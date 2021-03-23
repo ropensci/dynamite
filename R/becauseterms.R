@@ -8,5 +8,5 @@ becauseterms <- function(formula, ...) {
 #'
 #'@export
 becauseterms.default <- function(formula, ...) {
-
+    # TODO
 }
