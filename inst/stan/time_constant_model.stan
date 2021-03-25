@@ -1,40 +1,83 @@
+// Model with time-constant effects and correlated id-specific noise terms
+// Note: We could fit this model easily with brms as well.
+// something like:
+// bf1 <- bf(y1 ~ y1lag + y2lag + y3lag + (1|p|id), family = categorical)
+// bf2 <- bf(y2 ~ y1lag + y2lag + y3lag + (1|p|id), family = categorical)
+// bf3 <- bf(y3 ~ y1lag + y2lag + y3lag + (1|p|id), family = gaussian)
+// options(contrasts = rep("contr.sum", 2))
+// fit <- brm(bf1 + bf2 + bf3,data=df[-1,], chains = 1)
+
 functions {
 
-  vector[] alpha_vector(vector alphav, int Pc, int[] S, int S_max, int[] S_cumsum) {
+  /* Create an array of vectors from one long vector
+  * alpha[i] contains the intercept terms for the sequence i
+  * Each alpha[i] has length S_max but only first S[i] are used
+  * (with last one being zero for identifiability purposes)
+  */
+  vector[] alpha_vector(vector alphav, int Pc, int[] S) {
     // intercept terms for the sequences
     // alphav:
-    // (S_cumsum[1]+1):S_cumsum[2] = 1:(S[1]-1)for the first series
-    // (S_cumsum[2]+1):S_cumsum[3] = S[1]:(S[1])  for the second etc
-    // (S[1] + S[2]):(S[1] + S[2] + S[3] - 1) for the third
+    // 1:(S[1] - 1) for the first series
+    // S[1]:(S[1] + S[2] - 2) for the second
+    // (S[1] + S[2] - 1):(S[1] + S[2] + S[3] - 3) for the third etc
+    int S_max = max(S);
     vector[S_max] alpha[Pc];
+    int k = 0;
     for(i in 1:Pc) {
       alpha[i] = rep_vector(0, S_max);
-      alpha[i, 1:(S[i]-1)] = alphav[(S_cumsum[i] + 1):S_cumsum[i+1]];
+      alpha[i, 1:(S[i]-1)] = alphav[(k + 1):(k + S[i] - 1)];
+      k += S[i] - 1;
     }
     return alpha;
   }
 
-  matrix[] beta_matrix(vector betav, int Pc, int[] S, int S_max, int[] K, int K_max, int[] KS_cumsum) {
+  /* Create array of matrices of beta coefficients for sequences  */
+  matrix[] beta_matrix(vector betav, int Pc, int[] S, int[] K) {
     // regression coefficients terms for sequences
     // betav:
     // 1:(K[1] * (S[1] - 1)) for the first series
     // (K[1] * (S[1] - 1) + 1):(K[1] * (S[1] - 1) + 1 + K[2] * (S[2] - 1)) for the second
+    int S_max = max(S);
+    int K_max = max(K);
     matrix[K_max, S_max] beta[Pc];
+    int k = 0;
     for(i in 1:Pc) {
       beta[i] = rep_matrix(0, K_max, S_max);
-      beta[i, 1:K[i], 1:(S[i] - 1)] = to_matrix(betav[(KS_cumsum[i] + 1):KS_cumsum[i+1]], K[i], S[i] - 1);
+      beta[i, 1:K[i], 1:(S[i] - 1)] = to_matrix(betav[(k + 1):(k + K[i] * (S[i] - 1))], K[i], S[i] - 1);
+      k += K[i] * (S[i] - 1);
+    }
+    return beta;
+  }
+  /* Array of vectors of regression coefficients for non-sequence data */
+  vector[] beta_vector(vector betav, int P, int[] K) {
+    int K_max = max(K);
+    vector[K_max] beta[P];
+    int k = 0;
+    for(i in 1:P) {
+      beta[i] = rep_vector(0, K_max);
+      beta[i, 1:K[i]] = betav[(k + 1):(k + K[i])];
+      k += K[i];
     }
     return beta;
   }
 
-  vector[] beta_vector(vector betav, int P, int[] K, int K_max, int[] K_cumsum) {
-    vector[K_max] beta[P];
-    for(i in 1:P) {
-      beta[i] = rep_vector(0, K_max);
-      beta[i, 1:K[i]] = betav[(K_cumsum[i] + 1):K_cumsum[i + 1]];
-    }
-    return beta;
+
+
+  // from brms
+ /* compute correlated group-level effects
+  * Args:
+  *   z: matrix of unscaled group-level effects
+  *   SD: vector of standard deviation parameters
+  *   L: cholesky factor correlation matrix
+  * Returns:
+  *   matrix of scaled group-level effects
+  */
+  matrix scale_r_cor(matrix z, vector SD, matrix L) {
+    // r is stored in another dimension order than z
+    return transpose(diag_pre_multiply(SD, L) * z);
   }
+
+
 }
 data {
   int<lower=1> N; // number of sequences
@@ -69,35 +112,22 @@ data {
 
 transformed data {
   int S_max = 0;
-  int S_cumsum[Pc + 1] = rep_array(0, Pc + 1);
   int S_sum = 0;
   int Kc_max = 0;
   int Kc_sum = 0;
-  int KS_cumsum[Pc + 1] = rep_array(0, Pc + 1);
 
   int Kg_max = 0;
   int Kg_sum = 0;
-  int Kg_cumsum[Pg + 1] = rep_array(0, Pg + 1);
 
   if (Pc > 0) {
     S_max = max(S);
     S_sum = sum(S) - Pc;
     Kc_max = max(Kj[1:Pc]);
     Kc_sum = sum(Kj[1:Pc]);
-    S_cumsum[1] = 0;
-    KS_cumsum[1] = 0;
-    for(i in 2:(Pc + 1)) {
-      S_cumsum[i] = S_cumsum[i-1] + S[i-1] - 1;
-      KS_cumsum[i] = KS_cumsum[i-1] + Kj[i-1] * (S[i-1] - 1);
-    }
   }
   if (Pg > 0) {
     Kg_max = max(Kj[(Pc + 1):(Pc + Pg)]);
     Kg_sum = sum(Kj[(Pc + 1):(Pc + Pg)]);
-    Kg_cumsum[1] = 0;
-    for(i in 2:(Pg + 1)) {
-      Kg_cumsum[i] = Kg_cumsum[i-1] + Kj[Pc + i - 1];
-    }
   }
 }
 
@@ -107,27 +137,31 @@ parameters {
   // S[1]:(S[1] + S[2] - 1 for second etc)
   vector[S_sum] alpha_c0;
   vector[S_sum * Kc_sum] beta_c0;
-  vector[S_sum] pi0;
   vector<lower=0>[Pg] sigma;
   vector[Pg] alpha_g;
   vector[Pg * Kg_sum] beta_g0;
+
+  // correlated zero-mean random effect for each series
+  // for categorical we need multiple terms
+  // cholesky_factor_corr[Pg + S_sum] L;
+  // vector<lower=0>[Pg + S_sum] sigma_re;
 }
 
 transformed parameters {
-  vector[S_max] alpha_c[Pc] = alpha_vector(alpha_c0, Pc, S, S_max, S_cumsum);
-  matrix[Kc_max, S_max] beta_c[Pc] = beta_matrix(beta_c0, Pc, S, S_max, Kj[1:Pc], Kc_max, KS_cumsum);
-  vector[S_max] pi[Pc] = alpha_vector(pi0, Pc, S, S_max, S_cumsum);
-  vector[Kg_max] beta_g[Pg] = beta_vector(beta_g0, Pg, Kj[(Pc + 1):(Pc + Pg)], Kg_max, Kg_cumsum);
+  vector[S_max] alpha_c[Pc] = alpha_vector(alpha_c0, Pc, S);
+  matrix[Kc_max, S_max] beta_c[Pc] = beta_matrix(beta_c0, Pc, S, Kj[1:Pc]);
+  vector[Kg_max] beta_g[Pg] = beta_vector(beta_g0, Pg, Kj[(Pc + 1):(Pc + Pg)]);
 }
 model {
-  alpha_c0  ~ normal(0, 5);
-  beta_c0  ~ normal(0, 5);
-  pi0 ~ normal(0, 5);
-  alpha_g ~ normal(0, 5);
-  beta_g0 ~ normal(0, 5);
-  sigma ~ normal(0, 5);
+  // hard-coded for simplicity here,
+  // we can use alpha_c0 ~ normal(alpha_c_mean, alpha_c_sd)
+  // where alpha_c_mean and alpha_c_sd are given by the user
+  alpha_c0  ~ normal(0, 10);
+  beta_c0  ~ normal(0, 10);
+  alpha_g ~ normal(0, 10);
+  beta_g0 ~ normal(0, 10);
+  sigma ~ normal(0, 10);
   for(i in 1:Pc) {
-    for(ii in 1:N) yc[i, 1, ii] ~ categorical_logit(pi[i, 1:S[i]]);
     for(t in 2:T) {
       // note: categorical_logit_glm_lupmf is not available with current (15/2/2021) version of stanheaders/rstan
       // but should make this faster
@@ -138,10 +172,8 @@ model {
     }
   }
   for(i in 1:Pg) {
-    // QR parameterization could be better (see Stan manual and Case study), also for categorical case...
-    // assume first time point fixed for simplicity at least for now
     for(t in 2:T) {
-      yg[i, t, ] ~ normal(alpha_g[i] + x[t, , Xidx[1:Kj[i], i]] * beta_g[i, 1:Kj[i]], sigma[i]);
+      yg[i, t, ] ~ normal(alpha_g[i] + x[t, , Xidx[1:Kj[i], i]] * beta_g[i, 1:Kj[i]], sigma[i]); //+ random_effect_g[i]
     }
   }
 }
