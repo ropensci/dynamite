@@ -9,7 +9,7 @@ softmax <- function (x) {
 
 library(rstan)
 
-T <- 60
+T <- 20
 N <- 40
 yg <- array(0, c(1, T, N))
 yc <- array(0, c(2, T, N))
@@ -46,6 +46,7 @@ for(t in 2:T) {
 Xidx <- matrix(1:4,4,3)
 d <- list(N = N, T = T, Pc = 2, S = S, yc = yc, K = K, x = x, Kj = Kj, Xidx = Xidx,
   Pg = 1, yg = yg)
+
 
 model <- stan_model("inst/stan/time_constant_model.stan")
 
