@@ -1,5 +1,6 @@
 // Model with time-varying effects
-// creates coefficient matrices during sampling
+// creates coefficient matrices in generated quantities
+// could be slightly faster than the other version
 
 functions {
 
@@ -55,22 +56,8 @@ functions {
     return beta;
   }
 
-  // from brms
-  /* compute correlated group-level effects
-  * Args:
-  *   z: matrix of unscaled group-level effects
-  *   SD: vector of standard deviation parameters
-  *   L: cholesky factor correlation matrix
-  * Returns:
-  *   matrix of scaled group-level effects
-  */
-  matrix scale_r_cor(matrix z, vector SD, matrix L) {
-    // r is stored in another dimension order than z
-    return transpose(diag_pre_multiply(SD, L) * z);
-  }
-
-
 }
+
 // awful names, need to come up with better naming conventions...
 data {
   int<lower=1> N; // number of sequences
@@ -160,57 +147,36 @@ parameters {
   matrix[S_sum * Kc_sum_t, T] beta_c0_t_raw;
   matrix[Pg * Kg_sum_t, T] beta_g0_t_raw;
 
-  // correlated zero-mean random effect for each series
-  // for categorical we need multiple terms
-  // cholesky_factor_corr[Pg + S_sum] L;
-  // vector<lower=0>[Pg + S_sum] sigma_re;
 }
 
 transformed parameters {
-
+  matrix[S_sum * Kc_sum_t, T] beta_c0_t;
+  matrix[Pg * Kg_sum_t, T] beta_g0_t;
   vector[S_max] alpha_c[Pc];
 
-  matrix[Kc_max, S_max] beta_c[Pc];
-  vector[Kg_max] beta_g[Pg];
-  matrix[Kc_max_t, S_max] beta_c_t[T, Pc];
-  vector[Kg_max_t] beta_g_t[T, Pg];
+  if(Pc > 0) alpha_c = alpha_vector(alpha_c0, Pc, S);
 
-  if(Pc > 0) {
-    vector[S_sum * Kc_sum_t] beta_c0_t;
-    alpha_c = alpha_vector(alpha_c0, Pc, S);
-    if(Kc_max > 0) {
-      beta_c = beta_matrix(beta_c0, Pc, S, Kj[1:Pc]);
-    }
-    if(Kc_max_t > 0) {
-      // t = 1
-
-      // should have prior for the first time point
-      // i.e. beta = prior_mean + prior_sd * beta_raw
-      beta_c0_t = beta_c0_t_raw[,1];
-      beta_c_t[1] = beta_matrix(beta_c0_t, Pc, S, Kt[1:Pc]);
-      for(t in 2:T) {
-        beta_c0_t += sigma_beta_c .* beta_c0_t_raw[,t];
-        beta_c_t[t] = beta_matrix(beta_c0_t, Pc, S, Kt[1:Pc]);
-      }
-    }
-  }
-  if(Pg > 0) {
-    vector[Pg * Kg_sum_t] beta_g0_t;
-    if(Kg_max > 0) {
-      beta_g = beta_vector(beta_g0, Pg, Kj[(Pc + 1):(Pc + Pg)]);
-    }
-    if(Kg_max_t > 0) {
-      beta_g0_t = beta_g0_t_raw[,1];
-      beta_g_t[1] = beta_vector(beta_g0_t, Pg, Kt[(Pc + 1):(Pc + Pg)]);
-      for(t in 2:T) {
-        beta_g0_t += sigma_beta_g .* beta_g0_t_raw[,t];
-        beta_g_t[t] = beta_vector(beta_g0_t, Pg, Kt[(Pc + 1):(Pc + Pg)]);
-      }
+  if(Kc_max_t > 0) {
+    // t = 1
+    // should have prior for the first time point
+    // i.e. beta = prior_mean + prior_sd * beta_raw
+    beta_c0_t[, 1] = beta_c0_t_raw[, 1];
+    for(t in 2:T) {
+      beta_c0_t[, t] = beta_c0_t[, t - 1] + sigma_beta_c .* beta_c0_t_raw[,t];
     }
   }
 
+  if(Kg_max_t > 0) {
+    beta_g0_t[, 1] = beta_g0_t_raw[, 1];
+    for(t in 2:T) {
+      beta_g0_t[, t] = beta_g0_t[, t - 1] + sigma_beta_g .* beta_g0_t_raw[,t];
+    }
+  }
 }
+
 model {
+  int kj = 0;
+  int kt = 0;
   // hard-coded for simplicity here,
   // we can use alpha_c0 ~ normal(alpha_c_mean, alpha_c_sd)
   // where alpha_c_mean and alpha_c_sd are given by the user
@@ -228,7 +194,8 @@ model {
     matrix[N, Kj[i] + Kt[i]] xi;
     matrix[Kj[i] + Kt[i], S[i]] betai;
     if(Kj[i] > 0) {
-      betai[1:Kj[i], 1:S[i]] = beta_c[i, 1:Kj[i], 1:S[i]];
+      betai[1:Kj[i], 1:S[i]] = append_col(to_matrix(beta_c0[(kj + 1):(kj + Kj[i] * (S[i] - 1))], Kj[i], S[i] - 1), rep_vector(0, Kj[i]));
+      kj += Kj[i] * (S[i] - 1);
     }
     for(t in 2:T) {
       if(Kj[i] > 0) {
@@ -236,24 +203,57 @@ model {
       }
       if(Kt[i] > 0) {
         xi[, (Kj[i] + 1):(Kj[i] + Kt[i])] = x[t, ,Xidx_t[1:Kt[i], i]];
-        betai[(Kj[i] + 1):(Kj[i] + Kt[i]), 1:S[i]] = beta_c_t[t, i, 1:Kt[i], 1:S[i]];
+        betai[(Kj[i] + 1):(Kj[i] + Kt[i]), 1:S[i]] =
+        append_col(to_matrix(beta_c0_t[(kt + 1):(kt + Kt[i] * (S[i] - 1)),t], Kt[i], S[i] - 1), rep_vector(0, Kt[i]));
+
       }
-
       yc[i, t, ] ~ categorical_logit_glm(xi, alpha_c[i, 1:S[i]], betai);
-
     }
+    kt += Kt[i] * (S[i] - 1);
   }
+  kj = 0;
+  kt = 0;
   for(i in 1:Pg) {
     for(t in 2:T) {
       vector[N] xbeta = rep_vector(0, N);
       if(Kj[Pc + i] > 0) {
-        xbeta = x[t, ,Xidx[1:Kj[Pc + i], i]] * beta_g[i, 1:Kj[Pc + i]];
+        xbeta = x[t, ,Xidx[1:Kj[Pc + i], i]] * beta_g0[(kj + 1):(kj + Kj[Pc + i])];
       }
       if(Kt[Pc + i] > 0) {
-        xbeta += x[t, ,Xidx_t[1:Kt[Pc + i], i]] * beta_g_t[t, i, 1:Kt[Pc + i]];
+        xbeta += x[t, ,Xidx_t[1:Kt[Pc + i], i]] *  beta_g0_t[(kt + 1):(kt + Kt[Pc + i]), t];
       }
+      yg[i, t, ] ~ normal(alpha_g[i] + xbeta, sigma[i]);
+    }
+    kj += Kj[Pc + i];
+    kt += Kt[Pc + i];
+  }
+}
 
-      yg[i, t, ] ~ normal(alpha_g[i] + xbeta, sigma[i]); //+ random_effect_g[i]
+generated quantities {
+  //vector[S_max] alpha_c[Pc];
+  matrix[Kc_max, S_max] beta_c[Pc];
+  vector[Kg_max] beta_g[Pg];
+
+  matrix[Kc_max_t, S_max] beta_c_t[T, Pc];
+  vector[Kg_max_t] beta_g_t[T, Pg];
+  if(Pc > 0) {
+    if(Kc_max > 0) {
+      beta_c = beta_matrix(beta_c0, Pc, S, Kj[1:Pc]);
+    }
+    if(Kc_max_t > 0) {
+      for(t in 1:T) {
+        beta_c_t[t] = beta_matrix(beta_c0_t[, t], Pc, S, Kt[1:Pc]);
+      }
+    }
+  }
+  if(Pg > 0) {
+    if(Kg_max > 0) {
+      beta_g = beta_vector(beta_g0, Pg, Kj[(Pc + 1):(Pc + Pg)]);
+    }
+    if(Kg_max_t > 0) {
+      for(t in 1:T) {
+        beta_g_t[t] = beta_vector(beta_g0_t[, t], Pg, Kt[(Pc + 1):(Pc + Pg)]);
+      }
     }
   }
 }
