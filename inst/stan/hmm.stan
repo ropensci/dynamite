@@ -41,6 +41,7 @@ data {
   int<lower=1> S; // number of symbols
   int<lower=1> K; // number of latent states
   int<lower=1> y[T, N]; //observations
+  real<lower=0> dirichlet_alpha;
 }
 transformed data {
   vector<lower=0>[S] ones_S = rep_vector(1, S);
@@ -71,7 +72,7 @@ model {
   // prior probability for staying 0.9, probably should depend on T
   A ~ beta(22.5, 2.5);
   for(k in 1:K) {
-    B[k] ~ dirichlet(ones_S);
+    B[k] ~ dirichlet(dirichlet_alpha * ones_S);
   }
   target += sum(loglik);
 }

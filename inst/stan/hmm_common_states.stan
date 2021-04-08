@@ -45,11 +45,15 @@ data {
   int<lower=1> S; // number of symbols
   int<lower=1> K; // number of latent states
   int<lower=1> y[T, N]; //observations
+  real<lower=0> dirichlet_alpha;
+  // dirichlet prior parameters for the first and last row of emission matrix B
+  // (helps with multimodality)
+  vector<lower=0>[S] first_B;
+  vector<lower=0>[S] last_B;
 }
 transformed data {
   vector<lower=0>[S] ones_S = rep_vector(1, S);
   vector<lower=0>[K] ones_K = rep_vector(1, K);
-
 }
 parameters {
   simplex[S] B[K];
@@ -74,8 +78,10 @@ model {
   // more likely to stay than to move
   // prior probability for staying 0.9, probably should depend on T
   A ~ beta(22.5, 2.5);
-  for(k in 1:K) {
-    B[k] ~ dirichlet(ones_S);
+  B[1] ~ dirichlet(first_B);
+  for(k in 2:(K-1)) {
+    B[k] ~ dirichlet(dirichlet_alpha * ones_S);
   }
+  B[K] ~ dirichlet(last_B);
   target += log_sum_exp(forward_algorithm(y, N, K, T, logA, logB));
 }
