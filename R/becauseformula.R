@@ -94,6 +94,9 @@ join_becauseformulas <- function(e1, e2) {
 }
 
 set_hiddenstates <- function(e1, e2) {
+    if (!is.null(e1$hidden)) {
+        stop_("Multiple definitions for hidden states")
+    }
     e1$hidden <- e2
     e1
 }
