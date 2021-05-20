@@ -33,6 +33,10 @@ becauseformula <- function(formula, family = c("gaussian", "binomial", "poisson"
     return(out)
 }
 
+#' @rdname becauseformula
+#' @export
+obs <- becauseformula
+
 #' Checks if argument is a \code{becauseformula} object
 #'
 #' @param x An \R object
@@ -61,14 +65,10 @@ is.formula <- function(x) {
 add_becauseformula <- function(e1, e2) {
     if (is.becauseformula(e2)) {
         out <- join_becauseformulas(e1, e2)
-    } else if (is.function(e2)) {
-        res <- try(e2, silent = TRUE)
-        if (is.hiddenstates(res)) {
-            out <- set_hiddenstates(e1, res)
-        } else {
-            #TODO something informative
-            stop_("Unable to add object to an object of class 'becauseformula'")
-        }
+    } else if (is.hiddenstates(e2)) {
+        out <- set_hiddenstates(e1, e2)
+    } else {
+        stop_("Unable to add an object of class ", class(e2), " to an object of class 'becauseformula'")
     }
     out
 }
@@ -81,13 +81,19 @@ join_becauseformulas <- function(e1, e2) {
         resp = c(e1$resp, e2$resp),
         pred = c(e1$pred, e2$pred)
     )
+    uresp <- unlist(out$resp)
+    duped <- duplicated(uresp)
+    if (any(duped)) {
+        stop_("Multiple definitions for response variables: ", uresp[duped])
+    }
+    if (!is.null(e1$hidden) && !is.null(e2$hidden)) {
+        stop_("Multiple definitions for hidden states")
+    }
     class(out) <- "becauseformula"
     out
 }
 
 set_hiddenstates <- function(e1, e2) {
-    states <- try(e2, silent = TRUE)
-    # TODO react to possible errors!
-    e1$hidden <- states
+    e1$hidden <- e2
     e1
 }

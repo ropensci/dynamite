@@ -5,7 +5,6 @@
 #' @docType package
 #' @name because-package
 #' @aliases because
-#' @useDynLib because, .registration = TRUE
 #' @import methods
 #' @import Rcpp
 #' @importFrom rstan sampling

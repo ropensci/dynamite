@@ -2,9 +2,17 @@
 % Please edit documentation in R/becauseformula.R
 \name{becauseformula}
 \alias{becauseformula}
+\alias{obs}
 \title{Model formula for \pkg{because}}
 \usage{
 becauseformula(
+  formula,
+  family = c("gaussian", "binomial", "poisson", "categorical"),
+  data,
+  ...
+)
+
+obs(
   formula,
   family = c("gaussian", "binomial", "poisson", "categorical"),
   data,
