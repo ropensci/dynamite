@@ -25,6 +25,22 @@ warning_ <- function(...) {
     warning(..., call. = FALSE)
 }
 
+# Try to coerce one argument to specific type
+try_ <- function(..., type) {
+    if (missing(type)) {
+        stop_("Argument 'type' must be given")
+    }
+    dots <- list(...)
+    arg_val <- dots[[1]]
+    arg_name <- names(dots)[1]
+    as_type <- get(paste0("as.", type))
+    out <- try(as_type(arg_val), silent = TRUE)
+    if (identical(class(out), "try-error")) {
+        stop_("Unable to coerce argument ", arg_name, " to '", type, "'")
+    }
+    out
+}
+
 # Starup message for the package
 .onAttach <- function(libname, pkgname) {
     # TODO

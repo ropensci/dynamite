@@ -8,16 +8,10 @@
 becauseformula(
   formula,
   family = c("gaussian", "binomial", "poisson", "categorical"),
-  data,
   ...
 )
 
-obs(
-  formula,
-  family = c("gaussian", "binomial", "poisson", "categorical"),
-  data,
-  ...
-)
+obs(formula, family = c("gaussian", "binomial", "poisson", "categorical"), ...)
 }
 \description{
 Model formula for \pkg{because}
