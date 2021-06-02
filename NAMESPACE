@@ -2,10 +2,12 @@
 
 S3method("+",becauseformula)
 S3method(becauseterms,default)
+S3method(create_blocks,default)
 export(because)
 export(becauseformula)
 export(becauseterms)
-export(create_responses)
+export(create_blocks)
+export(create_data)
 export(is.becauseformula)
 export(obs)
 export(states)
