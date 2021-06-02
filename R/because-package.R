@@ -6,7 +6,6 @@
 #' @name because-package
 #' @aliases because
 #' @import methods
-#' @import Rcpp
 #' @importFrom rstan sampling
 #'
 #' @references
