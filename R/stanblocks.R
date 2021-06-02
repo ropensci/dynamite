@@ -3,11 +3,10 @@
 #' @param becauseformula defining model components
 #' @export
 create_blocks <- function(formula, ...) {
-    UseMethod("becauseformula")
+    UseMethod("create_blocks")
 }
 
-#'
-#'@export
+#' @export
 create_blocks.default <- function(formula, ...) {
     data <- create_data(formula, ....)
     transformed_data <- create_transformed_data(formula, ....)
@@ -16,13 +15,13 @@ create_blocks.default <- function(formula, ...) {
     model <- create_model(formula, ....)
     generated_quantities <- create_generated_quantities(formula, ....)
     model_code <- paste(data, transformed_data, parameters,
-        transformed_parameters, mdoel, generated_quantities,
+        transformed_parameters, model, generated_quantities,
         sep = "\n") # combine above text blocks
     model_code
 }
 
 #'
-#'@export
+#' @export
 create_data <- function(formula, ...) {
 
     continuous_distributions <- c("gaussian", "gamma") # ? Maybe define these globally
@@ -55,5 +54,50 @@ create_data <- function(formula, ...) {
         # TODO, need to add distribution-specific components as well, e.g, number of symbols
     }
     mtext <- paste("data {", mtext, "\n}") # no indentation... TODO?
+    mtext
+}
+
+#'
+#' @export
+create_transformed_data <- function(formula, ...) {
+    #TODO
+    mtext <- ""
+    mtext <- paste("transformed data {", mtext, "\n}")
+    mtext
+}
+
+#'
+#' @export
+create_parameters <- function(formula, ...) {
+    #TODO
+    mtext <- ""
+    mtext <- paste("parameters {", mtext, "\n}")
+    mtext
+}
+
+#'
+#' @export
+create_transformed_parameters <- function(formula, ...) {
+    #TODO
+    mtext <- ""
+    mtext <- paste("transformed parameters {", mtext, "\n}")
+    mtext
+}
+
+#'
+#' @export
+create_model <- function(formula, ...) {
+    #TODO
+    mtext <- ""
+    mtext <- paste("model {", mtext, "\n}")
+    mtext
+}
+
+#'
+#' @export
+create_generated_quantities <- function(formula, ...) {
+    #TODO
+    mtext <- ""
+    mtext <- paste("generated quantities {", mtext, "\n}")
     mtext
 }
