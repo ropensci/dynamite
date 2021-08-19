@@ -8,13 +8,15 @@ create_blocks <- function(formula, ...) {
 
 #' @export
 create_blocks.default <- function(formula, ...) {
+
+    functions <- paste("functions {", .loglik_stan, "}", sep = "\n")
     data <- create_data(formula, ....)
     transformed_data <- create_transformed_data(formula, ....)
     parameters <- create_parameters(formula, ....)
     transformed_parameters <- create_transformed_parameters(formula, ....)
     model <- create_model(formula, ....)
     generated_quantities <- create_generated_quantities(formula, ....)
-    model_code <- paste(data, transformed_data, parameters,
+    model_code <- paste(functions, data, transformed_data, parameters,
         transformed_parameters, model, generated_quantities,
         sep = "\n") # combine above text blocks
     model_code
