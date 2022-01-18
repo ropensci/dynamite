@@ -14,11 +14,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Potential venues:
 
-Sociological Methodology? Perhaps also separate "paper" on Journal of Open Source Software or similar.
+Sociological Methodology if go application first style, perhaps with another software paper on Journal of Open Source Software or similar "light" journal. I can see a proper stats paper coming from this as well. No need to decide yet.
 
 ## Introduction
 
-Studying individual-level life history data is important and difficult... Multiple approaches exists, sequence analysis, hidden Markov models, etc. We introduce an R package for joint modelling of the interdependent dynamics of multivariate measurements from multiple individuals where these dependency structures can vary in time. And we apply it to some real data and find something interesting.
+Studying individual-level life history data is important and difficult... Multiple approaches exists, sequence analysis, hidden Markov models, etc. We introduce a general modelling framework and accompanying R package for joint modelling of the interdependent dynamics of multivariate measurements from multiple individuals where these dependency structures can vary in time. And we apply it to some real data and find something interesting.
 
 
 
@@ -41,7 +41,7 @@ We assume that $p_{z_t}(y_t | y_{t-1}, x_t)$ has identical parametric form indep
 
 Need to reframe this so that it doesn't sound so negative:
 
-In a typical setting where we have multiple subjects we assume that they are governed by the same latent state process $z_1,\ldots,z_T$ i.e. we assume that the regimes correspond to global, population-level behaviour. We make this assumption for several reasons: First, this model is often more easily interpretable compared to a case with individuals latent processes for each individual. Second, with this assumption the model scales better with respect to the number of individuals, making it computationally more feasible for large data. Finally, hidden Markov models and other mixture models often exhibit strong multimodality, which leads to both computational and inferential difficulties. The use of single common latent process can alleviate these problems.
+In a typical setting where we have multiple subjects we assume that they are governed by the same latent state process $z_1,\ldots,z_T$ i.e. we assume that the regimes correspond to global, population-level behaviour. We make this assumption for several reasons: First, this model is often more easily interpretable compared to a case with individuals latent processes for each individual. Second, with this assumption the model scales better with respect to the number of individuals, making it computationally more feasible for large data. Finally, hidden Markov models and other mixture models often exhibit strong multimodality, which leads to both computational and inferential difficulties. The use of single common latent process can alleviate these problems. (potential generalization: If we support also individual-based state processes, we could add predict the transitions with observed variables as well, but probably best left to later)
 
 Similarly, partially due to identifiability and partially due to interpretability purposes, we assume that the transition matrix $A$ has a strict left-to-right form so that $A_{i,j}=0$ if $j < i$ or $j>i+1$. This leads to a change-point model with fixed number of change points, happening at unknown times. Finally, we use random walk prior structure for the penalize the variability in $\theta$, i.e. we assume 
 $$
@@ -59,13 +59,9 @@ $$
 p(y^j_t | y_{t-1}, z_t) = N(\alpha^{(z_t)}_j + \sum_{i=1}^C \beta^{(z_t)}_{ij}y^i_{t-1}, {\sigma^2}^{(z_t)}), \qquad  t=1,\ldots,T,\quad j=1,\ldots,C,  \quad z_t \in \{1,\ldots,M\}.
 $$
 
+(having $sigma$ depend on time is perhaps not very realistic)
 
-We use `rstan` development version 2.26.1 which is somewhat faster than the one in CRAN, and which also supports some additional functions important to us (the Gaussian version should actually work with CRAN version as well). This version can be installed as
-```{r, eval = FALSE}
-install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
-```
-
-We assume 3 hidden states, 20 time points, 100 sequences and 2 channels, with
+We assume 3 hidden states, 20 time points, 500 sequences and 2 channels, with
 $$
 z_t = \begin{cases} 
 1 & t\leq 5 \\
@@ -79,7 +75,7 @@ set.seed(1)
 M <- 3
 C <- 2
 T <- 20
-N <- 100
+N <- 500
 z <- rep(1:M, times = c(5, 8, 7))
 
 
@@ -97,7 +93,7 @@ for(m in 2:M) beta[, , m] <- rnorm(C^2, beta[, , m - 1], 0.1)
 
 # standard deviations, random walk in log-scale
 sigma <- matrix(NA, C, M)
-sigma[, 1] <- rnorm(C)
+sigma[, 1] <- rnorm(C, -1)
 for(m in 2:M) sigma[, m] <- rnorm(C, sigma[, m - 1], 0.1)
 sigma <- exp(sigma)
 
@@ -114,7 +110,16 @@ for(i in 1:N) {
 d <- list(y = y, M = M, N = N, C = C, T = T, T_fixed_start = 1, T_fixed_end = 1)
 ```
 
-use `because` (change the name??):
+```{r}
+library(rstan)
+model <- stan_model("gaussian_example.stan")
+```
+```{r}
+fit <- sampling(model, data = d, iter = 2000, chains = 4, cores = 4,
+    pars = c("A", "sigma_intercept", "sigma_beta", "sigma_sigma", "beta", "intercept", "sigma"))
+```
+
+
 
 # Main functionality of the package
 
