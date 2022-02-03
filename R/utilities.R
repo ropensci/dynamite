@@ -10,10 +10,17 @@ t_ <- function(f, type = "rw") {
     invisible(NULL)
 }
 
-# remove all whitespace characters from a character vector
+# Remove all whitespace characters from a character vector
 rm_ws <- function(x) {
     y <- gsub("[ \t\r\n]", "", x, perl = TRUE)
     dim(y) <- dim(x)
+    y
+}
+
+# Create a list with names defined by the arguments
+named_list <- function(...) {
+    y <- list(...)
+    names(y) <- as.character(substitute(list(...)))[-1]
     y
 }
 
