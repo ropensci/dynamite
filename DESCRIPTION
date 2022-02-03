@@ -13,7 +13,7 @@ License: `use_mit_license()`, `use_gpl3_license()` or friends to
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Biarch: true
 Depends: 
     R (>= 3.4.0)
@@ -21,4 +21,15 @@ Imports:
     methods,
     formula.tools,
     rstan (>= 2.18.1)
-
+Collate: 
+    'because-package.R'
+    'because.R'
+    'utilities.R'
+    'becausefit-class.R'
+    'becauseformula.R'
+    'becauseterms.R'
+    'loglik_stan.R'
+    'modeldata.R'
+    'stanblocks.R'
+    'states.R'
+    'testing.R'

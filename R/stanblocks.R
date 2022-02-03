@@ -34,16 +34,18 @@ create_data <- function(formula, ...) {
         "int<lower=1> T; // number of time points",
         "int<lower=1> N; // number of individuals",
         "int<lower=1> M; // number of hidden states",
+        "int<lower=1> C; // number of channels/response variables",
+        "int<lower=1> K; // total number of covariates accross all channels",
         "int<lower=0, upper=T> T_fixed_start; // fix to state one",
         "int<lower=0, upper=T> T_fixed_end; // fix to state M",
-        "int<lower=1> C; // number of channels/response variables", sep = "\n")
+        "matrix[N, K] X[T] // all covariates as an array of N x K matrices", sep = "\n")
 
     # loop over channels
     # TODO now using formula$resp and formula$families, should probably have
     # formula$resp[i]$family, formula$resp[i]$name or something
-    for(i in seq_along(formula$resp)) {
+    for (i in seq_along(formula$resp)) {
 
-        if(formula$families[i] %in% continuous_distributions) {
+        if (formula$families[i] %in% continuous_distributions) {
             type <- "real"
         } else {
             type <- "int"
@@ -52,14 +54,11 @@ create_data <- function(formula, ...) {
         # create response for channel i as T x N array
         y <- paste0(type, paste0(" response_", i), "[T,N];")
         mtext <- paste(mtext, y, sep = "\n")
-        # covariates related to channel i as array of N x K_i matrices
-        mtext <- paste(mtext,
-            paste0("int<lower=0> K_", i),
-            paste0("matrix[N, K_", i, "] X_", i, "[T];"),
-            sep = "\n")
+        # index vector of covariates related to channel i
+        mtext <- paste(mtext, paste0("int J_", i, "[K_", i, "]"), sep = "\n")
 
         # TODO, need to add other distribution-specific components as well
-        if(formula$families[i] == "categorical") {
+        if (formula$families[i] == "categorical") {
             mtext <- paste(mtext,  paste0("int<lower=0> S_", i), sep = "\n")
         }
     }
@@ -85,12 +84,11 @@ create_parameters <- function(formula, ...) {
         "// state-specific parameters",
         "// use noncentered parameterisation for sampling efficiency", sep = "\n")
 
-
     # Not the most efficient way but gets the job done
-    for(i in seq_along(formula$resp)) {
+    for (i in seq_along(formula$resp)) {
 
         # do we want to handle intercept separately or as first beta?
-        if(formula$families[i] == "categorical") {
+        if (formula$families[i] == "categorical") {
             # last column not sampled but fixed to 0 for identifiability
             # intercept_term <-
             #    paste0("vector[S_", i, " - 1] intercept_raw_", i, "[M];")
@@ -118,7 +116,7 @@ create_parameters <- function(formula, ...) {
     mtext <- paste(mtext,
         "vector<lower=0,upper=1>[M-1] A; // diagonal of the transition matrix",
         sep = "\n")
-    mtext <- paste("parameters {", mtext, "}", sep="\n") # no indentation... TODO?
+    mtext <- paste("parameters {", mtext, "}", sep = "\n") # no indentation... TODO?
     mtext
 }
 
@@ -135,9 +133,9 @@ create_transformed_parameters <- function(formula, ...) {
         "matrix[M, T] log_py = rep_matrix(0, M, T);", sep = "\n")
 
     # define variables
-    for(i in seq_along(formula$resp)) {
+    for (i in seq_along(formula$resp)) {
 
-        if(formula$families[i] == "categorical") { # Fix after definining families
+        if (formula$families[i] == "categorical") { # Fix after definining families
             # intercept_term <-
             #    paste0("vector[S_", i, "] intercept_", i, "[M]; // last column as 0 for identifiability")
             beta_term <- paste0("matrix[K_", i, ", S_", i, "] beta_", i, "[M];")
@@ -161,8 +159,8 @@ create_transformed_parameters <- function(formula, ...) {
         sep = "\n")
 
     # random walks
-    for(i in seq_along(formula$resp)) {
-        if(formula$families[i] == "categorical") {
+    for (i in seq_along(formula$resp)) {
+        if (formula$families[i] == "categorical") {
             # N(0, 1) prior for first state, should be user-defined
             rw <- paste(
                 # paste0("intercept_", i, "[1] = append_row(intercept_raw_", i, "[1], 0);"),
@@ -180,27 +178,27 @@ create_transformed_parameters <- function(formula, ...) {
             rw <- paste(
                 #paste0("intercept_", i, "[1] = intercept_raw_", i, "[1];"),
                 paste0("beta_", i, "[1] = beta_raw_", i, "[1]; "),
-                "for(m in 2:M) {",
+                    "for(m in 2:M) {",
                 #paste0("  intercept_", i, "[m] = intercept_", i, "[m-1] + sigma_intercept_", i, " .* intercept_raw_", i, "[m];"),
                 paste0("  beta_", i, "[m] = beta_", i, "[m-1] + sigma_beta_", i, " .* beta_raw_", i, "[m];"),
-                "}",
+                    "}",
                 sep = "\n")
         }
         mtext <- paste(mtext, rw, sep = "\n")
     }
     # likelihood terms
     distributions <- character(length(formula$resp))
-    for(i in seq_along(formula$resp)) {
+    for (i in seq_along(formula$resp)) {
         # TODO get_stan_distribution(formula$families[i], i)?
 
-        if(formula$families[i] == "categorical") {
-           distributions[i] <-
+        if (formula$families[i] == "categorical") {
+            distributions[i] <-
                # all individuals at once
-               "categorical_logit_glm_lupmf(response_i[t] | X_i[t], zeros_S_i, beta_i[m])"
+               "categorical_logit_glm_lupmf(response_i[t] | X[t][,J_i], zeros_S_i, beta_i[m])"
         } else {
             #distribution <- "normal_lpdf(response_i[t] | intercept_i[m] + X_i[t] * beta_i[m], sigma_i)"
             stop("Only categorical sequences are currently supported.")
-            }
+        }
         ll <- paste(
             "for(t in 1:T) {",
             "  for(m in 1:M) {",
@@ -239,9 +237,9 @@ create_model <- function(formula, ...) {
         sep = "\n")
 
     # random walks
-    for(i in seq_along(formula$resp)) {
+    for (i in seq_along(formula$resp)) {
         # Fix after definining families
-        if(formula$families[i] == "categorical") {
+        if (formula$families[i] == "categorical") {
             rw <- paste(
                 paste0("to_vector(beta_raw_", i, "[m]) ~ std_normal();"),
                # paste0("intercept_raw_", i, "[m] ~ std_normal();"),
@@ -262,7 +260,7 @@ create_model <- function(formula, ...) {
         "target += loglik(log_py, M, T, log_A);",
         sep = "\n")
 
-    mtext <- paste("model {", mtext, "}", sep="\n")
+    mtext <- paste("model {", mtext, "}", sep = "\n")
     mtext
 }
 
