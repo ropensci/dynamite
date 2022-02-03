@@ -45,11 +45,15 @@ $$
 \end{aligned}
 $$
 
-Here $\tau^c_k$ controls the "wigglyness" of the spline curves. In some cases it can be though that the splines change values in approximately same time points. For this, we can define (NOT YET TESTED) a global shrinkage series $\lambda_1,\ldots, \lambda T$ and define 
+Here $\tau^c_k$ controls the "wigglyness" of the spline curves. In some cases it can be though that the splines change values in approximately same time points. For this, we can construct a global shrinkage series $\lambda_2,\ldots, \lambda_D$ and define 
 $$
-\delta^c_{k,d} \sim N(\delta^c_{k,d-1}, (\tau^c_k\lambda_t)^2).
+\begin{aligned}
+\delta^c_{k,d} &\sim N(\delta^c_{k,d-1}, (\tau^c_k\lambda_d)^2)\\
+\tau^c_k &\sim Cauchy(0, 1)^+ \quad \textrm{(half-Cauchy distribution)}\\
+\lambda_d &\sim N(0, 1)^+  \quad \textrm{(half-Normal distribution)}
+\end{aligned}
 $$
-
+(not fully tested but might work) 
 # Example
 
 (not run)
