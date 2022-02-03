@@ -18,108 +18,214 @@ Sociological Methodology if go application first style, perhaps with another sof
 
 ## Introduction
 
-Studying individual-level life history data is important and difficult... Multiple approaches exists, sequence analysis, hidden Markov models, etc. We introduce a general modelling framework and accompanying R package for joint modelling of the interdependent dynamics of multivariate measurements from multiple individuals where these dependency structures can vary in time. And we apply it to some real data and find something interesting.
+Studying individual-level life history data is important and difficult. Multiple approaches exists to analyze such data, for example, sequence analysis, hidden Markov models, etc. Here we introduce a general modelling framework and accompanying R package for flexible joint modelling of the interdependent dynamics of multivariate measurements from multiple individuals where these dependency structures can vary in time. And we apply it to some real data and find something interesting.
 
+Consider an individual $i$ with observations $y_{i,t} = (y^1_{i,t}, \ldots, y^c_{i,t},\ldots, y^C_{i,t})$, $t=1,\ldots,T$, i.e. at each time point $t$ we have $C$ observations from individual $i$. Assume that each element of $y_{i,t}$ can depend on the past values $y_{i,t-1}$, as well as additional exogenous covariates $x_{i,t}$. Then, assuming that the elements of $y_{i,t}$ are independent given $y_{i, t-1}$ and $x_{i,t}$, we have
+$$
+\begin{aligned}
+y_{i,t} &\sim p_t(y_{i,t} | y_{i,t-1},  x_{i,t}) = p^1_t(y^1_{i,t} | y^1_{i,t-1}, y^2_{i,t-1}, x_{i,t})p^2_t(y^2_{i,t} | y^1_{i,t-1}, y^2_{i,t-1}, x_{i,t}).
+\end{aligned}
+$$
+Here the parameters of the conditional distributions $p^1$ and $p^2$ depend on time, which allows us to take into account the fact that the dynamics of our system can evolve over time. For example, something something life courses.
 
-
-Consider an individual with observations $y_t = (y^1_t, y^2_t)$, $t=1,\ldots,T$, i.e. at each time we have two observations $y_t$ and $y'_t$. We assume a double chain dynamics (also known as Markov switching model, regime switching model)
+For $p^c_t$, given a suitable link function depending our distributional assumptions, we define a linear predictor $\eta^c_{t}$ for the channel $c$ with a following general form:
 
 $$
 \begin{aligned}
-y_t &= p_{z_t}(y_t | y_{t-1},  x_t) = p^1_{z_t}(y^1_t | y^1_{t-1}, y^2_{t-1}, x_t)p^2_{z_t}(y^2_t | y^1_{t-1}, y^2_{t-1}, x_t),\\
-z_t &= p(z_t | z_{t-1}),
+\eta^c_{t} &= X^c_{t} \beta^c_{t}\\
+\beta^c_{k,t} &= B_t \delta_k^c, \quad k=1,\ldots,K,
 \end{aligned}
 $$
-where $x_t$ contains exogenous covariates and $z_t$ is Markov process with finite state space so that 
-$P(z_t = i | z_{t-1} = j) = A_{i,j}$, for $i,j=1,\ldots,M$. Compared to typical hidden Markov model where $p_{z_t}(y_t | y_{t-1},  x_t) = p_{z_t}(y_t |  x_t)$, this allows more complex and often more realistic serial dependency, and allows natural way to study causal relationships between the observations (assuming that the model correctly describes the underlying data generating process). 
-
-As a DAG, we have (with variables $X$ omitted for simplicity)
-
-![Double chain model](dcm.png)
-
-We assume that $p_{z_t}(y_t | y_{t-1}, x_t)$ has identical parametric form independent of the state variable $z_t$, but that the parameters $\theta$ of that distribution vary according to the value of $z_t$. For example, when $y_t$ is univariate Gaussian, we might have $y_t \sim N(\phi^{(z_t)} y_{t-1},{\sigma^2}^{(z_t)})$ with $\theta^{(z_t)} = (\phi^{(z_t)},\sigma^{(z_t)})$.
-
-Need to reframe this so that it doesn't sound so negative:
-
-In a typical setting where we have multiple subjects we assume that they are governed by the same latent state process $z_1,\ldots,z_T$ i.e. we assume that the regimes correspond to global, population-level behaviour. We make this assumption for several reasons: First, this model is often more easily interpretable compared to a case with individuals latent processes for each individual. Second, with this assumption the model scales better with respect to the number of individuals, making it computationally more feasible for large data. Finally, hidden Markov models and other mixture models often exhibit strong multimodality, which leads to both computational and inferential difficulties. The use of single common latent process can alleviate these problems. (potential generalization: If we support also individual-based state processes, we could add predict the transitions with observed variables as well, but probably best left to later)
-
-Similarly, partially due to identifiability and partially due to interpretability purposes, we assume that the transition matrix $A$ has a strict left-to-right form so that $A_{i,j}=0$ if $j < i$ or $j>i+1$. This leads to a change-point model with fixed number of change points, happening at unknown times. Finally, we use random walk prior structure for the penalize the variability in $\theta$, i.e. we assume 
-$$
-\theta^{(m)} \sim N(\theta^{(m-1)}, \Sigma_\theta), \quad m=2,\ldots,M
-$$
-with some prior for $\theta^{(1)}$. Furthermore, as we know the start and end states (with the reasonable assumption that the last state should be reached by time $T$ in order to it to be nonredundant), we can reduce potential multimodality issues by fixing $z_t = 1$ for $t=1,\ldots,\tau_{start}$ and $z_t = M$ for $t=T-\tau_{end},\ldots,T$, with $\tau_{start} \geq 1$ and $\tau_{end} \leq T$ chosen based on the application. Note that when $M \to T$, $A_{i,i} \to 0$ this model becomes time-varying random walk coefficient model. However, we typically assume that $M << T$ i.e. instead of constantly evolving parameters there are only small number of change points.
-
-## Example with simulated data
-
-Something more interesting perhaps for the simulation case, simulate data which looks like the real data we cannot share? Or omit this kind of section if we have interesting use case already, could be just in the vignette or JOSS/R Journal or similar software-focused paper.
-
-We consider a simple case where all observations are linear-Gaussian with
+where $K$ is the number of covariates, $B_t$ is a vector of B-spline values at time $t$ and $\delta_k^c$ is vector of corresponding spline coefficients. In general the number of B-splines $D$ (number of knots) used for constructing the splines for the study period $1,\ldots,T$ can be chosen freely, and can often result in overfitting. To mitigate this, we define a random walk prior for $\delta^c_k$ as
 
 $$
-p(y^j_t | y_{t-1}, z_t) = N(\alpha^{(z_t)}_j + \sum_{i=1}^C \beta^{(z_t)}_{ij}y^i_{t-1}, {\sigma^2}^{(z_t)}), \qquad  t=1,\ldots,T,\quad j=1,\ldots,C,  \quad z_t \in \{1,\ldots,M\}.
+\begin{aligned}
+\delta^c_{k,1} &\sim N(0, 1),\\
+\delta^c_{k,d} &\sim N(\delta^c_{k,d-1}, (\tau^c_k)^2), \quad d=2,\ldots, D.\\
+\end{aligned}
 $$
 
-(having $sigma$ depend on time is perhaps not very realistic)
-
-We assume 3 hidden states, 20 time points, 500 sequences and 2 channels, with
+Here $\tau^c_k$ controls the "wigglyness" of the spline curves. In some cases it can be though that the splines change values in approximately same time points. For this, we can define (NOT YET TESTED) a global shrinkage series $\lambda_1,\ldots, \lambda T$ and define 
 $$
-z_t = \begin{cases} 
-1 & t\leq 5 \\
-2 & 5\lt t \leq 13 \\
-3 & 13 \lt t \leq 20
-\end{cases}
+\delta^c_{k,d} \sim N(\delta^c_{k,d-1}, (\tau^c_k\lambda_t)^2).
 $$
-First we simulate the data
-```{r}
-set.seed(1)
-M <- 3
-C <- 2
-T <- 20
-N <- 500
-z <- rep(1:M, times = c(5, 8, 7))
+
+# Example
+
+(not run)
+```{r, eval = FALSE}
+library(rstan)
+rstan_options(javascript = FALSE)
+
+logsumexp <- function (x) {
+  y = max(x)
+  y + log(sum(exp(x - y)))
+}
+
+softmax <- function (x) {
+  exp(x - logsumexp(x))
+}
+
+set.seed(8)
+# number of time points
+T <- 100 
+# number of individuals
+N <- 100
+# number of observed symbols
+S <- 4
+# number of hidden states
+M <- 10
+# sample the hidden state sequence
+states <- rep(1:M, times = rmultinom(1, T, rep(1, M)))
+
+# exogenous predictor
+x <- t(sin(1:(T+1)) + matrix(rnorm(N * (T + 1), sd = 0.2), T + 1, N))
+# also explain with previous observations
+# => number of predictors K = S + 1
+# (intercept + x + factor(1:S))
+
+K <- S + 1
+# coefficients
+beta <- array(0, c(S, K, M))
+beta[-S, , 1] <- rnorm((S - 1) * K, sd = 0.5)
+
+sigma <- 0.2 + abs(rnorm(K, sd = 0.1))
+for(m in 2:M) {
+  beta_change <- matrix(rnorm((S - 1) * K), S - 1, K)
+  beta[, , m] <- beta[, , m - 1] + rbind(beta_change, 0) %*% diag(sigma)
+}
+
+ts.plot(t(matrix(beta, ncol = M)))
 
 
-# intercept terms
-alpha <- matrix(NA, C, M)
-alpha[, 1] <- rnorm(C)
-for(m in 2:M) alpha[, m] <- rnorm(C, alpha[, m - 1], 0.1)
+y <- matrix(NA, N, T) 
+X <- array(0, c(N, T+1, K)) 
+y0 <- factor(sample(1:S, N, TRUE), levels = 1:S)
+X[, 1, ] <-  model.matrix( ~ x[, 1] + y0)
+for(t in 1:T) {
+  for(i in 1:N){
+    y[i, t] <- sample(1:S, size = 1, prob = softmax(X[i, t, ] %*% t(beta[, , states[t]])))
+  }
+  X[, t + 1, ] <- model.matrix( ~ x[, t+1] + factor(y[, t], levels = 1:S))
+}
+# match indexing with stan
+y <- t(y)
+X <- aperm(X, c(2, 1, 3))
+X <- X[-(T+1), , , drop = FALSE]
 
-# regression coefficients
-# column c gives coefficients for response channel c
-beta <- array(NA, c(C, C, M))
-# Assume |beta^1| < 0.5 so series do not explode so easily
-beta[,, 1] <- runif(C^2, -0.5, 0.5)
-for(m in 2:M) beta[, , m] <- rnorm(C^2, beta[, , m - 1], 0.1)
+TraMineR::seqIplot(TraMineR::seqdef(t(y)))
+TraMineR::seqdplot(TraMineR::seqdef(t(y)))
 
-# standard deviations, random walk in log-scale
-sigma <- matrix(NA, C, M)
-sigma[, 1] <- rnorm(C, -1)
-for(m in 2:M) sigma[, m] <- rnorm(C, sigma[, m - 1], 0.1)
-sigma <- exp(sigma)
+Xpred <- model.matrix( ~ x + y0, 
+  data = data.frame(x = 0, y0 = factor(1:S, levels = 1:S)))
 
-# generate observations
-y <- array(0, c(T, N, C))
-for(i in 1:N) {
-  # first time point from normal distribution assuming y_0 = 0
-  y[1, i, ] <- rnorm(C, alpha[, 1], sigma[, 1])
-  for(t in 2:T) {
-    y[t, i, ] <- rnorm(C, alpha[, z[t]] + y[t - 1, i, ] %*% beta[, , z[t]], sigma[, z[t]])
+model <- stan_model("categorical_splines_best.stan")
+
+library("splines")
+# create the B-splines
+B <- t(bs(1:T, knots = seq(1, T, by = 1), degree = 3, intercept = FALSE)) 
+num_basis <- nrow(B)
+
+d <- list(prior_only = 0, N = N, T = T, S = S, response = y, C = 1,
+  X = X,  K = K, B = B, num_basis = num_basis,
+  Xpred = Xpred)
+
+fit <- sampling(model, data = d, 
+  chains = 4, cores = 4,  
+  refresh = 10, iter= 2000,
+  seed = 1)
+saveRDS(fit, file = "fit.rds")
+
+
+
+ts.plot(cbind(
+  apply(extract(fit, "beta",permuted=TRUE)[[1]], 2:4, mean)[,1,1],
+  apply(extract(fit, "beta",permuted=TRUE)[[1]], 2:4, quantile,0.025)[,1,1],
+  apply(extract(fit, "beta",permuted=TRUE)[[1]], 2:4, quantile,0.975)[,1,1]), col = 1)
+points(rep(beta[1,1,], times = rle(states)$lengths))
+
+pred <- extract(fit, "pred_response")[[1]]
+predmeans <- apply(pred, 2:4, mean)
+k <- 1
+ts.plot(cbind(
+  predmeans[, 1:S, k],
+  t(sapply(1:M, function(i) softmax(Xpred[k, ] %*% t(beta[, , i]))))[states,]), 
+  col = 1:S, lty = rep(1:2, each = S))
+
+```
+
+Stan code:
+
+```{stan, eval = FALSE, output.var = "model"}
+data {
+  
+  int<lower=1> T; // number of time points
+  int<lower=1> N; // number of individuals
+  int<lower=1> C; // number of channels/response variables
+  int response[T,N];
+  int<lower=0> K; //number of covariates
+  matrix[N, K] X[T]; //covariates
+  int<lower=0> S; // number of observed symbols
+  
+  matrix[S, K] Xpred; // for predictions
+  
+  int num_basis;
+  matrix[num_basis, T] B; // for splines
+  
+}
+transformed data {
+  row_vector[K] zeros_K = rep_row_vector(0, K);
+  vector[S] zeros_S = rep_vector(0, S);
+}
+
+parameters {
+  row_vector[num_basis] a_raw[S-1, K]; // S - 1 as we need to fix one set of betas to zero
+  vector<lower=0>[K] tau; 
+}
+
+transformed parameters {
+  matrix[S, K] beta[T];
+  row_vector[num_basis] a[S-1, K]; 
+  // strangely this seems to be faster than working with array of matrices etc...
+  for(s in 1:(S-1)) {
+    for(k in 1:K) {
+      a[s, k, 1] = a_raw[s, k, 1];
+      for (i in 2:num_basis) {
+        a[s, k, i] = a[s, k, i-1] + a_raw[s, k, i] * tau[k];
+      }
+      for(t in 1:T){
+        beta[t, s, k] = a[s, k] * B[, t];
+      } 
+    }
+  }
+  for(t in 1:T){
+    beta[t, S, ] = zeros_K;
+  } 
+}
+
+model {
+  
+  tau ~ std_normal();
+  for(s in 1:(S-1)) {
+    for(k in 1:K) {
+      a_raw[s, k] ~ std_normal();
+    }
+  }
+  for(t in 1:T) {
+    target += categorical_logit_glm_lupmf(response[t] | X[t], zeros_S, beta[t]');
   }
 }
 
-d <- list(y = y, M = M, N = N, C = C, T = T, T_fixed_start = 1, T_fixed_end = 1)
-```
+generated quantities {
+  matrix[S, S] pred_response[T];
+  for(t in 1:T) {
+    for(s in 1:S) {
+      pred_response[t, , s] = softmax(beta[t] * Xpred[s, ]');
+    }
+  }
+}
 
-```{r}
-library(rstan)
-model <- stan_model("gaussian_example.stan")
 ```
-```{r}
-fit <- sampling(model, data = d, iter = 2000, chains = 4, cores = 4,
-    pars = c("A", "sigma_intercept", "sigma_beta", "sigma_sigma", "beta", "intercept", "sigma"))
-```
-
-
 
 # Main functionality of the package
 
