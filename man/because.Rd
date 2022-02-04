@@ -4,7 +4,7 @@
 \alias{because}
 \title{The main function}
 \usage{
-because(formula, data, family, ...)
+because(formula, data, group, time, ...)
 }
 \description{
 The main function

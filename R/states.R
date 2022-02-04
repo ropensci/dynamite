@@ -23,7 +23,7 @@ states <- function(n, fixed = c(1L, 1L), individual = FALSE, replace = FALSE) {
     )
 }
 
-# Checks if argument represents hidden states definition
+# Checks if the argument represents a hidden states definition
 is.hiddenstates <- function(x) {
     inherits(x, "hiddenstates")
 }

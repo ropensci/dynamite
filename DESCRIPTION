@@ -21,3 +21,17 @@ Imports:
     methods,
     formula.tools,
     rstan (>= 2.18.1)
+Collate: 
+    'because-package.R'
+    'because.R'
+    'utilities.R'
+    'becausefit-class.R'
+    'becauseformula.R'
+    'becauseterms.R'
+    'loglik_stan.R'
+    'modeldata.R'
+    'splines.R'
+    'stanblocks.R'
+    'stanblocks_hiddenstates.R'
+    'states.R'
+    'testing.R'

@@ -35,7 +35,7 @@ create_data <- function(formula, ...) {
         "int<lower=1> N; // number of individuals",
         "int<lower=1> C; // number of channels/response variables",
         "int<lower=1> K; // total number of covariates across all channels",
-        "matrix[N, K] X[T] // all covariates as an array of N x K matrices",
+        "matrix[N, K] X[T]; // all covariates as an array of N x K matrices",
         "int<lower=0> D; // number of B-splines",
         "matrix[D, T] Bs; // B-spline basis matrix",
         sep = "\n")
@@ -54,12 +54,14 @@ create_data <- function(formula, ...) {
         # create response for channel i as T x N array
         y <- paste0(type, paste0(" response_", i), "[T,N];")
         mtext <- paste(mtext, y, sep = "\n")
+        # Number of covariates in channel i
+        mtext <- paste(mtext, paste0("int<lower=1> K_", i, ";"))
         # index vector of covariates related to channel i
-        mtext <- paste(mtext, paste0("int J_", i, "[K_", i, "]"), sep = "\n")
+        mtext <- paste(mtext, paste0("int J_", i, "[K_", i, "];"), sep = "\n")
 
         # TODO, need to add other distribution-specific components as well
         if (formula$families[i] == "categorical") {
-            mtext <- paste(mtext,  paste0("int<lower=0> S_", i), sep = "\n")
+            mtext <- paste(mtext,  paste0("int<lower=0> S_", i, ";"), sep = "\n")
         }
     }
     mtext <- paste("data {", mtext, "}", sep="\n") # TODO indentation?
@@ -99,11 +101,10 @@ create_parameters <- function(formula, ...) {
             a_raw_term <- paste0("row_vector[D] a_raw_", i, "[K_", i, "];")
             tau_term <- paste0("vector<lower=0>[K_", i, "] tau_", i, ";")
         }
-        lambda_term <- if(formula$shrinkage) {
-            "vector<lower=0>[D - 1] lambda; // shrinkage parameter"
-        } else NULL
-
-        mtext <- paste(mtext, a_raw_term, tau_term, lambda_term, sep = "\n")
+        mtext <- paste(mtext, a_raw_term, tau_term, sep = "\n")
+    }
+    if (formula$splines$shrinkage) {
+        mtext <- paste(mtext, "vector<lower=0>[D - 1] lambda; // shrinkage parameter", sep = "\n")
     }
     mtext <- paste("parameters {", mtext, "}", sep = "\n") # no indentation... TODO?
     mtext
@@ -171,7 +172,7 @@ create_transformed_parameters <- function(formula, ...) {
 create_model <- function(formula, ...) {
     # TODO: user-defined priors
     #
-    mtext <- if (formula$shrinkage) {
+    mtext <- if (formula$splines$shrinkage) {
         "lambda ~ std_normal();  // prior for shrinkage terms"
     } else NULL
     mtext <- paste(mtext, paste0("tau_", 1:length(formula$families), " ~ cauchy(0, 1);", collapse = "\n"), sep = "\n")

@@ -64,6 +64,8 @@ is.formula <- function(x) {
 add_becauseformula <- function(e1, e2) {
     if (is.becauseformula(e2)) {
         out <- join_becauseformulas(e1, e2)
+    } else if (is.splines(e2)) {
+        out <- set_splines(e1, e2)
     } else if (is.hiddenstates(e2)) {
         out <- set_hiddenstates(e1, e2)
     } else if (is.modeldata(e2)) {
@@ -87,6 +89,9 @@ join_becauseformulas <- function(e1, e2) {
     if (any(duped)) {
         stop_("Multiple definitions for response variables: ", uresp[duped])
     }
+    if (!is.null(e1$splines) && !is.null(e1$splines)) {
+        stop_("Multiple definitions for splines")
+    }
     if (!is.null(e1$hidden) && !is.null(e2$hidden)) {
         stop_("Multiple definitions for hidden states")
     }
@@ -97,9 +102,18 @@ join_becauseformulas <- function(e1, e2) {
     out
 }
 
+# Set the regression coefficient splines of the model
+set_splines <- function(e1, e2) {
+    if (!is.null(e1$splines) && !attr(e2, "replace")) {
+        stop_("Multiple definitions for splines")
+    }
+    e1$splines <- e2
+    e1
+}
+
 # Set the hidden state process of the model
 set_hiddenstates <- function(e1, e2) {
-    if (!is.null(e1$hidden) & !attr(e2, "replace")) {
+    if (!is.null(e1$hidden) && !attr(e2, "replace")) {
         stop_("Multiple definitions for hidden states")
     }
     e1$hidden <- e2
@@ -108,7 +122,7 @@ set_hiddenstates <- function(e1, e2) {
 
 # Set the data to be used by the model
 set_modeldata <- function(e1, e2) {
-    if (!is.null(e1$data) & !attr(e2, "replace")) {
+    if (!is.null(e1$data) && !attr(e2, "replace")) {
         stop_("Multiple data definitions")
     }
     e1$data <- e2
