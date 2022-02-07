@@ -135,7 +135,7 @@ create_transformed_parameters <- function(formula, ...) {
                 # TODO define zeros_K_i in transformed data?
                 paste0("for(s in 1:(S_", i, " - 1)) {"),
                 paste0("  for(k in 1:K_", i, ") {"),
-                paste0("    a[s, k, 1] = a_raw_", i, "[s, k, 1];"),
+                paste0("    a_", i, "[s, k, 1] = a_raw_", i, "[s, k, 1];"),
                 "    for (i in 2:D) {",
                 paste0("      a_", i, "[s, k, i] = a_", i, "[s, k, i-1] + a_raw_", i, "[s, k, i] * tau_", i, "[k] * lambda[i - 1];"),
                 "    }",
