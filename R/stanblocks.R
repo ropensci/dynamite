@@ -10,6 +10,7 @@ create_blocks <- function(formula, ...) {
 create_blocks.default <- function(formula, ...) {
 
     functions <- paste("functions {", .loglik_stan, "}", sep = "\n")
+    # TODO four dots .... on purpose?
     data <- create_data(formula, ....)
     transformed_data <- create_transformed_data(formula, ....)
     parameters <- create_parameters(formula, ....)
