@@ -11,7 +11,7 @@ splines <- function(shrinkage = TRUE, override = FALSE) {
     override <- try_(override, type = "logical")[1]
     structure(
         list(shrinkage = shrinkage),
-        replace = replace,
+        override = override,
         class = "splines"
     )
 }

@@ -25,10 +25,10 @@ named_list <- function(...) {
 }
 
 # Check which elements of x have a prefix in y
-which_prefix <- function(x, y) {
-    ys <- paste0("^(", paste0(y, collapse = "|"), ").*$")
-    grep(pattern = ys, x, perl = TRUE)
-}
+# which_prefix <- function(x, y) {
+#     ys <- paste0("^(", paste0(y, collapse = "|"), ").*$")
+#     grep(pattern = ys, x, perl = TRUE)
+# }
 
 stop_ <- function(...) {
     stop(..., call. = FALSE)

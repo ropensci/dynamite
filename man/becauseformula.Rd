@@ -5,13 +5,9 @@
 \alias{obs}
 \title{Model formula for \pkg{because}}
 \usage{
-becauseformula(
-  formula,
-  family = c("gaussian", "binomial", "poisson", "categorical"),
-  ...
-)
+becauseformula(formula, family, ...)
 
-obs(formula, family = c("gaussian", "binomial", "poisson", "categorical"), ...)
+obs(formula, family, ...)
 }
 \description{
 Model formula for \pkg{because}

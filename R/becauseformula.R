@@ -2,10 +2,7 @@
 #'
 #' @export
 #' @import formula.tools
-becauseformula <- function(formula, family = c("gaussian", "binomial", "poisson", "categorical"), ...) {
-    # TODO may need more precise formulation for families
-    bf <- formula
-    family <- match.arg(family)
+becauseformula <- function(formula, family, ...) {
     #all_terms <- terms(bf, specials = "t")
     #sp_terms <- attr(all_terms, "specials")
     # terms(bf)
@@ -22,12 +19,20 @@ becauseformula <- function(formula, family = c("gaussian", "binomial", "poisson"
     #     })
     # }
     # out <- list(formula = bf, family = family, time_forms = time_forms)
-    lhs <- formula.tools::lhs.vars(bf)
-    rhs <- formula.tools::rhs.vars(bf)
-    out <- list(formulas = list(bf),
-                families = list(family),
-                resp = list(lhs),
-                pred = list(rhs))
+    if (!is.becausefamily(family)) {
+        stop_("Unsupported family object")
+    }
+    # TODO can we drop formula.tools dependency and implement these? Only lhs.vars and rhs.vars are used at the moment.
+    lhs <- formula.tools::lhs.vars(formula)
+    rhs <- formula.tools::rhs.vars(formula)
+    out <- list(
+        list(
+            formula = formula,
+            family = family,
+            response = lhs,
+            predictors = rhs
+        )
+    )
     class(out) <- c("becauseformula")
     return(out)
 }
@@ -60,6 +65,16 @@ is.formula <- function(x) {
     out
 }
 
+# Get all response variables of a becauseformula object
+get_resp <- function(x) {
+    sapply(x, "[[", "response")
+}
+
+# Get all predictor variables of a becauseformula object
+get_pred <- function(x) {
+    lapply(x, "[[", "predictors")
+}
+
 # Internal `+.becauseformula` for model constructions
 add_becauseformula <- function(e1, e2) {
     if (is.becauseformula(e2)) {
@@ -71,60 +86,56 @@ add_becauseformula <- function(e1, e2) {
     } else if (is.modeldata(e2)) {
         out <- set_modeldata(e1, e2)
     } else {
-        stop_("Unable to add an object of class ", class(e2), " to an object of class 'becauseformula'")
+        stop_("Unable to add an object of class ", class(e2),
+              " to an object of class 'becauseformula'")
     }
     out
 }
 
 # Join two model definitions and verify compatibility
 join_becauseformulas <- function(e1, e2) {
-    out <- list(
-        formulas = c(e1$formulas, e2$formulas),
-        families = c(e1$families, e2$families),
-        resp = c(e1$resp, e2$resp),
-        pred = c(e1$pred, e2$pred)
-    )
-    uresp <- unlist(out$resp)
-    duped <- duplicated(uresp)
+    out <- c(e1, e2)
+    resp_all <- get_resp(out)
+    duped <- duplicated(resp_all)
     if (any(duped)) {
-        stop_("Multiple definitions for response variables: ", uresp[duped])
+        stop_("Multiple definitions for response variables: ", resp_all[duped])
     }
-    if (!is.null(e1$splines) && !is.null(e1$splines)) {
+    if (!is.null(attr(e1, "splines")) && !is.null(attr(e2, "splines"))) {
         stop_("Multiple definitions for splines")
     }
-    if (!is.null(e1$hidden) && !is.null(e2$hidden)) {
+    if (!is.null(attr(e1, "hidden")) && !is.null(attr(e2, "hidden"))) {
         stop_("Multiple definitions for hidden states")
     }
-    if (!is.null(e1$data) && !is.null(e2$data)) {
-        stop_("Multiple definitions for data")
-    }
+    # if (!is.null(e1$data) && !is.null(e2$data)) {
+    #     stop_("Multiple definitions for data")
+    # }
     class(out) <- "becauseformula"
     out
 }
 
 # Set the regression coefficient splines of the model
 set_splines <- function(e1, e2) {
-    if (!is.null(e1$splines) && !attr(e2, "replace")) {
+    if (!is.null(attr(e1, "splines")) && !attr(e2, "override")) {
         stop_("Multiple definitions for splines")
     }
-    e1$splines <- e2
+    attr(e1, "splines") <- e2
     e1
 }
 
 # Set the hidden state process of the model
-set_hiddenstates <- function(e1, e2) {
-    if (!is.null(e1$hidden) && !attr(e2, "replace")) {
-        stop_("Multiple definitions for hidden states")
-    }
-    e1$hidden <- e2
-    e1
-}
+# set_hiddenstates <- function(e1, e2) {
+#     if (!is.null(e1$hidden) && !attr(e2, "replace")) {
+#         stop_("Multiple definitions for hidden states")
+#     }
+#     e1$hidden <- e2
+#     e1
+# }
 
 # Set the data to be used by the model
-set_modeldata <- function(e1, e2) {
-    if (!is.null(e1$data) && !attr(e2, "replace")) {
-        stop_("Multiple data definitions")
-    }
-    e1$data <- e2
-    e1
-}
+# set_modeldata <- function(e1, e2) {
+#     if (!is.null(e1$data) && !attr(e2, "replace")) {
+#         stop_("Multiple data definitions")
+#     }
+#     e1$data <- e2
+#     e1
+# }
