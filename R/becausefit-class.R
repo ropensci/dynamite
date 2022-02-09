@@ -38,7 +38,7 @@ convert_data <- function(formula, data, group, time, moma, all_rhs_vars) {
         time_var <- sort(unique(data[[deparse(substitute(time))]]))
     }
     # TODO take spline definition into account here
-    knots <- seq(time_var[1], time_var[T], length.out = min(10, T))
+    knots <- seq(time_var[2], time_var[T-1], length.out = min(10, T - 2))
     Bs <- t(splines::bs(time_var, knots = knots, degree = 3, intercept = TRUE))
     D <- nrow(Bs)
     N <- length(id_tab)
