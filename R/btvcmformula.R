@@ -1,8 +1,8 @@
-#' Model formula for \pkg{because}
+#' Model formula for \pkg{btvcm}
 #'
 #' @export
 #' @import formula.tools
-becauseformula <- function(formula, family, ...) {
+btvcmformula <- function(formula, family, ...) {
     #all_terms <- terms(bf, specials = "t")
     #sp_terms <- attr(all_terms, "specials")
     # terms(bf)
@@ -19,7 +19,7 @@ becauseformula <- function(formula, family, ...) {
     #     })
     # }
     # out <- list(formula = bf, family = family, time_forms = time_forms)
-    if (!is.becausefamily(family)) {
+    if (!is.btvcmfamily(family)) {
         stop_("Unsupported family object")
     }
     # TODO can we drop formula.tools dependency and implement these? Only lhs.vars and rhs.vars are used at the moment.
@@ -33,21 +33,21 @@ becauseformula <- function(formula, family, ...) {
             predictors = rhs
         )
     )
-    class(out) <- c("becauseformula")
+    class(out) <- c("btvcmformula")
     return(out)
 }
 
-#' @rdname becauseformula
+#' @rdname btvcmformula
 #' @export
-obs <- becauseformula
+obs <- btvcmformula
 
-#' Checks if argument is a \code{becauseformula} object
+#' Checks if argument is a \code{btvcmformula} object
 #'
 #' @param x An \R object
 #'
 #' @export
-is.becauseformula <- function(x) {
-    inherits(x, "becauseformula")
+is.btvcmformula <- function(x) {
+    inherits(x, "btvcmformula")
 }
 
 # Checks if argument is a formula
@@ -56,11 +56,11 @@ is.formula <- function(x) {
 }
 
 #' @export
-`+.becauseformula` <- function(e1, e2) {
-    if (is.becauseformula(e1)) {
-        out <- add_becauseformula(e1, e2)
+`+.btvcmformula` <- function(e1, e2) {
+    if (is.btvcmformula(e1)) {
+        out <- add_btvcmformula(e1, e2)
     } else {
-        stop_("Method '+.becauseformula is not supported for ", class(e1), " objects.")
+        stop_("Method '+.btvcmformula is not supported for ", class(e1), " objects.")
     }
     out
 }
@@ -75,10 +75,10 @@ get_pred <- function(x) {
     lapply(x, "[[", "predictors")
 }
 
-# Internal `+.becauseformula` for model constructions
-add_becauseformula <- function(e1, e2) {
-    if (is.becauseformula(e2)) {
-        out <- join_becauseformulas(e1, e2)
+# Internal `+.btvcmformula` for model constructions
+add_btvcmformula <- function(e1, e2) {
+    if (is.btvcmformula(e2)) {
+        out <- join_btvcmformulas(e1, e2)
     } else if (is.lags(e2)) {
         out <- set_lags(e1, e2)
     } else if (is.splines(e2)) {
@@ -89,13 +89,13 @@ add_becauseformula <- function(e1, e2) {
         out <- set_modeldata(e1, e2)
     } else {
         stop_("Unable to add an object of class ", class(e2),
-              " to an object of class 'becauseformula'")
+              " to an object of class 'btvcmformula'")
     }
     out
 }
 
 # Join two model definitions and verify compatibility
-join_becauseformulas <- function(e1, e2) {
+join_btvcmformulas <- function(e1, e2) {
     out <- c(e1, e2)
     resp_all <- get_resp(out)
     duped <- duplicated(resp_all)
@@ -115,7 +115,7 @@ join_becauseformulas <- function(e1, e2) {
     #     stop_("Multiple definitions for data")
     # }
     attributes(out) <- c(attributes(e1), attributes(e2))
-    class(out) <- "becauseformula"
+    class(out) <- "btvcmformula"
     out
 }
 

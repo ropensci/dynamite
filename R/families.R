@@ -1,43 +1,43 @@
 # TODO implement families
 
-#' Family Functions for \pkg{because} Models
+#' Family Functions for \pkg{btvcm} Models
 #'
 #' @export
-becausefamily <- function(name, ...) {
+btvcmfamily <- function(name, ...) {
     # A wrapper to allow both:
-    #    gaussian(...) and becausefamily("gaussian", ...)
-    becausefamily_(name, ...)
+    #    gaussian(...) and btvcmfamily("gaussian", ...)
+    btvcmfamily_(name, ...)
 }
 
 # Internal use
-becausefamily_ <- function(name, ...) {
+btvcmfamily_ <- function(name, ...) {
     name <- tolower(as.character(name)[1])
     if (!is_supported(name)) {
         stop_(name, " is not a supported family")
     }
     # do something
     out <- list(name = name)
-    class(out) <- c("becausefamily")
+    class(out) <- c("btvcmfamily")
     out
 }
 
-# Checks if argument is a becausefamily object
-is.becausefamily <- function(x) {
-    inherits(x, "becausefamily")
+# Checks if argument is a btvcmfamily object
+is.btvcmfamily <- function(x) {
+    inherits(x, "btvcmfamily")
 }
 
-#' @rdname becausefamily
+#' @rdname btvcmfamily
 #' @export
 categorical <- function(...) {
     # do something different
-    becausefamily_("categorical", ...)
+    btvcmfamily_("categorical", ...)
 }
 
-#' @rdname becausefamily
+#' @rdname btvcmfamily
 #' @export
 gaussian <- function(...) {
     # do something else
-    becausefamily_("gaussian", ...)
+    btvcmfamily_("gaussian", ...)
 }
 
 # Hardcoded families for now
@@ -75,10 +75,10 @@ supported_families <- c(
 
 # Generate is_x convenience functions for all supported families x
 for (family in supported_families) {
-    assign(paste0("is_", family), (function(y) {
+    assign(paste0("is_", family), function(y) {
         force(y)
         function(x) {
             identical(x$name, y)
         }
-    })(family))
+    }(family))
 }

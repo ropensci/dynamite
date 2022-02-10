@@ -1,10 +1,10 @@
-#' The 'because' package.
+#' The 'btvcm' package.
 #'
 #' @description A DESCRIPTION OF THE PACKAGE
 #'
 #' @docType package
-#' @name because-package
-#' @aliases because
+#' @name btvcm-package
+#' @aliases btvcm
 #' @import methods
 #' @importFrom rstan sampling
 #'

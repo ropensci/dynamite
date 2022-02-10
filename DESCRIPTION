@@ -1,4 +1,4 @@
-Package: because
+Package: btvcm
 Title: Bayesian Modelling and Causal Inference for Multivariate Longitudinal Data
 Version: 0.0.0-1
 Authors@R: 
@@ -22,12 +22,12 @@ Imports:
     formula.tools,
     rstan (>= 2.18.1)
 Collate: 
-    'because-package.R'
-    'because.R'
+    'btvcm-package.R'
+    'btvcm.R'
     'utilities.R'
-    'becausefit.R'
-    'becauseformula.R'
-    'becauseterms.R'
+    'btvcmfit.R'
+    'btvcmformula.R'
+    'btvcmterms.R'
     'families.R'
     'lag.R'
     'loglik_stan.R'

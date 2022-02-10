@@ -1,12 +1,12 @@
 #' Parse formulas of \pkg{because} models
 #'
 #' @export
-becauseterms <- function(formula, ...) {
+btvcmterms <- function(formula, ...) {
     UseMethod("becauseterms")
 }
 
 #'
 #'@export
-becauseterms.default <- function(formula, ...) {
+btvcmterms.default <- function(formula, ...) {
     # TODO
 }

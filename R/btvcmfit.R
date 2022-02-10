@@ -1,7 +1,7 @@
 #' @include utilities.R
 
-# becausefit class
-becausefit <- function(formula, data, group, time, ...) {
+# btvcmfit class
+btvcmfit <- function(formula, data, group, time, ...) {
     if (missing(group)) {
         # TODO do we need to allow this?
         # Does it make sense to have a single individual
@@ -40,7 +40,7 @@ becausefit <- function(formula, data, group, time, ...) {
     stanfit <- rstan::sampling(model, data = model_data, ...)
     structure(
         list(stanfit = stanfit),
-        class = "becausefit"
+        class = "btvcmfit"
     )
 }
 
