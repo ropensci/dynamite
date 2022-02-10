@@ -6,7 +6,7 @@
 \alias{gaussian}
 \title{Family Functions for \pkg{because} Models}
 \usage{
-becausefamily(family, ...)
+becausefamily(name, ...)
 
 categorical(...)
 

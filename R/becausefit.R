@@ -11,16 +11,37 @@ becausefit <- function(formula, data, group, time, ...) {
     group <- deparse(substitute(group))
     resp_all <- get_resp(formula)
     pred_all <- get_pred(formula)
-    all_rhs_vars <- unique(c(unlist(pred_all), resp_all))
+    if (!is.null(lag_all <- attr(formula, "lags"))) {
+        # TODO remove all manual lag terms from formula
+        k <- lag_all$k
+        n_rows <- nrow(data)
+        n_resp <- length(resp_all)
+        pred_lag <- character(k * n_resp)
+        for (i in 1:k) {
+            remove <- n_rows:(n_rows-i+1)
+            for (j in 1:n_resp) {
+                ix <- (i-1)*n_resp + j
+                pred_lag[ix] <- paste0(resp_all[j], "_lag", i)
+                data[[pred_lag[ix]]] <- c(rep(0L, i), data[[resp_all[j]]][-remove,])
+            }
+        }
+        # TODO add check for name conflicts, and replace conflicting names
+        c(pred_all) <- pred_lag
+    } else {
+        # TODO process manual lag terms, if any
+    }
+    all_rhs_vars <- unique(unlist(pred_all))
     all_rhs_formula <- reformulate(all_rhs_vars, intercept = FALSE)
     moma <- model.matrix(all_rhs_formula, data)
     model_data <- convert_data(formula, data, group, time, moma, all_rhs_vars)
     model_code <- create_blocks(formula)
     message("Compiling Stan model")
     model <- rstan::stan_model(model_code = model_code)
-    out <- rstan::sampling(model, data = model_data, ...)
-    class(out) <- "becausefit"
-    out
+    stanfit <- rstan::sampling(model, data = model_data, ...)
+    structure(
+        list(stanfit = stanfit),
+        class = "becausefit"
+    )
 }
 
 # Convert data for Stan
@@ -38,6 +59,7 @@ convert_data <- function(formula, data, group, time, moma, all_rhs_vars) {
         time_var <- sort(unique(data[[deparse(substitute(time))]]))
     }
     # TODO take spline definition into account here
+    # TODO take fixed time points into account in spline
     knots <- seq(time_var[2], time_var[T-1], length.out = min(10, T - 2))
     Bs <- t(splines::bs(time_var, knots = knots, degree = 3, intercept = TRUE))
     D <- nrow(Bs)

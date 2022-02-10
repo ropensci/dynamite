@@ -79,6 +79,8 @@ get_pred <- function(x) {
 add_becauseformula <- function(e1, e2) {
     if (is.becauseformula(e2)) {
         out <- join_becauseformulas(e1, e2)
+    } else if (is.lags(e2)) {
+        out <- set_lags(e1, e2)
     } else if (is.splines(e2)) {
         out <- set_splines(e1, e2)
     } else if (is.hiddenstates(e2)) {
@@ -100,17 +102,30 @@ join_becauseformulas <- function(e1, e2) {
     if (any(duped)) {
         stop_("Multiple definitions for response variables: ", resp_all[duped])
     }
-    if (!is.null(attr(e1, "splines")) && !is.null(attr(e2, "splines"))) {
-        stop_("Multiple definitions for splines")
-    }
     if (!is.null(attr(e1, "hidden")) && !is.null(attr(e2, "hidden"))) {
         stop_("Multiple definitions for hidden states")
+    }
+    if (!is.null(attr(e1, "lag_all")) && !is.null(attr(e2, "lag_all"))) {
+        stop_("Multiple definitions for lags")
+    }
+    if (!is.null(attr(e1, "splines")) && !is.null(attr(e2, "splines"))) {
+        stop_("Multiple definitions for splines")
     }
     # if (!is.null(e1$data) && !is.null(e2$data)) {
     #     stop_("Multiple definitions for data")
     # }
+    attributes(out) <- c(attributes(e1), attributes(e2))
     class(out) <- "becauseformula"
     out
+}
+
+# Set lag definitions for all channels
+set_lags <- function(e1, e2) {
+    if (!is.null(attr(e1, "lags"))) {
+        stop_("Multiple definitions for lags")
+    }
+    attr(e1, "lags") <- e2
+    e1
 }
 
 # Set the regression coefficient splines of the model
