@@ -1,10 +1,12 @@
 #' @include utilities.R
 
 # btvcmfit class
+# TODO add options to return just the created model code or data without compiling & sampling for debugging etc
 btvcmfit <- function(formula, data, group, time, ...) {
     if (missing(group)) {
         # TODO do we need to allow this?
         # Does it make sense to have a single individual
+        # Not a priority but maybe reasonable special case, and allows comparison with the walker package
         stop_("No groups specified")
     }
     # TODO allow group = c(ID1, ID2, ...) etc.
@@ -42,6 +44,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
     message("Compiling Stan model")
     model <- rstan::stan_model(model_code = model_code)
     stanfit <- rstan::sampling(model, data = model_data, ...)
+    # TODO return the function call for potential update method?
     structure(
         list(stanfit = stanfit),
         class = "btvcmfit"

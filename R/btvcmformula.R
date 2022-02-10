@@ -23,6 +23,7 @@ btvcmformula <- function(formula, family, ...) {
         stop_("Unsupported family object")
     }
     # TODO can we drop formula.tools dependency and implement these? Only lhs.vars and rhs.vars are used at the moment.
+    # Is it enough to replace them with formula[[2]] and formula[[3]]?
     lhs <- formula.tools::lhs.vars(formula)
     rhs <- formula.tools::rhs.vars(formula)
     out <- list(

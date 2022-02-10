@@ -25,7 +25,8 @@ btvcmfamily_ <- function(name, ...) {
 is.btvcmfamily <- function(x) {
     inherits(x, "btvcmfamily")
 }
-
+# TODO could have an option to define the reference category? Or maybe simpler (for us)
+# to ask user to relevel the factor beforehand
 #' @rdname btvcmfamily
 #' @export
 categorical <- function(...) {
@@ -34,7 +35,8 @@ categorical <- function(...) {
 }
 
 # TODO some families might conflict with stats such as stats::gaussian, not sure if matters
-
+# Perhaps check how brms combines the use of own custom families and stats::gamma etc?
+# What features we need for the family functions?
 #' @rdname btvcmfamily
 #' @export
 gaussian <- function(...) {
