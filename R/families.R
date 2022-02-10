@@ -33,6 +33,8 @@ categorical <- function(...) {
     btvcmfamily_("categorical", ...)
 }
 
+# TODO some families might conflict with stats such as stats::gaussian, not sure if matters
+
 #' @rdname btvcmfamily
 #' @export
 gaussian <- function(...) {
@@ -75,10 +77,10 @@ supported_families <- c(
 
 # Generate is_x convenience functions for all supported families x
 for (family in supported_families) {
-    assign(paste0("is_", family), function(y) {
+    assign(paste0("is_", family), (function(y) {
         force(y)
         function(x) {
             identical(x$name, y)
         }
-    }(family))
+    })(family))
 }

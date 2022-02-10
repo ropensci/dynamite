@@ -16,8 +16,9 @@ test_data <- data.frame(y1 = as.factor(sample(2, size = TN, replace = TRUE)),
 test_form <- obs(y1 ~ x1 + x2 + x4, family = categorical()) +
     obs(y2 ~ x1 + x3 + x4, family = categorical()) +
     obs(y3 ~ x1 + x3, family = categorical()) +
-    splines()
+    splines() +
+    lags()
 
 # Rstudio ignores .Rbuildignore, so this needs to be commented out when building the package
-# test_fit <- because:::becausefit(test_form, test_data, ID)
+# test_fit <- btvcm:::btvcmfit(test_form, test_data, ID)
 
