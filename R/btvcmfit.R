@@ -13,19 +13,19 @@ btvcmfit <- function(formula, data, group, time, ...) {
     group <- deparse(substitute(group))
     resp_all <- get_resp(formula)
     pred_all <- unlist(get_pred(formula))
+    lag_map <- extract_lags(pred_all)
+    n_rows <- nrow(data)
     fixed <- 0L
+    # Add lag terms defined via lags()
     if (!is.null(lag_all <- attr(formula, "lags"))) {
-        # TODO remove all manual lag terms from formula
         fixed <- lag_all$k
-        n_rows <- nrow(data)
         n_resp <- length(resp_all)
         pred_lag <- character(fixed * n_resp)
         for (i in 1:fixed) {
-            remove <- n_rows:(n_rows-i+1)
             for (j in 1:n_resp) {
                 ix <- (i-1)*n_resp + j
                 pred_lag[ix] <- paste0(resp_all[j], "_lag", i)
-                data[,pred_lag[ix]] <- c(rep(0L, i), data[-remove,resp_all[j]])
+                data[,pred_lag[ix]] <- c(rep(0L, i), data[-(n_rows:(n_rows-i+1)),resp_all[j]])
             }
         }
         # TODO add check for name conflicts, and replace conflicting names
@@ -33,8 +33,16 @@ btvcmfit <- function(formula, data, group, time, ...) {
             c(formula[[j]]$predictors) <- pred_lag
         }
         c(pred_all) <- pred_lag
-    } else {
-        # TODO process manual lag terms, if any
+        lag_map <- lag_map[lag_map$var %in% resp_all & lag_map$k <= fixed,]
+    }
+    # Process lag definitions in formulas
+    if (nrow(lag_map)) {
+        fixed <- max(max(lag_map$k), fixed)
+        for (i in seq_along(lag_map)) {
+            pred_lag <- paste0(lag_map$var[i], "_lag", lag_map$k[i])
+            resp_all <- gsub(lag_map$src[i], pred_lag)
+            data[,pred_lag] <- c(rep(0L, lag_map$k[i]), data[-(n_rows:(n_rows-lag_map$k[i]+1)),lag_map$var[i]])
+        }
     }
     all_rhs_vars <- unique(pred_all)
     all_rhs_formula <- reformulate(all_rhs_vars, intercept = FALSE)
@@ -66,9 +74,9 @@ convert_data <- function(formula, data, group, time, moma, all_rhs_vars, fixed) 
         time_var <- sort(unique(data[[deparse(substitute(time))]]))
     }
     # TODO take spline definition into account here
-    # TODO take fixed time points into account in spline
-    free_obs <- (fixed+1):T_full
-    knots <- seq(time_var[2 + fixed], time_var[T_full-1], length.out = min(10, T_full - 2 - fixed))
+    free_obs <- (fixed + 1):T_full
+    knots <- seq(time_var[1 + fixed], time_var[T_full], length.out = min(10, T_full - fixed))
+    knots <- knots[2:(length(knots)-1)]
     Bs <- t(splines::bs(time_var[free_obs], knots = knots, degree = 3, intercept = TRUE))
     D <- nrow(Bs)
     N <- length(id_tab)

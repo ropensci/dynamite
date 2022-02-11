@@ -29,7 +29,7 @@ Collate:
     'btvcmformula.R'
     'btvcmterms.R'
     'families.R'
-    'lag.R'
+    'lags.R'
     'loglik_stan.R'
     'modeldata.R'
     'splines.R'
