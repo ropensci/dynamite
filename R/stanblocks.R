@@ -60,6 +60,11 @@ create_data <- function(formula, ...) {
         if (is_categorical(formula[[i]]$family)) {
             mtext <- paste(mtext,  paste0("    int<lower=0> S_", i, ";"), sep = "\n")
         }
+        if (is_binomial(formula[[i]]$family)) {
+            # TODO, add number of trials
+            stop("Binomial distribution not yet supported.")
+        }
+        # TODO: Exposure for poisson? Or perhaps better to have a general support for the offset term
     }
     mtext <- paste("data {", mtext, "}", sep = "\n")
     mtext
@@ -94,17 +99,27 @@ create_parameters <- function(formula, ...) {
     # Not the most efficient way but gets the job done
     for (i in seq_along(formula)) {
 
-        # do we want to handle intercept separately or as first beta?
+        # TODO: do we want to handle intercept separately or as first beta?
+        # Intercept can vary as a spline as well, so easier if part of beta?
         if (is_categorical(formula[[i]]$family)) {
             a_raw_term <- paste0("    row_vector[D] a_raw_", i, "[S_", i, "- 1, K_", i, "];")
             # Do we want separate tau for K coefficients or K * (S - 1) coefficients?
             tau_term <- paste0("    vector<lower=0>[K_", i, "] tau_", i, ";")
         } else {
-            # TODO: need to add distribution-specific parameters i.e sigma for gaussian case
+
             a_raw_term <- paste0("    row_vector[D] a_raw_", i, "[K_", i, "];")
             tau_term <- paste0("    vector<lower=0>[K_", i, "] tau_", i, ";")
         }
         mtext <- paste(mtext, a_raw_term, tau_term, sep = "\n")
+        if (is_gaussian(formula[[i]]$family)) {
+            sigma_term <- paste0("    real<lower=0> sigma_", i, ";")
+            mtext <- paste(mtext, sigma_term, sep = "\n")
+        }
+        if (is_gamma(formula[[i]]$family)) {
+            # TODO: shape parameter for the gamma distribution, not a priority
+            stop("Gamma distribution is not yet supported")
+        }
+
     }
     if (attr(formula, "splines")$shrinkage) {
         mtext <- paste(mtext, "    vector<lower=0>[D - 1] lambda; // shrinkage parameter", sep = "\n")
@@ -133,8 +148,11 @@ create_transformed_parameters <- function(formula, ...) {
     a_terms <- paste0(a_terms, collapse = "\n")
     mtext <- paste(beta_terms, a_terms, sep = "\n")
     for (i in seq_along(formula)) {
+        # TODO N(0, 1) prior for first a, prior mean and sd should be user-defined
+        # i.e. a_i[s, k, 1] = prior_mean_a_i[s, k] + prior_sd_a_i[s, k] * a_raw_i[s, k, 1]
+        # where prior_mean_a_i and prior_sd_a_i are defined in the data block
+        # Is it enough to assume prior means are always zero and there's one common prior sd for all?
         if (is_categorical(formula[[i]]$family)) {
-            # N(0, 1) prior for first a, should be user-defined
             spline_term <- paste(
                 # TODO define zeros_K_i in transformed data?
                 paste0("    for (s in 1:(S_", i, " - 1)) {"),
@@ -172,13 +190,16 @@ create_transformed_parameters <- function(formula, ...) {
 #'
 #' @export
 create_model <- function(formula, ...) {
-    # TODO: user-defined priors
+    # TODO: Without global shrinkage prior it probably makes sense to use user-defined prior for tau
+    # With lambda&tau, need more testing if this is fine or do we need to support other forms
+    # e.g. as in https://arxiv.org/abs/1611.01310 and https://www.mdpi.com/2225-1146/8/2/20
     priors <- character(0)
     if (attr(formula, "splines")$shrinkage) {
         c(priors) <- "    lambda ~ std_normal();  // prior for shrinkage terms"
     }
     c(priors) <- paste0("    tau_", 1:length(formula), " ~ cauchy(0, 1);")
     mtext <- paste0(priors, collapse = "\n")
+    # These are fixed (non-centered parameterisation)
     for (i in seq_along(formula)) {
         if (is_categorical(formula[[i]]$family)) {
             a_term <- paste(
@@ -194,6 +215,12 @@ create_model <- function(formula, ...) {
                        "    }", sep = "\n")
         }
         mtext <- paste(mtext, a_term, sep = "\n")
+
+        if (is_gaussian(formula[[i]]$family)) {
+            # TODO: User should be able to define this prior arbitrarily
+            sigma_term <- paste0("    sigma_", i, " ~ std_normal();")
+            mtext <- paste(mtext, sigma_term, sep = "\n")
+        }
     }
     for (i in seq_along(formula)) {
         if (is_categorical(formula[[i]]$family)) {
@@ -201,7 +228,13 @@ create_model <- function(formula, ...) {
                 paste0("        target += categorical_logit_glm_lupmf(response_", i,
                        "[t] | X[t][,J_", i, "], zeros_S_", i, ", beta_", i, "[t]);")
         } else {
-            stop("Likelihoods not yet defined for non-categorical data")
+            if (is_gaussian(formula[[i]]$family)) {
+                likelihood_term <-
+                paste0("        target += normal_lupdf(response_", i,
+                       "[t] | X[t][,J_", i, "] * beta_", i, "[t], ", "sigma_", i, ");")
+            } else {
+                stop(paste0("Distribution ", formula[[i]]$family, "not yet supported."))
+            }
         }
         mtext <- paste(mtext, "    for (t in 1:T) {", likelihood_term, "    }", sep = "\n")
     }
