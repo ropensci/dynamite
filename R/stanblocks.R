@@ -222,6 +222,9 @@ create_model <- function(formula, ...) {
             mtext <- paste(mtext, sigma_term, sep = "\n")
         }
     }
+    # TODO: Add option to sample from prior predictive distribution
+    # Either by adding flag to data block and conditioning below with it
+    # or don't create the likelihood terms below if user has opted for prior sampling
     for (i in seq_along(formula)) {
         if (is_categorical(formula[[i]]$family)) {
             likelihood_term <-
