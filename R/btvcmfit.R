@@ -15,6 +15,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
     pred_all <- unlist(get_pred(formula))
     lag_map <- extract_lags(pred_all)
     n_rows <- nrow(data)
+    data_vars <- names(data)
     fixed <- 0L
     # Add lag terms defined via lags()
     if (!is.null(lag_all <- attr(formula, "lags"))) {
@@ -39,8 +40,14 @@ btvcmfit <- function(formula, data, group, time, ...) {
     if (nrow(lag_map)) {
         fixed <- max(max(lag_map$k), fixed)
         for (i in seq_along(lag_map)) {
+            if (lag_map$k[i] <= 0) {
+                stop_("Only positive shift values are allowed in lag()")
+            }
+            if (!lag_map$var[i] %in% data_vars) {
+                stop_("There is no variable called", lag_map$var[i])
+            }
             pred_lag <- paste0(lag_map$var[i], "_lag", lag_map$k[i])
-            resp_all <- gsub(lag_map$src[i], pred_lag)
+            resp_all <- gsub(lag_map$src[i], pred_lag, resp_all)
             data[,pred_lag] <- c(rep(0L, lag_map$k[i]), data[-(n_rows:(n_rows-lag_map$k[i]+1)),lag_map$var[i]])
         }
     }

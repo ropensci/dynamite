@@ -21,13 +21,12 @@ extract_lags <- function(x) {
     lag_terms <- rm_ws(x_split[has_lag])
     lag_comp <- regexpr("lag\\((?<var>[^,]+)(?:,(?<k>[0-9]+)){0,1}\\)", lag_terms, perl = TRUE)
     n_terms <- length(lag_terms)
-    lag_map <- data.frame(src = lag_terms,
-                          var = character(n_terms),
-                          k = integer(n_terms))
+    lag_map <- data.frame(src = lag_terms)
     for (comp in attr(lag_comp, 'capture.name')) {
         start <- attr(lag_comp, "capture.start")[,comp]
         end <- start + attr(lag_comp, "capture.length")[,comp] - 1
         lag_map[,comp] <- substr(lag_terms, start, end)
     }
-    lag_map[!duplicated(lag_map)]
+    lag_map$k <- as.integer(lag_map$k)
+    lag_map[!duplicated(lag_map),]
 }
