@@ -1,7 +1,6 @@
 #' Model formula for \pkg{btvcm}
 #'
 #' @export
-#' @import formula.tools
 btvcmformula <- function(formula, family, ...) {
     #all_terms <- terms(bf, specials = "t")
     #sp_terms <- attr(all_terms, "specials")
@@ -22,20 +21,20 @@ btvcmformula <- function(formula, family, ...) {
     if (!is.btvcmfamily(family)) {
         stop_("Unsupported family object")
     }
-    # TODO can we drop formula.tools dependency and implement these? Only lhs.vars and rhs.vars are used at the moment.
-    # Is it enough to replace them with formula[[2]] and formula[[3]]?
-    lhs <- formula.tools::lhs.vars(formula)
-    rhs <- formula.tools::rhs.vars(formula)
-    out <- list(
+    # TODO process terms after vertical bar |, ignore for now
+    lhs <- formula_lhs(formula)
+    rhs <- formula_rhs(formula)$vars
+    structure(
         list(
-            formula = formula,
-            family = family,
-            response = lhs,
-            predictors = rhs
-        )
+            list(
+                formula = formula,
+                family = family,
+                response = lhs,
+                predictors = rhs
+            )
+        ),
+        class = "btvcmformula"
     )
-    class(out) <- c("btvcmformula")
-    return(out)
 }
 
 #' @rdname btvcmformula
@@ -66,12 +65,12 @@ is.formula <- function(x) {
     out
 }
 
-# Get all response variables of a becauseformula object
+# Get all response variables of a btvcmformula object
 get_resp <- function(x) {
     sapply(x, "[[", "response")
 }
 
-# Get all predictor variables of a becauseformula object
+# Get all predictor variables of a btvcmformula object
 get_pred <- function(x) {
     lapply(x, "[[", "predictors")
 }

@@ -15,7 +15,6 @@
 #' @export
 splines <- function(shrinkage = TRUE, override = FALSE,
                     df = NULL, knots = NULL, degree = 3, intercept = FALSE, Boundary.knots = NULL) {
-    # TODO more parameters to control the splines?
     shrinkage <- try_(shrinkage, type = "logical")[1]
     override <- try_(override, type = "logical")[1]
     df <- try_(df, type = "integer")[1]
@@ -23,11 +22,14 @@ splines <- function(shrinkage = TRUE, override = FALSE,
     degree <- try_(degree, type = "integer")
     structure(
         list(shrinkage = shrinkage,
-             df = df,
-             knots = knots,
-             degree = degree,
-             intercept = intercept,
-             Boundary.knots = Boundary.knots),
+             bs_opts = list(
+                df = df,
+                knots = knots,
+                degree = degree,
+                intercept = intercept,
+                Boundary.knots = Boundary.knots
+            )
+        ),
         override = override,
         class = "splines"
     )
