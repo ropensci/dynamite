@@ -73,13 +73,11 @@ print(fit_nc, pars = c("sigma", "tau"))
 
 beta_estimates <- extract(fit_nc, "beta", permuted = TRUE)[[1]]
 
-s <- 2
-k <- 1
 ts.plot(cbind(
-    colMeans(beta_estimates[, , s, k]),
-    apply(beta_estimates[, , s, k], 2, quantile, 0.025),
-    apply(beta_estimates[, , s, k], 2, quantile, 0.975)), col = 1)
-lines(beta[, s, k], col = 2)
+    colMeans(beta_estimates[, , 1]),
+    apply(beta_estimates[, , 1], 2, quantile, 0.025),
+    apply(beta_estimates[, , 1], 2, quantile, 0.975)), col = 1)
+lines(beta, col = 2)
 
 # all in once:
-ts.plot(cbind(c(aperm(a, 3:1)), get_posterior_mean(fit_nc, "a")[,1]), col = 1:2)
+ts.plot(cbind(c(a), get_posterior_mean(fit_nc, "a")[,5]), col = 1:2)
