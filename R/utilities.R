@@ -30,21 +30,19 @@ named_list <- function(...) {
 #     grep(pattern = ys, x, perl = TRUE)
 # }
 
-# Get left-hand side of a formula as character
+# Get left-hand side of a formula
 formula_lhs <- function(x) {
     as.character(x[[2]])
 }
 
-# Get right-hand side of fromula as a list with two components:
-# @param vars the predictor terms as a character vector.
-# @param cond terms after the vertical bar as a character vector.
+# Get right-hand side of formula
 formula_rhs <- function(x) {
-    rhs_form <- as.character(x[[3]])
-    out <- list(vars = trimws(strsplit(rhs_form[[2]], "+", fixed = TRUE)[[1]]), cond = NULL)
-    if (length(rhs_form) == 3) {
-        out$cond <- trimws(strsplit(rhs_form[[3]], "+", fixed = TRUE)[[1]])
-    }
-    out
+    attr(terms(x), "term.labels")
+}
+
+# Check if x is a string of the form I(.)
+is_as_is <- function(x) {
+    grepl("I\\(.*\\)", x, perl = TRUE)
 }
 
 stop_ <- function(...) {

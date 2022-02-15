@@ -2,35 +2,16 @@
 #'
 #' @export
 btvcmformula <- function(formula, family, ...) {
-    #all_terms <- terms(bf, specials = "t")
-    #sp_terms <- attr(all_terms, "specials")
-    # terms(bf)
-    # term_labels <- labels(all_terms)
-    # vars <- attr(all_terms, "variables")
-
-    # Time-dependent coefficients
-    # time_coefs <- integer(0)
-    # time_terms <- sp_terms$t
-    # if (!is.null(time_terms)) {
-    #     time_forms <- lapply(vars[1 + time_terms], function(x) {
-    #         y <- as.list(match.call(definition = t_, call = x))
-    #         list(add = y$f, remove = x, type = if (is.null(y$type)) "rw" else y$type)
-    #     })
-    # }
-    # out <- list(formula = bf, family = family, time_forms = time_forms)
     if (!is.btvcmfamily(family)) {
         stop_("Unsupported family object")
     }
-    # TODO process terms after vertical bar |, ignore for now
-    lhs <- formula_lhs(formula)
-    rhs <- formula_rhs(formula)$vars
     structure(
         list(
             list(
                 formula = formula,
                 family = family,
-                response = lhs,
-                predictors = rhs
+                response = formula_lhs(formula),
+                predictors = formula_rhs(formula)
             )
         ),
         class = "btvcmformula"
