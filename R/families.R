@@ -73,8 +73,11 @@ discrete_distributions <- c(
 )
 
 supported_families <- c(
+    "binomial",
     "categorical",
-    "gaussian"
+    "gaussian",
+    "gamma",
+    "poisson"
 )
 
 # Generate is_x convenience functions for all supported families x

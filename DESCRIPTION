@@ -19,7 +19,6 @@ Depends:
     R (>= 3.4.0)
 Imports: 
     methods,
-    formula.tools,
     rstan (>= 2.18.1)
 Collate: 
     'btvcm-package.R'
@@ -29,7 +28,7 @@ Collate:
     'btvcmformula.R'
     'btvcmterms.R'
     'families.R'
-    'lag.R'
+    'lags.R'
     'loglik_stan.R'
     'modeldata.R'
     'splines.R'
