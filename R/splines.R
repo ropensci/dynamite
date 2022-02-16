@@ -22,6 +22,7 @@ splines <- function(shrinkage = TRUE, override = FALSE,
     degree <- try_(degree, type = "integer")
     structure(
         list(shrinkage = shrinkage,
+             noncentered = FALSE, # TODO: allow user to switch
              bs_opts = list(
                 df = df,
                 knots = knots,

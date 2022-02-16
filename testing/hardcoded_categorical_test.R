@@ -270,3 +270,10 @@ colMeans(d$beta)
 colMeans(b0)
 colMeans(b)
 
+
+btvcm_data <- data.frame()
+test_form <- obs(y1 ~ x1 + x2 + x4, family = categorical()) +
+    obs(y2 ~ x1 + x3 + x4, family = categorical()) +
+    obs(y3 ~ x1 + x3, family = categorical()) +
+    splines() +
+    lags()

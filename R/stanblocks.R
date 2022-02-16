@@ -21,6 +21,8 @@ create_blocks.default <- function(formula, ...) {
     model_code <- paste(functions, data, transformed_data, parameters,
         transformed_parameters, model, generated_quantities,
         sep = "\n") # combine above text blocks
+    # TODO: Indentation is now 4 spaces instead of more common 2
+    # TODO: Can we fix all the indentation automatically?
     model_code
 }
 
@@ -78,8 +80,8 @@ create_transformed_data <- function(formula, ...) {
     transformed_data <- character(0)
     for (i in seq_along(formula)) {
         if (is_categorical(formula[[i]]$family)) {
-            zeros_term <- paste0("    vector[K_", i, "] zeros_K_", i, " = rep_vector(0, K_", i, ");",
-                                 "    vector[S_", i, "] zeros_S_", i, " = rep_vector(0, S_", i, ");")
+            zeros_term <- paste0("    vector[K_", i, "] zeros_K_", i, " = rep_vector(0, K_", i, "); \n",
+                "    vector[S_", i, "] zeros_S_", i, " = rep_vector(0, S_", i, ");")
             c(transformed_data) <- zeros_term
         }
     }
@@ -92,34 +94,62 @@ create_transformed_data <- function(formula, ...) {
 #' @export
 create_parameters <- function(formula, ...) {
 
-    mtext <- paste(
-        "    // Spline parameters",
-        "    // use noncentered parameterisation for sampling efficiency", sep = "\n")
+    # TODO channel-wise
+    if (attr(formula, "splines")$noncentered) {
 
-    # Not the most efficient way but gets the job done
-    for (i in seq_along(formula)) {
+        mtext <- paste(
+            "    // Spline parameters",
+            "    // use noncentered parameterisation for sampling efficiency", sep = "\n")
+        # TODO separate intercept for betas with sum-to-zero-constriant
+        for (i in seq_along(formula)) {
 
-        # TODO: do we want to handle intercept separately or as first beta?
-        # Intercept can vary as a spline as well, so easier if part of beta?
-        if (is_categorical(formula[[i]]$family)) {
-            a_raw_term <- paste0("    row_vector[D] a_raw_", i, "[S_", i, "- 1, K_", i, "];")
-            # Do we want separate tau for K coefficients or K * (S - 1) coefficients?
-            tau_term <- paste0("    vector<lower=0>[K_", i, "] tau_", i, ";")
-        } else {
+            # TODO: do we want to handle intercept separately or as first beta?
+            # Intercept can vary as a spline as well, so easier if part of beta?
+            if (is_categorical(formula[[i]]$family)) {
+                a_raw_term <- paste0("    row_vector[D] a_raw_", i, "[S_", i, "- 1, K_", i, "];")
+                # Do we want separate tau for K coefficients or K * (S - 1) coefficients?
+                tau_term <- paste0("    vector<lower=0>[K_", i, "] tau_", i, ";")
+            } else {
 
-            a_raw_term <- paste0("    row_vector[D] a_raw_", i, "[K_", i, "];")
-            tau_term <- paste0("    vector<lower=0>[K_", i, "] tau_", i, ";")
+                a_raw_term <- paste0("    row_vector[D] a_raw_", i, "[K_", i, "];")
+                tau_term <- paste0("    vector<lower=0>[K_", i, "] tau_", i, ";")
+            }
+            mtext <- paste(mtext, a_raw_term, tau_term, sep = "\n")
+            if (is_gaussian(formula[[i]]$family)) {
+                sigma_term <- paste0("    real<lower=0> sigma_", i, ";")
+                mtext <- paste(mtext, sigma_term, sep = "\n")
+            }
+            if (is_gamma(formula[[i]]$family)) {
+                # TODO: shape parameter for the gamma distribution, not a priority
+                stop("Gamma distribution is not yet supported")
+            }
+
         }
-        mtext <- paste(mtext, a_raw_term, tau_term, sep = "\n")
-        if (is_gaussian(formula[[i]]$family)) {
-            sigma_term <- paste0("    real<lower=0> sigma_", i, ";")
-            mtext <- paste(mtext, sigma_term, sep = "\n")
-        }
-        if (is_gamma(formula[[i]]$family)) {
-            # TODO: shape parameter for the gamma distribution, not a priority
-            stop("Gamma distribution is not yet supported")
-        }
+    } else {
+        mtext <- "    // Spline parameters"
+        for (i in seq_along(formula)) {
 
+            if (is_categorical(formula[[i]]$family)) {
+                a_term <- paste0("    row_vector[D] a_", i, "[S_", i, "- 1, K_", i, "];")
+                # TODO: Do we want separate tau for K coefficients or K * (S - 1) coefficients?
+                tau_term <- paste0("    vector<lower=0>[K_", i, "] tau_", i, ";")
+                beta_term <- paste0("    matrix[K_", i, ", S_", i, " - 1] beta_mean_", i, ";")
+            } else {
+                a_term <- paste0("    row_vector[D] a_", i, "[K_", i, "];")
+                tau_term <- paste0("    vector<lower=0>[K_", i, "] tau_", i, ";")
+                beta_term <- paste0("    vector[K_", i, "] beta_mean_", i, ";")
+            }
+            mtext <- paste(mtext, a_term, tau_term, beta_term, sep = "\n")
+            if (is_gaussian(formula[[i]]$family)) {
+                sigma_term <- paste0("    real<lower=0> sigma_", i, ";")
+                mtext <- paste(mtext, sigma_term, sep = "\n")
+            }
+            if (is_gamma(formula[[i]]$family)) {
+                # TODO: shape parameter for the gamma distribution, not a priority
+                stop("Gamma distribution is not yet supported")
+            }
+
+        }
     }
     if (attr(formula, "splines")$shrinkage) {
         mtext <- paste(mtext, "    vector<lower=0>[D - 1] lambda; // shrinkage parameter", sep = "\n")
@@ -136,50 +166,79 @@ create_transformed_parameters <- function(formula, ...) {
     beta_terms <- character(0)
     a_terms <- character(0)
     for (i in seq_along(formula)) {
-        if (is_categorical(formula[[i]]$family)) { #TODO Fix after definining families (?)
+        if (is_categorical(formula[[i]]$family)) {
             c(beta_terms) <- paste0("    matrix[K_", i, ", S_", i, "] beta_", i, "[T];")
-            c(a_terms) <- paste0("    row_vector[D] a_", i, "[S_", i, " - 1, K_", i, "];")
+            if (attr(formula, "splines")$noncentered) { # TODO: channel-wise?
+                c(a_terms) <- paste0("    row_vector[D] a_", i, "[S_", i, " - 1, K_", i, "];")
+            }
         } else {
             c(beta_terms) <- paste0("    vector[K_", i, "] beta_", i, "[T];")
-            c(a_terms) <- paste0("    row_vector[D] a_", i, "[K_", i, "];")
+            if (attr(formula, "splines")$noncentered) { # TODO: channel-wise?
+                c(a_terms) <- paste0("    row_vector[D] a_", i, "[K_", i, "];")
+            }
         }
     }
     beta_terms <- paste0(beta_terms, collapse = "\n")
     a_terms <- paste0(a_terms, collapse = "\n")
     mtext <- paste(beta_terms, a_terms, sep = "\n")
     for (i in seq_along(formula)) {
-        # TODO N(0, 1) prior for first a, prior mean and sd should be user-defined
+        # TODO N(0, 1) prior for first a, prior mean and sd should be user-defined?
         # i.e. a_i[s, k, 1] = prior_mean_a_i[s, k] + prior_sd_a_i[s, k] * a_raw_i[s, k, 1]
         # where prior_mean_a_i and prior_sd_a_i are defined in the data block
         # Is it enough to assume prior means are always zero and there's one common prior sd for all?
-        if (is_categorical(formula[[i]]$family)) {
-            spline_term <- paste(
-                # TODO define zeros_K_i in transformed data?
-                paste0("    for (s in 1:(S_", i, " - 1)) {"),
-                paste0("        for (k in 1:K_", i, ") {"),
-                paste0("            a_", i, "[s, k, 1] = a_raw_", i, "[s, k, 1];"),
-                       "            for (i in 2:D) {",
-                paste0("                a_", i, "[s, k, i] = a_", i, "[s, k, i-1] + a_raw_", i, "[s, k, i] * tau_", i, "[k] * lambda[i - 1];"),
-                       "            }",
-                       "            for (t in 1:T) {",
-                paste0("                beta_", i, "[t, k, s] = a_", i, "[s, k] * Bs[, t];"),
-                       "            }",
-                       "        }",
-                       "    }",
-                       "    for (t in 1:T) {",
-                paste0("        beta_", i, "[t, ,S_", i, "] = zeros_K_", i, ";"),
-                       "    }", sep = "\n")
+        if (attr(formula, "splines")$noncentered) {
+            # TODO: could separate construction of a and beta so less repetition in the codes
+            if (is_categorical(formula[[i]]$family)) {
+                spline_term <- paste(
+                    # TODO define zeros_K_i in transformed data?
+                    paste0("    for (s in 1:(S_", i, " - 1)) {"),
+                    paste0("        for (k in 1:K_", i, ") {"),
+                    paste0("            a_", i, "[s, k, 1] = a_raw_", i, "[s, k, 1];"),
+                    "            for (i in 2:D) {",
+                    paste0("                a_", i, "[s, k, i] = a_", i, "[s, k, i-1] + a_raw_", i, "[s, k, i] * tau_", i, "[k] * lambda[i - 1];"),
+                    "            }",
+                    "            for (t in 1:T) {",
+                    paste0("                beta_", i, "[t, k, s] = a_", i, "[s, k] * Bs[, t];"),
+                    "            }",
+                    "        }",
+                    "    }",
+                    "    for (t in 1:T) {",
+                    paste0("        beta_", i, "[t, , S_", i, "] = zeros_K_", i, ";"),
+                    "    }", sep = "\n")
+            } else {
+                spline_term <- paste(
+                    paste0("    for (k in 1:K_", i, ") {"),
+                    paste0("        a_", i, "[k, 1] = a_raw_", i, "[k, 1];"),
+                    "        for (i in 2:D) {",
+                    paste0("            a_", i, "[k, i] = a_", i, "[k, i-1] + a_raw_", i, "[k, i] * tau_", i, "[k] * lambda[i - 1];"),
+                    "        }",
+                    "        for (t in 1:T) {",
+                    paste0("            beta_", i, "[t, k] = a_", i, "[k] * Bs[, t];"),
+                    "        }",
+                    "    }", sep = "\n")
+            }
         } else {
-            spline_term <- paste(
-                paste0("    for (k in 1:K_", i, ") {"),
-                paste0("        a_", i, "[k, 1] = a_raw_", i, "[k, 1];"),
-                       "        for (i in 2:D) {",
-                paste0("            a_", i, "[k, i] = a_", i, "[k, i-1] + a_raw_", i, "[k, i] * tau_", i, "[k] * lambda[i - 1];"),
-                       "        }",
-                       "        for (t in 1:T) {",
-                paste0("            beta_", i, "[t, k] = a_", i, "[k] * Bs[, t];"),
-                       "        }",
-                       "    }", sep = "\n")
+            if (is_categorical(formula[[i]]$family)) {
+                spline_term <- paste(
+                    # TODO define zeros_K_i in transformed data?
+                    paste0("    for (s in 1:(S_", i, " - 1)) {"),
+                    paste0("        for (k in 1:K_", i, ") {"),
+                    "            for (t in 1:T) {",
+                    paste0("                beta_", i, "[t, k, s] = beta_mean_", i, "[k, s] + a_", i, "[s, k] * Bs[, t];"),
+                    "            }",
+                    "        }",
+                    "    }",
+                    "    for (t in 1:T) {",
+                    paste0("        beta_", i, "[t, , S_", i, "] = zeros_K_", i, ";"),
+                    "    }", sep = "\n")
+            } else {
+                spline_term <- paste(
+                    paste0("    for (k in 1:K_", i, ") {"),
+                    "        for (t in 1:T) {",
+                    paste0("            beta_", i, "[t, k] = beta_mean_", i, "[k] + a_", i, "[k] * Bs[, t];"),
+                    "        }",
+                    "    }", sep = "\n")
+            }
         }
         mtext <- paste(mtext, spline_term, sep = "\n")
     }
@@ -198,21 +257,50 @@ create_model <- function(formula, ...) {
         c(priors) <- "    lambda ~ std_normal();  // prior for shrinkage terms"
     }
     c(priors) <- paste0("    tau_", 1:length(formula), " ~ cauchy(0, 1);")
-    mtext <- paste0(priors, collapse = "\n")
-    # These are fixed (non-centered parameterisation)
+    mtext <- character(0)
     for (i in seq_along(formula)) {
         if (is_categorical(formula[[i]]$family)) {
-            a_term <- paste(
-                paste0("    for (s in 1:(S_", i, " - 1)) {"),
-                paste0("        for (k in 1:K_", i, ") {"),
-                paste0("            a_raw_", i, "[s, k] ~ std_normal();"),
-                       "        }",
-                       "    }", sep = "\n")
+
+            if (attr(formula, "splines")$noncentered) {
+                # These are fixed (non-centered parameterisation)
+                a_term <- paste(
+                    paste0("    for (s in 1:(S_", i, " - 1)) {"),
+                    paste0("        for (k in 1:K_", i, ") {"),
+                    paste0("            a_raw_", i, "[s, k] ~ std_normal();"),
+                    "        }",
+                    "    }", sep = "\n")
+            } else {
+                # TODO prior for the first a
+                a_term <- paste(
+                    paste0("    for (s in 1:(S_", i, " - 1)) {"),
+                    paste0("        for (k in 1:K_", i, ") {"),
+                    paste0("            a_", i, "[s, k, 1] ~ std_normal();"),
+                    "            for(i in 2:D) {",
+                    paste0("              a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], tau_", i, "[k]);"),
+                    "            }",
+                    "        }",
+                    "    }", sep = "\n")
+            }
+            # TODO user defined prior for the mean value of the regression coefficients
+            c(priors) <- paste0("    to_vector(beta_mean_", i, ") ~ normal(0, 2);")
         } else {
-            a_term <- paste(
-                paste0("    for (k in 1:K_", i, ") {"),
-                paste0("        a_raw_", i, "[k] ~ std_normal();"),
-                       "    }", sep = "\n")
+            if (attr(formula, "splines")$noncentered) {
+                a_term <- paste(
+                    paste0("    for (k in 1:K_", i, ") {"),
+                    paste0("        a_raw_", i, "[k] ~ std_normal();"),
+                    "    }", sep = "\n")
+            } else {
+                # TODO prior for the first a
+                a_term <- paste(
+                    paste0("    for (k in 1:K_", i, ") {"),
+                    paste0("        a_", i, "[k, 1] ~ std_normal();"),
+                    "        for(i in 2:D) {",
+                    paste0("            a_", i, "[k, i] ~ normal(a_", i,"[k, i - 1], tau_", i, "[k]);"),
+                    "        }",
+                    "    }", sep = "\n")
+            }
+            # TODO user defined prior for the mean value of the regression coefficients
+            c(priors) <- paste0("    to_vector(beta_mean_", i, ") ~ normal(0, 2);")
         }
         mtext <- paste(mtext, a_term, sep = "\n")
 
@@ -222,6 +310,8 @@ create_model <- function(formula, ...) {
             mtext <- paste(mtext, sigma_term, sep = "\n")
         }
     }
+    mtext <- paste(paste0(priors, collapse = "\n"), mtext, sep = "\n")
+
     # TODO: Add option to sample from prior predictive distribution
     # Either by adding flag to data block and conditioning below with it
     # or don't create the likelihood terms below if user has opted for prior sampling
@@ -229,12 +319,12 @@ create_model <- function(formula, ...) {
         if (is_categorical(formula[[i]]$family)) {
             likelihood_term <-
                 paste0("        target += categorical_logit_glm_lupmf(response_", i,
-                       "[t] | X[t][,J_", i, "], zeros_S_", i, ", beta_", i, "[t]);")
+                    "[t] | X[t][,J_", i, "], zeros_S_", i, ", beta_", i, "[t]);")
         } else {
             if (is_gaussian(formula[[i]]$family)) {
                 likelihood_term <-
-                paste0("        target += normal_lupdf(response_", i,
-                       "[t] | X[t][,J_", i, "] * beta_", i, "[t], ", "sigma_", i, ");")
+                    paste0("        target += normal_lupdf(response_", i,
+                        "[t] | X[t][,J_", i, "] * beta_", i, "[t], ", "sigma_", i, ");")
             } else {
                 stop(paste0("Distribution ", formula[[i]]$family, "not yet supported."))
             }
