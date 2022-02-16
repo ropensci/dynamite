@@ -20,43 +20,51 @@ btvcmfit <- function(formula, data, group, time, ...) {
     pred_all <- unlist(get_pred(formula))
     lag_map <- extract_lags(pred_all)
     n_rows <- nrow(data)
+    n_resp <- length(resp_all)
     data_vars <- names(data)
     fixed <- 0L
-    # Add lag terms defined via lags()
+    # Process lag terms defined via lags()
     if (!is.null(lag_all <- attr(formula, "lags"))) {
         fixed <- lag_all$k
-        n_resp <- length(resp_all)
         pred_lag <- character(fixed * n_resp)
         for (i in 1:fixed) {
             for (j in 1:n_resp) {
                 ix <- (i-1)*n_resp + j
-                pred_lag[ix] <- paste0(resp_all[j], "_lag", i)
-                data[,pred_lag[ix]] <- c(rep(0L, i), data[-(n_rows:(n_rows-i+1)),resp_all[j]])
+                pred_lag[ix] <- paste0("I(lag_(", resp_all[j], ", ", i, "))")
             }
         }
-        # TODO add check for name conflicts, and replace conflicting names
         for (j in 1:n_resp) {
             c(formula[[j]]$predictors) <- pred_lag
         }
         c(pred_all) <- pred_lag
         lag_map <- lag_map[lag_map$var %in% resp_all & lag_map$k <= fixed,]
     }
-    # Process lag definitions in formulas
+    # Process lag terms defined via lag() in formulas
     if (nrow(lag_map)) {
         fixed <- max(max(lag_map$k), fixed)
         for (i in seq_along(lag_map)) {
             if (lag_map$k[i] <= 0) {
                 stop_("Only positive shift values are allowed in lag()")
             }
-            if (!lag_map$var[i] %in% data_vars) {
-                stop_("There is no variable called", lag_map$var[i])
+            if (is_as_is(lag_map$src[i])) {
+                # Swap to internal lag function
+                lag_map$scr[i] <- gsub("lag", "lag_", lag_map$src[i])
             }
-            pred_lag <- paste0(lag_map$var[i], "_lag", lag_map$k[i])
-            resp_all <- gsub(lag_map$src[i], pred_lag, resp_all)
-            data[,pred_lag] <- c(rep(0L, lag_map$k[i]), data[-(n_rows:(n_rows-lag_map$k[i]+1)),lag_map$var[i]])
+            if (is_as_is(lag_map$def[i])) {
+                # Remove 'as is' from inside of lag terms
+                lag_map$def[i] <- gsub("I\\((.*)\\)", "\\1", lag_map$def[i])
+            }
+            pred_lag <- paste0("I(lag_(", lag_map$def[i], ", ", lag_map$k[i], "))")
+            for (j in 1:n_resp) {
+                formula[[j]]$predictors <- gsub(lag_map$src[i], pred_lag, formula[[j]]$predictors, fixed = TRUE)
+            }
+            pred_all <- gsub(lag_map$src[i], pred_lag, pred_all, fixed = TRUE)
         }
     }
     all_rhs_vars <- unique(pred_all)
+    # Place lags last
+    all_lags <- find_lags(all_rhs_vars, processed = TRUE)
+    all_rhs_vars <- c(all_rhs_vars[all_lags], all_rhs_vars[!all_lags])
     all_rhs_formula <- reformulate(all_rhs_vars, intercept = FALSE)
     model_matrix <- model.matrix(all_rhs_formula, data)
     responses <- data[,resp_all,drop = FALSE]

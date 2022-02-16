@@ -33,8 +33,10 @@ test_form2 <- obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1) + lag(y3, 1), fami
 #     model_code = TRUE => also return the model code
 
 # Rstudio ignores .Rbuildignore, so this needs to be commented out when building the package
-# test_fit <- btvcm:::btvcmfit(test_form, test_data, ID, debug = list(no_compile = TRUE, model_data = TRUE, model_code = TRUE))
-# test_fit <- btvcm:::btvcmfit(test_form2, test_data, ID)
+# test_fit <- btvcm:::btvcmfit(test_form, test_data, ID, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
+# test_fit2 <- btvcm:::btvcmfit(test_form2, test_data, ID, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
 
+# Should give identical model matrices
+# all.equal(test_fit$model_matrix, test_fit2$model_matrix)
 
 
