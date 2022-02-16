@@ -148,7 +148,7 @@ convert_data <- function(formula, responses, group, time, model_matrix, all_rhs_
         } else {
             resp_split <- responses[,formula[[i]]$response]
         }
-        Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))[free_obs, ]
+        Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))[free_obs, , drop = FALSE]
         channel_vars[[paste0("response_", i)]] <- Y
         if (is_categorical(formula[[i]]$family)) {
             channel_vars[[paste0("S_", i)]] <- length(unique(as.vector(Y)))
