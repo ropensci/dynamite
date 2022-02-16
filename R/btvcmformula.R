@@ -56,6 +56,11 @@ get_pred <- function(x) {
     lapply(x, "[[", "predictors")
 }
 
+# Check whether the formula contain intercept
+has_intercept <- function(x) {
+    attr(terms(x$formula), "intercept") == 1
+}
+
 # Internal `+.btvcmformula` for model constructions
 add_btvcmformula <- function(e1, e2) {
     if (is.btvcmformula(e2)) {

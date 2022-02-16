@@ -100,21 +100,20 @@ create_parameters <- function(formula, ...) {
         mtext <- paste(
             "    // Spline parameters",
             "    // use noncentered parameterisation for sampling efficiency", sep = "\n")
-        # TODO separate intercept for betas with sum-to-zero-constriant
+        # TODO separate intercept for betas with sum-to-zero-constraint
         for (i in seq_along(formula)) {
 
-            # TODO: do we want to handle intercept separately or as first beta?
-            # Intercept can vary as a spline as well, so easier if part of beta?
             if (is_categorical(formula[[i]]$family)) {
+                alpha_term <- paste0("    vector[S_", i, "] alpha_", i, ";")
                 a_raw_term <- paste0("    row_vector[D] a_raw_", i, "[S_", i, "- 1, K_", i, "];")
                 # Do we want separate tau for K coefficients or K * (S - 1) coefficients?
                 tau_term <- paste0("    vector<lower=0>[K_", i, "] tau_", i, ";")
             } else {
-
+                alpha_term <- paste0("    real alpha_", i, ";")
                 a_raw_term <- paste0("    row_vector[D] a_raw_", i, "[K_", i, "];")
                 tau_term <- paste0("    vector<lower=0>[K_", i, "] tau_", i, ";")
             }
-            mtext <- paste(mtext, a_raw_term, tau_term, sep = "\n")
+            mtext <- paste(mtext, alpha_term, a_raw_term, tau_term, sep = "\n")
             if (is_gaussian(formula[[i]]$family)) {
                 sigma_term <- paste0("    real<lower=0> sigma_", i, ";")
                 mtext <- paste(mtext, sigma_term, sep = "\n")
@@ -130,16 +129,25 @@ create_parameters <- function(formula, ...) {
         for (i in seq_along(formula)) {
 
             if (is_categorical(formula[[i]]$family)) {
+                # constant intercept alpha
+                # time-varying "intercept" can be handled as spline for x=rep(1,T)
+                # but then one needs to remove alpha with -1 or +0
+                if (has_intercept(formula[[i]])) {
+                    alpha_term <- paste0("    vector[S_", i, "] alpha_", i, ";")
+                } else alpha_term <- character(0)
                 a_term <- paste0("    row_vector[D] a_", i, "[S_", i, "- 1, K_", i, "];")
                 # TODO: Do we want separate tau for K coefficients or K * (S - 1) coefficients?
                 tau_term <- paste0("    vector<lower=0>[K_", i, "] tau_", i, ";")
                 beta_term <- paste0("    matrix[K_", i, ", S_", i, " - 1] beta_mean_", i, ";")
             } else {
+                if (has_intercept(formula[[i]])) {
+                    alpha_term <- paste0("    real alpha_", i, ";")
+                } else alpha_term <- character(0)
                 a_term <- paste0("    row_vector[D] a_", i, "[K_", i, "];")
                 tau_term <- paste0("    vector<lower=0>[K_", i, "] tau_", i, ";")
                 beta_term <- paste0("    vector[K_", i, "] beta_mean_", i, ";")
             }
-            mtext <- paste(mtext, a_term, tau_term, beta_term, sep = "\n")
+            mtext <- paste(mtext, alpha_term, a_term, tau_term, beta_term, sep = "\n")
             if (is_gaussian(formula[[i]]$family)) {
                 sigma_term <- paste0("    real<lower=0> sigma_", i, ";")
                 mtext <- paste(mtext, sigma_term, sep = "\n")
@@ -283,6 +291,9 @@ create_model <- function(formula, ...) {
             }
             # TODO user defined prior for the mean value of the regression coefficients
             c(priors) <- paste0("    to_vector(beta_mean_", i, ") ~ normal(0, 2);")
+            if (has_intercept(formula[[i]])) {
+                c(priors) <- paste0("    to_vector(alpha_", i, ") ~ normal(0, 2);")
+            }
         } else {
             if (attr(formula, "splines")$noncentered) {
                 a_term <- paste(
@@ -301,6 +312,9 @@ create_model <- function(formula, ...) {
             }
             # TODO user defined prior for the mean value of the regression coefficients
             c(priors) <- paste0("    to_vector(beta_mean_", i, ") ~ normal(0, 2);")
+            if (has_intercept(formula[[i]])) {
+                c(priors) <- paste0("    alpha_", i, " ~ normal(0, 2);")
+            }
         }
         mtext <- paste(mtext, a_term, sep = "\n")
 
@@ -317,14 +331,27 @@ create_model <- function(formula, ...) {
     # or don't create the likelihood terms below if user has opted for prior sampling
     for (i in seq_along(formula)) {
         if (is_categorical(formula[[i]]$family)) {
-            likelihood_term <-
-                paste0("        target += categorical_logit_glm_lupmf(response_", i,
-                    "[t] | X[t][,J_", i, "], zeros_S_", i, ", beta_", i, "[t]);")
+            if (has_intercept(formula[[i]])) {
+                likelihood_term <-
+                    paste0("        target += categorical_logit_glm_lupmf(response_", i,
+                        "[t] | X[t][,J_", i, "], alpha_", i, ", beta_", i, "[t]);")
+            } else {
+                likelihood_term <-
+                    paste0("        target += categorical_logit_glm_lupmf(response_", i,
+                        "[t] | X[t][,J_", i, "], zeros_S_", i, ", beta_", i, "[t]);")
+            }
+
         } else {
             if (is_gaussian(formula[[i]]$family)) {
-                likelihood_term <-
-                    paste0("        target += normal_lupdf(response_", i,
-                        "[t] | X[t][,J_", i, "] * beta_", i, "[t], ", "sigma_", i, ");")
+                if (has_intercept(formula[[i]])) {
+                    likelihood_term <-
+                        paste0("        target += normal_lupdf(response_", i,
+                            "[t] | alpha_", i, " + X[t][,J_", i, "] * beta_", i, "[t], ", "sigma_", i, ");")
+                } else {
+                    likelihood_term <-
+                        paste0("        target += normal_lupdf(response_", i,
+                            "[t] | X[t][,J_", i, "] * beta_", i, "[t], ", "sigma_", i, ");")
+                }
             } else {
                 stop(paste0("Distribution ", formula[[i]]$family, "not yet supported."))
             }

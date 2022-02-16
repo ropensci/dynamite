@@ -41,19 +41,37 @@ test_form2 <- obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1) + lag(y3, 1), fami
 
 set.seed(1)
 T <- 20
-N <- 10
+N <- 500
 x <- matrix(rnorm(T*N), N, T)
-intercept <- t(replicate(N, cumsum(rnorm(T, sd = 0.2))))
+intercept <- 2
 y <- matrix(0, N, T+1)
 y[, 1] <- rnorm(N)
 for(t in 1:T) {
-    y[, t+1] <- intercept[, t] + x[, t] + 0.5 * y[, t] + rnorm(N, sd = 0.1)
+    y[, t+1] <- intercept + x[, t] + 0.5 * y[, t] + rnorm(N, sd = 0.1)
 }
 y <- y[, -1]
 ts.plot(t(y))
 d <- data.frame(y = c(t(y)), x = c(t(x)), ID = gl(N, T))
-
-#fit <- btvcm:::btvcmfit(obs(y ~ x, family = gaussian()) + lags() + splines(df = 5), d, ID, chains = 1,
-#    debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
+# #
+# fit <- btvcm:::btvcmfit(
+#     obs(y ~ x, family = gaussian()) +
+#         lags() +
+#         splines(df = 10, intercept = TRUE),
+#     d, ID, chains = 1)
+    #, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
 
 # print(fit$stanfit, "tau_1")
+# print(fit$stanfit, "lambda")
+# pairs(fit$stanfit, pars = c("lp__", "tau_1", "lambda", "sigma_1"), log = TRUE)
+#
+# b <- apply(extract(fit$stanfit, "beta_1")[[1]], 2:3, mean)
+# ts.plot(b)
+# ts.plot(intercept)
+
+# fitdebug <- btvcm:::btvcmfit(
+#     obs(y ~ x, family = gaussian()) +
+#         lags() +
+#         splines(df = 10, intercept = TRUE),
+#     d, ID, chains = 1,
+#  debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
+# head(fitdebug$model_matrix)
