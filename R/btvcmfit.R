@@ -134,7 +134,7 @@ convert_data <- function(formula, responses, group, time, model_matrix, all_rhs_
     K <- ncol(model_matrix)
     C <- length(get_resp(formula))
     X <- aperm(array(as.numeric(unlist(split(model_matrix, gl(T, 1, N * T)))),
-                     dim = c(N, K, T_full))[,,free_obs],
+                     dim = c(N, K, T_full))[,,free_obs, drop = FALSE],
                c(3, 1, 2))
     assigned <- attr(model_matrix, "assign")
     channel_vars <- list()
