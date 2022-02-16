@@ -121,7 +121,7 @@ convert_data <- function(formula, responses, group, time, model_matrix, all_rhs_
     }
     # knots <- seq(time[1 + fixed], timer[T_full], length.out = min(10, T_full - fixed))
     # knots <- knots[2:(length(knots)-1)]
-    Bs <- t(do.call(splines::bs, args = bs_opts))
+    Bs <- do.call(splines::bs, args = bs_opts)
     # Use sum-to-zero constraint so that we can separate mean beta and spline effect
     # based on Wood (2006) section 5.4.1 (QR version)
     Z <- qr.Q(qr(colSums(Bs)), complete = TRUE)[, 2:ncol(Bs)]
