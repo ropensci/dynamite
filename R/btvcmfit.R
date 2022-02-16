@@ -69,7 +69,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
     model_matrix <- model.matrix(all_rhs_formula, data)
     responses <- data[,resp_all,drop = FALSE]
     model_data <- convert_data(formula, responses, group, time, model_matrix, all_rhs_vars, fixed)
-    model_code <- create_blocks(formula)
+    model_code <- create_blocks(formula, indent = 2L)
     debug <- dots$debug
     model <- if (isTRUE(debug$no_compile)) {
         NULL
