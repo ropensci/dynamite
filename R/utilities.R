@@ -97,6 +97,9 @@ try_ <- function(..., type) {
     }
     dots <- list(...)
     arg_val <- dots[[1]]
+    if (is.null(arg_val)) {
+        return(NULL)
+    }
     arg_name <- names(dots)[1]
     as_type <- get(paste0("as.", type))
     out <- try(as_type(arg_val), silent = TRUE)
