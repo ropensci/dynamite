@@ -14,15 +14,21 @@
 #' @param Boundary.knots see [splines::bs()].
 #' @export
 splines <- function(shrinkage = TRUE, override = FALSE,
-                    df = NULL, knots = NULL, degree = 3, intercept = FALSE, Boundary.knots = NULL) {
+                    df = NULL, knots = NULL, degree = 3, intercept = FALSE,
+                    Boundary.knots = NULL, lb_tau = 0.001, noncentered = FALSE) {
     shrinkage <- try_(shrinkage, type = "logical")[1]
     override <- try_(override, type = "logical")[1]
     df <- try_(df, type = "integer")[1]
     knots <- try_(knots, type = "numeric")
     degree <- try_(degree, type = "integer")
+    noncentered <- try_(noncentered, type = "logical")[1]
+    lb_tau <- try_(lb_tau, type = "numeric")
+    # TODO: better error message
+    if (lb_tau < 0) stop_("Lower bound for 'tau' should be non-negative.")
     structure(
         list(shrinkage = shrinkage,
-             noncentered = FALSE, # TODO: allow user to switch
+             lb_tau = lb_tau,
+             noncentered = noncentered, # TODO: allow user to switch
              bs_opts = list(
                 df = df,
                 knots = knots,

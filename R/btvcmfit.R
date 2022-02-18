@@ -69,7 +69,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
     model_matrix <- model.matrix(all_rhs_formula, data)
     responses <- data[,resp_all,drop = FALSE]
     model_data <- convert_data(formula, responses, group, time, model_matrix, all_rhs_vars, fixed)
-    model_code <- create_blocks(formula)
+    model_code <- create_blocks(formula, indent = 2L)
     debug <- dots$debug
     model <- if (isTRUE(debug$no_compile)) {
         NULL
@@ -121,11 +121,11 @@ convert_data <- function(formula, responses, group, time, model_matrix, all_rhs_
     }
     # knots <- seq(time[1 + fixed], timer[T_full], length.out = min(10, T_full - fixed))
     # knots <- knots[2:(length(knots)-1)]
-    Bs <- do.call(splines::bs, args = bs_opts)
+    Bs <- t(do.call(splines::bs, args = bs_opts))
     # Use sum-to-zero constraint so that we can separate mean beta and spline effect
     # based on Wood (2006) section 5.4.1 (QR version)
-    Z <- qr.Q(qr(colSums(Bs)), complete = TRUE)[, 2:ncol(Bs)]
-    Bs <- t(Bs %*% Z)
+    # Z <- qr.Q(qr(colSums(Bs)), complete = TRUE)[, 2:ncol(Bs)]
+    # Bs <- t(Bs %*% Z)
     D <- nrow(Bs)
     N <- T_full
     if (groups) {

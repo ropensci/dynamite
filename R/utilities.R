@@ -40,6 +40,43 @@ formula_rhs <- function(x) {
     attr(terms(x), "term.labels")
 }
 
+# Collapse argument vector with a newline
+collapse_rows <- function(x) {
+    paste0(x, collapse = "\n")
+}
+
+# Paste argument vectors with a newline
+paste_rows <- function(...) {
+    pasted <- sapply(list(...), function(x) {
+        xlen <- length(x)
+        if (xlen == 0) {
+            ""
+        } else if (xlen == 1) {
+            x
+        } else {
+            paste0(x, collapse = "")
+        }
+    })
+    pasted <- pasted[nzchar(pasted)]
+    if (length(pasted)) {
+        collapse_rows(pasted)
+    } else {
+        character(0)
+    }
+}
+
+# Create an indenter
+indenter_ <- function(m) {
+    x <- rep(" ", m)
+    idts <- sapply(1:10, function(y) {
+        paste0(rep(x, y), collapse = "")
+    })
+    force(idts)
+    function(n) {
+        idts[[n]]
+    }
+}
+
 # Check if x is a string of the form I(.)
 is_as_is <- function(x) {
     grepl("I\\(.*\\)", x, perl = TRUE)
