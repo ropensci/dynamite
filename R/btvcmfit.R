@@ -35,9 +35,11 @@ btvcmfit <- function(formula, data, group, time, ...) {
         }
         for (j in 1:n_resp) {
             c(formula[[j]]$predictors) <- pred_lag
+            icpt <- attr(terms(formula[[j]]$formula), "intercept")
+            formula[[j]]$formula <- reformulate(formula[[j]]$predictors, intercept = icpt)
         }
-        c(pred_all) <- pred_lag
-        lag_map <- lag_map[lag_map$var %in% resp_all & lag_map$k <= fixed,]
+        #c(pred_all) <- pred_lag
+        lag_map <- lag_map[lag_map$def %in% resp_all & lag_map$k <= fixed,]
     }
     # Process lag terms defined via lag() in formulas
     if (nrow(lag_map)) {
@@ -57,18 +59,35 @@ btvcmfit <- function(formula, data, group, time, ...) {
             pred_lag <- paste0("I(lag_(", lag_map$def[i], ", ", lag_map$k[i], "))")
             for (j in 1:n_resp) {
                 formula[[j]]$predictors <- gsub(lag_map$src[i], pred_lag, formula[[j]]$predictors, fixed = TRUE)
+                icpt <- attr(terms(formula[[j]]$formula), "intercept")
+                formula[[j]]$formula <- reformulate(formula[[j]]$predictors, intercept = icpt)
             }
-            pred_all <- gsub(lag_map$src[i], pred_lag, pred_all, fixed = TRUE)
+            #pred_all <- gsub(lag_map$src[i], pred_lag, pred_all, fixed = TRUE)
         }
     }
-    all_rhs_vars <- unique(pred_all)
+    #all_rhs_vars <- unique(pred_all)
+    # resp_all <- get_resp(formula)
+    model_matrix <- NULL
+    assigned <- list()
+    if (n_resp > 1) {
+        model_matrices <- lapply(lapply(formula, "[[", "formula"), model.matrix, data)
+        model_matrix <- do.call(cbind, model_matrices)
+        u_names <- unique(colnames(model_matrix))
+        model_matrix <- model_matrix[,u_names]
+        assigned <- lapply(model_matrices, function(x) {
+            which(u_names %in% colnames(x))
+        })
+    } else {
+        model_matrix <- model.matrix(formula[[1]]$formula, data)
+        assigned <- list(1:ncol(model_matrix))
+    }
     # Place lags last
-    all_lags <- find_lags(all_rhs_vars, processed = TRUE)
-    all_rhs_vars <- c(all_rhs_vars[all_lags], all_rhs_vars[!all_lags])
-    all_rhs_formula <- reformulate(all_rhs_vars, intercept = FALSE)
-    model_matrix <- model.matrix(all_rhs_formula, data)
+    # all_lags <- find_lags(all_rhs_vars, processed = TRUE)
+    # all_rhs_vars <- c(all_rhs_vars[all_lags], all_rhs_vars[!all_lags])
+    # all_rhs_formula <- reformulate(all_rhs_vars, intercept = FALSE)
+    # model_matrix <- model.matrix(all_rhs_formula, data)
     responses <- data[,resp_all,drop = FALSE]
-    model_data <- convert_data(formula, responses, group, time, model_matrix, all_rhs_vars, fixed)
+    model_data <- convert_data(formula, responses, group, time, model_matrix, assigned, fixed)
     model_code <- create_blocks(formula, indent = 2L)
     debug <- dots$debug
     model <- if (isTRUE(debug$no_compile)) {
@@ -97,7 +116,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
 }
 
 # Convert data for Stan
-convert_data <- function(formula, responses, group, time, model_matrix, all_rhs_vars, fixed) {
+convert_data <- function(formula, responses, group, time, model_matrix, assigned, fixed) {
     T_full <- 0
     groups <- !is.null(group)
     if (groups) {
@@ -136,13 +155,11 @@ convert_data <- function(formula, responses, group, time, model_matrix, all_rhs_
     X <- aperm(array(as.numeric(unlist(split(model_matrix, gl(T_full, 1, N * T_full)))),
                      dim = c(N, K, T_full))[,,free_obs, drop = FALSE],
                c(3, 1, 2))
-    assigned <- attr(model_matrix, "assign")
+    # assigned <- attr(model_matrix, "assign")
     channel_vars <- list()
     for (i in seq_along(formula)) {
-        pred_pos <- which(all_rhs_vars %in% formula[[i]]$predictors)
-        pred_ix <- which(assigned %in% pred_pos)
-        channel_vars[[paste0("J_", i)]] <- pred_ix
-        channel_vars[[paste0("K_", i)]] <- length(pred_ix)
+        channel_vars[[paste0("J_", i)]] <- assigned[[i]]
+        channel_vars[[paste0("K_", i)]] <- length(assigned[[i]])
         if (groups) {
             resp_split <- split(responses[,formula[[i]]$response], group)
         } else {
