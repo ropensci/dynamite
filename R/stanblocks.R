@@ -131,13 +131,13 @@ create_parameters <- function(formula, idt, ...) {
                 # time-varying "intercept" can be handled as spline for x=rep(1,T)
                 # but then one needs to remove alpha with -1 or +0
                 if (has_intercept(formula[[i]])) {
-                    alpha_term <- c(idt(1), "    vector[S_", i, "] alpha_", i, ";")
+                    alpha_term <- c(idt(1), "vector[S_", i, "] alpha_", i, ";")
                 } else alpha_term <- character(0)
                 a_term <- c(idt(1), "row_vector[D] a_", i, "[S_", i, "- 1, K_", i, "];")
                 tau_term <- c(idt(1), "vector<lower=", lb, ">[K_", i, "] tau_", i, ";")
             } else {
                 if (has_intercept(formula[[i]])) {
-                    alpha_term <- c(idt(1), "    real alpha_", i, ";")
+                    alpha_term <- c(idt(1), "real alpha_", i, ";")
                 } else alpha_term <- character(0)
 
                 a_term <- c(idt(1), "row_vector[D] a_", i, "[K_", i, "];")
@@ -292,7 +292,7 @@ create_model <- function(formula, idt, ...) {
             }
 
             if (has_intercept(formula[[i]])) {
-                c(priors) <- paste0(idt(1), "    to_vector(alpha_", i, ") ~ normal(0, 2);")
+                c(priors) <- paste0(idt(1), "to_vector(alpha_", i, ") ~ normal(0, 2);")
             }
         } else {
             if (attr(formula, "splines")$noncentered) {
