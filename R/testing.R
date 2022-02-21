@@ -90,3 +90,4 @@ test_form2 <- obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1) + lag(y3, 1), fami
 # print(fit$stanfit, "alpha_1")
 # print(fit$stanfit, "beta_1")
 # print(fit$stanfit, "tau_1")
+#

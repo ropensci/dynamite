@@ -192,6 +192,7 @@ create_transformed_parameters <- function(formula, idt, ...) {
         # Is it enough to assume prior means are always zero and there's one common prior sd for all?
         if (attr(formula, "splines")$noncentered) {
             # TODO: could separate construction of a and beta so less repetition in the codes
+            # TODO: check whether lambda is used
             if (is_categorical(formula[[i]]$family)) {
                 spline_term <- paste_rows(
                     # TODO define zeros_K_i in transformed data?
@@ -263,7 +264,7 @@ create_model <- function(formula, idt, ...) {
     if (attr(formula, "splines")$shrinkage) {
         c(priors) <- paste0(idt(1), "lambda ~ std_normal();  // prior for shrinkage terms")
     }
-    c(priors) <- paste0(idt(1), "tau_", 1:length(formula), " ~ cauchy(0, 1);")
+    c(priors) <- paste0(idt(1), "tau_", 1:length(formula), " ~ normal(0, 1);")
     mtext <- character(0)
     for (i in seq_along(formula)) {
         if (is_categorical(formula[[i]]$family)) {
@@ -282,9 +283,13 @@ create_model <- function(formula, idt, ...) {
                 a_term <- paste_rows(
                     c(idt(1), "for (s in 1:(S_", i, " - 1)) {"),
                     c(idt(2), "for (k in 1:K_", i, ") {"),
-                    c(idt(3), "a_", i, "[s, k, 1] ~ std_normal();"),
+                    c(idt(3), "a_", i, "[s, k, 1] ~ normal(0, 5);"),
                     c(idt(3), "for(i in 2:D) {"),
-                    c(idt(4), "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], tau_", i, "[k]);"),
+                    if (attr(formula, "splines")$shrinkage) {
+                        c(idt(4), "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], lambda[i - 1] * tau_", i, "[k]);")
+                    } else {
+                        c(idt(4), "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], tau_", i, "[k]);")
+                    },
                     c(idt(3), "}"),
                     c(idt(2), "}"),
                     c(idt(1), "}")
@@ -305,9 +310,13 @@ create_model <- function(formula, idt, ...) {
                 # TODO prior for the first a
                 a_term <- paste_rows(
                     c(idt(1), "for (k in 1:K_", i, ") {"),
-                    c(idt(2), "a_", i, "[k, 1] ~ std_normal();"),
+                    c(idt(2), "a_", i, "[k, 1] ~ normal(0, 5);"),
                     c(idt(2), "for(i in 2:D) {"),
-                    c(idt(3), "a_", i, "[k, i] ~ normal(a_", i,"[k, i - 1], tau_", i, "[k]);"),
+                    if (attr(formula, "splines")$shrinkage) {
+                        c(idt(3), "a_", i, "[k, i] ~ normal(a_", i,"[k, i - 1], lambda[i - 1] * tau_", i, "[k]);")
+                    } else {
+                        c(idt(3), "a_", i, "[k, i] ~ normal(a_", i,"[k, i - 1], tau_", i, "[k]);")
+                    },
                     c(idt(2), "}"),
                     c(idt(1), "}")
                 )
