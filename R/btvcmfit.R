@@ -78,7 +78,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
         if (any(ind <- u_names == "(Intercept)")) {
             u_names <- u_names[-which(ind)]
         }
-        model_matrix <- model_matrix[, u_names]
+        model_matrix <- model_matrix[, u_names, drop = FALSE]
         assigned <- lapply(model_matrices, function(x) {
             which(u_names %in% colnames(x))
         })
@@ -88,7 +88,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
         u_names <- colnames(model_matrix)
         if (any(ind <- u_names == "(Intercept)")) {
             u_names <- u_names[-which(ind)]
-            model_matrix <- model_matrix[, u_names]
+            model_matrix <- model_matrix[, u_names, drop = FALSE]
         }
         assigned <- list(1:ncol(model_matrix))
     }
