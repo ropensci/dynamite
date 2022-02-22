@@ -10,11 +10,10 @@
 #' @param df see [splines::bs()].
 #' @param knots see [splines::bs()].
 #' @param degree see [splines::bs()].
-#' @param intercept see [splines::bs()].
 #' @param Boundary.knots see [splines::bs()].
 #' @export
 splines <- function(shrinkage = TRUE, override = FALSE,
-                    df = NULL, knots = NULL, degree = 3, intercept = FALSE,
+                    df = NULL, knots = NULL, degree = 3,
                     Boundary.knots = NULL, lb_tau = 0.001, noncentered = FALSE) {
     shrinkage <- try_(shrinkage, type = "logical")[1]
     override <- try_(override, type = "logical")[1]
@@ -28,12 +27,14 @@ splines <- function(shrinkage = TRUE, override = FALSE,
     structure(
         list(shrinkage = shrinkage,
              lb_tau = lb_tau,
-             noncentered = noncentered, # TODO: allow user to switch
+             noncentered = noncentered,
              bs_opts = list(
                 df = df,
                 knots = knots,
                 degree = degree,
-                intercept = intercept,
+                # Always include intercept as we don't have separate intercept for betas
+                # Now first spline coefficient corresponds to beta_1
+                intercept = TRUE,
                 Boundary.knots = Boundary.knots
             )
         ),
