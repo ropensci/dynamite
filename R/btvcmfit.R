@@ -73,14 +73,26 @@ btvcmfit <- function(formula, data, group, time, ...) {
         model_matrices <- lapply(lapply(formula, "[[", "formula"), model.matrix, data)
         model_matrix <- do.call(cbind, model_matrices)
         u_names <- unique(colnames(model_matrix))
-        model_matrix <- model_matrix[,u_names]
+        # TODO: Is intercept always named as (Intercept)?
+        # checking assign attributes for 0 is an another option
+        if (any(ind <- u_names == "(Intercept)")) {
+            u_names <- u_names[-which(ind)]
+        }
+        model_matrix <- model_matrix[, u_names]
         assigned <- lapply(model_matrices, function(x) {
             which(u_names %in% colnames(x))
         })
+
     } else {
         model_matrix <- model.matrix(formula[[1]]$formula, data)
+        u_names <- colnames(model_matrix)
+        if (any(ind <- u_names == "(Intercept)")) {
+            u_names <- u_names[-which(ind)]
+            model_matrix <- model_matrix[, u_names]
+        }
         assigned <- list(1:ncol(model_matrix))
     }
+
     # Place lags last
     # all_lags <- find_lags(all_rhs_vars, processed = TRUE)
     # all_rhs_vars <- c(all_rhs_vars[all_lags], all_rhs_vars[!all_lags])
