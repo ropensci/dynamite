@@ -115,11 +115,12 @@ btvcmfit <- function(formula, data, group, time, ...) {
             coef_names = attr(model_matrix, "coef_names"),
             # TODO what else do we need to return?
             time = if(is.null(time)) 1:model_data$T else time[-(1:fixed)],
-            model_data = model_data, # TODO: remove X and responses?
+            model_data = model_data, # TODO: remove X and responses? as.data.frame needs just D
             prediction_basis = list(
                 formula = formula,
                 fixed = fixed,
                 past = model_matrix[(n_rows - fixed):n_rows,],
+                start = model_matrix[1:fixed,], # Needed for some posterior predictive checks?
                 ord = data_names[!data_names %in% c(group_var, time_var)]
             )
         ),
@@ -146,6 +147,7 @@ full_model.matrix <- function(formula, data, resp_all) {
         which(u_names %in% colnames(x))
     })
     # TODO: simplify I(lag(variable, 1)) to something shorter, e.g. lag_1(variable)?
+    # TODO: shorten variable and or channel name if they are very long?
     attr(model_matrix, "coef_names") <- lapply(seq_along(resp_all), function(i) {
          paste0(resp_all[i], "_", u_names[attr(model_matrix, "assign")[[i]]])
     })
