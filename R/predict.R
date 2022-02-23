@@ -29,7 +29,7 @@ predict.btvcmfit_counterfactual <- function(bf, newdata) {
             }
         }
     }
-    newdata[,resp_all]
+    newdata[, resp_all, drop = FALSE]
 }
 
 predict.btvcmfit_forecast <- function(bf, newdata) {
