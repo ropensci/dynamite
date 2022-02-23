@@ -61,7 +61,7 @@ get_form <- function(x) {
     lapply(x, "[[", "formula")
 }
 
-# Check whether the formula contain intercept
+# Check whether the formula contains an intercept
 has_intercept <- function(x) {
     attr(terms(x$formula), "intercept") == 1
 }

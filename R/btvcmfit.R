@@ -4,38 +4,36 @@
 # TODO add options to return just the created model code or data without compiling & sampling for debugging etc
 btvcmfit <- function(formula, data, group, time, ...) {
     dots <- list(...)
+    group_var <- NULL
+    time_var <- NULL
     if (missing(group)) {
         group <- NULL
     } else {
         # TODO allow group = c(ID1, ID2, ...) etc.
-        group <- data[,deparse(substitute(group)),drop = FALSE]
+        group_var <- deparse(substitute(group))
+        group <- data[, group_var, drop = FALSE]
     }
     if (missing(time)) {
         time <- NULL
     } else {
         # TODO is there a better way?
-        time <- sort(unique(data[,deparse(substitute(time))]))
+        time_var <- deparse(substitute(time))
+        time <- sort(unique(data[, time_var]))
     }
     resp_all <- get_resp(formula)
-    pred_all <- unlist(get_pred(formula))
     n_rows <- nrow(data)
     n_resp <- length(resp_all)
-    lag_map <- extract_lags(pred_all)
-    lag_resp_map <- replicate(n_resp, list())
-    data_vars <- names(data)
+    lag_map <- extract_lags(unlist(get_pred(formula)))
+    data_names <- names(data)
     fixed <- 0L
     # Process lag terms defined via lags()
     if (!is.null(lag_all <- attr(formula, "lags"))) {
         fixed <- lag_all$k
         pred_lag <- character(fixed * n_resp)
-        lag_resp <- resp_all
         for (i in seq_len(fixed)) {
             for (j in seq_len(n_resp)) {
                 ix <- (i-1)*n_resp + j
                 pred_lag[ix] <- paste0("I(lag_(", resp_all[j], ", ", i, "))")
-                for (k in seq_len(n_resp)) {
-                    lag_resp_map[[k]][[pred_lag[ix]]] <- list(response = resp_all[j], shift = i)
-                }
             }
         }
         for (j in seq_len(n_resp)) {
@@ -43,7 +41,6 @@ btvcmfit <- function(formula, data, group, time, ...) {
             icpt <- attr(terms(formula[[j]]$formula), "intercept")
             formula[[j]]$formula <- reformulate(formula[[j]]$predictors, intercept = icpt)
         }
-        #c(pred_all) <- pred_lag
         lag_map <- lag_map[lag_map$def %in% resp_all & lag_map$k <= fixed,]
     }
     # Process lag terms defined via lag() in formulas
@@ -65,56 +62,43 @@ btvcmfit <- function(formula, data, group, time, ...) {
             for (j in seq_len(n_resp)) {
                 formula[[j]]$predictors <- gsub(lag_map$src[i], pred_lag, formula[[j]]$predictors, fixed = TRUE)
                 icpt <- attr(terms(formula[[j]]$formula), "intercept")
-                formula[[j]]$formula <- reformulate(formula[[j]]$predictors, intercept = icpt)
-                if (lag_map$def[i] %in% resp_all && pred_lag %in% formula[[j]]$predictors) {
-                    lag_resp_map[[j]][[pred_lag]] <- list(response = lag_map$def[i], shift = lag_map$k[i])
-                }
-            }
-            #pred_all <- gsub(lag_map$src[i], pred_lag, pred_all, fixed = TRUE)
-        }
-    }
-    #all_rhs_vars <- unique(pred_all)
-    # resp_all <- get_resp(formula)
-    model_matrix <- NULL
-    assigned <- list()
-    model_matrices <- list()
-    for (i in seq_len(n_resp)) {
-        model_matrices[[i]] <- model.matrix(formula[[i]]$formula, data)
-        if (any(ind <- formula[[i]]$predictors %in% names(lag_resp_map[[i]]))) {
-            ind <- which(ind)
-            assign_i <- attr(model_matrices[[i]], "assign")
-            cols_i <- colnames(model_matrices[[i]])
-            for (j in seq_along(ind)) {
-                pred <- formula[[i]]$predictors[ind[j]]
-                lag_cols <- which(assign_i == ind[j])
-                lag_resp_map[[i]][[pred]]$cols <- cols_i[lag_cols]
             }
         }
     }
-    model_matrix <- do.call(cbind, model_matrices)
-    u_names <- unique(colnames(model_matrix))
-    # TODO: Is intercept always named as (Intercept)?
-    # checking assign attributes for 0 is an another option
-    if (any(ind <- u_names == "(Intercept)")) {
-        u_names <- u_names[-which(ind)]
-    }
-    model_matrix <- model_matrix[, u_names]
-    assigned <- lapply(model_matrices, function(x) {
-        which(u_names %in% colnames(x))
-    })
-    for (i in seq_len(n_resp)) {
-        for (j in seq_along(lag_resp_map[[i]])) {
-            lag_resp_map[[i]][[j]]$cols <- which(u_names %in% lag_resp_map[[i]][[j]]$cols)
-        }
-    }
-    # Place lags last
-    # all_lags <- find_lags(all_rhs_vars, processed = TRUE)
-    # all_rhs_vars <- c(all_rhs_vars[all_lags], all_rhs_vars[!all_lags])
-    # all_rhs_formula <- reformulate(all_rhs_vars, intercept = FALSE)
-    # model_matrix <- model.matrix(all_rhs_formula, data)
-    responses <- data[,resp_all,drop = FALSE]
-    model_data <- convert_data(formula, responses, group, time, model_matrix, assigned, fixed)
-    model_code <- create_blocks(formula, indent = 2L)
+#    model_matrices <- list()
+#    for (i in seq_len(n_resp)) {
+#        model_matrices[[i]] <- model.matrix(formula[[i]]$formula, data)
+#        if (any(ind <- formula[[i]]$predictors %in% names(lag_resp_map[[i]]))) {
+#            ind <- which(ind)
+#            assign_i <- attr(model_matrices[[i]], "assign")
+#            cols_i <- colnames(model_matrices[[i]])
+#            for (j in seq_along(ind)) {
+#                pred <- formula[[i]]$predictors[ind[j]]
+#                lag_cols <- which(assign_i == ind[j])
+#                lag_resp_map[[i]][[pred]]$cols <- cols_i[lag_cols]
+#            }
+#        }
+#    }
+#    model_matrix <- do.call(cbind, model_matrices)
+#    u_names <- unique(colnames(model_matrix))
+#    # TODO: Is intercept always named as (Intercept)?
+#    # checking assign attributes for 0 is an another option
+#    if (any(ind <- u_names == "(Intercept)")) {
+#        u_names <- u_names[-which(ind)]
+#    }
+#    model_matrix <- model_matrix[, u_names]
+#    assigned <- lapply(model_matrices, function(x) {
+#        which(u_names %in% colnames(x))
+#    })
+#    for (i in seq_len(n_resp)) {
+#        for (j in seq_along(lag_resp_map[[i]])) {
+#            lag_resp_map[[i]][[j]]$cols <- which(u_names %in% lag_resp_map[[i]][[j]]$cols)
+#        }
+# }
+    responses <- data[, resp_all, drop = FALSE]
+    model_matrix <- full_model.matrix(formula, data)
+    model_data <- convert_data(formula, responses, group, time, fixed, model_matrix)
+    model_code <- create_blocks(formula, indent = 2L, model_data)
     debug <- dots$debug
     model <- if (isTRUE(debug$no_compile)) {
         NULL
@@ -129,9 +113,9 @@ btvcmfit <- function(formula, data, group, time, ...) {
             stanfit = stanfit,
             prediction_basis = list(
                 formula = formula,
+                fixed = fixed,
                 past = model_matrix[(n_rows - fixed):n_rows,],
-                map = lag_resp_map,
-                ord = names(data)
+                ord = data_names[!data_names %in% c(group_var, time_var)]
             )
         ),
         class = "btvcmfit"
@@ -147,8 +131,20 @@ btvcmfit <- function(formula, data, group, time, ...) {
     out
 }
 
+# Combine model.matrix objects of all formulas of a btvcmformula into one
+full_model.matrix <- function(formula, data) {
+    model_matrices <- lapply(lapply(formula, "[[", "formula"), model.matrix, data)
+    model_matrix <- do.call(cbind, model_matrices)
+    u_names <- unique(colnames(model_matrix))
+    model_matrix <- model_matrix[, u_names, drop = FALSE]
+    attr(model_matrix, "assign") <- lapply(model_matrices, function(x) {
+        which(u_names %in% colnames(x))
+    })
+    model_matrix
+}
+
 # Convert data for Stan
-convert_data <- function(formula, responses, group, time, model_matrix, assigned, fixed) {
+convert_data <- function(formula, responses, group, time, fixed, model_matrix) {
     T_full <- 0
     groups <- !is.null(group)
     if (groups) {
@@ -163,20 +159,13 @@ convert_data <- function(formula, responses, group, time, model_matrix, assigned
     if (is.null(time)) {
         time <- 1:T_full
     }
-    # TODO take spline definition into account here
     free_obs <- (fixed + 1):T_full
     bs_opts <- attr(formula, "splines")$bs_opts
     bs_opts$x <- time[free_obs]
     if (is.null(bs_opts$Boundary.knots)) {
         bs_opts$Boundary.knots <- range(bs_opts$x)
     }
-    # knots <- seq(time[1 + fixed], timer[T_full], length.out = min(10, T_full - fixed))
-    # knots <- knots[2:(length(knots)-1)]
     Bs <- t(do.call(splines::bs, args = bs_opts))
-    # Use sum-to-zero constraint so that we can separate mean beta and spline effect
-    # based on Wood (2006) section 5.4.1 (QR version)
-    # Z <- qr.Q(qr(colSums(Bs)), complete = TRUE)[, 2:ncol(Bs)]
-    # Bs <- t(Bs %*% Z)
     D <- nrow(Bs)
     N <- T_full
     if (groups) {
@@ -187,8 +176,10 @@ convert_data <- function(formula, responses, group, time, model_matrix, assigned
     X <- aperm(array(as.numeric(unlist(split(model_matrix, gl(T_full, 1, N * T_full)))),
                      dim = c(N, K, T_full))[,,free_obs, drop = FALSE],
                c(3, 1, 2))
-    # assigned <- attr(model_matrix, "assign")
+    assigned <- attr(model_matrix, "assign")
     channel_vars <- list()
+    sd_x <- apply(X[1, , ], 2, sd)
+    sd_x[sd_x == 0] <- 1 # Intercept and other constants at time 1
     for (i in seq_along(formula)) {
         channel_vars[[paste0("J_", i)]] <- assigned[[i]]
         channel_vars[[paste0("K_", i)]] <- length(assigned[[i]])
@@ -200,8 +191,24 @@ convert_data <- function(formula, responses, group, time, model_matrix, assigned
         Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))[free_obs, , drop = FALSE]
         channel_vars[[paste0("response_", i)]] <- Y
         if (is_categorical(formula[[i]]$family)) {
-            channel_vars[[paste0("S_", i)]] <- length(unique(as.vector(Y)))
+            S_i <- length(unique(as.vector(Y)))
+            K_i <- length(assigned[[i]])
+            prior_sds <- matrix(2 / sd_x[assigned[[i]]], K_i, S_i)
+            channel_vars[[paste0("S_", i)]] <- S_i
+            channel_vars[[paste0("a_prior_mean_", i)]] <- matrix(0, K_i, S_i)
+            channel_vars[[paste0("a_prior_sd_", i)]] <- prior_sds
         }
+        if (is_gaussian(formula[[i]]$family)) {
+            sd_y <- sd(Y)
+            channel_vars[[paste0("a_prior_mean_", i)]] <- rep(0, length(assigned[[i]]))
+            # TODO adjust prior mean for the intercept term under the assumption that other betas/x are 0
+            #if(model_matrix[])
+            channel_vars[[paste0("a_prior_sd_", i)]] <- 2 * sd_y / sd_x[assigned[[i]]]
+            channel_vars[[paste0("sigma_scale_", i)]] <- 1 / sd_y
+        }
+        # TODO switch case other families, with Gamma shape, negbin dispersion
+        # TODO or something like do.call(paste0("prepare_channel_vars_", formula[[i]]$family, list(Y, S_i, K_i, i ...))) for branchless
+
     }
     T <- T_full - fixed
     c(named_list(T, N, C, K, X, D, Bs), channel_vars)
