@@ -56,16 +56,23 @@ create_data <- function(formula, idt, ...) {
         mtext <- paste_rows(mtext, c(idt(1), "int<lower=1> K_", i, ";"))
         # index vector of covariates related to channel i
         mtext <- paste_rows(mtext, c(idt(1), "int J_", i, "[K_", i, "];"))
-
         # TODO, need to add other distribution-specific components as well
         if (is_categorical(formula[[i]]$family)) {
             mtext <- paste_rows(mtext, c(idt(1), "int<lower=0> S_", i, ";"))
+            mtext <- paste_rows(mtext, c(idt(1), "matrix[K_", i, ", S_", i, "] a_prior_mean_", i, ";"))
+            mtext <- paste_rows(mtext, c(idt(1), "matrix[K_", i, ", S_", i, "] a_prior_sd_", i, ";"))
+        } else {
+            mtext <- paste_rows(mtext, c(idt(1), "vector[K_", i, "] a_prior_mean_", i, ";"))
+            mtext <- paste_rows(mtext, c(idt(1), "vector[K_", i, "] a_prior_sd_", i, ";"))
+            if (is_gaussian(formula[[i]]$family)) {
+                mtext <- paste_rows(mtext, c(idt(1), "real<lower=0> sigma_scale_", i, ";"))
+            }
+            if (is_binomial(formula[[i]]$family)) {
+                # TODO, add number of trials
+                stop("Binomial distribution not yet supported.")
+            }
+            # TODO: shape for gamma, dispersion for negbin
         }
-        if (is_binomial(formula[[i]]$family)) {
-            # TODO, add number of trials
-            stop("Binomial distribution not yet supported.")
-        }
-        # TODO: Exposure for poisson? Or perhaps better to have a general support for the offset term
     }
     paste_rows("data {", mtext, "}")
 }
@@ -102,16 +109,14 @@ create_parameters <- function(formula, idt, ...) {
         for (i in seq_along(formula)) {
 
             if (is_categorical(formula[[i]]$family)) {
-                alpha_term <- c(idt(1), "vector[S_", i, "] alpha_", i, ";")
                 a_raw_term <- c(idt(1), "row_vector[D] a_raw_", i, "[S_", i, "- 1, K_", i, "];")
                 # Do we want separate tau for K coefficients or K * (S - 1) coefficients?
                 tau_term <- c(idt(1), "vector<lower=", lb, ">[K_", i, "] tau_", i, ";")
             } else {
-                alpha_term <- c(idt(1), "real alpha_", i, ";")
                 a_raw_term <- c(idt(1), "row_vector[D] a_raw_", i, "[K_", i, "];")
                 tau_term <- c(idt(1), "vector<lower=", lb, ">[K_", i, "] tau_", i, ";")
             }
-            mtext <- paste_rows(mtext, alpha_term, a_raw_term, tau_term)
+            mtext <- paste_rows(mtext, a_raw_term, tau_term)
             if (is_gaussian(formula[[i]]$family)) {
                 sigma_term <- c(idt(1), "real<lower=0> sigma_", i, ";")
                 mtext <- paste_rows(mtext, sigma_term)
@@ -127,23 +132,13 @@ create_parameters <- function(formula, idt, ...) {
         for (i in seq_along(formula)) {
 
             if (is_categorical(formula[[i]]$family)) {
-                # constant intercept alpha
-                # time-varying "intercept" can be handled as spline for x=rep(1,T)
-                # but then one needs to remove alpha with -1 or +0
-                if (has_intercept(formula[[i]])) {
-                    alpha_term <- c(idt(1), "vector[S_", i, "] alpha_", i, ";")
-                } else alpha_term <- character(0)
                 a_term <- c(idt(1), "row_vector[D] a_", i, "[S_", i, "- 1, K_", i, "];")
                 tau_term <- c(idt(1), "vector<lower=", lb, ">[K_", i, "] tau_", i, ";")
             } else {
-                if (has_intercept(formula[[i]])) {
-                    alpha_term <- c(idt(1), "real alpha_", i, ";")
-                } else alpha_term <- character(0)
-
                 a_term <- c(idt(1), "row_vector[D] a_", i, "[K_", i, "];")
                 tau_term <- c(idt(1), "vector<lower=", lb, ">[K_", i, "] tau_", i, ";")
             }
-            mtext <- paste_rows(mtext, alpha_term, a_term, tau_term)
+            mtext <- paste_rows(mtext, a_term, tau_term)
 
             if (is_gaussian(formula[[i]]$family)) {
                 sigma_term <- c(idt(1), "real<lower=0> sigma_", i, ";")
@@ -186,13 +181,12 @@ create_transformed_parameters <- function(formula, idt, ...) {
     a_terms <- collapse_rows(a_terms)
     mtext <- paste_rows(beta_terms, a_terms)
     for (i in seq_along(formula)) {
-        # TODO N(0, 1) prior for first a, prior mean and sd should be user-defined?
-        # i.e. a_i[s, k, 1] = prior_mean_a_i[s, k] + prior_sd_a_i[s, k] * a_raw_i[s, k, 1]
-        # where prior_mean_a_i and prior_sd_a_i are defined in the data block
-        # Is it enough to assume prior means are always zero and there's one common prior sd for all?
+
         if (attr(formula, "splines")$noncentered) {
             # TODO: could separate construction of a and beta so less repetition in the codes
             # TODO: check whether lambda is used
+            # TODO use prior definitions
+            # i.e. a_i[s, k, 1] = a_prior_mean_i[s, k] + a_prior_sd_i[s, k] * a_raw_i[s, k, 1]
             if (is_categorical(formula[[i]]$family)) {
                 spline_term <- paste_rows(
                     # TODO define zeros_K_i in transformed data?
@@ -227,7 +221,6 @@ create_transformed_parameters <- function(formula, idt, ...) {
         } else {
             if (is_categorical(formula[[i]]$family)) {
                 spline_term <- paste_rows(
-                    # TODO define zeros_K_i in transformed data?
                     c(idt(1), "for (s in 1:(S_", i, " - 1)) {"),
                     c(idt(2), "for (k in 1:K_", i, ") {"),
                     c(idt(3), "for (t in 1:T) {"),
@@ -279,11 +272,11 @@ create_model <- function(formula, idt, ...) {
                     c(idt(1), "}")
                 )
             } else {
-                # TODO prior for the first a
+                # Prior for the first a (beta) is always normal given the RW prior
                 a_term <- paste_rows(
                     c(idt(1), "for (s in 1:(S_", i, " - 1)) {"),
                     c(idt(2), "for (k in 1:K_", i, ") {"),
-                    c(idt(3), "a_", i, "[s, k, 1] ~ normal(0, 5);"),
+                    c(idt(3), "a_", i, "[s, k, 1] ~ normal(a_prior_mean_", i, "[k, s], a_prior_sd_", i, "[k, s]);"),
                     c(idt(3), "for(i in 2:D) {"),
                     if (attr(formula, "splines")$shrinkage) {
                         c(idt(4), "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], lambda[i - 1] * tau_", i, "[k]);")
@@ -295,10 +288,6 @@ create_model <- function(formula, idt, ...) {
                     c(idt(1), "}")
                 )
             }
-
-            if (has_intercept(formula[[i]])) {
-                c(priors) <- paste0(idt(1), "to_vector(alpha_", i, ") ~ normal(0, 2);")
-            }
         } else {
             if (attr(formula, "splines")$noncentered) {
                 a_term <- paste_rows(
@@ -307,10 +296,10 @@ create_model <- function(formula, idt, ...) {
                     c(idt(1), "}")
                 )
             } else {
-                # TODO prior for the first a
+                # Prior for the first a (beta) is always normal given the RW prior
                 a_term <- paste_rows(
                     c(idt(1), "for (k in 1:K_", i, ") {"),
-                    c(idt(2), "a_", i, "[k, 1] ~ normal(0, 5);"),
+                    c(idt(2), "a_", i, "[k, 1] ~ normal(a_prior_mean_", i, "[k], a_prior_sd_", i, "[k]);"),
                     c(idt(2), "for(i in 2:D) {"),
                     if (attr(formula, "splines")$shrinkage) {
                         c(idt(3), "a_", i, "[k, i] ~ normal(a_", i,"[k, i - 1], lambda[i - 1] * tau_", i, "[k]);")
@@ -321,17 +310,12 @@ create_model <- function(formula, idt, ...) {
                     c(idt(1), "}")
                 )
             }
-            # TODO user defined prior for the mean value of the regression coefficients
-
-            if (has_intercept(formula[[i]])) {
-                c(priors) <- paste0(idt(1), "alpha_", i, " ~ normal(0, 2);")
-            }
         }
         mtext <- paste_rows(mtext, a_term)
 
         if (is_gaussian(formula[[i]]$family)) {
-            # TODO: User should be able to define this prior arbitrarily
-            sigma_term <- c(idt(1), "sigma_", i, " ~ std_normal();")
+            # TODO: User should be able to define this prior arbitrarily?
+            sigma_term <- c(idt(1), "sigma_", i, " ~ exponential(sigma_scale_", i, ");")
             mtext <- paste_rows(mtext, sigma_term)
         }
     }
@@ -342,32 +326,25 @@ create_model <- function(formula, idt, ...) {
     # or don't create the likelihood terms below if user has opted for prior sampling
     for (i in seq_along(formula)) {
         if (is_categorical(formula[[i]]$family)) {
-            if (has_intercept(formula[[i]])) {
-                likelihood_term <-
-                    c(idt(2), "target += categorical_logit_glm_lupmf(response_", i,
-                        "[t] | X[t][,J_", i, "], alpha_", i, ", beta_", i, "[t]);")
-            } else {
-                likelihood_term <-
-                    c(idt(2), "target += categorical_logit_glm_lupmf(response_", i,
-                        "[t] | X[t][,J_", i, "], zeros_S_", i, ", beta_", i, "[t]);")
-            }
 
+            likelihood_term <-
+                c(idt(2), "target += categorical_logit_glm_lupmf(response_", i,
+                    "[t] | X[t][,J_", i, "], zeros_S_", i, ", beta_", i, "[t]);")
+
+            beta_regularisation <- c(idt(2), "to_vector(beta_", i, "[t]) ~ std_normal();")
         } else {
             if (is_gaussian(formula[[i]]$family)) {
-                if (has_intercept(formula[[i]])) {
-                    likelihood_term <-
-                        c(idt(2), "target += normal_lupdf(response_", i,
-                            "[t] | alpha_", i, " + X[t][,J_", i, "] * beta_", i, "[t], ", "sigma_", i, ");")
-                } else {
-                    likelihood_term <-
-                        c(idt(2), "target += normal_lupdf(response_", i,
-                            "[t] | X[t][,J_", i, "] * beta_", i, "[t], ", "sigma_", i, ");")
-                }
+
+                likelihood_term <-
+                    c(idt(2), "target += normal_lupdf(response_", i,
+                        "[t] | X[t][,J_", i, "] * beta_", i, "[t], ", "sigma_", i, ");")
+
+                beta_regularisation <- c(idt(2), "beta_", i, "[t] ~ std_normal();")
             } else {
                 stop(paste0("Distribution ", formula[[i]]$family, "not yet supported."))
             }
         }
-        mtext <- paste_rows(mtext, paste_rows(c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}")))
+        mtext <- paste_rows(mtext, paste_rows(c(idt(1), "for (t in 1:T) {"), likelihood_term, beta_regularisation, c(idt(1) ,"}")))
     }
 
     mtext <- paste_rows("model {", mtext, "}")

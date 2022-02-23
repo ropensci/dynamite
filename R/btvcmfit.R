@@ -73,11 +73,6 @@ btvcmfit <- function(formula, data, group, time, ...) {
         model_matrices <- lapply(lapply(formula, "[[", "formula"), model.matrix, data)
         model_matrix <- do.call(cbind, model_matrices)
         u_names <- unique(colnames(model_matrix))
-        # TODO: Is intercept always named as (Intercept)?
-        # checking assign attributes for 0 is an another option
-        if (any(ind <- u_names == "(Intercept)")) {
-            u_names <- u_names[-which(ind)]
-        }
         model_matrix <- model_matrix[, u_names, drop = FALSE]
         assigned <- lapply(model_matrices, function(x) {
             which(u_names %in% colnames(x))
@@ -86,10 +81,6 @@ btvcmfit <- function(formula, data, group, time, ...) {
     } else {
         model_matrix <- model.matrix(formula[[1]]$formula, data)
         u_names <- colnames(model_matrix)
-        if (any(ind <- u_names == "(Intercept)")) {
-            u_names <- u_names[-which(ind)]
-            model_matrix <- model_matrix[, u_names, drop = FALSE]
-        }
         assigned <- list(1:ncol(model_matrix))
     }
 
@@ -98,9 +89,9 @@ btvcmfit <- function(formula, data, group, time, ...) {
     # all_rhs_vars <- c(all_rhs_vars[all_lags], all_rhs_vars[!all_lags])
     # all_rhs_formula <- reformulate(all_rhs_vars, intercept = FALSE)
     # model_matrix <- model.matrix(all_rhs_formula, data)
-    responses <- data[,resp_all,drop = FALSE]
+    responses <- data[, resp_all, drop = FALSE]
     model_data <- convert_data(formula, responses, group, time, model_matrix, assigned, fixed)
-    model_code <- create_blocks(formula, indent = 2L)
+    model_code <- create_blocks(formula, indent = 2L, model_data)
     debug <- dots$debug
     model <- if (isTRUE(debug$no_compile)) {
         NULL
@@ -163,6 +154,8 @@ convert_data <- function(formula, responses, group, time, model_matrix, assigned
                c(3, 1, 2))
     # assigned <- attr(model_matrix, "assign")
     channel_vars <- list()
+    sd_x <- apply(X[1, , ], 2, sd)
+    sd_x[sd_x == 0] <- 1 # Intercept and other constants at time 1
     for (i in seq_along(formula)) {
         channel_vars[[paste0("J_", i)]] <- assigned[[i]]
         channel_vars[[paste0("K_", i)]] <- length(assigned[[i]])
@@ -174,8 +167,23 @@ convert_data <- function(formula, responses, group, time, model_matrix, assigned
         Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))[free_obs, , drop = FALSE]
         channel_vars[[paste0("response_", i)]] <- Y
         if (is_categorical(formula[[i]]$family)) {
-            channel_vars[[paste0("S_", i)]] <- length(unique(as.vector(Y)))
+            S_i <- length(unique(as.vector(Y)))
+            K_i <- length(assigned[[i]])
+            prior_sds <- matrix(2 / sd_x[assigned[[i]]], K_i, S_i)
+            channel_vars[[paste0("S_", i)]] <- S_i
+            channel_vars[[paste0("a_prior_mean_", i)]] <- matrix(0, K_i, S_i)
+            channel_vars[[paste0("a_prior_sd_", i)]] <- prior_sds
         }
+        if (is_gaussian(formula[[i]]$family)) {
+            sd_y <- sd(Y)
+            channel_vars[[paste0("a_prior_mean_", i)]] <- rep(0, length(assigned[[i]]))
+            # TODO adjust prior mean for the intercept term under the assumption that other betas/x are 0
+            #if(model_matrix[])
+            channel_vars[[paste0("a_prior_sd_", i)]] <- 2 * sd_y / sd_x[assigned[[i]]]
+            channel_vars[[paste0("sigma_scale_", i)]] <- 1 / sd_y
+        }
+        # TODO switch case other families, with Gamma shape, negbin dispersion
+
     }
     T <- T_full - fixed
     c(named_list(T, N, C, K, X, D, Bs), channel_vars)
