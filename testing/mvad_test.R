@@ -2,21 +2,24 @@ library(TraMineR)
 library(dplyr)
 library(tidyr)
 data(mvad)
-n_ids <- 250
-d <- pivot_longer(mvad[1:n_ids,], 15:86, "time")
+d <- pivot_longer(mvad, 15:86, "time")
 d$time <- rep(1:72, length = nrow(d))
 fit <- btvcm:::btvcmfit(
     obs(value ~ 1, family = categorical()) + lags() +
-        splines(df = 5, intercept = TRUE, shrinkage = TRUE),
+        splines(df = 20, shrinkage = FALSE),
     d, id, chains = 1, refresh = 1)
 
 print(fit$stanfit, "tau_1")
-print(fit$stanfit, "alpha_1")
 b <- apply(rstan::extract(fit$stanfit, "beta_1")[[1]], 2:4, mean)
 ts.plot(b[, , 1])
 ts.plot(b[, , 2])
 ts.plot(b[, , 3])
 ts.plot(b[, , 4])
+
+fit2 <- btvcm:::btvcmfit(
+    obs(value ~ 1, family = categorical()) + lags() +
+        splines(df = 20, shrinkage = TRUE),
+    d, id, chains = 1, refresh = 1)
 
 d2 <- d %>% select(id, time, value)
 # add fake series with random transitions

@@ -8,18 +8,19 @@ the random walk prior of the spline coefficients, and the this "global" shrinkag
 splines. Need to avoid confusion with the traditional global-local shrinkage priories (e.g. horseshoe)}
 \usage{
 splines(
-  shrinkage = TRUE,
+  shrinkage = FALSE,
   override = FALSE,
   df = NULL,
   knots = NULL,
   degree = 3,
-  intercept = FALSE,
-  Boundary.knots = NULL
+  Boundary.knots = NULL,
+  lb_tau = 0.001,
+  noncentered = FALSE
 )
 }
 \arguments{
 \item{shrinkage}{a logical value. If \code{TRUE} (the default) a shrinkage prior is used
-for smoothing the splines.}
+for smoothing the splines. Default is FALSE. TODO: Needs more testing.}
 
 \item{override}{a logical value. If \code{FALSE} (the default), an existing
 definition for the splines will not be overridden by another call to \code{splines}.
@@ -30,8 +31,6 @@ If \code{TRUE}, any existing definitions will be replaced.}
 \item{knots}{see \code{\link[splines:bs]{splines::bs()}}.}
 
 \item{degree}{see \code{\link[splines:bs]{splines::bs()}}.}
-
-\item{intercept}{see \code{\link[splines:bs]{splines::bs()}}.}
 
 \item{Boundary.knots}{see \code{\link[splines:bs]{splines::bs()}}.}
 }

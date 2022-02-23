@@ -44,29 +44,28 @@ test_form2 <- obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1) + lag(y3, 1), fami
 # T <- 20
 # N <- 500
 # x <- matrix(rnorm(T*N), N, T)
-# intercept <- 2
+# intercept <- cumsum(rnorm(T))
 # y <- matrix(0, N, T+1)
 # y[, 1] <- rnorm(N)
 # betax <- cumsum(rnorm(T, sd = 0.1))
 # betay <- cumsum(rnorm(T, sd = 0.1))
 # for(t in 1:T) {
-#     y[, t+1] <- intercept + betax[t] * x[, t] + betay[t] * y[, t] + rnorm(N, sd = 0.1)
+#     y[, t+1] <- intercept[t] + betax[t] * x[, t] + betay[t] * y[, t] + rnorm(N, sd = 0.1)
 # }
 # y <- y[, -1]
 # ts.plot(t(y))
 # d <- data.frame(y = c(t(y)), x = c(t(x)), ID = gl(N, T))
-#
+# #
 # fit <- btvcm:::btvcmfit(
 #     obs(y ~ x, family = gaussian()) +
 #         lags() +
-#         splines(df = 5, intercept = TRUE, shrinkage = FALSE),
+#         splines(df = 15,  shrinkage = FALSE),
 #     d, ID, chains = 1)
 #
-# print(fit$stanfit, "alpha_1")
 # print(fit$stanfit, "tau_1")
-# b <- apply(extract(fit$stanfit, "beta_1")[[1]], 2:3, mean)
-# ts.plot(cbind(b, betax[-1], betay[-1]), col=1:4)
-
+# b <- apply(rstan::extract(fit$stanfit, "beta_1")[[1]], 2:3, mean)
+# ts.plot(cbind(b, intercept[-1], betax[-1], betay[-1]), col=1:3,lty=rep(1:2,each=3))
+#
 # set.seed(1)
 # T <- 20
 # N <- 500
@@ -84,10 +83,9 @@ test_form2 <- obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1) + lag(y3, 1), fami
 # fit <- btvcm:::btvcmfit(
 #     obs(y ~ x, family = gaussian()) +
 #         lags() +
-#         splines(df = 5, intercept = TRUE),
+#         splines(df = 10),
 #     d, ID, chains = 1, cores = 1)
 #      #, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
-# print(fit$stanfit, "alpha_1")
 # print(fit$stanfit, "beta_1")
 # print(fit$stanfit, "tau_1")
 #

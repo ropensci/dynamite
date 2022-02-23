@@ -21,6 +21,7 @@ Imports:
     methods,
     rstan (>= 2.18.1)
 Collate: 
+    'as_data_frame.R'
     'btvcm-package.R'
     'btvcm.R'
     'utilities.R'

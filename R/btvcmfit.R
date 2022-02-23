@@ -83,7 +83,10 @@ btvcmfit <- function(formula, data, group, time, ...) {
         u_names <- colnames(model_matrix)
         assigned <- list(1:ncol(model_matrix))
     }
-
+    # TODO: simplify I(lag(variable, 1)) to something shorter eg lag_1(variable)?
+    coef_names <- lapply(1:n_resp, function(i) {
+        paste0(resp_all[i], "_", u_names[assigned[[i]]])
+    })
     # Place lags last
     # all_lags <- find_lags(all_rhs_vars, processed = TRUE)
     # all_rhs_vars <- c(all_rhs_vars[all_lags], all_rhs_vars[!all_lags])
@@ -103,7 +106,11 @@ btvcmfit <- function(formula, data, group, time, ...) {
     # TODO return the function call for potential update method?
     out <- structure(
         list(
-            stanfit = stanfit
+            stanfit = stanfit,
+            coef_names = coef_names,
+            # TODO what else do we need to return?
+            time = if(is.null(time)) 1:model_data$T else time[-(1:fixed)],
+            model_data = model_data # TODO: remove X and responses?
         ),
         class = "btvcmfit"
     )
