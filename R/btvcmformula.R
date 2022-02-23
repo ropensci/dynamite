@@ -56,6 +56,11 @@ get_pred <- function(x) {
     lapply(x, "[[", "predictors")
 }
 
+# Get all formulas of a btvcmformula object
+get_form <- function(x) {
+    lapply(x, "[[", "formula")
+}
+
 # Check whether the formula contain intercept
 has_intercept <- function(x) {
     attr(terms(x$formula), "intercept") == 1

@@ -14,7 +14,9 @@ splines(
   knots = NULL,
   degree = 3,
   intercept = FALSE,
-  Boundary.knots = NULL
+  Boundary.knots = NULL,
+  lb_tau = 0.001,
+  noncentered = FALSE
 )
 }
 \arguments{

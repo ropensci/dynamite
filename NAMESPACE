@@ -3,6 +3,7 @@
 S3method("+",btvcmformula)
 S3method(btvcmterms,default)
 S3method(create_blocks,default)
+S3method(predict,btvcmfit)
 export(btvcm)
 export(btvcmfamily)
 export(btvcmformula)

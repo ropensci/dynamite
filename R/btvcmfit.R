@@ -18,22 +18,27 @@ btvcmfit <- function(formula, data, group, time, ...) {
     }
     resp_all <- get_resp(formula)
     pred_all <- unlist(get_pred(formula))
-    lag_map <- extract_lags(pred_all)
     n_rows <- nrow(data)
     n_resp <- length(resp_all)
+    lag_map <- extract_lags(pred_all)
+    lag_resp_map <- replicate(n_resp, list())
     data_vars <- names(data)
     fixed <- 0L
     # Process lag terms defined via lags()
     if (!is.null(lag_all <- attr(formula, "lags"))) {
         fixed <- lag_all$k
         pred_lag <- character(fixed * n_resp)
-        for (i in 1:fixed) {
-            for (j in 1:n_resp) {
+        lag_resp <- resp_all
+        for (i in seq_len(fixed)) {
+            for (j in seq_len(n_resp)) {
                 ix <- (i-1)*n_resp + j
                 pred_lag[ix] <- paste0("I(lag_(", resp_all[j], ", ", i, "))")
+                for (k in seq_len(n_resp)) {
+                    lag_resp_map[[k]][[pred_lag[ix]]] <- list(response = resp_all[j], shift = i)
+                }
             }
         }
-        for (j in 1:n_resp) {
+        for (j in seq_len(n_resp)) {
             c(formula[[j]]$predictors) <- pred_lag
             icpt <- attr(terms(formula[[j]]$formula), "intercept")
             formula[[j]]$formula <- reformulate(formula[[j]]$predictors, intercept = icpt)
@@ -57,10 +62,13 @@ btvcmfit <- function(formula, data, group, time, ...) {
                 lag_map$def[i] <- gsub("I\\((.*)\\)", "\\1", lag_map$def[i])
             }
             pred_lag <- paste0("I(lag_(", lag_map$def[i], ", ", lag_map$k[i], "))")
-            for (j in 1:n_resp) {
+            for (j in seq_len(n_resp)) {
                 formula[[j]]$predictors <- gsub(lag_map$src[i], pred_lag, formula[[j]]$predictors, fixed = TRUE)
                 icpt <- attr(terms(formula[[j]]$formula), "intercept")
                 formula[[j]]$formula <- reformulate(formula[[j]]$predictors, intercept = icpt)
+                if (lag_map$def[i] %in% resp_all && pred_lag %in% formula[[j]]$predictors) {
+                    lag_resp_map[[j]][[pred_lag]] <- list(response = lag_map$def[i], shift = lag_map$k[i])
+                }
             }
             #pred_all <- gsub(lag_map$src[i], pred_lag, pred_all, fixed = TRUE)
         }
@@ -69,30 +77,36 @@ btvcmfit <- function(formula, data, group, time, ...) {
     # resp_all <- get_resp(formula)
     model_matrix <- NULL
     assigned <- list()
-    if (n_resp > 1) {
-        model_matrices <- lapply(lapply(formula, "[[", "formula"), model.matrix, data)
-        model_matrix <- do.call(cbind, model_matrices)
-        u_names <- unique(colnames(model_matrix))
-        # TODO: Is intercept always named as (Intercept)?
-        # checking assign attributes for 0 is an another option
-        if (any(ind <- u_names == "(Intercept)")) {
-            u_names <- u_names[-which(ind)]
+    model_matrices <- list()
+    for (i in seq_len(n_resp)) {
+        model_matrices[[i]] <- model.matrix(formula[[i]]$formula, data)
+        if (any(ind <- formula[[i]]$predictors %in% names(lag_resp_map[[i]]))) {
+            ind <- which(ind)
+            assign_i <- attr(model_matrices[[i]], "assign")
+            cols_i <- colnames(model_matrices[[i]])
+            for (j in seq_along(ind)) {
+                pred <- formula[[i]]$predictors[ind[j]]
+                lag_cols <- which(assign_i == ind[j])
+                lag_resp_map[[i]][[pred]]$cols <- cols_i[lag_cols]
+            }
         }
-        model_matrix <- model_matrix[, u_names]
-        assigned <- lapply(model_matrices, function(x) {
-            which(u_names %in% colnames(x))
-        })
-
-    } else {
-        model_matrix <- model.matrix(formula[[1]]$formula, data)
-        u_names <- colnames(model_matrix)
-        if (any(ind <- u_names == "(Intercept)")) {
-            u_names <- u_names[-which(ind)]
-            model_matrix <- model_matrix[, u_names]
-        }
-        assigned <- list(1:ncol(model_matrix))
     }
-
+    model_matrix <- do.call(cbind, model_matrices)
+    u_names <- unique(colnames(model_matrix))
+    # TODO: Is intercept always named as (Intercept)?
+    # checking assign attributes for 0 is an another option
+    if (any(ind <- u_names == "(Intercept)")) {
+        u_names <- u_names[-which(ind)]
+    }
+    model_matrix <- model_matrix[, u_names]
+    assigned <- lapply(model_matrices, function(x) {
+        which(u_names %in% colnames(x))
+    })
+    for (i in seq_len(n_resp)) {
+        for (j in seq_along(lag_resp_map[[i]])) {
+            lag_resp_map[[i]][[j]]$cols <- which(u_names %in% lag_resp_map[[i]][[j]]$cols)
+        }
+    }
     # Place lags last
     # all_lags <- find_lags(all_rhs_vars, processed = TRUE)
     # all_rhs_vars <- c(all_rhs_vars[all_lags], all_rhs_vars[!all_lags])
@@ -112,7 +126,13 @@ btvcmfit <- function(formula, data, group, time, ...) {
     # TODO return the function call for potential update method?
     out <- structure(
         list(
-            stanfit = stanfit
+            stanfit = stanfit,
+            prediction_basis = list(
+                formula = formula,
+                past = model_matrix[(n_rows - fixed):n_rows,],
+                map = lag_resp_map,
+                ord = names(data)
+            )
         ),
         class = "btvcmfit"
     )
