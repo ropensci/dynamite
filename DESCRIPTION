@@ -32,6 +32,7 @@ Collate:
     'lags.R'
     'loglik_stan.R'
     'modeldata.R'
+    'predict.R'
     'splines.R'
     'stanblocks.R'
     'stanblocks_hiddenstates.R'
