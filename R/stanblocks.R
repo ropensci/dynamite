@@ -12,7 +12,7 @@ create_blocks.default <- function(formula, indent = 2L, ...) {
     # only need this for the hidden state case
     #functions <- paste("functions {", .loglik_stan, "}", sep = "\n")
     idt <- indenter_(indent)
-    functions <- paste("functions {", "}", sep = "\n")
+    functions <- create_functions(formula, idt, ...)
     data <- create_data(formula, idt, ...)
     transformed_data <- create_transformed_data(formula, idt, ...)
     parameters <- create_parameters(formula, idt, ...)
@@ -24,7 +24,34 @@ create_blocks.default <- function(formula, indent = 2L, ...) {
         transformed_parameters, model, generated_quantities)
     model_code
 }
+#'
+#' @export
+create_functions <- function(formula, idt, ...) {
 
+    mtext <- "// create rng functions for predictions"
+    for (i in seq_along(formula)) {
+        if (is_categorical(formula[[i]]$family)) {
+            rng <- paste_rows(
+                c(idt(2), paste0("real response_", i, "_rng(vector x, zeros_S, matrix beta) {")),
+                c(idt(3), "return categorical_logit_rng(x * beta);"),
+                c(idt(2), "}"))
+        } else {
+            if (is_gaussian(formula[[i]]$family)) {
+                rng <- paste_rows(
+                    c(idt(2), paste0("real response_", i, "_rng(row_vector x, vector beta, real sigma) {")),
+                    c(idt(3), "return normal_rng(x * beta, sigma);"),
+                    c(idt(2), "}"))
+            } else {
+                stop(paste0("Distribution ", formula[[i]]$family, "not yet supported."))
+            }
+        }
+        mtext <- paste_rows(mtext, rng)
+    }
+
+    mtext <- paste_rows("functions {", mtext, "}")
+    mtext
+
+}
 #'
 #' @export
 create_data <- function(formula, idt, ...) {
