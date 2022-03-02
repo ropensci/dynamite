@@ -39,10 +39,10 @@ test_form2 <- obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1) + lag(y3, 1), fami
 # Should give identical model matrices
 # all.equal(test_fit$model_matrix, test_fit2$model_matrix)
 
-#
+
 # set.seed(1)
 # T <- 20
-# N <- 500
+# N <- 50
 # x <- matrix(rnorm(T*N), N, T)
 # intercept <- cumsum(rnorm(T))
 # y <- matrix(0, N, T+1)
@@ -59,8 +59,13 @@ test_form2 <- obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1) + lag(y3, 1), fami
 # fit <- btvcm:::btvcmfit(
 #     obs(y ~ x, family = gaussian()) +
 #         lags() +
-#         splines(df = 15,  shrinkage = FALSE),
+#         splines(df = 5),
 #     d, ID, chains = 1)
+#
+# newdata <- d %>% filter(ID == 1)
+# newdata[2:20, 1] <- NA
+# nd <- btvcm:::predict.btvcmfit_counterfactual(fit, newdata, n_draws=10)
+# tidyr::unnest(nd)
 #
 # print(fit$stanfit, "tau_1")
 # b <- apply(rstan::extract(fit$stanfit, "beta_1")[[1]], 2:3, mean)

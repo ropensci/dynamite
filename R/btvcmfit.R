@@ -115,14 +115,16 @@ btvcmfit <- function(formula, data, group, time, ...) {
             coef_names = attr(model_matrix, "coef_names"),
             # TODO what else do we need to return?
             time = if(is.null(time)) 1:model_data$T else time[-(1:fixed)],
-            model_data = model_data, # TODO: remove X and responses? as.data.frame needs just D
+            # TODO: extract only D for as.data.frame and J for predict
+            model_data = model_data,
             prediction_basis = list(
                 formula = formula,
                 fixed = fixed,
                 past = model_matrix[(n_rows - fixed):n_rows,],
                 start = model_matrix[1:fixed,], # Needed for some posterior predictive checks?
                 ord = data_names[!data_names %in% c(group_var, time_var)],
-                rng = create_predict_functions(formula)
+                rng = create_predict_functions(formula),
+                J = model_data$J
             )
         ),
         class = "btvcmfit"
@@ -223,5 +225,5 @@ convert_data <- function(formula, responses, group, time, fixed, model_matrix) {
 
     }
     T <- T_full - fixed
-    c(named_list(T, N, C, K, X, D, Bs), channel_vars)
+    c(named_list(T, N, C, K, X, D, Bs), channel_vars, J = assigned) # J is for prediction, not used in Stan
 }

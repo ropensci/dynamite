@@ -1,10 +1,18 @@
 #' @export
-predict.btvcmfit <- function(object, newdata, mode = c("counterfactual", "forecast"), n_samples = 100) {
+predict.btvcmfit <- function(object, newdata, mode = c("counterfactual", "forecast"), n_draws = 100) {
     mode <- match.arg(mode)
     do.call(paste0("predict.btvcmfit_", mode), list(bf = object, newdata = newdata))
 }
 
-predict.btvcmfit_counterfactual <- function(bf, newdata) {
+predict.btvcmfit_counterfactual <- function(bf, newdata, n_draws) {
+    # TODO needs some logic and testing for time points, does time points in newdata match with original?
+    # could be a (continuous? or can be made continuous) subset, e.g. original time was 1:100
+    # we might want to predict for times 2:100, 5:50, 2:10 etc
+
+    # TODO do we assume that newdata corresponds to one ID only? Simplifies things,
+    # but one might be interested in marginal effects so that we could use original individuals (multiple ids)
+    # and their exogenous covariates
+    # We could also just call this function multiple times after grouping by ID
     basis <- bf$prediction_basis
     fixed <- basis$fixed
     n_new <- nrow(newdata)
@@ -21,49 +29,40 @@ predict.btvcmfit_counterfactual <- function(bf, newdata) {
     newdata <- newdata[, basis$ord]
     samples <- rstan::extract(bf$stanfit)
     # Prediction loop
-    idx <- sample(rstantools::nsamples(bf$stanfit), size = n_samples)
-    #TODO: Is it easier to just create tibble with list-columns afterwards by combining separate normal data frames?
+    idx <- sample(ndraws(bf), size = n_draws)
     # create list-columns for responses, there's probably better way
     newdata <- tibble::as_tibble(newdata)
     for (resp in resp_all) {
-        newdata[[resp]] <- list(rep(newdata[[resp]], n_samples))
+        newdata[[resp]] <- lapply(1:nrow(newdata), function(i) rep(newdata[[resp]][i], n_draws))
     }
-    for(k in 1:n_samples) {
+    for(k in 1:n_draws) {
         for (i in seq_len(n_new)) {
-            # TODO: how do you extract rows of tibble with list-columns converted to normal columns based on ith element in said list?
-            model_matrix <- full_model.matrix(basis$formula, newdata[(i-fixed):i,], resp_all)
-            for (resp in resp_all) {
-                if (is.na(newdata[i,resp])) {
-                    if (is_gaussian(basis$formula$family)) {
-                        #TODO select correct columns using J_1 etc
-                        newdata[i,resp] <- do.call(basis$rngs[[resp]],
-                            list(model_matrix, samples[[paste0("beta_",j)]][1,i,], samples[[paste0("sigma_",j)]][1]))
+            newdata_k <- slice_tibble(newdata[(i-fixed):i,], k)
+            model_matrix <- full_model.matrix(basis$formula, newdata_k, resp_all)
+            for (j in seq_along(resp_all)) {
+                resp <- resp_all[j]
+                if (is.na(newdata_k[i,resp])) {
+                    # TODO instead of if clauses call rng(model_matrix[, J_i], samples, idx[k])
+                    # TODO except we need additional arguments depending on the family
+                    if (is_gaussian(basis$formula[[j]]$family)) {
+                        newdata[[resp]][[i]][k] <- do.call(basis$rng[[resp]], # TODO match time!
+                            list(model_matrix[, basis$J], samples[[paste0("beta_",j)]][idx[k], i - 1, ], samples[[paste0("sigma_", j)]][idx[k]]))
+                    } else {
+                        if (is_categorical(basis$formula[[j]]$family)) {
+                            y_levels <- basis$formula$levels #TODO
+                                newdata[[resp]][[i]][k] <- do.call(basis$rngs[[resp]],
+                                list(y_levels, model_matrix[, basis$J], samples[[paste0("beta_",j)]][idx[k], i, ,]))
+                        }
                     }
                 }
             }
         }
     }
-    newdata[, resp_all, drop = FALSE]
+    # TODO return either full newdata or just the responses
+    #newdata[, resp_all, drop = FALSE]
+    newdata
 }
 
-predict.btvcmfit_forecast <- function(bf, newdata) {
+predict.btvcmfit_forecast <- function(bf, newdata, n_draws) {
     stop_("Forecasting is not yet supported")
-}
-
-
-categorical_rng <- function(y, x, beta, J) {
-    sample(y, 1, prob = x[J] %*% beta)
-}
-gaussian_rng <- function(x, beta, sigma, J) {
-    rnorm(1, x[J] %*% beta, sigma)
-}
-create_predict_functions <- function(x) {
-    resp_all <- get_resp(x)
-    rng <- vector("list", length(resp_all))
-    names(rng) <- resp_all
-    families <- lapply(x, function(x) x$family$name)
-    for (i in seq_along(resp_all)) {
-        rng[[i]] <- get(paste0(families[i], "_rng"))
-    }
-    rng
 }
