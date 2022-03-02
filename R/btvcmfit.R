@@ -121,7 +121,8 @@ btvcmfit <- function(formula, data, group, time, ...) {
                 fixed = fixed,
                 past = model_matrix[(n_rows - fixed):n_rows,],
                 start = model_matrix[1:fixed,], # Needed for some posterior predictive checks?
-                ord = data_names[!data_names %in% c(group_var, time_var)]
+                ord = data_names[!data_names %in% c(group_var, time_var)],
+                rng = create_predict_functions(formula)
             )
         ),
         class = "btvcmfit"
@@ -206,8 +207,8 @@ convert_data <- function(formula, responses, group, time, fixed, model_matrix) {
             K_i <- length(assigned[[i]])
             prior_sds <- matrix(2 / sd_x[assigned[[i]]], K_i, S_i)
             channel_vars[[paste0("S_", i)]] <- S_i
-            channel_vars[[paste0("a_prior_mean_", i)]] <- matrix(0, K_i, S_i)
-            channel_vars[[paste0("a_prior_sd_", i)]] <- prior_sds
+            channel_vars[[paste0("a_prior_mean_", i)]] <- matrix(0, K_i, S_i - 1)
+            channel_vars[[paste0("a_prior_sd_", i)]] <- prior_sds[, -S_i]
         }
         if (is_gaussian(formula[[i]]$family)) {
             sd_y <- sd(Y)

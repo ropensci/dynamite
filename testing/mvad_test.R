@@ -1,7 +1,7 @@
 library(TraMineR)
 library(dplyr)
 library(tidyr)
-data(mvad)
+data(mvad, package = "TraMineR")
 d <- pivot_longer(mvad, 15:86, "time")
 d$time <- rep(1:72, length = nrow(d))
 fit <- btvcm:::btvcmfit(

@@ -32,8 +32,8 @@ create_functions <- function(formula, idt, ...) {
     for (i in seq_along(formula)) {
         if (is_categorical(formula[[i]]$family)) {
             rng <- paste_rows(
-                c(idt(2), paste0("real response_", i, "_rng(vector x, zeros_S, matrix beta) {")),
-                c(idt(3), "return categorical_logit_rng(x * beta);"),
+                c(idt(2), paste0("real response_", i, "_rng(row_vector x, vector zeros_S, matrix beta) {")),
+                c(idt(3), "return categorical_logit_rng((x * beta)');"),
                 c(idt(2), "}"))
         } else {
             if (is_gaussian(formula[[i]]$family)) {
@@ -86,8 +86,8 @@ create_data <- function(formula, idt, ...) {
         # TODO, need to add other distribution-specific components as well
         if (is_categorical(formula[[i]]$family)) {
             mtext <- paste_rows(mtext, c(idt(1), "int<lower=0> S_", i, ";"))
-            mtext <- paste_rows(mtext, c(idt(1), "matrix[K_", i, ", S_", i, "] a_prior_mean_", i, ";"))
-            mtext <- paste_rows(mtext, c(idt(1), "matrix[K_", i, ", S_", i, "] a_prior_sd_", i, ";"))
+            mtext <- paste_rows(mtext, c(idt(1), "matrix[K_", i, ", S_", i, " - 1] a_prior_mean_", i, ";"))
+            mtext <- paste_rows(mtext, c(idt(1), "matrix[K_", i, ", S_", i, " - 1] a_prior_sd_", i, ";"))
         } else {
             mtext <- paste_rows(mtext, c(idt(1), "vector[K_", i, "] a_prior_mean_", i, ";"))
             mtext <- paste_rows(mtext, c(idt(1), "vector[K_", i, "] a_prior_sd_", i, ";"))
@@ -371,7 +371,9 @@ create_model <- function(formula, idt, ...) {
                 stop(paste0("Distribution ", formula[[i]]$family, "not yet supported."))
             }
         }
-        mtext <- paste_rows(mtext, paste_rows(c(idt(1), "for (t in 1:T) {"), likelihood_term, beta_regularisation, c(idt(1) ,"}")))
+        # TODO remove regularisation option?
+        mtext <- paste_rows(mtext, paste_rows(c(idt(1), "for (t in 1:T) {"),
+            likelihood_term, if(FALSE) beta_regularisation else NULL, c(idt(1) ,"}")))
     }
 
     mtext <- paste_rows("model {", mtext, "}")
