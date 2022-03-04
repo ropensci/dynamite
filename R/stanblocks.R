@@ -27,30 +27,7 @@ create_blocks.default <- function(formula, indent = 2L, ...) {
 #'
 #' @export
 create_functions <- function(formula, idt, ...) {
-
-    mtext <- "// create rng functions for predictions"
-    for (i in seq_along(formula)) {
-        if (is_categorical(formula[[i]]$family)) {
-            rng <- paste_rows(
-                c(idt(2), paste0("real response_", i, "_rng(row_vector x, vector zeros_S, matrix beta) {")),
-                c(idt(3), "return categorical_logit_rng((x * beta)');"),
-                c(idt(2), "}"))
-        } else {
-            if (is_gaussian(formula[[i]]$family)) {
-                rng <- paste_rows(
-                    c(idt(2), paste0("real response_", i, "_rng(row_vector x, vector beta, real sigma) {")),
-                    c(idt(3), "return normal_rng(x * beta, sigma);"),
-                    c(idt(2), "}"))
-            } else {
-                stop(paste0("Distribution ", formula[[i]]$family, "not yet supported."))
-            }
-        }
-        mtext <- paste_rows(mtext, rng)
-    }
-
-    mtext <- paste_rows("functions {", mtext, "}")
-    mtext
-
+    NULL
 }
 #'
 #' @export
@@ -355,16 +332,17 @@ create_model <- function(formula, idt, ...) {
         if (is_categorical(formula[[i]]$family)) {
 
             likelihood_term <-
-                c(idt(2), "target += categorical_logit_glm_lupmf(response_", i,
-                    "[t] | X[t][,J_", i, "], zeros_S_", i, ", beta_", i, "[t]);")
+                c(idt(2), "response_", i,
+                    "[t] ~ categorical_logit_glm(X[t][,J_", i, "], zeros_S_", i,
+                    ", beta_", i, "[t]);")
 
             beta_regularisation <- c(idt(2), "to_vector(beta_", i, "[t]) ~ std_normal();")
         } else {
             if (is_gaussian(formula[[i]]$family)) {
 
                 likelihood_term <-
-                    c(idt(2), "target += normal_lupdf(response_", i,
-                        "[t] | X[t][,J_", i, "] * beta_", i, "[t], ", "sigma_", i, ");")
+                    c(idt(2), "response_", i, "[t] ~ normal(X[t][,J_", i,
+                        "] * beta_", i, "[t], ", "sigma_", i, ");")
 
                 beta_regularisation <- c(idt(2), "beta_", i, "[t] ~ std_normal();")
             } else {
@@ -383,10 +361,5 @@ create_model <- function(formula, idt, ...) {
 #'
 #' @export
 create_generated_quantities <- function(formula, ...) {
-    # TODO? For simulating predictions, we probably need to do it in R as we
-    # need to create new covariate matrix at each time point given previous samples
-    # and we might be interested in multiple things based on the results anyway
-    mtext <- ""
-    mtext <- paste("generated quantities {", mtext, "\n}")
-    mtext
+    NULL
 }

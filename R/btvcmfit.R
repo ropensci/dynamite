@@ -213,12 +213,11 @@ convert_data <- function(formula, responses, group, time, fixed, model_matrix) {
             channel_vars[[paste0("a_prior_sd_", i)]] <- prior_sds[, -S_i]
         }
         if (is_gaussian(formula[[i]]$family)) {
-            sd_y <- sd(Y)
             channel_vars[[paste0("a_prior_mean_", i)]] <- rep(0, length(assigned[[i]]))
             # TODO adjust prior mean for the intercept term under the assumption that other betas/x are 0
             #if(model_matrix[])
-            channel_vars[[paste0("a_prior_sd_", i)]] <- 2 * sd_y / sd_x[assigned[[i]]]
-            channel_vars[[paste0("sigma_scale_", i)]] <- 1 / sd_y
+            channel_vars[[paste0("a_prior_sd_", i)]] <- 2 * sd(Y[1, ]) / sd_x[assigned[[i]]]
+            channel_vars[[paste0("sigma_scale_", i)]] <- 1 / mean(apply(Y, 1, sd))
         }
         # TODO switch case other families, with Gamma shape, negbin dispersion
         # TODO or something like do.call(paste0("prepare_channel_vars_", formula[[i]]$family, list(Y, S_i, K_i, i ...))) for branchless
