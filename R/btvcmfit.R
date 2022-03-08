@@ -193,7 +193,7 @@ convert_data <- function(formula, responses, group, time, fixed, model_matrix) {
     assigned <- attr(model_matrix, "assign")
     channel_vars <- list()
     sd_x <- apply(X[1, , ], 2, sd)
-    sd_x[sd_x == 0] <- 1 # Intercept and other constants at time 1
+    sd_x[sd_x < 1] <- 1 # Intercept and other constants at time 1
     for (i in seq_along(formula)) {
         channel_vars[[paste0("J_", i)]] <- assigned[[i]]
         channel_vars[[paste0("K_", i)]] <- length(assigned[[i]])
@@ -207,10 +207,10 @@ convert_data <- function(formula, responses, group, time, fixed, model_matrix) {
         if (is_categorical(formula[[i]]$family)) {
             S_i <- length(unique(as.vector(Y)))
             K_i <- length(assigned[[i]])
-            prior_sds <- matrix(2 / sd_x[assigned[[i]]], K_i, S_i)
+            prior_sds <- matrix(2 / sd_x[assigned[[i]]], K_i, S_i - 1)
             channel_vars[[paste0("S_", i)]] <- S_i
             channel_vars[[paste0("a_prior_mean_", i)]] <- matrix(0, K_i, S_i - 1)
-            channel_vars[[paste0("a_prior_sd_", i)]] <- prior_sds[, -S_i]
+            channel_vars[[paste0("a_prior_sd_", i)]] <- prior_sds
         }
         if (is_gaussian(formula[[i]]$family)) {
             channel_vars[[paste0("a_prior_mean_", i)]] <- rep(0, length(assigned[[i]]))
