@@ -4,7 +4,7 @@
 \alias{fitted.btvcmfit}
 \title{Extract fitted values of btvcmfit}
 \usage{
-\method{fitted}{btvcmfit}(object, newdata = NULL, ...)
+\method{fitted}{btvcmfit}(object, newdata = NULL, n_draws = 100, ...)
 }
 \arguments{
 \item{object}{An object of class \code{btvcmfit}.}
@@ -12,5 +12,5 @@
 \item{...}{Ignored.}
 }
 \description{
-Extract fitted values of btvcmfit
+TODO Note that these are conditional on the observed data i.e., we don't simulate new lagged values for covariates
 }

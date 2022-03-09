@@ -1,10 +1,14 @@
 #' @export
-predict.btvcmfit <- function(object, newdata, mode = c("counterfactual", "forecast"), n_draws = 100) {
+predict.btvcmfit <- function(object, newdata, mode = c("counterfactual", "forecast"), n_draws = NULL) {
     mode <- match.arg(mode)
-    do.call(paste0("predict.btvcmfit_", mode), list(bf = object, newdata = newdata))
+    do.call(paste0("predict.btvcmfit_", mode), list(bf = object, newdata = newdata, n_draws = n_draws))
 }
+# TODO: What about the posterior distribution at the means/probability level?
+predict.btvcmfit_counterfactual <- function(bf, newdata, n_draws = NULL) {
 
-predict.btvcmfit_counterfactual <- function(bf, newdata, n_draws) {
+    if (is.null(n_draws)) {
+        n_draws <- ndraws(bf)
+    }
     # TODO needs some logic and testing for time points, does time points in newdata match with original?
     # could be a (continuous? or can be made continuous) subset, e.g. original time was 1:100
     # we might want to predict for times 2:100, 5:50, 2:10 etc
@@ -46,12 +50,12 @@ predict.btvcmfit_counterfactual <- function(bf, newdata, n_draws) {
                     # TODO except we need additional arguments depending on the family
                     if (is_gaussian(basis$formula[[j]]$family)) {
                         newdata[[resp]][[i]][k] <- do.call(basis$rng[[resp]], # TODO match time!
-                            list(model_matrix[, basis$J], samples[[paste0("beta_",j)]][idx[k], i - 1, ], samples[[paste0("sigma_", j)]][idx[k]]))
+                            list(model_matrix[i, basis$J], samples[[paste0("beta_", j)]][idx[k], i - 1, ], samples[[paste0("sigma_", j)]][idx[k]]))
                     } else {
                         if (is_categorical(basis$formula[[j]]$family)) {
                             y_levels <- basis$formula$levels #TODO
                                 newdata[[resp]][[i]][k] <- do.call(basis$rngs[[resp]],
-                                list(y_levels, model_matrix[, basis$J], samples[[paste0("beta_",j)]][idx[k], i, ,]))
+                                list(y_levels, model_matrix[i, basis$J], samples[[paste0("beta_", j)]][idx[k], i - 1, ,]))
                         }
                     }
                 }

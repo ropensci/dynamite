@@ -28,7 +28,7 @@ create_predict_functions <- function(x) {
 categorical_mean <- function(y, x, beta, J) {
     softmax(x[J] %*% beta)
 }
-gaussian_mean <- function(x, beta, sigma, J) {
+gaussian_mean <- function(x, beta, J) {
     x[J] %*% beta
 }
 create_mean_functions <- function(x) {

@@ -5,7 +5,7 @@ as.data.frame.btvcmfit <- function(x, row.names = NULL, optional = FALSE, parame
     # should there be an option to be more specific in what parameters to extract?
     # TODO distributional parameters (sigma, shape)
     parameter_types <- match.arg(parameter_types,
-        c("beta", "tau", "a", "lambda"), TRUE) #TODO a = spline_coefficients? alpha (greek as others)?
+        c("beta", "tau", "a", "lambda"), TRUE) #TODO all?, a = spline_coefficients? alpha (greek as others)?
     all_pars <- x$stanfit@sim$pars_oi
     d <- NULL
     coef_names <- unlist(x$coef_names)
@@ -41,7 +41,7 @@ as.data.frame.btvcmfit <- function(x, row.names = NULL, optional = FALSE, parame
         samples <- rstan::extract(x$stanfit, pars = all_pars[idx], permuted = FALSE)
         # TODO categorical case, how to name S-1 cases?
         # a is K x D or S x K x D depending on channel
-        a <- rep(paste0("a[", 1:x$model_data$D, "]"), each = length(coef_names))
+        a <- rep(paste0("a[", 1:x$spline$D, "]"), each = length(coef_names))
         var_names <- paste0(a, "_", coef_names)
         n <- nrow(samples) # samples per chain
         k <- ncol(samples) # number of chains
@@ -58,7 +58,7 @@ as.data.frame.btvcmfit <- function(x, row.names = NULL, optional = FALSE, parame
         samples <- rstan::extract(x$stanfit, pars = all_pars[idx], permuted = FALSE)
         # TODO categorical case, how to name S-1 cases (or S if we don't drop the zeros)?
         # beta is T x K or T x K x S
-        var_names <- rep(paste0("beta_", coef_names), each = x$model_data$T)
+        var_names <- rep(paste0("beta_", coef_names), each = length(x$time))
         n <- nrow(samples) # samples per chain
         k <- ncol(samples) # number of chains
         d <- rbind(d, data.frame(
