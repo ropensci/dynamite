@@ -52,37 +52,42 @@ fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
         # extract returns permuted samples so we can just pick first n_draws
         #idx <- 1:n_draws #sample(ndraws(bf), size = n_draws)
 
-        # create list-columns for responses, remove fixed time points
-        newdata <- dplyr::filter(tibble::as_tibble(newdata), time > fixed)
+        # remove fixed time points
+        newdata <- dplyr::filter(newdata, time > fixed)
 
         for (i in seq_along(resp_all)) {
             resp <- resp_all[i]
             if (is_categorical(basis$formula[[i]]$family)) {
                 resp_levels <- basis$formula[[i]]$levels
-                d <- tibble::tibble(draw = seq_len(n_draws))
-                d[, c(glue::glue("{resp}[{resp_levels}]"))] <- NA
-                newdata[[resp]] <- lapply(1:nrow(newdata), function(i) d)
-            } else {
-                d <- tibble::tibble(draw = seq_len(n_draws), {{resp}} := NA)
-                newdata[[resp]] <- lapply(1:nrow(newdata), function(i) d)
+                newdata[, c(glue::glue("{resp}[{resp_levels}]"))] <- NA # TODO: glued names to formula?
+                newdata[[resp]] <- NULL
             }
         }
-        for(k in seq_len(n_draws)) {
-            for (i in seq_len(nrow(newdata))) {
-                for (j in seq_along(resp_all)) {
-                    resp <- resp_all[j]
-                    if (is_gaussian(basis$formula[[j]]$family)) {
-                        newdata[[resp]][[i]][k, -1] <- do.call(basis$mean[[resp]],
+        n <- nrow(newdata)
+        newdata <- data.frame(newdata, draw = rep(1:n_draws, each = nrow(newdata)))
+        for (i in seq_len(n)) {
+            for (j in seq_along(resp_all)) {
+                resp <- resp_all[j]
+                if (is_gaussian(basis$formula[[j]]$family)) {
+                    for(k in seq_len(n_draws)) {
+                        # newdata[i + (k - 1) * n, resp] <- do.call(basis$mean[[resp]],
+                        #     list(model_matrix[i, basis$J], samples[[paste0("beta_", j)]][k, i, ]))
+                        newdata[[resp]][i + (k - 1) * n] <- do.call(basis$mean[[resp]],
                             list(model_matrix[i, basis$J], samples[[paste0("beta_", j)]][k, i, ]))
-                    } else {
-                        if (is_categorical(basis$formula[[j]]$family)) {
-                            newdata[[resp]][[i]][k, -1] <- do.call(basis$mean[[resp]],
+                    }
+                } else {
+                    if (is_categorical(basis$formula[[j]]$family)) {
+                        resp_levels <- basis$formula[[i]]$levels
+                        idx <- which(names(newdata) %in% c(glue::glue("{resp}[{resp_levels}]")))
+                        for(k in seq_len(n_draws)) {
+                            newdata[i + (k - 1) * n, idx] <- do.call(basis$mean[[resp]],
                                 list(model_matrix[i, basis$J], samples[[paste0("beta_", j)]][k, i, ,]))
                         }
                     }
-
                 }
+
             }
+
         }
     }
     newdata
