@@ -13,15 +13,15 @@ predict.btvcmfit_counterfactual <- function(object, newdata, n_draws = NULL) {
 
     if (is.null(newdata)) {
         newdata <- object$data
-        group <- newdata[, object$group_var]
+        group <- newdata[[object$group_var]]
         time <- object$time
     } else {
         if (!(object$group_var %in% names(newdata)))
             stop(paste("Grouping variable", object$group_var, "not found in 'newdata'."))
-        group <- newdata[, object$group_var]
+        group <- newdata[[object$group_var]]
         if (is.factor(group)) group <- droplevels(group)
         # TODO doesn't really matter at least at the moment
-        if (!all(group %in% object$data[, object$group_var]))
+        if (!all(group %in% object$data[[object$group_var]]))
             stop(paste("Grouping variable", object$group_var, "contains new levels not found in the original data."))
 
         if (!(object$time_var %in% names(newdata)))
@@ -29,7 +29,7 @@ predict.btvcmfit_counterfactual <- function(object, newdata, n_draws = NULL) {
         # sort just in case
         newdata <- dplyr::arrange(newdata, dplyr::across(dplyr::all_of(c(object$group_var, object$time_var))))
         # TODO just use the original time points starting from start_time
-        time <- unique(newdata[, object$time_var])
+        time <- unique(newdata[[object$time_var]])
         if (!all(time %in% object$time))
             stop(paste("Timing variable", object$time_var, "contains time points not found in the original data."))
     }
@@ -78,11 +78,12 @@ predict.btvcmfit_counterfactual <- function(object, newdata, n_draws = NULL) {
                 }
                 if (is_categorical(basis$formula[[j]]$family)) {
                     y_levels <- basis$formula$levels #TODO
-                    sim <- integer(length(idx_i))
+                    sim <- character(length(idx_i))
                     for(k in seq_len(n_draws)) {
+                        browser()
                         idx_k <- ((k - 1) * n_id + 1):(k * n_id)
                         xbeta <- model_matrix[idx_k, basis$J[[j]], drop = FALSE] %*% samples[[paste0("beta_", j)]][k, i - fixed, , ]
-                        #sim[idx_k] <- rnorm(n_id, xbeta, sigma)
+                        sim[idx_k] <- apply(xbeta, 1, function(x) sample(y_levels, 1, prob = softmax(x)))
                     }
                     newdata[idx_i, resp] <- factor(sim, levels = y_levels)
                 }

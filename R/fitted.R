@@ -14,15 +14,15 @@ fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
 
     if (is.null(newdata)) {
         newdata <- object$data
-        group <- newdata[, object$group_var]
+        group <- newdata[[object$group_var]]
         time <- object$time
     } else {
         if (!(object$group_var %in% names(newdata)))
             stop(paste("Grouping variable", object$group_var, "not found in 'newdata'."))
-        group <- newdata[, object$group_var]
+        group <- newdata[[object$group_var]]
         if (is.factor(group)) group <- droplevels(group)
         # TODO doesn't really matter at least at the moment
-        if (!all(group %in% object$data[, object$group_var]))
+        if (!all(group %in% object$data[[object$group_var]]))
             stop(paste("Grouping variable", object$group_var, "contains new levels not found in the original data."))
 
         if (!(object$time_var %in% names(newdata)))
@@ -30,7 +30,7 @@ fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
         # sort just in case
         newdata <- dplyr::arrange(newdata, dplyr::across(object$time_var))
         # TODO just use the original time points starting from start_time
-        time <- unique(newdata[, object$time_var])
+        time <- unique(newdata[[object$time_var]])
         if (!all(time %in% object$time))
             stop(paste("Timing variable", object$time_var, "contains time points not found in the original data."))
     }

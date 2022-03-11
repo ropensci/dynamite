@@ -4,14 +4,12 @@
 # TODO add options to return just the created model code or data without compiling & sampling for debugging etc
 btvcmfit <- function(formula, data, group, time, ...) {
     dots <- list(...)
-    group_var <- NULL
-    time_var <- NULL
     if (missing(group)) {
         group <- NULL
     } else {
         # TODO allow group = c(ID1, ID2, ...) etc.
         group_var <- deparse(substitute(group))
-        group <- data[, group_var] # had , drop = FALSE, is it needed somewhere?
+        group <- data[[group_var]] # had , drop = FALSE, is it needed somewhere?
         if (is.factor(group)) group <- droplevels(group)
     }
     # TODO is there a better way?
@@ -19,7 +17,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
         stop("Argument 'time' is missing. ")
     time_var <- deparse(substitute(time))
     data <- dplyr::arrange(data, dplyr::across(dplyr::all_of(c(group_var, time_var))))
-    time <- unique(data[, time_var])
+    time <- unique(data[[time_var]])
     resp_all <- get_resp(formula)
     n_rows <- nrow(data)
     n_resp <- length(resp_all)
