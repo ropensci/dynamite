@@ -115,6 +115,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
             time = time,
             time_var = time_var,
             group_var = group_var,
+            levels = lapply(droplevels(responses), levels),
             # TODO: extract only D for as.data.frame and J for predict
             #model_data = model_data,
             data = data,

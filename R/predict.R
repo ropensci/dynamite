@@ -42,8 +42,7 @@ predict.btvcmfit_counterfactual <- function(object, newdata, n_draws = NULL) {
         stop_("Model definition implies ", fixed, " fixed time points, but 'newdata' has only ", n_time, " time points.")
     }
     resp_all <- get_resp(basis$formula)
-    n_resp <- length(resp_all)
-    # TODO check that first fixed time points do not contain NAs
+    # TODO check that fixed time points do not contain NAs
     for (resp in resp_all) {
         if (is.null(newdata[[resp]])) {
             newdata[[resp]] <- NA
@@ -80,8 +79,7 @@ predict.btvcmfit_counterfactual <- function(object, newdata, n_draws = NULL) {
                     newdata[idx_i, resp] <- sim
                 }
                 if (is_categorical(basis$formula[[j]]$family)) {
-                    #TODO check that the order is correct
-                    y_levels <- levels(droplevels(object$data[[resp]])) #TODO, could be already stored in basis$formula$levels
+                    y_levels <- object$levels[[resp]]
                     S <- length(y_levels)
                     sim <- integer(length(idx_i))
                     for(k in seq_len(n_draws)) {

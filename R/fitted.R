@@ -35,56 +35,57 @@ fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
             stop(paste("Timing variable", object$time_var, "contains time points not found in the original data."))
     }
 
-    # For each ID independently
-    if (length(unique(group)) > 1) {
-        newdata <- dplyr::bind_rows(lapply(split(newdata, group), function(x)
-            fitted.btvcmfit(object, x, n_draws)))
-    } else {
-        basis <- object$prediction_basis
-        fixed <- basis$fixed
-        resp_all <- get_resp(basis$formula)
-        responses <- newdata[, resp_all, drop = FALSE]
-        model_matrix <- full_model.matrix(basis$formula, newdata, resp_all)
-        model_data <- convert_data(basis$formula, responses, group, time, fixed, model_matrix)
-        samples <- rstan::extract(object$stanfit)
-        # extract returns permuted samples so we can just pick first n_draws
-        #idx <- 1:n_draws #sample(ndraws(bf), size = n_draws)
+    basis <- object$prediction_basis
+    fixed <- basis$fixed
+    n_time <- length(time)
+    n_id <- length(unique(group))
+    if (n_time <= fixed) {
+        stop_("Model definition implies ", fixed, " fixed time points, but 'newdata' has only ", n_time, " time points.")
+    }
+    resp_all <- get_resp(basis$formula)
 
-        # remove fixed time points (TODO: Fix, now assumes time is of form 1,2,...)
-        newdata <- dplyr::filter(newdata, time > fixed)
-        # create separate column for each level of categorical variables
-        for (i in seq_along(resp_all)) {
-            resp <- resp_all[i]
-            if (is_categorical(basis$formula[[i]]$family)) {
-                resp_levels <- basis$formula[[i]]$levels
-                newdata[, c(glue::glue("{resp}[{resp_levels}]"))] <- NA # TODO: glued names to formula?
-                newdata[[resp]] <- NULL
-            }
+    samples <- rstan::extract(object$stanfit)
+    u_names <- unique(names(basis$start))
+
+    model_matrix <- full_model.matrix_fast(basis$formula,
+        newdata, u_names)
+    # create separate column for each level of categorical variables
+    for (i in seq_along(resp_all)) {
+        resp <- resp_all[i]
+        if (is_categorical(basis$formula[[i]]$family)) {
+            resp_levels <- object$levels[[resp]]
+            newdata[, c(glue::glue("{resp}[{resp_levels}]"))] <- NA # TODO: glued names to formula?
+            newdata[[resp]] <- NULL
         }
-        n <- nrow(newdata)
-        newdata <- data.frame(newdata, draw = rep(1:n_draws, each = nrow(newdata)))
-        for (i in seq_len(n)) {
-            for (j in seq_along(resp_all)) {
-                resp <- resp_all[j]
-                if (is_gaussian(basis$formula[[j]]$family)) {
-                    for(k in seq_len(n_draws)) {
-                        newdata[i + (k - 1) * n, resp] <- do.call(basis$mean[[resp]],
-                            list(model_matrix[i, basis$J], samples[[paste0("beta_", j)]][k, i, ]))
-                    }
-                } else {
-                    if (is_categorical(basis$formula[[j]]$family)) {
-                        resp_levels <- basis$formula[[i]]$levels
-                        idx <- which(names(newdata) %in% c(glue::glue("{resp}[{resp_levels}]")))
-                        for(k in seq_len(n_draws)) {
-                            newdata[i + (k - 1) * n, idx] <- do.call(basis$mean[[resp]],
-                                list(model_matrix[i, basis$J], samples[[paste0("beta_", j)]][k, i, ,]))
-                        }
-                    }
-                }
+    }
+    newdata <- data.frame(newdata, draw = rep(1:n_draws, each = nrow(newdata)))
+    n <- nrow(newdata)
+    for (i in (fixed + 1):n_time) {
 
+        idx_i <- seq(i, n, by = n_time) # TODO fix for a case of unequal number of time points per group
+        idx_i2 <- seq(i, nrow(model_matrix), by = n_time)
+        for (j in seq_along(resp_all)) {
+            resp <- resp_all[j]
+            if (is_gaussian(basis$formula[[j]]$family)) {
+                xbeta <- model_matrix[idx_i2, basis$J[[j]], drop = FALSE] %*% t(samples[[paste0("beta_", j)]][1:n_draws, i - fixed, ])
+                newdata[idx, resp] <- xbeta
+            }
+            if (is_categorical(basis$formula[[j]]$family)) {
+                sim <- matrix(NA, length(idx_i), length(object$levels[[resp]]))
+                for(k in seq_len(n_draws)) {
+                    idx_k <- ((k - 1) * n_id + 1):(k * n_id)
+                    xbeta <- model_matrix[idx_i2, basis$J[[j]], drop = FALSE] %*% samples[[paste0("beta_", j)]][k, i - fixed, , ]
+                    # sim[idx_k, ] <- exp(xbeta)/rowSums(exp(beta))
+                    maxs <- apply(xbeta, 1, max)
+                    sim[idx_k, ] <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+                }
+                idx_resp <- which(names(newdata) %in% c(glue::glue("{resp}[{resp_levels}]")))
+                newdata[idx_i, idx_resp] <- sim
             }
 
         }
     }
+
+
     newdata
 }
