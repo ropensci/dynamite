@@ -52,15 +52,18 @@ predict.btvcmfit_counterfactual <- function(object, newdata, n_draws = NULL) {
     newdata <- data.frame(newdata, draw = rep(1:n_draws, each = nrow(newdata)))
     samples <- rstan::extract(object$stanfit)
     u_names <- unique(names(basis$start))
+    n <- nrow(newdata)
     for (i in (fixed + 1):n_time) {
-
-        idx <- which(dplyr::between(newdata[[object$time_var]], i - fixed, i)) # TODO don't assume time_var is 1,2,...
-        idx_i <- which(newdata[[object$time_var]] == i)
+        idx <- rep(seq(i - fixed, n, by = n_time), 1 + fixed) + rep(0:fixed, each = n_id * n_draws)
+        idx_i <- seq(i, n, by = n_time)
+        # TODO: revert back to switch when we support for unequal series
+        # idx <- which(dplyr::between(newdata[[object$time_var]], i - fixed, i)) # TODO don't assume time_var is 1,2,...
+        # idx_i <- which(newdata[[object$time_var]] == i)
 
         model_matrix <- full_model.matrix_fast(basis$formula,
             newdata[idx, ], u_names)[-1,] #remove extra due to NAs
         # drop previous time points
-       # model_matrix <- model_matrix[-seq(i, nrow(model_matrix), length = n_id * n_draws), ]
+        # model_matrix <- model_matrix[-seq(i, nrow(model_matrix), length = n_id * n_draws), ]
         for (j in seq_along(resp_all)) {
             resp <- resp_all[j]
             if (any(is.na(newdata[idx_i, resp]))) { #TODO partial missingness?
@@ -84,9 +87,9 @@ predict.btvcmfit_counterfactual <- function(object, newdata, n_draws = NULL) {
                     for(k in seq_len(n_draws)) {
                         idx_k <- ((k - 1) * n_id + 1):(k * n_id)
                         xbeta <- model_matrix[idx_k, basis$J[[j]], drop = FALSE] %*% samples[[paste0("beta_", j)]][k, i - fixed, , ]
-                        sim[idx_k] <- apply(xbeta, 1, function(x) sample.int(S, 1, prob = softmax(x)))
+                        sim[idx_k] <- max.col(xbeta - log(-log(runif(S * n_id))))
                     }
-                    newdata[idx_i, resp] <- factor(y_levels[sim], levels = y_levels)
+                    newdata[idx_i, resp] <- y_levels[sim]
                 }
                 # for(k in seq_len(n_draws)) {
                 #     idx_k <- ((k - 1) * n_id + 1):(k * n_id)
