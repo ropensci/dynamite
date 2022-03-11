@@ -8,9 +8,6 @@
 #' @importFrom stats fitted
 fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
 
-
-    # TODO: this works but should be reimplemented, currently very slow!
-
     if (is.null(n_draws)) {
         n_draws <- ndraws(object)
     }
@@ -30,7 +27,8 @@ fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
 
         if (!(object$time_var %in% names(newdata)))
             stop(paste("Time index variable", object$time_var, "not found in 'newdata'."))
-        newdata <- dplyr::arrange(newdata, object$time_var)
+        # sort just in case
+        newdata <- dplyr::arrange(newdata, dplyr::across(object$time_var))
         # TODO just use the original time points starting from start_time
         time <- unique(newdata[, object$time_var])
         if (!all(time %in% object$time))
@@ -52,9 +50,9 @@ fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
         # extract returns permuted samples so we can just pick first n_draws
         #idx <- 1:n_draws #sample(ndraws(bf), size = n_draws)
 
-        # remove fixed time points
+        # remove fixed time points (TODO: Fix, now assumes time is of form 1,2,...)
         newdata <- dplyr::filter(newdata, time > fixed)
-
+        # create separate column for each level of categorical variables
         for (i in seq_along(resp_all)) {
             resp <- resp_all[i]
             if (is_categorical(basis$formula[[i]]$family)) {
@@ -70,9 +68,7 @@ fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
                 resp <- resp_all[j]
                 if (is_gaussian(basis$formula[[j]]$family)) {
                     for(k in seq_len(n_draws)) {
-                        # newdata[i + (k - 1) * n, resp] <- do.call(basis$mean[[resp]],
-                        #     list(model_matrix[i, basis$J], samples[[paste0("beta_", j)]][k, i, ]))
-                        newdata[[resp]][i + (k - 1) * n] <- do.call(basis$mean[[resp]],
+                        newdata[i + (k - 1) * n, resp] <- do.call(basis$mean[[resp]],
                             list(model_matrix[i, basis$J], samples[[paste0("beta_", j)]][k, i, ]))
                     }
                 } else {

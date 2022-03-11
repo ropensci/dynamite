@@ -109,19 +109,6 @@ try_ <- function(..., type) {
     out
 }
 
-slice_tibble <- function(x, i) {
-    out <- vector("list", length = ncol(x))
-    names(out) <- names(x)
-    for (j in seq_len(ncol(x))) {
-        if (is.list(x[[j]])) {
-            out[[j]] <- sapply(x[[j]], "[[", i)
-        } else {
-            out[[j]] <- x[[j]]
-        }
-    }
-    list2DF(out)
-}
-
 # Starup message for the package
 .onAttach <- function(libname, pkgname) {
     # TODO

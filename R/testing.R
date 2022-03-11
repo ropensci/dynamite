@@ -76,11 +76,12 @@ test_form2 <- obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1) + lag(y3, 1), fami
 #     geom_line() + geom_line(aes(y = true), colour = "red") +
 #     facet_wrap(~ variable, scales = "free_y")
 #
-# newdata <- d %>% filter(ID == 1)
-# newdata[2:20, 1] <- NA
-# nd <- btvcm:::predict.btvcmfit_counterfactual(fit, newdata, n_draws=10)
-# tidyr::unnest(nd)
+# newdata <- d
+# newdata$y[newdata$month > 1] <- NA
+# system.time(pred <- predict(fit, newdata = newdata))
+# sumr <- pred %>% group_by(ID, month) %>% summarise(mean = mean(y), lwr = quantile(y, 0.05), upr = quantile(y, 0.95))
 #
+# sumr %>% ggplot(aes(month, mean, group = ID)) + geom_line()
 # print(fit$stanfit, "tau_1")
 # b <- apply(rstan::extract(fit$stanfit, "beta_1")[[1]], 2:3, mean)
 # ts.plot(cbind(b, intercept[-1], betax[-1], betay[-1]), col=1:3,lty=rep(1:2,each=3))

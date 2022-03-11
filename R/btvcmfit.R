@@ -18,7 +18,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
     if (missing(time))
         stop("Argument 'time' is missing. ")
     time_var <- deparse(substitute(time))
-    data <- dplyr::arrange(data, time_var) # just in case?
+    data <- dplyr::arrange(data, dplyr::across(dplyr::all_of(c(group_var, time_var))))
     time <- unique(data[, time_var])
     resp_all <- get_resp(formula)
     n_rows <- nrow(data)
@@ -130,7 +130,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
                 ord = data_names[!data_names %in% c(group_var, time_var)],
                 rng = create_predict_functions(formula),
                 mean = create_mean_functions(formula),
-                J = model_data$J
+                J = attr(model_matrix, "assign")
             )
         ),
         class = "btvcmfit"
@@ -161,6 +161,12 @@ full_model.matrix <- function(formula, data, resp_all) {
         paste0(resp_all[i], "_", u_names[attr(model_matrix, "assign")[[i]]])
     })
     model_matrix
+}
+# For prediction
+full_model.matrix_fast <- function(formula, data, u_names) {
+    model_matrices <- lapply(lapply(formula, "[[", "formula"), model.matrix, data)
+    model_matrix <- do.call(cbind, model_matrices)
+    model_matrix[, u_names, drop = FALSE]
 }
 
 # Convert data for Stan
@@ -237,5 +243,5 @@ convert_data <- function(formula, responses, group, time, fixed, model_matrix) {
 
     }
     T <- T_full - fixed
-    c(named_list(T, N, C, K, X, D, Bs), channel_vars, J = assigned) # J is for prediction, not used in Stan
+    c(named_list(T, N, C, K, X, D, Bs), channel_vars)
 }
