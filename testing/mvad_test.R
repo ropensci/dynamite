@@ -4,10 +4,15 @@ library(tidyr)
 data(mvad, package = "TraMineR")
 d <- pivot_longer(mvad, 15:86, "time")
 d$time <- rep(1:72, length = nrow(d))
+#d <-  d %>% filter(id < 20 & time < 20) %>% select(id, time, value)
 fit <- btvcm:::btvcmfit(
     obs(value ~ 1, family = categorical()) + lags() +
-        splines(df = 20, shrinkage = FALSE),
-    d, id, chains = 1, refresh = 1)
+        splines(df = 5, shrinkage = FALSE),
+    d, id, time, chains = 1, refresh = 10)
+
+newdata <- d
+newdata$value[newdata$time > 1] <- NA
+system.time(pred <- predict(fit, newdata = newdata))
 
 print(fit$stanfit, "tau_1")
 b <- apply(rstan::extract(fit$stanfit, "beta_1")[[1]], 2:4, mean)

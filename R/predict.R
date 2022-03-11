@@ -77,15 +77,16 @@ predict.btvcmfit_counterfactual <- function(object, newdata, n_draws = NULL) {
                     newdata[idx_i, resp] <- sim
                 }
                 if (is_categorical(basis$formula[[j]]$family)) {
-                    y_levels <- basis$formula$levels #TODO
-                    sim <- character(length(idx_i))
+                    #TODO check that the order is correct
+                    y_levels <- levels(droplevels(object$data[[resp]])) #TODO, could be already stored in basis$formula$levels
+                    S <- length(y_levels)
+                    sim <- integer(length(idx_i))
                     for(k in seq_len(n_draws)) {
-                        browser()
                         idx_k <- ((k - 1) * n_id + 1):(k * n_id)
                         xbeta <- model_matrix[idx_k, basis$J[[j]], drop = FALSE] %*% samples[[paste0("beta_", j)]][k, i - fixed, , ]
-                        sim[idx_k] <- apply(xbeta, 1, function(x) sample(y_levels, 1, prob = softmax(x)))
+                        sim[idx_k] <- apply(xbeta, 1, function(x) sample.int(S, 1, prob = softmax(x)))
                     }
-                    newdata[idx_i, resp] <- factor(sim, levels = y_levels)
+                    newdata[idx_i, resp] <- factor(y_levels[sim], levels = y_levels)
                 }
                 # for(k in seq_len(n_draws)) {
                 #     idx_k <- ((k - 1) * n_id + 1):(k * n_id)
