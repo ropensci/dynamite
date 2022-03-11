@@ -126,8 +126,6 @@ btvcmfit <- function(formula, data, group, time, ...) {
                 past = model_matrix[(n_rows - fixed):n_rows,],
                 start = model_matrix[1:fixed,], # Needed for some posterior predictive checks?
                 ord = data_names[!data_names %in% c(group_var, time_var)],
-                rng = create_predict_functions(formula),
-                mean = create_mean_functions(formula),
                 J = attr(model_matrix, "assign")
             )
         ),
