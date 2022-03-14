@@ -55,11 +55,11 @@ fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
         resp <- resp_all[i]
         if (is_categorical(basis$formula[[i]]$family)) {
             resp_levels <- object$levels[[resp]]
-            newdata[, c(glue::glue("{resp}[{resp_levels}]"))] <- NA # TODO: glued names to formula?
+            newdata[, c(glue::glue("{resp}_{resp_levels}"))] <- NA # TODO: glued names to formula?
             newdata[[resp]] <- NULL
         }
     }
-    newdata <- data.frame(newdata, draw = rep(1:n_draws, each = nrow(newdata)))
+    newdata <- data.frame(newdata, draw = rep(1:n_draws, each = nrow(newdata)), check.names = FALSE)
     n <- nrow(newdata)
     for (i in (fixed + 1):n_time) {
 
@@ -80,7 +80,7 @@ fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
                     maxs <- apply(xbeta, 1, max)
                     sim[idx_k, ] <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
                 }
-                idx_resp <- which(names(newdata) %in% c(glue::glue("{resp}[{resp_levels}]")))
+                idx_resp <- which(names(newdata) %in% c(glue::glue("{resp}_{resp_levels}")))
                 newdata[idx_i, idx_resp] <- sim
             }
 
