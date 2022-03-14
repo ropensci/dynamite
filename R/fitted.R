@@ -59,7 +59,7 @@ fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
             newdata[[resp]] <- NULL
         }
     }
-    newdata <- data.frame(newdata, draw = rep(1:n_draws, each = nrow(newdata)), check.names = FALSE)
+    newdata <- data.frame(newdata, draw = rep(1:n_draws, each = nrow(newdata)))
     n <- nrow(newdata)
     for (i in (fixed + 1):n_time) {
 
