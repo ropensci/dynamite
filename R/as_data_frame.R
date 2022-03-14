@@ -58,13 +58,16 @@ as.data.frame.btvcmfit <- function(x, row.names = NULL, optional = FALSE, parame
         samples <- rstan::extract(x$stanfit, pars = all_pars[idx], permuted = FALSE)
         # TODO categorical case, how to name S-1 cases (or S if we don't drop the zeros)?
         # beta is T x K or T x K x S
-        var_names <- rep(paste0("beta_", coef_names), each = length(x$time))
+        fixed <- x$prediction_basis$fixed
+        time <- if (fixed > 0) x$time[-(1:fixed)] else x$time
+        var_names <- rep(paste0("beta_", coef_names),
+            each = length(time))
         n <- nrow(samples) # samples per chain
         k <- ncol(samples) # number of chains
         d <- rbind(d, data.frame(
             iter = 1:n,
             chain = rep(1:k, each = n),
-            time = rep(x$time, each = n * k), # times number of coefficients
+            time = rep(time, each = n * k), # times number of coefficients
             value = c(samples),
             variable = rep(var_names, each = n * k),
             row.names = row.names))

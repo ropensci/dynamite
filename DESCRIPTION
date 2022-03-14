@@ -37,6 +37,7 @@ Collate:
     'modeldata.R'
     'predict.R'
     'predict_helpers.R'
+    'print.R'
     'splines.R'
     'stanblocks.R'
     'stanblocks_hiddenstates.R'

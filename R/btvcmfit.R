@@ -119,8 +119,8 @@ btvcmfit <- function(formula, data, group, time, ...) {
             # TODO: extract only D for as.data.frame and J for predict
             #model_data = model_data,
             data = data,
-            # spline = list(B = model_data$Bs,
-            #     D = model_data$D),
+            spline = list(B = model_data$Bs,
+                D = model_data$D),
             prediction_basis = list(
                 formula = formula,
                 fixed = fixed,

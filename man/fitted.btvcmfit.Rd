@@ -4,7 +4,7 @@
 \alias{fitted.btvcmfit}
 \title{Extract fitted values of btvcmfit}
 \usage{
-\method{fitted}{btvcmfit}(object, newdata = NULL, n_draws = 100, ...)
+\method{fitted}{btvcmfit}(object, newdata = NULL, n_draws = NULL, ...)
 }
 \arguments{
 \item{object}{An object of class \code{btvcmfit}.}

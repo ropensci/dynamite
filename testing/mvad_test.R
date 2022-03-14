@@ -1,13 +1,14 @@
 library(TraMineR)
 library(dplyr)
 library(tidyr)
+library(btvcm)
 data(mvad, package = "TraMineR")
-d <- pivot_longer(mvad, 15:86, "time")
+d <- pivot_longer(mvad, 15:86, "time") %>% select(id, time, value)
 d$time <- rep(1:72, length = nrow(d))
-#d <-  d %>% filter(id < 20 & time < 20) %>% select(id, time, value)
+d <-  d %>% filter(id < 100)
 fit <- btvcm:::btvcmfit(
     obs(value ~ 1, family = categorical()) + lags() +
-        splines(df = 5, shrinkage = FALSE),
+        splines(df = 10),
     d, id, time, chains = 1, refresh = 10)
 
 newdata <- d

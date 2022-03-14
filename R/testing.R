@@ -5,13 +5,13 @@ N <- 4
 TN <- T * N
 
 test_data <- data.frame(y1 = as.factor(sample(2, size = TN, replace = TRUE)),
-                        y2 = as.factor(sample(3, size = TN, replace = TRUE)),
-                        y3 = as.factor(sample(5, size = TN, replace = TRUE)),
-                        x1 = rnorm(TN),
-                        x2 = as.factor(sample(4, size = TN, replace = TRUE)),
-                        x3 = rnorm(TN),
-                        x4 = rnorm(TN),
-                        ID = gl(N, T))
+    y2 = as.factor(sample(3, size = TN, replace = TRUE)),
+    y3 = as.factor(sample(5, size = TN, replace = TRUE)),
+    x1 = rnorm(TN),
+    x2 = as.factor(sample(4, size = TN, replace = TRUE)),
+    x3 = rnorm(TN),
+    x4 = rnorm(TN),
+    ID = gl(N, T))
 
 test_form <- obs(y1 ~ x1 + x2 + x4, family = categorical()) +
     obs(y2 ~ x1 + x3 + x4, family = categorical()) +
@@ -39,7 +39,7 @@ test_form2 <- obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1) + lag(y3, 1), fami
 # Should give identical model matrices
 # all.equal(test_fit$model_matrix, test_fit2$model_matrix)
 
-
+#
 # set.seed(1)
 # T <- 20
 # N <- 500
@@ -54,13 +54,13 @@ test_form2 <- obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1) + lag(y3, 1), fami
 # }
 # y <- y[, -1]
 # ts.plot(t(y))
-# d <- data.frame(y = c(t(y)), x = c(t(x)), ID = gl(N, T))
+# d <- data.frame(y = c(t(y)), x = c(t(x)), ID = gl(N, T), month = 1:T)
 # #
 # fit <- btvcm:::btvcmfit(
 #     obs(y ~ x, family = gaussian()) +
 #         lags() +
 #         splines(knots = 3:19), #t=1 fixed
-#     d, ID, chains = 1)
+#     d, ID, month, chains = 1)
 #
 # print(fit$stanfit, pars = c("sigma_1", "tau_1"))
 # b <- apply(rstan::extract(fit$stanfit, "beta_1")[[1]], 2:3, mean)
@@ -68,7 +68,7 @@ test_form2 <- obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1) + lag(y3, 1), fami
 #
 # cf <- coef(fit) %>% group_by(time, variable) %>%
 #     summarise(mean = mean(value),
-#         lwr = quantile(value, 0.05), upr = quantile(value, 0.95))
+#         lwr = quantile(value, 0.025), upr = quantile(value, 0.975))
 # cf$true <- c(rbind(intercept, betay, betax)[, -1])
 # cf %>%
 #     ggplot(aes(time, mean)) + theme_bw() +
@@ -76,6 +76,48 @@ test_form2 <- obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1) + lag(y3, 1), fami
 #     geom_line() + geom_line(aes(y = true), colour = "red") +
 #     facet_wrap(~ variable, scales = "free_y")
 #
+# newdata <- d %>% filter(ID == 1)
+# newdata$x[] <- 0
+# newdata$y[] <- 2
+# fits <- fitted(fit, newdata = newdata)
+# sumr <- fits %>% group_by(ID, month) %>% summarise(mean = mean(y), lwr = quantile(y, 0.025), upr = quantile(y, 0.975))
+# sumr$y <- d$y[d$ID == 1]
+# sumr %>%
+#     ggplot(aes(month, mean, group = ID)) +
+#     geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7, fill = "blue") +
+#     geom_line(aes(y = y), colour = "red") +
+#     geom_line() +
+#     theme_bw()
+#
+# newdata <- d %>% filter(ID == 1)
+# newdata$x[] <- 0
+# # the uncertainty is minimal due to the strong correlation of intercept and beta_y, and fixed negative y
+# fits <- fitted(fit, newdata = newdata)
+# sumr <- fits %>% group_by(ID, month) %>% summarise(mean = mean(y), lwr = quantile(y, 0.025), upr = quantile(y, 0.975))
+# sumr$y <- d$y[d$ID == 1]
+# sumr %>%
+#     ggplot(aes(month, mean, group = ID)) +
+#     geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7, fill = "blue") +
+#     geom_line(aes(y = y), colour = "red") +
+#     geom_line() +
+#     theme_bw()
+#
+# # simulate also y:
+# newdata <- d %>% filter(ID == 1)
+# newdata$x[] <- 0
+# newdata$y[-1] <- NA
+# pred <- predict(fit, newdata = newdata)
+# sumr <- pred %>% group_by(ID, month) %>% summarise(mean = mean(y), lwr = quantile(y, 0.025), upr = quantile(y, 0.975))
+# sumr$y <- d$y[d$ID == 1]
+# sumr %>%
+#     ggplot(aes(month, mean, group = ID)) +
+#     geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7, fill = "blue") +
+#     geom_line(aes(y = y), colour = "red") +
+#     geom_line() +
+#     theme_bw()
+
+
+
 # newdata <- d
 # newdata$y[newdata$month > 1] <- NA
 # system.time(pred <- predict(fit, newdata = newdata))
