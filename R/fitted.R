@@ -68,7 +68,7 @@ fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
             resp <- resp_all[j]
             if (is_gaussian(basis$formula[[j]]$family)) {
                 xbeta <- model_matrix[idx_i2, basis$J[[j]], drop = FALSE] %*% t(samples[[paste0("beta_", j)]][1:n_draws, i - fixed, ])
-                newdata[idx, resp] <- xbeta
+                newdata[idx_i, resp] <- c(xbeta)
             }
             if (is_categorical(basis$formula[[j]]$family)) {
                 sim <- matrix(NA, length(idx_i), length(object$levels[[resp]]))
