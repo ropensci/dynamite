@@ -12,5 +12,7 @@
 \item{...}{Ignored.}
 }
 \description{
-TODO Note that these are conditional on the observed data i.e., we don't simulate new lagged values for covariates
+TODO Note that these are conditional on the observed data i.e., we don't
+simulate new lagged values for covariates, so we underestimate the uncertainty.
+Better to use predict with type = "mean" TODO do it
 }

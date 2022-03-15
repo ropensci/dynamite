@@ -4,6 +4,10 @@
 \alias{btvcmfamily}
 \alias{categorical}
 \alias{gaussian}
+\alias{binomial}
+\alias{bernoulli}
+\alias{poisson}
+\alias{negbin}
 \title{Family Functions for \pkg{btvcm} Models}
 \usage{
 btvcmfamily(name, ...)
@@ -11,6 +15,14 @@ btvcmfamily(name, ...)
 categorical(...)
 
 gaussian(...)
+
+binomial(...)
+
+bernoulli(...)
+
+poisson(...)
+
+negbin(...)
 }
 \description{
 Family Functions for \pkg{btvcm} Models

@@ -25,6 +25,7 @@ btvcmfamily_ <- function(name, ...) {
 is.btvcmfamily <- function(x) {
     inherits(x, "btvcmfamily")
 }
+
 # TODO could have an option to define the reference category? Or maybe simpler (for us)
 # to ask user to relevel the factor beforehand
 #' @rdname btvcmfamily
@@ -43,7 +44,30 @@ gaussian <- function(...) {
     # do something else
     btvcmfamily_("gaussian", ...)
 }
-
+#' @rdname btvcmfamily
+#' @export
+binomial <- function(...) {
+    # do something else
+    btvcmfamily_("binomial", ...)
+}
+#' @rdname btvcmfamily
+#' @export
+bernoulli <- function(...) {
+    # do something else
+    btvcmfamily_("bernoulli", ...)
+}
+#' @rdname btvcmfamily
+#' @export
+poisson <- function(...) {
+    # do something else
+    btvcmfamily_("poisson", ...)
+}
+#' @rdname btvcmfamily
+#' @export
+negbin <- function(...) {
+    # do something else
+    btvcmfamily_("negbin", ...)
+}
 # Hardcoded families for now
 
 # Check if response of a family is continuous
@@ -74,10 +98,11 @@ discrete_distributions <- c(
 
 supported_families <- c(
     "binomial",
+    "bernoulli", # separate as stan has separete (more efficient) pmf for it
     "categorical",
+    "negbin",
     "gaussian",
-    "gamma",
-    "poisson"
+    "poisson" #TODO add gamma
 )
 
 # Generate is_x convenience functions for all supported families x

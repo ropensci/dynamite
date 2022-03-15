@@ -220,25 +220,47 @@ convert_data <- function(formula, responses, group, time, fixed, model_matrix) {
         }
         Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))[free_obs, , drop = FALSE]
         channel_vars[[paste0("response_", i)]] <- Y
-        if (is_categorical(formula[[i]]$family)) {
-            S_i <- length(unique(as.vector(Y)))
-            K_i <- length(assigned[[i]])
-            prior_sds <- matrix(2 / sd_x[assigned[[i]]], K_i, S_i - 1)
-            channel_vars[[paste0("S_", i)]] <- S_i
-            channel_vars[[paste0("a_prior_mean_", i)]] <- matrix(0, K_i, S_i - 1)
-            channel_vars[[paste0("a_prior_sd_", i)]] <- prior_sds
-        }
-        if (is_gaussian(formula[[i]]$family)) {
-            channel_vars[[paste0("a_prior_mean_", i)]] <- rep(0, length(assigned[[i]]))
-            # TODO adjust prior mean for the intercept term under the assumption that other betas/x are 0
-            #if(model_matrix[])
-            channel_vars[[paste0("a_prior_sd_", i)]] <- 2 * sd(Y[1, ]) / sd_x[assigned[[i]]]
-            channel_vars[[paste0("sigma_scale_", i)]] <- 1 / mean(apply(Y, 1, sd))
-        }
-        # TODO switch case other families, with Gamma shape, negbin dispersion
-        # TODO or something like do.call(paste0("prepare_channel_vars_", formula[[i]]$family, list(Y, S_i, K_i, i ...))) for branchless
-
+        prep <- do.call(paste0("prepare_channel_vars_", formula[[i]]$family), list(i = i, Y = Y, J = assigned[[i]], sd_x = sd_x))
+        channel_vars <- c(channel_vars, prep)
     }
     T <- T_full - fixed
     c(named_list(T, N, C, K, X, D, Bs), channel_vars)
+}
+
+prepare_channel_vars_categorical <- function(i, Y, J, sd_x) {
+    S_i <- length(unique(as.vector(Y)))
+    K_i <- length(J)
+    prior_sds <- matrix(2 / sd_x[J], K_i, S_i - 1)
+    channel_vars <- vector("list", 3)
+    channel_vars[[paste0("S_", i)]] <- S_i
+    channel_vars[[paste0("a_prior_mean_", i)]] <- matrix(0, K_i, S_i - 1)
+    channel_vars[[paste0("a_prior_sd_", i)]] <- prior_sds
+    channel_vars
+}
+prepare_channel_vars_gaussian <- function(i, Y, J, sd_x) {
+    channel_vars <- vector("list", 3)
+    channel_vars[[paste0("a_prior_mean_", i)]] <- rep(0, length(J))
+    # TODO adjust prior mean for the intercept term under the assumption that other betas/x are 0
+    channel_vars[[paste0("a_prior_sd_", i)]] <- 2 * sd(Y[1, ]) / sd_x[J]
+    channel_vars[[paste0("sigma_scale_", i)]] <- 1 / mean(apply(Y, 1, sd))
+    channel_vars
+}
+prepare_channel_vars_binomial <- function(i, Y, J, sd_x) {
+    channel_vars <- vector("list", 2)
+    channel_vars[[paste0("a_prior_mean_", i)]] <- rep(0, length(J))
+    channel_vars[[paste0("a_prior_sd_", i)]] <- 2 / sd_x[J]
+    channel_vars
+}
+prepare_channel_vars_bernoulli <- function(i, Y, J, sd_x) {
+    prepare_channel_vars_binomial(i, Y, J, sd_x)
+}
+prepare_channel_vars_poisson <- function(i, Y, J, sd_x) {
+    prepare_channel_vars_binomial(i, Y, J, sd_x)
+}
+prepare_channel_vars_negbin <- function(i, Y, J, sd_x) {
+    channel_vars <- vector("list", 3)
+    channel_vars[[paste0("a_prior_mean_", i)]] <- rep(0, length(J))
+    channel_vars[[paste0("a_prior_sd_", i)]] <- 2 / sd_x[J]
+    channel_vars[[paste0("phi_scale_", i)]] <- 1
+    channel_vars
 }

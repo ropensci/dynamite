@@ -46,37 +46,12 @@ create_data <- function(formula, idt, ...) {
 
     # loop over channels
     for (i in seq_along(formula)) {
-
-        if (is_continuous(formula[[i]]$family)) {
-            type <- "real"
-        } else {
-            type <- "int"
-        }
-
-        # create response for channel i as T x N array
-        y <- paste0(idt(1), type, paste0(" response_", i), "[T,N];")
-        mtext <- paste_rows(mtext, y)
         # Number of covariates in channel i
         mtext <- paste_rows(mtext, c(idt(1), "int<lower=1> K_", i, ";"))
         # index vector of covariates related to channel i
         mtext <- paste_rows(mtext, c(idt(1), "int J_", i, "[K_", i, "];"))
-        # TODO, need to add other distribution-specific components as well
-        if (is_categorical(formula[[i]]$family)) {
-            mtext <- paste_rows(mtext, c(idt(1), "int<lower=0> S_", i, ";"))
-            mtext <- paste_rows(mtext, c(idt(1), "matrix[K_", i, ", S_", i, " - 1] a_prior_mean_", i, ";"))
-            mtext <- paste_rows(mtext, c(idt(1), "matrix[K_", i, ", S_", i, " - 1] a_prior_sd_", i, ";"))
-        } else {
-            mtext <- paste_rows(mtext, c(idt(1), "vector[K_", i, "] a_prior_mean_", i, ";"))
-            mtext <- paste_rows(mtext, c(idt(1), "vector[K_", i, "] a_prior_sd_", i, ";"))
-            if (is_gaussian(formula[[i]]$family)) {
-                mtext <- paste_rows(mtext, c(idt(1), "real<lower=0> sigma_scale_", i, ";"))
-            }
-            if (is_binomial(formula[[i]]$family)) {
-                # TODO, add number of trials
-                stop("Binomial distribution not yet supported.")
-            }
-            # TODO: shape for gamma, dispersion for negbin
-        }
+        mtext <- paste_rows(mtext,
+            do.call(paste0("data_lines_", formula[[i]]$family), list(i = i, idt = idt)))
     }
     paste_rows("data {", mtext, "}")
 }
@@ -84,8 +59,6 @@ create_data <- function(formula, idt, ...) {
 #'
 #' @export
 create_transformed_data <- function(formula, idt, ...) {
-    # TODO: Consider transforming X by centering, typically improves sampling efficiency
-    # Should center over all time points?
     transformed_data <- character(0)
     for (i in seq_along(formula)) {
         if (is_categorical(formula[[i]]$family)) {
@@ -105,7 +78,7 @@ create_parameters <- function(formula, idt, ...) {
     lb <- attr(formula, "splines")$lb_tau
     # TODO channel-wise
     if (attr(formula, "splines")$noncentered) {
-
+        stop("Noncentered parameterisation is currently not supported.")
         mtext <- paste_rows(
             c(idt(1), "// Spline parameters"),
             c(idt(1), "// use noncentered parameterisation for sampling efficiency")
@@ -134,25 +107,8 @@ create_parameters <- function(formula, idt, ...) {
     } else {
         mtext <- paste0(idt(1), "// Spline parameters")
         for (i in seq_along(formula)) {
-
-            if (is_categorical(formula[[i]]$family)) {
-                a_term <- c(idt(1), "row_vector[D] a_", i, "[S_", i, "- 1, K_", i, "];")
-                tau_term <- c(idt(1), "vector<lower=", lb, ">[K_", i, "] tau_", i, ";")
-            } else {
-                a_term <- c(idt(1), "row_vector[D] a_", i, "[K_", i, "];")
-                tau_term <- c(idt(1), "vector<lower=", lb, ">[K_", i, "] tau_", i, ";")
-            }
-            mtext <- paste_rows(mtext, a_term, tau_term)
-
-            if (is_gaussian(formula[[i]]$family)) {
-                sigma_term <- c(idt(1), "real<lower=0> sigma_", i, ";")
-                mtext <- paste_rows(mtext, sigma_term)
-            }
-            if (is_gamma(formula[[i]]$family)) {
-                # TODO: shape parameter for the gamma distribution, not a priority
-                stop("Gamma distribution is not yet supported")
-            }
-
+            mtext <- paste_rows(mtext,
+                do.call(paste0("parameters_lines_", formula[[i]]$family), list(i = i, lb = lb, idt = idt)))
         }
     }
     if (attr(formula, "splines")$shrinkage) {
@@ -187,6 +143,7 @@ create_transformed_parameters <- function(formula, idt, ...) {
     for (i in seq_along(formula)) {
 
         if (attr(formula, "splines")$noncentered) {
+            stop("Noncentered parameterisation is currently not supported.")
             # TODO: could separate construction of a and beta so less repetition in the codes
             # TODO: check whether lambda is used
             # TODO use prior definitions
@@ -264,96 +221,12 @@ create_model <- function(formula, idt, ...) {
     c(priors) <- paste0(idt(1), "tau_", 1:length(formula), " ~ normal(0, 1);")
     mtext <- character(0)
     for (i in seq_along(formula)) {
-        if (is_categorical(formula[[i]]$family)) {
-
-            if (attr(formula, "splines")$noncentered) {
-                # These are fixed (non-centered parameterisation)
-                a_term <- paste_rows(
-                    c(idt(1), "for (s in 1:(S_", i, " - 1)) {"),
-                    c(idt(2), "for (k in 1:K_", i, ") {"),
-                    c(idt(3), "a_raw_", i, "[s, k] ~ std_normal();"),
-                    c(idt(2), "}"),
-                    c(idt(1), "}")
-                )
-            } else {
-                # Prior for the first a (beta) is always normal given the RW prior
-                a_term <- paste_rows(
-                    c(idt(1), "for (s in 1:(S_", i, " - 1)) {"),
-                    c(idt(2), "for (k in 1:K_", i, ") {"),
-                    c(idt(3), "a_", i, "[s, k, 1] ~ normal(a_prior_mean_", i, "[k, s], a_prior_sd_", i, "[k, s]);"),
-                    c(idt(3), "for(i in 2:D) {"),
-                    if (attr(formula, "splines")$shrinkage) {
-                        c(idt(4), "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], lambda[i - 1] * tau_", i, "[k]);")
-                    } else {
-                        c(idt(4), "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], tau_", i, "[k]);")
-                    },
-                    c(idt(3), "}"),
-                    c(idt(2), "}"),
-                    c(idt(1), "}")
-                )
-            }
-        } else {
-            if (attr(formula, "splines")$noncentered) {
-                a_term <- paste_rows(
-                    c(idt(1), "for (k in 1:K_", i, ") {"),
-                    c(idt(2), "a_raw_", i, "[k] ~ std_normal();"),
-                    c(idt(1), "}")
-                )
-            } else {
-                # Prior for the first a (beta) is always normal given the RW prior
-                a_term <- paste_rows(
-                    c(idt(1), "for (k in 1:K_", i, ") {"),
-                    c(idt(2), "a_", i, "[k, 1] ~ normal(a_prior_mean_", i, "[k], a_prior_sd_", i, "[k]);"),
-                    c(idt(2), "for(i in 2:D) {"),
-                    if (attr(formula, "splines")$shrinkage) {
-                        c(idt(3), "a_", i, "[k, i] ~ normal(a_", i,"[k, i - 1], lambda[i - 1] * tau_", i, "[k]);")
-                    } else {
-                        c(idt(3), "a_", i, "[k, i] ~ normal(a_", i,"[k, i - 1], tau_", i, "[k]);")
-                    },
-                    c(idt(2), "}"),
-                    c(idt(1), "}")
-                )
-            }
-        }
-        mtext <- paste_rows(mtext, a_term)
-
-        if (is_gaussian(formula[[i]]$family)) {
-            # TODO: User should be able to define this prior arbitrarily?
-            sigma_term <- c(idt(1), "sigma_", i, " ~ exponential(sigma_scale_", i, ");")
-            mtext <- paste_rows(mtext, sigma_term)
-        }
+            mtext <- paste_rows(mtext,
+                do.call(paste0("model_lines_", formula[[i]]$family),
+                list(i = i, shrinkage = attr(formula, "splines")$shrinkage,
+                    noncentered = attr(formula, "splines")$noncentered, idt = idt)))
     }
     mtext <- paste_rows(collapse_rows(priors), mtext)
-
-    # TODO: Add option to sample from prior predictive distribution
-    # Either by adding flag to data block and conditioning below with it
-    # or don't create the likelihood terms below if user has opted for prior sampling
-    for (i in seq_along(formula)) {
-        if (is_categorical(formula[[i]]$family)) {
-
-            likelihood_term <-
-                c(idt(2), "response_", i,
-                    "[t] ~ categorical_logit_glm(X[t][,J_", i, "], zeros_S_", i,
-                    ", beta_", i, "[t]);")
-
-            beta_regularisation <- c(idt(2), "to_vector(beta_", i, "[t]) ~ std_normal();")
-        } else {
-            if (is_gaussian(formula[[i]]$family)) {
-
-                likelihood_term <-
-                    c(idt(2), "response_", i, "[t] ~ normal(X[t][,J_", i,
-                        "] * beta_", i, "[t], ", "sigma_", i, ");")
-
-                beta_regularisation <- c(idt(2), "beta_", i, "[t] ~ std_normal();")
-            } else {
-                stop(paste0("Distribution ", formula[[i]]$family, "not yet supported."))
-            }
-        }
-        # TODO remove regularisation option?
-        mtext <- paste_rows(mtext, paste_rows(c(idt(1), "for (t in 1:T) {"),
-            likelihood_term, if(FALSE) beta_regularisation else NULL, c(idt(1) ,"}")))
-    }
-
     mtext <- paste_rows("model {", mtext, "}")
     mtext
 }

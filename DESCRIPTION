@@ -40,6 +40,7 @@ Collate:
     'print.R'
     'splines.R'
     'stanblocks.R'
+    'stanblocks_families.R'
     'stanblocks_hiddenstates.R'
     'states.R'
     'testing.R'
