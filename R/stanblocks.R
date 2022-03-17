@@ -33,7 +33,6 @@ create_functions <- function(formula, idt, ...) {
 #' @export
 create_data <- function(formula, idt, ...) {
 
-    # Maybe not the best way...
     mtext <- paste_rows(
         c(idt(1), "int<lower=1> T; // number of time points"),
         c(idt(1), "int<lower=1> N; // number of individuals"),
