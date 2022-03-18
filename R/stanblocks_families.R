@@ -6,36 +6,36 @@ data_lines_default <- function(i, idt) {
 }
 
 data_lines_categorical <- function(i, idt) {
-    mtext <- c(idt(1), "int<lower=1> response_", i, "[T, N];")
+    mtext <- c(idt(1), "int<lower=1> ", i, "[T, N];")
     mtext <- paste_rows(mtext, c(idt(1), "int<lower=0> S_", i, ";"))
     mtext <- paste_rows(mtext, c(idt(1), "matrix[K_", i, ", S_", i, " - 1] a_prior_mean_", i, ";"))
     paste_rows(mtext, c(idt(1), "matrix[K_", i, ", S_", i, " - 1] a_prior_sd_", i, ";"))
 }
 
 data_lines_gaussian <- function(i, idt) {
-    mtext <- c(idt(1), "real response_", i, "[T, N];")
+    mtext <- c(idt(1), "real ", i, "[T, N];")
     mtext <- paste_rows(mtext, c(idt(1), "real<lower=0> sigma_scale_", i, ";"))
     paste_rows(mtext, data_lines_default(i, idt))
 }
 
 data_lines_binomial <- function(i, idt) {
-    mtext <- c(idt(1), "int<lower=0> response_", i, "[T, N];")
+    mtext <- c(idt(1), "int<lower=0> ", i, "[T, N];")
     mtext <- paste_rows(mtext, c(idt(1), "int<lower=1>[N, T] trials_", i, ";"))
     paste_rows(mtext, data_lines_default(i, idt))
 }
 
 data_lines_bernoulli <- function(i, idt) {
-    mtext <- c(idt(1), "int<lower=0,upper=1> response_", i, "[T, N];")
+    mtext <- c(idt(1), "int<lower=0,upper=1> ", i, "[T, N];")
     paste_rows(mtext, data_lines_default(i, idt))
 }
 
 data_lines_poisson <- function(i, idt) {
-    mtext <- c(idt(1), "int<lower=0> response_", i, "[T, N];")
+    mtext <- c(idt(1), "int<lower=0> ", i, "[T, N];")
     paste_rows(mtext, data_lines_default(i, idt))
 }
 
 data_lines_negbin <- function(i, idt) {
-    mtext <- c(idt(1), "int<lower=0> response_", i, "[T, N];")
+    mtext <- c(idt(1), "int<lower=0> ", i, "[T, N];")
     mtext <- c(idt(1), "real<lower=0> phi_scale_", i)
     paste_rows(mtext, data_lines_default(i, idt))
 }
@@ -49,7 +49,7 @@ parameters_lines_default <- function(i, lb, idt) {
 
 parameters_lines_categorical <- function(i, lb, idt) {
     a_term <- c(idt(1), "row_vector[D] a_", i, "[S_", i, "- 1, K_", i, "];")
-    tau_term <- c(idt(1), "vector<lower=", lb, ">[K_", i, "] tau_", i, ";")
+    tau_term <- c(idt(1), "matrix<lower=", lb, ">[S_", i, "- 1, K_", i, "] tau_", i, ";")
     paste_rows(a_term, tau_term)
 }
 
@@ -98,7 +98,7 @@ model_lines_default <- function(i, shrinkage, noncentered, idt) {
             c(idt(1), "}")
         )
     }
-    mtext
+    paste_rows(mtext, c(idt(1), "tau_", i, " ~ normal(0, 1);"))
 }
 
 model_lines_categorical <- function(i, shrinkage, noncentered, idt) {
@@ -118,19 +118,22 @@ model_lines_categorical <- function(i, shrinkage, noncentered, idt) {
             c(idt(3), "a_", i, "[s, k, 1] ~ normal(a_prior_mean_", i, "[k, s], a_prior_sd_", i, "[k, s]);"),
             c(idt(3), "for(i in 2:D) {"),
             if (shrinkage) {
-                c(idt(4), "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], lambda[i - 1] * tau_", i, "[k]);")
+                c(idt(4), "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], lambda[i - 1] * tau_", i, "[s, k]);")
             } else {
-                c(idt(4), "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], tau_", i, "[k]);")
+                c(idt(4), "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], tau_", i, "[s, k]);")
             },
             c(idt(3), "}"),
             c(idt(2), "}"),
             c(idt(1), "}")
         )
     }
-    likelihood_term <-
-        c(idt(2), "response_", i, "[t] ~ categorical_logit_glm(X[t][,J_", i, "], zeros_S_", i, ", beta_", i, "[t]);")
 
-    paste_rows(a_term, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
+    prior_term <- c(idt(1), "to_vector(tau_", i, ") ~ normal(0, 1);")
+
+    likelihood_term <-
+        c(idt(2), i, "[t] ~ categorical_logit_glm(X[t][,J_", i, "], zeros_S_", i, ", append_col(beta_", i, "[t], zeros_K_", i, "));")
+
+    paste_rows(a_term, prior_term, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
 
 model_lines_gaussian <- function(i, shrinkage, noncentered, idt) {
@@ -139,7 +142,7 @@ model_lines_gaussian <- function(i, shrinkage, noncentered, idt) {
     mtext <- paste_rows(mtext, c(idt(1), "sigma_", i, " ~ exponential(sigma_scale_", i, ");"))
 
     likelihood_term <-
-        c(idt(2), "response_", i, "[t] ~ normal(X[t][,J_", i, "] * beta_", i, "[t], ", "sigma_", i, ");")
+        c(idt(2), i, "[t] ~ normal(X[t][,J_", i, "] * beta_", i, "[t], ", "sigma_", i, ");")
 
     paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
@@ -147,7 +150,7 @@ model_lines_gaussian <- function(i, shrinkage, noncentered, idt) {
 model_lines_binomial <- function(i, shrinkage, noncentered, idt) {
     mtext <- model_lines_default(i, shrinkage, noncentered, idt)
     likelihood_term <-
-        c(idt(2), "response_", i, "[t] ~ binomial_logit(X[t][,J_", i, "] * beta_", i, "[t], trials_, ", i, "[t]);")
+        c(idt(2), i, "[t] ~ binomial_logit(X[t][,J_", i, "] * beta_", i, "[t], trials_, ", i, "[t]);")
 
     paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
@@ -155,7 +158,7 @@ model_lines_binomial <- function(i, shrinkage, noncentered, idt) {
 model_lines_bernoulli <- function(i, shrinkage, noncentered, idt) {
     mtext <- model_lines_default(i, shrinkage, noncentered, idt)
     likelihood_term <-
-        c(idt(2), "response_", i, "[t] ~ bernoulli_logit_glm(X[t][,J_", i, "], 0, beta_", i, "[t]);")
+        c(idt(2), i, "[t] ~ bernoulli_logit_glm(X[t][,J_", i, "], 0, beta_", i, "[t]);")
 
     paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
@@ -163,7 +166,7 @@ model_lines_bernoulli <- function(i, shrinkage, noncentered, idt) {
 model_lines_poisson <- function(i, shrinkage, noncentered, idt) {
     mtext <- model_lines_default(i, shrinkage, noncentered, idt)
     likelihood_term <-
-        c(idt(2), "response_", i, "[t] ~ poisson_log_glm(X[t][,J_", i, "], 0, beta_", i, "[t]);")
+        c(idt(2), i, "[t] ~ poisson_log_glm(X[t][,J_", i, "], 0, beta_", i, "[t]);")
 
     paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
@@ -174,7 +177,7 @@ model_lines_negbin <- function(i, shrinkage, noncentered, idt) {
     mtext <- paste_rows(mtext, c(idt(1), "phi_", i, " ~ exponential(phi_scale_", i, ");"))
 
     likelihood_term <-
-        c(idt(2), "response_", i, "[t] ~ neg_binomial_2_log_glm(X[t][,J_", i, "], 0, beta_", i, "[t], ", "phi_", i, ");")
+        c(idt(2), i, "[t] ~ neg_binomial_2_log_glm(X[t][,J_", i, "], 0, beta_", i, "[t], ", "phi_", i, ");")
 
     paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }

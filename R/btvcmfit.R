@@ -94,9 +94,20 @@ btvcmfit <- function(formula, data, group, time, ...) {
     #        }
     # }
     responses <- data[, resp_all, drop = FALSE]
-    model_matrix <- full_model.matrix(formula, data, resp_all)
+    model_matrix <- full_model.matrix(formula, data)
+    resp_levels <- lapply(droplevels(responses), levels)
+    # TODO: simplify I(lag(variable, 1)) to something shorter, e.g. lag_1(variable)?
+    # TODO: shorten variable and or channel name if they are very long?
+    u_names <- colnames(model_matrix)
+    coef_names <- lapply(seq_along(resp_all), function(i) {
+        x <- paste0(resp_all[i], "_", u_names[attr(model_matrix, "assign")[[i]]])
+        if (is_categorical(formula[[i]]$family)) {
+            x <- paste0(x, "_", rep(resp_levels[[i]][-length(resp_levels[[i]])], each = length(x)))
+        }
+        x
+    })
     model_data <- convert_data(formula, responses, group, time, fixed, model_matrix)
-    model_code <- create_blocks(formula, indent = 2L, model_data)
+    model_code <- create_blocks(formula, indent = 2L, resp_all)
     debug <- dots$debug
     model <- if (isTRUE(debug$no_compile)) {
         NULL
@@ -109,13 +120,12 @@ btvcmfit <- function(formula, data, group, time, ...) {
     out <- structure(
         list(
             stanfit = stanfit,
-            # TODO could just extract these from prediction_basis$past
-            coef_names = attr(model_matrix, "coef_names"),
+            coef_names = coef_names,
             # TODO what else do we need to return?
             time = time,
             time_var = time_var,
             group_var = group_var,
-            levels = lapply(droplevels(responses), levels),
+            levels = resp_levels,
             # TODO: extract only D for as.data.frame and J for predict
             #model_data = model_data,
             data = data,
@@ -144,18 +154,13 @@ btvcmfit <- function(formula, data, group, time, ...) {
 }
 
 # Combine model.matrix objects of all formulas of a btvcmformula into one
-full_model.matrix <- function(formula, data, resp_all) {
+full_model.matrix <- function(formula, data) {
     model_matrices <- lapply(lapply(formula, "[[", "formula"), model.matrix, data)
     model_matrix <- do.call(cbind, model_matrices)
     u_names <- unique(colnames(model_matrix))
     model_matrix <- model_matrix[, u_names, drop = FALSE]
     attr(model_matrix, "assign") <- lapply(model_matrices, function(x) {
         which(u_names %in% colnames(x))
-    })
-    # TODO: simplify I(lag(variable, 1)) to something shorter, e.g. lag_1(variable)?
-    # TODO: shorten variable and or channel name if they are very long?
-    attr(model_matrix, "coef_names") <- lapply(seq_along(resp_all), function(i) {
-        paste0(resp_all[i], "_", u_names[attr(model_matrix, "assign")[[i]]])
     })
     model_matrix
 }
@@ -211,16 +216,17 @@ convert_data <- function(formula, responses, group, time, fixed, model_matrix) {
     }
     sd_x[sd_x < 1] <- 1 # Intercept and other constants at time 1
     for (i in seq_along(formula)) {
-        channel_vars[[paste0("J_", i)]] <- assigned[[i]]
-        channel_vars[[paste0("K_", i)]] <- length(assigned[[i]])
+        resp <- formula[[i]]$response
+        channel_vars[[paste0("J_", resp)]] <- assigned[[i]]
+        channel_vars[[paste0("K_", resp)]] <- length(assigned[[i]])
         if (groups) {
-            resp_split <- split(responses[,formula[[i]]$response], group)
+            resp_split <- split(responses[, resp], group)
         } else {
-            resp_split <- responses[,formula[[i]]$response]
+            resp_split <- responses[, resp]
         }
         Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))[free_obs, , drop = FALSE]
-        channel_vars[[paste0("response_", i)]] <- Y
-        prep <- do.call(paste0("prepare_channel_vars_", formula[[i]]$family), list(i = i, Y = Y, J = assigned[[i]], sd_x = sd_x))
+        channel_vars[[resp]] <- Y
+        prep <- do.call(paste0("prepare_channel_vars_", formula[[i]]$family), list(i = resp, Y = Y, J = assigned[[i]], sd_x = sd_x))
         channel_vars <- c(channel_vars, prep)
     }
     T <- T_full - fixed
@@ -231,14 +237,14 @@ prepare_channel_vars_categorical <- function(i, Y, J, sd_x) {
     S_i <- length(unique(as.vector(Y)))
     K_i <- length(J)
     prior_sds <- matrix(2 / sd_x[J], K_i, S_i - 1)
-    channel_vars <- vector("list", 3)
+    channel_vars <- list()
     channel_vars[[paste0("S_", i)]] <- S_i
     channel_vars[[paste0("a_prior_mean_", i)]] <- matrix(0, K_i, S_i - 1)
     channel_vars[[paste0("a_prior_sd_", i)]] <- prior_sds
     channel_vars
 }
 prepare_channel_vars_gaussian <- function(i, Y, J, sd_x) {
-    channel_vars <- vector("list", 3)
+    channel_vars <- list()
     channel_vars[[paste0("a_prior_mean_", i)]] <- rep(0, length(J))
     # TODO adjust prior mean for the intercept term under the assumption that other betas/x are 0
     channel_vars[[paste0("a_prior_sd_", i)]] <- 2 * sd(Y[1, ]) / sd_x[J]
@@ -246,7 +252,7 @@ prepare_channel_vars_gaussian <- function(i, Y, J, sd_x) {
     channel_vars
 }
 prepare_channel_vars_binomial <- function(i, Y, J, sd_x) {
-    channel_vars <- vector("list", 2)
+    channel_vars <- list()
     channel_vars[[paste0("a_prior_mean_", i)]] <- rep(0, length(J))
     channel_vars[[paste0("a_prior_sd_", i)]] <- 2 / sd_x[J]
     channel_vars
@@ -258,7 +264,7 @@ prepare_channel_vars_poisson <- function(i, Y, J, sd_x) {
     prepare_channel_vars_binomial(i, Y, J, sd_x)
 }
 prepare_channel_vars_negbin <- function(i, Y, J, sd_x) {
-    channel_vars <- vector("list", 3)
+    channel_vars <- list()
     channel_vars[[paste0("a_prior_mean_", i)]] <- rep(0, length(J))
     channel_vars[[paste0("a_prior_sd_", i)]] <- 2 / sd_x[J]
     channel_vars[[paste0("phi_scale_", i)]] <- 1

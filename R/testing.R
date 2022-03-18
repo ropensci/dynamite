@@ -11,7 +11,8 @@ test_data <- data.frame(y1 = as.factor(sample(2, size = TN, replace = TRUE)),
     x2 = as.factor(sample(4, size = TN, replace = TRUE)),
     x3 = rnorm(TN),
     x4 = rnorm(TN),
-    ID = gl(N, T))
+    ID = gl(N, T),
+    time = 1:T)
 
 test_form <- obs(y1 ~ x1 + x2 + x4, family = categorical()) +
     obs(y2 ~ x1 + x3 + x4, family = categorical()) +

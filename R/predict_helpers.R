@@ -7,38 +7,53 @@ softmax <- function (x) {
     exp(x - log_sum_exp(x))
 }
 
-# categorical_rng <- function(y, x, beta, J) {
-#     sample(y, 1, prob = softmax(x[J] %*% beta))
-# }
-# gaussian_rng <- function(x, beta, sigma, J) {
-#     rnorm(1, x[J] %*% beta, sigma)
-# }
-# create_predict_functions <- function(x) {
-#     resp_all <- get_resp(x)
-#     rng <- vector("list", length(resp_all))
-#     names(rng) <- resp_all
-#     families <- lapply(x, function(x) x$family$name)
-#     for (i in seq_along(resp_all)) {
-#         rng[[i]] <- get(paste0(families[i], "_rng"))
-#     }
-#     rng
-# }
-
-
-# categorical_mean <- function(y, x, beta, J) {
-#     softmax(x[J] %*% beta)
-# }
-# gaussian_mean <- function(x, beta, J) {
-#     x[J] %*% beta
-# }
-# create_mean_functions <- function(x) {
-#     resp_all <- get_resp(x)
-#     rng <- vector("list", length(resp_all))
-#     names(rng) <- resp_all
-#     families <- lapply(x, function(x) x$family$name)
-#     for (i in seq_along(resp_all)) {
-#         rng[[i]] <- get(paste0(families[i], "_mean"))
-#     }
-#     rng
-# }
-
+fitted_gaussian <- function(model_matrix, samples) {
+    c(model_matrix %*% t(samples))
+}
+fitted_categorical <- function(model_matrix, samples) {
+    n_draws <- nrow(samples)
+    n_id <- nrow(model_matrix)
+    sim <- matrix(NA, n_draws * n_id, dim(samples)[4] + 1)
+    for(k in seq_len(n_draws)) {
+        idx_k <- ((k - 1) * n_id + 1):(k * n_id)
+        xbeta <- cbind(model_matrix %*% samples[k, , , ], 0)
+        maxs <- apply(xbeta, 1, max)
+        sim[idx_k, ] <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+    }
+    sim
+}
+predict_gaussian <- function(model_matrix, samples, resp, time, type) {
+    beta <- samples[[paste0("beta_", resp)]]
+    n_draws <- nrow(beta)
+    n_id <- nrow(model_matrix) / n_draws
+    sim <- sim_r <- numeric(nrow(model_matrix))
+    for(k in seq_len(n_draws)) {
+        idx_k <- ((k - 1) * n_id + 1):(k * n_id)
+        xbeta <- model_matrix[idx_k, , drop = FALSE] %*% beta[k, time, ]
+        sim[idx_k] <- xbeta
+        sigma <- samples[[paste0("sigma_", resp)]][k]
+        sim_r[idx_k] <- rnorm(n_id, xbeta, sigma)
+    }
+    list(response = sim_r, mean_or_link = sim)
+}
+predict_categorical <- function(model_matrix, samples, resp, time, type) {
+    beta <- samples[[paste0("beta_", resp)]]
+    n_draws <- nrow(beta)
+    n_id <- nrow(model_matrix) / n_draws
+    S <- dim(samples[[paste0("beta_", resp)]])[4] + 1
+    sim <- matrix(NA, nrow(model_matrix), S)
+    sim_r <- numeric(nrow(model_matrix))
+    for(k in seq_len(n_draws)) {
+        idx_k <- ((k - 1) * n_id + 1):(k * n_id)
+        xbeta <- cbind(model_matrix[idx_k, , drop = FALSE] %*% beta[k, time, , ], 0)
+        maxs <- apply(xbeta, 1, max)
+        if (type == "link") {
+            sim[idx_k, ] <- xbeta
+        }
+        if (type == "mean") {
+            sim[idx_k, ] <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+        }
+        sim_r[idx_k] <- max.col(xbeta - log(-log(runif(S * n_id))))
+    }
+    list(response = sim_r, mean_or_link = sim)
+}

@@ -67,23 +67,17 @@ fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
         idx_i2 <- seq(i, nrow(model_matrix), by = n_time)
         for (j in seq_along(resp_all)) {
             resp <- resp_all[j]
-            if (is_gaussian(basis$formula[[j]]$family)) {
-                xbeta <- model_matrix[idx_i2, basis$J[[j]], drop = FALSE] %*% t(samples[[paste0("beta_", j)]][1:n_draws, i - fixed, ])
-                newdata[idx_i, resp] <- c(xbeta)
-            }
-            if (is_categorical(basis$formula[[j]]$family)) {
-                sim <- matrix(NA, length(idx_i), length(object$levels[[resp]]))
-                for(k in seq_len(n_draws)) {
-                    idx_k <- ((k - 1) * n_id + 1):(k * n_id)
-                    xbeta <- model_matrix[idx_i2, basis$J[[j]], drop = FALSE] %*% samples[[paste0("beta_", j)]][k, i - fixed, , ]
-                    # sim[idx_k, ] <- exp(xbeta)/rowSums(exp(beta))
-                    maxs <- apply(xbeta, 1, max)
-                    sim[idx_k, ] <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
-                }
-                idx_resp <- which(names(newdata) %in% c(glue::glue("{resp}_{resp_levels}")))
-                newdata[idx_i, idx_resp] <- sim
-            }
 
+            if (is_categorical(basis$formula[[j]]$family)) {
+                idx_resp <- which(names(newdata) %in% c(glue::glue("{resp}_{resp_levels}")))
+                newdata[idx_i, idx_resp] <- do.call(paste0("fitted_", basis$formula[[j]]$family),
+                    list(model_matrix = model_matrix[idx_i2, basis$J[[j]], drop = FALSE],
+                        samples = samples[[paste0("beta_", resp)]][1:n_draws, i - fixed, , , drop = FALSE]))
+            } else {
+                newdata[idx_i, resp] <- do.call(paste0("fitted_", basis$formula[[j]]$family),
+                    list(model_matrix = model_matrix[idx_i2, basis$J[[j]], drop = FALSE],
+                        samples = samples[[paste0("beta_", resp)]][1:n_draws, i - fixed, , drop = FALSE]))
+            }
         }
     }
 

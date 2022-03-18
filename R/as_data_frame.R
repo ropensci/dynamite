@@ -5,14 +5,13 @@ as.data.frame.btvcmfit <- function(x, row.names = NULL, optional = FALSE, parame
     # should there be an option to be more specific in what parameters to extract?
     # TODO distributional parameters (sigma, shape)
     parameter_types <- match.arg(parameter_types,
-        c("beta", "tau", "a", "lambda"), TRUE) #TODO all?, a = spline_coefficients? alpha (greek as others)?
+        c("beta", "tau", "a", "lambda"), TRUE) #TODO all?, naming? a = spline_coefficients? alpha (greek as others)?
     all_pars <- x$stanfit@sim$pars_oi
     d <- NULL
     coef_names <- unlist(x$coef_names)
     if ("tau" %in% parameter_types) {
         idx <-  grep("^tau", all_pars)
         samples <- rstan::extract(x$stanfit, pars = all_pars[idx], permuted = FALSE)
-        # TODO variable names should be something like tau_response_coefficient?
         var_names <- paste0("tau_", coef_names)
         n <- nrow(samples) # samples per chain
         k <- ncol(samples) # number of chains
@@ -56,7 +55,6 @@ as.data.frame.btvcmfit <- function(x, row.names = NULL, optional = FALSE, parame
     if ("beta" %in% parameter_types) { #TODO name
         idx <- grep("^beta", all_pars, perl = TRUE)
         samples <- rstan::extract(x$stanfit, pars = all_pars[idx], permuted = FALSE)
-        # TODO categorical case, how to name S-1 cases (or S if we don't drop the zeros)?
         # beta is T x K or T x K x S
         fixed <- x$prediction_basis$fixed
         time <- if (fixed > 0) x$time[-(1:fixed)] else x$time
