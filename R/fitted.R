@@ -18,6 +18,7 @@ fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
         group <- newdata[[object$group_var]]
         time <- object$time
     } else {
+        # TODO check that there are no NA values in newdata
         if (!(object$group_var %in% names(newdata)))
             stop(paste("Grouping variable", object$group_var, "not found in 'newdata'."))
         group <- newdata[[object$group_var]]

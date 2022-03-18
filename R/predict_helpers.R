@@ -8,8 +8,10 @@ softmax <- function (x) {
 }
 
 fitted_gaussian <- function(model_matrix, samples) {
-    c(model_matrix %*% t(samples))
+    c(model_matrix %*% matrix(samples, nrow = ncol(model_matrix), byrow = TRUE))
 }
+
+
 fitted_categorical <- function(model_matrix, samples) {
     n_draws <- nrow(samples)
     n_id <- nrow(model_matrix)
@@ -22,6 +24,23 @@ fitted_categorical <- function(model_matrix, samples) {
     }
     sim
 }
+
+fitted_bernoulli <- function(model_matrix, samples) {
+    plogis(c(model_matrix %*% t(samples)))
+}
+
+fitted_binomial <- function(model_matrix, samples) {
+    fitted_bernoulli(model_matrix, samples)
+}
+
+fitted_poisson <- function(model_matrix, samples) {
+    exp(c(model_matrix %*% t(samples)))
+}
+
+fitted_negbin <- function(model_matrix, samples) {
+    exp(c(model_matrix %*% t(samples)))
+}
+
 predict_gaussian <- function(model_matrix, samples, resp, time, type) {
     beta <- samples[[paste0("beta_", resp)]]
     n_draws <- nrow(beta)
@@ -36,6 +55,7 @@ predict_gaussian <- function(model_matrix, samples, resp, time, type) {
     }
     list(response = sim_r, mean_or_link = sim)
 }
+
 predict_categorical <- function(model_matrix, samples, resp, time, type) {
     beta <- samples[[paste0("beta_", resp)]]
     n_draws <- nrow(beta)
@@ -54,6 +74,70 @@ predict_categorical <- function(model_matrix, samples, resp, time, type) {
             sim[idx_k, ] <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
         }
         sim_r[idx_k] <- max.col(xbeta - log(-log(runif(S * n_id))))
+    }
+    list(response = sim_r, mean_or_link = sim)
+}
+
+predict_bernoulli <- function(model_matrix, samples, resp, time, type) {
+    beta <- samples[[paste0("beta_", resp)]]
+    n_draws <- nrow(beta)
+    n_id <- nrow(model_matrix) / n_draws
+    sim <- sim_r <- numeric(nrow(model_matrix))
+    for(k in seq_len(n_draws)) {
+        idx_k <- ((k - 1) * n_id + 1):(k * n_id)
+        xbeta <- model_matrix[idx_k, , drop = FALSE] %*% beta[k, time, ]
+        if (type == "link") {
+            sim[idx_k, ] <- xbeta
+        }
+        if (type == "mean") {
+            sim[idx_k] <- plogis(xbeta)
+        }
+        sim_r[idx_k] <- rbinom(n_id, 1, plogis(xbeta))
+    }
+    list(response = sim_r, mean_or_link = sim)
+}
+predict_binomial <- function(model_matrix, samples, resp, time, type) {
+    predict_bernoulli(model_matrix, samples, resp, time, type) #TODO multiply by trials, where are those stored?
+}
+
+predict_poisson <- function(model_matrix, samples, resp, time, type) {
+    beta <- samples[[paste0("beta_", resp)]]
+    n_draws <- nrow(beta)
+    n_id <- nrow(model_matrix) / n_draws
+    sim <- sim_r <- numeric(nrow(model_matrix))
+    for(k in seq_len(n_draws)) {
+        idx_k <- ((k - 1) * n_id + 1):(k * n_id)
+        xbeta <- model_matrix[idx_k, , drop = FALSE] %*% beta[k, time, ]
+        exp_xbeta <- exp(xbeta)
+        if (type == "link") {
+            sim[idx_k, ] <- xbeta
+        }
+        if (type == "mean") {
+            sim[idx_k] <- exp_xbeta
+        }
+        sim_r[idx_k] <- rpois(n_id, exp_xbeta)
+    }
+    list(response = sim_r, mean_or_link = sim)
+}
+
+predict_negbin <- function(model_matrix, samples, resp, time, type) {
+    beta <- samples[[paste0("beta_", resp)]]
+    phi <- samples[[paste0("phi_", resp)]]
+    n_draws <- nrow(beta)
+    n_id <- nrow(model_matrix) / n_draws
+    sim <- sim_r <- numeric(nrow(model_matrix))
+    for(k in seq_len(n_draws)) {
+        idx_k <- ((k - 1) * n_id + 1):(k * n_id)
+        xbeta <- model_matrix[idx_k, , drop = FALSE] %*% beta[k, time, ]
+        exp_xbeta <- exp(xbeta)
+        if (type == "link") {
+            sim[idx_k, ] <- xbeta
+        }
+        if (type == "mean") {
+            sim[idx_k] <- exp_xbeta
+        }
+
+        sim_r[idx_k] <- rnbinom(n_id, size = phi[k], mu = exp_xbeta)
     }
     list(response = sim_r, mean_or_link = sim)
 }
