@@ -49,7 +49,7 @@ parameters_lines_default <- function(i, lb, idt) {
 
 parameters_lines_categorical <- function(i, lb, idt) {
     a_term <- c(idt(1), "row_vector[D] a_", i, "[S_", i, "- 1, K_", i, "];")
-    tau_term <- c(idt(1), "matrix<lower=", lb, ">[S_", i, "- 1, K_", i, "] tau_", i, ";")
+    tau_term <- c(idt(1), "vector<lower=", lb, ">[K_", i, "] tau_", i, ";")
     paste_rows(a_term, tau_term)
 }
 
@@ -118,9 +118,9 @@ model_lines_categorical <- function(i, shrinkage, noncentered, idt) {
             c(idt(3), "a_", i, "[s, k, 1] ~ normal(a_prior_mean_", i, "[k, s], a_prior_sd_", i, "[k, s]);"),
             c(idt(3), "for(i in 2:D) {"),
             if (shrinkage) {
-                c(idt(4), "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], lambda[i - 1] * tau_", i, "[s, k]);")
+                c(idt(4), "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], lambda[i - 1] * tau_", i, "[k]);")
             } else {
-                c(idt(4), "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], tau_", i, "[s, k]);")
+                c(idt(4), "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], tau_", i, "[k]);")
             },
             c(idt(3), "}"),
             c(idt(2), "}"),
