@@ -5,13 +5,14 @@ btvcmformula <- function(formula, family, ...) {
     if (!is.btvcmfamily(family)) {
         stop_("Unsupported family object")
     }
+    formula_plain <- remove_specials(formula)
     structure(
         list(
             list(
-                formula = formula,
+                formula = remove_specials(formula_plain),
                 family = family,
-                response = formula_lhs(formula),
-                predictors = formula_rhs(formula),
+                response = formula_lhs(formula_plain),
+                predictors = formula_rhs(formula_plain),
                 specials = formula_specials(formula)
             )
         ),

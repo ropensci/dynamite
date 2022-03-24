@@ -27,7 +27,7 @@ data_lines_gaussian <- function(i, idt) {
 
 data_lines_binomial <- function(i, idt) {
     paste_rows(c(idt(1), "int<lower=0> ", i, "[T, N];"),
-               c(idt(1), "int<lower=1>[N, T] trials_", i, ";"),
+               c(idt(1), "int<lower=1> trials_", i, "[T, N];"),
                data_lines_default(i, idt))
 }
 
@@ -39,7 +39,7 @@ data_lines_bernoulli <- function(i, idt) {
 data_lines_poisson <- function(i, idt, has_offset) {
     mtext <- c(idt(1), "int<lower=0> ", i, "[T, N];")
     if (has_offset) {
-        offset_term <- c(idt(1), "matrix[N, T] offset_", i, ";")
+        offset_term <- c(idt(1), "real offset_", i, "[T, N];")
         paste_rows(mtext, offset_term, data_lines_default(i, idt))
     } else {
         paste_rows(mtext, data_lines_default(i, idt))
@@ -162,7 +162,7 @@ model_lines_gaussian <- function(i, shrinkage, noncentered, idt) {
 model_lines_binomial <- function(i, shrinkage, noncentered, idt) {
     mtext <- model_lines_default(i, shrinkage, noncentered, idt)
     likelihood_term <-
-        c(idt(2), i, "[t] ~ binomial_logit(X[t][,J_", i, "] * beta_", i, "[t], trials_, ", i, "[t]);")
+        c(idt(2), i, "[t] ~ binomial_logit(trials_", i, "[t], X[t][,J_", i, "] * beta_", i, "[t]);")
 
     paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
@@ -179,7 +179,7 @@ model_lines_poisson <- function(i, shrinkage, noncentered, idt, has_offset) {
     mtext <- model_lines_default(i, shrinkage, noncentered, idt)
     offset_term <- "0"
     if (has_offset) {
-        offset_term <- paste0("offset_", i, "[,t]")
+        offset_term <- paste0("to_vector(offset_", i, "[t])")
     }
     likelihood_term <-
         c(idt(2), i, "[t] ~ poisson_log_glm(X[t][,J_", i, "], ", offset_term, ", beta_", i, "[t]);")
