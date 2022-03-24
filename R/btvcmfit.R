@@ -14,9 +14,13 @@ btvcmfit <- function(formula, data, group, time, ...) {
     }
     # TODO is there a better way?
     if (missing(time))
-        stop("Argument 'time' is missing. ")
+        stop_("Argument 'time' is missing.")
     time_var <- deparse(substitute(time))
-    data <- dplyr::arrange(data, dplyr::across(dplyr::all_of(c(group_var, time_var))))
+    # Pipe for readability, not really needed if we need to support older R versions
+    data <- data |>
+        # Convert character types to factors
+        dplyr::mutate(dplyr::across(tidyselect:::where(is.character), as.factor)) |>
+        dplyr::arrange(data, dplyr::across(dplyr::all_of(c(group_var, time_var))))
     time <- unique(data[[time_var]])
     resp_all <- get_resp(formula)
     n_rows <- nrow(data)
@@ -46,7 +50,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
         fixed <- max(max(lag_map$k), fixed)
         for (i in seq_along(lag_map)) {
             if (lag_map$k[i] <= 0) {
-                stop_("Only positive shift values are allowed in lag()")
+                stop_("Only positive shift values are allowed in lag().")
             }
             if (is_as_is(lag_map$src[i])) {
                 # Swap to internal lag function
@@ -63,37 +67,8 @@ btvcmfit <- function(formula, data, group, time, ...) {
             }
         }
     }
-    #    model_matrices <- list()
-    #    for (i in seq_len(n_resp)) {
-    #        model_matrices[[i]] <- model.matrix(formula[[i]]$formula, data)
-    #        if (any(ind <- formula[[i]]$predictors %in% names(lag_resp_map[[i]]))) {
-    #            ind <- which(ind)
-    #            assign_i <- attr(model_matrices[[i]], "assign")
-    #            cols_i <- colnames(model_matrices[[i]])
-    #            for (j in seq_along(ind)) {
-    #                pred <- formula[[i]]$predictors[ind[j]]
-    #                lag_cols <- which(assign_i == ind[j])
-    #                lag_resp_map[[i]][[pred]]$cols <- cols_i[lag_cols]
-    #            }
-    #        }
-    #    }
-    #    model_matrix <- do.call(cbind, model_matrices)
-    #    u_names <- unique(colnames(model_matrix))
-    #    # TODO: Is intercept always named as (Intercept)?
-    #    # checking assign attributes for 0 is an another option
-    #    if (any(ind <- u_names == "(Intercept)")) {
-    #        u_names <- u_names[-which(ind)]
-    #    }
-    #    model_matrix <- model_matrix[, u_names]
-    #    assigned <- lapply(model_matrices, function(x) {
-    #        which(u_names %in% colnames(x))
-    #    })
-    #    for (i in seq_len(n_resp)) {
-    #        for (j in seq_along(lag_resp_map[[i]])) {
-    #            lag_resp_map[[i]][[j]]$cols <- which(u_names %in% lag_resp_map[[i]][[j]]$cols)
-    #        }
-    # }
     responses <- data[, resp_all, drop = FALSE]
+    attr(responses, "resp_class") <- apply(responses, 2, class)
     model_matrix <- full_model.matrix(formula, data)
     resp_levels <- lapply(responses, levels)
     # TODO: simplify I(lag(variable, 1)) to something shorter, e.g. lag_1(variable)?
@@ -106,7 +81,18 @@ btvcmfit <- function(formula, data, group, time, ...) {
         }
         x
     })
-    model_data <- convert_data(formula, responses, group, time, fixed, model_matrix)
+    specials <- lapply(seq_along(resp_all), function(i) {
+        if (length(formula[[i]]$specials)) {
+            out <- list()
+            if (!is.null(offset <- formula[[i]]$specials$offset)) {
+                out$offset <- with(data, eval(offset))
+            }
+            out
+        } else {
+            NULL
+        }
+    })
+    model_data <- convert_data(formula, responses, specials, group, time, fixed, model_matrix)
     model_code <- create_blocks(formula, indent = 2L, resp_all)
     debug <- dots$debug
     model <- if (isTRUE(debug$no_compile)) {
@@ -155,7 +141,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
 
 # Combine model.matrix objects of all formulas of a btvcmformula into one
 full_model.matrix <- function(formula, data) {
-    model_matrices <- lapply(lapply(formula, "[[", "formula"), model.matrix, data)
+    model_matrices <- lapply(get_form(formula), model.matrix, data)
     model_matrix <- do.call(cbind, model_matrices)
     u_names <- unique(colnames(model_matrix))
     model_matrix <- model_matrix[, u_names, drop = FALSE]
@@ -164,15 +150,16 @@ full_model.matrix <- function(formula, data) {
     })
     model_matrix
 }
+
 # For prediction
 full_model.matrix_fast <- function(formula, data, u_names) {
-    model_matrices <- lapply(lapply(formula, "[[", "formula"), model.matrix, data)
+    model_matrices <- lapply(get_form(formula), model.matrix, data)
     model_matrix <- do.call(cbind, model_matrices)
     model_matrix[, u_names, drop = FALSE]
 }
 
 # Convert data for Stan
-convert_data <- function(formula, responses, group, time, fixed, model_matrix) {
+convert_data <- function(formula, responses, specials, group, time, fixed, model_matrix) {
     T_full <- 0
     groups <- !is.null(group)
     if (groups) {
@@ -215,8 +202,10 @@ convert_data <- function(formula, responses, group, time, fixed, model_matrix) {
         sd_x <- apply(X[, 1, ], 2, sd)
     }
     sd_x[sd_x < 1] <- 1 # Intercept and other constants at time 1
+    resp_classes <- attr(responses, "resp_class")
     for (i in seq_along(formula)) {
         resp <- formula[[i]]$response
+        spec <- specials[[i]]
         channel_vars[[paste0("J_", resp)]] <- assigned[[i]]
         channel_vars[[paste0("K_", resp)]] <- length(assigned[[i]])
         if (groups) {
@@ -224,16 +213,26 @@ convert_data <- function(formula, responses, group, time, fixed, model_matrix) {
         } else {
             resp_split <- responses[, resp]
         }
+        if (length(spec)) {
+            if (!is.null(spec$offset)) {
+                if (groups) {
+                    offset_split <- split(spec$offset, group)
+                }
+                channel_vars[[paste0("offset_", resp)]] <- aperm(array(as.numeric(unlist(offset_split)), dim = c(T_full, N))[free_obs, , drop = FALSE], c(2, 1))
+            }
+        }
         Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))[free_obs, , drop = FALSE]
         channel_vars[[resp]] <- Y
-        prep <- do.call(paste0("prepare_channel_vars_", formula[[i]]$family), list(i = resp, Y = Y, J = assigned[[i]], sd_x = sd_x))
+        prep <- do.call(paste0("prepare_channel_vars_", formula[[i]]$family),
+                        list(i = resp, Y = Y, J = assigned[[i]], sd_x = sd_x, resp_class = resp_classes[resp]))
         channel_vars <- c(channel_vars, prep)
     }
     T <- T_full - fixed
     c(named_list(T, N, C, K, X, D, Bs), channel_vars)
 }
 
-prepare_channel_vars_categorical <- function(i, Y, J, sd_x) {
+
+prepare_channel_vars_categorical <- function(i, Y, J, sd_x, resp_class) {
     S_i <- length(unique(as.vector(Y)))
     K_i <- length(J)
     prior_sds <- matrix(2 / sd_x[J], K_i, S_i - 1)
@@ -243,7 +242,11 @@ prepare_channel_vars_categorical <- function(i, Y, J, sd_x) {
     channel_vars[[paste0("a_prior_sd_", i)]] <- prior_sds
     channel_vars
 }
-prepare_channel_vars_gaussian <- function(i, Y, J, sd_x) {
+
+prepare_channel_vars_gaussian <- function(i, Y, J, sd_x, resp_class) {
+    if ("factor" %in% resp_class) {
+        stop_("Response variable ", resp, " is invalid: gaussian family is not supported for factors.")
+    }
     channel_vars <- list()
     channel_vars[[paste0("a_prior_mean_", i)]] <- rep(0, length(J))
     # TODO adjust prior mean for the intercept term under the assumption that other betas/x are 0
@@ -251,19 +254,29 @@ prepare_channel_vars_gaussian <- function(i, Y, J, sd_x) {
     channel_vars[[paste0("sigma_scale_", i)]] <- 1 / mean(apply(Y, 1, sd))
     channel_vars
 }
-prepare_channel_vars_binomial <- function(i, Y, J, sd_x) {
+
+prepare_channel_vars_binomial <- function(i, Y, J, sd_x, resp_class) {
     channel_vars <- list()
     channel_vars[[paste0("a_prior_mean_", i)]] <- rep(0, length(J))
     channel_vars[[paste0("a_prior_sd_", i)]] <- 2 / sd_x[J]
     channel_vars
 }
-prepare_channel_vars_bernoulli <- function(i, Y, J, sd_x) {
-    prepare_channel_vars_binomial(i, Y, J, sd_x)
+
+prepare_channel_vars_bernoulli <- function(i, Y, J, sd_x, resp_class) {
+    prepare_channel_vars_binomial(i, Y, J, sd_x, resp_class)
 }
-prepare_channel_vars_poisson <- function(i, Y, J, sd_x) {
-    prepare_channel_vars_binomial(i, Y, J, sd_x)
+
+prepare_channel_vars_poisson <- function(i, Y, J, sd_x, resp_class) {
+    if ("factor" %in% resp_class) {
+        stop_("Response variable ", resp, " is invalid: Poisson family is not supported for factors.")
+    }
+    prepare_channel_vars_binomial(i, Y, J, sd_x, resp_class)
 }
-prepare_channel_vars_negbin <- function(i, Y, J, sd_x) {
+
+prepare_channel_vars_negbin <- function(i, Y, J, sd_x, resp_class) {
+    if ("factor" %in% resp_class) {
+        stop_("Response variable ", resp, " is invalid: negative binomial family is not supported for factors.")
+    }
     channel_vars <- list()
     channel_vars[[paste0("a_prior_mean_", i)]] <- rep(0, length(J))
     channel_vars[[paste0("a_prior_sd_", i)]] <- 2 / sd_x[J]

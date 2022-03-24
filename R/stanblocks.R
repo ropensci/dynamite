@@ -47,11 +47,13 @@ create_data <- function(formula, idt, resp, ...) {
     for (i in seq_along(formula)) {
         y <- resp[i]
         # Number of covariates in channel i
-        mtext <- paste_rows(mtext, c(idt(1), "int<lower=1> K_", y, ";"))
-        # index vector of covariates related to channel i
-        mtext <- paste_rows(mtext, c(idt(1), "int J_", y, "[K_", y, "];"))
-        mtext <- paste_rows(mtext,
-            do.call(paste0("data_lines_", formula[[i]]$family), list(i = y, idt = idt)))
+        mtext <- paste_rows(
+            mtext,
+            c(idt(1), "int<lower=1> K_", y, ";"),
+            # index vector of covariates related to channel i
+            c(idt(1), "int J_", y, "[K_", y, "];"),
+            lines_wrap("data", formula[[i]], list(i = y, idt = idt, has_offset = !is.null(formula[[i]]$specials$offset)))
+        )
     }
     paste_rows("data {", mtext, "}")
 }
@@ -108,9 +110,7 @@ create_parameters <- function(formula, idt, resp, ...) {
     } else {
         mtext <- paste0(idt(1), "// Spline parameters")
         for (i in seq_along(formula)) {
-            y <- resp[i]
-            mtext <- paste_rows(mtext,
-                do.call(paste0("parameters_lines_", formula[[i]]$family), list(i = y, lb = lb, idt = idt)))
+            mtext <- paste_rows(mtext, lines_wrap("parameters", formula[[i]], list(i = resp[i], lb = lb, idt = idt)))
         }
     }
     if (attr(formula, "splines")$shrinkage) {
@@ -217,10 +217,20 @@ create_model <- function(formula, idt, resp, ...) {
 
     mtext <- character(0)
     for (i in seq_along(formula)) {
-            mtext <- paste_rows(mtext,
-                do.call(paste0("model_lines_", formula[[i]]$family),
-                list(i = resp[i], shrinkage = attr(formula, "splines")$shrinkage,
-                    noncentered = attr(formula, "splines")$noncentered, idt = idt)))
+        mtext <- paste_rows(
+            mtext,
+            lines_wrap(
+                "model",
+                formula[[i]],
+                list(
+                    i = resp[i],
+                    idt = idt,
+                    shrinkage = attr(formula, "splines")$shrinkage,
+                    noncentered = attr(formula, "splines")$noncentered,
+                    has_offset = !is.null(formula[[i]]$specials$offset)
+                )
+            )
+        )
     }
     mtext <- paste_rows(priors, "model {", mtext, "}")
     mtext

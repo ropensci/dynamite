@@ -1,43 +1,55 @@
+# NOTE: Added this wrapper, so that *_lines_* functions can have different arguments (including parameters and model)
+lines_wrap <- function(prefix, formula, args) {
+    lines_fun <- paste0(prefix, "_lines_", formula$family)
+    has_args <- names(args) %in% names(formals(get(lines_fun)))
+    args[!has_args] <- NULL
+    do.call(lines_fun, args)
+}
 
 # For data block
 data_lines_default <- function(i, idt) {
-    mtext <- c(idt(1), "vector[K_", i, "] a_prior_mean_", i, ";")
-    paste_rows(mtext, c(idt(1), "vector[K_", i, "] a_prior_sd_", i, ";"))
+    paste_rows(c(idt(1), "vector[K_", i, "] a_prior_mean_", i, ";"),
+               c(idt(1), "vector[K_", i, "] a_prior_sd_", i, ";"))
 }
 
 data_lines_categorical <- function(i, idt) {
-    mtext <- c(idt(1), "int<lower=1> ", i, "[T, N];")
-    mtext <- paste_rows(mtext, c(idt(1), "int<lower=0> S_", i, ";"))
-    mtext <- paste_rows(mtext, c(idt(1), "matrix[K_", i, ", S_", i, " - 1] a_prior_mean_", i, ";"))
-    paste_rows(mtext, c(idt(1), "matrix[K_", i, ", S_", i, " - 1] a_prior_sd_", i, ";"))
+    paste_rows(c(idt(1), "int<lower=1> ", i, "[T, N];"),
+               c(idt(1), "int<lower=0> S_", i, ";"),
+               c(idt(1), "matrix[K_", i, ", S_", i, " - 1] a_prior_mean_", i, ";"),
+               c(idt(1), "matrix[K_", i, ", S_", i, " - 1] a_prior_sd_", i, ";"))
 }
 
 data_lines_gaussian <- function(i, idt) {
-    mtext <- c(idt(1), "real ", i, "[T, N];")
-    mtext <- paste_rows(mtext, c(idt(1), "real<lower=0> sigma_scale_", i, ";"))
-    paste_rows(mtext, data_lines_default(i, idt))
+    paste_rows(c(idt(1), "real ", i, "[T, N];"),
+               c(idt(1), "real<lower=0> sigma_scale_", i, ";"),
+               data_lines_default(i, idt))
 }
 
 data_lines_binomial <- function(i, idt) {
-    mtext <- c(idt(1), "int<lower=0> ", i, "[T, N];")
-    mtext <- paste_rows(mtext, c(idt(1), "int<lower=1>[N, T] trials_", i, ";"))
-    paste_rows(mtext, data_lines_default(i, idt))
+    paste_rows(c(idt(1), "int<lower=0> ", i, "[T, N];"),
+               c(idt(1), "int<lower=1>[N, T] trials_", i, ";"),
+               data_lines_default(i, idt))
 }
 
 data_lines_bernoulli <- function(i, idt) {
-    mtext <- c(idt(1), "int<lower=0,upper=1> ", i, "[T, N];")
-    paste_rows(mtext, data_lines_default(i, idt))
+    paste_rows(c(idt(1), "int<lower=0,upper=1> ", i, "[T, N];"),
+               data_lines_default(i, idt))
 }
 
-data_lines_poisson <- function(i, idt) {
+data_lines_poisson <- function(i, idt, has_offset) {
     mtext <- c(idt(1), "int<lower=0> ", i, "[T, N];")
-    paste_rows(mtext, data_lines_default(i, idt))
+    if (has_offset) {
+        offset_term <- c(idt(1), "matrix[N, T] offset_", i, ";")
+        paste_rows(mtext, offset_term, data_lines_default(i, idt))
+    } else {
+        paste_rows(mtext, data_lines_default(i, idt))
+    }
 }
 
 data_lines_negbin <- function(i, idt) {
-    mtext <- c(idt(1), "int<lower=0> ", i, "[T, N];")
-    mtext <- c(idt(1), "real<lower=0> phi_scale_", i)
-    paste_rows(mtext, data_lines_default(i, idt))
+    paste_rows(c(idt(1), "int<lower=0> ", i, "[T, N];"),
+               c(idt(1), "real<lower=0> phi_scale_", i),
+               data_lines_default(i, idt))
 }
 
 # For parameters block
@@ -163,10 +175,14 @@ model_lines_bernoulli <- function(i, shrinkage, noncentered, idt) {
     paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
 
-model_lines_poisson <- function(i, shrinkage, noncentered, idt) {
+model_lines_poisson <- function(i, shrinkage, noncentered, idt, has_offset) {
     mtext <- model_lines_default(i, shrinkage, noncentered, idt)
+    offset_term <- "0"
+    if (has_offset) {
+        offset_term <- paste0("offset_", i, "[,t]")
+    }
     likelihood_term <-
-        c(idt(2), i, "[t] ~ poisson_log_glm(X[t][,J_", i, "], 0, beta_", i, "[t]);")
+        c(idt(2), i, "[t] ~ poisson_log_glm(X[t][,J_", i, "], ", offset_term, ", beta_", i, "[t]);")
 
     paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }

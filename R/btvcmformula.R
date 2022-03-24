@@ -11,7 +11,8 @@ btvcmformula <- function(formula, family, ...) {
                 formula = formula,
                 family = family,
                 response = formula_lhs(formula),
-                predictors = formula_rhs(formula)
+                predictors = formula_rhs(formula),
+                specials = formula_specials(formula)
             )
         ),
         class = "btvcmformula"
