@@ -26,7 +26,24 @@ formula_specials <- function(x) {
     out
 }
 
+# Computes all specials defined in a formula in the context of the data
+evaluate_specials <- function(formula, fata) {
+    lapply(seq_along(formula), function(i) {
+        if (length(formula[[i]]$specials)) {
+            out <- list()
+            for (spec in formula_special_funs)
+                if (!is.null(spec_formula <- formula[[i]]$specials[[spec]])) {
+                    out[[spec]] <- with(data, eval(spec_formula))
+                }
+            out
+        } else {
+            NULL
+        }
+    })
+}
+
 formula_special_funs <- c(
     "offset",
     "trials"
 )
+

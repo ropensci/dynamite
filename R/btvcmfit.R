@@ -81,19 +81,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
         }
         x
     })
-    # Evaluate specials
-    specials <- lapply(seq_along(resp_all), function(i) {
-        if (length(formula[[i]]$specials)) {
-            out <- list()
-            for (spec in formula_special_funs)
-            if (!is.null(spec_formula <- formula[[i]]$specials[[spec]])) {
-                out[[spec]] <- with(data, eval(spec_formula))
-            }
-            out
-        } else {
-            NULL
-        }
-    })
+    specials <- evaluate_specials(formula, data)
     model_data <- convert_data(formula, responses, specials, group, time, fixed, model_matrix)
     model_code <- create_blocks(formula, indent = 2L, resp_all)
     debug <- dots$debug
@@ -114,6 +102,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
             time_var = time_var,
             group_var = group_var,
             levels = resp_levels,
+            specials = specials,
             # TODO: extract only D for as.data.frame and J for predict
             #model_data = model_data,
             data = data,
