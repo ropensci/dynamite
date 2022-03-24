@@ -40,25 +40,6 @@ formula_rhs <- function(x) {
     attr(terms(x), "term.labels")
 }
 
-# Get all specials of a formula
-formula_specials <- function(x) {
-    out <- list()
-    offset <- get_offset(x)
-    if (!is.null(offset)) {
-        out$offset <- offset
-    }
-    out
-}
-
-# Get offset term from formula
-get_offset <- function(x) {
-    xt <- terms(x)
-    if (!is.null(offset <- attr(xt, "offset"))) {
-        return(attr(xt, "variables")[[offset + 1]][[2]])
-    }
-    return(NULL)
-}
-
 # Collapse argument vector with a newline
 collapse_rows <- function(x) {
     paste0(x, collapse = "\n")

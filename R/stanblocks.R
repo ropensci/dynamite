@@ -47,12 +47,16 @@ create_data <- function(formula, idt, resp, ...) {
     for (i in seq_along(formula)) {
         y <- resp[i]
         # Number of covariates in channel i
+        line_args <- list(i = y, idt = idt)
+        for (spec in formula_special_funs) {
+            line_args[[paste0("has_", spec)]] <- !is.null(formula[[i]]$specials[[spec]])
+        }
         mtext <- paste_rows(
             mtext,
             c(idt(1), "int<lower=1> K_", y, ";"),
             # index vector of covariates related to channel i
             c(idt(1), "int J_", y, "[K_", y, "];"),
-            lines_wrap("data", formula[[i]], list(i = y, idt = idt, has_offset = !is.null(formula[[i]]$specials$offset)))
+            lines_wrap("data", formula[[i]], line_args)
         )
     }
     paste_rows("data {", mtext, "}")

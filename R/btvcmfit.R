@@ -81,11 +81,13 @@ btvcmfit <- function(formula, data, group, time, ...) {
         }
         x
     })
+    # Evaluate specials
     specials <- lapply(seq_along(resp_all), function(i) {
         if (length(formula[[i]]$specials)) {
             out <- list()
-            if (!is.null(offset <- formula[[i]]$specials$offset)) {
-                out$offset <- with(data, eval(offset))
+            for (spec in formula_special_funs)
+            if (!is.null(spec_formula <- formula[[i]]$specials[[spec]])) {
+                out[[spec]] <- with(data, eval(spec_formula))
             }
             out
         } else {
@@ -205,7 +207,7 @@ convert_data <- function(formula, responses, specials, group, time, fixed, model
     resp_classes <- attr(responses, "resp_class")
     for (i in seq_along(formula)) {
         resp <- formula[[i]]$response
-        spec <- specials[[i]]
+        form_specials <- specials[[i]]
         channel_vars[[paste0("J_", resp)]] <- assigned[[i]]
         channel_vars[[paste0("K_", resp)]] <- length(assigned[[i]])
         if (groups) {
@@ -213,12 +215,17 @@ convert_data <- function(formula, responses, specials, group, time, fixed, model
         } else {
             resp_split <- responses[, resp]
         }
-        if (length(spec)) {
-            if (!is.null(spec$offset)) {
-                if (groups) {
-                    offset_split <- split(spec$offset, group)
+        if (length(form_specials)) {
+            for (spec in formula_special_funs) {
+                if (!is.null(form_specials[[spec]])) {
+                    if (groups) {
+                        spec_split <- split(form_specials[[spec]], group)
+                    } else {
+                        spec_split <- form_specials[[spec]]
+                    }
+                    channel_vars[[paste0(spec, "_", resp)]] <- array(as.numeric(unlist(spec_split)), dim = c(T_full, N))[free_obs, , drop = FALSE]
                 }
-                channel_vars[[paste0("offset_", resp)]] <- aperm(array(as.numeric(unlist(offset_split)), dim = c(T_full, N))[free_obs, , drop = FALSE], c(2, 1))
+
             }
         }
         Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))[free_obs, , drop = FALSE]
