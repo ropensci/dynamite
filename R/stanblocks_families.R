@@ -128,7 +128,7 @@ model_lines_categorical <- function(i, shrinkage, noncentered, idt) {
         )
     }
 
-    prior_term <- c(idt(1), "to_vector(tau_", i, ") ~ normal(0, 1);")
+    prior_term <- c(idt(1), "tau_", i, " ~ normal(0, 1);")
 
     likelihood_term <-
         c(idt(2), i, "[t] ~ categorical_logit_glm(X[t][,J_", i, "], zeros_S_", i, ", append_col(beta_", i, "[t], zeros_K_", i, "));")

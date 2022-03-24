@@ -1,9 +1,9 @@
 #' @include utilities.R
 
 # btvcmfit class
-# TODO add options to return just the created model code or data without compiling & sampling for debugging etc
 btvcmfit <- function(formula, data, group, time, ...) {
     dots <- list(...)
+    data <- droplevels(data) #TODO document this in return value
     if (missing(group)) {
         group <- NULL
     } else {
@@ -95,7 +95,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
     # }
     responses <- data[, resp_all, drop = FALSE]
     model_matrix <- full_model.matrix(formula, data)
-    resp_levels <- lapply(droplevels(responses), levels)
+    resp_levels <- lapply(responses, levels)
     # TODO: simplify I(lag(variable, 1)) to something shorter, e.g. lag_1(variable)?
     # TODO: shorten variable and or channel name if they are very long?
     u_names <- colnames(model_matrix)
