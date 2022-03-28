@@ -50,6 +50,7 @@ predict.btvcmfit_counterfactual <- function(object, newdata, type, n_draws = NUL
             newdata[[resp]] <- NA
         }
     }
+    specials <- evaluate_specials(basis$formula, newdata)
 
     if (type != "response") {
         # create separate column for each level of categorical variables
@@ -77,7 +78,7 @@ predict.btvcmfit_counterfactual <- function(object, newdata, type, n_draws = NUL
 
                 sim <- do.call(paste0("predict_", basis$formula[[j]]$family),
                     list(model_matrix = model_matrix[, basis$J[[j]], drop = FALSE],
-                        samples = samples, resp, time =  i - fixed, type))
+                        samples = samples, specials[[j]], resp, time =  i - fixed, type))
 
 
                 if (is_categorical(basis$formula[[j]]$family)) {
