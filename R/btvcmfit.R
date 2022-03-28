@@ -203,7 +203,7 @@ convert_data <- function(formula, responses, specials, group, time, fixed, model
     } else {
         sd_x <- apply(X[, 1, ], 2, sd)
     }
-    sd_x[sd_x < 1] <- 1 # Intercept and other constants at time 1
+    sd_x[sd_x < 0.1] <- 0.1 # Intercept and other constants at time 1
     resp_classes <- attr(responses, "resp_class")
     for (i in seq_along(formula)) {
         resp <- formula[[i]]$response
