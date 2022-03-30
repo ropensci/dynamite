@@ -2,18 +2,23 @@
 #'
 #' @export
 btvcmformula <- function(formula, family, ...) {
+    if (!is.formula(formula)) {
+        stop_("Argument 'formula' is not a formula.")
+    }
     if (!is.btvcmfamily(family)) {
         stop_("Unsupported family object")
     }
-    formula_plain <- remove_specials(formula)
+    x <- formula_specials(formula)
     structure(
         list(
             list(
-                formula = remove_specials(formula_plain),
+                formula = x$formula,
                 family = family,
-                response = formula_lhs(formula_plain),
-                predictors = formula_rhs(formula_plain),
-                specials = formula_specials(formula)
+                response = formula_lhs(x$formula),
+                predictors = formula_rhs(x$formula),
+                fixed = x$fixed,
+                varying = x$varying,
+                specials = x$specials
             )
         ),
         class = "btvcmformula"

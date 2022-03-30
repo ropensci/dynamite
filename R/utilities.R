@@ -109,7 +109,7 @@ try_ <- function(..., type) {
     out
 }
 
-# Starup message for the package
+# Startup message for the package
 .onAttach <- function(libname, pkgname) {
     # TODO
     invisible(NULL)
