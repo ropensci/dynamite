@@ -138,9 +138,10 @@ full_model.matrix <- function(formula, data) {
     model_matrix <- do.call(cbind, model_matrices)
     u_names <- unique(colnames(model_matrix))
     model_matrix <- model_matrix[, u_names, drop = FALSE]
-    attr(model_matrix, "assign") <- list()
-    attr(model_matrix, "fixed") <- list()
-    attr(model_matrix, "varying") <- list()
+    n_models <- length(model_matrices)
+    attr(model_matrix, "assign") <- vector(mode = "list", length = n_models)
+    attr(model_matrix, "fixed") <- vector(mode = "list", length = n_models)
+    attr(model_matrix, "varying") <- vector(mode = "list", length = n_models)
     for (i in seq_along(model_matrices)) {
         attr(model_matrix, "assign")[[i]] <- which(u_names %in% colnames(model_matrices[[i]]))
         attr(model_matrix, "fixed")[[i]] <- attr(model_matrix, "assign")[[i]][which(attr(model_matrices[[i]], "assign") %in% formula[[i]]$fixed)]
