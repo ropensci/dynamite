@@ -40,15 +40,13 @@ btvcmfit <- function(formula, data, group, time, ...) {
         }
         for (j in seq_len(n_resp)) {
             c(formula[[j]]$predictors) <- pred_lag
-            icpt <- attr(terms(formula[[j]]$formula), "intercept")
-            formula[[j]]$formula <- reformulate(formula[[j]]$predictors, intercept = icpt)
         }
         lag_map <- lag_map[lag_map$def %in% resp_all & lag_map$k <= fixed,]
     }
     # Process lag terms defined via lag() in formulas
-    if (nrow(lag_map)) {
+    if (nlag <- nrow(lag_map)) {
         fixed <- max(max(lag_map$k), fixed)
-        for (i in seq_along(lag_map)) {
+        for (i in seq_len(nlag)) {
             if (lag_map$k[i] <= 0) {
                 stop_("Only positive shift values are allowed in lag().")
             }
@@ -63,9 +61,13 @@ btvcmfit <- function(formula, data, group, time, ...) {
             pred_lag <- paste0("I(lag_(", lag_map$def[i], ", ", lag_map$k[i], "))")
             for (j in seq_len(n_resp)) {
                 formula[[j]]$predictors <- gsub(lag_map$src[i], pred_lag, formula[[j]]$predictors, fixed = TRUE)
-                icpt <- attr(terms(formula[[j]]$formula), "intercept")
             }
         }
+    }
+    for (j in seq_len(n_resp)) {
+        formula[[j]]$formula <- reformulate(termlabels = formula[[j]]$predictors,
+                                            response = resp_all[j],
+                                            intercept = attr(terms(formula[[j]]$formula), "intercept"))
     }
     responses <- data[, resp_all, drop = FALSE]
     attr(responses, "resp_class") <- apply(responses, 2, class)
