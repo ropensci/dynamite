@@ -109,6 +109,15 @@ try_ <- function(..., type) {
     out
 }
 
+# Shorthand for if (test) yes else no)
+# NOTE: This is not the ifelse-function which enforces output length
+ifelse_ <- function(test, yes, no) {
+    if (test) {
+        return(yes)
+    }
+    return(no)
+}
+
 # Startup message for the package
 .onAttach <- function(libname, pkgname) {
     # TODO
