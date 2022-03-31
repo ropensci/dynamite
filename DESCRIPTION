@@ -30,6 +30,7 @@ Collate:
     'btvcmformula.R'
     'btvcmterms.R'
     'coef.R'
+    'convert_data.R'
     'families.R'
     'fitted.R'
     'lags.R'
