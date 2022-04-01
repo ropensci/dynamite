@@ -55,13 +55,13 @@ data_lines_negbin <- function(i, idt, ...) {
 
 # For parameters block
 parameters_lines_default <- function(i, lb, idt, has_fixed, has_varying, ...) {
-    paste_rows(onlyif(has_fixed,   c(idt(1), "beta_fixed_", i, "[K_fixed_", i, "];")),
+    paste_rows(onlyif(has_fixed,   c(idt(1), "vector[K_fixed_", i, "] beta_fixed_", i, ";")),
                onlyif(has_varying, c(idt(1), "row_vector[D] a_", i, "[K_varying_", i, "];")),
                onlyif(has_varying, c(idt(1), "vector<lower=", lb, ">[K_varying_", i, "] tau_", i, ";")))
 }
 
 parameters_lines_categorical <- function(i, lb, idt, has_fixed, has_varying, ...) {
-    paste_rows(onlyif(has_fixed,   c(idt(1), "beta_fixed_", i, "[K_fixed_", i, ", S_", i, "- 1];")),
+    paste_rows(onlyif(has_fixed,   c(idt(1), "matrix[K_fixed_", i, ", S_", i, "- 1] beta_fixed_", i, ";")),
                onlyif(has_varying, c(idt(1), "row_vector[D] a_", i, "[S_", i, "- 1, K_varying_", i, "];")),
                onlyif(has_varying, c(idt(1), "vector<lower=", lb, ">[K_varying_", i, "] tau_", i, ";")))
 }
@@ -90,7 +90,7 @@ parameters_lines_negbin <- function(i, lb, idt, ...) {
 
 # For transformed parameters block
 transformed_parameters_lines_default <- function(i, idt, has_varying, ...) {
-    mtext <- character(0)
+    mtext <- ""
     if (has_varying) {
         mtext <- paste_rows(
             c(idt(1), "vector[K_varying_", i, "] beta_varying_", i, "[T];"),
@@ -108,14 +108,12 @@ transformed_parameters_lines_default <- function(i, idt, has_varying, ...) {
 }
 
 transformed_parameters_lines_categorial <- function(i, idt, has_fixed, has_varying) {
-    mtext_fixed <- character(0)
-    mtext_varying <- character(0)
+    mtext_fixed <- ""
+    mtext_varying <- ""
     mtext <- paste0(idt(1), "matrix[K_", i, ", S_", i, " - 1] beta_", i, "[T];")
     if (has_fixed) {
         mtext_fixed <- paste_rows(
-            c(idt(1), "for (s in 1:(S_", i, " - 1)) {"),
-            c(idt(2),     "beta_", i, "[1:T, J_fixed_", i, "s] = rep_matrix(beta_fixed_", i, "[s], T);"),
-            c(idt(1), "}")
+            c(idt(1), "beta_", i, "[1:T, L_fixed_", i, "1:(S_", i, " - 1))] = rep_array(beta_fixed_", i, ", T);"),
         )
     }
     #if (attr(formula, "splines")$noncentered) { # TODO: channel-wise?
@@ -127,7 +125,7 @@ transformed_parameters_lines_categorial <- function(i, idt, has_fixed, has_varyi
             c(idt(1), "for (s in 1:(S_", i, " - 1)) {"),
             c(idt(2),     "for (k in 1:K_varying_", i, ") {"),
             c(idt(3),         "for (t in 1:T) {"),
-            c(idt(4),             "beta_", i, "[t, J_varying_", i, "[k], s] = a_", i, "[s, k] * Bs[, t];"),
+            c(idt(4),             "beta_", i, "[t, L_varying_", i, "[k], s] = a_", i, "[s, k] * Bs[, t];"),
             c(idt(3),          "}"),
             c(idt(2),     "}"),
             c(idt(1), "}")
@@ -145,17 +143,17 @@ transformed_parameters_lines_binomial <- function(...) {
 }
 
 transformed_parameters_lines_bernoulli <- function(i, idt, has_fixed, has_varying, ...) {
-    mtext_fixed <- character(0)
-    mtext_varying <- character(0)
-    mtext <- paste0(idt(1), "matrix[K_", i, "] beta_", i, "[T];")
+    mtext_fixed <- ""
+    mtext_varying <- ""
+    mtext <- paste0(idt(1), "vector[K_", i, "] beta_", i, "[T];")
     if (has_fixed) {
-        mtext_fixed <- paste0(idt(1), "beta_", i, "[1:T, J_fixed_", i, "] = rep_matrix(beta_fixed_", i, ", T);")
+        mtext_fixed <- paste0(idt(1), "beta_", i, "[1:T, L_fixed_", i, "] = rep_array(beta_fixed_", i, ", T);")
     }
     if (has_varying) {
         mtext_varying <- paste_rows(
             c(idt(1), "for (k in 1:K_varying_", i, ") {"),
             c(idt(2),     "for (t in 1:T) {"),
-            c(idt(3),         "beta_", i, "[t, J_varying_", i, "[k]] = a_", i, "[k] * Bs[, t];"),
+            c(idt(3),         "beta_", i, "[t, L_varying_", i, "[k]] = a_", i, "[k] * Bs[, t];"),
             c(idt(2),     "}"),
             c(idt(1), "}")
         )
@@ -169,8 +167,8 @@ transformed_parameters_lines_poisson <- function(...) {
 
 # For model block
 model_lines_default <- function(i, idt, shrinkage, noncentered, has_fixed, has_varying, ...) {
-    mtext_fixed <- character(0)
-    mtext_varying <- character(0)
+    mtext_fixed <- ""
+    mtext_varying <- ""
     if (has_fixed) {
         mtext_fixed <- paste_rows(
             c(idt(1), "for (k in 1:K_fixed_", i, ") {"),
@@ -206,8 +204,8 @@ model_lines_default <- function(i, idt, shrinkage, noncentered, has_fixed, has_v
 }
 
 model_lines_categorical <- function(i, idt, shrinkage, noncentered, has_fixed, has_varying, ...) {
-    mtext_fixed <- character(0)
-    mtext_varying <- character(0)
+    mtext_fixed <- ""
+    mtext_varying <- ""
     if (has_fixed) {
         mtext_fixed <- paste_rows(
             c(idt(2), "for (k in 1:K_fixed_", i, ") {"),
@@ -256,7 +254,7 @@ model_lines_gaussian <- function(i, idt, has_fixed, has_varying, ...) {
     mtext <- model_lines_default(i, idt, has_fixed, has_varying, ...)
     # TODO user-defined prior for sigma
     sigma_term <- c(idt(1), "sigma_", i, " ~ exponential(sigma_scale_", i, ");")
-    fixed_term <- onlyif(has_fixed, paste0("X[t][,J_fixed_", i, "] * beta_fixed_", i, ")"))
+    fixed_term <- onlyif(has_fixed, paste0("X[t][,J_fixed_", i, "] * beta_fixed_", i))
     varying_term <- onlyif(has_varying, paste0("X[t][,J_varying_", i, "] * beta_varying_", i, "[t]"))
     plus <- onlyif(has_fixed && has_varying, " + ")
     likelihood_term <-  c(idt(2), i, "[t] ~ normal(", fixed_term, plus, varying_term, ", sigma_", i, ");")
@@ -265,10 +263,10 @@ model_lines_gaussian <- function(i, idt, has_fixed, has_varying, ...) {
 
 model_lines_binomial <- function(i, idt, has_fixed, has_varying, ...) {
     mtext <- model_lines_default(i, idt, has_fixed, has_varying, ...)
-    fixed_term <- onlyif(has_fixed, paste0("X[t][,J_fixed_", i, "] * beta_fixed_", i, ")"))
+    fixed_term <- onlyif(has_fixed, paste0("X[t][,J_fixed_", i, "] * beta_fixed_", i))
     varying_term <- onlyif(has_varying, paste0("X[t][,J_varying_", i, "] * beta_varying_", i, "[t]"))
     plus <- onlyif(has_fixed && has_varying, " + ")
-    likelihood_term <- c(idt(2), i, "[t] ~ binomial_logit(trials_", i, fixed_term, plus, varying_term, ");")
+    likelihood_term <- c(idt(2), i, "[t] ~ binomial_logit(trials_", i, "[t], ", fixed_term, plus, varying_term, ");")
     paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
 

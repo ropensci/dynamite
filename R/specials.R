@@ -47,6 +47,7 @@ formula_specials <- function(x) {
         any_icpt <- fixed_icpt || varying_icpt
         if (fixed_icpt && varying_icpt) {
             warning_("Both time-independent and time-varying intercept specified. Defaulting to time-varying intercept.")
+            fixed_icpt <- FALSE
         }
         x <- reformulate(termlabels = full_rhs,
                          response = xt_variables[[2]],

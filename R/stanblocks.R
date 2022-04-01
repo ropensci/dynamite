@@ -51,14 +51,17 @@ create_data <- function(formula, idt, resp, helpers, ...) {
         # Number of covariates in channel i
         line_args <- c(list(i = y, idt = idt), h)
         channels[i] <- paste_rows(
-            # number of covariates, fixed and varying
+            # number of covariates (all, fixed, varying)
             c(idt(1), "int<lower=1> K_", y, ";"),
             onlyif(h$has_fixed, c(idt(1), "int<lower=1> K_fixed_", y, ";")),
             onlyif(h$has_varying, c(idt(1), "int<lower=1> K_varying_", y, ";")),
-            # index vector of covariates related to channel i
+            # index vectors of covariates (all, fixed, varying) related to channel i
             c(idt(1), "int J_", y, "[K_", y, "];"),
             onlyif(h$has_fixed, c(idt(1), "int J_fixed_", y, "[K_fixed_", y, "];")),
             onlyif(h$has_varying, c(idt(1), "int J_varying_", y, "[K_varying_", y, "];")),
+            # index vectors of fixed and varying betas
+            onlyif(h$has_fixed, c(idt(1), "int L_fixed_", y, "[K_fixed_", y, "];")),
+            onlyif(h$has_varying, c(idt(1), "int L_varying_", y, "[K_varying_", y, "];")),
             lines_wrap("data", formula[[i]], line_args)
         )
     }

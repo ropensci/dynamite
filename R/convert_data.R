@@ -49,11 +49,14 @@ convert_data <- function(formula, responses, specials, group, time, fixed, model
     for (i in seq_along(formula)) {
         resp <- formula[[i]]$response
         form_specials <- specials[[i]]
+        Ls <- c(paste0(c("L_fixed_", "L_varying_"), resp))
         Js <- c(paste0(c("J_", "J_fixed_", "J_varying_"), resp))
         Ks <- c(paste0(c("K_", "K_fixed_", "K_varying_"), resp))
+        channel_vars[[Ls[1]]] <- as.array(fixed_pars[[i]])
+        channel_vars[[Ls[2]]] <- as.array(varying_pars[[i]])
         channel_vars[[Js[1]]] <- as.array(assigned[[i]])
-        channel_vars[[Js[2]]] <- as.array(fixed_pars[[i]])
-        channel_vars[[Js[3]]] <- as.array(varying_pars[[i]])
+        channel_vars[[Js[2]]] <- as.array(assigned[[i]][channel_vars[[Ls[1]]]])
+        channel_vars[[Js[3]]] <- as.array(assigned[[i]][channel_vars[[Ls[2]]]])
         channel_vars[[Ks[1]]] <- length(assigned[[i]])
         channel_vars[[Ks[2]]] <- length(fixed_pars[[i]])
         channel_vars[[Ks[3]]] <- length(varying_pars[[i]])
@@ -84,8 +87,8 @@ convert_data <- function(formula, responses, specials, group, time, fixed, model
         prep <- do.call(paste0("prepare_channel_vars_", formula[[i]]$family),
                         list(i = resp,
                              Y = Y,
-                             J_fixed = assigned[[i]][fixed_pars[[i]]],
-                             J_varying = assigned[[i]][varying_pars[[i]]],
+                             J_fixed = channel_vars[[Js[2]]],
+                             J_varying = channel_vars[[Js[3]]],
                              K_fixed = channel_vars[[Ks[2]]],
                              K_varying = channel_vars[[Ks[3]]],
                              sd_x = sd_x,

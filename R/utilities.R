@@ -40,9 +40,9 @@ formula_rhs <- function(x) {
     attr(terms(x), "term.labels")
 }
 
-# Collapse argument vector with a newline
+# Collapse argument vector with a newline ignoring zero-length entries
 collapse_rows <- function(x) {
-    paste0(x, collapse = "\n")
+    paste0(x[nzchar(x) > 0], collapse = "\n")
 }
 
 # Paste argument vectors with a newline
@@ -61,7 +61,7 @@ paste_rows <- function(...) {
     if (length(pasted)) {
         collapse_rows(pasted)
     } else {
-        character(0)
+        ""
     }
 }
 

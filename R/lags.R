@@ -42,5 +42,6 @@ extract_lags <- function(x) {
     }
     lag_map <- list2DF(lag_map)
     lag_map$k <- as.integer(lag_map$k)
+    lag_map$k[is.na(lag_map$k)] <- 1L
     lag_map[!duplicated(lag_map),]
 }
