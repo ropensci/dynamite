@@ -191,9 +191,11 @@ create_model <- function(formula, idt, resp, helpers, ...) {
     # With lambda&tau, need more testing if this is fine or do we need to support other forms
     # e.g. as in https://arxiv.org/abs/1611.01310 and https://www.mdpi.com/2225-1146/8/2/20
     priors <- character(0)
-    spline_defs <- attr(formula, "splines")
-    if (spline_defs$shrinkage) {
-        priors <- paste0(idt(1), "lambda ~ std_normal();  // prior for shrinkage terms")
+
+    if (!is.null(spline_defs <- attr(formula, "splines"))) {
+        if (spline_defs$shrinkage) {
+            priors <- paste0(idt(1), "lambda ~ std_normal();  // prior for shrinkage terms")
+        }
     }
     mod <- character(length(formula))
     for (i in seq_along(formula)) {

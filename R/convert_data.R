@@ -46,6 +46,7 @@ convert_data <- function(formula, responses, specials, group, time, fixed, model
     sd_x[sd_x < 1] <- 1 # Intercept and other constants at time 1
     resp_classes <- attr(responses, "resp_class")
     helpers <- list()
+    warn_nosplines <- FALSE
     for (i in seq_along(formula)) {
         resp <- formula[[i]]$response
         form_specials <- specials[[i]]
@@ -62,6 +63,10 @@ convert_data <- function(formula, responses, specials, group, time, fixed, model
         channel_vars[[Ks[3]]] <- length(varying_pars[[i]])
         helpers[[i]] <- list(has_fixed = channel_vars[[Ks[2]]] > 0,
                              has_varying = channel_vars[[Ks[3]]] > 0)
+        if (helpers[[i]]$has_varying && is.null(attr(formula, "splines"))) {
+            warning_("Model for response variable ", resp, " contains time-varying definitions, but splines have not been defined.")
+            warn_nosplines <- TRUE
+        }
         if (groups) {
             resp_split <- split(responses[, resp], group)
         } else {
@@ -94,6 +99,12 @@ convert_data <- function(formula, responses, specials, group, time, fixed, model
                              sd_x = sd_x,
                              resp_class = resp_classes[resp]))
         channel_vars <- c(channel_vars, prep)
+    }
+    if (warn_nosplines) {
+        warning_("All channels will now default to time-constant coefficients for all predictors.")
+        for (i in seq_along(formula)) {
+            helpers[[i]]$has_varying <- FALSE
+        }
     }
     T <- T_full - fixed
     list(data = c(named_list(T, N, C, K, X, D, Bs), channel_vars),

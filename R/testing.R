@@ -45,6 +45,9 @@ test_trials <- obs(y4 ~ x1 + trials(n), family = binomial()) + splines()
 #test_fit <- btvcm:::btvcmfit(test_trials, test_data, ID, t, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
 #test_fit <- btvcm:::btvcmfit(test_trials, test_data, ID, t)
 
+test_splinewarning <- obs(y2 ~ -1 + x1 + varying(~x3) + trials(n), family = binomial())
+#test_fit <- btvcm:::btvcmfit(test_splinewarning, test_data, ID, t, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
+
 # Use these to control what is returned, wrap in argument debug:
 #     no_compile = TRUE => stan model is not compiled, implies no_sampling = TRUE
 #     no_sampling = TRUE => sampling is not called, stanfit == NULL
