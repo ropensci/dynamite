@@ -26,6 +26,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
     n_rows <- nrow(data)
     n_resp <- length(resp_all)
     lag_map <- extract_lags(unlist(get_pred(formula)))
+    unprocessed_lags <- rep(TRUE, nrow(lag_map))
     data_names <- names(data)
     fixed <- 0L
     # Process lag terms defined via lags()
@@ -41,12 +42,12 @@ btvcmfit <- function(formula, data, group, time, ...) {
         for (j in seq_len(n_resp)) {
             c(formula[[j]]$predictors) <- pred_lag
         }
-        lag_map <- lag_map[lag_map$def %in% resp_all & lag_map$k <= fixed,]
+        unprocessed_lags[lag_map$def %in% resp_all & lag_map$k <= fixed] <- FALSE
     }
     # Process lag terms defined via lag() in formulas
-    if (nlag <- nrow(lag_map)) {
+    if (any(unprocessed_lags)) {
         fixed <- max(max(lag_map$k), fixed)
-        for (i in seq_len(nlag)) {
+        for (i in which(unprocessed_lags)) {
             if (lag_map$k[i] <= 0) {
                 stop_("Only positive shift values are allowed in lag().")
             }
@@ -75,6 +76,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
     resp_levels <- lapply(droplevels(responses), levels)
     # TODO: simplify I(lag(variable, 1)) to something shorter, e.g. lag_1(variable)?
     # TODO: shorten variable and or channel name if they are very long?
+    # TODO: NOTE! you can use lag_map to get the variables within the complicated definition for formatting
     u_names <- colnames(model_matrix)
     coef_names <- lapply(seq_along(resp_all), function(i) {
         x <- paste0(resp_all[i], "_", u_names[attr(model_matrix, "assign")[[i]]])
