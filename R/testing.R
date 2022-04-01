@@ -36,6 +36,7 @@ test_form2 <- obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1) + lag(y3, 1), fami
 test_all <- obs(y4 ~ -1 + x1 + varying(~x2) + offset(log(t)), family = poisson()) +
     obs(y2 ~ -1 + x1 + varying(~x3) + trials(n), family = binomial()) +
     obs(y5 ~ x4 + fixed(~x5) + varying(~-1 + lag(y5)), family = gaussian()) +
+    obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1), family = categorical()) +
     splines()
 #test_fit <- btvcm:::btvcmfit(test_all, test_data, ID, t, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
 #test_fit <- btvcm:::btvcmfit(test_all, test_data, ID, t)

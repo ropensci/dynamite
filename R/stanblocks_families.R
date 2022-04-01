@@ -61,8 +61,8 @@ parameters_lines_default <- function(i, lb, idt, has_fixed, has_varying, ...) {
 }
 
 parameters_lines_categorical <- function(i, lb, idt, has_fixed, has_varying, ...) {
-    paste_rows(onlyif(has_fixed,   c(idt(1), "matrix[K_fixed_", i, ", S_", i, "- 1] beta_fixed_", i, ";")),
-               onlyif(has_varying, c(idt(1), "row_vector[D] a_", i, "[S_", i, "- 1, K_varying_", i, "];")),
+    paste_rows(onlyif(has_fixed,   c(idt(1), "matrix[K_fixed_", i, ", S_", i, " - 1] beta_fixed_", i, ";")),
+               onlyif(has_varying, c(idt(1), "row_vector[D] a_", i, "[S_", i, " - 1, K_varying_", i, "];")),
                onlyif(has_varying, c(idt(1), "vector<lower=", lb, ">[K_varying_", i, "] tau_", i, ";")))
 }
 
@@ -107,13 +107,13 @@ transformed_parameters_lines_default <- function(i, idt, has_varying, ...) {
     #}
 }
 
-transformed_parameters_lines_categorial <- function(i, idt, has_fixed, has_varying) {
+transformed_parameters_lines_categorical <- function(i, idt, has_fixed, has_varying, ...) {
     mtext_fixed <- ""
     mtext_varying <- ""
     mtext <- paste0(idt(1), "matrix[K_", i, ", S_", i, " - 1] beta_", i, "[T];")
     if (has_fixed) {
         mtext_fixed <- paste_rows(
-            c(idt(1), "beta_", i, "[1:T, L_fixed_", i, "1:(S_", i, " - 1))] = rep_array(beta_fixed_", i, ", T);"),
+            c(idt(1), "beta_", i, "[1:T, L_fixed_", i, ", 1:(S_", i, " - 1)] = rep_array(beta_fixed_", i, ", T);")
         )
     }
     #if (attr(formula, "splines")$noncentered) { # TODO: channel-wise?
@@ -206,10 +206,11 @@ model_lines_default <- function(i, idt, shrinkage, noncentered, has_fixed, has_v
 model_lines_categorical <- function(i, idt, shrinkage, noncentered, has_fixed, has_varying, ...) {
     mtext_fixed <- ""
     mtext_varying <- ""
+    prior_term <- ""
     if (has_fixed) {
         mtext_fixed <- paste_rows(
             c(idt(2), "for (k in 1:K_fixed_", i, ") {"),
-            c(idt(1),     "for (s in 1:(S_", i, " - 1)) {"),
+            c(idt(2),     "for (s in 1:(S_", i, " - 1)) {"),
             c(idt(3),          "beta_fixed_", i, "[k, s] ~ normal(beta_prior_mean_", i, "[k], beta_prior_sd_", i, "[k]);"),
             c(idt(2),     "}"),
             c(idt(1), "}")
@@ -247,7 +248,7 @@ model_lines_categorical <- function(i, idt, shrinkage, noncentered, has_fixed, h
     likelihood_term <-
         c(idt(2), i, "[t] ~ categorical_logit_glm(X[t][,J_", i, "], zeros_S_", i, ", append_col(beta_", i, "[t], zeros_K_", i, "));")
 
-    paste_rows(a_term, prior_term, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
+    paste_rows(mtext_fixed, mtext_varying, prior_term, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
 
 model_lines_gaussian <- function(i, idt, has_fixed, has_varying, ...) {
