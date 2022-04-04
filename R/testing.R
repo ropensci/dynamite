@@ -9,6 +9,7 @@ test_data <- data.frame(
     y2 = as.factor(sample(3, size = TN, replace = TRUE)),
     y3 = as.factor(sample(5, size = TN, replace = TRUE)),
     y4 = sample(5, size = TN, replace = TRUE),
+    y5 = rnorm(n = TN, mean = 1, sd = 2),
     x1 = rnorm(TN),
     x2 = as.factor(sample(4, size = TN, replace = TRUE)),
     x3 = rnorm(TN),
@@ -32,13 +33,20 @@ test_form2 <- obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1) + lag(y3, 1), fami
     obs(y3 ~ x1 + x3 + lag(y1, 1) + lag(y2, 1) + lag(y3, 1), family = categorical()) +
     splines()
 
-test_offset <- obs(y4 ~ x1 + varying(~x2) + offset(log(t)), family = poisson()) + obs(y2 ~ varying(~x1) + x3 + trials(n), family = binomial()) + splines()
-#test_fit <- btvcm:::btvcmfit(test_offset, test_data, ID, t, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
-#test_fit <- btvcm:::btvcmfit(test_offset, test_data, ID, t)
+test_all <- obs(y4 ~ -1 + x1 + varying(~x2) + offset(log(t)), family = poisson()) +
+    obs(y2 ~ -1 + x1 + varying(~x3) + trials(n), family = binomial()) +
+    obs(y5 ~ x4 + fixed(~x5) + varying(~-1 + lag(y5)), family = gaussian()) +
+    obs(y1 ~ x1 + x2 + x4 + lag(y1, 1) + lag(y2, 1), family = categorical()) +
+    splines()
+#test_fit <- btvcm:::btvcmfit(test_all, test_data, ID, t, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
+#test_fit <- btvcm:::btvcmfit(test_all, test_data, ID, t)
 
 test_trials <- obs(y4 ~ x1 + trials(n), family = binomial()) + splines()
 #test_fit <- btvcm:::btvcmfit(test_trials, test_data, ID, t, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
 #test_fit <- btvcm:::btvcmfit(test_trials, test_data, ID, t)
+
+test_splinewarning <- obs(y2 ~ -1 + x1 + varying(~x3) + trials(n), family = binomial())
+#test_fit <- btvcm:::btvcmfit(test_splinewarning, test_data, ID, t, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
 
 # Use these to control what is returned, wrap in argument debug:
 #     no_compile = TRUE => stan model is not compiled, implies no_sampling = TRUE
