@@ -124,7 +124,7 @@ prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, K_fixed, 
 
 prepare_channel_vars_gaussian <- function(i, Y, J_fixed, J_varying, K_fixed, K_varying, sd_x, resp_class) {
     if ("factor" %in% resp_class) {
-        stop_("Response variable ", resp, " is invalid: gaussian family is not supported for factors.")
+        stop_("Response variable ", i, " is invalid: gaussian family is not supported for factors.")
     }
     channel_vars <- list()
     channel_vars[[paste0("beta_prior_mean_", i)]] <- array(0, K_fixed)
@@ -137,6 +137,12 @@ prepare_channel_vars_gaussian <- function(i, Y, J_fixed, J_varying, K_fixed, K_v
 }
 
 prepare_channel_vars_binomial <- function(i, Y, J_fixed, J_varying, K_fixed, K_varying, sd_x, resp_class) {
+    if (any(Y) < 0 || any(Y != as.integer(Y))) {
+        stop_("Response variable ", i, " is invalid: binomial family supports only non-negative integers.")
+    }
+    if ("factor" %in% resp_class) {
+        stop_("Response variable ", i, " is invalid: binomial family is not supported for factors.")
+    }
     channel_vars <- list()
     channel_vars[[paste0("beta_prior_mean_", i)]] <- array(0, K_fixed)
     channel_vars[[paste0("beta_prior_sd_", i)]] <- array(5, K_fixed) # TODO better initial values
@@ -150,6 +156,9 @@ prepare_channel_vars_bernoulli <- function(...) {
 }
 
 prepare_channel_vars_poisson <- function(i, resp_class, ...) {
+    if (any(Y) < 0 || any(Y != as.integer(Y))) {
+        stop_("Response variable ", i, " is invalid: Poisson family supports only non-negative integers.")
+    }
     if ("factor" %in% resp_class) {
         stop_("Response variable ", i, " is invalid: Poisson family is not supported for factors.")
     }
@@ -157,8 +166,11 @@ prepare_channel_vars_poisson <- function(i, resp_class, ...) {
 }
 
 prepare_channel_vars_negbin <- function(i, Y, J_fixed, J_varying, K_fixed, K_varying, sd_x, resp_class) {
+    if (any(Y) < 0 || any(Y != as.integer(Y))) {
+        stop_("Response variable ", i, " is invalid: negative binomial family supports only non-negative integers.")
+    }
     if ("factor" %in% resp_class) {
-        stop_("Response variable ", resp, " is invalid: negative binomial family is not supported for factors.")
+        stop_("Response variable ", i, " is invalid: negative binomial family is not supported for factors.")
     }
     channel_vars <- list()
     channel_vars[[paste0("beta_prior_mean_", i)]] <- array(0, K_fixed)
