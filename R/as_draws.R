@@ -19,8 +19,10 @@
 #' @rdname as_draws-btvcmfit
 #' @method as_draws_df btvcmfit
 as_draws_df.btvcmfit <- function(x, parameter_types, ...) {
-
-    as_draws(as.data.frame(x, parameter_types = parameter_types))
+    if (!requireNamespace("posterior", quietly = TRUE)) {
+        stop("This function depends on the 'posterior' package. ", call. = FALSE)
+    }
+    posterior::as_draws(as.data.frame(x, parameter_types = parameter_types))
     # Not tested
 }
 #' @export

@@ -18,8 +18,11 @@ Biarch: true
 Depends: 
     R (>= 3.4.0)
 Imports: 
+    dplyr,
     methods,
     rstan (>= 2.18.1)
+Suggests:
+    posterior
 Collate: 
     'as_data_frame.R'
     'as_draws.R'
