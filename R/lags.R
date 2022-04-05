@@ -1,10 +1,12 @@
 #' Add each lagged response as a predictor to each channel.
 #' @param k An integer indicating how many previous observations should be included. Defaults to 1.
+#' @param type Either `"fixed"` or `"varying"` which indicates whether the coefficients of the lag terms should vary in time or not. Defaults to `"fixed"`.
 #' @export
-lags <- function(k = 1L) {
+lags <- function(k = 1L, type = c("fixed", "varying")) {
+    type <- match.arg(type)
     k <- try_(k, type = "integer")[1]
     structure(
-        list(k = k),
+        list(k = k, type = type),
         class = "lags"
     )
 }

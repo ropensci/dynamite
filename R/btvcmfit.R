@@ -32,6 +32,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
     # Process lag terms defined via lags()
     if (!is.null(lag_all <- attr(formula, "lags"))) {
         fixed <- lag_all$k
+        type <- lag_all$type
         pred_lag <- character(fixed * n_resp)
         for (i in seq_len(fixed)) {
             for (j in seq_len(n_resp)) {
@@ -41,6 +42,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
         }
         for (j in seq_len(n_resp)) {
             c(formula[[j]]$predictors) <- pred_lag
+            c(formula[[j]][[type]]) <- which(formula[[j]]$predictors %in% pred_lag)
         }
         unprocessed_lags[lag_map$def %in% resp_all & lag_map$k <= fixed] <- FALSE
     }
