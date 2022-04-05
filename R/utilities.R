@@ -42,7 +42,7 @@ formula_rhs <- function(x) {
 
 # Collapse argument vector with a newline ignoring zero-length entries
 collapse_rows <- function(x) {
-    paste0(x[nzchar(x) > 0], collapse = "\n")
+    paste0(x[nzchar(x)], collapse = "\n")
 }
 
 # Paste argument vectors with a newline

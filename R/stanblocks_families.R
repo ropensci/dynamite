@@ -291,3 +291,50 @@ model_lines_negbin <- function(i, idt, ...) {
     likelihood_term <- c(idt(2), i, "[t] ~ neg_binomial_2_log_glm(X[t][,J_", i, "], 0, beta_", i, "[t], ", "phi_", i, ");")
     paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
+
+# For generated quantities block
+generated_quantities_lines_default <- function(...) {
+    ""
+}
+
+generated_quantities_lines_categorical <- function(...) {
+    generated_quantities_lines_default(...)
+}
+
+generated_quantities_lines_gaussian <- function(i, idt, has_fixed, has_varying, ...) {
+    mtext <- paste0(idt(1), "vector[K_", i, "] beta_", i, "[T];")
+    mtext_fixed <- ""
+    mtext_varying <- ""
+    if (has_fixed) {
+        mtext_fixed <- paste_rows(
+            c(idt(1), "beta_", i, "[1:T, L_fixed_", i, "] = rep_array(beta_fixed_", i, ", T);")
+        )
+    }
+    if (has_varying) {
+        mtext_varying <- paste_rows(
+            c(idt(1), "beta_", i, "[1:T, L_varying_", i, "[1:K_varying_", i, "]] = beta_varying_", i, ";")
+            #c(idt(1), "for (k in 1:K_varying_", i, ") {"),
+            #c(idt(2),     "for (t in 1:T) {"),
+            #c(idt(3),         "beta_", i, "[t, L_varying_", i, "[k]] = beta_varying_", i, "[t, k];"),
+            #c(idt(2),     "}"),
+            #c(idt(1), "}")
+        )
+    }
+    paste_rows(mtext, mtext_fixed, mtext_varying)
+}
+
+generated_quantities_lines_binomial <- function(...) {
+    generated_quantities_lines_gaussian(...)
+}
+
+generated_quantities_lines_bernoulli <- function(...) {
+    generated_quantities_lines_default(...)
+}
+
+generated_quantities_lines_poisson <- function(...) {
+    generated_quantities_lines_default(...)
+}
+
+generated_quantities_lines_negbin <- function(...) {
+    generated_quantities_lines_default(...)
+}

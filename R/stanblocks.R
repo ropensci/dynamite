@@ -211,6 +211,15 @@ create_model <- function(formula, idt, resp, helpers, ...) {
 
 #'
 #' @export
-create_generated_quantities <- function(formula, ...) {
-    NULL
+create_generated_quantities <- function(formula, idt, resp, helpers, ...) {
+    gen <- character(length(formula))
+    for (i in seq_along(formula)) {
+        line_args <- c(list(i = resp[i], idt), helpers[[i]])
+        gen[i] <- lines_wrap("generated_quantities", formula[[i]], line_args)
+    }
+    if (any(nzchar(gen))) {
+        paste_rows("generated quantities {", collapse_rows(gen), "}")
+    } else {
+        NULL
+    }
 }

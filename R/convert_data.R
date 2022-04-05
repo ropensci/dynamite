@@ -137,7 +137,7 @@ prepare_channel_vars_gaussian <- function(i, Y, J_fixed, J_varying, K_fixed, K_v
 }
 
 prepare_channel_vars_binomial <- function(i, Y, J_fixed, J_varying, K_fixed, K_varying, sd_x, resp_class) {
-    if (any(Y) < 0 || any(Y != as.integer(Y))) {
+    if (any(Y < 0) || any(Y != as.integer(Y))) {
         stop_("Response variable ", i, " is invalid: binomial family supports only non-negative integers.")
     }
     if ("factor" %in% resp_class) {
@@ -155,18 +155,18 @@ prepare_channel_vars_bernoulli <- function(...) {
     prepare_channel_vars_binomial(...)
 }
 
-prepare_channel_vars_poisson <- function(i, resp_class, ...) {
-    if (any(Y) < 0 || any(Y != as.integer(Y))) {
+prepare_channel_vars_poisson <- function(i, Y, resp_class, ...) {
+    if (any(Y < 0) || any(Y != as.integer(Y))) {
         stop_("Response variable ", i, " is invalid: Poisson family supports only non-negative integers.")
     }
     if ("factor" %in% resp_class) {
         stop_("Response variable ", i, " is invalid: Poisson family is not supported for factors.")
     }
-    prepare_channel_vars_binomial(i = i, resp_class = resp_class, ...)
+    prepare_channel_vars_binomial(i = i, Y = Y, resp_class = resp_class, ...)
 }
 
 prepare_channel_vars_negbin <- function(i, Y, J_fixed, J_varying, K_fixed, K_varying, sd_x, resp_class) {
-    if (any(Y) < 0 || any(Y != as.integer(Y))) {
+    if (any(Y < 0) || any(Y != as.integer(Y))) {
         stop_("Response variable ", i, " is invalid: negative binomial family supports only non-negative integers.")
     }
     if ("factor" %in% resp_class) {
