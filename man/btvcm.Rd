@@ -2,10 +2,13 @@
 % Please edit documentation in R/btvcm.R
 \name{btvcm}
 \alias{btvcm}
-\title{The main function}
+\title{Bayesian Time-Varying Coefficients Model}
 \usage{
 btvcm(formula, data, group, time, ...)
 }
+\arguments{
+\item{...}{}
+}
 \description{
-The main function
+Bayesian Time-Varying Coefficients Model
 }

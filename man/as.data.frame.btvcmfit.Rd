@@ -6,6 +6,20 @@
 \usage{
 \method{as.data.frame}{btvcmfit}(x, row.names = NULL, optional = FALSE, parameter_types, ...)
 }
+\arguments{
+\item{x}{The estimated \code{btvcm} model.}
+
+\item{row.names}{\code{NULL} (default) or a character vector giving the row
+names for the data frame.}
+
+\item{optional}{Ignored.}
+
+\item{parameter_types}{What type of parameters should be returned? Possible
+choices are \code{"beta"}, \code{"tau"}, \code{"a"}, \code{"beta"}, or
+\code{"all"} (default). #TODO sigmas etc? others? Or just return all of these...}
+
+\item{...}{Ignored.}
+}
 \description{
 Extract samples from the btvcmfit object as data frame.
 }

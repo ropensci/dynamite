@@ -1,11 +1,20 @@
 #' Extract samples from the btvcmfit object as data frame.
 #'
+#' @param x The estimated \code{btvcm} model.
+#' @param row.names \code{NULL} (default) or a character vector giving the row
+#' names for the data frame.
+#' @param optional Ignored.
+#' @param parameter_types What type of parameters should be returned? Possible
+#' choices are \code{"beta"}, \code{"tau"}, \code{"a"}, \code{"beta"}, or
+#' \code{"all"} (default). #TODO sigmas etc? others? Or just return all of these...
+#' @param ... Ignored.
 #' @export
 as.data.frame.btvcmfit <- function(x, row.names = NULL, optional = FALSE, parameter_types, ...) {
     # should there be an option to be more specific in what parameters to extract?
     # TODO distributional parameters (sigma, shape)
     parameter_types <- match.arg(parameter_types,
-        c("beta", "tau", "a", "lambda"), TRUE) #TODO all?, naming? a = spline_coefficients? alpha (greek as others)?
+        c("beta", "tau", "a", "lambda", "all"), TRUE) #TODO all?, naming? a = spline_coefficients? alpha (greek as others)?
+    if (parameter_types == "all") parameter_types <- c("beta", "tau", "a", "lambda")
     all_pars <- x$stanfit@sim$pars_oi
     d <- NULL
     coef_names <- unlist(x$coef_names)

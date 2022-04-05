@@ -1,3 +1,11 @@
+#' @param object Object of class \code{btvcmfit}.
+#' @param newdata Data frame used in predictions. If \code{NULL} (default), the
+#' data used in model estimation is used for predictions as well.
+#' @param mode TODO: Think about the names, if we predict missing observations
+#' does the term counterfactual make sense?
+#' @param type Type of prediction, \code{"response"} (default), \code{"mean"}
+#' or \code{"link"}.
+#' @param n_draws Number of posterior samples to use, default is all.
 #' @export
 predict.btvcmfit <- function(object, newdata = NULL, mode = c("counterfactual", "forecast"),
     type = c("response", "mean", "link"), n_draws = NULL) {
