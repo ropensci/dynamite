@@ -20,7 +20,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
     data <- data |>
         # Convert character types to factors
         dplyr::mutate(dplyr::across(tidyselect:::where(is.character), as.factor)) |>
-        dplyr::arrange(data, dplyr::across(dplyr::all_of(c(group_var, time_var))))
+        dplyr::arrange(dplyr::across(dplyr::all_of(c(group_var, time_var))))
     time <- unique(data[[time_var]])
     resp_all <- get_resp(formula)
     n_rows <- nrow(data)
