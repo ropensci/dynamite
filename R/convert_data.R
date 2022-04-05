@@ -115,10 +115,10 @@ prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, K_fixed, 
     S_i <- length(unique(as.vector(Y)))
     channel_vars <- list()
     channel_vars[[paste0("S_", i)]] <- S_i
-    channel_vars[[paste0("beta_prior_mean_", i)]] <- matrix(0, K_fixed, S_i - 1)
-    channel_vars[[paste0("beta_prior_sd_", i)]] <- matrix(5, K_fixed, S_i - 1) # TODO better initial values
-    channel_vars[[paste0("a_prior_mean_", i)]] <- matrix(0, K_varying, S_i - 1)
-    channel_vars[[paste0("a_prior_sd_", i)]] <- matrix(2 / sd_x[J_varying], K_varying, S_i - 1)
+    channel_vars[[paste0("beta_fixed_prior_mean_", i)]] <- matrix(0, K_fixed, S_i - 1)
+    channel_vars[[paste0("beta_fixed_prior_sd_", i)]] <- matrix(5, K_fixed, S_i - 1) # TODO better initial values
+    channel_vars[[paste0("beta_varying_prior_mean_", i)]] <- matrix(0, K_varying, S_i - 1)
+    channel_vars[[paste0("beta_varying_prior_sd_", i)]] <- matrix(2 / sd_x[J_varying], K_varying, S_i - 1)
     channel_vars
 }
 
@@ -127,11 +127,11 @@ prepare_channel_vars_gaussian <- function(i, Y, J_fixed, J_varying, K_fixed, K_v
         stop_("Response variable ", i, " is invalid: gaussian family is not supported for factors.")
     }
     channel_vars <- list()
-    channel_vars[[paste0("beta_prior_mean_", i)]] <- array(0, K_fixed)
-    channel_vars[[paste0("beta_prior_sd_", i)]] <- array(5, K_fixed) # TODO better initial values
-    channel_vars[[paste0("a_prior_mean_", i)]] <- array(0, K_varying)
+    channel_vars[[paste0("beta_fixed_prior_mean_", i)]] <- array(0, K_fixed)
+    channel_vars[[paste0("beta_fixed_prior_sd_", i)]] <- array(5, K_fixed) # TODO better initial values
+    channel_vars[[paste0("beta_varying_prior_mean_", i)]] <- array(0, K_varying)
     # TODO adjust prior mean for the intercept term under the assumption that other betas/x are 0
-    channel_vars[[paste0("a_prior_sd_", i)]] <- array(2 * sd(Y[1, ]) / sd_x[J_varying], K_varying)
+    channel_vars[[paste0("beta_varying_prior_sd_", i)]] <- array(2 * sd(Y[1, ]) / sd_x[J_varying], K_varying)
     channel_vars[[paste0("sigma_scale_", i)]] <- 1 / mean(apply(Y, 1, sd))
     channel_vars
 }
@@ -144,10 +144,10 @@ prepare_channel_vars_binomial <- function(i, Y, J_fixed, J_varying, K_fixed, K_v
         stop_("Response variable ", i, " is invalid: binomial family is not supported for factors.")
     }
     channel_vars <- list()
-    channel_vars[[paste0("beta_prior_mean_", i)]] <- array(0, K_fixed)
-    channel_vars[[paste0("beta_prior_sd_", i)]] <- array(5, K_fixed) # TODO better initial values
-    channel_vars[[paste0("a_prior_mean_", i)]] <- array(0, K_varying)
-    channel_vars[[paste0("a_prior_sd_", i)]] <- array(2 / sd_x[J_varying], K_varying)
+    channel_vars[[paste0("beta_fixed_prior_mean_", i)]] <- array(0, K_fixed)
+    channel_vars[[paste0("beta_fixed_prior_sd_", i)]] <- array(5, K_fixed) # TODO better initial values
+    channel_vars[[paste0("beta_varying_prior_mean_", i)]] <- array(0, K_varying)
+    channel_vars[[paste0("beta_varying_prior_sd_", i)]] <- array(2 / sd_x[J_varying], K_varying)
     channel_vars
 }
 
@@ -173,10 +173,10 @@ prepare_channel_vars_negbin <- function(i, Y, J_fixed, J_varying, K_fixed, K_var
         stop_("Response variable ", i, " is invalid: negative binomial family is not supported for factors.")
     }
     channel_vars <- list()
-    channel_vars[[paste0("beta_prior_mean_", i)]] <- array(0, K_fixed)
-    channel_vars[[paste0("beta_prior_sd_", i)]] <- array(5, K_fixed) # TODO better initial values
-    channel_vars[[paste0("a_prior_mean_", i)]] <- array(0, K_varying)
-    channel_vars[[paste0("a_prior_sd_", i)]] <- array(2 / sd_x[J_varying], K_varying)
+    channel_vars[[paste0("beta_fixed_prior_mean_", i)]] <- array(0, K_fixed)
+    channel_vars[[paste0("beta_fixed_prior_sd_", i)]] <- array(5, K_fixed) # TODO better initial values
+    channel_vars[[paste0("beta_varying_prior_mean_", i)]] <- array(0, K_varying)
+    channel_vars[[paste0("beta_varying_prior_sd_", i)]] <- array(2 / sd_x[J_varying], K_varying)
     channel_vars[[paste0("phi_scale_", i)]] <- 1
     channel_vars
 }

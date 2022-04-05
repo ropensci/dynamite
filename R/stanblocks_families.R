@@ -8,20 +8,20 @@ lines_wrap <- function(prefix, formula, args) {
 
 # For data block
 data_lines_default <- function(i, idt, has_fixed, has_varying, ...) {
-    paste_rows(onlyif(has_fixed, c(idt(1), "vector[K_fixed_", i, "] beta_prior_mean_", i, ";")),
-               onlyif(has_fixed, c(idt(1), "vector[K_fixed_", i, "] beta_prior_sd_", i, ";")),
-               onlyif(has_varying, c(idt(1), "vector[K_varying_", i, "] a_prior_mean_", i, ";")),
-               onlyif(has_varying, c(idt(1), "vector[K_varying_", i, "] a_prior_sd_", i, ";")))
+    paste_rows(onlyif(has_fixed, c(idt(1), "vector[K_fixed_", i, "] beta_fixed_prior_mean_", i, ";")),
+               onlyif(has_fixed, c(idt(1), "vector[K_fixed_", i, "] beta_fixed_prior_sd_", i, ";")),
+               onlyif(has_varying, c(idt(1), "vector[K_varying_", i, "] beta_varying_prior_mean_", i, ";")),
+               onlyif(has_varying, c(idt(1), "vector[K_varying_", i, "] beta_varying_prior_sd_", i, ";")))
 
 }
 
 data_lines_categorical <- function(i, idt, has_fixed, has_varying, ...) {
     paste_rows(c(idt(1), "int<lower=1> ", i, "[T, N];"),
                c(idt(1), "int<lower=0> S_", i, ";"),
-               onlyif(has_fixed, c(idt(1), "matrix[K_fixed_", i, ", S_", i, " - 1] beta_prior_mean_", i, ";")),
-               onlyif(has_fixed, c(idt(1), "matrix[K_fixed_", i, ", S_", i, " - 1] beta_prior_sd_", i, ";")),
-               onlyif(has_varying, c(idt(1), "matrix[K_varying_", i, ", S_", i, " - 1] a_prior_sd_", i, ";")),
-               onlyif(has_varying, c(idt(1), "matrix[K_varying_", i, ", S_", i, " - 1] a_prior_sd_", i, ";")))
+               onlyif(has_fixed, c(idt(1), "matrix[K_fixed_", i, ", S_", i, " - 1] beta_fixed_prior_mean_", i, ";")),
+               onlyif(has_fixed, c(idt(1), "matrix[K_fixed_", i, ", S_", i, " - 1] beta_fixed_prior_sd_", i, ";")),
+               onlyif(has_varying, c(idt(1), "matrix[K_varying_", i, ", S_", i, " - 1] beta_varying_prior_sd_", i, ";")),
+               onlyif(has_varying, c(idt(1), "matrix[K_varying_", i, ", S_", i, " - 1] beta_varying_prior_sd_", i, ";")))
 }
 
 data_lines_gaussian <- function(i, idt, ...) {
@@ -172,7 +172,7 @@ model_lines_default <- function(i, idt, shrinkage, noncentered, has_fixed, has_v
     if (has_fixed) {
         mtext_fixed <- paste_rows(
             c(idt(1), "for (k in 1:K_fixed_", i, ") {"),
-            c(idt(2),     "beta_fixed_", i, "[k] ~ normal(beta_prior_mean_", i, "[k], beta_prior_sd_", i, "[k]);"),
+            c(idt(2),     "beta_fixed_", i, "[k] ~ normal(beta_fixed_prior_mean_", i, "[k], beta_fixed_prior_sd_", i, "[k]);"),
             c(idt(1), "}")
         )
     }
@@ -187,7 +187,7 @@ model_lines_default <- function(i, idt, shrinkage, noncentered, has_fixed, has_v
             # Prior for the first a (beta) is always normal given the RW prior
             mtext_varying <- paste_rows(
                 c(idt(1), "for (k in 1:K_varying_", i, ") {"),
-                c(idt(2),      "a_", i, "[k, 1] ~ normal(a_prior_mean_", i, "[k], a_prior_sd_", i, "[k]);"),
+                c(idt(2),      "a_", i, "[k, 1] ~ normal(beta_varying_prior_mean_", i, "[k], beta_varying_prior_sd_", i, "[k]);"),
                 c(idt(2),      "for(i in 2:D) {"),
                 if (shrinkage) {
                     c(idt(3),      "a_", i, "[k, i] ~ normal(a_", i,"[k, i - 1], lambda[i - 1] * tau_", i, "[k]);")
@@ -211,7 +211,7 @@ model_lines_categorical <- function(i, idt, shrinkage, noncentered, has_fixed, h
         mtext_fixed <- paste_rows(
             c(idt(2), "for (k in 1:K_fixed_", i, ") {"),
             c(idt(2),     "for (s in 1:(S_", i, " - 1)) {"),
-            c(idt(3),          "beta_fixed_", i, "[k, s] ~ normal(beta_prior_mean_", i, "[k], beta_prior_sd_", i, "[k]);"),
+            c(idt(3),          "beta_fixed_", i, "[k, s] ~ normal(beta_fixed_prior_mean_", i, "[k], beta_fixed_prior_sd_", i, "[k]);"),
             c(idt(2),     "}"),
             c(idt(1), "}")
         )
@@ -231,7 +231,7 @@ model_lines_categorical <- function(i, idt, shrinkage, noncentered, has_fixed, h
             mtext_varying <- paste_rows(
                 c(idt(1), "for (s in 1:(S_", i, " - 1)) {"),
                 c(idt(2),     "for (k in 1:K_varying_", i, ") {"),
-                c(idt(3),         "a_", i, "[s, k, 1] ~ normal(a_prior_mean_", i, "[k, s], a_prior_sd_", i, "[k, s]);"),
+                c(idt(3),         "a_", i, "[s, k, 1] ~ normal(beta_varying_prior_mean_", i, "[k, s], beta_varying_prior_sd_", i, "[k, s]);"),
                 c(idt(3),         "for(i in 2:D) {"),
                 if (shrinkage) {
                     c(idt(4),         "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], lambda[i - 1] * tau_", i, "[k]);")
