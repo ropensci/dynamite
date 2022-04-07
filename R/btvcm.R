@@ -1,10 +1,10 @@
 #' Bayesian Time-Varying Coefficients Model
 #'
-#' @param formula
-#' @param data
-#' @param group
-#' @param time
-#' @param ...
+#' @param formula todo
+#' @param data todo
+#' @param group todo
+#' @param time todo
+#' @param ... todo
 #'
 #' @export
 btvcm <- function(formula, data, group, time, ...) {

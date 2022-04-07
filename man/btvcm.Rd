@@ -7,7 +7,15 @@
 btvcm(formula, data, group, time, ...)
 }
 \arguments{
-\item{...}{}
+\item{formula}{todo}
+
+\item{data}{todo}
+
+\item{group}{todo}
+
+\item{time}{todo}
+
+\item{...}{todo}
 }
 \description{
 Bayesian Time-Varying Coefficients Model

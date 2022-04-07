@@ -1,6 +1,6 @@
+#' Fit a Bayesian Time-Varying Coefficients Model
+#'
 #' @include utilities.R
-
-# btvcmfit class
 btvcmfit <- function(formula, data, group, time, ...) {
     dots <- list(...)
     data <- droplevels(data) #TODO document this in return value

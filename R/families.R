@@ -28,43 +28,32 @@ is.btvcmfamily <- function(x) {
 
 # TODO could have an option to define the reference category? Or maybe simpler (for us)
 # to ask user to relevel the factor beforehand
-#' @rdname btvcmfamily
-#' @export
-categorical <- function(...) {
+categorical_ <- function(...) {
     # do something different
     btvcmfamily_("categorical", ...)
 }
 
-# TODO some families might conflict with stats such as stats::gaussian, not sure if matters
-# Perhaps check how brms combines the use of own custom families and stats::gamma etc?
-# What features we need for the family functions?
-#' @rdname btvcmfamily
-#' @export
-gaussian <- function(...) {
+gaussian_ <- function(...) {
     # do something else
     btvcmfamily_("gaussian", ...)
 }
-#' @rdname btvcmfamily
-#' @export
-binomial <- function(...) {
+
+binomial_ <- function(...) {
     # do something else
     btvcmfamily_("binomial", ...)
 }
-#' @rdname btvcmfamily
-#' @export
-bernoulli <- function(...) {
+
+bernoulli_ <- function(...) {
     # do something else
     btvcmfamily_("bernoulli", ...)
 }
-#' @rdname btvcmfamily
-#' @export
-poisson <- function(...) {
+
+poisson_ <- function(...) {
     # do something else
     btvcmfamily_("poisson", ...)
 }
-#' @rdname btvcmfamily
-#' @export
-negbin <- function(...) {
+
+negbin_ <- function(...) {
     # do something else
     btvcmfamily_("negbin", ...)
 }
@@ -78,6 +67,14 @@ is_continuous <- function(x) {
 # Check if response of a family is discrete
 is_discrete <- function(x) {
     x$name %in% discrete_distributions
+}
+
+# Check is a function call is of the form family(...),
+# where 'family' is supported
+is_valid_family_call <- function(x) {
+    family <- as.character(x[[1]])[1]
+    x[[1]] <- as.symbol(paste0(family, "_"))
+    return(list(supported = is_supported(family), call = x))
 }
 
 # Check if family is supported
@@ -98,7 +95,7 @@ discrete_distributions <- c(
 
 supported_families <- c(
     "binomial",
-    "bernoulli", # separate as stan has separete (more efficient) pmf for it
+    "bernoulli", # separate as stan has separate (more efficient) pmf for it
     "categorical",
     "negbin",
     "gaussian",
