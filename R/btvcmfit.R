@@ -21,7 +21,33 @@ btvcmfit <- function(formula, data, group, time, ...) {
         # Convert character types to factors
         dplyr::mutate(dplyr::across(tidyselect:::where(is.character), as.factor)) |>
         dplyr::arrange(dplyr::across(dplyr::all_of(c(group_var, time_var))))
-    time <- unique(data[[time_var]])
+    time <- sort(unique(data[[time_var]]))
+    full_time <- NULL
+    # TODO convert Dates etc. to integers before this
+    time_ivals <- diff(time)
+    time_scale <- min(diff(time))
+    if (any(time_ivals[!is.na(time_ivals)] %% time_scale > 0)) {
+        stop_("Observations must occur at equal time intervals.")
+    } else {
+        full_time <- seq(time[1], time[length(time)], by = time_scale)
+        if (!identical(time, full_time)) {
+            full_data_template <- expand.grid(time = time, group = unique(data[[group_var]]))
+            names(full_data_template) <- c(time_var, group_var)
+            data <- full_data_template |> dplyr::left_join(data, by = c(group_var, time_var))
+        }
+    }
+    data_mis <- data[ ,c(group_var, time_var)]
+    data_mis$obs <- complete.cases(data)
+    time_segments <- data_mis |>
+        dplyr::group_by(dplyr::across(dplyr::all_of(c(group_var)))) |>
+        dplyr::summarise(last_obs = which(obs)[sum(obs)],
+                         valid_missingness_pattern_ =
+                             all(obs[1:last_obs] == cummin(obs[1:last_obs])) ||
+                             all(obs[1:last_obs] == cummax(obs[1:last_obs])))
+    if (any(!time_segments$valid_missingness_pattern_)) {
+        # TODO is there a better term or a way to convey this?
+        stop_("Observed time series must not contain gaps.")
+    }
     resp_all <- get_resp(formula)
     n_rows <- nrow(data)
     n_resp <- length(resp_all)
@@ -88,7 +114,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
         x
     })
     specials <- evaluate_specials(formula, data)
-    converted <- convert_data(formula, responses, specials, group, time, fixed, model_matrix)
+    converted <- convert_data(formula, responses, specials, group, full_time, fixed, model_matrix)
     model_data <- converted$data
     model_helpers <- converted$helpers
     model_code <- create_blocks(formula, indent = 2L, resp = resp_all, helpers = model_helpers)
