@@ -345,8 +345,6 @@ model_lines_poisson <- function(i, idt, has_offset, ...) {
     paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
 
-vectorizable_prior <- function(x) !grep("\\(", d)
-
 model_lines_negbin <- function(i, idt, ...) {
     mtext <- model_lines_default(i, idt, ...)
     d <- data[[paste0("phi_prior_distr_", i)]]
