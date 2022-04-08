@@ -115,7 +115,7 @@ btvcmfit <- function(formula, data, group, time, priors = NULL, debug, ...) {
         x
     })
     specials <- evaluate_specials(formula, data)
-    converted <- convert_data(formula, responses, specials, group, time_time, fixed, model_matrix, coef_names, priors)
+    converted <- convert_data(formula, responses, specials, group, full_time, fixed, model_matrix, coef_names, priors)
     model_data <- converted$data
     model_helpers <- converted$helpers
     model_priors <- converted$priors

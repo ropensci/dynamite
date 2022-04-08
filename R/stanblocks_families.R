@@ -5,6 +5,7 @@ lines_wrap <- function(prefix, formula, args) {
     # args[!has_args] <- NULL
     do.call(lines_fun, args)
 }
+vectorizable_prior <- function(x) length(x) == 1 && !grepl("\\(", x)
 
 # For data block
 data_lines_default <- function(i, idt, has_fixed, has_varying, data, ...) {
@@ -40,7 +41,6 @@ data_lines_categorical <- function(i, idt, has_fixed, has_varying, data, ...) {
 
 data_lines_gaussian <- function(i, idt, has_fixed, has_varying, data, ...) {
     paste_rows(c(idt(1), "real ", i, "[T, N];"),
-               c(idt(1), "real<lower=0> sigma_scale_", i, ";"),
                data_lines_default(i, idt, has_fixed, has_varying, data, ...))
 }
 
@@ -63,7 +63,6 @@ data_lines_poisson <- function(i, idt, has_offset, has_fixed, has_varying, data,
 
 data_lines_negbin <- function(i, idt, has_fixed, has_varying, data, ...) {
     paste_rows(c(idt(1), "int<lower=0> ", i, "[T, N];"),
-               c(idt(1), "real<lower=0> phi_scale_", i),
                data_lines_default(i, idt, has_fixed, has_varying, data, ...))
 }
 
@@ -183,13 +182,14 @@ transformed_parameters_lines_poisson <- function(...) {
 model_lines_default <- function(i, idt, shrinkage, noncentered, has_fixed, has_varying, data, ...) {
     mtext_fixed <- ""
     mtext_varying <- ""
+    mtext_tau <- ""
     if (has_fixed) {
         #d <- priors |> dplyr::filter(type == "beta_fixed")
         # if (d$vectorized[1]) {
         #     distribution <- sub("(.*", "", d$prior[1])
         #     mtext_fixed <- c(idt(1), distribution, "~ (", "beta_fixed_")
         d <- data[[paste0("beta_fixed_prior_distr_", i)]]
-        if (length(d) == 1) {
+        if (vectorizable_prior(d)) {
             np <- data[[paste0("beta_fixed_prior_npars_", i)]]
             mtext_fixed <- c(idt(1), "beta_fixed_", i, " ~ ", d, "(", paste0("beta_fixed_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
         } else {
@@ -204,10 +204,16 @@ model_lines_default <- function(i, idt, shrinkage, noncentered, has_fixed, has_v
                 c(idt(1), "}")
             )
         } else {
-            # Prior for the first a (beta) is always normal given the RW prior
-            mtext_varying <- paste_rows(
+            d <- data[[paste0("beta_varying_prior_distr_", i)]]
+            if (vectorizable_prior(d)) {
+                np <- data[[paste0("beta_varying_prior_npars_", i)]]
+                mtext_varying <- c(idt(1), "a_", i, "[, 1] ~ ", d, "(", paste0("beta_varying_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
+            } else {
+                K <- data[[paste0("K_varying_", i)]]
+                mtext_varying <- do.call(paste_rows, as.list(paste0(idt(1), "a_", i, "[", 1:K, "] ~ ", d, ";")))
+            }
+            mtext_varying <- paste_rows(mtext_varying,
                 c(idt(1), "for (k in 1:K_varying_", i, ") {"),
-                c(idt(2),      "a_", i, "[k, 1] ~ normal(beta_varying_prior_mean_", i, "[k], beta_varying_prior_sd_", i, "[k]);"),
                 c(idt(2),      "for(i in 2:D) {"),
                 if (shrinkage) {
                     c(idt(3),      "a_", i, "[k, i] ~ normal(a_", i,"[k, i - 1], lambda[i - 1] * tau_", i, "[k]);")
@@ -218,18 +224,25 @@ model_lines_default <- function(i, idt, shrinkage, noncentered, has_fixed, has_v
                 c(idt(1), "}")
             )
         }
-        mtext_varying <- paste_rows(mtext_varying, c(idt(1), "tau_", i, " ~ normal(0, 1);"))
+        d <- data[[paste0("tau_prior_distr_", i)]]
+        if (vectorizable_prior(d)) {
+            np <- data[[paste0("tau_prior_npars_", i)]]
+            mtext_tau <- c(idt(1), "tau_", i, " ~ ", d, "(", paste0("tau_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
+        } else {
+            K <- data[[paste0("K_varying_", i)]]
+            mtext_tau <- do.call(paste_rows, as.list(paste0(idt(1), "tau_", i, "[", 1:K, "] ~ ", d, ";")))
+        }
     }
-    paste_rows(mtext_fixed, mtext_varying)
+    paste_rows(mtext_fixed, mtext_varying, mtext_tau)
 }
 
 model_lines_categorical <- function(i, idt, shrinkage, noncentered, has_fixed, has_varying, data, ...) {
     mtext_fixed <- ""
     mtext_varying <- ""
-    prior_term <- ""
+    mtext_tau <- ""
     if (has_fixed) {
         d <- data[[paste0("beta_fixed_prior_distr_", i)]]
-        if (length(d) == 1) {
+        if (vectorizable_prior(d)) {
             np <- data[[paste0("beta_fixed_prior_npars_", i)]]
             mtext_fixed <- c(idt(1), "to_vector(beta_fixed_", i, ") ~ ", d, "(", paste0("beta_fixed_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
         } else {
@@ -252,11 +265,20 @@ model_lines_categorical <- function(i, idt, shrinkage, noncentered, has_fixed, h
                 c(idt(1), "}")
             )
         } else {
-            # Prior for the first a (beta) is always normal given the RW prior
-            mtext_varying <- paste_rows(
+            d <- data[[paste0("beta_varying_prior_distr_", i)]]
+            if (vectorizable_prior(d)) {
+                np <- data[[paste0("beta_varying_prior_npars_", i)]]
+                mtext_varying <- c(idt(1), "a_", i, "[1, , ] ~ ", d, "(", paste0("beta_varying_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
+            } else {
+                K <- data[[paste0("K_fixed_", i)]]
+                S <- data[[paste0("S_", i)]]
+                k <- rep(1:K, S - 1)
+                s <- rep(1:(S - 1), each = K)
+                mtext_varying <- do.call(paste_rows, as.list(paste0(idt(1), "a_", i, "[", k, ",", s, "] ~ ", d, ";")))
+            }
+            mtext_varying <- paste_rows(mtext_varying,
                 c(idt(1), "for (s in 1:(S_", i, " - 1)) {"),
                 c(idt(2),     "for (k in 1:K_varying_", i, ") {"),
-                c(idt(3),         "a_", i, "[s, k, 1] ~ normal(beta_varying_prior_mean_", i, "[k, s], beta_varying_prior_sd_", i, "[k, s]);"),
                 c(idt(3),         "for(i in 2:D) {"),
                 if (shrinkage) {
                     c(idt(4),         "a_", i, "[s, k, i] ~ normal(a_", i,"[s, k, i - 1], lambda[i - 1] * tau_", i, "[k]);")
@@ -268,18 +290,32 @@ model_lines_categorical <- function(i, idt, shrinkage, noncentered, has_fixed, h
                 c(idt(1), "}")
             )
         }
-        prior_term <- c(idt(1), "to_vector(tau_", i, ") ~ normal(0, 1);")
+        d <- data[[paste0("tau_prior_distr_", i)]]
+        if (vectorizable_prior(d)) {
+            np <- data[[paste0("tau_prior_npars_", i)]]
+            mtext_tau <- c(idt(1), "tau_", i, " ~ ", d, "(", paste0("tau_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
+        } else {
+            K <- data[[paste0("K_varying_", i)]]
+            mtext_tau <- do.call(paste_rows, as.list(paste0(idt(1), "tau_", i, "[", 1:K, "] ~ ", d, ";")))
+        }
     }
     likelihood_term <-
         c(idt(2), i, "[t] ~ categorical_logit_glm(X[t][,J_", i, "], zeros_S_", i, ", append_col(beta_", i, "[t], zeros_K_", i, "));")
 
-    paste_rows(mtext_fixed, mtext_varying, prior_term, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
+    paste_rows(mtext_fixed, mtext_varying, mtext_tau, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
 
 model_lines_gaussian <- function(i, idt, has_fixed, has_varying, ...) {
+
     mtext <- model_lines_default(i, idt, has_fixed, has_varying, ...)
-    # TODO user-defined prior for sigma
-    sigma_term <- c(idt(1), "sigma_", i, " ~ exponential(sigma_scale_", i, ");")
+    d <- data[[paste0("sigma_prior_distr_", i)]]
+    if (vectorizable_prior(d)) {
+        np <- data[[paste0("sigma_prior_npars_", i)]]
+        sigma_term <- c(idt(1), "sigma_", i, " ~ ", d, "(", paste0("sigma_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
+    } else {
+        sigma_term <- c(idt(1), "sigma_", i, " ~ ", d, ";")
+    }
+
     fixed_term <- onlyif(has_fixed, paste0("X[t][,J_fixed_", i, "] * beta_fixed_", i))
     varying_term <- onlyif(has_varying, paste0("X[t][,J_varying_", i, "] * beta_varying_", i, "[t]"))
     plus <- onlyif(has_fixed && has_varying, " + ")
@@ -309,12 +345,19 @@ model_lines_poisson <- function(i, idt, has_offset, ...) {
     paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
 
+vectorizable_prior <- function(x) !grep("\\(", d)
+
 model_lines_negbin <- function(i, idt, ...) {
     mtext <- model_lines_default(i, idt, ...)
-    # TODO user-defined prior for phi
-    mtext <- paste_rows(mtext, c(idt(1), "phi_", i, " ~ exponential(phi_scale_", i, ");"))
+    d <- data[[paste0("phi_prior_distr_", i)]]
+    if (vectorizable_prior(d)) {
+        np <- data[[paste0("phi_prior_npars_", i)]]
+        phi_term <- c(idt(1), "phi_", i, " ~ ", d, "(", paste0("phi_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
+    } else {
+        phi_term <- c(idt(1), "phi_", i, " ~ ", d, ";")
+    }
     likelihood_term <- c(idt(2), i, "[t] ~ neg_binomial_2_log_glm(X[t][,J_", i, "], 0, beta_", i, "[t], ", "phi_", i, ");")
-    paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
+    paste_rows(mtext, phi_term, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
 
 # For generated quantities block

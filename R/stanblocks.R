@@ -21,7 +21,7 @@ create_blocks.default <- function(formula, indent = 2L, ...) {
     generated_quantities <- create_generated_quantities(formula, idt, ...)
     # combine above text blocks
     model_code <- paste_rows(functions, data, transformed_data, parameters,
-        transformed_parameters, model, generated_quantities)
+                             transformed_parameters, model, generated_quantities)
     model_code
 }
 #'
@@ -33,14 +33,15 @@ create_functions <- function(formula, idt, ...) {
 #' @export
 create_data <- function(formula, idt, resp, helpers, data, ...) {
 
+    has_splines <- any(unlist(lapply(helpers, "[[", "has_varying")))
     mtext <- paste_rows(
         c(idt(1), "int<lower=1> T; // number of time points"),
         c(idt(1), "int<lower=1> N; // number of individuals"),
         c(idt(1), "int<lower=1> C; // number of channels/response variables"),
         c(idt(1), "int<lower=1> K; // total number of covariates across all channels"),
         c(idt(1), "matrix[N, K] X[T]; // all covariates as an array of N x K matrices"),
-        c(idt(1), "int<lower=0> D; // number of B-splines"),
-        c(idt(1), "matrix[D, T] Bs; // B-spline basis matrix")
+        onlyif(has_splines, c(idt(1), "int<lower=0> D; // number of B-splines")),
+        onlyif(has_splines, c(idt(1), "matrix[D, T] Bs; // B-spline basis matrix"))
     )
 
     # loop over channels

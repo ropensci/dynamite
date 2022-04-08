@@ -114,19 +114,18 @@ convert_data <- function(formula, responses, specials, group, time, fixed,
     list(data = out_data, helpers = helpers, priors = prior_list)
 }
 
-prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
-                                             L_varying, K_fixed, K_varying,
-                                             sd_x, resp_class, coef_names, priors = NULL) {
-    S_i <- length(unique(as.vector(Y)))
+prepare_channel_vars_default <- function(i, Y, J_fixed, J_varying, L_fixed,
+                                         L_varying, K_fixed, K_varying,
+                                         sd_x, resp_class, coef_names, priors) {
+
     channel_vars <- list()
-    channel_vars[[paste0("S_", i)]] <- S_i
     if (is.null(priors)) {
         priors <- list()
         #default priors
         bnames <- gsub(paste0("^", i), "beta", coef_names)
         if (K_fixed > 0) {
-            m <- rep(0, K_fixed * (S_i - 1))
-            s <- rep(2 / sd_x[J_fixed], S_i - 1)
+            m <- rep(0, K_fixed)
+            s <- 2 / sd_x[J_fixed]
             channel_vars[[paste0("beta_fixed_prior_npars_", i)]] <- 2
             channel_vars[[paste0("beta_fixed_prior_pars_", i)]] <- cbind(m, s, deparse.level = 0)
             channel_vars[[paste0("beta_fixed_prior_distr_", i)]] <- "normal"
@@ -135,13 +134,12 @@ prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
                 data.frame(parameter = bnames[L_fixed],
                            response = i,
                            prior = paste0("normal(", m, ", ", s, ")"),
-                           type = "beta_fixed")#,
-                           #vectorized = TRUE)
+                           type = "beta_fixed")
         }
 
         if (K_varying > 0) {
-            m <- matrix(0, K_varying, S_i - 1)
-            s <- matrix(2 / sd_x[J_varying], K_varying, S_i - 1)
+            m <- rep(0, K_varying)
+            s <- 2 / sd_x[J_varying]
             channel_vars[[paste0("beta_varying_prior_npars_", i)]] <- 2
             channel_vars[[paste0("beta_varying_prior_pars_", i)]] <- cbind(m, s, deparse.level = 0)
             channel_vars[[paste0("beta_varying_prior_distr_", i)]] <- "normal"
@@ -150,8 +148,7 @@ prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
                 data.frame(parameter = bnames[L_varying],
                            response = i,
                            prior = paste0("normal(", m, ", ", s, ")"),
-                           type = "beta_varying")#,
-                           #vectorized = TRUE)
+                           type = "beta_varying")
 
             channel_vars[[paste0("tau_prior_npars_", i)]] <- 2
             channel_vars[[paste0("tau_prior_pars_", i)]] <- cbind(0, rep(1, K_varying))
@@ -160,8 +157,7 @@ prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
                 data.frame(parameter = paste0("tau", bnames[L_varying]),
                            response = i,
                            prior = "normal(0, 1)",
-                           type = "tau")#,
-                           #vectorized = TRUE)
+                           type = "tau")
         }
         priors <- dplyr::bind_rows(priors)
     } else {
@@ -182,7 +178,6 @@ prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
                     channel_vars[[paste0(ptype, "_prior_distr_", i)]] <- dists[1]
                 } else {
                     channel_vars[[paste0(ptype, "_prior_distr_", i)]] <- pdef$prior # write separate priors
-                    #priors[priors$type == type]$vectorized <- FALSE
                 }
             }
         }
@@ -191,61 +186,175 @@ prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
     list(channel_vars = channel_vars, priors = priors)
 }
 
-prepare_channel_vars_gaussian <- function(i, Y, J_fixed, J_varying, K_fixed, K_varying, sd_x, resp_class) {
+prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
+                                             L_varying, K_fixed, K_varying,
+                                             sd_x, resp_class, coef_names, priors) {
+    S_i <- length(unique(as.vector(Y)))
+    channel_vars <- list()
+    channel_vars[[paste0("S_", i)]] <- S_i
+    if (is.null(priors)) {
+        priors <- list()
+        #default priors
+        bnames <- gsub(paste0("^", i), "beta", coef_names)
+        if (K_fixed > 0) {
+            m <- rep(0, K_fixed * (S_i - 1))
+            s <- rep(2 / sd_x[J_fixed], S_i - 1)
+            channel_vars[[paste0("beta_fixed_prior_npars_", i)]] <- 2
+            channel_vars[[paste0("beta_fixed_prior_pars_", i)]] <- cbind(m, s, deparse.level = 0)
+            channel_vars[[paste0("beta_fixed_prior_distr_", i)]] <- "normal"
+
+            priors$beta_fixed <-
+                data.frame(parameter = bnames[L_fixed],
+                           response = i,
+                           prior = paste0("normal(", m, ", ", s, ")"),
+                           type = "beta_fixed")
+        }
+
+        if (K_varying > 0) {
+            m <- rep(0, K_varying * (S_i - 1))
+            s <- rep(2 / sd_x[J_varying], S_i - 1)
+            channel_vars[[paste0("beta_varying_prior_npars_", i)]] <- 2
+            channel_vars[[paste0("beta_varying_prior_pars_", i)]] <- cbind(m, s, deparse.level = 0)
+            channel_vars[[paste0("beta_varying_prior_distr_", i)]] <- "normal"
+
+            priors$beta_varying <-
+                data.frame(parameter = bnames[L_varying],
+                           response = i,
+                           prior = paste0("normal(", m, ", ", s, ")"),
+                           type = "beta_varying")
+
+            channel_vars[[paste0("tau_prior_npars_", i)]] <- 2
+            channel_vars[[paste0("tau_prior_pars_", i)]] <- cbind(0, rep(1, K_varying))
+            channel_vars[[paste0("tau_prior_distr_", i)]] <- "normal"
+            priors$tau <-
+                data.frame(parameter = paste0("tau", bnames[L_varying]),
+                           response = i,
+                           prior = "normal(0, 1)",
+                           type = "tau")
+        }
+        priors <- dplyr::bind_rows(priors)
+    } else {
+        # TODO add a warning to documentation that the only the 'prior' column
+        # of the priors data.frame should be altered (i.e. there's no checks for names or reordering of rows)
+        # Or arrange...
+        priors <- priors |> dplyr::filter(response == i)
+        for (ptype in c("beta_fixed", "beta_varying", "tau")) {
+            pdef <- priors |> dplyr::filter(type == ptype)
+            if (nrow(pdef) > 0) {
+                dists <- sub("\\(.*", "", pdef$prior)
+                vectorized <- length(unique(dists)) == 1
+                if (vectorized) {
+                    pars <- strsplit(sub(".*\\((.*)\\).*", "\\1", pdef$prior), ",")
+                    pars <- do.call("rbind", lapply(pars, as.numeric))
+                    channel_vars[[paste0(ptype, "_prior_npars_", i)]] <- ncol(pars)
+                    channel_vars[[paste0(ptype, "_prior_pars_", i)]] <- pars
+                    channel_vars[[paste0(ptype, "_prior_distr_", i)]] <- dists[1]
+                } else {
+                    channel_vars[[paste0(ptype, "_prior_distr_", i)]] <- pdef$prior # write separate priors
+                }
+            }
+        }
+    }
+
+    list(channel_vars = channel_vars, priors = priors)
+}
+
+prepare_channel_vars_gaussian <- function(i, Y, J_fixed, J_varying, L_fixed,
+                                          L_varying, K_fixed, K_varying,
+                                          sd_x, resp_class, coef_names, priors) {
     if ("factor" %in% resp_class) {
         stop_("Response variable ", i, " is invalid: gaussian family is not supported for factors.")
     }
-    channel_vars <- list()
-    channel_vars[[paste0("beta_fixed_prior_mean_", i)]] <- array(0, K_fixed)
-    channel_vars[[paste0("beta_fixed_prior_sd_", i)]] <- array(5, K_fixed) # TODO better initial values
-    channel_vars[[paste0("beta_varying_prior_mean_", i)]] <- array(0, K_varying)
-    # TODO adjust prior mean for the intercept term under the assumption that other betas/x are 0
-    channel_vars[[paste0("beta_varying_prior_sd_", i)]] <- array(2 * sd(Y[1, ]) / sd_x[J_varying], K_varying)
-    channel_vars[[paste0("sigma_scale_", i)]] <- 1 / mean(apply(Y, 1, sd))
-    channel_vars
+    out <- prepare_channel_vars_default(i, Y, J_fixed, J_varying, L_fixed,
+                                        L_varying, K_fixed, K_varying,
+                                        sd_x, resp_class, coef_names, priors)
+    if (is.null(priors)) {
+        s <- 1 / mean(apply(Y, 1, sd))
+        out$channel_vars[[paste0("sigma_prior_npars_", i)]] <- 1
+        out$channel_vars[[paste0("sigma_prior_pars_", i)]] <- s
+        out$channel_vars[[paste0("sigma_prior_distr_", i)]] <- "exponential"
+        out$priors <- dplyr::bind_rows(out$priors,
+                                       data.frame(parameter = "sigma",
+                                                  response = i,
+                                                  prior = paste0("exponential(", s, ")"),
+                                                  type = "sigma"))
+    } else {
+        pdef <- priors |> dplyr::filter(response == i && type == "sigma")
+        if (nrow(pdef) == 1) {
+            out$channel_vars[[paste0("sigma_prior_distr_", i)]] <- pdef$prior
+        }
+    }
+    out
 }
 
-prepare_channel_vars_binomial <- function(i, Y, J_fixed, J_varying, K_fixed, K_varying, sd_x, resp_class) {
+prepare_channel_vars_binomial <- function(i, Y, J_fixed, J_varying, L_fixed,
+                                          L_varying, K_fixed, K_varying,
+                                          sd_x, resp_class, coef_names, priors) {
     if (any(Y < 0) || any(Y != as.integer(Y))) {
         stop_("Response variable ", i, " is invalid: binomial family supports only non-negative integers.")
     }
     if ("factor" %in% resp_class) {
         stop_("Response variable ", i, " is invalid: binomial family is not supported for factors.")
     }
-    channel_vars <- list()
-    channel_vars[[paste0("beta_fixed_prior_mean_", i)]] <- array(0, K_fixed)
-    channel_vars[[paste0("beta_fixed_prior_sd_", i)]] <- array(5, K_fixed) # TODO better initial values
-    channel_vars[[paste0("beta_varying_prior_mean_", i)]] <- array(0, K_varying)
-    channel_vars[[paste0("beta_varying_prior_sd_", i)]] <- array(2 / sd_x[J_varying], K_varying)
-    channel_vars
+    prepare_channel_vars_default(i, Y, J_fixed, J_varying, L_fixed,
+                                 L_varying, K_fixed, K_varying,
+                                 sd_x, resp_class, coef_names, priors)
 }
 
-prepare_channel_vars_bernoulli <- function(...) {
-    prepare_channel_vars_binomial(...)
+prepare_channel_vars_bernoulli <- function(i, Y, J_fixed, J_varying, L_fixed,
+                                           L_varying, K_fixed, K_varying,
+                                           sd_x, resp_class, coef_names, priors) {
+    if (!all(Y %in% 0:1)) {
+        stop_("Response variable ", i, " is invalid: bernoulli family supports only 0/1 integers.")
+    }
+    if ("factor" %in% resp_class) {
+        stop_("Response variable ", i, " is invalid: bernoulli family is not supported for factors.")
+    }
+    prepare_channel_vars_binomial(i, Y, J_fixed, J_varying, L_fixed,
+                                  L_varying, K_fixed, K_varying,
+                                  sd_x, resp_class, coef_names, priors)
 }
 
-prepare_channel_vars_poisson <- function(i, Y, resp_class, ...) {
+prepare_channel_vars_poisson <- function(i, Y, J_fixed, J_varying, L_fixed,
+                                         L_varying, K_fixed, K_varying,
+                                         sd_x, resp_class, coef_names, priors) {
     if (any(Y < 0) || any(Y != as.integer(Y))) {
         stop_("Response variable ", i, " is invalid: Poisson family supports only non-negative integers.")
     }
     if ("factor" %in% resp_class) {
         stop_("Response variable ", i, " is invalid: Poisson family is not supported for factors.")
     }
-    prepare_channel_vars_binomial(i = i, Y = Y, resp_class = resp_class, ...)
+    prepare_channel_vars_binomial(i, Y, J_fixed, J_varying, L_fixed,
+                                  L_varying, K_fixed, K_varying,
+                                  sd_x, resp_class, coef_names, priors)
 }
 
-prepare_channel_vars_negbin <- function(i, Y, J_fixed, J_varying, K_fixed, K_varying, sd_x, resp_class) {
+prepare_channel_vars_negbin <- function(i, Y, J_fixed, J_varying, L_fixed,
+                                        L_varying, K_fixed, K_varying,
+                                        sd_x, resp_class, coef_names, priors) {
     if (any(Y < 0) || any(Y != as.integer(Y))) {
         stop_("Response variable ", i, " is invalid: negative binomial family supports only non-negative integers.")
     }
     if ("factor" %in% resp_class) {
         stop_("Response variable ", i, " is invalid: negative binomial family is not supported for factors.")
     }
-    channel_vars <- list()
-    channel_vars[[paste0("beta_fixed_prior_mean_", i)]] <- array(0, K_fixed)
-    channel_vars[[paste0("beta_fixed_prior_sd_", i)]] <- array(5, K_fixed) # TODO better initial values
-    channel_vars[[paste0("beta_varying_prior_mean_", i)]] <- array(0, K_varying)
-    channel_vars[[paste0("beta_varying_prior_sd_", i)]] <- array(2 / sd_x[J_varying], K_varying)
-    channel_vars[[paste0("phi_scale_", i)]] <- 1
-    channel_vars
+    out <- prepare_channel_vars_default(i, Y, J_fixed, J_varying, L_fixed,
+                                        L_varying, K_fixed, K_varying,
+                                        sd_x, resp_class, coef_names, priors)
+    if (is.null(priors)) {
+        out$channel_vars[[paste0("phi_prior_npars_", i)]] <- 1
+        out$channel_vars[[paste0("phi_prior_pars_", i)]] <- s
+        out$channel_vars[[paste0("phi_prior_distr_", i)]] <- "exponential"
+        out$priors <- dplyr::bind_rows(out$priors,
+                                       data.frame(parameter = "phi",
+                                                  response = i,
+                                                  prior = paste0("exponential(1)"),
+                                                  type = "phi"))
+    } else {
+        pdef <- priors |> dplyr::filter(response == i && type == "phi")
+        if (nrow(pdef) == 1) {
+            out$channel_vars[[paste0("phi_prior_distr_", i)]] <- pdef$prior
+        }
+    }
+    out
 }
