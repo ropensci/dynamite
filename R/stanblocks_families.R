@@ -12,7 +12,7 @@ data_lines_default <- function(i, idt, has_fixed, has_varying, data, ...) {
 
     write_beta_fixed <- has_fixed && length(data[[paste0("beta_fixed_prior_distr_", i)]]) == 1
     write_beta_varying <- has_varying && length(data[[paste0("beta_varying_prior_distr_", i)]]) == 1
-    write_tau <- has_varying && length(data[[paste0("tau_prior_", i)]]) == 1
+    write_tau <- has_varying && length(data[[paste0("tau_prior_distr_", i)]]) == 1
 
     paste_rows(onlyif(write_beta_fixed, c(idt(1), "int beta_fixed_prior_npars_", i, ";")),
                onlyif(write_beta_fixed, c(idt(1), "matrix[K_fixed_", i, ", beta_fixed_prior_npars_", i, "] beta_fixed_prior_pars_", i, ";")),
@@ -27,7 +27,7 @@ data_lines_categorical <- function(i, idt, has_fixed, has_varying, data, ...) {
 
     write_beta_fixed <- has_fixed && length(data[[paste0("beta_fixed_prior_distr_", i)]]) == 1
     write_beta_varying <- has_varying && length(data[[paste0("beta_varying_prior_distr_", i)]]) == 1
-    write_tau <- has_varying && length(data[[paste0("tau_prior_", i)]]) == 1
+    write_tau <- has_varying && length(data[[paste0("tau_prior_distr_", i)]]) == 1
 
     paste_rows(c(idt(1), "int<lower=1> ", i, "[T, N];"),
                c(idt(1), "int<lower=0> S_", i, ";"),
@@ -305,16 +305,11 @@ model_lines_categorical <- function(i, idt, shrinkage, noncentered, has_fixed, h
     paste_rows(mtext_fixed, mtext_varying, mtext_tau, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
 
-model_lines_gaussian <- function(i, idt, has_fixed, has_varying, ...) {
+model_lines_gaussian <- function(i, idt, shrinkage, noncentered, has_fixed, has_varying, data, ...) {
 
-    mtext <- model_lines_default(i, idt, has_fixed, has_varying, ...)
+    mtext <- model_lines_default(i, idt, shrinkage, noncentered, has_fixed, has_varying, data, ...)
     d <- data[[paste0("sigma_prior_distr_", i)]]
-    if (vectorizable_prior(d)) {
-        np <- data[[paste0("sigma_prior_npars_", i)]]
-        sigma_term <- c(idt(1), "sigma_", i, " ~ ", d, "(", paste0("sigma_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
-    } else {
-        sigma_term <- c(idt(1), "sigma_", i, " ~ ", d, ";")
-    }
+    sigma_term <- c(idt(1), "sigma_", i, " ~ ", d, ";")
 
     fixed_term <- onlyif(has_fixed, paste0("X[t][,J_fixed_", i, "] * beta_fixed_", i))
     varying_term <- onlyif(has_varying, paste0("X[t][,J_varying_", i, "] * beta_varying_", i, "[t]"))
@@ -323,8 +318,8 @@ model_lines_gaussian <- function(i, idt, has_fixed, has_varying, ...) {
     paste_rows(mtext, sigma_term, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
 
-model_lines_binomial <- function(i, idt, has_fixed, has_varying, ...) {
-    mtext <- model_lines_default(i, idt, has_fixed, has_varying, ...)
+model_lines_binomial <- function(i, idt, shrinkage, noncentered, has_fixed, has_varying, data, ...) {
+    mtext <- model_lines_default(i, idt, shrinkage, noncentered, has_fixed, has_varying, data, ...)
     fixed_term <- onlyif(has_fixed, paste0("X[t][,J_fixed_", i, "] * beta_fixed_", i))
     varying_term <- onlyif(has_varying, paste0("X[t][,J_varying_", i, "] * beta_varying_", i, "[t]"))
     plus <- onlyif(has_fixed && has_varying, " + ")
@@ -332,28 +327,23 @@ model_lines_binomial <- function(i, idt, has_fixed, has_varying, ...) {
     paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
 
-model_lines_bernoulli <- function(i, idt, ...) {
-    mtext <- model_lines_default(i, idt, ...)
+model_lines_bernoulli <- function(i, idt, shrinkage, noncentered, has_fixed, has_varying, data, ...) {
+    mtext <- model_lines_default(i, idt, shrinkage, noncentered, has_fixed, has_varying, data, ...)
     likelihood_term <- c(idt(2), i, "[t] ~ bernoulli_logit_glm(X[t][,J_", i, "], 0, beta_", i, "[t]);")
     paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
 
-model_lines_poisson <- function(i, idt, has_offset, ...) {
-    mtext <- model_lines_default(i, idt, ...)
+model_lines_poisson <-  function(i, idt, has_offset, shrinkage, noncentered, has_fixed, has_varying, data, ...) {
+    mtext <- model_lines_default(i, idt, shrinkage, noncentered, has_fixed, has_varying, data, ...)
     offset_term <- ifelse_(has_offset, paste0("to_vector(offset_", i, "[t])"), "0")
     likelihood_term <- c(idt(2), i, "[t] ~ poisson_log_glm(X[t][,J_", i, "], ", offset_term, ", beta_", i, "[t]);")
     paste_rows(mtext, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
 
-model_lines_negbin <- function(i, idt, ...) {
-    mtext <- model_lines_default(i, idt, ...)
+model_lines_negbin <- function(i, idt, shrinkage, noncentered, has_fixed, has_varying, data, ...) {
+    mtext <- model_lines_default(i, idt, shrinkage, noncentered, has_fixed, has_varying, data, ...)
     d <- data[[paste0("phi_prior_distr_", i)]]
-    if (vectorizable_prior(d)) {
-        np <- data[[paste0("phi_prior_npars_", i)]]
-        phi_term <- c(idt(1), "phi_", i, " ~ ", d, "(", paste0("phi_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
-    } else {
-        phi_term <- c(idt(1), "phi_", i, " ~ ", d, ";")
-    }
+    phi_term <- c(idt(1), "phi_", i, " ~ ", d, ";")
     likelihood_term <- c(idt(2), i, "[t] ~ neg_binomial_2_log_glm(X[t][,J_", i, "], 0, beta_", i, "[t], ", "phi_", i, ");")
     paste_rows(mtext, phi_term, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }

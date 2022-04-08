@@ -270,9 +270,7 @@ prepare_channel_vars_gaussian <- function(i, Y, J_fixed, J_varying, L_fixed,
                                         sd_x, resp_class, coef_names, priors)
     if (is.null(priors)) {
         s <- 1 / mean(apply(Y, 1, sd))
-        out$channel_vars[[paste0("sigma_prior_npars_", i)]] <- 1
-        out$channel_vars[[paste0("sigma_prior_pars_", i)]] <- s
-        out$channel_vars[[paste0("sigma_prior_distr_", i)]] <- "exponential"
+        out$channel_vars[[paste0("sigma_prior_distr_", i)]] <- paste0("exponential(", s, ")")
         out$priors <- dplyr::bind_rows(out$priors,
                                        data.frame(parameter = "sigma",
                                                   response = i,
@@ -342,9 +340,7 @@ prepare_channel_vars_negbin <- function(i, Y, J_fixed, J_varying, L_fixed,
                                         L_varying, K_fixed, K_varying,
                                         sd_x, resp_class, coef_names, priors)
     if (is.null(priors)) {
-        out$channel_vars[[paste0("phi_prior_npars_", i)]] <- 1
-        out$channel_vars[[paste0("phi_prior_pars_", i)]] <- s
-        out$channel_vars[[paste0("phi_prior_distr_", i)]] <- "exponential"
+        out$channel_vars[[paste0("phi_prior_distr_", i)]] <- "exponential(1)"
         out$priors <- dplyr::bind_rows(out$priors,
                                        data.frame(parameter = "phi",
                                                   response = i,
