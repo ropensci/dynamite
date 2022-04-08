@@ -268,7 +268,7 @@ model_lines_categorical <- function(i, idt, shrinkage, noncentered, has_fixed, h
             d <- data[[paste0("beta_varying_prior_distr_", i)]]
             if (vectorizable_prior(d)) {
                 np <- data[[paste0("beta_varying_prior_npars_", i)]]
-                mtext_varying <- c(idt(1), "a_", i, "[1, , ] ~ ", d, "(", paste0("beta_varying_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
+                mtext_varying <- c(idt(1), "to_vector(beta_", i, "[1, L_varying_", i, ", ]) ~ ", d, "(", paste0("beta_varying_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
             } else {
                 K <- data[[paste0("K_fixed_", i)]]
                 S <- data[[paste0("S_", i)]]
