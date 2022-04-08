@@ -2,27 +2,9 @@
 % Please edit documentation in R/families.R
 \name{btvcmfamily}
 \alias{btvcmfamily}
-\alias{categorical}
-\alias{gaussian}
-\alias{binomial}
-\alias{bernoulli}
-\alias{poisson}
-\alias{negbin}
 \title{Family Functions for \pkg{btvcm} Models}
 \usage{
 btvcmfamily(name, ...)
-
-categorical(...)
-
-gaussian(...)
-
-binomial(...)
-
-bernoulli(...)
-
-poisson(...)
-
-negbin(...)
 }
 \description{
 Family Functions for \pkg{btvcm} Models

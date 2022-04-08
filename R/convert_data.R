@@ -1,34 +1,23 @@
 # Convert data for Stan
 convert_data <- function(formula, responses, specials, group, time, fixed,
                          model_matrix, coef_names, priors = NULL) {
-    T_full <- 0
+    T_full <- length(time)
     groups <- !is.null(group)
-    if (groups) {
-        id_tab <- table(group)
-        if (!all(id_tab == id_tab[1])) {
-            # TODO In theory we could allow unequal number of observations
-            # Just need to define time from smallest t to the largest,
-            # and use proper indexing.
-            stop_("Unequal number of time points")
-        }
-        T_full <- as.integer(id_tab[1])
-    } else {
-        T_full <- nrow(responses)
-    }
-    if (is.null(time)) {
-        time <- 1:T_full
-    }
     free_obs <- (fixed + 1):T_full
-    bs_opts <- attr(formula, "splines")$bs_opts
-    bs_opts$x <- time[free_obs]
-    if (is.null(bs_opts$Boundary.knots)) {
-        bs_opts$Boundary.knots <- range(bs_opts$x)
+    spline_defs <- attr(formula, "splines")
+    has_splines <- !is.null(spline_defs)
+    if (has_splines) {
+        bs_opts <- spline_defs$bs_opts
+        bs_opts$x <- time[free_obs]
+        if (is.null(bs_opts$Boundary.knots)) {
+            bs_opts$Boundary.knots <- range(bs_opts$x)
+        }
+        Bs <- t(do.call(splines::bs, args = bs_opts))
+        D <- nrow(Bs)
     }
-    Bs <- t(do.call(splines::bs, args = bs_opts))
-    D <- nrow(Bs)
     N <- T_full
     if (groups) {
-        N <- length(id_tab)
+        N <- length(unique(group))
     }
     K <- ncol(model_matrix)
     C <- length(get_resp(formula))
@@ -65,7 +54,7 @@ convert_data <- function(formula, responses, specials, group, time, fixed,
         channel_vars[[Ks[3]]] <- length(varying_pars[[i]])
         helpers[[i]] <- list(has_fixed = channel_vars[[Ks[2]]] > 0,
                              has_varying = channel_vars[[Ks[3]]] > 0)
-        if (helpers[[i]]$has_varying && is.null(attr(formula, "splines"))) {
+        if (helpers[[i]]$has_varying && !has_splines) {
             warning_("Model for response variable ", resp, " contains time-varying definitions, but splines have not been defined.")
             warn_nosplines <- TRUE
         }
@@ -116,8 +105,13 @@ convert_data <- function(formula, responses, specials, group, time, fixed,
         }
     }
     T <- T_full - fixed
-    list(data = c(named_list(T, N, C, K, X, D, Bs), channel_vars),
-         helpers = helpers, priors = prior_list)
+
+    out_data <- c(named_list(T, N, C, K, X), channel_vars)
+    if (has_splines) {
+        out_data$D <- D
+        out_data$Bs <- Bs
+    }
+    list(data = out_data, helpers = helpers, priors = prior_list)
 }
 
 prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,

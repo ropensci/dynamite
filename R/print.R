@@ -9,10 +9,15 @@
 #' @method print btvcmfit
 #' @export
 print.btvcmfit <- function(x, pars, ...) {
-    if (missing(pars)) {
-        all_pars <- x$stanfit@sim$pars_oi
-        idx <-  c(grep("^tau", all_pars), grep("lambda",all_pars))
-        pars <- all_pars[idx]
+    if (!is.null(x$stanfit)) {
+        if (missing(pars)) {
+            all_pars <- x$stanfit@sim$pars_oi
+            idx <-  c(grep("^tau", all_pars), grep("lambda",all_pars))
+            pars <- all_pars[idx]
+        }
+        print(x$stanfit, pars = pars, ...)
+    } else {
+        message("No Stan model fit is available.")
+        invisible(x)
     }
-    print(x$stanfit, pars = pars, ...)
 }

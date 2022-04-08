@@ -5,7 +5,8 @@ btvcmformula <- function(formula, family, ...) {
     if (!is.formula(formula)) {
         stop_("Argument 'formula' is not a formula.")
     }
-    if (!is.btvcmfamily(family)) {
+    family_call <- is_valid_family_call(substitute(family))
+    if (!family_call$supported) {
         stop_("Unsupported family object")
     }
     x <- formula_specials(formula)
@@ -13,7 +14,7 @@ btvcmformula <- function(formula, family, ...) {
         list(
             list(
                 formula = x$formula,
-                family = family,
+                family = eval(family_call$call),
                 response = formula_lhs(x$formula),
                 predictors = formula_rhs(x$formula),
                 fixed = x$fixed,

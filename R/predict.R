@@ -1,3 +1,5 @@
+#' Predict method for a Bayesian Time-Varying Coefficients Model
+#'
 #' @param object Object of class \code{btvcmfit}.
 #' @param newdata Data frame used in predictions. If \code{NULL} (default), the
 #' data used in model estimation is used for predictions as well.
