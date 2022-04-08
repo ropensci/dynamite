@@ -31,7 +31,7 @@ create_functions <- function(formula, idt, ...) {
 }
 #'
 #' @export
-create_data <- function(formula, idt, resp, helpers, ...) {
+create_data <- function(formula, idt, resp, helpers, data, ...) {
 
     mtext <- paste_rows(
         c(idt(1), "int<lower=1> T; // number of time points"),
@@ -49,7 +49,7 @@ create_data <- function(formula, idt, resp, helpers, ...) {
         y <- resp[i]
         h <- helpers[[i]]
         # Number of covariates in channel i
-        line_args <- c(list(i = y, idt = idt), h)
+        line_args <- c(list(i = y, idt = idt, data), h)
         channels[i] <- paste_rows(
             # number of covariates (all, fixed, varying)
             c(idt(1), "int<lower=1> K_", y, ";"),
@@ -186,27 +186,30 @@ create_transformed_parameters <- function(formula, idt, resp, helpers, ...) {
 
 #'
 #' @export
-create_model <- function(formula, idt, resp, helpers, ...) {
+create_model <- function(formula, idt, resp, helpers, priors, data, ...) {
     # TODO: Without global shrinkage prior it probably makes sense to use user-defined prior for tau
     # With lambda&tau, need more testing if this is fine or do we need to support other forms
     # e.g. as in https://arxiv.org/abs/1611.01310 and https://www.mdpi.com/2225-1146/8/2/20
-    priors <- character(0)
+    #priors <- character(0)
 
-    if (!is.null(spline_defs <- attr(formula, "splines"))) {
-        if (spline_defs$shrinkage) {
-            priors <- paste0(idt(1), "lambda ~ std_normal();  // prior for shrinkage terms")
-        }
-    }
+    # if (!is.null(spline_defs <- attr(formula, "splines"))) {
+    #     if (spline_defs$shrinkage) {
+    #         priors <- paste0(idt(1), "lambda ~ std_normal();  // prior for shrinkage terms")
+    #     }
+    # }
+    spline_defs <- attr(formula, "splines")
     mod <- character(length(formula))
     for (i in seq_along(formula)) {
         line_args <- c(list(i = resp[i],
                             idt = idt,
                             shrinkage = spline_defs$shrinkage,
-                            noncentered = spline_defs$noncentered),
-                       helpers[[i]])
+                            noncentered = spline_defs$noncentered,
+                            data = data),
+                       helpers[[i]],
+                       priors = priors[[i]])
         mod[i] <- lines_wrap("model", formula[[i]], line_args)
     }
-    paste_rows(priors, "model {", collapse_rows(mod), "}")
+    paste_rows("model {", collapse_rows(mod), "}")
 }
 
 #'

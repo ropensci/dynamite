@@ -1,5 +1,6 @@
 # Convert data for Stan
-convert_data <- function(formula, responses, specials, group, time, fixed, model_matrix) {
+convert_data <- function(formula, responses, specials, group, time, fixed,
+                         model_matrix, coef_names, priors = NULL) {
     T_full <- 0
     groups <- !is.null(group)
     if (groups) {
@@ -47,6 +48,7 @@ convert_data <- function(formula, responses, specials, group, time, fixed, model
     resp_classes <- attr(responses, "resp_class")
     helpers <- list()
     warn_nosplines <- FALSE
+    prior_list <- list()
     for (i in seq_along(formula)) {
         resp <- formula[[i]]$response
         form_specials <- specials[[i]]
@@ -94,12 +96,19 @@ convert_data <- function(formula, responses, specials, group, time, fixed, model
                              Y = Y,
                              J_fixed = channel_vars[[Js[2]]],
                              J_varying = channel_vars[[Js[3]]],
+                             L_fixed = channel_vars[[Ls[1]]],
+                             L_varying = channel_vars[[Ls[2]]],
                              K_fixed = channel_vars[[Ks[2]]],
                              K_varying = channel_vars[[Ks[3]]],
                              sd_x = sd_x,
-                             resp_class = resp_classes[resp]))
-        channel_vars <- c(channel_vars, prep)
+                             resp_class = resp_classes[resp],
+                             coef_names = coef_names[[i]],
+                             priors = priors))
+        prior_list[[resp]] <- prep$priors
+        channel_vars <- c(channel_vars, prep$channel_vars)
     }
+
+
     if (warn_nosplines) {
         warning_("All channels will now default to time-constant coefficients for all predictors.")
         for (i in seq_along(formula)) {
@@ -108,18 +117,84 @@ convert_data <- function(formula, responses, specials, group, time, fixed, model
     }
     T <- T_full - fixed
     list(data = c(named_list(T, N, C, K, X, D, Bs), channel_vars),
-         helpers = helpers)
+         helpers = helpers, priors = prior_list)
 }
 
-prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, K_fixed, K_varying, sd_x, resp_class) {
+prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
+                                             L_varying, K_fixed, K_varying,
+                                             sd_x, resp_class, coef_names, priors = NULL) {
     S_i <- length(unique(as.vector(Y)))
     channel_vars <- list()
     channel_vars[[paste0("S_", i)]] <- S_i
-    channel_vars[[paste0("beta_fixed_prior_mean_", i)]] <- matrix(0, K_fixed, S_i - 1)
-    channel_vars[[paste0("beta_fixed_prior_sd_", i)]] <- matrix(5, K_fixed, S_i - 1) # TODO better initial values
-    channel_vars[[paste0("beta_varying_prior_mean_", i)]] <- matrix(0, K_varying, S_i - 1)
-    channel_vars[[paste0("beta_varying_prior_sd_", i)]] <- matrix(2 / sd_x[J_varying], K_varying, S_i - 1)
-    channel_vars
+    if (is.null(priors)) {
+        priors <- list()
+        #default priors
+        bnames <- gsub(paste0("^", i), "beta", coef_names)
+        if (K_fixed > 0) {
+            m <- rep(0, K_fixed * (S_i - 1))
+            s <- rep(2 / sd_x[J_fixed], S_i - 1)
+            channel_vars[[paste0("beta_fixed_prior_npars_", i)]] <- 2
+            channel_vars[[paste0("beta_fixed_prior_pars_", i)]] <- cbind(m, s, deparse.level = 0)
+            channel_vars[[paste0("beta_fixed_prior_distr_", i)]] <- "normal"
+
+            priors$beta_fixed <-
+                data.frame(parameter = bnames[L_fixed],
+                           response = i,
+                           prior = paste0("normal(", m, ", ", s, ")"),
+                           type = "beta_fixed")#,
+                           #vectorized = TRUE)
+        }
+
+        if (K_varying > 0) {
+            m <- matrix(0, K_varying, S_i - 1)
+            s <- matrix(2 / sd_x[J_varying], K_varying, S_i - 1)
+            channel_vars[[paste0("beta_varying_prior_npars_", i)]] <- 2
+            channel_vars[[paste0("beta_varying_prior_pars_", i)]] <- cbind(m, s, deparse.level = 0)
+            channel_vars[[paste0("beta_varying_prior_distr_", i)]] <- "normal"
+
+            priors$beta_varying <-
+                data.frame(parameter = bnames[L_varying],
+                           response = i,
+                           prior = paste0("normal(", m, ", ", s, ")"),
+                           type = "beta_varying")#,
+                           #vectorized = TRUE)
+
+            channel_vars[[paste0("tau_prior_npars_", i)]] <- 2
+            channel_vars[[paste0("tau_prior_pars_", i)]] <- cbind(0, rep(1, K_varying))
+            channel_vars[[paste0("tau_prior_distr_", i)]] <- "normal"
+            priors$tau <-
+                data.frame(parameter = paste0("tau", bnames[L_varying]),
+                           response = i,
+                           prior = "normal(0, 1)",
+                           type = "tau")#,
+                           #vectorized = TRUE)
+        }
+        priors <- dplyr::bind_rows(priors)
+    } else {
+        # TODO add a warning to documentation that the only the 'prior' column
+        # of the priors data.frame should be altered (i.e. there's no checks for names or reordering of rows)
+        # Or arrange...
+        priors <- priors |> dplyr::filter(response == i)
+        for (ptype in c("beta_fixed", "beta_varying", "tau")) {
+            pdef <- priors |> dplyr::filter(type == ptype)
+            if (nrow(pdef) > 0) {
+                dists <- sub("\\(.*", "", pdef$prior)
+                vectorized <- length(unique(dists)) == 1
+                if (vectorized) {
+                    pars <- strsplit(sub(".*\\((.*)\\).*", "\\1", pdef$prior), ",")
+                    pars <- do.call("rbind", lapply(pars, as.numeric))
+                    channel_vars[[paste0(ptype, "_prior_npars_", i)]] <- ncol(pars)
+                    channel_vars[[paste0(ptype, "_prior_pars_", i)]] <- pars
+                    channel_vars[[paste0(ptype, "_prior_distr_", i)]] <- dists[1]
+                } else {
+                    channel_vars[[paste0(ptype, "_prior_distr_", i)]] <- pdef$prior # write separate priors
+                    #priors[priors$type == type]$vectorized <- FALSE
+                }
+            }
+        }
+    }
+
+    list(channel_vars = channel_vars, priors = priors)
 }
 
 prepare_channel_vars_gaussian <- function(i, Y, J_fixed, J_varying, K_fixed, K_varying, sd_x, resp_class) {

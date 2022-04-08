@@ -34,6 +34,7 @@ Collate:
     'btvcmterms.R'
     'coef.R'
     'convert_data.R'
+    'create_priors.R'
     'families.R'
     'fitted.R'
     'lags.R'

@@ -1,8 +1,8 @@
 #' @include utilities.R
 
 # btvcmfit class
-btvcmfit <- function(formula, data, group, time, ...) {
-    dots <- list(...)
+btvcmfit <- function(formula, data, group, time, priors = NULL, debug, ...) {
+    #dots <- list(...) #Note: Use explicit debug-argument as otherwise it is passed to sampling with an error
     data <- droplevels(data) #TODO document this in return value
     if (missing(group)) {
         group <- NULL
@@ -88,11 +88,14 @@ btvcmfit <- function(formula, data, group, time, ...) {
         x
     })
     specials <- evaluate_specials(formula, data)
-    converted <- convert_data(formula, responses, specials, group, time, fixed, model_matrix)
+    converted <- convert_data(formula, responses, specials, group, time, fixed, model_matrix, coef_names, priors)
     model_data <- converted$data
     model_helpers <- converted$helpers
-    model_code <- create_blocks(formula, indent = 2L, resp = resp_all, helpers = model_helpers)
-    debug <- dots$debug
+    model_priors <- converted$priors
+    model_code <- create_blocks(formula, indent = 2L, resp = resp_all,
+                                helpers = model_helpers, priors = model_priors, data = model_data)
+    model_data[grep("_prior_distr_", names(model_data))] <- NULL
+    #debug <- dots$debug
     model <- if (isTRUE(debug$no_compile)) {
         NULL
     } else {
@@ -118,6 +121,7 @@ btvcmfit <- function(formula, data, group, time, ...) {
             data = data,
             spline = list(B = model_data$Bs,
                 D = model_data$D),
+            priors = dplyr::bind_rows(model_priors),
             prediction_basis = list(
                 formula = formula,
                 fixed = fixed,

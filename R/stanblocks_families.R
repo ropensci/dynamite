@@ -7,50 +7,64 @@ lines_wrap <- function(prefix, formula, args) {
 }
 
 # For data block
-data_lines_default <- function(i, idt, has_fixed, has_varying, ...) {
-    paste_rows(onlyif(has_fixed, c(idt(1), "vector[K_fixed_", i, "] beta_fixed_prior_mean_", i, ";")),
-               onlyif(has_fixed, c(idt(1), "vector[K_fixed_", i, "] beta_fixed_prior_sd_", i, ";")),
-               onlyif(has_varying, c(idt(1), "vector[K_varying_", i, "] beta_varying_prior_mean_", i, ";")),
-               onlyif(has_varying, c(idt(1), "vector[K_varying_", i, "] beta_varying_prior_sd_", i, ";")))
+data_lines_default <- function(i, idt, has_fixed, has_varying, data, ...) {
+
+    write_beta_fixed <- has_fixed && length(data[[paste0("beta_fixed_prior_distr_", i)]]) == 1
+    write_beta_varying <- has_varying && length(data[[paste0("beta_varying_prior_distr_", i)]]) == 1
+    write_tau <- has_varying && length(data[[paste0("tau_prior_", i)]]) == 1
+
+    paste_rows(onlyif(write_beta_fixed, c(idt(1), "int beta_fixed_prior_npars_", i, ";")),
+               onlyif(write_beta_fixed, c(idt(1), "matrix[K_fixed_", i, ", beta_fixed_prior_npars_", i, "] beta_fixed_prior_pars_", i, ";")),
+               onlyif(write_beta_varying, c(idt(1), "int beta_varying_prior_npars_", i, ";")),
+               onlyif(write_beta_varying, c(idt(1), "matrix[K_varying_", i, ", beta_varying_prior_npars_", i, "] beta_varying_prior_pars_", i, ";")),
+               onlyif(write_tau, c(idt(1), "int tau_prior_npars_", i, ";")),
+               onlyif(write_tau, c(idt(1), "matrix[K_varying_", i, ", tau_prior_npars_", i, "] tau_prior_pars_", i, ";")))
 
 }
 
-data_lines_categorical <- function(i, idt, has_fixed, has_varying, ...) {
+data_lines_categorical <- function(i, idt, has_fixed, has_varying, data, ...) {
+
+    write_beta_fixed <- has_fixed && length(data[[paste0("beta_fixed_prior_distr_", i)]]) == 1
+    write_beta_varying <- has_varying && length(data[[paste0("beta_varying_prior_distr_", i)]]) == 1
+    write_tau <- has_varying && length(data[[paste0("tau_prior_", i)]]) == 1
+
     paste_rows(c(idt(1), "int<lower=1> ", i, "[T, N];"),
                c(idt(1), "int<lower=0> S_", i, ";"),
-               onlyif(has_fixed, c(idt(1), "matrix[K_fixed_", i, ", S_", i, " - 1] beta_fixed_prior_mean_", i, ";")),
-               onlyif(has_fixed, c(idt(1), "matrix[K_fixed_", i, ", S_", i, " - 1] beta_fixed_prior_sd_", i, ";")),
-               onlyif(has_varying, c(idt(1), "matrix[K_varying_", i, ", S_", i, " - 1] beta_varying_prior_sd_", i, ";")),
-               onlyif(has_varying, c(idt(1), "matrix[K_varying_", i, ", S_", i, " - 1] beta_varying_prior_sd_", i, ";")))
+               onlyif(write_beta_fixed, c(idt(1), "int beta_fixed_prior_npars_", i, ";")),
+               onlyif(write_beta_fixed, c(idt(1), "matrix[K_fixed_", i, " * (S_", i, " - 1), beta_fixed_prior_npars_", i, "] beta_fixed_prior_pars_", i, ";")),
+               onlyif(write_beta_varying, c(idt(1), "int beta_varying_prior_npars_", i, ";")),
+               onlyif(write_beta_varying, c(idt(1), "matrix[K_varying_", i, " * (S_", i, " - 1), beta_varying_prior_npars_", i, "] beta_varying_prior_pars_", i, ";")),
+               onlyif(write_tau, c(idt(1), "int tau_prior_npars_", i, ";")),
+               onlyif(write_tau, c(idt(1), "matrix[K_varying_", i, ", tau_prior_npars_", i, "] tau_prior_pars_", i, ";")))
 }
 
-data_lines_gaussian <- function(i, idt, ...) {
+data_lines_gaussian <- function(i, idt, has_fixed, has_varying, data, ...) {
     paste_rows(c(idt(1), "real ", i, "[T, N];"),
                c(idt(1), "real<lower=0> sigma_scale_", i, ";"),
-               data_lines_default(i, idt, ...))
+               data_lines_default(i, idt, has_fixed, has_varying, data, ...))
 }
 
-data_lines_binomial <- function(i, idt, ...) {
+data_lines_binomial <- function(i, idt, has_fixed, has_varying, data, ...) {
     paste_rows(c(idt(1), "int<lower=0> ", i, "[T, N];"),
                c(idt(1), "int<lower=1> trials_", i, "[T, N];"),
-               data_lines_default(i, idt, ...))
+               data_lines_default(i, idt, has_fixed, has_varying, data, ...))
 }
 
-data_lines_bernoulli <- function(i, idt, ...) {
+data_lines_bernoulli <- function(i, idt, has_fixed, has_varying, data, ...) {
     paste_rows(c(idt(1), "int<lower=0,upper=1> ", i, "[T, N];"),
-               data_lines_default(i, idt, ...))
+               data_lines_default(i, idt, has_fixed, has_varying, data, ...))
 }
 
-data_lines_poisson <- function(i, idt, has_offset, ...) {
+data_lines_poisson <- function(i, idt, has_offset, has_fixed, has_varying, data, ...) {
     paste_rows(c(idt(1), "int<lower=0> ", i, "[T, N];"),
                onlyif(has_offset, c(idt(1), "real offset_", i, "[T, N];")),
-               data_lines_default(i, idt, ...))
+               data_lines_default(i, idt, has_fixed, has_varying, data, ...))
 }
 
-data_lines_negbin <- function(i, idt, ...) {
+data_lines_negbin <- function(i, idt, has_fixed, has_varying, data, ...) {
     paste_rows(c(idt(1), "int<lower=0> ", i, "[T, N];"),
                c(idt(1), "real<lower=0> phi_scale_", i),
-               data_lines_default(i, idt, ...))
+               data_lines_default(i, idt, has_fixed, has_varying, data, ...))
 }
 
 # For parameters block
@@ -166,15 +180,21 @@ transformed_parameters_lines_poisson <- function(...) {
 }
 
 # For model block
-model_lines_default <- function(i, idt, shrinkage, noncentered, has_fixed, has_varying, ...) {
+model_lines_default <- function(i, idt, shrinkage, noncentered, has_fixed, has_varying, data, ...) {
     mtext_fixed <- ""
     mtext_varying <- ""
     if (has_fixed) {
-        mtext_fixed <- paste_rows(
-            c(idt(1), "for (k in 1:K_fixed_", i, ") {"),
-            c(idt(2),     "beta_fixed_", i, "[k] ~ normal(beta_fixed_prior_mean_", i, "[k], beta_fixed_prior_sd_", i, "[k]);"),
-            c(idt(1), "}")
-        )
+        #d <- priors |> dplyr::filter(type == "beta_fixed")
+        # if (d$vectorized[1]) {
+        #     distribution <- sub("(.*", "", d$prior[1])
+        #     mtext_fixed <- c(idt(1), distribution, "~ (", "beta_fixed_")
+        d <- data[[paste0("beta_fixed_prior_distr_", i)]]
+        if (length(d) == 1) {
+            np <- data[[paste0("beta_fixed_prior_npars_", i)]]
+            mtext_fixed <- c(idt(1), "beta_fixed_", i, " ~ ", d, "(", paste0("beta_fixed_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
+        } else {
+            mtext_fixed <- c(idt(1), "beta_fixed_", i, "[k] ~ ", d)
+        }
     }
     if (has_varying) {
         if (noncentered) {
@@ -203,18 +223,23 @@ model_lines_default <- function(i, idt, shrinkage, noncentered, has_fixed, has_v
     paste_rows(mtext_fixed, mtext_varying)
 }
 
-model_lines_categorical <- function(i, idt, shrinkage, noncentered, has_fixed, has_varying, ...) {
+model_lines_categorical <- function(i, idt, shrinkage, noncentered, has_fixed, has_varying, data, ...) {
     mtext_fixed <- ""
     mtext_varying <- ""
     prior_term <- ""
     if (has_fixed) {
-        mtext_fixed <- paste_rows(
-            c(idt(2), "for (k in 1:K_fixed_", i, ") {"),
-            c(idt(2),     "for (s in 1:(S_", i, " - 1)) {"),
-            c(idt(3),          "beta_fixed_", i, "[k, s] ~ normal(beta_fixed_prior_mean_", i, "[k], beta_fixed_prior_sd_", i, "[k]);"),
-            c(idt(2),     "}"),
-            c(idt(1), "}")
-        )
+        d <- data[[paste0("beta_fixed_prior_distr_", i)]]
+        if (length(d) == 1) {
+            np <- data[[paste0("beta_fixed_prior_npars_", i)]]
+            mtext_fixed <- c(idt(1), "to_vector(beta_fixed_", i, ") ~ ", d, "(", paste0("beta_fixed_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
+        } else {
+            K <- data[[paste0("K_fixed_", i)]]
+            S <- data[[paste0("S_", i)]]
+            k <- rep(1:K, S - 1)
+            s <- rep(1:(S - 1), each = K)
+            mtext_fixed <- do.call(paste_rows, as.list(paste0(idt(1), "beta_fixed_", i, "[", k, ",", s, "] ~ ", d, ";")))
+        }
+
     }
     if (has_varying) {
         if (noncentered) {
