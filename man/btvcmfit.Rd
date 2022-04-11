@@ -4,7 +4,7 @@
 \alias{btvcmfit}
 \title{Fit a Bayesian Time-Varying Coefficients Model}
 \usage{
-btvcmfit(formula, data, group, time, ...)
+btvcmfit(formula, data, group, time, priors = NULL, debug = NULL, ...)
 }
 \description{
 Fit a Bayesian Time-Varying Coefficients Model

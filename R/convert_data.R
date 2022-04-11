@@ -195,7 +195,8 @@ prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
     if (is.null(priors)) {
         priors <- list()
         #default priors
-        bnames <- gsub(paste0("^", i), "beta", coef_names)
+        bnames <- gsub(paste0("^", i), "beta", attr(coef_names, "simplified")$names)
+        levels_ <- attr(coef_names, "simplified")$levels
         if (K_fixed > 0) {
             m <- rep(0, K_fixed * (S_i - 1))
             s <- rep(2 / sd_x[J_fixed], S_i - 1)
@@ -205,7 +206,7 @@ prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
 
             priors$beta_fixed <-
                 data.frame(parameter = bnames[L_fixed],
-                           response = i,
+                           response = paste0(i, "_", rep(levels_, each = K_fixed)),
                            prior = paste0("normal(", m, ", ", s, ")"),
                            type = "beta_fixed")
         }
@@ -219,7 +220,7 @@ prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
 
             priors$beta_varying <-
                 data.frame(parameter = bnames[L_varying],
-                           response = i,
+                           response = paste0(i, "_", rep(levels_, each = K_varying)),
                            prior = paste0("normal(", m, ", ", s, ")"),
                            type = "beta_varying")
 

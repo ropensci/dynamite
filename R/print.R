@@ -15,7 +15,11 @@ print.btvcmfit <- function(x, pars, ...) {
             idx <-  c(grep("^tau", all_pars), grep("lambda",all_pars))
             pars <- all_pars[idx]
         }
-        print(x$stanfit, pars = pars, ...)
+        if (length(idx) == 0) {
+          message("Model does not contain time-invariant parameters. ")  # TODO what about time-invariant betas...
+        } else {
+          print(x$stanfit, pars = pars, ...)
+        }
     } else {
         message("No Stan model fit is available.")
         invisible(x)

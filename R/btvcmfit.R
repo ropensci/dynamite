@@ -110,10 +110,15 @@ btvcmfit <- function(formula, data, group, time, priors = NULL, debug = NULL, ..
     coef_names <- lapply(seq_along(resp_all), function(i) {
         x <- paste0(resp_all[i], "_", u_names[attr(model_matrix, "assign")[[i]]])
         if (is_categorical(formula[[i]]$family)) {
-            x <- paste0(x, "_", rep(resp_levels[[i]][-length(resp_levels[[i]])], each = length(x)))
+            levels_ <- resp_levels[[i]][-length(resp_levels[[i]])]
+            # for prior names, there's probably more elegant way... Need to keep in mind as.data.frame function, and fixed vs varying
+            simplified <- list(names = x, levels = levels_)
+            x <- paste0(x, "_", rep(levels_, each = length(x)))
+            attr(x, "simplified") <- simplified
         }
         x
     })
+
     specials <- evaluate_specials(formula, data)
     converted <- convert_data(formula, responses, specials, group, full_time, fixed, model_matrix, coef_names, priors)
     model_data <- converted$data
@@ -123,7 +128,7 @@ btvcmfit <- function(formula, data, group, time, priors = NULL, debug = NULL, ..
                                 helpers = model_helpers, priors = model_priors, data = model_data)
     model_data[grep("_prior_distr_", names(model_data))] <- NULL
     #debug <- dots$debug
-    model <- if (isTRUE(debug$no_compile)) {
+    model <- if (!is.null(debug) && isTRUE(debug$no_compile)) {
         NULL
     } else {
         message("Compiling Stan model")
