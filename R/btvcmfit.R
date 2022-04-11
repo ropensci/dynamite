@@ -2,7 +2,7 @@
 #'
 #' @include utilities.R
 # btvcmfit class
-btvcmfit <- function(formula, data, group, time, priors = NULL, debug, ...) {
+btvcmfit <- function(formula, data, group, time, priors = NULL, debug = NULL, ...) {
     #dots <- list(...) #Note: Use explicit debug-argument as otherwise it is passed to sampling with an error
     data <- droplevels(data) #TODO document this in return value
     if (missing(group)) {
