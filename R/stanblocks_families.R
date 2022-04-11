@@ -98,7 +98,7 @@ parameters_lines_poisson <- function(...) {
 
 parameters_lines_negbin <- function(i, lb, idt, ...) {
     paste_rows(parameters_lines_default(i, lb, idt, ...),
-               c(idt(1), "real<lower=0 phi_", i))
+               c(idt(1), "real<lower=0> phi_", i))
 }
 
 # For transformed parameters block
@@ -175,6 +175,10 @@ transformed_parameters_lines_bernoulli <- function(i, idt, has_fixed, has_varyin
 }
 
 transformed_parameters_lines_poisson <- function(...) {
+    transformed_parameters_lines_bernoulli(...)
+}
+
+transformed_parameters_lines_negbin <- function(...) {
     transformed_parameters_lines_bernoulli(...)
 }
 
