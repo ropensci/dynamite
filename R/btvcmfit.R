@@ -100,7 +100,8 @@ btvcmfit <- function(formula, data, group, time, priors = NULL, debug = NULL, ..
                                             intercept = attr(terms(formula[[j]]$formula), "intercept"))
     }
     responses <- data[, resp_all, drop = FALSE]
-    attr(responses, "resp_class") <- apply(responses, 2, class)
+    # needs sapply/lapply instead of apply to keep factors as factors
+    attr(responses, "resp_class") <- sapply(responses, class)
     model_matrix <- full_model.matrix(formula, data)
     resp_levels <- lapply(responses, levels)
     # TODO: simplify I(lag(variable, 1)) to something shorter, e.g. lag_1(variable)?

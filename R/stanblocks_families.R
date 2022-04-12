@@ -278,23 +278,20 @@ model_lines_categorical <- function(i, idt, shrinkage, noncentered, has_fixed, h
                 S <- data[[paste0("S_", i)]]
                 k <- rep(1:K, S - 1)
                 s <- rep(1:(S - 1), each = K)
-                mtext_varying <- do.call(paste_rows, as.list(paste0(idt(1), "a_", i, "[", k, ",", s, "] ~ ", d, ";")))
+                mtext_varying <- do.call(paste_rows, as.list(paste0(idt(1), "a_", i, "[", s, ",", k, "] ~ ", d, ";")))
             }
             mtext_varying <- paste_rows(mtext_varying,
-                # c(idt(1), "for (s in 1:(S_", i, " - 1)) {"),
-                # c(idt(2),     "for (k in 1:K_varying_", i, ") {"),
-                c(idt(1), "{"),
-                c(idt(2),   "vector[(S_", i, "- 1) * K_varying_", i, "] tauvector = to_vector(rep_matrix(tau_", i, ", S_", i, " - 1)');"),
-                c(idt(2),   "for(i in 2:D) {"),
+                c(idt(1), "for (s in 1:(S_", i, " - 1)) {"),
+                c(idt(2),   "for (k in 1:K_varying_", i, ") {"),
+                c(idt(3),     "for(i in 2:D) {"),
                 if (shrinkage) {
-                    c(idt(3),  "to_vector(to_matrix(a_", i, "[, , i])) ~ normal(to_vector(to_matrix(a_", i, "[, , i - 1])), lambda[i - 1] * tauvector);")
+                    c(idt(4),    "a_", i, "[s, k, i] ~ normal(a_", i, "[s, k, i - 1], lambda[i - 1] * tau_", i, "[k]);")
                 } else {
-                    c(idt(3),  "to_vector(to_matrix(a_", i, "[, , i])) ~ normal(to_vector(to_matrix(a_", i, "[, , i - 1])), tauvector);")
+                    c(idt(4),    "a_", i, "[s, k, i] ~ normal(a_", i, "[s, k, i - 1], tau_", i, "[k]);")
                 },
+                c(idt(3),      "}"),
                 c(idt(2),    "}"),
                 c(idt(1), "}")
-                # c(idt(2),     "}"),
-                # c(idt(1), "}")
             )
         }
         d <- data[[paste0("tau_prior_distr_", i)]]
