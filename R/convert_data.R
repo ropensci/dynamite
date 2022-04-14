@@ -28,12 +28,14 @@ convert_data <- function(formula, responses, specials, group, time, fixed,
     fixed_pars <- attr(model_matrix, "fixed")
     varying_pars <- attr(model_matrix, "varying")
     channel_vars <- list()
-    if (N > 1) {
-        sd_x <- apply(X[1, , ], 2, sd)
-    } else {
-        sd_x <- apply(X[, 1, ], 2, sd)
-    }
-    sd_x[sd_x < 0.1] <- 0.1 # Intercept and other constants at time 1
+    # if (N > 1) {
+    #     sd_x <- apply(X[1, , ], 2, sd)
+    # } else {
+    #     sd_x <- apply(X[, 1, ], 2, sd)
+    # }
+    # sd_x[sd_x < 0.1] <- 0.1 # Intercept and other constants at time 1
+    # use sd over all time points so we get reasonable prior scale for covariates which are constant at t=1
+    sd_x <- apply(X, 3, sd)
     resp_classes <- attr(responses, "resp_class")
     helpers <- list()
     warn_nosplines <- FALSE
@@ -116,7 +118,7 @@ convert_data <- function(formula, responses, specials, group, time, fixed,
 
 prepare_channel_vars_default <- function(i, Y, J_fixed, J_varying, L_fixed,
     L_varying, K_fixed, K_varying,
-    sd_x, resp_class, coef_names, priors) {
+    sd_beta, resp_class, coef_names, priors) {
 
     channel_vars <- list()
     if (is.null(priors)) {
@@ -125,7 +127,7 @@ prepare_channel_vars_default <- function(i, Y, J_fixed, J_varying, L_fixed,
         bnames <- gsub(paste0("^", i), "beta", coef_names)
         if (K_fixed > 0) {
             m <- rep(0, K_fixed)
-            s <- 2 / sd_x[J_fixed]
+            s <- sd_beta[J_fixed]
             channel_vars[[paste0("beta_fixed_prior_npars_", i)]] <- 2
             channel_vars[[paste0("beta_fixed_prior_pars_", i)]] <- cbind(m, s, deparse.level = 0)
             channel_vars[[paste0("beta_fixed_prior_distr_", i)]] <- "normal"
@@ -140,7 +142,7 @@ prepare_channel_vars_default <- function(i, Y, J_fixed, J_varying, L_fixed,
 
         if (K_varying > 0) {
             m <- rep(0, K_varying)
-            s <- 2 / sd_x[J_varying]
+            s <- sd_beta[J_varying]
             channel_vars[[paste0("beta_varying_prior_npars_", i)]] <- 2
             channel_vars[[paste0("beta_varying_prior_pars_", i)]] <- cbind(m, s, deparse.level = 0)
             channel_vars[[paste0("beta_varying_prior_distr_", i)]] <- "normal"
@@ -193,6 +195,7 @@ prepare_channel_vars_default <- function(i, Y, J_fixed, J_varying, L_fixed,
 prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
     L_varying, K_fixed, K_varying,
     sd_x, resp_class, coef_names, priors) {
+
     S_i <- length(unique(as.vector(Y)))
     if (!("factor" %in% resp_class)) {
         stop_("Response variable ", i, " is invalid: categorical family supports only factors.")
@@ -204,9 +207,21 @@ prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
         #default priors
         bnames <- gsub(paste0("^", i), "beta", attr(coef_names, "simplified")$names)
         levels_ <- attr(coef_names, "simplified")$levels
+
+        sd_beta <- 2 / sd_x
+        k <- grep("(Intercept)", coef_names)
+        if (!is.null(k)) sd_beta[k] <- 5 # TODO arbitrary, perhaps should depend on S
+        if (any(!is.finite(sd_beta))) {
+            msg <- paste0("Found nonfinite prior standard deviation when using default priors for regression coeffients for response ",
+                i, ", indicating constant covariate: Switching to N(0, 0.01) prior.")
+            sd_beta[!is.finite(sd_beta)] <- 0.1
+            warning(msg)
+        }
+
         if (K_fixed > 0) {
             m <- rep(0, K_fixed * (S_i - 1))
-            s <- rep(2 / sd_x[J_fixed], S_i - 1)
+            s <- rep(sd_beta[J_fixed], S_i - 1) # match with binomial in case S_i=2
+
             channel_vars[[paste0("beta_fixed_prior_npars_", i)]] <- 2
             channel_vars[[paste0("beta_fixed_prior_pars_", i)]] <- cbind(m, s, deparse.level = 0)
             channel_vars[[paste0("beta_fixed_prior_distr_", i)]] <- "normal"
@@ -221,7 +236,7 @@ prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
 
         if (K_varying > 0) {
             m <- rep(0, K_varying * (S_i - 1))
-            s <- rep(2 / sd_x[J_varying], S_i - 1)
+            s <- rep(sd_beta[J_varying], S_i - 1)
             channel_vars[[paste0("beta_varying_prior_npars_", i)]] <- 2
             channel_vars[[paste0("beta_varying_prior_pars_", i)]] <- cbind(m, s, deparse.level = 0)
             channel_vars[[paste0("beta_varying_prior_distr_", i)]] <- "normal"
@@ -274,12 +289,22 @@ prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
 prepare_channel_vars_gaussian <- function(i, Y, J_fixed, J_varying, L_fixed,
     L_varying, K_fixed, K_varying,
     sd_x, resp_class, coef_names, priors) {
+
     if ("factor" %in% resp_class) {
         stop_("Response variable ", i, " is invalid: gaussian family is not supported for factors.")
     }
+    sd_beta <- 2 / sd_x
+    k <- grep("(Intercept)", coef_names)
+    if (!is.null(k)) sd_beta[k] <- 10 # Wider prior for intercept as we are not centering X
+    if (any(!is.finite(sd_beta))) {
+        msg <- paste0("Found nonfinite prior standard deviation when using default priors for regression coeffients for response ",
+            i, ", indicating constant covariate: Switching to N(0, 0.01) prior.")
+        sd_beta[!is.finite(sd_beta)] <- 0.1
+        warning(msg)
+    }
     out <- prepare_channel_vars_default(i, Y, J_fixed, J_varying, L_fixed,
         L_varying, K_fixed, K_varying,
-        sd_x, resp_class, coef_names, priors)
+        sd_beta, resp_class, coef_names, priors)
     if (is.null(priors)) {
         s <- 1 / mean(apply(Y, 1, sd))
         out$channel_vars[[paste0("sigma_prior_distr_", i)]] <- paste0("exponential(", s, ")")
@@ -301,15 +326,25 @@ prepare_channel_vars_gaussian <- function(i, Y, J_fixed, J_varying, L_fixed,
 prepare_channel_vars_binomial <- function(i, Y, J_fixed, J_varying, L_fixed,
     L_varying, K_fixed, K_varying,
     sd_x, resp_class, coef_names, priors) {
+
     if (any(Y < 0) || any(Y != as.integer(Y))) {
         stop_("Response variable ", i, " is invalid: binomial family supports only non-negative integers.")
     }
     if ("factor" %in% resp_class) {
         stop_("Response variable ", i, " is invalid: binomial family is not supported for factors.")
     }
+    sd_beta <- 2 / sd_x
+    k <- grep("(Intercept)", coef_names)
+    if (!is.null(k)) sd_beta[k] <- 2.5
+    if (any(!is.finite(sd_beta))) {
+        msg <- paste0("Found nonfinite prior standard deviation when using default priors for regression coeffients for response ",
+            i, ", indicating constant covariate: Switching to N(0, 0.01) prior.")
+        sd_beta[!is.finite(sd_beta)] <- 0.1
+        warning(msg)
+    }
     prepare_channel_vars_default(i, Y, J_fixed, J_varying, L_fixed,
         L_varying, K_fixed, K_varying,
-        sd_x, resp_class, coef_names, priors)
+        sd_beta, resp_class, coef_names, priors)
 }
 
 prepare_channel_vars_bernoulli <- function(i, Y, J_fixed, J_varying, L_fixed,
@@ -335,9 +370,18 @@ prepare_channel_vars_poisson <- function(i, Y, J_fixed, J_varying, L_fixed,
     if ("factor" %in% resp_class) {
         stop_("Response variable ", i, " is invalid: Poisson family is not supported for factors.")
     }
-    prepare_channel_vars_binomial(i, Y, J_fixed, J_varying, L_fixed,
+    sd_beta <- 2 / sd_x
+    k <- grep("(Intercept)", coef_names)
+    if (!is.null(k)) sd_beta[k] <- 10 # wider prior for intercept as we are not centering X
+    if (any(!is.finite(sd_beta))) {
+        msg <- paste0("Found nonfinite prior standard deviation when using default priors for regression coeffients for response ",
+            i, ", indicating constant covariate: Switching to N(0, 0.01) prior.")
+        sd_beta[!is.finite(sd_beta)] <- 0.1
+        warning(msg)
+    }
+    prepare_channel_vars_default(i, Y, J_fixed, J_varying, L_fixed,
         L_varying, K_fixed, K_varying,
-        sd_x, resp_class, coef_names, priors)
+        sd_beta, resp_class, coef_names, priors)
 }
 
 prepare_channel_vars_negbin <- function(i, Y, J_fixed, J_varying, L_fixed,
@@ -349,9 +393,18 @@ prepare_channel_vars_negbin <- function(i, Y, J_fixed, J_varying, L_fixed,
     if ("factor" %in% resp_class) {
         stop_("Response variable ", i, " is invalid: negative binomial family is not supported for factors.")
     }
+    sd_beta <- 2 / sd_x
+    k <- grep("(Intercept)", coef_names)
+    if (!is.null(k)) sd_beta[k] <- # wider prior for intercept as we are not centering X
+    if (any(!is.finite(sd_beta))) {
+        msg <- paste0("Found nonfinite prior standard deviation when using default priors for regression coeffients for response ",
+            i, ", indicating constant covariate: Switching to N(0, 0.01) prior.")
+        sd_beta[!is.finite(sd_beta)] <- 0.1
+        warning(msg)
+    }
     out <- prepare_channel_vars_default(i, Y, J_fixed, J_varying, L_fixed,
         L_varying, K_fixed, K_varying,
-        sd_x, resp_class, coef_names, priors)
+        sd_beta, resp_class, coef_names, priors)
     if (is.null(priors)) {
         out$channel_vars[[paste0("phi_prior_distr_", i)]] <- "exponential(1)"
         out$priors <- dplyr::bind_rows(out$priors,
