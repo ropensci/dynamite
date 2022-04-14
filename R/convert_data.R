@@ -209,7 +209,7 @@ prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
         levels_ <- attr(coef_names, "simplified")$levels
 
         sd_beta <- 2 / sd_x
-        k <- grep("(Intercept)", coef_names)
+        k <- grep("(Intercept)", bnames)
         if (!is.null(k)) sd_beta[k] <- 5 # TODO arbitrary, perhaps should depend on S
         if (any(!is.finite(sd_beta))) {
             msg <- paste0("Found nonfinite prior standard deviation when using default priors for regression coeffients for response ",
