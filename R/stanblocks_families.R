@@ -304,7 +304,7 @@ model_lines_categorical <- function(i, idt, shrinkage, noncentered, has_fixed, h
         }
     }
     likelihood_term <-
-        c(idt(2), i, "[t] ~ categorical_logit_glm(X[t][,J_", i, "], zeros_S_", i, ", append_col(beta_", i, "[t], zeros_K_", i, "));")
+        c(idt(2), i, "[t] ~ categorical_logit_glm(X[t][,J_", i, "], zeros_S_", i, ", append_col(zeros_K_", i, ", beta_", i, "[t]));")
 
     paste_rows(mtext_fixed, mtext_varying, mtext_tau, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
