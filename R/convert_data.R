@@ -35,7 +35,7 @@ convert_data <- function(formula, responses, specials, group, time, fixed,
     # }
     # sd_x[sd_x < 0.1] <- 0.1 # Intercept and other constants at time 1
     # use sd over all time points so we get reasonable prior scale for covariates which are constant at t=1
-    sd_x <- apply(X, 3, sd)
+    sd_x <- pmax(0.5, apply(X, 3, sd))
     resp_classes <- attr(responses, "resp_class")
     helpers <- list()
     warn_nosplines <- FALSE
@@ -57,7 +57,8 @@ convert_data <- function(formula, responses, specials, group, time, fixed,
         helpers[[i]] <- list(has_fixed = channel_vars[[Ks[2]]] > 0,
             has_varying = channel_vars[[Ks[3]]] > 0)
         if (helpers[[i]]$has_varying && !has_splines) {
-            warning_("Model for response variable ", resp, " contains time-varying definitions, but splines have not been defined.")
+            stop_("Model for response variable ", resp, " contains time-varying definitions, but splines have not been defined.")
+            # TODO switch back to warning after defining default splines?
             warn_nosplines <- TRUE
         }
         if (groups) {
@@ -157,7 +158,7 @@ prepare_channel_vars_default <- function(i, Y, J_fixed, J_varying, L_fixed,
             channel_vars[[paste0("tau_prior_npars_", i)]] <- 2
             channel_vars[[paste0("tau_prior_pars_", i)]] <- cbind(0, rep(1, K_varying))
             channel_vars[[paste0("tau_prior_distr_", i)]] <- "normal"
-            bnames <- gsub(paste0("^", i), "", attr(coef_names, "simplified")$names)
+            bnames <- gsub(paste0("^", i), "", coef_names)
             priors$tau <-
                 data.frame(parameter = paste0("tau", bnames[L_varying]),
                     response = i,
@@ -211,7 +212,7 @@ prepare_channel_vars_categorical <- function(i, Y, J_fixed, J_varying, L_fixed,
         sd_beta <- 2 / sd_x
         k <- grep("(Intercept)", bnames)
         if (!is.null(k)) sd_beta[k] <- 5 # TODO arbitrary, perhaps should depend on S
-        if (any(!is.finite(sd_beta))) {
+        if (any(!is.finite(sd_beta))) { # never happens due to pmax(0.5,sd_x)
             msg <- paste0("Found nonfinite prior standard deviation when using default priors for regression coeffients for response ",
                 i, ", indicating constant covariate: Switching to N(0, 0.01) prior.")
             sd_beta[!is.finite(sd_beta)] <- 0.1
