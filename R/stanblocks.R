@@ -92,9 +92,6 @@ create_parameters <- function(formula, idt, resp, helpers, ...) {
     lb <- character(0)
     splinetext <- ""
     if (!is.null(spline_defs <- attr(formula, "splines"))) {
-        if (spline_defs$noncentered) {
-            stop_("Noncentered parameterisation is currently not supported.")
-        }
         lb <- attr(formula, "splines")$lb_tau
         splinetext <- paste0(idt(1), "// Spline parameters")
         if (spline_defs$shrinkage) {
@@ -102,36 +99,9 @@ create_parameters <- function(formula, idt, resp, helpers, ...) {
         }
         # TODO handle centered case where spline is not defined but user inserts varying(.) terms
     }
-    ## TODO channel-wise
-    #if (attr(formula, "splines")$noncentered) {
-    #    stop("Noncentered parameterisation is currently not supported.")
-    #    mtext <- paste_rows(
-    #        c(idt(1), "// Spline parameters"),
-    #        c(idt(1), "// use noncentered parameterisation for sampling efficiency")
-    #    )
-    #    for (i in seq_along(formula)) {
-    #        if (is_categorical(formula[[i]]$family)) {
-    #            a_raw_term <- c(idt(1), "row_vector[D] a_raw_", i, "[S_", i, "- 1, K_", i, "];")
-    #            # Do we want separate tau for K coefficients or K * (S - 1) coefficients?
-    #            tau_term <- c(idt(1), "vector<lower=", lb, ">[K_", i, "] tau_", i, ";")
-    #        } else {
-    #            a_raw_term <- c(idt(1), "row_vector[D] a_raw_", i, "[K_", i, "];")
-    #            tau_term <- c(idt(1), "vector<lower=", lb, ">[K_", i, "] tau_", i, ";")
-    #        }
-    #        mtext <- paste_rows(mtext, a_raw_term, tau_term)
-    #        if (is_gaussian(formula[[i]]$family)) {
-    #            sigma_term <- c(idt(1), "real<lower=0> sigma_", i, ";")
-    #            mtext <- paste_rows(mtext, sigma_term)
-    #        }
-    #        if (is_gamma(formula[[i]]$family)) {
-    #            # TODO: shape parameter for the gamma distribution, not a priority
-    #            stop("Gamma distribution is not yet supported")
-    #        }
-    #    }
-    #} else {
     pars <- character(length(formula))
     for (i in seq_along(formula)) {
-        line_args <- c(list(i = resp[i], lb = lb, idt = idt), helpers[[i]])
+        line_args <- c(list(i = resp[i], idt = idt, lb = lb), helpers[[i]])
         pars[i] <- lines_wrap("parameters", formula[[i]], line_args)
     }
     paste_rows("parameters {", splinetext, collapse_rows(pars), "}")
@@ -140,45 +110,13 @@ create_parameters <- function(formula, idt, resp, helpers, ...) {
 #'
 #' @export
 create_transformed_parameters <- function(formula, idt, resp, helpers, ...) {
-    #if (spline_defs$noncentered) {
-    #stop("Noncentered parameterisation is currently not supported.")
-    # TODO: could separate construction of a and beta so less repetition in the codes
-    # TODO: check whether lambda is used
-    # TODO use prior definitions
-    # i.e. a_i[s, k, 1] = a_prior_mean_i[s, k] + a_prior_sd_i[s, k] * a_raw_i[s, k, 1]
-    # if (is_categorical(formula[[i]]$family)) {
-    #     c(varying_terms) <- paste_rows(
-    #         c(idt(1), "for (s in 1:(S_", y, " - 1)) {"),
-    #         c(idt(2),     "for (k in 1:K_varying_", y, ") {"),
-    #         c(idt(3),         "a_", y, "[s, k, 1] = a_raw_", y, "[s, k, 1];"),
-    #         c(idt(3),         "for (i in 2:D) {"),
-    #         c(idt(4),             "a_", y, "[s, k, i] = a_", y, "[s, k, i-1] + a_raw_", y, "[s, k, i] * tau_", y, "[k] * lambda[i - 1];"),
-    #         c(idt(3),         "}"),
-    #         c(idt(3),         "for (t in 1:T) {"),
-    #         c(idt(4),             "beta_", y, "[t, J_varying_", y, "[k], s] = a_", y, "[s, k] * Bs[, t];"),
-    #         c(idt(3),         "}"),
-    #         c(idt(2),     "}"),
-    #         c(idt(1), "}")
-    #     )
-    # } else {
-    #     c(varying_terms) <- paste_rows(
-    #         c(idt(1), "for (k in 1:K_", y, ") {"),
-    #         c(idt(2),     "a_", y, "[k, 1] = a_raw_", y, "[k, 1];"),
-    #         c(idt(2),     "for (i in 2:D) {"),
-    #         c(idt(3),         "a_", y, "[k, i] = a_", y, "[k, i - 1] + a_raw_", y, "[k, i] * tau_", y, "[k] * lambda[i - 1];"),
-    #         c(idt(2),     "}"),
-    #         c(idt(2),     "for (t in 1:T) {"),
-    #         c(idt(3),          "beta_", y, "[t, k] = a_", y, "[k] * Bs[, t];"),
-    #         c(idt(2),     "}"),
-    #         c(idt(1), "}")
-    #     )
-    # }
+
     spline_defs <- attr(formula, "splines")
     transpars <- character(length(formula))
     for (i in seq_along(formula)) {
         line_args <- c(list(i = resp[i],
                             idt = idt,
-                            noncentered = spline_defs$noncetered),
+                            shrinkage = spline_defs$shrinkage),
                        helpers[[i]])
         transpars[i] <- lines_wrap("transformed_parameters", formula[[i]], line_args)
 
@@ -205,7 +143,6 @@ create_model <- function(formula, idt, resp, helpers, priors, data, ...) {
         line_args <- c(list(i = resp[i],
                             idt = idt,
                             shrinkage = spline_defs$shrinkage,
-                            noncentered = spline_defs$noncentered,
                             data = data),
                        helpers[[i]],
                        priors = priors[[i]])

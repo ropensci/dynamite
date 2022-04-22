@@ -8,22 +8,16 @@ btvcmfit <- function(formula, data, group, time, priors = NULL, debug = NULL, ..
     if (missing(group)) {
         group <- group_var <- NULL
     } else {
-        # TODO allow group = c(ID1, ID2, ...) etc.
-        if (is.character(group)) {
-            group_var <- group
-        } else {
-            group_var <- deparse(substitute(group))
+        if (!is.character(group_var <- substitute(group))) {
+            group_var <- deparse(group_var)
         }
-
        # if (is.factor(group)) group <- droplevels(group) #already done above
     }
     # TODO is there a better way?
     if (missing(time))
         stop_("Argument 'time' is missing.")
-    if (is.character(time)) {
-        time_var <- time
-    } else {
-        time_var <- deparse(substitute(time))
+    if (!is.character(time_var <- substitute(time))) {
+        time_var <- deparse(time_var)
     }
 
     # Pipe for readability, not really needed if we need to support older R versions

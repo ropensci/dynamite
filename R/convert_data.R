@@ -4,6 +4,7 @@ convert_data <- function(formula, responses, specials, group, time, fixed,
     T_full <- length(time)
     groups <- !is.null(group)
     free_obs <- (fixed + 1):T_full
+    C <- length(get_resp(formula))
     spline_defs <- attr(formula, "splines")
     has_splines <- !is.null(spline_defs)
     if (has_splines) {
@@ -14,13 +15,20 @@ convert_data <- function(formula, responses, specials, group, time, fixed,
         }
         Bs <- t(do.call(splines::bs, args = bs_opts))
         D <- nrow(Bs)
+        noncentered <- spline_defs$noncentered
+        if (length(noncentered) %in% c(1L, C)) {
+            noncentered <- rep(noncentered, length = C)
+        } else {
+            warning_(paste0(
+                "Length of the 'noncentered' argument of 'splines' function ",
+                "is not equal to 1 or the number of the channels. Recycling. "))
+        }
     }
     N <- T_full
     if (groups) {
         N <- length(unique(group))
     }
     K <- ncol(model_matrix)
-    C <- length(get_resp(formula))
     X <- aperm(array(as.numeric(unlist(split(model_matrix, gl(T_full, 1, N * T_full)))),
         dim = c(N, K, T_full))[,,free_obs, drop = FALSE],
         c(3, 1, 2))
@@ -56,10 +64,14 @@ convert_data <- function(formula, responses, specials, group, time, fixed,
         channel_vars[[Ks[3]]] <- length(varying_pars[[i]])
         helpers[[i]] <- list(has_fixed = channel_vars[[Ks[2]]] > 0,
             has_varying = channel_vars[[Ks[3]]] > 0)
-        if (helpers[[i]]$has_varying && !has_splines) {
-            stop_("Model for response variable ", resp, " contains time-varying definitions, but splines have not been defined.")
-            # TODO switch back to warning after defining default splines?
-            warn_nosplines <- TRUE
+
+        if (helpers[[i]]$has_varying) {
+            if (!has_splines) {
+               stop_("Model for response variable ", resp, " contains time-varying definitions, but splines have not been defined.")
+               # TODO switch back to warning after defining default splines?
+               warn_nosplines <- TRUE
+            }
+            helpers[[i]]$noncentered <- noncentered[i]
         }
         if (groups) {
             resp_split <- split(responses[, resp], group)
@@ -82,8 +94,13 @@ convert_data <- function(formula, responses, specials, group, time, fixed,
             }
         }
         Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))[free_obs, , drop = FALSE]
-        channel_vars[[resp]] <- Y
-        prep <- do.call(paste0("prepare_channel_vars_", formula[[i]]$family),
+        family <- formula[[i]]$family
+        if (is_gaussian(family)) {
+          channel_vars[[resp]] <- t(Y) # NxT matrix
+        } else {
+          channel_vars[[resp]] <- Y # T*N array (needs to be integers)
+        }
+        prep <- do.call(paste0("prepare_channel_vars_", family),
             list(i = resp,
                 Y = Y,
                 J_fixed = channel_vars[[Js[2]]],
@@ -396,7 +413,7 @@ prepare_channel_vars_negbin <- function(i, Y, J_fixed, J_varying, L_fixed,
     }
     sd_beta <- 2 / sd_x
     k <- grep("(Intercept)", coef_names)
-    if (!is.null(k)) sd_beta[k] <- # wider prior for intercept as we are not centering X
+    if (!is.null(k)) sd_beta[k] <- 10 # wider prior for intercept as we are not centering X
     if (any(!is.finite(sd_beta))) {
         msg <- paste0("Found nonfinite prior standard deviation when using default priors for regression coeffients for response ",
             i, ", indicating constant covariate: Switching to N(0, 0.01) prior.")

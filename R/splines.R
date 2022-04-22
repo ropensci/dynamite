@@ -20,8 +20,10 @@ splines <- function(shrinkage = FALSE, override = FALSE,
     df <- try_(df, type = "integer")[1]
     knots <- try_(knots, type = "numeric")
     degree <- try_(degree, type = "integer")
-    noncentered <- try_(noncentered, type = "logical")[1]
-    lb_tau <- try_(lb_tau, type = "numeric")
+    # length of these this argument can be > 1 for channel-wise definitions,
+    # check the length later
+    noncentered <- try_(noncentered, type = "logical")
+    lb_tau <- try_(lb_tau, type = "numeric")[1]
     # TODO: better error message
     if (lb_tau < 0) stop_("Lower bound for 'tau' should be non-negative.")
     structure(
