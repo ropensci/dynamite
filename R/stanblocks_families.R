@@ -148,14 +148,6 @@ transformed_parameters_lines_categorical <- function(i, idt, has_fixed, has_vary
 }
 
 transformed_parameters_lines_gaussian <- function(...) {
-    transformed_parameters_lines_default(...)
-}
-
-transformed_parameters_lines_binomial <- function(...) {
-    transformed_parameters_lines_default(...)
-}
-
-transformed_parameters_lines_bernoulli <- function(i, idt, has_fixed, has_varying, ...) {
     mtext_fixed <- ""
     mtext_varying <- ""
     mtext <- paste0(idt(1), "vector[K_", i, "] beta_", i, "[T];")
@@ -174,12 +166,20 @@ transformed_parameters_lines_bernoulli <- function(i, idt, has_fixed, has_varyin
     paste_rows(mtext, mtext_fixed, mtext_varying)
 }
 
+transformed_parameters_lines_binomial <- function(...) {
+    transformed_parameters_lines_default(...)
+}
+
+transformed_parameters_lines_bernoulli <- function(i, idt, has_fixed, has_varying, ...) {
+    transformed_parameters_lines_gaussian(...)
+}
+
 transformed_parameters_lines_poisson <- function(...) {
-    transformed_parameters_lines_bernoulli(...)
+    transformed_parameters_lines_gaussian(...)
 }
 
 transformed_parameters_lines_negbin <- function(...) {
-    transformed_parameters_lines_bernoulli(...)
+    transformed_parameters_lines_gaussian(...)
 }
 
 # For model block
@@ -315,10 +315,7 @@ model_lines_gaussian <- function(i, idt, shrinkage, noncentered, has_fixed, has_
     d <- data[[paste0("sigma_prior_distr_", i)]]
     sigma_term <- c(idt(1), "sigma_", i, " ~ ", d, ";")
 
-    fixed_term <- onlyif(has_fixed, paste0("X[t][,J_fixed_", i, "] * beta_fixed_", i))
-    varying_term <- onlyif(has_varying, paste0("X[t][,J_varying_", i, "] * beta_varying_", i, "[t]"))
-    plus <- onlyif(has_fixed && has_varying, " + ")
-    likelihood_term <-  c(idt(2), i, "[t] ~ normal(", fixed_term, plus, varying_term, ", sigma_", i, ");")
+    likelihood_term <-  c(idt(2), i, "[t] ~ normal_id_glm(X[t][,J_", i, "], 0, beta_", i, "[t]", ", sigma_", i, ");")
     paste_rows(mtext, sigma_term, c(idt(1), "for (t in 1:T) {"), likelihood_term, c(idt(1) ,"}"))
 }
 
@@ -362,6 +359,10 @@ generated_quantities_lines_categorical <- function(...) {
 }
 
 generated_quantities_lines_gaussian <- function(i, idt, has_fixed, has_varying, ...) {
+    generated_quantities_lines_default(...)
+}
+
+generated_quantities_lines_binomial <- function(...) {
     mtext <- paste0(idt(1), "vector[K_", i, "] beta_", i, "[T];")
     mtext_fixed <- ""
     mtext_varying <- ""
@@ -381,10 +382,6 @@ generated_quantities_lines_gaussian <- function(i, idt, has_fixed, has_varying, 
         )
     }
     paste_rows(mtext, mtext_fixed, mtext_varying)
-}
-
-generated_quantities_lines_binomial <- function(...) {
-    generated_quantities_lines_gaussian(...)
 }
 
 generated_quantities_lines_bernoulli <- function(...) {
