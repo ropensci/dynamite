@@ -127,7 +127,7 @@ transformed_parameters_lines_default <- function(i, idt, has_fixed, has_varying,
                 c(idt(2),      "a_", i, "[, i] = a_", i, "[, i - 1] + a_raw_", i, "[, i] .* tau_", i, lambda_term),
                 c(idt(1), "}"))
         }
-        mtext_varying <- paste_rows(
+        mtext_varying <- paste_rows(mtext_varying,
             c(idt(1), "for (t in 1:T) {"),
             c(idt(2),     "beta_", i, "[t, L_varying_", i, "] = a_", i, " * Bs[, t];"),
             c(idt(1), "}")
@@ -159,7 +159,7 @@ transformed_parameters_lines_categorical <- function(i, idt, has_fixed, has_vary
             )
         }
 
-        mtext_varying <- paste_rows(
+        mtext_varying <- paste_rows(mtext_varying,
             c(idt(1), "for (s in 1:(S_", i, " - 1)) {"),
             c(idt(2),     "for (t in 1:T) {"),
             c(idt(3),         "beta_", i, "[t, L_varying_", i, ", s] = a_", i, "[s] * Bs[, t];"),
@@ -184,7 +184,7 @@ transformed_parameters_lines_binomial <- function(i, idt, has_fixed, has_varying
                 c(idt(1), "}"))
         }
 
-        mtext <- paste_rows(
+        mtext <- paste_rows(mtext,
             c(idt(1), "vector[K_varying_", i, "] beta_varying_", i, "[T];"),
             c(idt(1), "for (t in 1:T) {"),
             c(idt(2),     "beta_varying_", i, "[t] = a_", i, " * Bs[, t];"),
