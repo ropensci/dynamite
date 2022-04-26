@@ -72,7 +72,8 @@ convert_data <- function(formula, responses, specials, group, time, fixed,
                warn_nosplines <- TRUE
             }
             helpers[[i]]$noncentered <- noncentered[i]
-        }
+        } else helpers[[i]]$noncentered <- FALSE
+
         if (groups) {
             resp_split <- split(responses[, resp], group)
         } else {
