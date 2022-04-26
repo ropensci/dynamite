@@ -1,3 +1,4 @@
+
 #' Extract fitted values of btvcmfit
 #'
 #' TODO Note that these are conditional on the observed data i.e., we don't
@@ -68,16 +69,17 @@ fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
         idx_i2 <- seq(i, nrow(model_matrix), by = n_time)
         for (j in seq_along(resp_all)) {
             resp <- resp_all[j]
+            s <- matrix(samples[[paste0("beta_", resp)]][1:n_draws, i - fixed, ], nrow = n_draws)
 
             if (is_categorical(basis$formula[[j]]$family)) {
                 idx_resp <- which(names(newdata) %in% c(glue::glue("{resp}_{resp_levels}")))
                 newdata[idx_i, idx_resp] <- do.call(paste0("fitted_", basis$formula[[j]]$family),
                     list(model_matrix = model_matrix[idx_i2, basis$J[[j]], drop = FALSE],
-                        samples = samples[[paste0("beta_", resp)]][1:n_draws, i - fixed, , , drop = FALSE]))
+                        samples = s))
             } else {
                 newdata[idx_i, resp] <- do.call(paste0("fitted_", basis$formula[[j]]$family),
                     list(model_matrix = model_matrix[idx_i2, basis$J[[j]], drop = FALSE],
-                        samples = samples[[paste0("beta_", resp)]][1:n_draws, i - fixed, , drop = FALSE]))
+                        samples = s))
             }
         }
     }

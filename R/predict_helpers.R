@@ -41,9 +41,8 @@ fitted_negbin <- function(model_matrix, samples) {
     exp(c(model_matrix %*% t(samples)))
 }
 
-predict_gaussian <- function(model_matrix, samples, specials, resp, time, type) {
+predict_gaussian <- function(model_matrix, samples, specials, resp, time, type, n_draws) {
     beta <- samples[[paste0("beta_", resp)]]
-    n_draws <- nrow(beta)
     n_id <- nrow(model_matrix) / n_draws
     sim <- sim_r <- numeric(nrow(model_matrix))
     for(k in seq_len(n_draws)) {
@@ -56,9 +55,8 @@ predict_gaussian <- function(model_matrix, samples, specials, resp, time, type) 
     list(response = sim_r, mean_or_link = sim)
 }
 
-predict_categorical <- function(model_matrix, samples, specials, resp, time, type) {
+predict_categorical <- function(model_matrix, samples, specials, resp, time, type, n_draws) {
     beta <- samples[[paste0("beta_", resp)]]
-    n_draws <- nrow(beta)
     n_id <- nrow(model_matrix) / n_draws
     S <- dim(samples[[paste0("beta_", resp)]])[4] + 1
     sim <- matrix(NA, nrow(model_matrix), S)
@@ -78,13 +76,12 @@ predict_categorical <- function(model_matrix, samples, specials, resp, time, typ
     list(response = sim_r, mean_or_link = sim)
 }
 
-predict_bernoulli <- function(model_matrix, samples, specials, resp, time, type) {
-    predict_binomial(model_matrix, samples, specials, resp, time, type)
+predict_bernoulli <- function(model_matrix, samples, specials, resp, time, type, n_draws) {
+    predict_binomial(model_matrix, samples, specials, resp, time, type, n_draws)
 }
 
-predict_binomial <- function(model_matrix, samples, specials, resp, time, type) {
+predict_binomial <- function(model_matrix, samples, specials, resp, time, type, n_draws) {
     beta <- samples[[paste0("beta_", resp)]]
-    n_draws <- nrow(beta)
     n_id <- nrow(model_matrix) / n_draws
     sim <- sim_r <- numeric(nrow(model_matrix))
     trials <- specials$trials
@@ -105,9 +102,8 @@ predict_binomial <- function(model_matrix, samples, specials, resp, time, type) 
     list(response = sim_r, mean_or_link = sim)
 }
 
-predict_poisson <- function(model_matrix, samples, specials, resp, time, type) {
+predict_poisson <- function(model_matrix, samples, specials, resp, time, type, n_draws) {
     beta <- samples[[paste0("beta_", resp)]]
-    n_draws <- nrow(beta)
     n_id <- nrow(model_matrix) / n_draws
     sim <- sim_r <- numeric(nrow(model_matrix))
     offset <- specials$offset
@@ -127,10 +123,9 @@ predict_poisson <- function(model_matrix, samples, specials, resp, time, type) {
     list(response = sim_r, mean_or_link = sim)
 }
 
-predict_negbin <- function(model_matrix, samples, specials, resp, time, type) {
+predict_negbin <- function(model_matrix, samples, specials, resp, time, type, n_draws) {
     beta <- samples[[paste0("beta_", resp)]]
     phi <- samples[[paste0("phi_", resp)]]
-    n_draws <- nrow(beta)
     n_id <- nrow(model_matrix) / n_draws
     sim <- sim_r <- numeric(nrow(model_matrix))
     for(k in seq_len(n_draws)) {

@@ -81,14 +81,15 @@ predict.btvcmfit_counterfactual <- function(object, newdata, type, n_draws = NUL
     for (i in (fixed + 1):n_time) {
         idx <- rep(seq(i - fixed, n, by = n_time), 1 + fixed) + rep(0:fixed, each = n_id * n_draws)
         idx_i <- seq(i, n, by = n_time)
-        model_matrix <- full_model.matrix_fast(basis$formula, newdata[idx, ], u_names)[-1,] #remove extra due to NAs
+        model_matrix <- full_model.matrix_fast(basis$formula, newdata[idx, ], u_names)#[-1,] #remove extra due to NAs
         for (j in seq_along(resp_all)) {
             resp <- resp_all[j]
             if (any(is.na(newdata[idx_i, resp]))) { #TODO partial missingness?
 
                 sim <- do.call(paste0("predict_", basis$formula[[j]]$family),
                     list(model_matrix = model_matrix[, basis$J[[j]], drop = FALSE],
-                        samples = samples, specials[[j]], resp, time =  i - fixed, type))
+                        samples = samples, specials[[j]], resp,
+                        time =  i - fixed, type, n_draws = n_draws))
 
 
                 if (is_categorical(basis$formula[[j]]$family)) {
