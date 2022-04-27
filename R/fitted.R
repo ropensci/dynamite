@@ -30,8 +30,7 @@ fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
 
         if (!(object$time_var %in% names(newdata)))
             stop(paste("Time index variable", object$time_var, "not found in 'newdata'."))
-        # sort just in case
-        newdata <- dplyr::arrange(newdata, dplyr::across(object$time_var))
+        newdata <- dplyr::arrange(newdata, dplyr::across(dplyr::all_of(c(object$group_var, object$time_var))))
         # TODO just use the original time points starting from start_time
         time <- unique(newdata[[object$time_var]])
         if (!all(time %in% object$time))
