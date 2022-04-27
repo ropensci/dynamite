@@ -346,7 +346,7 @@ prepare_channel_vars_binomial <- function(i, Y, J_fixed, J_varying, L_fixed,
     L_varying, K_fixed, K_varying,
     sd_x, resp_class, coef_names, priors) {
 
-    if (any(Y < 0) || any(Y != as.integer(Y))) {
+    if (any(Y < 0) || any(is.logical(Y)) || any(Y != as.integer(Y))) {
         stop_("Response variable ", i, " is invalid: binomial family supports only non-negative integers.")
     }
     if ("factor" %in% resp_class) {
@@ -369,7 +369,7 @@ prepare_channel_vars_binomial <- function(i, Y, J_fixed, J_varying, L_fixed,
 prepare_channel_vars_bernoulli <- function(i, Y, J_fixed, J_varying, L_fixed,
     L_varying, K_fixed, K_varying,
     sd_x, resp_class, coef_names, priors) {
-    if (!all(Y %in% 0:1)) {
+    if (!all(Y %in% 0:1) || any(is.logical(Y))) {
         stop_("Response variable ", i, " is invalid: bernoulli family supports only 0/1 integers.")
     }
     if ("factor" %in% resp_class) {
