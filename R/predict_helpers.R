@@ -86,7 +86,7 @@ predict_binomial <- function(model_matrix, samples, specials, resp, time, type, 
     sim <- sim_r <- numeric(nrow(model_matrix))
     trials <- specials$trials
     if (is.null(trials)) {
-        trials <- 1
+        trials <- rep(1, n_id)
     }
     for(k in seq_len(n_draws)) {
         idx_k <- ((k - 1) * n_id + 1):(k * n_id)
@@ -97,7 +97,7 @@ predict_binomial <- function(model_matrix, samples, specials, resp, time, type, 
         if (type == "mean") {
             sim[idx_k] <- plogis(xbeta)
         }
-        sim_r[idx_k] <- rbinom(n_id, trials[idx_k], plogis(xbeta))
+        sim_r[idx_k] <- rbinom(n_id, trials, plogis(xbeta))
     }
     list(response = sim_r, mean_or_link = sim)
 }
@@ -111,7 +111,7 @@ predict_poisson <- function(model_matrix, samples, specials, resp, time, type, n
     for(k in seq_len(n_draws)) {
         idx_k <- ((k - 1) * n_id + 1):(k * n_id)
         xbeta <- model_matrix[idx_k, , drop = FALSE] %*% beta[k, time, ]
-        exp_xbeta <- if (has_offset) exp(xbeta + offset[idx_k]) else exp(xbeta)
+        exp_xbeta <- if (has_offset) exp(xbeta + offset) else exp(xbeta)
         if (type == "link") {
             sim[idx_k, ] <- xbeta
         }

@@ -144,7 +144,15 @@ full_model.matrix <- function(formula, data) {
     model_matrix
 }
 
-# For prediction
+# For prediction handles NA's correctly
+full_model.matrix_predict <- function(formula, data, u_names) {
+    idx <- seq(2, nrow(data), by = 2)
+    model_matrices <- lapply(get_form(formula), function(x) model.matrix.lm(x, data,
+        na.action = na.pass)[idx,])
+    model_matrix <- do.call(cbind, model_matrices)
+    model_matrix[, u_names, drop = FALSE]
+}
+
 full_model.matrix_fast <- function(formula, data, u_names) {
     model_matrices <- lapply(get_form(formula), model.matrix, data)
     model_matrix <- do.call(cbind, model_matrices)

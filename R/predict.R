@@ -79,9 +79,9 @@ predict.btvcmfit_counterfactual <- function(object, newdata, type, n_draws = NUL
     u_names <- unique(names(basis$start))
     n <- nrow(newdata)
     for (i in (fixed + 1):n_time) {
-        idx <- rep(seq(i - fixed, n, by = n_time), 1 + fixed) + rep(0:fixed, each = n_id * n_draws)
+        idx <- rep(seq(i - fixed, n, by = n_time), each = 1 + fixed) + rep(0:fixed, times = n_id * n_draws)
         idx_i <- seq(i, n, by = n_time)
-        model_matrix <- full_model.matrix_fast(basis$formula, newdata[idx, ], u_names)#[-1,] #remove extra due to NAs
+        model_matrix <- full_model.matrix_predict(basis$formula, newdata[idx, ], u_names)
         for (j in seq_along(resp_all)) {
             resp <- resp_all[j]
             if (any(is.na(newdata[idx_i, resp]))) { #TODO partial missingness?
