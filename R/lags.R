@@ -18,7 +18,8 @@ is.lags <- function(x) {
 
 # Create a lagged version of a vector
 lag_ <- function(x, k = 1) {
-    c(x[1], x[-length(x)])
+    xlen <- length(x)
+    c(x[1:k], x[-((xlen - k + 1):xlen)])
 }
 
 # Find lag terms in a vector
@@ -35,7 +36,7 @@ extract_lags <- function(x) {
     has_lag <- find_lags(x, processed = FALSE)
     lag_terms <- x[has_lag]
     # TODO allow vector k
-    lag_comp <- regexpr("(?<src>lag\\(\\s*(?<def>.*?)\\s*(?:,\\s*(?<k>[0-9]+)){0,1}\\s*\\))", lag_terms, perl = TRUE)
+    lag_comp <- regexpr("^(?<src>lag\\(\\s*(?<def>.*?)\\s*(?:,\\s*(?<k>[0-9]+)){0,1}\\s*\\))$", lag_terms, perl = TRUE)
     lag_map <- list()
     for (comp in attr(lag_comp, 'capture.name')) {
         start <- attr(lag_comp, "capture.start")[,comp]
