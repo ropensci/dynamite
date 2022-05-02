@@ -19,7 +19,7 @@ is.lags <- function(x) {
 # Create a lagged version of a vector
 lag_ <- function(x, k = 1) {
     xlen <- length(x)
-    c(x[1:k], x[-((xlen - k + 1):xlen)])
+    c(rep(NA, k), x[1:(length(x) - k)])
 }
 
 # Find lag terms in a vector

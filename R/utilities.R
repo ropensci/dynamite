@@ -41,25 +41,55 @@ formula_rhs <- function(x) {
 }
 
 # Collapse argument vector with a newline ignoring zero-length entries
-collapse_rows <- function(x) {
-    paste0(x[nzchar(x)], collapse = "\n")
+# collapse_rows <- function(x) {
+#     paste0(x[nzchar(x)], collapse = "\n")
+# }
+
+# Create a comma-separated character string to represent a Stan integer array
+cs <- function(x) {
+    paste0(x, collapse = ",")
 }
 
-# Paste argument vectors with a newline
-paste_rows <- function(...) {
-    pasted <- sapply(list(...), function(x) {
+# Paste and optionally parse character strings containing glue syntax
+paste_rows <- function(..., .indent = "", .parse = TRUE) {
+    dots <- list(...)
+    ndots <- length(dots)
+    if (ndots) {
+        idt_vec <- character(ndots)
+        idt_vec[1:ndots] <- .indent
+    }
+    pasted <- rep("", ndots)
+    for (i in seq_len(ndots)) {
+        x <- dots[[i]]
         xlen <- length(x)
         if (xlen == 0) {
-            ""
+            pasted[i] <- ""
         } else if (xlen == 1) {
-            x
+            if (nzchar(x)) {
+                if (.parse) {
+                    xglue <- glue::glue(x, .envir = parent.frame(), .trim = FALSE)
+                    pasted[i] <- paste0(idt_vec[i], xglue, collapse = "\n")
+                } else {
+                    pasted[i] <- paste0(idt_vec[i], x)
+                }
+            }
         } else {
-            paste0(x, collapse = "")
+            x <- x[nzchar(x)]
+            if (length(x)) {
+                if (.parse) {
+                    xglue <- sapply(x, function(y) {
+                        paste0(glue::glue(y, .envir = parent.frame(), .trim = FALSE), collapse = "\n")
+                    })
+                    pasted[i] <- paste0(idt_vec[i], xglue, collapse = "\n")
+                } else {
+                    pasted[i] <- paste0(idt_vec[i], x, collapse = "\n")
+                }
+            }
         }
-    })
+    }
     pasted <- pasted[nzchar(pasted)]
     if (length(pasted)) {
-        collapse_rows(pasted)
+        paste0(pasted, collapse = "\n")
     } else {
         ""
     }
@@ -68,12 +98,12 @@ paste_rows <- function(...) {
 # Create an indenter
 indenter_ <- function(m) {
     x <- rep(" ", m)
-    idts <- sapply(1:10, function(y) {
+    idts <- sapply(0:10, function(y) {
         paste0(rep(x, y), collapse = "")
     })
     force(idts)
-    function(n) {
-        idts[[n]]
+    function(v) {
+        unlist(idts[v + 1])
     }
 }
 
@@ -128,7 +158,7 @@ onlyif <- function(test, yes) {
 
 # Combine model.matrix objects of all formulas of a btvcmformula into one
 full_model.matrix <- function(formula, data) {
-    model_matrices <- lapply(get_form(formula), model.matrix, data)
+    model_matrices <- lapply(get_form(formula), model.matrix.lm, data = data, na.action = na.pass)
     model_matrix <- do.call(cbind, model_matrices)
     u_names <- unique(colnames(model_matrix))
     model_matrix <- model_matrix[, u_names, drop = FALSE]

@@ -25,47 +25,51 @@ btvcmfit <- function(formula, data, group, time, priors = NULL, debug = NULL, ..
         # Convert character types to factors
         dplyr::mutate(dplyr::across(tidyselect:::where(is.character), as.factor)) |>
         dplyr::arrange(dplyr::across(dplyr::all_of(c(group_var, time_var))))
-    group <- data[[group_var]] # had , drop = FALSE, is it needed somewhere?
     time <- sort(unique(data[[time_var]]))
     full_time <- NULL
     # TODO convert Dates etc. to integers before this
     time_ivals <- diff(time)
     time_scale <- min(diff(time))
     if (any(time_ivals[!is.na(time_ivals)] %% time_scale > 0)) {
-        stop_("Observations must occur at equal time intervals.")
+        stop_("Observations must occur at regular time intervals.")
     } else {
         full_time <- seq(time[1], time[length(time)], by = time_scale)
-        if (!identical(time, full_time)) {
+        time_groups <- data |>
+            dplyr::group_by(!!as.symbol(group_var)) |>
+            dplyr::summarise(has_missing = !identical(!!as.symbol(time_var), full_time))
+        if (any(time_groups$has_missing)) {
             full_data_template <- expand.grid(time = time, group = unique(data[[group_var]]))
             names(full_data_template) <- c(time_var, group_var)
             data <- full_data_template |> dplyr::left_join(data, by = c(group_var, time_var))
         }
     }
-    data_mis <- data[ ,c(group_var, time_var)]
-    data_mis$obs <- complete.cases(data)
-    time_segments <- data_mis |>
-        dplyr::group_by(dplyr::across(dplyr::all_of(c(group_var)))) |>
-        dplyr::summarise(last_obs = which(obs)[sum(obs)],
-                         valid_missingness_pattern_ =
-                             all(obs[1:last_obs] == cummin(obs[1:last_obs])) ||
-                             all(obs[1:last_obs] == cummax(obs[1:last_obs])))
-    if (any(!time_segments$valid_missingness_pattern_)) {
-        # TODO is there a better term or a way to convey this?
-        stop_("Observed time series must not contain gaps.")
-    }
+    group <- data[[group_var]] # had , drop = FALSE, is it needed somewhere?
+    # TODO M1aybe having a continuous range of non-NA values for each individual is useful for some special case?
+    # data_mis <- data[ ,c(group_var, time_var)]
+    # data_mis$obs <- complete.cases(data)
+    # time_segments <- data_mis |>
+    #     dplyr::group_by(dplyr::across(dplyr::all_of(c(group_var)))) |>
+    #     dplyr::summarise(last_obs = which(obs)[sum(obs)],
+    #                      valid_missingness_pattern_ =
+    #                          all(obs[1:last_obs] == cummin(obs[1:last_obs])) ||
+    #                          all(obs[1:last_obs] == cummax(obs[1:last_obs])))
+    # if (any(!time_segments$valid_missingness_pattern_)) {
+    #     # TODO is there a better term or a way to convey this?
+    #     stop_("Observed time series must not contain gaps.")
+    # }
     resp_all <- get_resp(formula)
     n_rows <- nrow(data)
     n_resp <- length(resp_all)
     lag_map <- extract_lags(unlist(get_pred(formula)))
     unprocessed_lags <- rep(TRUE, nrow(lag_map))
     data_names <- names(data)
-    fixed <- 0L
+    #fixed <- 0L
     # Process lag terms defined via lags()
     if (!is.null(lag_all <- attr(formula, "lags"))) {
-        fixed <- lag_all$k
+        #fixed <- lag_all$k
         type <- lag_all$type
-        pred_lag <- character(fixed * n_resp)
-        for (i in seq_len(fixed)) {
+        pred_lag <- character(lag_all$k * n_resp)
+        for (i in seq_len(lag_all$k)) {
             for (j in seq_len(n_resp)) {
                 ix <- (i-1)*n_resp + j
                 pred_lag[ix] <- paste0("I(lag_(", resp_all[j], ", ", i, "))")
@@ -75,11 +79,11 @@ btvcmfit <- function(formula, data, group, time, priors = NULL, debug = NULL, ..
             c(formula[[j]]$predictors) <- pred_lag
             c(formula[[j]][[type]]) <- which(formula[[j]]$predictors %in% pred_lag)
         }
-        unprocessed_lags[lag_map$def %in% resp_all & lag_map$k <= fixed] <- FALSE
+        unprocessed_lags[lag_map$def %in% resp_all & lag_map$k <= lag_all$k] <- FALSE
     }
     # Process lag terms defined via lag() in formulas
     if (any(unprocessed_lags)) {
-        fixed <- max(max(lag_map$k), fixed)
+        #fixed <- max(max(lag_map$k), fixed)
         for (i in which(unprocessed_lags)) {
             if (lag_map$k[i] <= 0) {
                 stop_("Only positive shift values are allowed in lag().")
@@ -123,15 +127,13 @@ btvcmfit <- function(formula, data, group, time, priors = NULL, debug = NULL, ..
         }
         x
     })
-
     specials <- evaluate_specials(formula, data)
-    converted <- convert_data(formula, responses, specials, group, full_time, fixed, model_matrix, coef_names, priors)
-    model_data <- converted$data
-    model_helpers <- converted$helpers
+    converted <- convert_data(formula, responses, specials, group, full_time, model_matrix, coef_names, priors)
+    model_vars <- converted$model_vars
+    sampling_vars <- converted$sampling_vars
     model_priors <- converted$priors
-    model_code <- create_blocks(formula, indent = 2L, resp = resp_all,
-                                helpers = model_helpers, priors = model_priors, data = model_data)
-    model_data[grep("_prior_distr_", names(model_data))] <- NULL
+    model_code <- create_blocks(formula, indent = 2L, vars = model_vars)
+    model_vars[grep("_prior_distr_", names(model_vars))] <- NULL
     #debug <- dots$debug
     model <- if (!is.null(debug) && isTRUE(debug$no_compile)) {
         NULL
@@ -141,7 +143,7 @@ btvcmfit <- function(formula, data, group, time, priors = NULL, debug = NULL, ..
     }
     drop_pars <- expand.grid(c("beta_fixed_", "beta_varying_"), resp_all)
     drop_pars <- paste0(drop_pars[,1], drop_pars[,2])
-    stanfit <- if (isTRUE(debug$no_compile) || isTRUE(debug$no_sampling)) NULL else rstan::sampling(model, data = model_data, pars = drop_pars, include = FALSE, ...)
+    stanfit <- if (isTRUE(debug$no_compile) || isTRUE(debug$no_sampling)) NULL else rstan::sampling(model, data = sampling_vars, pars = drop_pars, include = FALSE, ...)
     # TODO return the function call for potential update method?
     out <- structure(
         list(
@@ -154,16 +156,16 @@ btvcmfit <- function(formula, data, group, time, priors = NULL, debug = NULL, ..
             levels = resp_levels,
             specials = specials,
             # TODO: extract only D for as.data.frame and J for predict
-            #model_data = model_data,
+            model_vars = model_vars,
             data = data,
-            spline = list(B = model_data$Bs,
-                D = model_data$D),
+            spline = list(B = sampling_vars$Bs,
+                D = sampling_vars$D),
             priors = dplyr::bind_rows(model_priors),
             prediction_basis = list(
                 formula = formula,
-                fixed = fixed,
-                past = model_matrix[(n_rows - fixed):n_rows,],
-                start = model_matrix[1:fixed,], # Needed for some posterior predictive checks?
+                #fixed = fixed,
+                #past = model_matrix[(n_rows - fixed):n_rows,],
+                #start = model_matrix[1:fixed,], # Needed for some posterior predictive checks?
                 ord = data_names[!data_names %in% c(group_var, time_var)],
                 J = attr(model_matrix, "assign")
             )

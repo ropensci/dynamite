@@ -14,7 +14,7 @@
 #' @export
 splines <- function(shrinkage = FALSE, override = FALSE,
                     df = NULL, knots = NULL, degree = 3,
-                    Boundary.knots = NULL, lb_tau = 0.001, noncentered = FALSE) {
+                    Boundary.knots = NULL, lb_tau = 0, noncentered = FALSE) {
     shrinkage <- try_(shrinkage, type = "logical")[1]
     override <- try_(override, type = "logical")[1]
     df <- try_(df, type = "integer")[1]

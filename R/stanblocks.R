@@ -7,126 +7,101 @@ create_blocks <- function(formula, ...) {
 }
 
 #' @export
-create_blocks.default <- function(formula, indent = 2L, ...) {
+create_blocks.default <- function(formula, indent = 2L, vars, ...) {
 
     # only need this for the hidden state case
     #functions <- paste("functions {", .loglik_stan, "}", sep = "\n")
     idt <- indenter_(indent)
-    functions <- create_functions(formula, idt, ...)
-    data <- create_data(formula, idt, ...)
-    transformed_data <- create_transformed_data(formula, idt, ...)
-    parameters <- create_parameters(formula, idt, ...)
-    transformed_parameters <- create_transformed_parameters(formula, idt, ...)
-    model <- create_model(formula, idt, ...)
-    generated_quantities <- create_generated_quantities(formula, idt, ...)
+    functions <- create_functions(formula, idt, vars)
+    data <- create_data(formula, idt, vars)
+    transformed_data <- create_transformed_data(formula, idt, vars)
+    parameters <- create_parameters(formula, idt, vars)
+    transformed_parameters <- create_transformed_parameters(formula, idt, vars)
+    model <- create_model(formula, idt, vars)
+    generated_quantities <- create_generated_quantities(formula, idt, vars)
     # combine above text blocks
-    model_code <- paste_rows(functions, data, transformed_data, parameters,
-                             transformed_parameters, model, generated_quantities)
-    model_code
+    paste_rows(functions, data, transformed_data, parameters,
+               transformed_parameters, model, generated_quantities,
+               .parse = FALSE)
 }
 #'
 #' @export
-create_functions <- function(formula, idt, ...) {
+create_functions <- function(formula, idt, vars) {
     NULL
 }
 #'
 #' @export
-create_data <- function(formula, idt, resp, helpers, data, ...) {
+create_data <- function(formula, idt, vars) {
 
-    has_splines <- any(unlist(lapply(helpers, "[[", "has_varying")))
+    has_splines <- any(unlist(lapply(vars, "[[", "has_varying")))
     mtext <- paste_rows(
-        c(idt(1), "int<lower=1> T; // number of time points"),
-        c(idt(1), "int<lower=1> N; // number of individuals"),
-        c(idt(1), "int<lower=1> C; // number of channels/response variables"),
-        c(idt(1), "int<lower=1> K; // total number of covariates across all channels"),
-        c(idt(1), "matrix[N, K] X[T]; // all covariates as an array of N x K matrices"),
-        onlyif(has_splines, c(idt(1), "int<lower=0> D; // number of B-splines")),
-        onlyif(has_splines, c(idt(1), "matrix[D, T] Bs; // B-spline basis matrix"))
+        "int<lower=1> T; // number of time points",
+        "int<lower=1> N; // number of individuals",
+        "int<lower=1> K; // total number of covariates across all channels",
+        "matrix[N, K] X[T]; // all covariates as an array of N x K matrices",
+        onlyif(has_splines, "int<lower=0> D; // number of B-splines"),
+        onlyif(has_splines, "matrix[D, T] Bs; // B-spline basis matrix"),
+        .indent = idt(1),
+        .parse = FALSE
     )
 
     # loop over channels
-    channels <- character(length(formula))
+    datatext <- character(length(formula))
     for (i in seq_along(formula)) {
-        y <- resp[i]
-        h <- helpers[[i]]
-        # Number of covariates in channel i
-        line_args <- c(list(i = y, idt = idt, data), h)
-        channels[i] <- paste_rows(
-            c(idt(1), "// Data for response ", i),
-            # number of covariates (all, fixed, varying)
-            c(idt(1), "int<lower=1> K_", y, ";"),
-            onlyif(h$has_fixed, c(idt(1), "int<lower=1> K_fixed_", y, ";")),
-            onlyif(h$has_varying, c(idt(1), "int<lower=1> K_varying_", y, ";")),
-            # index vectors of covariates (all, fixed, varying) related to channel i
-            c(idt(1), "int J_", y, "[K_", y, "];"),
-            onlyif(h$has_fixed, c(idt(1), "int J_fixed_", y, "[K_fixed_", y, "];")),
-            onlyif(h$has_varying, c(idt(1), "int J_varying_", y, "[K_varying_", y, "];")),
-            # index vectors of fixed and varying betas
-            onlyif(h$has_fixed, c(idt(1), "int L_fixed_", y, "[K_fixed_", y, "];")),
-            onlyif(h$has_varying, c(idt(1), "int L_varying_", y, "[K_varying_", y, "];")),
-            lines_wrap("data", formula[[i]], line_args)
-        )
+        channel <- vars[[i]]
+        y <- channel$resp
+        line_args <- c(list(y = y, idt = idt), channel)
+        datatext[i] <- lines_wrap("data", formula[[i]], line_args)
     }
-    paste_rows("data {", mtext, collapse_rows(channels), "}")
+    paste_rows("data {", mtext, datatext, "}", .parse = FALSE)
 }
 
 #'
 #' @export
-create_transformed_data <- function(formula, idt, resp, ...) {
+create_transformed_data <- function(formula, idt, vars) {
     transformed_data <- character(length(formula))
     for (i in seq_along(formula)) {
-        if (is_categorical(formula[[i]]$family)) {
-            y <- resp[i]
-            transformed_data[i] <- paste_rows(
-                c(idt(1), "vector[K_", y, "] zeros_K_", y, " = rep_vector(0, K_", y, ");"),
-                c(idt(1), "vector[S_", y, "] zeros_S_", y, " = rep_vector(0, S_", y, ");")
-            )
-        }
+        line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
+        transformed_data[i] <- lines_wrap("transformed_data", formula[[i]], line_args)
     }
-    paste_rows("transformed data {", collapse_rows(transformed_data), "}")
+    paste_rows("transformed data {", transformed_data, "}", .parse = FALSE)
 }
 
 #'
 #' @export
-create_parameters <- function(formula, idt, resp, helpers, ...) {
-    lb <- character(0)
+create_parameters <- function(formula, idt, vars) {
     splinetext <- ""
     if (!is.null(spline_defs <- attr(formula, "splines"))) {
-        lb <- attr(formula, "splines")$lb_tau
-        splinetext <- paste0(idt(1), "// Spline parameters")
-        if (spline_defs$shrinkage) {
-            splinetext <- paste_rows(splinetext, c(idt(1), "vector<lower=0>[D - 1] lambda; // shrinkage parameter"))
-        }
+        splinetext <- paste_rows(
+            "// Spline parameters",
+            onlyif(spline_defs$shrinkage, "vector<lower=0>[D - 1] lambda; // shrinkage parameter"),
+            .indent = idt(c(1, 1))
+        )
         # TODO handle centered case where spline is not defined but user inserts varying(.) terms
     }
     pars <- character(length(formula))
     for (i in seq_along(formula)) {
-        line_args <- c(list(i = resp[i], idt = idt, lb = lb), helpers[[i]])
+        line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
         pars[i] <- lines_wrap("parameters", formula[[i]], line_args)
     }
-    paste_rows("parameters {", splinetext, collapse_rows(pars), "}")
+    paste_rows("parameters {", splinetext, pars, "}", .parse = FALSE)
 }
 
 #'
 #' @export
-create_transformed_parameters <- function(formula, idt, resp, helpers, ...) {
-
+create_transformed_parameters <- function(formula, idt, vars) {
     spline_defs <- attr(formula, "splines")
     transpars <- character(length(formula))
     for (i in seq_along(formula)) {
-        line_args <- c(list(i = resp[i],
-                            idt = idt,
-                            shrinkage = spline_defs$shrinkage),
-                       helpers[[i]])
+        line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
         transpars[i] <- lines_wrap("transformed_parameters", formula[[i]], line_args)
-
     }
-    paste_rows("transformed parameters {", collapse_rows(transpars), "}")
+    paste_rows("transformed parameters {", transpars, "}", .parse = FALSE)
 }
 
 #'
 #' @export
-create_model <- function(formula, idt, resp, helpers, priors, data, ...) {
+create_model <- function(formula, idt, vars) {
     # TODO: Without global shrinkage prior it probably makes sense to use user-defined prior for tau
     # With lambda&tau, need more testing if this is fine or do we need to support other forms
     # e.g. as in https://arxiv.org/abs/1611.01310 and https://www.mdpi.com/2225-1146/8/2/20
@@ -140,27 +115,22 @@ create_model <- function(formula, idt, resp, helpers, priors, data, ...) {
     spline_defs <- attr(formula, "splines")
     mod <- character(length(formula))
     for (i in seq_along(formula)) {
-        line_args <- c(list(i = resp[i],
-                            idt = idt,
-                            shrinkage = spline_defs$shrinkage,
-                            data = data),
-                       helpers[[i]],
-                       priors = priors[[i]])
+        line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
         mod[i] <- lines_wrap("model", formula[[i]], line_args)
     }
-    paste_rows("model {", collapse_rows(mod), "}")
+    paste_rows("model {", mod, "}", .parse = FALSE)
 }
 
 #'
 #' @export
-create_generated_quantities <- function(formula, idt, resp, helpers, ...) {
+create_generated_quantities <- function(formula, idt, vars) {
     gen <- character(length(formula))
     for (i in seq_along(formula)) {
-        line_args <- c(list(i = resp[i], idt), helpers[[i]])
+        line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
         gen[i] <- lines_wrap("generated_quantities", formula[[i]], line_args)
     }
     if (any(nzchar(gen))) {
-        paste_rows("generated quantities {", collapse_rows(gen), "}")
+        paste_rows("generated quantities {", gen, "}", .parse = FALSE)
     } else {
         NULL
     }
