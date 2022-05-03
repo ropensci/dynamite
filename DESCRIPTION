@@ -23,31 +23,9 @@ Depends:
     R (>= 3.4.0)
 Imports: 
     dplyr,
+    glue,
     methods,
+    rlang,
     rstan (>= 2.18.1)
 Suggests:
     posterior
-Collate: 
-    'as_data_frame.R'
-    'as_draws.R'
-    'coef.R'
-    'convert_data.R'
-    'dynamite-package.R'
-    'dynamite.R'
-    'utilities.R'
-    'dynamitefit.R'
-    'dynamiteformula.R'
-    'dynamiteterms.R'
-    'families.R'
-    'fitted.R'
-    'get_priors.R'
-    'lags.R'
-    'modeldata.R'
-    'predict.R'
-    'predict_helpers.R'
-    'print.R'
-    'specials.R'
-    'splines.R'
-    'stanblocks.R'
-    'stanblocks_families.R'
-    'testing.R'

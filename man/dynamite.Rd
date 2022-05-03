@@ -2,9 +2,9 @@
 % Please edit documentation in R/dynamite.R
 \name{dynamite}
 \alias{dynamite}
-\title{Bayesian Time-Varying Coefficients Model}
+\title{Estimate a Bayesian Dynamic Multivariate Panel Model}
 \usage{
-dynamite(formula, data, group, time, ...)
+dynamite(formula, data, group, time, priors = NULL, debug = NULL, ...)
 }
 \arguments{
 \item{formula}{todo}
@@ -18,5 +18,5 @@ dynamite(formula, data, group, time, ...)
 \item{...}{todo}
 }
 \description{
-Bayesian Time-Varying Coefficients Model
+Estimate a Bayesian Dynamic Multivariate Panel Model
 }
