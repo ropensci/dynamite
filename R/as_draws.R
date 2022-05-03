@@ -19,9 +19,6 @@
 #' @rdname as_draws-dynamitefit
 #' @method as_draws_df dynamitefit
 as_draws_df.dynamitefit <- function(x, parameter_types, ...) {
-    if (!requireNamespace("posterior", quietly = TRUE)) {
-        stop("This function depends on the 'posterior' package. ", call. = FALSE)
-    }
     posterior::as_draws(as.data.frame(x, parameter_types = parameter_types))
     # Not tested
 }

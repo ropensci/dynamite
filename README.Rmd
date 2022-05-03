@@ -10,7 +10,7 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.path = "man/figures/README-",
   out.width = "100%",
-  cache = TRUE
+  cache = FALSE
 )
 ```
 
@@ -35,5 +35,5 @@ You can install the development version from with:
 
 ```{r, eval=FALSE}
 # install.packages("devtools")
-devtools::install_git("https://gitlab.jyu.fi/predlife/dynamite")
+devtools::install_github("https://gitlab.jyu.fi/predlife/dynamite")
 ```

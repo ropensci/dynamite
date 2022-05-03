@@ -83,7 +83,7 @@ convert_data <- function(formula, responses, specials, group, time,
         obs_len <- apply(obs_idx, 2, function(x) {
             sum(x > 0)
         })
-        channel$has_missing = any(obs_len < N)
+        channel$has_missing <- any(obs_len < N)
         if (channel$has_missing) {
             sampling_vars[[paste0("obs_", resp)]] <- t(obs_idx)
             sampling_vars[[paste0("n_obs_", resp)]] <- obs_len
@@ -91,8 +91,8 @@ convert_data <- function(formula, responses, specials, group, time,
         } else {
             channel$obs <- ""
         }
-        channel$has_fixed = channel$K_fixed > 0
-        channel$has_varying = channel$K_varying > 0
+        channel$has_fixed <- channel$K_fixed > 0
+        channel$has_varying <- channel$K_varying > 0
         channel$lb <- lb
         channel$shrinkage <- shrinkage
         if (channel$has_varying) {

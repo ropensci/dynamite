@@ -1,6 +1,6 @@
 Package: dynamite
 Title: Bayesian Modelling and Causal Inference for Multivariate Longitudinal Data
-Version: 0.0.0-1
+Version: 0.0.1
 Authors@R: 
     c(person(given = "Santtu",
            family = "Tikka",
@@ -13,19 +13,18 @@ Authors@R:
            email = "jouni.helske@iki.fi",
            comment = c(ORCID = "0000-0001-7130-793X")))
 Description: What the package does (one paragraph).
+URL: https://github.com/santikka/dynamite
+BugReports: https://github.com/santikka/dynamite/issues
 License: GPL (>= 3)
 Encoding: UTF-8
-LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
-Biarch: true
 Depends: 
-    R (>= 3.4.0)
+    R (>= 3.5.0)
 Imports: 
     dplyr,
     glue,
     methods,
+    posterior,
     rlang,
     rstan (>= 2.18.1)
-Suggests:
-    posterior

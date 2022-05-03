@@ -12,8 +12,8 @@ public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostat
 
 general description…
 
-The `dynamite` package is developed with the support of Academy of Finland
-grant 331817.
+The `dynamite` package is developed with the support of Academy of
+Finland grant 331817.
 
 ## Installation
 
@@ -21,5 +21,5 @@ You can install the development version from with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_git("https://gitlab.jyu.fi/predlife/dynamite")
+devtools::install_github("santikka/dynamite")
 ```
