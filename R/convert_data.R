@@ -46,6 +46,7 @@ convert_data <- function(formula, responses, specials, group, time,
     X <- aperm(array(as.numeric(unlist(split(model_matrix, gl(T_full, 1, N * T_full)))),
                      dim = c(N, K, T_full)),
                c(3, 1, 2))
+    X[is.na(X)] <- 0
     assigned <- attr(model_matrix, "assign")
     fixed_pars <- attr(model_matrix, "fixed")
     varying_pars <- attr(model_matrix, "varying")
@@ -84,9 +85,9 @@ convert_data <- function(formula, responses, specials, group, time,
         })
         channel$has_missing = any(obs_len < N)
         if (channel$has_missing) {
-            channel$obs_idx <- t(obs_idx)
-            channel$n_obs <- obs_len
-            channel$obs <- glue::glue("obs_idx_{resp}[1:n_obs_{resp}[t], t]")
+            sampling_vars[[paste0("obs_", resp)]] <- t(obs_idx)
+            sampling_vars[[paste0("n_obs_", resp)]] <- obs_len
+            channel$obs <- glue::glue("obs_{resp}[1:n_obs_{resp}[t], t]")
         } else {
             channel$obs <- ""
         }
@@ -155,7 +156,7 @@ convert_data <- function(formula, responses, specials, group, time,
         warning_("All channels will now default to time-constant coefficients for all predictors.")
     }
     sampling_vars$N <- N
-    sampling_vars$K <- X
+    sampling_vars$K <- K
     sampling_vars$X <- X
     sampling_vars$T <- T_full
     list(model_vars = model_vars, sampling_vars = sampling_vars, priors = prior_list)

@@ -2,9 +2,7 @@
 lines_wrap <- function(prefix, formula, args) {
     lines_expr <- paste0(prefix, "_lines_", formula$family)
     lines_env <- list2env(args)
-    eval(get(lines_expr), envir = lines_env)
-    #formals(lines_fun) <- args
-
+    eval(eval(as.name(lines_expr)), envir = lines_env)
 }
 
 vectorizable_prior <- function(x) length(x) == 1 && !grepl("\\(", x)
@@ -14,7 +12,7 @@ data_lines_default <- quote({
     paste_rows(
         "// Data for response {y}",
         onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
-        onlyif(has_missing, "vector[T] n_obs_{y};"),
+        onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
         .indent = idt(1)
     )
 })
@@ -339,24 +337,22 @@ model_lines_default <- quote({
     mtext_varying <- ""
     mtext_tau <- ""
     if (has_fixed) {
-        d <- beta_fixed_prior_distr
-        if (vectorizable_prior(d)) {
+        if (vectorizable_prior(beta_fixed_prior_distr)) {
             np <- beta_fixed_prior_npars
-            dpars <- paste0("beta_fixed_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
-            mtext_fixed <- "beta_fixed_{y} ~ {d}({dpars});"
+            dpars_fixed <- paste0("beta_fixed_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
+            mtext_fixed <- "beta_fixed_{y} ~ {beta_fixed_prior_distr}({dpars_fixed});"
         } else {
-            mtext_fixed <- "beta_fixed_{y}[k] ~ {d};"
+            mtext_fixed <- "beta_fixed_{y}[k] ~ {beta_fixed_prior_distr};"
         }
     }
     if (has_varying) {
         if (noncentered) {
-            d <- beta_varying_prior_distr
-            if (vectorizable_prior(d)) {
+            if (vectorizable_prior(beta_varying_prior_distr)) {
                 np <- beta_varying_prior_npars
-                dpars <- paste0("beta_varying_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
-                mtext_varying <- "a_raw_{y}[, 1] ~ {d}({dpars});"
+                dpars_varying <- paste0("beta_varying_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
+                mtext_varying <- "a_raw_{y}[, 1] ~ {beta_varying_prior_distr}({dpars_varying});"
             } else {
-                mtext_varying <- "a_raw_{y}[{{{cs(1:K_varying)}}}, 1] ~ {d};"
+                mtext_varying <- "a_raw_{y}[{{{cs(1:K_varying)}}}, 1] ~ {beta_varying_prior_distr};"
             }
             mtext_varying <- paste_rows(mtext_varying,
                 "to_vector(a_raw_{y}[, 2:D]) ~ std_normal();",
@@ -364,13 +360,12 @@ model_lines_default <- quote({
                 .parse = FALSE
             )
         } else {
-            d <- beta_varying_prior_distr
-            if (vectorizable_prior(d)) {
+            if (vectorizable_prior(beta_varying_prior_distr)) {
                 np <- beta_varying_prior_npars
-                dpars <- paste0("beta_varying_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
-                mtext_varying <- "a_{y}[, 1] ~ {d}();"
+                dpars_varying <- paste0("beta_varying_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
+                mtext_varying <- "a_{y}[, 1] ~ {beta_varying_prior_distr}({dpars_varying});"
             } else {
-                mtext_varying <- "a_{y}[{{{cs(1:K_varying)}}}, 1] ~ {d};"
+                mtext_varying <- "a_{y}[{{{cs(1:K_varying)}}}, 1] ~ {beta_varying_prior_distr};"
             }
             mtext_varying <- paste_rows(
                 mtext_varying,
@@ -384,11 +379,10 @@ model_lines_default <- quote({
                 .parse = FALSE
             )
         }
-        d <- tau_prior_distr
-        if (vectorizable_prior(d)) {
+        if (vectorizable_prior(tau_prior_distr)) {
             np <- tau_prior_npars
-            dpars <- paste0("tau_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
-            mtext_tau <- "tau_{y} ~ {d}({dpars});"
+            dpars_tau <- paste0("tau_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
+            mtext_tau <- "tau_{y} ~ {tau_prior_distr}({dpars_tau});"
         } else {
             mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {d};"
         }
@@ -401,31 +395,29 @@ model_lines_categorical <- quote({
     mtext_varying <- ""
     mtext_tau <- ""
     if (has_fixed) {
-        d <- beta_fixed_prior_distr
-        if (vectorizable_prior(d)) {
+        if (vectorizable_prior(beta_fixed_prior_distr)) {
             np <- beta_fixed_prior_npars
-            dpars <- paste0("beta_fixed_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
-            mtext_fixed <- "to_vector(beta_fixed_{y} ~ {d}({dpars});"
+            dpars_fixed <- paste0("beta_fixed_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
+            mtext_fixed <- "to_vector(beta_fixed_{y}) ~ {beta_fixed_prior_distr}({dpars_fixed});"
         } else {
             k <- rep(1:K_fixed, S - 1)
             s <- rep(1:(S - 1), each = K)
-            mtext_fixed <- "beta_fixed_{y}[{k},{s}] ~ {d};"
+            mtext_fixed <- "beta_fixed_{y}[{k},{s}] ~ {beta_fixed_prior_distr};"
         }
     }
     if (has_varying) {
         if (noncentered) {
-            d <- beta_varying_prior_distr
-            if (vectorizable_prior(d)) {
+            if (vectorizable_prior(beta_varying_prior_distr)) {
                 np <- beta_varying_prior_npars
-                dpars <- paste0("beta_varying_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
+                dpars_varying <- paste0("beta_varying_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
                 # can't convert vector[] to vector
                 # mtext_varying <- c(idt(1), "to_vector(to_matrix(a_raw_", i, "[, , 1])') ~ ", d, "(", paste0("beta_varying_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
                 # TODO: this works but might give a false warning about missing jacobian which needs to be suppressed?
-                mtext_varying <- "to_vector(beta_{y}[1, {{{cs(L_varying)}}}, ]) ~ {d}({dpars});"
+                mtext_varying <- "to_vector(beta_{y}[1, {{{cs(L_varying)}}}, ]) ~ {beta_varying_prior_distr}({dpars_varying});"
             } else {
                 k <- rep(1:K_fixed, S - 1)
                 s <- rep(1:(S - 1), each = K_fixed)
-                mtext_varying <- "a_raw_{y}[{s},{k},1] ~ {d};"
+                mtext_varying <- "a_raw_{y}[{s},{k},1] ~ {beta_varying_prior_distr};"
             }
             mtext_varying <- paste_rows(
                 mtext_varying,
@@ -436,18 +428,17 @@ model_lines_categorical <- quote({
                 .parse = FALSE
             )
         } else {
-            d <- beta_varying_prior_distr
-            if (vectorizable_prior(d)) {
+            if (vectorizable_prior(beta_varying_prior_distr)) {
                 np <- beta_varying_prior_npars
-                dpars <- paste0("beta_varying_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
+                dpars_varying <- paste0("beta_varying_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
                 # can't convert vector[] to vector
                 # mtext_varying <- c(idt(1), "to_vector(to_matrix(a_raw_", i, "[, , 1])') ~ ", d, "(", paste0("beta_varying_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
                 # TODO: this works but might give a false warning about missing jacobian which needs to be suppressed?
-                mtext_varying <- "to_vector(beta_{y}[1, {{{cs(L_varying)}}}, ]) ~ {d}({dpars});"
+                mtext_varying <- "to_vector(beta_{y}[1, {{{cs(L_varying)}}}, ]) ~ {beta_varying_prior_distr}({dpars_varying});"
             } else {
                 k <- rep(1:K_fixed, S - 1)
                 s <- rep(1:(S - 1), each = K_varying)
-                mtext_varying <- "a_{y}[{s}, {k}, 1] ~ {d};"
+                mtext_varying <- "a_{y}[{s}, {k}, 1] ~ {beta_varying_prior_distr};"
             }
             mtext_varying <- paste_rows(
                 mtext_varying,
@@ -463,13 +454,12 @@ model_lines_categorical <- quote({
                 .parse = FALSE
             )
         }
-        d <- tau_prior_distr
-        if (vectorizable_prior(d)) {
+        if (vectorizable_prior(tau_prior_distr)) {
             np <- tau_prior_npars
-            dpars <-  paste0("tau_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
-            mtext_tau <- "tau_{y} ~ {d}({dpars});"
+            dpars_tau <-  paste0("tau_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
+            mtext_tau <- "tau_{y} ~ {tau_prior_distr}({dpars_tau});"
         } else {
-            mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {d};"
+            mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {tau_prior_distr};"
         }
     }
     likelihood_term <- "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], zeros_S_{y}, append_col(zeros_K_{y}, beta_{y}[t]));"
@@ -505,7 +495,7 @@ model_lines_bernoulli <- quote({
 
 model_lines_poisson <-  quote({
     mtext_def <- eval(model_lines_default)
-    offset_term <- ifelse_(has_offset, glue::glue("to_vector(offset_{y}[t, {obs}])", "0"))
+    offset_term <- ifelse_(has_offset, glue::glue("to_vector(offset_{y}[t, {obs}])"), "0")
     likelihood_term <- "{y}[t, {obs}] ~ poisson_log_glm(X[t][{obs}, {{{cs(J)}}}], {offset_term}, beta_{y}[t]);"
     mtext <- paste_rows("for (t in 1:T) {{", likelihood_term, "}}", .indent = idt(c(1, 2, 1)))
     paste_rows(mtext_def, mtext, .parse = FALSE)

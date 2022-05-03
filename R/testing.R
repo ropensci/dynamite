@@ -33,7 +33,7 @@ test_data$n <- test_data$y4 + sample(10, size = TN, replace = TRUE)
 
 test_form <- obs(y1 ~ x1 + x2 + x4 - lag(y2), family = categorical()) +
     obs(y2 ~ x1 + x3 + x4, family = categorical()) +
-    obs(y3 ~ x1 + x3, family = categorical()) +
+    obs(y5 ~ x1 + x3, family = gaussian()) +
     splines() +
     lags()
 
@@ -50,7 +50,7 @@ test_all <- obs(y6 ~ -1 + x1 + varying(~x2) + offset(log(t)), family = poisson()
     obs(y7 ~ x1 + x2 + varying(~x4) + lag(y1, 1) + lag(y2, 1), family = negbin()) +
     splines()
 
-#test_fit <- btvcm:::btvcmfit(test_all, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
+#test_fit <- btvcm:::btvcmfit(test_all, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, sampling_vars = TRUE, model_code = TRUE))
 #test_fit <- btvcm:::btvcmfit(test_all, test_data, ID, time)
 
 #test_fit_neglag <- btvcm:::btvcmfit(test_form, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
