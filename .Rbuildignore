@@ -1,3 +1,4 @@
 ^dynamite\.Rproj$
 ^\.Rproj\.user$
 testing
+^\.github$

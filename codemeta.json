@@ -1,0 +1,143 @@
+{
+  "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+  "@type": "SoftwareSourceCode",
+  "identifier": "dynamite",
+  "description": "What the package does (one paragraph).",
+  "name": "dynamite: Bayesian Modelling and Causal Inference for Multivariate Longitudinal Data",
+  "codeRepository": "https://github.com/santikka/dynamite",
+  "issueTracker": "https://github.com/santikka/dynamite/issues",
+  "license": "https://spdx.org/licenses/GPL-3.0",
+  "version": "0.0.1",
+  "programmingLanguage": {
+    "@type": "ComputerLanguage",
+    "name": "R",
+    "url": "https://r-project.org"
+  },
+  "runtimePlatform": "R version 4.1.2 (2021-11-01)",
+  "author": [
+    {
+      "@type": "Person",
+      "givenName": "Santtu",
+      "familyName": "Tikka",
+      "email": "santtuth@gmail.com",
+      "@id": "https://orcid.org/0000-0003-4039-4342"
+    },
+    {
+      "@type": "Person",
+      "givenName": "Jouni",
+      "familyName": "Helske",
+      "email": "jouni.helske@iki.fi",
+      "@id": "https://orcid.org/0000-0001-7130-793X"
+    }
+  ],
+  "maintainer": [
+    {
+      "@type": "Person",
+      "givenName": "Santtu",
+      "familyName": "Tikka",
+      "email": "santtuth@gmail.com",
+      "@id": "https://orcid.org/0000-0003-4039-4342"
+    }
+  ],
+  "softwareRequirements": {
+    "1": {
+      "@type": "SoftwareApplication",
+      "identifier": "R",
+      "name": "R",
+      "version": ">= 3.5.0"
+    },
+    "2": {
+      "@type": "SoftwareApplication",
+      "identifier": "dplyr",
+      "name": "dplyr",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=dplyr"
+    },
+    "3": {
+      "@type": "SoftwareApplication",
+      "identifier": "glue",
+      "name": "glue",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=glue"
+    },
+    "4": {
+      "@type": "SoftwareApplication",
+      "identifier": "methods",
+      "name": "methods"
+    },
+    "5": {
+      "@type": "SoftwareApplication",
+      "identifier": "posterior",
+      "name": "posterior",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=posterior"
+    },
+    "6": {
+      "@type": "SoftwareApplication",
+      "identifier": "rlang",
+      "name": "rlang",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=rlang"
+    },
+    "7": {
+      "@type": "SoftwareApplication",
+      "identifier": "rstan",
+      "name": "rstan",
+      "version": ">= 2.18.1",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=rstan"
+    },
+    "SystemRequirements": null
+  },
+  "fileSize": "221.121KB",
+  "citation": [
+    {
+      "@type": "ScholarlyArticle",
+      "datePublished": "todo",
+      "author": [
+        {
+          "@type": "Organization",
+          "name": "todo"
+        }
+      ],
+      "name": "todo",
+      "url": "todo",
+      "isPartOf": {
+        "@type": "PublicationIssue",
+        "datePublished": "todo",
+        "isPartOf": {
+          "@type": ["PublicationVolume", "Periodical"],
+          "name": "todo"
+        }
+      }
+    }
+  ],
+  "readme": "https://github.com/santikka/dynamite/blob/master/README.md",
+  "contIntegration": "https://github.com/santikka/dynamite/actions",
+  "developmentStatus": "https://www.repostatus.org/#wip"
+}

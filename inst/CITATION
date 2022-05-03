@@ -2,15 +2,12 @@ citHeader("To cite dynamite in publications use:")
 
 citEntry(
   entry    = "Article",
-  title    = ,
-  author   = ,
-  journal  = ,
-  year     = ,
-  volume   = ,
-  number   = ,
-  pages    = ,
-  url      = ,
-  textVersion = paste(
+  title    = "todo",
+  author   = "todo",
+  journal  = "todo",
+  year     = "todo",
+  url      = "todo",
+  textVersion = paste("todo"
 
   )
 )
