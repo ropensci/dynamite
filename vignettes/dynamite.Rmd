@@ -1,0 +1,88 @@
+---
+documentclass: jss
+author:
+  - name: FirstName LastName
+    orcid: 0000-0000-0000-0000
+    affiliation: University/Company
+    # use this syntax to add text on several lines
+    address: |
+      | First line
+      | Second line
+    email: \email{name@company.com}
+    url: http://rstudio.com
+  - name: Second Author
+    orcid: 0000-0000-0000-0000
+    affiliation: 'Affiliation \AND'
+    # To add another line, use \AND at the end of the previous one as above
+  - name: Third Author
+    orcid: 0000-0000-0000-0000
+    address: |
+      | Department of Statistics and Mathematics,
+      | Faculty of Biosciences,
+      | Universitat Autònoma de Barcelona
+    affiliation: |
+      | Universitat Autònoma 
+      | de Barcelona
+    # use a different affiliation in adress field (differently formated here)
+    affiliation2: Universitat Autònoma de Barcelona
+title:
+  formatted: "\\pkg{dynamite}: Dynamic Multivariate Models for Panel Data"
+  # If you use tex in the formatted title, also supply version without
+  plain:     "dynamite: Dynamic Multivariate Models for Panel Data"
+  # For running headers, if needed
+  short:     "\\pkg{dynamite}: Dynamic Multivariate Models for Panel Data"
+abstract: >
+  The abstract of the article.
+keywords:
+  # at least one keyword must be supplied
+  formatted: [keywords, not capitalized, "\\proglang{Java}"]
+  plain:     [keywords, not capitalized, Java]
+preamble: >
+  \usepackage{amsmath}
+output: rticles::jss_article
+---
+
+```{r, setup, include=FALSE}
+options(prompt = 'R> ', continue = '+ ')
+```
+
+## Potentially relevant papers/packages:
+
+https://core.ac.uk/download/pdf/159376747.pdf
+https://cran.r-project.org/web/packages/tvem/index.html
+https://cran.r-project.org/web/packages/tvReg/index.html
+
+several packages mentioned in the seqHMM paper:
+https://www.jstatsoft.org/article/view/v088i03
+
+
+template stuff:
+
+# Introduction
+
+This template demonstrates some of the basic LaTeX that you need to know to create a JSS article.
+
+## Code formatting
+
+In general, don't use Markdown, but use the more precise LaTeX commands instead:
+
+* \proglang{Java}
+* \pkg{plyr}
+
+One exception is inline code, which can be written inside a pair of backticks (i.e., using the Markdown syntax).
+
+If you want to use LaTeX commands in headers, you need to provide a `short-title` attribute. You can also provide a custom identifier if necessary. See the header of Section \ref{r-code} for example.
+
+# \proglang{R} code {short-title="R code" #r-code}
+
+Can be inserted in regular R markdown blocks.
+
+```{r}
+x <- 1:10
+x
+```
+
+## Features specific to \pkg{rticles} {short-title="Features specific to rticles"}
+
+* Adding short titles to section headers is a feature specific to \pkg{rticles} (implemented via a Pandoc Lua filter). This feature is currently not supported by Pandoc and we will update this template if [it is officially supported in the future](https://github.com/jgm/pandoc/issues/4409).
+* Using the `\AND` syntax in the `author` field to add authors on a new line. This is a specific to the `rticles::jss_article` format.
