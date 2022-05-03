@@ -1,8 +1,6 @@
 # Contributing to dynamite
 
-This outlines how to propose a change to dynamite. 
-For more detailed info about contributing to this, and other tidyverse packages, please see the
-[**development contributing guide**](https://rstd.io/tidy-contrib). 
+This outlines how to propose a change to dynamite, modified from the `usethis::use_tidy_contributing`.
 
 ## Fixing typos
 
@@ -40,8 +38,3 @@ If you’ve found a bug, please file an issue that illustrates the bug with a mi
 *  We use [testthat](https://cran.r-project.org/package=testthat) for unit tests. 
    Contributions with test cases included are easier to accept.  
 
-## Code of Conduct
-
-Please note that the dynamite project is released with a
-[Contributor Code of Conduct](CODE_OF_CONDUCT.md). By contributing to this
-project you agree to abide by its terms.
