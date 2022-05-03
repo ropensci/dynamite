@@ -82,8 +82,6 @@ add_dynamiteformula <- function(e1, e2) {
         out <- set_lags(e1, e2)
     } else if (is.splines(e2)) {
         out <- set_splines(e1, e2)
-    } else if (is.hiddenstates(e2)) {
-        out <- set_hiddenstates(e1, e2)
     } else if (is.modeldata(e2)) {
         out <- set_modeldata(e1, e2)
     } else {
@@ -100,9 +98,6 @@ join_dynamiteformulas <- function(e1, e2) {
     duped <- duplicated(resp_all)
     if (any(duped)) {
         stop_("Multiple definitions for response variables: ", resp_all[duped])
-    }
-    if (!is.null(attr(e1, "hidden")) && !is.null(attr(e2, "hidden"))) {
-        stop_("Multiple definitions for hidden states")
     }
     if (!is.null(attr(e1, "lag_all")) && !is.null(attr(e2, "lag_all"))) {
         stop_("Multiple definitions for lags")
@@ -135,15 +130,6 @@ set_splines <- function(e1, e2) {
     attr(e1, "splines") <- e2
     e1
 }
-
-# Set the hidden state process of the model
-# set_hiddenstates <- function(e1, e2) {
-#     if (!is.null(e1$hidden) && !attr(e2, "replace")) {
-#         stop_("Multiple definitions for hidden states")
-#     }
-#     e1$hidden <- e2
-#     e1
-# }
 
 # Set the data to be used by the model
 # set_modeldata <- function(e1, e2) {

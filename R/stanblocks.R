@@ -9,8 +9,6 @@ create_blocks <- function(formula, ...) {
 #' @export
 create_blocks.default <- function(formula, indent = 2L, vars, ...) {
 
-    # only need this for the hidden state case
-    #functions <- paste("functions {", .loglik_stan, "}", sep = "\n")
     idt <- indenter_(indent)
     functions <- create_functions(formula, idt, vars)
     data <- create_data(formula, idt, vars)
