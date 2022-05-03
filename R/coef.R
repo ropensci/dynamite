@@ -1,11 +1,11 @@
-#' Extract regression coefficients of btvcmfit
+#' Extract regression coefficients of dynamitefit
 #'
 #'
 #' @export
-#' @param object An object of class \code{btvcmfit}.
+#' @param object An object of class \code{dynamitefit}.
 #' @param ... Ignored.
 #' @importFrom stats coef
-coef.btvcmfit <- function(object, ...) {
+coef.dynamitefit <- function(object, ...) {
     # TODO is this best format?
     as.data.frame(object, parameter_types = "beta")
 }

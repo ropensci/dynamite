@@ -1,7 +1,7 @@
-#' Model formula for \pkg{btvcm}
+#' Model formula for \pkg{dynamite}
 #'
 #' @export
-btvcmformula <- function(formula, family, ...) {
+dynamiteformula <- function(formula, family, ...) {
     if (!is.formula(formula)) {
         stop_("Argument 'formula' is not a formula.")
     }
@@ -22,21 +22,21 @@ btvcmformula <- function(formula, family, ...) {
                 specials = x$specials
             )
         ),
-        class = "btvcmformula"
+        class = "dynamiteformula"
     )
 }
 
-#' @rdname btvcmformula
+#' @rdname dynamiteformula
 #' @export
-obs <- btvcmformula
+obs <- dynamiteformula
 
-#' Checks if argument is a \code{btvcmformula} object
+#' Checks if argument is a \code{dynamiteformula} object
 #'
 #' @param x An \R object
 #'
 #' @export
-is.btvcmformula <- function(x) {
-    inherits(x, "btvcmformula")
+is.dynamiteformula <- function(x) {
+    inherits(x, "dynamiteformula")
 }
 
 # Checks if argument is a formula
@@ -45,26 +45,26 @@ is.formula <- function(x) {
 }
 
 #' @export
-`+.btvcmformula` <- function(e1, e2) {
-    if (is.btvcmformula(e1)) {
-        out <- add_btvcmformula(e1, e2)
+`+.dynamiteformula` <- function(e1, e2) {
+    if (is.dynamiteformula(e1)) {
+        out <- add_dynamiteformula(e1, e2)
     } else {
-        stop_("Method '+.btvcmformula is not supported for ", class(e1), " objects.")
+        stop_("Method '+.dynamiteformula is not supported for ", class(e1), " objects.")
     }
     out
 }
 
-# Get all response variables of a btvcmformula object
+# Get all response variables of a dynamiteformula object
 get_resp <- function(x) {
     sapply(x, "[[", "response")
 }
 
-# Get all predictor variables of a btvcmformula object
+# Get all predictor variables of a dynamiteformula object
 get_pred <- function(x) {
     lapply(x, "[[", "predictors")
 }
 
-# Get all formulas of a btvcmformula object
+# Get all formulas of a dynamiteformula object
 get_form <- function(x) {
     lapply(x, "[[", "formula")
 }
@@ -74,10 +74,10 @@ has_intercept <- function(x) {
     attr(terms(x$formula), "intercept") == 1
 }
 
-# Internal `+.btvcmformula` for model constructions
-add_btvcmformula <- function(e1, e2) {
-    if (is.btvcmformula(e2)) {
-        out <- join_btvcmformulas(e1, e2)
+# Internal `+.dynamiteformula` for model constructions
+add_dynamiteformula <- function(e1, e2) {
+    if (is.dynamiteformula(e2)) {
+        out <- join_dynamiteformulas(e1, e2)
     } else if (is.lags(e2)) {
         out <- set_lags(e1, e2)
     } else if (is.splines(e2)) {
@@ -88,13 +88,13 @@ add_btvcmformula <- function(e1, e2) {
         out <- set_modeldata(e1, e2)
     } else {
         stop_("Unable to add an object of class ", class(e2),
-              " to an object of class 'btvcmformula'")
+              " to an object of class 'dynamiteformula'")
     }
     out
 }
 
 # Join two model definitions and verify compatibility
-join_btvcmformulas <- function(e1, e2) {
+join_dynamiteformulas <- function(e1, e2) {
     out <- c(e1, e2)
     resp_all <- get_resp(out)
     duped <- duplicated(resp_all)
@@ -114,7 +114,7 @@ join_btvcmformulas <- function(e1, e2) {
     #     stop_("Multiple definitions for data")
     # }
     attributes(out) <- c(attributes(e1), attributes(e2))
-    class(out) <- "btvcmformula"
+    class(out) <- "dynamiteformula"
     out
 }
 

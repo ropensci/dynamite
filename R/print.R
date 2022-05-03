@@ -1,14 +1,14 @@
-#' Print Summary of btvcm Object
+#' Print Summary of dynamite Object
 #'
 #' Prints the summary information of time-invariant model parameters.
 #'
-#' @param x An output from \code{\link{btvcm}}.
+#' @param x An output from \code{\link{dynamite}}.
 #' @param pars A character vector of parameter names.
 #' The default is to print summary of spline coefficient standard deviations tau.
 #' @param ... Additional arguments to \code{\link{print.stanfit}}.
-#' @method print btvcmfit
+#' @method print dynamitefit
 #' @export
-print.btvcmfit <- function(x, pars, ...) {
+print.dynamitefit <- function(x, pars, ...) {
     if (!is.null(x$stanfit)) {
         if (missing(pars)) {
             all_pars <- x$stanfit@sim$pars_oi

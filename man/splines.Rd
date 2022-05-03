@@ -14,7 +14,7 @@ splines(
   knots = NULL,
   degree = 3,
   Boundary.knots = NULL,
-  lb_tau = 0.001,
+  lb_tau = 0,
   noncentered = FALSE
 )
 }

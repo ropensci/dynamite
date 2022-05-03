@@ -156,7 +156,7 @@ onlyif <- function(test, yes) {
     do.call(paste0(typeof(yes)), args = list(length = 0))
 }
 
-# Combine model.matrix objects of all formulas of a btvcmformula into one
+# Combine model.matrix objects of all formulas of a dynamiteformula into one
 full_model.matrix <- function(formula, data) {
     model_matrices <- lapply(get_form(formula), model.matrix.lm, data = data, na.action = na.pass)
     model_matrix <- do.call(cbind, model_matrices)
@@ -201,7 +201,7 @@ full_model.matrix_fast <- function(formula, data, u_names) {
     invisible(NULL)
 }
 
-# TODO there is ndraws method in posterior package, should probably define ndraws.btvcmfit
+# TODO there is ndraws method in posterior package, should probably define ndraws.dynamitefit
 ndraws <- function(x) {
     (x$stanfit@sim$n_save[1] - x$stanfit@sim$warmup2[1]) * x$stanfit@sim$chains
 }

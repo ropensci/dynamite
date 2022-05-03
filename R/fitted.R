@@ -1,14 +1,14 @@
 
-#' Extract fitted values of btvcmfit
+#' Extract fitted values of dynamitefit
 #'
 #' TODO Note that these are conditional on the observed data i.e., we don't
 #' simulate new lagged values for covariates, so we underestimate the uncertainty.
 #' Better to use predict with type = "mean" TODO do it
 #' @export
-#' @param object An object of class \code{btvcmfit}.
+#' @param object An object of class \code{dynamitefit}.
 #' @param ... Ignored.
 #' @importFrom stats fitted
-fitted.btvcmfit <- function(object, newdata = NULL, n_draws = NULL, ...) {
+fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, ...) {
 
     if (is.null(n_draws)) {
         n_draws <- ndraws(object)

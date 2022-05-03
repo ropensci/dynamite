@@ -7,7 +7,7 @@
 #' @param ... todo
 #'
 #' @export
-btvcm <- function(formula, data, group, time, ...) {
-    x <- btvcmfit(formula, data, group, time, ...)
+dynamite <- function(formula, data, group, time, ...) {
+    x <- dynamitefit(formula, data, group, time, ...)
     x
 }

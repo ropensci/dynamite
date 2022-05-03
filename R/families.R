@@ -1,61 +1,61 @@
 # TODO implement families
 
-#' Family Functions for \pkg{btvcm} Models
+#' Family Functions for \pkg{dynamite} Models
 #'
 #' @export
-btvcmfamily <- function(name, ...) {
+dynamitefamily <- function(name, ...) {
     # A wrapper to allow both:
-    #    gaussian(...) and btvcmfamily("gaussian", ...)
-    btvcmfamily_(name, ...)
+    #    gaussian(...) and dynamitefamily("gaussian", ...)
+    dynamitefamily_(name, ...)
 }
 
 # Internal use
-btvcmfamily_ <- function(name, ...) {
+dynamitefamily_ <- function(name, ...) {
     name <- tolower(as.character(name)[1])
     if (!is_supported(name)) {
         stop_(name, " is not a supported family")
     }
     # do something
     out <- list(name = name)
-    class(out) <- c("btvcmfamily")
+    class(out) <- c("dynamitefamily")
     out
 }
 
-# Checks if argument is a btvcmfamily object
-is.btvcmfamily <- function(x) {
-    inherits(x, "btvcmfamily")
+# Checks if argument is a dynamitefamily object
+is.dynamitefamily <- function(x) {
+    inherits(x, "dynamitefamily")
 }
 
 # TODO could have an option to define the reference category? Or maybe simpler (for us)
 # to ask user to relevel the factor beforehand
 categorical_ <- function(...) {
     # do something different
-    btvcmfamily_("categorical", ...)
+    dynamitefamily_("categorical", ...)
 }
 
 gaussian_ <- function(...) {
     # do something else
-    btvcmfamily_("gaussian", ...)
+    dynamitefamily_("gaussian", ...)
 }
 
 binomial_ <- function(...) {
     # do something else
-    btvcmfamily_("binomial", ...)
+    dynamitefamily_("binomial", ...)
 }
 
 bernoulli_ <- function(...) {
     # do something else
-    btvcmfamily_("bernoulli", ...)
+    dynamitefamily_("bernoulli", ...)
 }
 
 poisson_ <- function(...) {
     # do something else
-    btvcmfamily_("poisson", ...)
+    dynamitefamily_("poisson", ...)
 }
 
 negbin_ <- function(...) {
     # do something else
-    btvcmfamily_("negbin", ...)
+    dynamitefamily_("negbin", ...)
 }
 # Hardcoded families for now
 

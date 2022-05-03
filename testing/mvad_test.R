@@ -1,15 +1,15 @@
 library(TraMineR)
 library(dplyr)
 library(tidyr)
-library(btvcm)
+library(dynamite)
 data(mvad, package = "TraMineR")
 d <- pivot_longer(mvad, 15:86, "time") %>% select(id, time, value)
 d$time <- rep(1:72, length = nrow(d))
-fit <- btvcm:::btvcmfit(
+fit <- dynamite:::dynamitefit(
     obs(value ~ -1, family = categorical()) + lags(type = "varying") +
         splines(df = 10, noncentered = TRUE),
     d, id, time, chains = 1, cores=1, refresh = 10)
-fit2 <- btvcm:::btvcmfit(
+fit2 <- dynamite:::dynamitefit(
     obs(value ~ -1, family = categorical()) + lags(type = "varying") +
         splines(df = 10),
     d, id, time, chains = 1, cores=1, refresh = 10)

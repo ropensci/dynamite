@@ -50,18 +50,18 @@ test_all <- obs(y6 ~ -1 + x1 + varying(~x2) + offset(log(t)), family = poisson()
     obs(y7 ~ x1 + x2 + varying(~x4) + lag(y1, 1) + lag(y2, 1), family = negbin()) +
     splines()
 
-#test_fit <- btvcm:::btvcmfit(test_all, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, sampling_vars = TRUE, model_code = TRUE))
-#test_fit <- btvcm:::btvcmfit(test_all, test_data, ID, time)
+#test_fit <- dynamite:::dynamitefit(test_all, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, sampling_vars = TRUE, model_code = TRUE))
+#test_fit <- dynamite:::dynamitefit(test_all, test_data, ID, time)
 
-#test_fit_neglag <- btvcm:::btvcmfit(test_form, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
-#test_fit_mis <- btvcm:::btvcmfit(test_form, test_data_mis, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
+#test_fit_neglag <- dynamite:::dynamitefit(test_form, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
+#test_fit_mis <- dynamite:::dynamitefit(test_form, test_data_mis, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
 
 test_trials <- obs(y4 ~ x1 + trials(n), family = binomial()) + splines()
-#test_fit <- btvcm:::btvcmfit(test_trials, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
-#test_fit <- btvcm:::btvcmfit(test_trials, test_data, ID, time)
+#test_fit <- dynamite:::dynamitefit(test_trials, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
+#test_fit <- dynamite:::dynamitefit(test_trials, test_data, ID, time)
 
 test_splinewarning <- obs(y2 ~ -1 + x1 + varying(~x3) + trials(n), family = binomial())
-#test_fit <- btvcm:::btvcmfit(test_splinewarning, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
+#test_fit <- dynamite:::dynamitefit(test_splinewarning, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
 
 # Use these to control what is returned, wrap in argument debug:
 #     no_compile = TRUE => stan model is not compiled, implies no_sampling = TRUE
@@ -71,8 +71,8 @@ test_splinewarning <- obs(y2 ~ -1 + x1 + varying(~x3) + trials(n), family = bino
 #     model_code = TRUE => also return the model code
 
 # Rstudio ignores .Rbuildignore, so this needs to be commented out when building the package
-# test_fit <- btvcm:::btvcmfit(test_form, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
-# test_fit2 <- btvcm:::btvcmfit(test_form2, test_data, ID, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
+# test_fit <- dynamite:::dynamitefit(test_form, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
+# test_fit2 <- dynamite:::dynamitefit(test_form2, test_data, ID, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
 
 # Should give identical model matrices
 # all.equal(test_fit$model_matrix, test_fit2$model_matrix)
@@ -94,7 +94,7 @@ test_splinewarning <- obs(y2 ~ -1 + x1 + varying(~x3) + trials(n), family = bino
 # ts.plot(t(y))
 # d <- data.frame(y = c(t(y)), x = c(t(x)), ID = gl(N, T), month = 1:T)
 # #
-# fit <- btvcm:::btvcmfit(
+# fit <- dynamite:::dynamitefit(
 #     obs(y ~ x, family = gaussian()) +
 #         lags() +
 #         splines(knots = 3:19), #t=1 fixed
@@ -180,7 +180,7 @@ test_splinewarning <- obs(y2 ~ -1 + x1 + varying(~x3) + trials(n), family = bino
 # ts.plot(t(y))
 # d <- data.frame(y = c(t(y)), x = c(t(x)), ID = gl(N, T))
 
-# fit <- btvcm:::btvcmfit(
+# fit <- dynamite:::dynamitefit(
 #     obs(y ~ x, family = gaussian()) +
 #         lags() +
 #         splines(df = 10),

@@ -1,4 +1,4 @@
-citHeader("To cite btvcm in publications use:")
+citHeader("To cite dynamite in publications use:")
 
 citEntry(
   entry    = "Article",

@@ -1,6 +1,6 @@
 #' @export
 get_priors <- function(formula, data, group, time) {
-    out <- do.call("btvcmfit",
+    out <- do.call("dynamitefit",
         list(formula = formula,
             data = data,
             group = substitute(group),
@@ -10,7 +10,7 @@ get_priors <- function(formula, data, group, time) {
 }
 #' @export
 get_code <- function(formula, data, group, time) {
-    out <- do.call("btvcmfit",
+    out <- do.call("dynamitefit",
         list(formula = formula,
             data = data,
             group = substitute(group),
@@ -20,7 +20,7 @@ get_code <- function(formula, data, group, time) {
 }
 #' @export
 get_data <- function(formula, data, group, time) {
-    out <- do.call("btvcmfit",
+    out <- do.call("dynamitefit",
         list(formula = formula,
             data = data,
             group = substitute(group),

@@ -1,10 +1,10 @@
-#' The 'btvcm' package.
+#' The 'dynamite' package.
 #'
 #' @description A DESCRIPTION OF THE PACKAGE
 #'
 #' @docType package
-#' @name btvcm-package
-#' @aliases btvcm
+#' @name dynamite-package
+#' @aliases dynamite
 #' @import methods
 #' @importFrom rstan sampling
 #'

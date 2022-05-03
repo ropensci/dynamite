@@ -1,11 +1,11 @@
-#' Convert \code{btvcm} Output to \code{draws_df} Format
+#' Convert \code{dynamite} Output to \code{draws_df} Format
 #'
-#' Converts the output from \code{btvcm} call to a
+#' Converts the output from \code{dynamite} call to a
 #' \code{draws_df} format of the \code{posterior} package, enabling the use
 #' of diagnostics and plotting methods of \code{posterior} and \code{bayesplot}
 #' packages.
 #'
-#' @param x An object of class \code{btvcmfit}.
+#' @param x An object of class \code{dynamitefit}.
 #' @param times A vector of indices defining which time points to return?
 #' Default is all.
 #' @param parameter_types What parameters should be returned? Possible choices are
@@ -16,9 +16,9 @@
 #' @aliases as_draws as_draws_df
 #' @export
 #' @export as_draws_df
-#' @rdname as_draws-btvcmfit
-#' @method as_draws_df btvcmfit
-as_draws_df.btvcmfit <- function(x, parameter_types, ...) {
+#' @rdname as_draws-dynamitefit
+#' @method as_draws_df dynamitefit
+as_draws_df.dynamitefit <- function(x, parameter_types, ...) {
     if (!requireNamespace("posterior", quietly = TRUE)) {
         stop("This function depends on the 'posterior' package. ", call. = FALSE)
     }
@@ -27,8 +27,8 @@ as_draws_df.btvcmfit <- function(x, parameter_types, ...) {
 }
 #' @export
 #' @export as_draws
-#' @rdname as_draws-btvcmfit
-#' @method as_draws btvcmfit
-as_draws.btvcmfit <- function(x, ...) {
-    as_draws_df.btvcmfit(x, ...)
+#' @rdname as_draws-dynamitefit
+#' @method as_draws dynamitefit
+as_draws.dynamitefit <- function(x, ...) {
+    as_draws_df.dynamitefit(x, ...)
 }

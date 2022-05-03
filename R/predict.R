@@ -1,6 +1,6 @@
 #' Predict method for a Bayesian Time-Varying Coefficients Model
 #'
-#' @param object Object of class \code{btvcmfit}.
+#' @param object Object of class \code{dynamitefit}.
 #' @param newdata Data frame used in predictions. If \code{NULL} (default), the
 #' data used in model estimation is used for predictions as well.
 #' @param mode TODO: Think about the names, if we predict missing observations
@@ -9,14 +9,14 @@
 #' or \code{"link"}.
 #' @param n_draws Number of posterior samples to use, default is all.
 #' @export
-predict.btvcmfit <- function(object, newdata = NULL, mode = c("counterfactual", "forecast"),
+predict.dynamitefit <- function(object, newdata = NULL, mode = c("counterfactual", "forecast"),
     type = c("response", "mean", "link"), n_draws = NULL) {
     mode <- match.arg(mode)
     type <- match.arg(type)
-    do.call(paste0("predict.btvcmfit_", mode), list(object = object, newdata = newdata, type = type, n_draws = n_draws))
+    do.call(paste0("predict.dynamitefit_", mode), list(object = object, newdata = newdata, type = type, n_draws = n_draws))
 }
 
-predict.btvcmfit_counterfactual <- function(object, newdata, type, n_draws = NULL) {
+predict.dynamitefit_counterfactual <- function(object, newdata, type, n_draws = NULL) {
 
     if (is.null(n_draws)) {
         n_draws <- ndraws(object)
@@ -125,6 +125,6 @@ predict.btvcmfit_counterfactual <- function(object, newdata, type, n_draws = NUL
     newdata
 }
 
-predict.btvcmfit_forecast <- function(object, newdata, type, n_draws) {
+predict.dynamitefit_forecast <- function(object, newdata, type, n_draws) {
     stop_("Forecasting is not yet supported")
 }

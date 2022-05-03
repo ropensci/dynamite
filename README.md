@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# btvcm
+# dynamite
 
 <!-- badges: start -->
 
@@ -12,7 +12,7 @@ public.](https://www.repostatus.org/badges/latest/wip.svg)](https://www.repostat
 
 general description…
 
-The `btvcm` package is developed with the support of Academy of Finland
+The `dynamite` package is developed with the support of Academy of Finland
 grant 331817.
 
 ## Installation
@@ -21,5 +21,5 @@ You can install the development version from with:
 
 ``` r
 # install.packages("devtools")
-devtools::install_git("https://gitlab.jyu.fi/predlife/btvcm")
+devtools::install_git("https://gitlab.jyu.fi/predlife/dynamite")
 ```

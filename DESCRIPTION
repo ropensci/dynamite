@@ -1,4 +1,4 @@
-Package: btvcm
+Package: dynamite
 Title: Bayesian Modelling and Causal Inference for Multivariate Longitudinal Data
 Version: 0.0.0-1
 Authors@R: 
@@ -30,14 +30,14 @@ Suggests:
 Collate: 
     'as_data_frame.R'
     'as_draws.R'
-    'btvcm-package.R'
-    'btvcm.R'
-    'utilities.R'
-    'btvcmfit.R'
-    'btvcmformula.R'
-    'btvcmterms.R'
     'coef.R'
     'convert_data.R'
+    'dynamite-package.R'
+    'dynamite.R'
+    'utilities.R'
+    'dynamitefit.R'
+    'dynamiteformula.R'
+    'dynamiteterms.R'
     'families.R'
     'fitted.R'
     'get_priors.R'

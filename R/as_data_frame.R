@@ -1,6 +1,6 @@
-#' Extract samples from the btvcmfit object as data frame.
+#' Extract samples from the dynamitefit object as data frame.
 #'
-#' @param x The estimated \code{btvcm} model.
+#' @param x The estimated \code{dynamite} model.
 #' @param row.names \code{NULL} (default) or a character vector giving the row
 #' names for the data frame.
 #' @param optional Ignored.
@@ -9,7 +9,7 @@
 #' \code{"all"} (default). #TODO sigmas etc? others? Or just return all of these...
 #' @param ... Ignored.
 #' @export
-as.data.frame.btvcmfit <- function(x, row.names = NULL, optional = FALSE, parameter_types, ...) {
+as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE, parameter_types, ...) {
     # should there be an option to be more specific in what parameters to extract?
     # TODO distributional parameters (sigma, shape)
     parameter_types <- match.arg(parameter_types,
