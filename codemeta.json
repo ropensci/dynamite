@@ -39,6 +39,44 @@
       "@id": "https://orcid.org/0000-0003-4039-4342"
     }
   ],
+  "softwareSuggestions": [
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "covr",
+      "name": "covr",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=covr"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "knitr",
+      "name": "knitr",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=knitr"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "rmarkdown",
+      "name": "rmarkdown",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=rmarkdown"
+    }
+  ],
   "softwareRequirements": {
     "1": {
       "@type": "SoftwareApplication",
@@ -114,7 +152,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "221.121KB",
+  "fileSize": "142.15KB",
   "citation": [
     {
       "@type": "ScholarlyArticle",
@@ -137,7 +175,7 @@
       }
     }
   ],
-  "readme": "https://github.com/santikka/dynamite/blob/master/README.md",
-  "contIntegration": "https://github.com/santikka/dynamite/actions",
+  "readme": "https://github.com/santikka/dynamite/blob/main/README.md",
+  "contIntegration": ["https://github.com/santikka/dynamite/actions", "https://app.codecov.io/gh/santikka/dynamite?branch=main"],
   "developmentStatus": "https://www.repostatus.org/#wip"
 }
