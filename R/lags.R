@@ -63,7 +63,7 @@ extract_lags <- function(x) {
   # TODO allow vector k
   lag_comp <- regexpr(
     pattern = "^(?<src>lag\\(\\s*(?<def>.*?)\\s*(?:,\\s*(?<k>[0-9]+)){0,1}\\s*\\))$",
-    x = lag_terms,
+    text = lag_terms,
     perl = TRUE
   )
   lag_map <- list()
