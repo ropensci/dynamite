@@ -30,6 +30,10 @@ If \code{TRUE}, any existing definitions will be replaced.}
 \item{degree}{see \code{\link[splines:bs]{splines::bs()}}.}
 
 \item{Boundary.knots}{see \code{\link[splines:bs]{splines::bs()}}.}
+
+\item{lb_tau}{TODO.}
+
+\item{noncentered}{TODO.}
 }
 \description{
 TODO: Think the naming of this option, we have a "local" shrinkage due to

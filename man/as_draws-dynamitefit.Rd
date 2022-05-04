@@ -18,9 +18,6 @@
 \code{"beta"}, \code{"tau"}, ... #TODO}
 
 \item{...}{Ignored.}
-
-\item{times}{A vector of indices defining which time points to return?
-Default is all.}
 }
 \value{
 A \code{draws_df} object.

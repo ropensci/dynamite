@@ -119,8 +119,6 @@ add_dynamiteformula <- function(e1, e2) {
     out <- set_lags(e1, e2)
   } else if (is.splines(e2)) {
     out <- set_splines(e1, e2)
-  } else if (is.modeldata(e2)) {
-    out <- set_modeldata(e1, e2)
   } else {
     stop_(
       "Unable to add an object of class ", class(e2),

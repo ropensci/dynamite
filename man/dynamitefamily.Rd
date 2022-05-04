@@ -7,9 +7,7 @@
 dynamitefamily(name)
 }
 \arguments{
-\item{\[`character(1)`]\cr}{Name of the family.}
-
-\item{...}{TODO is this needed?}
+\item{name}{[\code{character(1)}]\cr Name of the family.}
 }
 \description{
 Family Functions for \pkg{dynamite} Models

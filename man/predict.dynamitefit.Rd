@@ -9,7 +9,8 @@
   newdata = NULL,
   mode = c("counterfactual", "forecast"),
   type = c("response", "mean", "link"),
-  n_draws = NULL
+  n_draws = NULL,
+  ...
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ does the term counterfactual make sense?}
 or \code{"link"}.}
 
 \item{n_draws}{Number of posterior samples to use, default is all.}
+
+\item{...}{Ignored.}
 }
 \description{
 Predict method for a Bayesian Time-Varying Coefficients Model

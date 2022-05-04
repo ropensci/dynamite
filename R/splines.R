@@ -8,6 +8,8 @@
 #' @param override a logical value. If `FALSE` (the default), an existing
 #'    definition for the splines will not be overridden by another call to \code{splines}.
 #'    If \code{TRUE}, any existing definitions will be replaced.
+#' @param lb_tau TODO.
+#' @param noncentered TODO.
 #' @param df see [splines::bs()].
 #' @param knots see [splines::bs()].
 #' @param degree see [splines::bs()].

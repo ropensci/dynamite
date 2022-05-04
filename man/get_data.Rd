@@ -6,6 +6,19 @@
 \usage{
 get_data(formula, data, group, time)
 }
+\arguments{
+\item{formula}{[\code{dynamiteformula}]\cr The model formula.
+See \code{\link[=dynamiteformula]{dynamiteformula()}}.}
+
+\item{data}{[\code{data.frame}]\cr The data frame containing the variables in
+the model.}
+
+\item{group}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
+unique groups.}
+
+\item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
+time axis.}
+}
 \description{
 TODO documentation
 }

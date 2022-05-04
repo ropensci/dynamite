@@ -2,8 +2,7 @@
 
 #' Family Functions for \pkg{dynamite} Models
 #'
-#' @param \[`character(1)`]\cr Name of the family.
-#' @param ... TODO is this needed?
+#' @param name \[`character(1)`]\cr Name of the family.
 #'
 #' @export
 dynamitefamily <- function(name) {
@@ -16,11 +15,9 @@ dynamitefamily <- function(name) {
 #'
 #' Checks that a given family is supported by the package
 #'
-#' @param name \[`character(1)`]\cr Name of the family.
-#' @param ... TODO is this needed?
-#'
+#' @param name \[`character(1)`]\cr Name of the family.#'
 #' @noRd
-dynamitefamily_ <- function(name, ...) {
+dynamitefamily_ <- function(name) {
   name <- tolower(as.character(name)[1])
   if (!is_supported(name)) {
     stop_(name, " is not a supported family")
@@ -42,51 +39,49 @@ is.dynamitefamily <- function(x) {
   inherits(x, "dynamitefamily")
 }
 
-# TODO could have an option to define the reference category?
-# Or maybe simpler (for us) to ask user to relevel the factor beforehand
-categorical_ <- function(...) {
+categorical_ <- function() {
   # do something different
-  dynamitefamily_("categorical", ...)
+  dynamitefamily_("categorical")
 }
 
 #* Gaussian family
 #*
 #' @noRd
-gaussian_ <- function(...) {
+gaussian_ <- function() {
   # do something else
-  dynamitefamily_("gaussian", ...)
+  dynamitefamily_("gaussian")
 }
 
 #* Binomial family
 #*
 #' @noRd
-binomial_ <- function(...) {
+binomial_ <- function() {
   # do something else
-  dynamitefamily_("binomial", ...)
+  dynamitefamily_("binomial")
 }
 
 #* Bernoulli family
 #*
 #' @noRd
-bernoulli_ <- function(...) {
+bernoulli_ <- function() {
   # do something else
-  dynamitefamily_("bernoulli", ...)
+  dynamitefamily_("bernoulli")
 }
 
 #* Poisson family
 #*
 #' @noRd
-poisson_ <- function(...) {
+poisson_ <- function() {
   # do something else
-  dynamitefamily_("poisson", ...)
+  dynamitefamily_("poisson")
 }
 
 #* Negative binomial family
 #*
 #' @noRd
-negbin_ <- function(...) {
+negbin_ <- function() {
   # do something else
-  dynamitefamily_("negbin", ...)
+  dynamitefamily_("negbin")
 }
 
 #' Check if response of a family is continuous

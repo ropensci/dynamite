@@ -1,6 +1,6 @@
 # Some stuff that might be useful
 
-# This is need to use tidyselect's where which is not exported.
+# This is needed to use tidyselect's where which is not exported.
 utils::globalVariables("where")
 
 

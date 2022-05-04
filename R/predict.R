@@ -8,11 +8,12 @@
 #' @param type Type of prediction, `"response"` (default), `"mean"`
 #'   or `"link"`.
 #' @param n_draws Number of posterior samples to use, default is all.
+#' @param ... Ignored.
 #' @export
 predict.dynamitefit <- function(object, newdata = NULL,
                                 mode = c("counterfactual", "forecast"),
                                 type = c("response", "mean", "link"),
-                                n_draws = NULL) {
+                                n_draws = NULL, ...) {
   mode <- match.arg(mode)
   type <- match.arg(type)
   do.call(paste0("predict.dynamitefit_", mode),

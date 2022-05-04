@@ -3,7 +3,6 @@
 \docType{package}
 \name{dynamite-package}
 \alias{dynamite-package}
-\alias{dynamite}
 \title{The 'dynamite' package.}
 \description{
 A DESCRIPTION OF THE PACKAGE

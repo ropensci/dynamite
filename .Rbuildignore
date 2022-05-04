@@ -6,3 +6,4 @@ testing
 ^codecov\.yml$
 ^LICENSE\.md$
 ^README\.Rmd$
+^codemeta\.json$

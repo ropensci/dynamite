@@ -6,8 +6,6 @@
 #' packages.
 #'
 #' @param x An object of class \code{dynamitefit}.
-#' @param times A vector of indices defining which time points to return?
-#' Default is all.
 #' @param parameter_types What parameters should be returned? Possible choices are
 #' \code{"beta"}, \code{"tau"}, ... #TODO
 #' @param ... Ignored.

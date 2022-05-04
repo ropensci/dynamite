@@ -26,7 +26,9 @@ get_priors <- function(formula, data, group, time) {
   out$priors
 }
 
+
 #' TODO documentation
+#' @inheritParams get_priors
 #' @export
 get_code <- function(formula, data, group, time) {
   out <- do.call(
@@ -43,6 +45,7 @@ get_code <- function(formula, data, group, time) {
 }
 
 #' TODO documentation
+#' @inheritParams get_priors
 #' @export
 get_data <- function(formula, data, group, time) {
   out <- do.call(
