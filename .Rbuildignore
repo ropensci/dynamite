@@ -1,6 +1,6 @@
 ^dynamite\.Rproj$
 ^\.Rproj\.user$
-testing
+^testing$
 ^\.github$
 ^R/testing\.R$
 ^codecov\.yml$
