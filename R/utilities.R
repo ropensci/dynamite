@@ -1,5 +1,9 @@
 # Some stuff that might be useful
 
+# This is need to use tidyselect's where which is not exported.
+utils::globalVariables("where")
+
+
 #' A Shortcut function to update lists and vectors
 #'
 #' @param x A list or a vector

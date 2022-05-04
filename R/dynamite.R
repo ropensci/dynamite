@@ -34,7 +34,7 @@ dynamite <- function(formula, data, group, time,
   # Pipe for readability, not really needed if we need to support older R versions
   data <- data |>
     # Convert character types to factors
-    dplyr::mutate(dplyr::across(tidyselect:::where(is.character), as.factor)) |>
+    dplyr::mutate(dplyr::across(where(is.character), as.factor)) |>
     dplyr::arrange(dplyr::across(dplyr::all_of(c(group_var, time_var))))
   time <- sort(unique(data[[time_var]]))
   full_time <- NULL
