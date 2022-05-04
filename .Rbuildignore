@@ -4,3 +4,5 @@ testing
 ^\.github$
 ^R/testing\.R$
 ^codecov\.yml$
+^LICENSE\.md$
+^README\.Rmd$
