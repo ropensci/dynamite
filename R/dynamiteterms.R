@@ -2,11 +2,11 @@
 #'
 #' @export
 dynamiteterms <- function(formula, ...) {
-    UseMethod("becauseterms")
+  UseMethod("becauseterms")
 }
 
 #'
-#'@export
+#' @export
 dynamiteterms.default <- function(formula, ...) {
-    # TODO
+  # TODO
 }

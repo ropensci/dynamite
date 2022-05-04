@@ -2,3 +2,4 @@
 ^\.Rproj\.user$
 testing
 ^\.github$
+^R/testing\.R$

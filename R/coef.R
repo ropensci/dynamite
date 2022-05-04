@@ -6,6 +6,6 @@
 #' @param ... Ignored.
 #' @importFrom stats coef
 coef.dynamitefit <- function(object, ...) {
-    # TODO is this best format?
-    as.data.frame(object, parameter_types = "beta")
+  # TODO is this best format?
+  as.data.frame(object, parameter_types = "beta")
 }
