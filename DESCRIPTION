@@ -29,6 +29,7 @@ Imports:
     rlang,
     rstan (>= 2.18.1)
 Suggests: 
+    covr,
     knitr,
     rmarkdown
 VignetteBuilder: knitr
