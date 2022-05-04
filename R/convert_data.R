@@ -3,6 +3,8 @@
 #' Prepares data for Stan sampling, Stan model code construction and
 #' default/user-modifiable prior definitions.
 #'
+#' @importFrom rlang .data
+#'
 #' @param formula \[`dynamiteformula`]\cr The model formula.
 #' @param responses \[`data.frame`]\cr A data.frame with the
 #'   response columns only.
@@ -263,9 +265,9 @@ prepare_channel_default <- function(y, Y, channel,
     # TODO add a warning to documentation that the only the 'prior' column
     # of the priors data.frame should be altered (i.e. there's no checks for names or reordering of rows)
     # Or arrange...
-    priors <- priors |> dplyr::filter(response == y)
+    priors <- priors |> dplyr::filter(.data$response == y)
     for (ptype in c("beta_fixed", "beta_varying", "tau")) {
-      pdef <- priors |> dplyr::filter(type == ptype)
+      pdef <- priors |> dplyr::filter(.data$type == ptype)
       if (nrow(pdef) > 0) {
         dists <- sub("\\(.*", "", pdef$prior)
         vectorized <- length(unique(dists)) == 1
@@ -369,9 +371,9 @@ prepare_channel_categorical <- function(y, Y, channel,
     # TODO add a warning to documentation that the only the 'prior' column
     # of the priors data.frame should be altered (i.e. there's no checks for names or reordering of rows)
     # Or arrange...
-    priors <- priors |> dplyr::filter(response == y)
+    priors <- priors |> dplyr::filter(.data$response == y)
     for (ptype in c("beta_fixed", "beta_varying", "tau")) {
-      pdef <- priors |> dplyr::filter(type == ptype)
+      pdef <- priors |> dplyr::filter(.data$type == ptype)
       if (nrow(pdef) > 0) {
         dists <- sub("\\(.*", "", pdef$prior)
         vectorized <- length(unique(dists)) == 1
@@ -434,7 +436,7 @@ prepare_channel_gaussian <- function(y, Y, channel,
       )
     )
   } else {
-    pdef <- priors |> dplyr::filter(response == y && type == "sigma")
+    pdef <- priors |> dplyr::filter(.data$response == y && .data$type == "sigma")
     if (nrow(pdef) == 1) {
       out$channel$sigma_prior_distr <- pdef$prior
     }
@@ -560,7 +562,7 @@ prepare_channel_negbin <- function(y, Y, channel,
       )
     )
   } else {
-    pdef <- priors |> dplyr::filter(response == y && type == "phi")
+    pdef <- priors |> dplyr::filter(.data$response == y && .data$type == "phi")
     if (nrow(pdef) == 1) {
       out$channel$phi_prior_distr <- pdef$prior
     }
