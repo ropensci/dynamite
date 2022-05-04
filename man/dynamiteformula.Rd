@@ -9,6 +9,13 @@ dynamiteformula(formula, family, ...)
 
 obs(formula, family, ...)
 }
+\arguments{
+\item{formula}{[\code{formula}]\cr An R formula describing the model.}
+
+\item{family}{[\code{call}]\cr A call to a family function, e.g., \code{gaussian()}.}
+
+\item{...}{TODO}
+}
 \description{
-Model formula for \pkg{dynamite}
+TODO description and details of all features
 }

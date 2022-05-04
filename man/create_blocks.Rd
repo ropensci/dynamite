@@ -7,7 +7,9 @@
 create_blocks(formula, ...)
 }
 \arguments{
-\item{becauseformula}{defining model components}
+\item{formula}{A \code{dynamiteformula} defining the model}
+
+\item{...}{TODO}
 }
 \description{
 Create code blocks for the Stan model

@@ -1,10 +1,15 @@
 #' Estimate a Bayesian Dynamic Multivariate Panel Model
 #'
-#' @param formula todo
-#' @param data todo
-#' @param group todo
-#' @param time todo
-#' @param ... todo
+#' @param formula \[`dynamiteformula`]\cr The model formula. See 'Details'.
+#' @param data \[`data.frame`]\cr The data frame containing the variables in
+#'   the model.
+#' @param group \[`character(1)`]\cr A column name of `data` that denotes the
+#'   unique groups.
+#' @param time \[`character(1)`]\cr A column name of `data` that denotes the
+#'   time axis.
+#' @param priors TODO
+#' @param debug TODO
+#' @param ... TODO
 #' @export
 dynamite <- function(formula, data, group, time,
                      priors = NULL, debug = NULL, ...) {

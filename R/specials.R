@@ -1,4 +1,8 @@
-# Get and separate all specials of a formula
+#' Get and separate all specials of a formula
+#'
+#' @param x A `formula` object
+#'
+#' @noRd
 formula_specials <- function(x) {
   out <- list(formula = NULL, specials = NULL, coefs = NULL)
   xt <- terms(x, specials = formula_special_funs)
@@ -65,7 +69,14 @@ formula_specials <- function(x) {
   out
 }
 
-# Computes all specials defined in a formula in the context of the data
+# TODO don't use "with", convert to env and eval with that
+#' Computes all specials defined in a formula in the context of the data
+#'
+#' @param formula A `dynamiteformula` object
+#' @param data A `data.frame` containing the variables present in the special
+#'   definitions in the formula
+#'
+#' @noRd
 evaluate_specials <- function(formula, data) {
   lapply(seq_along(formula), function(i) {
     if (length(formula[[i]]$specials)) {

@@ -6,6 +6,8 @@
 #' Better to use predict with type = "mean" TODO do it
 #' @export
 #' @param object An object of class \code{dynamitefit}.
+#' @param newdata TODO
+#' @param n_draws TODO
 #' @param ... Ignored.
 #' @importFrom stats fitted
 fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, ...) {

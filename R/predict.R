@@ -1,12 +1,12 @@
 #' Predict method for a Bayesian Time-Varying Coefficients Model
 #'
-#' @param object Object of class \code{dynamitefit}.
-#' @param newdata Data frame used in predictions. If \code{NULL} (default), the
-#' data used in model estimation is used for predictions as well.
+#' @param object Object of class `dynamitefit`.
+#' @param newdata Data frame used in predictions. If `NULL` (default), the
+#'   data used in model estimation is used for predictions as well.
 #' @param mode TODO: Think about the names, if we predict missing observations
-#' does the term counterfactual make sense?
-#' @param type Type of prediction, \code{"response"} (default), \code{"mean"}
-#' or \code{"link"}.
+#'   does the term counterfactual make sense?
+#' @param type Type of prediction, `"response"` (default), `"mean"`
+#'   or `"link"`.
 #' @param n_draws Number of posterior samples to use, default is all.
 #' @export
 predict.dynamitefit <- function(object, newdata = NULL,

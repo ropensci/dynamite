@@ -7,15 +7,22 @@
 dynamite(formula, data, group, time, priors = NULL, debug = NULL, ...)
 }
 \arguments{
-\item{formula}{todo}
+\item{formula}{[\code{dynamiteformula}]\cr The model formula. See 'Details'.}
 
-\item{data}{todo}
+\item{data}{[\code{data.frame}]\cr The data frame containing the variables in
+the model.}
 
-\item{group}{todo}
+\item{group}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
+unique groups.}
 
-\item{time}{todo}
+\item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
+time axis.}
 
-\item{...}{todo}
+\item{priors}{TODO}
+
+\item{debug}{TODO}
+
+\item{...}{TODO}
 }
 \description{
 Estimate a Bayesian Dynamic Multivariate Panel Model

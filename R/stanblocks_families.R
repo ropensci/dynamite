@@ -1,13 +1,26 @@
-# NOTE: Added this wrapper, so that *_lines_* functions can have different arguments (including parameters and model)
+#' Wrapper to parse Stan model blocks based on the family of the response
+#'
+#' @param prefix A character string indicating the Stan model block name
+#' @param formula A `dynamiteformula` object
+#' @param args Channel specific component of `model_vars`
+#'   (see [create_blocks()])
+#'
+#' @noRd
 lines_wrap <- function(prefix, formula, args) {
   lines_expr <- paste0(prefix, "_lines_", formula$family)
   lines_env <- list2env(args)
   eval(eval(as.name(lines_expr)), envir = lines_env)
 }
 
-vectorizable_prior <- function(x) length(x) == 1 && !grepl("\\(", x)
+#' Checks if a prior definition is vectorizable
+#'
+#' @param x A character string
+#'
+#' @noRd
+vectorizable_prior <- function(x) {
+  length(x) == 1 && !grepl("\\(", x)
+}
 
-# For data block
 data_lines_default <- quote({
   paste_rows(
     "// Data for response {y}",
@@ -73,7 +86,6 @@ data_lines_negbin <- quote({
   paste_rows(dtext_def, dtext, .parse = FALSE)
 })
 
-# For transformed data block
 transformed_data_lines_default <- quote({
   mtext_fixed <- ""
   mtext_varying <- ""
@@ -169,7 +181,6 @@ transformed_data_lines_negbin <- quote({
   eval(transformed_data_lines_default)
 })
 
-# For parameters block
 parameters_lines_default <- quote({
   aname <- ifelse_(noncentered, "a_raw_", "a_")
   paste_rows(
@@ -218,7 +229,6 @@ parameters_lines_negbin <- quote({
   )
 })
 
-# For transformed parameters block
 transformed_parameters_lines_default <- quote({
   mtext_fixed <- ""
   mtext_varying <- ""
@@ -333,7 +343,6 @@ transformed_parameters_lines_negbin <- quote({
   eval(transformed_parameters_lines_default)
 })
 
-# For model block
 model_lines_default <- quote({
   mtext_fixed <- ""
   mtext_varying <- ""
@@ -529,7 +538,6 @@ model_lines_negbin <- quote({
   paste_rows(mtext_def, mtext, .parse = FALSE)
 })
 
-# For generated quantities block
 generated_quantities_lines_default <- quote({
   ""
 })

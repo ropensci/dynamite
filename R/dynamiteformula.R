@@ -1,5 +1,11 @@
 #' Model formula for \pkg{dynamite}
 #'
+#' TODO description and details of all features
+#'
+#' @param formula \[`formula`]\cr An R formula describing the model.
+#' @param family \[`call`]\cr A call to a family function, e.g., `gaussian()`.
+#' @param ... TODO
+#'
 #' @export
 dynamiteformula <- function(formula, family, ...) {
   if (!is.formula(formula)) {
@@ -30,7 +36,7 @@ dynamiteformula <- function(formula, family, ...) {
 #' @export
 obs <- dynamiteformula
 
-#' Checks if argument is a \code{dynamiteformula} object
+#' Checks if argument is a `dynamiteformula` object
 #'
 #' @param x An \R object
 #'
@@ -39,11 +45,11 @@ is.dynamiteformula <- function(x) {
   inherits(x, "dynamiteformula")
 }
 
-# Checks if argument is a formula
-is.formula <- function(x) {
-  inherits(x, "formula")
-}
-
+#' Join two dynamiteformulas
+#'
+#' @param e1 An \R object
+#' @param e2 An \R object
+#'
 #' @export
 `+.dynamiteformula` <- function(e1, e2) {
   if (is.dynamiteformula(e1)) {
@@ -55,27 +61,57 @@ is.formula <- function(x) {
   out
 }
 
-# Get all response variables of a dynamiteformula object
+#' Checks if argument is a formula
+#'
+#' @param x An \R object
+#'
+#' @noRd
+is.formula <- function(x) {
+  inherits(x, "formula")
+}
+
+#' Get all response variables of a dynamiteformula object
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
 get_resp <- function(x) {
   sapply(x, "[[", "response")
 }
 
-# Get all predictor variables of a dynamiteformula object
+#' Get all predictor variables of a dynamiteformula object
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
 get_pred <- function(x) {
   lapply(x, "[[", "predictors")
 }
 
-# Get all formulas of a dynamiteformula object
+#' Get all formulas of a dynamiteformula object
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
 get_form <- function(x) {
   lapply(x, "[[", "formula")
 }
 
-# Check whether the formula contains an intercept
+#' Check whether a dynamiteformula contains an intercept
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
 has_intercept <- function(x) {
   attr(terms(x$formula), "intercept") == 1
 }
 
-# Internal `+.dynamiteformula` for model constructions
+#' Internal +.dynamiteformula for model constructions
+#'
+#' @param e1 An \R object
+#' @param e2 An \R object
+#'
+#' @noRd
 add_dynamiteformula <- function(e1, e2) {
   if (is.dynamiteformula(e2)) {
     out <- join_dynamiteformulas(e1, e2)
@@ -94,7 +130,13 @@ add_dynamiteformula <- function(e1, e2) {
   out
 }
 
-# Join two model definitions and verify compatibility
+#' Join two model definitions and verify compatibility
+#'
+#'
+#' @param e1 A `dynamiteformula` object
+#' @param e2 A `dynamiteformula` object
+#'
+#' @noRd
 join_dynamiteformulas <- function(e1, e2) {
   out <- c(e1, e2)
   resp_all <- get_resp(out)
@@ -116,7 +158,12 @@ join_dynamiteformulas <- function(e1, e2) {
   out
 }
 
-# Set lag definitions for all channels
+#' Set lag definitions for all channels
+#'
+#' @param e1 A `dynamiteformula` object
+#' @param e2 A `lags` object
+#'
+#' @noRd
 set_lags <- function(e1, e2) {
   if (!is.null(attr(e1, "lags"))) {
     stop_("Multiple definitions for lags")
@@ -125,7 +172,12 @@ set_lags <- function(e1, e2) {
   e1
 }
 
-# Set the regression coefficient splines of the model
+#' Set the regression coefficient splines of the model
+#'
+#' @param e1 A `dynamiteformula` object
+#' @param e2 A `splines` object
+#'
+#' @noRd
 set_splines <- function(e1, e2) {
   if (!is.null(attr(e1, "splines")) && !attr(e2, "override")) {
     stop_("Multiple definitions for splines")
@@ -133,12 +185,3 @@ set_splines <- function(e1, e2) {
   attr(e1, "splines") <- e2
   e1
 }
-
-# Set the data to be used by the model
-# set_modeldata <- function(e1, e2) {
-#     if (!is.null(e1$data) && !attr(e2, "replace")) {
-#         stop_("Multiple data definitions")
-#     }
-#     e1$data <- e2
-#     e1
-# }

@@ -1,6 +1,8 @@
 #' Create code blocks for the Stan model
 #'
-#' @param becauseformula defining model components
+#' @param formula A `dynamiteformula` defining the model
+#' @param ... TODO
+#'
 #' @export
 create_blocks <- function(formula, ...) {
   UseMethod("create_blocks")
@@ -22,13 +24,20 @@ create_blocks.default <- function(formula, indent = 2L, vars, ...) {
     .parse = FALSE
   )
 }
+
+#' Create the 'Functions' block of the Stan model code
 #'
-#' @export
+#' @param formula A `dynamiteformula` defining the model
+#' @param idt An indeter function created by [indenter_()]
+#' @param vars `model_vars` component of [convert_data()] output
+#'
+#' @noRd
 create_functions <- function(formula, idt, vars) {
   NULL
 }
-#'
-#' @export
+
+#' @describeIn create_function Create the 'Data' block of the Stan model code
+#' @noRd
 create_data <- function(formula, idt, vars) {
   has_splines <- any(unlist(lapply(vars, "[[", "has_varying")))
   mtext <- paste_rows(
@@ -41,8 +50,6 @@ create_data <- function(formula, idt, vars) {
     .indent = idt(1),
     .parse = FALSE
   )
-
-  # loop over channels
   datatext <- character(length(formula))
   for (i in seq_along(formula)) {
     channel <- vars[[i]]
@@ -53,8 +60,8 @@ create_data <- function(formula, idt, vars) {
   paste_rows("data {", mtext, datatext, "}", .parse = FALSE)
 }
 
-#'
-#' @export
+#' @describeIn create_function Create the 'Transformed Data' block of the Stan model code
+#' @noRd
 create_transformed_data <- function(formula, idt, vars) {
   tr_data <- character(length(formula))
   for (i in seq_along(formula)) {
@@ -64,8 +71,8 @@ create_transformed_data <- function(formula, idt, vars) {
   paste_rows("transformed data {", tr_data, "}", .parse = FALSE)
 }
 
-#'
-#' @export
+#' @describeIn create_function Create the 'Parameters' block of the Stan model code
+#' @noRd
 create_parameters <- function(formula, idt, vars) {
   splinetext <- ""
   if (!is.null(spline_defs <- attr(formula, "splines"))) {
@@ -85,8 +92,8 @@ create_parameters <- function(formula, idt, vars) {
   paste_rows("parameters {", splinetext, pars, "}", .parse = FALSE)
 }
 
-#'
-#' @export
+#' @describeIn create_function Create the 'Transformed Parameters' block of the Stan model code
+#' @noRd
 create_transformed_parameters <- function(formula, idt, vars) {
   spline_defs <- attr(formula, "splines")
   tr_pars <- character(length(formula))
@@ -97,8 +104,8 @@ create_transformed_parameters <- function(formula, idt, vars) {
   paste_rows("transformed parameters {", tr_pars, "}", .parse = FALSE)
 }
 
-#'
-#' @export
+#' @describeIn create_function Create the 'Model' block of the Stan model code
+#' @noRd
 create_model <- function(formula, idt, vars) {
   # TODO: Without global shrinkage prior it probably makes sense to use user-defined prior for tau
   # With lambda&tau, need more testing if this is fine or do we need to support other forms
@@ -119,8 +126,8 @@ create_model <- function(formula, idt, vars) {
   paste_rows("model {", mod, "}", .parse = FALSE)
 }
 
-#'
-#' @export
+#' @describeIn create_function Create the 'Generated Quantities' block of the Stan model code
+#' @noRd
 create_generated_quantities <- function(formula, idt, vars) {
   gen <- character(length(formula))
   for (i in seq_along(formula)) {

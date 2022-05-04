@@ -1,4 +1,21 @@
-# Convert data for Stan
+#' Convert data
+#'
+#' Prepares data for Stan sampling, Stan model code construction and
+#' default/user-modifiable prior definitions.
+#'
+#' @param formula \[`dynamiteformula`]\cr The model formula.
+#' @param responses \[`data.frame`]\cr A data.frame with the
+#'   response columns only.
+#' @param specials \[`list`]\cr A list of formula specials for each channel
+#' @param group \[`vector`]\cr A vector defining group membership of each
+#'   individual.
+#' @param time \[`numeric`]\cr A vector defining the observation times for
+#'   for each individual.
+#' @param model_matrix \[`data.frame`]\cr Output of `full_model.matrix`.
+#' @param coef_names TODO
+#' @param priors TODO
+#'
+#' @noRd
 convert_data <- function(formula, responses, specials, group, time,
                          model_matrix, coef_names, priors = NULL) {
 
@@ -176,6 +193,20 @@ convert_data <- function(formula, responses, specials, group, time,
   )
 }
 
+#' Default channel preparation
+#'
+#' Computes default channel-specific variables for Stan sampling,
+#' Stan model code construction, and prior definitions.
+#'
+#' @param y \[`character(1)`]\cr Name of the response variable of the channel.
+#' @param Y \[`vector()`]\cr A vector of values of the response variable.
+#' @param channel \[`list()`]\cr Channel-specific helper variables.
+#' @param sd_beta TODO
+#' @param resp_class \[`character()`]\cr Class(es) of the response `Y`.
+#' @param coef_names TODO
+#' @param priors TODO
+#'
+#' @noRd
 prepare_channel_default <- function(y, Y, channel,
                                     sd_beta, resp_class, coef_names, priors) {
   if (is.null(priors)) {
@@ -259,6 +290,7 @@ prepare_channel_default <- function(y, Y, channel,
   list(channel = channel, priors = priors)
 }
 
+# TODO documentation, same as prepare_channel_default
 prepare_channel_categorical <- function(y, Y, channel,
                                         sd_x, resp_class, coef_names, priors) {
   S_y <- length(unique(na.exclude(as.vector(Y))))
@@ -364,6 +396,7 @@ prepare_channel_categorical <- function(y, Y, channel,
   list(channel = channel, priors = priors)
 }
 
+# TODO documentation, same as prepare_channel_default
 prepare_channel_gaussian <- function(y, Y, channel,
                                      sd_x, resp_class, coef_names, priors) {
   if ("factor" %in% resp_class) {
@@ -409,6 +442,7 @@ prepare_channel_gaussian <- function(y, Y, channel,
   out
 }
 
+# TODO documentation, same as prepare_channel_default
 prepare_channel_binomial <- function(y, Y, channel,
                                      sd_x, resp_class, coef_names, priors) {
   if (any(Y < 0) || any(is.logical(Y)) || any(Y != as.integer(Y))) {
@@ -438,6 +472,7 @@ prepare_channel_binomial <- function(y, Y, channel,
   )
 }
 
+# TODO documentation, same as prepare_channel_default
 prepare_channel_bernoulli <- function(y, Y, channel,
                                       sd_x, resp_class, coef_names, priors) {
   if (!all(Y %in% 0:1) || any(is.logical(Y))) {
@@ -454,6 +489,7 @@ prepare_channel_bernoulli <- function(y, Y, channel,
   )
 }
 
+# TODO documentation, same as prepare_channel_default
 prepare_channel_poisson <- function(y, Y, channel,
                                     sd_x, resp_class, coef_names, priors) {
   if (any(Y < 0) || any(Y != as.integer(Y))) {
@@ -483,6 +519,7 @@ prepare_channel_poisson <- function(y, Y, channel,
   )
 }
 
+# TODO documentation, same as prepare_channel_default
 prepare_channel_negbin <- function(y, Y, channel,
                                    sd_x, resp_class, coef_names, priors) {
   if (any(Y < 0) || any(Y != as.integer(Y))) {

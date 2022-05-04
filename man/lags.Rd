@@ -7,9 +7,12 @@
 lags(k = 1L, type = c("fixed", "varying"))
 }
 \arguments{
-\item{k}{An integer indicating how many previous observations should be included. Defaults to 1.}
+\item{k}{[\code{integer(1)}: \sQuote{1}]\cr Indicates how many previous
+observations should be included.}
 
-\item{type}{Either \code{"fixed"} or \code{"varying"} which indicates whether the coefficients of the lag terms should vary in time or not. Defaults to \code{"fixed"}.}
+\item{type}{[\code{integer(1)}: \sQuote{"fixed"}]\cr Either
+\code{"fixed"} or \code{"varying"} which indicates whether the coefficients of the
+lag terms should vary in time or not.}
 }
 \description{
 Add each lagged response as a predictor to each channel.

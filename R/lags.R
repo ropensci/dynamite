@@ -1,6 +1,9 @@
 #' Add each lagged response as a predictor to each channel.
-#' @param k An integer indicating how many previous observations should be included. Defaults to 1.
-#' @param type Either `"fixed"` or `"varying"` which indicates whether the coefficients of the lag terms should vary in time or not. Defaults to `"fixed"`.
+#' @param k \[`integer(1)`: \sQuote{1}]\cr Indicates how many previous
+#'   observations should be included.
+#' @param type \[`integer(1)`: \sQuote{"fixed"}]\cr Either
+#'   `"fixed"` or `"varying"` which indicates whether the coefficients of the
+#'   lag terms should vary in time or not.
 #' @export
 lags <- function(k = 1L, type = c("fixed", "varying")) {
   type <- match.arg(type)
@@ -11,18 +14,33 @@ lags <- function(k = 1L, type = c("fixed", "varying")) {
   )
 }
 
-# Checks if the argument represents a lags definition
+#' Check if the argument represents a lags definition
+#'
+#' @param x An R object
+#'
+#' @noRd
 is.lags <- function(x) {
   inherits(x, "lags")
 }
 
-# Create a lagged version of a vector
+#' Create a lagged version of a vector
+#'
+#' @param x \[`vector()`]\cr A vector of values.
+#' @param k \[`integer(1)`: \sQuote{1}]\cr Number of positions to lag by.
+#'
+#' @noRd
 lag_ <- function(x, k = 1) {
   xlen <- length(x)
   c(rep(NA, k), x[1:(length(x) - k)])
 }
 
-# Find lag terms in a vector
+#' Find lag terms in a character vector
+#'
+#' @param x \[`character(1)`]\cr A character vector of length one.
+#' @param processed \[`logical()`: \sQuote(FALSE)]\cr If true, assumes that
+#'   the character string does not contain 'as is' definitions via `I()`.
+#'
+#' @noRd
 find_lags <- function(x, processed = FALSE) {
   if (processed) {
     grepl("I\\(lag_\\(.+\\)\\)", x, perl = TRUE)
@@ -31,7 +49,14 @@ find_lags <- function(x, processed = FALSE) {
   }
 }
 
-# Extract variables and shifts of lagged terms of the form lag(var, shift)
+#' Extract lag definitions
+#'
+#' Extract variables and shifts of lagged terms of the form lag(var, shift)
+#' and return them as a data frame for post processing.
+#'
+#' @param x \[`character(1)`]\cr A character vector of length one.
+#'
+#' @noRd
 extract_lags <- function(x) {
   has_lag <- find_lags(x, processed = FALSE)
   lag_terms <- x[has_lag]

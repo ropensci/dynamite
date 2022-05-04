@@ -1,23 +1,37 @@
 # Some stuff that might be useful
 
-# Shortcut to update lists and vectors
+#' A Shortcut function to update lists and vectors
+#'
+#' @param x A list or a vector
+#' @param value An element to add to the list or vector
+#'
+#' @noRd
 `c<-` <- function(x, value) {
   c(x, value)
 }
 
 # Internal placeholder for match.call
-t_ <- function(f, type = "rw") {
-  invisible(NULL)
-}
+# t_ <- function(f, type = "rw") {
+#   invisible(NULL)
+# }
 
-# Remove all whitespace characters from a character vector
+# TODO check if used somewhere
+#' Remove all whitespace characters from a character vector
+#'
+#' @param x A character vector
+#'
+#' @noRd
 rm_ws <- function(x) {
   y <- gsub("[ \t\r\n]", "", x, perl = TRUE)
   dim(y) <- dim(x)
   y
 }
 
-# Create a list with names defined by the arguments
+#' Create a list with names defined by the arguments
+#'
+#' @param ... Any number of `name = value` pairs
+#'
+#' @noRd
 named_list <- function(...) {
   y <- list(...)
   names(y) <- as.character(substitute(list(...)))[-1]
@@ -30,12 +44,20 @@ named_list <- function(...) {
 #     grep(pattern = ys, x, perl = TRUE)
 # }
 
-# Get left-hand side of a formula
+#' Get left-hand side of a formula
+#'
+#' @param x A `formula` object
+#'
+#' @noRd
 formula_lhs <- function(x) {
   as.character(x[[2]])
 }
 
-# Get right-hand side of formula
+#' Get right-hand side of formula
+#'
+#' @param x A `formula` object
+#'
+#' @noRd
 formula_rhs <- function(x) {
   attr(terms(x), "term.labels")
 }
@@ -45,12 +67,23 @@ formula_rhs <- function(x) {
 #     paste0(x[nzchar(x)], collapse = "\n")
 # }
 
-# Create a comma-separated character string to represent a Stan integer array
+#' Create a comma-separated character string to represent a Stan integer array
+#'
+#' @param x A character vector
+#'
+#' @noRd
 cs <- function(x) {
   paste0(x, collapse = ",")
 }
 
-# Paste and optionally parse character strings containing glue syntax
+#' Paste and optionally parse character strings containing glue syntax
+#'
+#' @param ... Any number of character vectors of arbitrary length
+#' @param .indent A character string to prefix each row with
+#' @param .parse A logical value indicating whether glue syntax should be
+#'   parsed by [glue::glue()].
+#'
+#' @noRd
 paste_rows <- function(..., .indent = "", .parse = TRUE) {
   dots <- list(...)
   ndots <- length(dots)
@@ -96,8 +129,13 @@ paste_rows <- function(..., .indent = "", .parse = TRUE) {
   }
 }
 
-# Create an indenter
-indenter_ <- function(m) {
+#' Create an indenter
+#'
+#' @param m An integer denoting how many spaces does one unit of indentation
+#'   correspond to (default = 2)
+#'
+#' @noRd
+indenter_ <- function(m = 2) {
   x <- rep(" ", m)
   idts <- sapply(0:10, function(y) {
     paste0(rep(x, y), collapse = "")
@@ -108,20 +146,39 @@ indenter_ <- function(m) {
   }
 }
 
-# Check if x is a string of the form I(.)
+#' Check if x is a string of the form I(.)
+#'
+#' @param x A character string
+#'
+#' @noRd
 is_as_is <- function(x) {
   grepl("I\\(.*\\)", x, perl = TRUE)
 }
 
+#' Stop function execution without displaying the call
+#'
+#' @param ... See [stop()]
+#'
+#' @noRd
 stop_ <- function(...) {
   stop(..., call. = FALSE)
 }
 
+#' Generate a warning message without displaying the call
+#'
+#' @param ... See [warning()]
+#'
+#' @noRd
 warning_ <- function(...) {
   warning(..., call. = FALSE)
 }
 
-# Try to coerce one argument to specific type
+#' Try to coerce one argument to specific type
+#'
+#' @param ... A `name = value` pair,
+#'   only the first one is used if multiple are given
+#'
+#' @noRd
 try_ <- function(..., type) {
   if (missing(type)) {
     stop_("Argument 'type' must be given")
@@ -140,8 +197,13 @@ try_ <- function(..., type) {
   out
 }
 
-# Shorthand for if (test) yes else no)
-# NOTE: This is not the ifelse-function which enforces output length
+#' Shorthand for if (test) yes else no
+#'
+#' @param test An object which can be coerced into logical mode
+#' @param yes An \R object to return when `test` evaluates to `TRUE`
+#' @param no An \R object to return when `test` evaluates to `FALSE`
+#'
+#' @noRd
 ifelse_ <- function(test, yes, no) {
   if (test) {
     return(yes)
@@ -149,7 +211,12 @@ ifelse_ <- function(test, yes, no) {
   return(no)
 }
 
-# Return yes if test is TRUE, otherwise an empty vector of the same type
+#' Return yes if test is TRUE, otherwise an empty vector of the same type
+#'
+#' @param tes An object which can be coerced into logical mode
+#' @param yes An \R object to return when `test` evaluates to `TRUE`
+#'
+#' @noRd
 onlyif <- function(test, yes) {
   if (test) {
     return(yes)
@@ -157,7 +224,12 @@ onlyif <- function(test, yes) {
   do.call(paste0(typeof(yes)), args = list(length = 0))
 }
 
-# Combine model.matrix objects of all formulas of a dynamiteformula into one
+#' Combine model.matrix objects of all formulas of a dynamiteformula into one
+#'
+#' @param formula A `dynamiteformula` object
+#' @param data A `data.frame` containing the variables in the model
+#'
+#' @noRd
 full_model.matrix <- function(formula, data) {
   model_matrices <- lapply(get_form(formula), model.matrix.lm,
                            data = data, na.action = na.pass)
@@ -179,7 +251,13 @@ full_model.matrix <- function(formula, data) {
   model_matrix
 }
 
-# For prediction handles NA's correctly
+#' A version of full_model.matrix for prediction
+#'
+#' @param formula A `dynamiteformula` object
+#' @param data A `data.frame` containing the variables in the model
+#' @param u_names TODO
+#'
+#' @noRd
 full_model.matrix_predict <- function(formula, data, u_names) {
   idx <- seq(2, nrow(data), by = 2)
   model_matrices <- lapply(get_form(formula), function(x) {
@@ -191,18 +269,27 @@ full_model.matrix_predict <- function(formula, data, u_names) {
   model_matrix[, u_names, drop = FALSE]
 }
 
+#' A fast version of full_model.matrix
+#'
+#' @param formula A `dynamiteformula` object
+#' @param data A `data.frame` containing the variables in the model
+#' @param u_names TODO
+#'
+#' @noRd
 full_model.matrix_fast <- function(formula, data, u_names) {
   model_matrices <- lapply(get_form(formula), model.matrix, data)
   model_matrix <- do.call(cbind, model_matrices)
   model_matrix[, u_names, drop = FALSE]
 }
 
+# TODO is needed?
 # Startup message for the package
 .onAttach <- function(libname, pkgname) {
   # TODO
   invisible(NULL)
 }
 
+# TODO is needed?
 # Code to execute when loading the package
 .onLoad <- function(libname, pkgname) {
   # TODO

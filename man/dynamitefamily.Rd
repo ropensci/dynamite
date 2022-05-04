@@ -4,7 +4,12 @@
 \alias{dynamitefamily}
 \title{Family Functions for \pkg{dynamite} Models}
 \usage{
-dynamitefamily(name, ...)
+dynamitefamily(name)
+}
+\arguments{
+\item{\[`character(1)`]\cr}{Name of the family.}
+
+\item{...}{TODO is this needed?}
 }
 \description{
 Family Functions for \pkg{dynamite} Models

@@ -2,10 +2,7 @@
 % Please edit documentation in R/splines.R
 \name{splines}
 \alias{splines}
-\title{Define the B-splines used for the regression coefficients of the model.
-TODO: Think the naming of this option, we have a "local" shrinkage due to
-the random walk prior of the spline coefficients, and the this "global" shrinkage over
-splines. Need to avoid confusion with the traditional global-local shrinkage priories (e.g. horseshoe)}
+\title{Define the B-splines used for the regression coefficients of the model.}
 \usage{
 splines(
   shrinkage = FALSE,
@@ -19,7 +16,7 @@ splines(
 )
 }
 \arguments{
-\item{shrinkage}{a logical value. If \code{TRUE} (the default) a shrinkage prior is used
+\item{shrinkage}{a logical value. If `TRUE`` (the default) a shrinkage prior is used
 for smoothing the splines. Default is FALSE. TODO: Needs more testing.}
 
 \item{override}{a logical value. If \code{FALSE} (the default), an existing
@@ -35,7 +32,6 @@ If \code{TRUE}, any existing definitions will be replaced.}
 \item{Boundary.knots}{see \code{\link[splines:bs]{splines::bs()}}.}
 }
 \description{
-Define the B-splines used for the regression coefficients of the model.
 TODO: Think the naming of this option, we have a "local" shrinkage due to
 the random walk prior of the spline coefficients, and the this "global" shrinkage over
 splines. Need to avoid confusion with the traditional global-local shrinkage priories (e.g. horseshoe)

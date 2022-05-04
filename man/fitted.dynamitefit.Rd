@@ -9,6 +9,10 @@
 \arguments{
 \item{object}{An object of class \code{dynamitefit}.}
 
+\item{newdata}{TODO}
+
+\item{n_draws}{TODO}
+
 \item{...}{Ignored.}
 }
 \description{
