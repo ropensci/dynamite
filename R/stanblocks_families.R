@@ -90,21 +90,21 @@ transformed_data_lines_default <- quote({
   mtext_fixed <- ""
   mtext_varying <- ""
   mtext_tau <- ""
-  if (write_beta_fixed) {
-    i <- rep(1:K_fixed, beta_fixed_prior_npars)
-    j <- rep(1:beta_fixed_prior_npars, each = K_fixed)
+  if (write_beta) {
+    i <- rep(1:K_fixed, beta_prior_npars)
+    j <- rep(1:beta_prior_npars, each = K_fixed)
     mtext_fixed <- paste_rows(
-      "matrix[{K_fixed}, {beta_fixed_prior_npars}] beta_fixed_prior_pars_{y};",
-      "beta_fixed_prior_pars_{y}[{i},{j}] = {beta_fixed_prior_pars};",
+      "matrix[{K_fixed}, {beta_prior_npars}] beta_prior_pars_{y};",
+      "beta_prior_pars_{y}[{i},{j}] = {beta_prior_pars};",
       .indent = idt(1)
     )
   }
-  if (write_beta_varying) {
-    i <- rep(1:K_varying, beta_varying_prior_npars)
-    j <- rep(1:beta_varying_prior_npars, each = K_varying)
+  if (write_delta) {
+    i <- rep(1:K_varying, delta_prior_npars)
+    j <- rep(1:delta_prior_npars, each = K_varying)
     mtext_varying <- paste_rows(
-      "matrix[{K_varying}, {beta_varying_prior_npars}] beta_varying_prior_pars_{y};",
-      "beta_varying_prior_pars_{y}[{i},{j}] = {beta_varying_prior_pars};",
+      "matrix[{K_varying}, {delta_prior_npars}] delta_prior_pars_{y};",
+      "delta_prior_pars_{y}[{i},{j}] = {delta_prior_pars};",
       .indent = idt(1)
     )
   }
@@ -129,23 +129,23 @@ transformed_data_lines_categorical <- quote({
   mtext_fixed <- ""
   mtext_varying <- ""
   mtext_tau <- ""
-  if (write_beta_fixed) {
+  if (write_beta) {
     k <- (K_fixed * (S - 1))
-    i <- rep(1:k, beta_fixed_prior_npars)
-    j <- rep(1:beta_fixed_prior_npars, each = k)
+    i <- rep(1:k, beta_prior_npars)
+    j <- rep(1:beta_prior_npars, each = k)
     mtext_fixed <- paste_rows(
-      "matrix[{k}, {beta_fixed_prior_npars}] beta_fixed_prior_pars_{y};",
-      "beta_fixed_prior_pars_{y}[{i},{j}] = {beta_fixed_prior_pars};",
+      "matrix[{k}, {beta_prior_npars}] beta_prior_pars_{y};",
+      "beta_prior_pars_{y}[{i},{j}] = {beta_prior_pars};",
       .indent = idt(1)
     )
   }
-  if (write_beta_varying) {
+  if (write_delta) {
     k <- (K_varying * (S - 1))
-    i <- rep(1:k, beta_varying_prior_npars)
-    j <- rep(1:beta_varying_prior_npars, each = k)
+    i <- rep(1:k, delta_prior_npars)
+    j <- rep(1:delta_prior_npars, each = k)
     mtext_varying <- paste_rows(
-      "matrix[{k}, {beta_varying_prior_npars}] beta_varying_prior_pars_{y};",
-      "beta_varying_prior_pars_{y}[{i},{j}] = {beta_varying_prior_pars};",
+      "matrix[{k}, {delta_prior_npars}] delta_prior_pars_{y};",
+      "delta_prior_pars_{y}[{i},{j}] = {delta_prior_pars};",
       .indent = idt(1)
     )
   }
@@ -182,9 +182,9 @@ transformed_data_lines_negbin <- quote({
 })
 
 parameters_lines_default <- quote({
-  aname <- ifelse_(noncentered, "a_raw_", "a_")
+  aname <- ifelse_(noncentered, "alpha_raw_", "alpha_")
   paste_rows(
-    onlyif(has_fixed, "vector[{K_fixed}] beta_fixed_{y};"),
+    onlyif(has_fixed, "vector[{K_fixed}] beta_{y};"),
     onlyif(has_varying, "matrix[{K_varying}, D] {aname}{y};"),
     onlyif(has_varying, "vector<lower={lb}>[{K_varying}] tau_{y};"),
     .indent = idt(1)
@@ -192,9 +192,9 @@ parameters_lines_default <- quote({
 })
 
 parameters_lines_categorical <- quote({
-  aname <- ifelse_(noncentered, "a_raw_", "a_")
+  aname <- ifelse_(noncentered, "alpha_raw_", "alpha_")
   paste_rows(
-    onlyif(has_fixed, "matrix[{K_fixed}, {S - 1}] beta_fixed_{y};"),
+    onlyif(has_fixed, "matrix[{K_fixed}, {S - 1}] beta_{y};"),
     onlyif(has_varying, "matrix[{K_varying}, D] {aname}{y}[{S - 1}];"),
     onlyif(has_varying, "vector<lower={lb}>[{K_varying}] tau_{y};"),
     .indent = idt(1)
@@ -230,21 +230,18 @@ parameters_lines_negbin <- quote({
 })
 
 transformed_parameters_lines_default <- quote({
-  mtext_fixed <- ""
-  mtext_varying <- ""
+  mtext <- ""
   mtext_varying_noncentered <- ""
-  mtext <- "vector[{K}] beta_{y}[T];"
-  if (has_fixed) {
-    mtext_fixed <- "beta_{y}[1:T, {{{cs(L_fixed)}}}] = rep_array(beta_fixed_{y}, T);"
-  }
+  mtext_varying <- ""
   if (has_varying) {
+    mtext <- "vector[{K_varying}] delta_{y}[T];"
     if (noncentered) {
       lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
       mtext_varying_noncentered <- paste_rows(
-        "matrix[{K_varying}, D] a_{y};",
-        "a_{y}[, 1] = a_raw_{y}[, 1];",
+        "matrix[{K_varying}, D] alpha_{y};",
+        "alpha_{y}[, 1] = alpha_raw_{y}[, 1];",
         "for (i in 2:D) {{",
-        "a_{y}[, i] = a_{y}[, i - 1] + a_raw_{y}[, i] .* tau_{y}{lambda_term}",
+        "alpha_{y}[, i] = alpha_{y}[, i - 1] + alpha_raw_{y}[, i] .* tau_{y}{lambda_term}",
         "}}",
         .indent = idt(c(1, 1, 1, 2, 1)),
         .parse = FALSE
@@ -252,34 +249,31 @@ transformed_parameters_lines_default <- quote({
     }
     mtext_varying <- paste_rows(
       "for (t in 1:T) {{",
-      "beta_{y}[t, {{{cs(L_varying)}}}] = a_{y} * Bs[, t];",
+      "delta_{y}[t] = alpha_{y} * Bs[, t];",
       "}}",
       .indent = idt(c(1, 2, 1)),
       .parse = FALSE
     )
   }
-  paste_rows(mtext, mtext_fixed, mtext_varying, mtext_varying_noncentered,
-    .indent = idt(c(1, 1, 0, 0))
+  paste_rows(mtext, mtext_varying_noncentered, mtext_varying,
+    .indent = idt(c(1, 0, 0))
   )
 })
 
 transformed_parameters_lines_categorical <- quote({
-  mtext_fixed <- ""
-  mtext_varying <- ""
+  mtext <- ""
   mtext_varying_noncentered <- ""
-  mtext <- "matrix[{K}, {S - 1}] beta_{y}[T];"
-  if (has_fixed) {
-    mtext_fixed <- "beta_{y}[1:T, {{{cs(L_fixed)}}}, {{{cs(1:(S - 1))}}}] = rep_array(beta_fixed_{y}, T);"
-  }
+  mtext_varying <- ""
   if (has_varying) {
+    mtext <- "matrix[{K_varying}, {S - 1}] delta_{y}[T];"
     if (noncentered) {
       lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
       mtext_varying_noncentered <- paste_rows(
-        "matrix[{K_varying}, D] a_{y}[{S - 1}];",
+        "matrix[{K_varying}, D] alpha_{y}[{S - 1}];",
         "for (s in 1:{S - 1}) {{",
-        "a_{y}[s, , 1] = a_raw_{y}[s, , 1];",
+        "alpha_{y}[s, , 1] = alpha_raw_{y}[s, , 1];",
         "for (i in 2:D) {{",
-        "a_{y}[s, , i] = a_{y}[s, , i - 1] + a_raw_{y}[s, , i] .* tau_{y}{lambda_term}",
+        "alpha_{y}[s, , i] = alpha_{y}[s, , i - 1] + alpha_raw_{y}[s, , i] .* tau_{y}{lambda_term}",
         "}}",
         "}}",
         .indent = idt(c(1, 1, 2, 2, 3, 2, 1)),
@@ -289,42 +283,20 @@ transformed_parameters_lines_categorical <- quote({
     mtext_varying <- paste_rows(
       "for (s in 1:{S - 1}) {{",
       "for (t in 1:T) {{",
-      "beta_{y}[t, {{{cs(L_varying)}}}, s] = a_{y}[s] * Bs[, t];",
+      "delta_{y}[t, , s] = alpha_{y}[s] * Bs[, t];",
       "}}",
       "}}",
       .indent = idt(c(1, 2, 3, 2, 1)),
       .parse = FALSE
     )
   }
-  paste_rows(mtext, mtext_fixed, mtext_varying, mtext_varying_noncentered,
-    .indent = idt(c(1, 1, 0, 0))
+  paste_rows(mtext, mtext_varying_noncentered, mtext_varying,
+    .indent = idt(c(1, 0, 0))
   )
 })
 
 transformed_parameters_lines_binomial <- quote({
-  mtext <- ""
-  mtext_noncentered <- ""
-  if (has_varying) {
-    if (noncentered) {
-      lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
-      mtext_noncentered <- paste_rows(
-        "matrix[{K_varying}, D] a_{y};",
-        "a_{y}[, 1] = a_raw_{y}[, 1];",
-        "for (i in 2:D) {{",
-        "a_{y}[, i] = a_{y}[, i - 1] + a_raw_{y}[, i] .* tau_{y}{lambda_term}",
-        "}}",
-        .indent = idt(c(1, 1, 1, 2, 1))
-      )
-    }
-    mtext <- paste_rows(
-      "vector[{K_varying}] beta_varying_{y}[T];",
-      "for (t in 1:T) {{",
-      "beta_varying_{y}[t] = a_{y} * Bs[, t];",
-      "}}",
-      .indent = idt(c(1, 1, 2, 1))
-    )
-  }
-  paste_rows(mtext, mtext_noncentered, .parse = FALSE)
+  eval(transformed_parameters_lines_default)
 })
 
 transformed_parameters_lines_gaussian <- quote({
@@ -348,46 +320,46 @@ model_lines_default <- quote({
   mtext_varying <- ""
   mtext_tau <- ""
   if (has_fixed) {
-    if (vectorizable_prior(beta_fixed_prior_distr)) {
-      np <- beta_fixed_prior_npars
-      dpars_fixed <- paste0("beta_fixed_prior_pars_", y, "[, ", 1:np, "]",
+    if (vectorizable_prior(beta_prior_distr)) {
+      np <- beta_prior_npars
+      dpars_fixed <- paste0("beta_prior_pars_", y, "[, ", 1:np, "]",
                             collapse = ", ")
-      mtext_fixed <- "beta_fixed_{y} ~ {beta_fixed_prior_distr}({dpars_fixed});"
+      mtext_fixed <- "beta_{y} ~ {beta_prior_distr}({dpars_fixed});"
     } else {
-      mtext_fixed <- "beta_fixed_{y}[k] ~ {beta_fixed_prior_distr};"
+      mtext_fixed <- "beta_{y}[k] ~ {beta_prior_distr};"
     }
   }
   if (has_varying) {
     if (noncentered) {
-      if (vectorizable_prior(beta_varying_prior_distr)) {
-        np <- beta_varying_prior_npars
-        dpars_varying <- paste0("beta_varying_prior_pars_", y, "[, ", 1:np, "]",
+      if (vectorizable_prior(delta_prior_distr)) {
+        np <- delta_prior_npars
+        dpars_varying <- paste0("delta_prior_pars_", y, "[, ", 1:np, "]",
                                 collapse = ", ")
-        mtext_varying <- "a_raw_{y}[, 1] ~ {beta_varying_prior_distr}({dpars_varying});"
+        mtext_varying <- "alpha_raw_{y}[, 1] ~ {delta_prior_distr}({dpars_varying});"
       } else {
-        mtext_varying <- "a_raw_{y}[{{{cs(1:K_varying)}}}, 1] ~ {beta_varying_prior_distr};"
+        mtext_varying <- "alpha_raw_{y}[{{{cs(1:K_varying)}}}, 1] ~ {delta_prior_distr};"
       }
       mtext_varying <- paste_rows(mtext_varying,
-        "to_vector(a_raw_{y}[, 2:D]) ~ std_normal();",
-        .indent = idt(c(1, 1)),
+        "to_vector(alpha_raw_{y}[, 2:D]) ~ std_normal();",
+        .indent = idt(c(0, 1)),
         .parse = FALSE
       )
     } else {
-      if (vectorizable_prior(beta_varying_prior_distr)) {
-        np <- beta_varying_prior_npars
-        dpars_varying <- paste0("beta_varying_prior_pars_", y, "[, ", 1:np, "]",
+      if (vectorizable_prior(delta_prior_distr)) {
+        np <- delta_prior_npars
+        dpars_varying <- paste0("delta_prior_pars_", y, "[, ", 1:np, "]",
                                 collapse = ", ")
-        mtext_varying <- "a_{y}[, 1] ~ {beta_varying_prior_distr}({dpars_varying});"
+        mtext_varying <- "alpha_{y}[, 1] ~ {delta_prior_distr}({dpars_varying});"
       } else {
-        mtext_varying <- "a_{y}[{{{cs(1:K_varying)}}}, 1] ~ {beta_varying_prior_distr};"
+        mtext_varying <- "alpha_{y}[{{{cs(1:K_varying)}}}, 1] ~ {delta_prior_distr};"
       }
       mtext_varying <- paste_rows(
         mtext_varying,
         "for(i in 2:D) {{",
         ifelse_(
           shrinkage,
-          "a_{y}[, i] ~ normal(a_{y}[, i - 1], lambda[i - 1] * tau_{y});",
-          "a_{y}[, i] ~ normal(a_{y}[, i - 1], tau_{y});"
+          "alpha_{y}[, i] ~ normal(alpha_{y}[, i - 1], lambda[i - 1] * tau_{y});",
+          "alpha_{y}[, i] ~ normal(alpha_{y}[, i - 1], tau_{y});"
         ),
         "}}",
         .indent = idt(c(0, 1, 2, 1)),
@@ -410,53 +382,53 @@ model_lines_categorical <- quote({
   mtext_varying <- ""
   mtext_tau <- ""
   if (has_fixed) {
-    if (vectorizable_prior(beta_fixed_prior_distr)) {
-      np <- beta_fixed_prior_npars
-      dpars_fixed <- paste0("beta_fixed_prior_pars_", y, "[, ", 1:np, "]",
+    if (vectorizable_prior(beta_prior_distr)) {
+      np <- beta_prior_npars
+      dpars_fixed <- paste0("beta_prior_pars_", y, "[, ", 1:np, "]",
                             collapse = ", ")
-      mtext_fixed <- "to_vector(beta_fixed_{y}) ~ {beta_fixed_prior_distr}({dpars_fixed});"
+      mtext_fixed <- "to_vector(beta_{y}) ~ {beta_prior_distr}({dpars_fixed});"
     } else {
       k <- rep(1:K_fixed, S - 1)
       s <- rep(1:(S - 1), each = K)
-      mtext_fixed <- "beta_fixed_{y}[{k},{s}] ~ {beta_fixed_prior_distr};"
+      mtext_fixed <- "beta_{y}[{k},{s}] ~ {beta_prior_distr};"
     }
   }
   if (has_varying) {
     if (noncentered) {
-      if (vectorizable_prior(beta_varying_prior_distr)) {
-        np <- beta_varying_prior_npars
-        dpars_varying <- paste0("beta_varying_prior_pars_", y, "[, ", 1:np, "]",
+      if (vectorizable_prior(delta_prior_distr)) {
+        np <- delta_prior_npars
+        dpars_varying <- paste0("delta_prior_pars_", y, "[, ", 1:np, "]",
                                 collapse = ", ")
         # can't convert vector[] to vector
-        # mtext_varying <- c(idt(1), "to_vector(to_matrix(a_raw_", i, "[, , 1])') ~ ", d, "(", paste0("beta_varying_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
+        # mtext_varying <- c(idt(1), "to_vector(to_matrix(a_raw_", i, "[, , 1])') ~ ", d, "(", paste0("delta_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
         # TODO: this works but might give a false warning about missing jacobian which needs to be suppressed?
-        mtext_varying <- "to_vector(beta_{y}[1, {{{cs(L_varying)}}}, ]) ~ {beta_varying_prior_distr}({dpars_varying});"
+        mtext_varying <- "to_vector(delta_{y}[1]) ~ {delta_prior_distr}({dpars_varying});"
       } else {
         k <- rep(1:K_fixed, S - 1)
         s <- rep(1:(S - 1), each = K_fixed)
-        mtext_varying <- "a_raw_{y}[{s},{k},1] ~ {beta_varying_prior_distr};"
+        mtext_varying <- "alpha_raw_{y}[{s},{k},1] ~ {delta_prior_distr};"
       }
       mtext_varying <- paste_rows(
         mtext_varying,
         "for (s in 1:{S - 1}) {{",
-        "to_vector(a_raw_{y}[s, ,2:D]) ~ std_normal();",
+        "to_vector(alpha_raw_{y}[s, ,2:D]) ~ std_normal();",
         "}}",
-        .indent = idt(c(1, 1, 2, 1)),
+        .indent = idt(c(0, 1, 2, 1)),
         .parse = FALSE
       )
     } else {
-      if (vectorizable_prior(beta_varying_prior_distr)) {
-        np <- beta_varying_prior_npars
-        dpars_varying <- paste0("beta_varying_prior_pars_", y, "[, ", 1:np, "]",
+      if (vectorizable_prior(delta_prior_distr)) {
+        np <- delta_prior_npars
+        dpars_varying <- paste0("delta_prior_pars_", y, "[, ", 1:np, "]",
                                 collapse = ", ")
         # can't convert vector[] to vector
-        # mtext_varying <- c(idt(1), "to_vector(to_matrix(a_raw_", i, "[, , 1])') ~ ", d, "(", paste0("beta_varying_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
+        # mtext_varying <- c(idt(1), "to_vector(to_matrix(alpha_raw_", i, "[, , 1])') ~ ", d, "(", paste0("delta_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
         # TODO: this works but might give a false warning about missing jacobian which needs to be suppressed?
-        mtext_varying <- "to_vector(beta_{y}[1, {{{cs(L_varying)}}}, ]) ~ {beta_varying_prior_distr}({dpars_varying});"
+        mtext_varying <- "to_vector(delta_{y}[1]) ~ {delta_prior_distr}({dpars_varying});"
       } else {
         k <- rep(1:K_fixed, S - 1)
         s <- rep(1:(S - 1), each = K_varying)
-        mtext_varying <- "a_{y}[{s}, {k}, 1] ~ {beta_varying_prior_distr};"
+        mtext_varying <- "alpha_{y}[{s}, {k}, 1] ~ {delta_prior_distr};"
       }
       mtext_varying <- paste_rows(
         mtext_varying,
@@ -464,12 +436,12 @@ model_lines_categorical <- quote({
         "for(i in 2:D) {{",
         ifelse_(
           shrinkage,
-          "a_{y}[s, , i] ~ normal(a_{y}[s, , i - 1], lambda[i - 1] * tau_{y});",
-          "a_{y}[s, , i] ~ normal(a_{y}[s, , i - 1], tau_{y});"
+          "alpha_{y}[s, , i] ~ normal(alpha_{y}[s, , i - 1], lambda[i - 1] * tau_{y});",
+          "alpha_{y}[s, , i] ~ normal(alpha_{y}[s, , i - 1], tau_{y});"
         ),
         "}}",
         "}}",
-        .indent = idt(c(1, 1, 2, 3, 2, 1)),
+        .indent = idt(c(0, 1, 2, 3, 2, 1)),
         .parse = FALSE
       )
     }
@@ -482,11 +454,19 @@ model_lines_categorical <- quote({
       mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {tau_prior_distr};"
     }
   }
-  likelihood_term <- "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], zeros_S_{y}, append_col(zeros_K_{y}, beta_{y}[t]));"
+
+  likelihood_term <- "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], zeros_S_{y}, append_col(zeros_K_{y}, gamma_{y}));"
   paste_rows(
     mtext_fixed, mtext_varying, mtext_tau,
-    "for (t in 1:T) {{", likelihood_term, "}}",
-    .indent = idt(c(1, 0, 1, 1, 2, 1))
+    "{{",
+    "vector[{K}] gamma_{y};",
+    "for (t in 1:T) {{",
+    onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+    onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
+    likelihood_term,
+    "}}",
+    "}}",
+    .indent = idt(c(1, 1, 1, 1, 2, 2, 3, 3, 3, 2, 1))
   )
 })
 
@@ -494,16 +474,26 @@ model_lines_gaussian <- quote({
   mtext_def <- eval(model_lines_default)
   d <- sigma_prior_distr
   sigma_term <- "sigma_{y} ~ {d};"
-  likelihood_term <- "{y}[{obs}, t] ~ normal_id_glm(X[t][{obs}, {{{cs(J)}}}], 0, beta_{y}[t], sigma_{y});"
-  mtext <- paste_rows(sigma_term, "for (t in 1:T) {{", likelihood_term, "}}",
-                      .indent = idt(c(1, 1, 2, 1)))
+  likelihood_term <- "{y}[{obs}, t] ~ normal_id_glm(X[t][{obs}, {{{cs(J)}}}], 0, gamma_{y}, sigma_{y});"
+  mtext <- paste_rows(
+    sigma_term,
+    "{{",
+    "vector[{K}] gamma_{y};",
+    "for (t in 1:T) {{",
+    onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+    onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
+    likelihood_term,
+    "}}",
+    "}}",
+    .indent = idt(c(1, 1, 2, 2, 3, 3, 3, 2, 1))
+  )
   paste_rows(mtext_def, mtext, .parse = FALSE)
 })
 
 model_lines_binomial <- quote({
   mtext_def <- eval(model_lines_default)
-  fixed_term <- onlyif(has_fixed, glue::glue("X[t][{obs}, {{{cs(J_fixed)}}}] * beta_fixed_{y}"))
-  varying_term <- onlyif(has_varying, glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * beta_varying_{y}[t]"))
+  fixed_term <- onlyif(has_fixed, glue::glue("X[t][{obs}, {{{cs(J_fixed)}}}] * beta_{y}"))
+  varying_term <- onlyif(has_varying, glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"))
   plus <- onlyif(has_fixed && has_varying, " + ")
   likelihood_term <- "{y}[t, {obs}] ~ binomial_logit(trials_{y}[t, {obs}], {fixed_term}{plus}{varying_term});"
   mtext <- paste_rows("for (t in 1:T) {{", likelihood_term, "}}",
@@ -513,18 +503,36 @@ model_lines_binomial <- quote({
 
 model_lines_bernoulli <- quote({
   mtext_def <- eval(model_lines_default)
-  likelihood_term <- "{y}[t, {obs}] ~ bernoulli_logit_glm(X[t][{obs}, {{{cs(J)}}}], 0, beta_{y}[t]);"
-  mtext <- paste_rows(mtext, "for (t in 1:T) {{", likelihood_term, "}}",
-                      .indent = idt(c(1, 2, 1)))
+  likelihood_term <- "{y}[t, {obs}] ~ bernoulli_logit_glm(X[t][{obs}, {{{cs(J)}}}], 0, gamma_{y});"
+  mtext <- paste_rows(
+    "{{",
+    "vector[{K}] gamma_{y};",
+    "for (t in 1:T) {{",
+    onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+    onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
+    likelihood_term,
+    "}}",
+    "}}",
+    .indent = idt(c(1, 2, 2, 3, 3, 3, 2, 1))
+  )
   paste_rows(mtext_def, mtext, .parse = FALSE)
 })
 
 model_lines_poisson <- quote({
   mtext_def <- eval(model_lines_default)
   offset_term <- ifelse_(has_offset, glue::glue("to_vector(offset_{y}[t, {obs}])"), "0")
-  likelihood_term <- "{y}[t, {obs}] ~ poisson_log_glm(X[t][{obs}, {{{cs(J)}}}], {offset_term}, beta_{y}[t]);"
-  mtext <- paste_rows("for (t in 1:T) {{", likelihood_term, "}}",
-                      .indent = idt(c(1, 2, 1)))
+  likelihood_term <- "{y}[t, {obs}] ~ poisson_log_glm(X[t][{obs}, {{{cs(J)}}}], {offset_term}, gamma_{y});"
+  mtext <- paste_rows(
+    "{{",
+    "vector[{K}] gamma_{y};",
+    "for (t in 1:T) {{",
+    onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+    onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
+    likelihood_term,
+    "}}",
+    "}}",
+    .indent = idt(c(1, 2, 2, 3, 3, 3, 2, 1))
+  )
   paste_rows(mtext_def, mtext, .parse = FALSE)
 })
 
@@ -532,9 +540,19 @@ model_lines_negbin <- quote({
   mtext_def <- eval(model_lines_default)
   d <- phi_prior_distr
   phi_term <- "phi_{y} ~ {d};"
-  likelihood_term <- "{y}[t, {obs}] ~ neg_binomial_2_log_glm(X[t][{obs}, {{{cs(J)}}}], 0, beta_{y}[t], phi_{y});"
-  mtext <- paste_rows(phi_term, "for (t in 1:T) {{", likelihood_term, "}}",
-                      .indent = idt(c(1, 1, 2, 1)))
+  likelihood_term <- "{y}[t, {obs}] ~ neg_binomial_2_log_glm(X[t][{obs}, {{{cs(J)}}}], 0, gamma_{y}, phi_{y});"
+  mtext <- paste_rows(
+    phi_term,
+    "{{",
+    "vector[{K}] gamma_{y};",
+    "for (t in 1:T) {{",
+    onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+    onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
+    likelihood_term,
+    "}}",
+    "}}",
+    .indent = idt(c(1, 1, 2, 2, 3, 3, 3, 2, 1))
+  )
   paste_rows(mtext_def, mtext, .parse = FALSE)
 })
 
@@ -551,16 +569,7 @@ generated_quantities_lines_gaussian <- quote({
 })
 
 generated_quantities_lines_binomial <- quote({
-  mtext <- "vector[{K}] beta_{y}[T];"
-  mtext_fixed <- ""
-  mtext_varying <- ""
-  if (has_fixed) {
-    mtext_fixed <- "beta_{y}[1:T, {{{cs(L_fixed)}}}] = rep_array(beta_fixed_{y}, T);"
-  }
-  if (has_varying) {
-    mtext_varying <- "beta_{y}[1:T, {{{cs(L_varying)}}}] = beta_varying_{y};"
-  }
-  paste_rows(mtext, mtext_fixed, mtext_varying, .indent = idt(c(1, 1, 1)))
+  eval(generated_quantities_lines_default)
 })
 
 generated_quantities_lines_bernoulli <- quote({

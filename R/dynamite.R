@@ -176,13 +176,10 @@ dynamite <- function(formula, data, group, time,
     message("Compiling Stan model")
     rstan::stan_model(model_code = model_code)
   }
-  drop_pars <- expand.grid(c("beta_fixed_", "beta_varying_"), resp_all)
-  drop_pars <- paste0(drop_pars[, 1], drop_pars[, 2])
   stanfit <- if (isTRUE(debug$no_compile) || isTRUE(debug$no_sampling)) {
     NULL
   } else {
-    rstan::sampling(model, data = sampling_vars,
-                    pars = drop_pars, include = FALSE, ...)
+    rstan::sampling(model, data = sampling_vars, ...)
   }
   # TODO return the function call for potential update method?
   out <- structure(
