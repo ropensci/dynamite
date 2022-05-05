@@ -218,32 +218,32 @@ prepare_channel_default <- function(y, Y, channel,
     if (channel$has_fixed) {
       m <- rep(0, channel$K_fixed)
       s <- sd_beta[channel$J_fixed]
-      channel$beta_fixed_prior_npars <- 2
-      channel$beta_fixed_prior_pars <- cbind(m, s, deparse.level = 0)
-      channel$beta_fixed_prior_distr <- "normal"
+      channel$beta_prior_npars <- 2
+      channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
+      channel$beta_prior_distr <- "normal"
 
-      priors$beta_fixed <-
+      priors$beta <-
         data.frame(
           parameter = bnames[channel$L_fixed],
           response = y,
           prior = paste0("normal(", m, ", ", s, ")"),
-          type = "beta_fixed",
+          type = "beta",
           category = ""
         )
     }
     if (channel$has_varying) {
       m <- rep(0, channel$K_varying)
       s <- sd_beta[channel$J_varying]
-      channel$beta_varying_prior_npars <- 2
-      channel$beta_varying_prior_pars <- cbind(m, s, deparse.level = 0)
-      channel$beta_varying_prior_distr <- "normal"
+      channel$delta_prior_npars <- 2
+      channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
+      channel$delta_prior_distr <- "normal"
 
-      priors$beta_varying <-
+      priors$delta <-
         data.frame(
           parameter = bnames[channel$L_varying],
           response = y,
           prior = paste0("normal(", m, ", ", s, ")"),
-          type = "beta_varying",
+          type = "delta",
           category = ""
         )
 
@@ -266,7 +266,7 @@ prepare_channel_default <- function(y, Y, channel,
     # of the priors data.frame should be altered (i.e. there's no checks for names or reordering of rows)
     # Or arrange...
     priors <- priors |> dplyr::filter(.data$response == y)
-    for (ptype in c("beta_fixed", "beta_varying", "tau")) {
+    for (ptype in c("beta", "delta", "tau")) {
       pdef <- priors |> dplyr::filter(.data$type == ptype)
       if (nrow(pdef) > 0) {
         dists <- sub("\\(.*", "", pdef$prior)
@@ -283,10 +283,10 @@ prepare_channel_default <- function(y, Y, channel,
       }
     }
   }
-  channel$write_beta_fixed <- channel$has_fixed &&
-    length(channel$beta_fixed_prior_distr) == 1
-  channel$write_beta_varying <- channel$has_varying &&
-    length(channel$beta_varying_prior_distr) == 1
+  channel$write_beta <- channel$has_fixed &&
+    length(channel$beta_prior_distr) == 1
+  channel$write_delta <- channel$has_varying &&
+    length(channel$delta_prior_distr) == 1
   channel$write_tau <- channel$has_varying &&
     length(channel$tau_prior_distr) == 1
   list(channel = channel, priors = priors)
@@ -324,15 +324,15 @@ prepare_channel_categorical <- function(y, Y, channel,
     if (channel$has_fixed > 0) {
       m <- rep(0, channel$K_fixed * (S_y - 1))
       s <- rep(sd_beta[channel$J_fixed], S_y - 1)
-      channel$beta_fixed_prior_npars <- 2
-      channel$beta_fixed_prior_distr <- "normal"
-      channel$beta_fixed_prior_pars <- cbind(m, s, deparse.level = 0)
-      priors$beta_fixed <-
+      channel$beta_prior_npars <- 2
+      channel$beta_prior_distr <- "normal"
+      channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
+      priors$beta <-
         data.frame(
           parameter = bnames[channel$L_fixed],
           response = y,
           prior = paste0("normal(", m, ", ", s, ")"),
-          type = "beta_fixed",
+          type = "beta",
           category = levels_
         )
     }
@@ -340,16 +340,16 @@ prepare_channel_categorical <- function(y, Y, channel,
     if (channel$has_varying) {
       m <- rep(0, channel$K_varying * (S_y - 1))
       s <- rep(sd_beta[channel$J_varying], S_y - 1)
-      channel$beta_varying_prior_npars <- 2
-      channel$beta_varying_prior_pars <- cbind(m, s, deparse.level = 0)
-      channel$beta_varying_prior_distr <- "normal"
+      channel$delta_prior_npars <- 2
+      channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
+      channel$delta_prior_distr <- "normal"
 
-      priors$beta_varying <-
+      priors$delta <-
         data.frame(
           parameter = bnames[channel$L_varying],
           response = y,
           prior = paste0("normal(", m, ", ", s, ")"),
-          type = "beta_varying",
+          type = "delta",
           category = levels_
         )
 
@@ -372,7 +372,7 @@ prepare_channel_categorical <- function(y, Y, channel,
     # of the priors data.frame should be altered (i.e. there's no checks for names or reordering of rows)
     # Or arrange...
     priors <- priors |> dplyr::filter(.data$response == y)
-    for (ptype in c("beta_fixed", "beta_varying", "tau")) {
+    for (ptype in c("beta", "delta", "tau")) {
       pdef <- priors |> dplyr::filter(.data$type == ptype)
       if (nrow(pdef) > 0) {
         dists <- sub("\\(.*", "", pdef$prior)
@@ -389,10 +389,10 @@ prepare_channel_categorical <- function(y, Y, channel,
       }
     }
   }
-  channel$write_beta_fixed <- channel$has_fixed &&
-    length(channel$beta_fixed_prior_distr) == 1
-  channel$write_beta_varying <- channel$has_varying &&
-    length(channel$beta_varying_prior_distr) == 1
+  channel$write_beta <- channel$has_fixed &&
+    length(channel$beta_prior_distr) == 1
+  channel$write_delta <- channel$has_varying &&
+    length(channel$delta_prior_distr) == 1
   channel$write_tau <- channel$has_varying &&
     length(channel$tau_prior_distr) == 1
   list(channel = channel, priors = priors)
