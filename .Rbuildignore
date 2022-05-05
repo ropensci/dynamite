@@ -7,3 +7,4 @@
 ^LICENSE\.md$
 ^README\.Rmd$
 ^codemeta\.json$
+^data-raw$
