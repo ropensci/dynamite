@@ -96,13 +96,14 @@ convert_data <- function(formula, responses, specials, group, time,
     channel$K <- length(assigned[[i]])
     channel$K_fixed <- length(fixed_pars[[i]])
     channel$K_varying <- length(varying_pars[[i]])
-    obs_idx <- apply(X[, , channel$J], 1, function(x) {
+    obs_idx <- apply(X[, , channel$J, drop = FALSE], 1, function(x) {
       nc <- nrow(x)
       obs <- which(apply(x, 1, function(y) {
         all(!is.na(y))
       }))
       c(obs, rep(0, nc - length(obs)))
     })
+    dim(obs_idx) <- c(T_full, N)
     obs_len <- apply(obs_idx, 2, function(x) {
       sum(x > 0)
     })
@@ -140,7 +141,7 @@ convert_data <- function(formula, responses, specials, group, time,
     } else {
       resp_split <- responses[, resp]
     }
-    if (length(form_specials)) {
+    if (length(form_specials) > 0) {
       for (spec in formula_special_funs) {
         if (!is.null(form_specials[[spec]])) {
           if (groups) {
@@ -423,7 +424,11 @@ prepare_channel_gaussian <- function(y, Y, channel,
     sd_gamma, resp_class, coef_names, priors
   )
   if (is.null(priors)) {
-    s <- 1 / mean(apply(Y, 1, sd, na.rm = TRUE))
+    if (ncol(Y) > 1) {
+      s <- 1 / mean(apply(Y, 1, sd, na.rm = TRUE))
+    } else {
+      s <- sd(Y, na.rm = TRUE)
+    }
     out$channel$sigma_prior_distr <- paste0("exponential(", s, ")")
     out$priors <- dplyr::bind_rows(
       out$priors,

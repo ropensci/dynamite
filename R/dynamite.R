@@ -81,7 +81,7 @@ dynamite <- function(formula, data, group, time,
     }
   }
   group <- data[[group_var]] # had , drop = FALSE, is it needed somewhere?
-  # TODO M1aybe having a continuous range of non-NA values for
+  # TODO Maybe having a continuous range of non-NA values for
   # each individual is useful for some special case?
   # data_mis <- data[ ,c(group_var, time_var)]
   # data_mis$obs <- complete.cases(data)

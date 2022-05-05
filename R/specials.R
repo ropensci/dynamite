@@ -14,7 +14,7 @@ formula_specials <- function(x) {
       out$specials[[y]] <- xt_variables[[xt_specials[[y]] + 1]][[2]]
     }
   }
-  if (length(special_vars)) {
+  if (length(special_vars) > 0) {
     x <- formula(drop.terms(xt, special_vars - 1, keep.response = TRUE))
   }
   xt <- terms(x, specials = c("fixed", "varying"))
@@ -43,7 +43,7 @@ formula_specials <- function(x) {
   fixed_rhs <- union(form_rhs, fixed_rhs)
   fixed_icpt <- attr(xt, "intercept") || fixed_icpt
   common_rhs <- intersect(fixed_rhs, varying_rhs)
-  if (length(common_rhs)) {
+  if (length(common_rhs) > 0) {
     stop_("Variables ", common_rhs,
           " specified as both time-constant and time-varying.")
   }
@@ -79,7 +79,7 @@ formula_specials <- function(x) {
 #' @noRd
 evaluate_specials <- function(formula, data) {
   lapply(seq_along(formula), function(i) {
-    if (length(formula[[i]]$specials)) {
+    if (length(formula[[i]]$specials) > 0) {
       out <- list()
       for (spec in formula_special_funs) {
         if (!is.null(spec_formula <- formula[[i]]$specials[[spec]])) {

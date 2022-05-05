@@ -112,7 +112,7 @@ paste_rows <- function(..., .indent = "", .parse = TRUE) {
       }
     } else {
       x <- x[nzchar(x)]
-      if (length(x)) {
+      if (length(x) > 0) {
         if (.parse) {
           xglue <- sapply(x, function(y) {
             paste0(glue::glue(y, .envir = parent.frame(), .trim = FALSE),
@@ -126,7 +126,7 @@ paste_rows <- function(..., .indent = "", .parse = TRUE) {
     }
   }
   pasted <- pasted[nzchar(pasted)]
-  if (length(pasted)) {
+  if (length(pasted) > 0) {
     paste0(pasted, collapse = "\n")
   } else {
     ""
