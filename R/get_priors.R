@@ -14,7 +14,7 @@
 #' @export
 get_priors <- function(formula, data, group, time) {
   out <- do.call(
-    "dynamitefit",
+    "dynamite",
     list(
       formula = formula,
       data = data,
@@ -32,7 +32,7 @@ get_priors <- function(formula, data, group, time) {
 #' @export
 get_code <- function(formula, data, group, time) {
   out <- do.call(
-    "dynamitefit",
+    "dynamite",
     list(
       formula = formula,
       data = data,
@@ -49,7 +49,7 @@ get_code <- function(formula, data, group, time) {
 #' @export
 get_data <- function(formula, data, group, time) {
   out <- do.call(
-    "dynamitefit",
+    "dynamite",
     list(
       formula = formula,
       data = data,
