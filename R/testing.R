@@ -50,8 +50,8 @@
 #     obs(y7 ~ x1 + x2 + varying(~x4) + lag(y1, 1) + lag(y2, 1), family = negbin()) +
 #     splines()
 #
-# #test_fit <- dynamite:::dynamitefit(test_all, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, sampling_vars = TRUE, model_code = TRUE))
-# #test_fit <- dynamite:::dynamitefit(test_all, test_data, ID, time)
+# #test_fit <- dynamite(test_all, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, sampling_vars = TRUE, model_code = TRUE))
+# #test_fit <- dynamite(test_all, test_data, ID, time)
 #
 # #test_fit_neglag <- dynamite:::dynamitefit(test_form, test_data, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))
 # #test_fit_mis <- dynamite:::dynamitefit(test_form, test_data_mis, ID, time, debug = list(no_compile = TRUE, model_matrix = TRUE, model_data = TRUE, model_code = TRUE))

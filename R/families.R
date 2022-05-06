@@ -39,51 +39,6 @@ is.dynamitefamily <- function(x) {
   inherits(x, "dynamitefamily")
 }
 
-categorical_ <- function() {
-  # do something different
-  dynamitefamily_("categorical")
-}
-
-#* Gaussian family
-#*
-#' @noRd
-gaussian_ <- function() {
-  # do something else
-  dynamitefamily_("gaussian")
-}
-
-#* Binomial family
-#*
-#' @noRd
-binomial_ <- function() {
-  # do something else
-  dynamitefamily_("binomial")
-}
-
-#* Bernoulli family
-#*
-#' @noRd
-bernoulli_ <- function() {
-  # do something else
-  dynamitefamily_("bernoulli")
-}
-
-#* Poisson family
-#*
-#' @noRd
-poisson_ <- function() {
-  # do something else
-  dynamitefamily_("poisson")
-}
-
-#* Negative binomial family
-#*
-#' @noRd
-negbin_ <- function() {
-  # do something else
-  dynamitefamily_("negbin")
-}
-
 #' Check if response of a family is continuous
 #'
 #' @param x A `dynamitefamily` object.
@@ -125,11 +80,13 @@ is_supported <- function(name) {
   name %in% supported_families
 }
 
+# TODO needed?
 continuous_distributions <- c(
   "gaussian",
   "gamma"
 )
 
+# TODO needed?
 discrete_distributions <- c(
   "categorical",
   "binomial",
@@ -145,12 +102,20 @@ supported_families <- c(
   "poisson" # TODO add gamma
 )
 
-# Generate is_x convenience functions for all supported families x
+# Generate 'family_' and 'is_family' convenience functions
+# for all supported families
 for (family in supported_families) {
+  force(family)
   assign(paste0("is_", family), (function(y) {
     force(y)
     function(x) {
       identical(x$name, y)
+    }
+  })(family))
+  assign(paste0(family, "_"), (function(y) {
+    force(y)
+    function() {
+      dynamitefamily_(y)
     }
   })(family))
 }

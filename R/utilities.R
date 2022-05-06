@@ -180,7 +180,7 @@ warning_ <- function(...) {
 #' Try to coerce one argument to specific type
 #'
 #' @param ... A `name = value` pair,
-#'   only the first one is used if multiple are given
+#'   only the first one is used if multiple pairs are supplied.
 #'
 #' @noRd
 try_ <- function(..., type) {
@@ -210,9 +210,10 @@ try_ <- function(..., type) {
 #' @noRd
 ifelse_ <- function(test, yes, no) {
   if (test) {
-    return(yes)
+    yes
+  } else {
+    no
   }
-  return(no)
 }
 
 #' Return yes if test is TRUE, otherwise an empty vector of the same type
@@ -223,9 +224,10 @@ ifelse_ <- function(test, yes, no) {
 #' @noRd
 onlyif <- function(test, yes) {
   if (test) {
-    return(yes)
+    yes
+  } else {
+    do.call(paste0(typeof(yes)), args = list(length = 0))
   }
-  do.call(paste0(typeof(yes)), args = list(length = 0))
 }
 
 #' Combine model.matrix objects of all formulas of a dynamiteformula into one

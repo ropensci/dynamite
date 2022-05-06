@@ -58,9 +58,9 @@ auxiliary <- function(formula) {
   x <- formula_specials(formula)
   structure(
     list(
-      formula = x$formula
+      formula = x$formula,
       specials = x$specials
-    )
+    ),
     class = "auxiliary"
   )
 }

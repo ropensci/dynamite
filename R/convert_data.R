@@ -52,7 +52,7 @@ convert_data <- function(formula, responses, specials, group, time,
     } else {
       warning_(
         "Length of the 'noncentered' argument of 'splines' function ",
-        "is not equal to 1 or the number of the channels. Recycling. "
+        "is not equal to 1 or the number of the channels. Recycling."
       )
     }
     sampling_vars$D <- D
@@ -121,9 +121,9 @@ convert_data <- function(formula, responses, specials, group, time,
     channel$shrinkage <- shrinkage
     if (channel$has_varying) {
       if (!has_splines) {
-        stop_("Model for response variable ", resp,
-              " contains time-varying definitions",
-              " but splines have not been defined.")
+        stop_("Model for response variable ", resp, " ",
+              "contains time-varying definitions ",
+              "but splines have not been defined.")
         # TODO switch back to warning after defining default splines?
         warn_nosplines <- TRUE
       }
@@ -182,7 +182,7 @@ convert_data <- function(formula, responses, specials, group, time,
   }
   # TODO move this before prep
   if (warn_nosplines) {
-    warning_("All channels will now default to time-constant",
+    warning_("All channels will now default to time-constant ",
              "coefficients for all predictors.")
   }
   sampling_vars$N <- N
@@ -214,7 +214,6 @@ prepare_channel_default <- function(y, Y, channel,
                                     sd_gamma, resp_class, coef_names, priors) {
   if (is.null(priors)) {
     priors <- list()
-    # default priors
     bnames <- gsub(paste0("^", y), "beta", coef_names)
     if (channel$has_fixed) {
       m <- rep(0, channel$K_fixed)
@@ -222,15 +221,13 @@ prepare_channel_default <- function(y, Y, channel,
       channel$beta_prior_npars <- 2
       channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
       channel$beta_prior_distr <- "normal"
-
-      priors$beta <-
-        data.frame(
-          parameter = bnames[channel$L_fixed],
-          response = y,
-          prior = paste0("normal(", m, ", ", s, ")"),
-          type = "beta",
-          category = ""
-        )
+      priors$beta <- data.frame(
+        parameter = bnames[channel$L_fixed],
+        response = y,
+        prior = paste0("normal(", m, ", ", s, ")"),
+        type = "beta",
+        category = ""
+       )
     }
     if (channel$has_varying) {
       m <- rep(0, channel$K_varying)
@@ -238,28 +235,24 @@ prepare_channel_default <- function(y, Y, channel,
       channel$delta_prior_npars <- 2
       channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
       channel$delta_prior_distr <- "normal"
-
-      priors$delta <-
-        data.frame(
-          parameter = bnames[channel$L_varying],
-          response = y,
-          prior = paste0("normal(", m, ", ", s, ")"),
-          type = "delta",
-          category = ""
-        )
-
+      priors$delta <- data.frame(
+        parameter = bnames[channel$L_varying],
+        response = y,
+        prior = paste0("normal(", m, ", ", s, ")"),
+        type = "delta",
+        category = ""
+      )
       channel$tau_prior_npars <- 2
       channel$tau_prior_pars <- cbind(0, rep(1, channel$K_varying))
       channel$tau_prior_distr <- "normal"
       bnames <- gsub(paste0("^", y), "", coef_names)
-      priors$tau <-
-        data.frame(
-          parameter = paste0("tau", bnames[channel$L_varying]),
-          response = y,
-          prior = "normal(0, 1)",
-          type = "tau",
-          category = ""
-        )
+      priors$tau <- data.frame(
+        parameter = paste0("tau", bnames[channel$L_varying]),
+        response = y,
+        prior = "normal(0, 1)",
+        type = "tau",
+        category = ""
+      )
     }
     priors <- dplyr::bind_rows(priors)
   } else {
@@ -299,7 +292,7 @@ prepare_channel_categorical <- function(y, Y, channel,
   S_y <- length(unique(na.exclude(as.vector(Y))))
   channel$S <- S_y
   if (!("factor" %in% resp_class)) {
-    stop_("Response variable ", y, " is invalid:",
+    stop_("Response variable ", y, " is invalid: ",
           "categorical family supports only factors.")
   }
   if (is.null(priors)) {
@@ -307,65 +300,51 @@ prepare_channel_categorical <- function(y, Y, channel,
     # default priors
     bnames <- gsub(paste0("^", y), "beta", attr(coef_names, "simplified")$names)
     levels_ <- attr(coef_names, "simplified")$levels
-
     sd_gamma <- 2 / sd_x
     k <- grep("(Intercept)", bnames)
     if (!is.null(k)) sd_gamma[k] <- 5 # TODO arbitrary, perhaps should depend on S
     if (any(!is.finite(sd_gamma))) { # never happens due to pmax(0.5,sd_x)
-      msg <- paste0(
-        "Found nonfinite prior standard deviation when using default priors ",
-        "for regression coeffients for response ",
-         y,
-        ", indicating constant covariate: Switching to N(0, 0.01) prior."
-      )
+      warn_nonfinite(y)
       sd_gamma[!is.finite(sd_gamma)] <- 0.1
-      warning(msg)
     }
-
-    if (channel$has_fixed > 0) {
+    if (channel$has_fixed) {
       m <- rep(0, channel$K_fixed * (S_y - 1))
       s <- rep(sd_gamma[channel$J_fixed], S_y - 1)
       channel$beta_prior_npars <- 2
       channel$beta_prior_distr <- "normal"
       channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
-      priors$beta <-
-        data.frame(
-          parameter = bnames[channel$L_fixed],
-          response = y,
-          prior = paste0("normal(", m, ", ", s, ")"),
-          type = "beta",
-          category = levels_
-        )
+      priors$beta <- data.frame(
+        parameter = bnames[channel$L_fixed],
+        response = y,
+        prior = paste0("normal(", m, ", ", s, ")"),
+        type = "beta",
+        category = levels_
+      )
     }
-
     if (channel$has_varying) {
       m <- rep(0, channel$K_varying * (S_y - 1))
       s <- rep(sd_gamma[channel$J_varying], S_y - 1)
       channel$delta_prior_npars <- 2
       channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
       channel$delta_prior_distr <- "normal"
-
-      priors$delta <-
-        data.frame(
-          parameter = bnames[channel$L_varying],
-          response = y,
-          prior = paste0("normal(", m, ", ", s, ")"),
-          type = "delta",
-          category = levels_
-        )
-
+      priors$delta <- data.frame(
+        parameter = bnames[channel$L_varying],
+        response = y,
+        prior = paste0("normal(", m, ", ", s, ")"),
+        type = "delta",
+        category = levels_
+      )
       channel$tau_prior_npars <- 2
       channel$tau_prior_pars <- cbind(0, rep(1, channel$K_varying))
       channel$tau_prior_distr <- "normal"
       bnames <- gsub(paste0("^", y), "", attr(coef_names, "simplified")$names)
-      priors$tau <-
-        data.frame(
-          parameter = paste0("tau", bnames[channel$L_varying]),
-          response = y,
-          prior = "normal(0, 1)",
-          type = "tau",
-          category = ""
-        )
+      priors$tau <- data.frame(
+        parameter = paste0("tau", bnames[channel$L_varying]),
+        response = y,
+        prior = "normal(0, 1)",
+        type = "tau",
+        category = ""
+      )
     }
     priors <- dplyr::bind_rows(priors)
   } else {
@@ -410,14 +389,8 @@ prepare_channel_gaussian <- function(y, Y, channel,
   k <- grep("(Intercept)", coef_names)
   if (!is.null(k)) sd_gamma[k] <- 10
   if (any(!is.finite(sd_gamma))) {
-    msg <- paste0(
-      "Found nonfinite prior standard deviation when using default priors ",
-      "for regression coeffients for response ",
-      y,
-      ", indicating constant covariate: Switching to N(0, 0.01) prior."
-    )
+    warn_nonfinite(y)
     sd_gamma[!is.finite(sd_gamma)] <- 0.1
-    warning(msg)
   }
   out <- prepare_channel_default(
     y, Y, channel,
@@ -441,7 +414,8 @@ prepare_channel_gaussian <- function(y, Y, channel,
       )
     )
   } else {
-    pdef <- priors |> dplyr::filter(.data$response == y && .data$type == "sigma")
+    pdef <- priors |>
+      dplyr::filter(.data$response == y && .data$type == "sigma")
     if (nrow(pdef) == 1) {
       out$channel$sigma_prior_distr <- pdef$prior
     }
@@ -464,14 +438,8 @@ prepare_channel_binomial <- function(y, Y, channel,
   k <- grep("(Intercept)", coef_names)
   if (!is.null(k)) sd_gamma[k] <- 2.5
   if (any(!is.finite(sd_gamma))) {
-    msg <- paste0(
-      "Found nonfinite prior standard deviation when using default priors ",
-      "for regression coeffients for response ",
-      y,
-      ", indicating constant covariate: Switching to N(0, 0.01) prior."
-    )
+    warn_nonfinite(y)
     sd_gamma[!is.finite(sd_gamma)] <- 0.1
-    warning_(msg)
   }
   prepare_channel_default(
     y, Y, channel,
@@ -500,7 +468,7 @@ prepare_channel_bernoulli <- function(y, Y, channel,
 prepare_channel_poisson <- function(y, Y, channel,
                                     sd_x, resp_class, coef_names, priors) {
   if (any(Y < 0) || any(Y != as.integer(Y))) {
-    stop_("Response variable ", y, " is invalid:",
+    stop_("Response variable ", y, " is invalid: ",
           "Poisson family supports only non-negative integers.")
   }
   if ("factor" %in% resp_class) {
@@ -511,14 +479,8 @@ prepare_channel_poisson <- function(y, Y, channel,
   k <- grep("(Intercept)", coef_names)
   if (!is.null(k)) sd_gamma[k] <- 10
   if (any(!is.finite(sd_gamma))) {
-    msg <- paste0(
-      "Found nonfinite prior standard deviation when using default priors ",
-      "for regression coeffients for response ",
-      y,
-      ", indicating constant covariate: Switching to N(0, 0.01) prior."
-    )
+    warn_nonfinite(y)
     sd_gamma[!is.finite(sd_gamma)] <- 0.1
-    warning_(msg)
   }
   prepare_channel_default(
     y, Y, channel,
@@ -541,14 +503,8 @@ prepare_channel_negbin <- function(y, Y, channel,
   k <- grep("(Intercept)", coef_names)
   if (!is.null(k)) sd_gamma[k] <- 10
   if (any(!is.finite(sd_gamma))) {
-    msg <- paste0(
-      "Found nonfinite prior standard deviation when using default priors ",
-      "for regression coeffients for response ",
-      y,
-      ", indicating constant covariate: Switching to N(0, 0.01) prior."
-    )
     sd_gamma[!is.finite(sd_gamma)] <- 0.1
-    warning(msg)
+    warn_nonfinite(y)
   }
   out <- prepare_channel_default(
     y, Y, channel,
@@ -573,4 +529,12 @@ prepare_channel_negbin <- function(y, Y, channel,
     }
   }
   out
+}
+
+warn_nonfinite <- function(y) {
+  warning_(
+    "Found nonfinite prior standard deviation when using default priors ",
+    "for regression coeffients for response ", y, " ",
+    "indicating constant covariate: Switching to N(0, 0.01) prior."
+  )
 }

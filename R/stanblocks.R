@@ -117,7 +117,7 @@ create_model <- function(formula, idt, vars) {
   #         priors <- paste0(idt(1), "lambda ~ std_normal();  // prior for shrinkage terms")
   #     }
   # }
-  spline_defs <- attr(formula, "splines")
+  #spline_defs <- attr(formula, "splines")
   mod <- character(length(formula))
   for (i in seq_along(formula)) {
     line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])

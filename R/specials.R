@@ -69,7 +69,6 @@ formula_specials <- function(x) {
   out
 }
 
-# TODO don't use "with", convert to env and eval with that
 #' Computes all specials defined in a formula in the context of the data
 #'
 #' @param formula A `dynamiteformula` object
@@ -83,7 +82,7 @@ evaluate_specials <- function(formula, data) {
       out <- list()
       for (spec in formula_special_funs) {
         if (!is.null(spec_formula <- formula[[i]]$specials[[spec]])) {
-          out[[spec]] <- with(data, eval(spec_formula))
+          out[[spec]] <- eval(spec_formula, envir = list2env(data))
         }
       }
       out

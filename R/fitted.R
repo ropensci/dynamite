@@ -22,23 +22,23 @@ fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, ...) {
   } else {
     # TODO check that there are no NA values in newdata
     if (!(object$group_var %in% names(newdata))) {
-      stop("Grouping variable", object$group_var, "not found in 'newdata'.")
+      stop_("Grouping variable ", object$group_var, " not found in 'newdata'.")
     }
     group <- newdata[[object$group_var]]
     if (is.factor(group)) group <- droplevels(group)
     # TODO doesn't really matter at least at the moment
     if (!all(group %in% object$data[[object$group_var]])) {
-      stop("Grouping variable", object$group_var,
-           "contains new levels not found in the original data.")
+      stop_("Grouping variable ", object$group_var, " ",
+            "contains new levels not found in the original data.")
     }
     if (!(object$time_var %in% names(newdata))) {
-      stop("Time index variable", object$time_var, "not found in 'newdata'.")
+      stop_("Time index variable ", object$time_var, " not found in 'newdata'.")
     }
     newdata <- dplyr::arrange(newdata, dplyr::across(dplyr::all_of(c(object$group_var, object$time_var))))
     # TODO just use the original time points starting from start_time
     time <- unique(newdata[[object$time_var]])
     if (!all(time %in% object$time)) {
-      stop("Timing variable", object$time_var,
+      stop("Time index variable ", object$time_var, " ",
            "contains time points not found in the original data.")
     }
   }
@@ -48,9 +48,8 @@ fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, ...) {
   n_time <- length(time)
   n_id <- length(unique(group))
   if (n_time <= fixed) {
-    stop_("Model definition implies ", fixed,
-          " fixed time points, but 'newdata' has only ",
-          n_time, " time points.")
+    stop_("Model definition implies ", fixed, " fixed time points, ",
+          "but 'newdata' has only ", n_time, " time points.")
   }
   resp_all <- get_resp(basis$formula)
   samples <- rstan::extract(object$stanfit)

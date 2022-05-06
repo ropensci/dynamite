@@ -39,22 +39,19 @@ dynamite <- function(formula, data, group, time,
   if (missing(group)) {
     group <- group_var <- NULL
   } else {
-    if (!is.character(group_var <- substitute(group))) {
+    group_var <- substitute(group)
+    if (!is.character(group_var)) {
       group_var <- deparse(group_var)
     }
-    # if (is.factor(group)) group <- droplevels(group) #already done above
   }
-  # TODO is there a better way?
   if (missing(time)) {
     stop_("Argument 'time' is missing.")
   }
-  if (!is.character(time_var <- substitute(time))) {
+  time_var <- substitute(time)
+  if (!is.character(time_var)) {
     time_var <- deparse(time_var)
   }
-
-  # Pipe for readability, not really needed if we need to support older R versions
   data <- data |>
-    # Convert character types to factors
     dplyr::mutate(dplyr::across(where(is.character), as.factor)) |>
     dplyr::arrange(dplyr::across(dplyr::all_of(c(group_var, time_var))))
   time <- sort(unique(data[[time_var]]))
@@ -68,8 +65,7 @@ dynamite <- function(formula, data, group, time,
     full_time <- seq(time[1], time[length(time)], by = time_scale)
     time_groups <- data |>
       dplyr::group_by(!!as.symbol(group_var)) |>
-      dplyr::summarise(has_missing =
-                         !identical(!!as.symbol(time_var), full_time))
+      dplyr::summarise(has_missing = !identical({{ time_var }}, full_time))
     if (any(time_groups$has_missing)) {
       full_data_template <- expand.grid(
         time = time,
@@ -80,7 +76,7 @@ dynamite <- function(formula, data, group, time,
         dplyr::left_join(data, by = c(group_var, time_var))
     }
   }
-  group <- data[[group_var]] # had , drop = FALSE, is it needed somewhere?
+  group <- data[[group_var]]
   # TODO Maybe having a continuous range of non-NA values for
   # each individual is useful for some special case?
   # data_mis <- data[ ,c(group_var, time_var)]
@@ -129,7 +125,8 @@ dynamite <- function(formula, data, group, time,
       }
       pred_lag <- paste0("I(lag_(", lag_map$def[i], ", ", lag_map$k[i], "))")
       for (j in seq_len(n_resp)) {
-        formula[[j]]$predictors <- gsub(lag_map$src[i], pred_lag, formula[[j]]$predictors, fixed = TRUE)
+        formula[[j]]$predictors <- gsub(lag_map$src[i], pred_lag,
+                                        formula[[j]]$predictors, fixed = TRUE)
       }
     }
   }
