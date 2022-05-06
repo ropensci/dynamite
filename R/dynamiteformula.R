@@ -45,6 +45,39 @@ is.dynamiteformula <- function(x) {
   inherits(x, "dynamiteformula")
 }
 
+#' Prepare a deterministic auxiliary channel
+#'
+#' @param formula \[`formula`]\cr An \R formula describing how the LHS
+#'     variable is defined
+#'
+#' @export
+auxiliary <- function(formula) {
+  if (!is.formula(formula)) {
+    stop_("Argument 'formula' is not a formula.")
+  }
+  x <- formula_specials(formula)
+  structure(
+    list(
+      formula = x$formula
+      specials = x$specials
+    )
+    class = "auxiliary"
+  )
+}
+
+#' @rdname auxiliary
+#' @export
+aux <- auxiliary
+
+#' Checks if argument is an auxiliary channel definition
+#'
+#' @param x An \R object
+#'
+#' @noRd
+is.auxiliary <- function(x) {
+  inherits(x, "auxiliary")
+}
+
 #' Join two dynamiteformulas
 #'
 #' @param e1 An \R object
@@ -119,6 +152,8 @@ add_dynamiteformula <- function(e1, e2) {
     out <- set_lags(e1, e2)
   } else if (is.splines(e2)) {
     out <- set_splines(e1, e2)
+  } else if (is.auxiliary(e2)) {
+    out <- add_auxiliary(e1, e2)
   } else {
     stop_(
       "Unable to add an object of class ", class(e2),
@@ -138,9 +173,10 @@ add_dynamiteformula <- function(e1, e2) {
 join_dynamiteformulas <- function(e1, e2) {
   out <- c(e1, e2)
   resp_all <- get_resp(out)
-  duped <- duplicated(resp_all)
-  if (any(duped)) {
-    stop_("Multiple definitions for response variables: ", resp_all[duped])
+  resp_duped <- duplicated(resp_all)
+  if (any(resp_duped)) {
+    stop_("Multiple definitions for response variables: ",
+          resp_all[resp_duped])
   }
   if (!is.null(attr(e1, "lag_all")) && !is.null(attr(e2, "lag_all"))) {
     stop_("Multiple definitions for lags")
@@ -148,9 +184,19 @@ join_dynamiteformulas <- function(e1, e2) {
   if (!is.null(attr(e1, "splines")) && !is.null(attr(e2, "splines"))) {
     stop_("Multiple definitions for splines")
   }
-  # if (!is.null(e1$data) && !is.null(e2$data)) {
-  #     stop_("Multiple definitions for data")
-  # }
+  aux_l <- attr(e1, "auxiliary")
+  aux_r <- attr(e2, "auxiliary")
+  if (!is.null(aux_l) && !is.null(aux_r)) {
+    aux_all <- c(sapply(aux_l, formula_lhs),
+                 sapply(aux_r, formula_lhs))
+    aux_duped <- duplicated(aux_all)
+    if (any(aux_duped)) {
+      stop_("Multiple definitions for auxiliary variables: ",
+            aux_all[aux_duped])
+    }
+    attr(e1, "aux") <- c(aux_l, aux_r)
+    attr(e2, "aux") <- NULL
+  }
   attributes(out) <- c(attributes(e1), attributes(e2))
   class(out) <- "dynamiteformula"
   out
@@ -181,5 +227,27 @@ set_splines <- function(e1, e2) {
     stop_("Multiple definitions for splines")
   }
   attr(e1, "splines") <- e2
+  e1
+}
+
+#' Add an auxiliary channel to dynamiteformula
+#'
+#' @param e1 A `dynamiteformula` object
+#' @param e2 An `aux` object
+#'
+#' @noRd
+add_auxiliary <- function(e1, e2) {
+  aux_l <- attr(e1, "auxiliary")
+  if (!is.null(aux_l)) {
+    new_aux <- formula_lhs(e2)
+    if (new_aux %in% sapply(aux_l, formula_lhs)) {
+      stop_("An auxiliary channel has already been defined for ",
+            new_aux)
+    } else {
+      attr(e1, "auxiliary") <- c(aux_l, list(e2))
+    }
+  } else {
+    attr(e1, "auxiliary") <- list(e2)
+  }
   e1
 }
