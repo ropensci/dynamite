@@ -131,11 +131,15 @@ dynamite <- function(formula, data, group, time,
     }
   }
   for (j in seq_len(n_resp)) {
-    formula[[j]]$formula <- reformulate(
-      termlabels = formula[[j]]$predictors,
-      response = resp_all[j],
-      intercept = attr(terms(formula[[j]]$formula), "intercept")
-    )
+    if (length(formula[[j]]$predictors) > 0) {
+      formula[[j]]$formula <- reformulate(
+        termlabels = formula[[j]]$predictors,
+        response = resp_all[j],
+        intercept = attr(terms(formula[[j]]$formula), "intercept")
+      )
+    } else {
+      formula[[j]]$formula <- as.formula(paste0(resp_all[j], "~ 1"))
+    }
   }
   responses <- data[, resp_all, drop = FALSE]
   # Needs sapply/lapply instead of apply to keep factors as factors

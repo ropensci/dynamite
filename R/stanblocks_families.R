@@ -241,7 +241,7 @@ transformed_parameters_lines_default <- quote({
         "matrix[{K_varying}, D] alpha_{y};",
         "alpha_{y}[, 1] = alpha_raw_{y}[, 1];",
         "for (i in 2:D) {{",
-        "alpha_{y}[, i] = alpha_{y}[, i - 1] + alpha_raw_{y}[, i] .* tau_{y}{lambda_term}",
+          "alpha_{y}[, i] = alpha_{y}[, i - 1] + alpha_raw_{y}[, i] .* tau_{y}{lambda_term}",
         "}}",
         .indent = idt(c(1, 1, 1, 2, 1)),
         .parse = FALSE
@@ -249,7 +249,7 @@ transformed_parameters_lines_default <- quote({
     }
     mtext_varying <- paste_rows(
       "for (t in 1:T) {{",
-      "delta_{y}[t] = alpha_{y} * Bs[, t];",
+        "delta_{y}[t] = alpha_{y} * Bs[, t];",
       "}}",
       .indent = idt(c(1, 2, 1)),
       .parse = FALSE
@@ -271,10 +271,10 @@ transformed_parameters_lines_categorical <- quote({
       mtext_varying_noncentered <- paste_rows(
         "matrix[{K_varying}, D] alpha_{y}[{S - 1}];",
         "for (s in 1:{S - 1}) {{",
-        "alpha_{y}[s, , 1] = alpha_raw_{y}[s, , 1];",
-        "for (i in 2:D) {{",
-        "alpha_{y}[s, , i] = alpha_{y}[s, , i - 1] + alpha_raw_{y}[s, , i] .* tau_{y}{lambda_term}",
-        "}}",
+          "alpha_{y}[s, , 1] = alpha_raw_{y}[s, , 1];",
+          "for (i in 2:D) {{",
+            "alpha_{y}[s, , i] = alpha_{y}[s, , i - 1] + alpha_raw_{y}[s, , i] .* tau_{y}{lambda_term}",
+          "}}",
         "}}",
         .indent = idt(c(1, 1, 2, 2, 3, 2, 1)),
         .parse = FALSE
@@ -282,9 +282,9 @@ transformed_parameters_lines_categorical <- quote({
     }
     mtext_varying <- paste_rows(
       "for (s in 1:{S - 1}) {{",
-      "for (t in 1:T) {{",
-      "delta_{y}[t, , s] = alpha_{y}[s] * Bs[, t];",
-      "}}",
+        "for (t in 1:T) {{",
+          "delta_{y}[t, , s] = alpha_{y}[s] * Bs[, t];",
+        "}}",
       "}}",
       .indent = idt(c(1, 2, 3, 2, 1)),
       .parse = FALSE
@@ -411,7 +411,7 @@ model_lines_categorical <- quote({
       mtext_varying <- paste_rows(
         mtext_varying,
         "for (s in 1:{S - 1}) {{",
-        "to_vector(alpha_raw_{y}[s, ,2:D]) ~ std_normal();",
+          "to_vector(alpha_raw_{y}[s, ,2:D]) ~ std_normal();",
         "}}",
         .indent = idt(c(0, 1, 2, 1)),
         .parse = FALSE
@@ -433,13 +433,13 @@ model_lines_categorical <- quote({
       mtext_varying <- paste_rows(
         mtext_varying,
         "for (s in 1:{S - 1}) {{",
-        "for(i in 2:D) {{",
-        ifelse_(
-          shrinkage,
-          "alpha_{y}[s, , i] ~ normal(alpha_{y}[s, , i - 1], lambda[i - 1] * tau_{y});",
-          "alpha_{y}[s, , i] ~ normal(alpha_{y}[s, , i - 1], tau_{y});"
-        ),
-        "}}",
+          "for(i in 2:D) {{",
+          ifelse_(
+           shrinkage,
+           "alpha_{y}[s, , i] ~ normal(alpha_{y}[s, , i - 1], lambda[i - 1] * tau_{y});",
+           "alpha_{y}[s, , i] ~ normal(alpha_{y}[s, , i - 1], tau_{y});"
+          ),
+          "}}",
         "}}",
         .indent = idt(c(0, 1, 2, 3, 2, 1)),
         .parse = FALSE
@@ -454,17 +454,16 @@ model_lines_categorical <- quote({
       mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {tau_prior_distr};"
     }
   }
-
   likelihood_term <- "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], zeros_S_{y}, append_col(zeros_K_{y}, gamma_{y}));"
   paste_rows(
     mtext_fixed, mtext_varying, mtext_tau,
     "{{",
-    "vector[{K}] gamma_{y};",
-    "for (t in 1:T) {{",
-    onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
-    onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
-    likelihood_term,
-    "}}",
+      "matrix[{K}, {S-1}] gamma_{y};",
+      "for (t in 1:T) {{",
+        onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = rep_array(beta_{y}, T);"),
+        onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
+        likelihood_term,
+      "}}",
     "}}",
     .indent = idt(c(1, 1, 1, 1, 2, 2, 3, 3, 3, 2, 1))
   )
@@ -478,12 +477,12 @@ model_lines_gaussian <- quote({
   mtext <- paste_rows(
     sigma_term,
     "{{",
-    "vector[{K}] gamma_{y};",
-    "for (t in 1:T) {{",
-    onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
-    onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
-    likelihood_term,
-    "}}",
+      "vector[{K}] gamma_{y};",
+      "for (t in 1:T) {{",
+        onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+        onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
+        likelihood_term,
+      "}}",
     "}}",
     .indent = idt(c(1, 1, 2, 2, 3, 3, 3, 2, 1))
   )

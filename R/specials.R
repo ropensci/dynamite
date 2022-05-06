@@ -48,18 +48,25 @@ formula_specials <- function(x) {
           " specified as both time-constant and time-varying.")
   }
   full_rhs <- c(fixed_rhs, varying_rhs)
-  if (!identical(full_rhs, form_rhs)) {
-    any_icpt <- fixed_icpt || varying_icpt
-    if (fixed_icpt && varying_icpt) {
-      warning_("Both time-independent and time-varying intercept specified. ",
-               "Defaulting to time-varying intercept.")
-      fixed_icpt <- FALSE
-    }
+  any_icpt <- fixed_icpt || varying_icpt
+  if (fixed_icpt && varying_icpt) {
+    warning_("Both time-independent and time-varying intercept specified. ",
+             "Defaulting to time-varying intercept.")
+    fixed_icpt <- FALSE
+  }
+  if (length(full_rhs) > 0) {
     x <- reformulate(
       termlabels = full_rhs,
       response = xt_variables[[2]],
       intercept = 1 * any_icpt
     )
+  } else {
+    y <- as.character(xt_variables[[2]])
+    if (!any_icpt) {
+      stop_("Invalid formula for response ", y, ". ",
+            "There are no predictors nor an intercept.")
+    }
+    x <- as.formula(paste0(y, "~ 1"))
   }
   out$fixed <- c(ifelse_(fixed_icpt, 0, integer(0)),
                  which(full_rhs %in% fixed_rhs))
