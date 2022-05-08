@@ -77,7 +77,7 @@ formula_rhs <- function(x) {
 #'
 #' @noRd
 cs <- function(x) {
-  paste0(x, collapse = ",")
+  paste0(x, collapse = ", ")
 }
 
 #' Paste and optionally parse character strings containing glue syntax

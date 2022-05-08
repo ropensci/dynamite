@@ -17,6 +17,14 @@ formula_specials <- function(x) {
   if (length(special_vars) > 0) {
     x <- formula(drop.terms(xt, special_vars - 1, keep.response = TRUE))
   }
+
+  xt <- terms(x, specials = "initial")
+  xt_specials <- attr(xt, "specials")[["initial"]]
+  xt_variables <- attr(xt, "variables")
+  if (!is.null(xt_specials)) {
+    out$initial <- xt_variables[[xt_specials + 1]][[2]]
+  }
+
   xt <- terms(x, specials = c("fixed", "varying"))
   xt_specials <- attr(xt, "specials")[c("fixed", "varying")]
   xt_variables <- attr(xt, "variables")
@@ -24,14 +32,14 @@ formula_specials <- function(x) {
   special_vars <- unlist(xt_specials)
   fixed_rhs <- character(0)
   if (!is.null(xt_specials[["fixed"]])) {
-    fixed_form <- eval(xt_variables[[xt_specials[["fixed"]] + 1]][[2]])
+    fixed_form <- xt_variables[[xt_specials[["fixed"]] + 1]][[2]]
     fixed_rhs <- formula_rhs(fixed_form)
     fixed_icpt <- attr(terms(fixed_form), "intercept")
   }
   varying_rhs <- character(0)
   varying_icpt <- 0
   if (!is.null(xt_specials[["varying"]])) {
-    varying_form <- eval(xt_variables[[xt_specials[["varying"]] + 1]][[2]])
+    varying_form <- xt_variables[[xt_specials[["varying"]] + 1]][[2]]
     varying_rhs <- formula_rhs(varying_form)
     varying_icpt <- attr(terms(varying_form), "intercept")
   }
@@ -44,8 +52,8 @@ formula_specials <- function(x) {
   fixed_icpt <- attr(xt, "intercept") || fixed_icpt
   common_rhs <- intersect(fixed_rhs, varying_rhs)
   if (length(common_rhs) > 0) {
-    stop_("Variables ", common_rhs,
-          " specified as both time-constant and time-varying.")
+    stop_("Variables ", cs(common_rhs), " ",
+          "specified as both time-constant and time-varying.")
   }
   full_rhs <- c(fixed_rhs, varying_rhs)
   any_icpt <- fixed_icpt || varying_icpt
@@ -88,10 +96,14 @@ evaluate_specials <- function(formula, data) {
     if (length(formula[[i]]$specials) > 0) {
       out <- list()
       for (spec in formula_special_funs) {
-        if (!is.null(spec_formula <- formula[[i]]$specials[[spec]])) {
+        spec_formula <- formula[[i]]$specials[[spec]]
+        if (!is.null(spec_formula))) {
           out[[spec]] <- eval(spec_formula, envir = list2env(data))
         }
       }
+      # if (!is.null(formula$specials$initial)) {
+      #
+      # }
       out
     } else {
       NULL

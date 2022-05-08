@@ -44,12 +44,18 @@ dynamite <- function(formula, data, group, time,
       group_var <- deparse(group_var)
     }
   }
+  if (is.null(data$group_var)) {
+    stop_("Grouping variable '", group_var, "' is not present in the data")
+  }
   if (missing(time)) {
     stop_("Argument 'time' is missing.")
   }
   time_var <- substitute(time)
   if (!is.character(time_var)) {
     time_var <- deparse(time_var)
+  }
+  if (is.null(data$time_var)) {
+    stop_("Time index variable '", time_var, "' is not present in the data")
   }
   data <- data |>
     dplyr::mutate(dplyr::across(where(is.character), as.factor)) |>
@@ -91,31 +97,43 @@ dynamite <- function(formula, data, group, time,
   #     # TODO is there a better term or a way to convey this?
   #     stop_("Observed time series must not contain gaps.")
   # }
+  formula_det <- get_deterministic(formula)
+  formula <- get_stochastic(formula)
   resp_all <- get_resp(formula)
   n_rows <- nrow(data)
   n_resp <- length(resp_all)
-  lag_map <- extract_lags(unlist(get_pred(formula)))
-  unprocessed_lags <- rep(TRUE, nrow(lag_map))
   data_names <- names(data)
-  if (!is.null(lag_all <- attr(formula, "lags"))) {
+  lag_map <- extract_lags(unlist(get_pred(formula)))
+  lag_all <- attr(formula, "lags")
+  unprocessed_lags <- rep(TRUE, nrow(lag_map))
+  formula_lag <- list()
+  lag_defs <- list()
+  if (!is.null(lag_all)) {
     type <- lag_all$type
-    pred_lag <- character(lag_all$k * n_resp)
+    lhs_lag <- character(lag_all$k * n_resp)
     for (i in seq_len(lag_all$k)) {
       for (j in seq_len(n_resp)) {
         ix <- (i - 1) * n_resp + j
-        pred_lag[ix] <- paste0("I(lag_(", resp_all[j], ", ", i, "))")
+        lhs_lag[ix] <- paste0(resp_all[j], "_lag_", i)
+        if (i == 1) {
+          rhs_lag <- paste0("I(lag_(", resp_all[j], ", 1")))
+        } else {
+          rhs_lag <- paste0(resp_all[j], "_lag_", i - 1)
+        }
+        lags_defs[[ix]] <- paste0(lhs_lag[ix], " ~ ", rhs_lag)
+        formula_lag[[ix]] <- as.formula(lag_defs[[ix]])
       }
     }
     for (j in seq_len(n_resp)) {
-      c(formula[[j]]$predictors) <- pred_lag
-      c(formula[[j]][[type]]) <- which(formula[[j]]$predictors %in% pred_lag)
+      c(formula[[j]]$predictors) <- rhs_lag
+      c(formula[[j]][[type]]) <- which(formula[[j]]$predictors %in% rhs_lag)
     }
     unprocessed_lags[lag_map$def %in% resp_all & lag_map$k <= lag_all$k] <- FALSE
   }
   if (any(unprocessed_lags)) {
     for (i in which(unprocessed_lags)) {
       if (lag_map$k[i] <= 0) {
-        stop_("Only positive shift values are allowed in lag().")
+        stop_("Only positive shift values are allowed in lag()")
       }
       if (is_as_is(lag_map$src[i])) {
         lag_map$scr[i] <- gsub("lag", "lag_", lag_map$src[i])
@@ -123,10 +141,24 @@ dynamite <- function(formula, data, group, time,
       if (is_as_is(lag_map$def[i])) {
         lag_map$def[i] <- gsub("I\\((.*)\\)", "\\1", lag_map$def[i])
       }
-      pred_lag <- paste0("I(lag_(", lag_map$def[i], ", ", lag_map$k[i], "))")
-      for (j in seq_len(n_resp)) {
-        formula[[j]]$predictors <- gsub(lag_map$src[i], pred_lag,
-                                        formula[[j]]$predictors, fixed = TRUE)
+      for (j in 1:lag_map$k[i]) {
+        ix <- ix + 1
+        if (j == 1) {
+          rhs_lag <- paste0("I(lag_(", lag_map$def[i], ", ", lag_map$k[i], "))")
+        } else {
+          rhs_lag <- paste0(lag_map$def[i], "_lag_", lag_map$k[i] - 1)
+        }
+        lhs_lag <- paste0(lag_map$def[i], "_lag_", lag_map$k[i])
+        lag_defs[[ix]] <- paste0(lhs_lag[ix], " ~ ", rhs_lag)
+        formula_lag[[ix]] <- as.formula(lag_defs[[ix]])
+        if (j == lag_map$k[i]) {
+          for (l in seq_len(n_resp)) {
+            formula[[l]]$predictors <- gsub(lag_map$src[i],
+                                            lhs_lag,
+                                            formula[[l]]$predictors,
+                                            fixed = TRUE)
+          }
+        }
       }
     }
   }
