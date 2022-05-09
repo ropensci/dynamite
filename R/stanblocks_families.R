@@ -460,7 +460,7 @@ model_lines_categorical <- quote({
     "{{",
       "matrix[{K}, {S-1}] gamma_{y};",
       "for (t in 1:T) {{",
-        onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = rep_array(beta_{y}, T);"),
+        onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
         onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
         likelihood_term,
       "}}",

@@ -5,6 +5,7 @@
 #' @noRd
 formula_specials <- function(x) {
   out <- list(formula = NULL, specials = NULL, coefs = NULL)
+
   xt <- terms(x, specials = formula_special_funs)
   xt_specials <- attr(xt, "specials")[formula_special_funs]
   xt_variables <- attr(xt, "variables")
@@ -18,12 +19,15 @@ formula_specials <- function(x) {
     x <- formula(drop.terms(xt, special_vars - 1, keep.response = TRUE))
   }
 
-  xt <- terms(x, specials = "initial")
-  xt_specials <- attr(xt, "specials")[["initial"]]
-  xt_variables <- attr(xt, "variables")
-  if (!is.null(xt_specials)) {
-    out$initial <- xt_variables[[xt_specials + 1]][[2]]
-  }
+  #xt <- terms(x, specials = "initial")
+  #xt_specials <- attr(xt, "specials")[["initial"]]
+  #xt_variables <- attr(xt, "variables")
+  #if (!is.null(xt_specials)) {
+  #  out$initial <- xt_variables[[xt_specials + 1]][[2]]
+  #  if (has_lags(deparse(out$initial))) {
+  #    stop_("Initial value definition cannot contain lagged values")
+  #  }
+  #}
 
   xt <- terms(x, specials = c("fixed", "varying"))
   xt_specials <- attr(xt, "specials")[c("fixed", "varying")]
@@ -84,6 +88,43 @@ formula_specials <- function(x) {
   out
 }
 
+#' Process formulas for deterministic channels and get initial value definitions
+#'
+#' @param x A `formula` object
+#'
+#' @noRd
+formula_initials <- function(formula) {
+  formula_str <- deparse(formula)
+  form_comp <- regexpr(
+    pattern = "^.+ ~ (?<def>[^~]+) \\+ (?:initial\\(~(?<init>.+)\\)){0,1}.*$",
+    text = formula_str,
+    perl = TRUE
+  )
+  start <- attr(form_comp, "capture.start")
+  end <- start + attr(form_comp, "capture.length") - 1
+  form_def <- substr(formula_str, start[1], end[1])
+  form_init <- substr(formula_str, start[2], end[2])
+  form_both <- c(form_def, form_init)
+  if (any(grepl("fixed", form_both))) {
+    warning_("fixed(.) definitions of a determinstic channel for ",
+             formula_lhs(formula), " will be ignored")
+  }
+  if (any(grepl("varying", form_both))) {
+    warning_("varying(.) definitions of a determinstic channel for ",
+             formula_lhs(formula), " will be ignored")
+  }
+  list(
+    formula = as.formula(paste0("~", form_def)),
+    specials = list(
+      initial = ifelse_(nzchar(form_init),
+                        as.formula(paste0("~", form_init)),
+                        NULL)
+    ),
+    fixed = integer(0),
+    varying = integer(0)
+  )
+}
+
 #' Computes all specials defined in a formula in the context of the data
 #'
 #' @param formula A `dynamiteformula` object
@@ -97,13 +138,10 @@ evaluate_specials <- function(formula, data) {
       out <- list()
       for (spec in formula_special_funs) {
         spec_formula <- formula[[i]]$specials[[spec]]
-        if (!is.null(spec_formula))) {
+        if (!is.null(spec_formula)) {
           out[[spec]] <- eval(spec_formula, envir = list2env(data))
         }
       }
-      # if (!is.null(formula$specials$initial)) {
-      #
-      # }
       out
     } else {
       NULL

@@ -230,62 +230,23 @@ onlyif <- function(test, yes) {
   }
 }
 
-#' Combine model.matrix objects of all formulas of a dynamiteformula into one
+#' Convert a formula into an expression of mathematical equality
 #'
-#' @param formula A `dynamiteformula` object
-#' @param data A `data.frame` containing the variables in the model
+#' @param formula A `formula` object without a response
 #'
 #' @noRd
-full_model.matrix <- function(formula, data) {
-  model_matrices <- lapply(get_form(formula), model.matrix.lm,
-                           data = data, na.action = na.pass)
-  model_matrix <- do.call(cbind, model_matrices)
-  u_names <- unique(colnames(model_matrix))
-  model_matrix <- model_matrix[, u_names, drop = FALSE]
-  n_models <- length(model_matrices)
-  attr(model_matrix, "assign") <- vector(mode = "list", length = n_models)
-  attr(model_matrix, "fixed") <- vector(mode = "list", length = n_models)
-  attr(model_matrix, "varying") <- vector(mode = "list", length = n_models)
-  for (i in seq_along(model_matrices)) {
-    attr(model_matrix, "assign")[[i]] <-
-      which(u_names %in% colnames(model_matrices[[i]]))
-    attr(model_matrix, "fixed")[[i]] <-
-      which(attr(model_matrices[[i]], "assign") %in% formula[[i]]$fixed)
-    attr(model_matrix, "varying")[[i]] <-
-      which(attr(model_matrices[[i]], "assign") %in% formula[[i]]$varying)
-  }
-  model_matrix
+formula2expression <- function(formula) {
+  formula_str <- deparse(formula)
+  str2expression(substr(formula_str, 2, nchar(formula_str)))
 }
 
-#' A version of full_model.matrix for prediction
+#' Evaluate a formula as an expression
 #'
-#' @param formula A `dynamiteformula` object
-#' @param data A `data.frame` containing the variables in the model
-#' @param u_names TODO
+#' @param formula A `formula` object
 #'
 #' @noRd
-full_model.matrix_predict <- function(formula, data, u_names) {
-  idx <- seq(2, nrow(data), by = 2)
-  model_matrices <- lapply(get_form(formula), function(x) {
-    model.matrix.lm(x, data,
-      na.action = na.pass
-    )[idx, ]
-  })
-  model_matrix <- do.call(cbind, model_matrices)
-  model_matrix[, u_names, drop = FALSE]
-}
-
-#' A fast version of full_model.matrix
-#'
-#' @param formula A `dynamiteformula` object
-#' @param data A `data.frame` containing the variables in the model
-#' @param u_names TODO
-#'
-#' @noRd
-full_model.matrix_fast <- function(formula, data, u_names) {
-  model_matrices <- lapply(get_form(formula), model.matrix, data)
-  model_matrix <- do.call(cbind, model_matrices)
-  model_matrix[, u_names, drop = FALSE]
+eval_formula <- function(formula, envir) {
+  eval(expr = formula2expression(formula), envir = envir)
 }
 
 # TODO is needed?

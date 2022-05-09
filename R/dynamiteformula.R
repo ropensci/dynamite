@@ -12,35 +12,36 @@ dynamiteformula <- function(formula, family) {
   if (!is.formula(formula)) {
     stop_("Argument 'formula' is not a formula")
   }
+  family <- substitute(family)
   if (is.character(family)) {
     if (is_supported(family[1])) {
-      family = family[1]
+      family <- do.call(paste0(family, "_"), args = list())
     } else {
       stop_("Family '", family[1], "'is not supported")
     }
-  }
-  family_call <- is_valid_family_call(substitute(family))
-  if (!family_call$supported) {
-    stop_("Unsupported family object '", family_call, "'")
   } else {
-    family = eval(family_call$call)
-  }
-  x <- formula_specials(formula)
-  if (identical(family), "deterministic") {
-    if (length(x$varying) > 0) {
-      warning_("varying(.) definitions of a determinstic channel for ",
-               formula_lhs(x$formula), " will be ignored")
+    family_call <- is_valid_family_call(family)
+    if (!family_call$supported) {
+      stop_("Unsupported family object '", family_call, "'")
+    } else {
+      family <- eval(family_call$call)
     }
-    x$fixed <- character(0)
-    x$varying <- character(0)
+  }
+  y <- formula_lhs(formula)
+  if (is_deterministic(family)) {
+    x <- formula_initials(formula)
+    pred <- character(0)
+  } else {
+    x <- formula_specials(formula)
+    pred <- formula_rhs(x$formula)
   }
   structure(
     list(
       list(
         formula = x$formula,
         family = family,
-        response = formula_lhs(x$formula),
-        predictors = formula_rhs(x$formula),
+        response = y,
+        predictors = pred,
         fixed = x$fixed,
         varying = x$varying,
         specials = x$specials
@@ -139,6 +140,25 @@ get_deterministic <- function(x) {
 get_stochastic <- function(x) {
   stoch <- which(sapply(x, function(y) !is_deterministic(y$family)))
   x[stoch]
+}
+
+#' Get initial value definitions of a dynamiteformula
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
+get_initial <- function(x) {
+  out <- lapply(x, function(y) y$specials$initial)
+  out[lengths(out) != 0]
+}
+
+#' Get channels with initial value definitions
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
+has_initial <- function(x) {
+  sapply(x, function(y) !is.null(y$specials$initial))
 }
 
 #' Check whether a dynamiteformula contains an intercept

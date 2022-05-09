@@ -52,7 +52,8 @@ find_lags <- function(x, processed = FALSE) {
 #' Extract lag definitions
 #'
 #' Extract variables and shifts of lagged terms of the form lag(var, shift)
-#' and return them as a data frame for post processing.
+#' and return them as a data frame for post processing. Also works for
+#' nested definitions, for example I(..., lag(y, k), ...).
 #'
 #' @param x \[`character(1)`]\cr A character vector of length one.
 #'
@@ -62,7 +63,7 @@ extract_lags <- function(x) {
   lag_terms <- x[has_lag]
   # TODO allow vector k
   lag_comp <- regexpr(
-    pattern = "^(?<src>lag\\(\\s*(?<def>.*?)\\s*(?:,\\s*(?<k>[0-9]+)){0,1}\\s*\\))$",
+    pattern = "^.*(?<src>lag\\(\\s*(?<def>.*?)\\s*(?:,\\s*(?<k>[0-9]+)){0,1}\\s*\\)).*$",
     text = lag_terms,
     perl = TRUE
   )
