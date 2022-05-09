@@ -318,7 +318,7 @@ prepare_channel_categorical <- function(y, Y, channel,
         response = y,
         prior = paste0("normal(", m, ", ", s, ")"),
         type = "beta",
-        category = levels_
+        category = rep(levels_, each = S_y - 1)
       )
     }
     if (channel$has_varying) {
@@ -332,7 +332,7 @@ prepare_channel_categorical <- function(y, Y, channel,
         response = y,
         prior = paste0("normal(", m, ", ", s, ")"),
         type = "delta",
-        category = levels_
+        category = lrep(levels_, each = S_y - 1)
       )
       channel$tau_prior_npars <- 2
       channel$tau_prior_pars <- cbind(0, rep(1, channel$K_varying))
