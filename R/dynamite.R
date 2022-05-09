@@ -153,12 +153,12 @@ dynamite <- function(formula, data, group, time,
   coef_names <- lapply(seq_along(resp_all), function(i) {
     x <- paste0(resp_all[i], "_", u_names[attr(model_matrix, "assign")[[i]]])
     if (is_categorical(formula[[i]]$family)) {
-      levels_ <- resp_levels[[i]][-length(resp_levels[[i]])]
-      # for prior names, there's probably more elegant way...
-      #Need to keep in mind as.data.frame function, and fixed vs varying
-      simplified <- list(names = x, levels = levels_)
-      x <- paste0(x, "_", rep(levels_, each = length(x)))
-      attr(x, "simplified") <- simplified
+      attr(x, "levels") <- resp_levels[[i]][-length(resp_levels[[i]])]
+    #   # for prior names, there's probably more elegant way...
+    #   #Need to keep in mind as.data.frame function, and fixed vs varying
+    #   simplified <- list(names = x, levels = levels_)
+    #   x <- paste0(x, "_", rep(levels_, each = length(x)))
+    #   attr(x, "simplified") <- simplified
     }
     x
   })

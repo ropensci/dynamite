@@ -214,7 +214,7 @@ prepare_channel_default <- function(y, Y, channel,
                                     sd_gamma, resp_class, coef_names, priors) {
   if (is.null(priors)) {
     priors <- list()
-    bnames <- gsub(paste0("^", y), "beta", coef_names)
+    bnames <- gsub(paste0("^", y), "", coef_names)
     if (channel$has_fixed) {
       m <- rep(0, channel$K_fixed)
       s <- sd_gamma[channel$J_fixed]
@@ -222,7 +222,7 @@ prepare_channel_default <- function(y, Y, channel,
       channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
       channel$beta_prior_distr <- "normal"
       priors$beta <- data.frame(
-        parameter = bnames[channel$L_fixed],
+        parameter = paste0("beta", bnames[channel$L_fixed]),
         response = y,
         prior = paste0("normal(", m, ", ", s, ")"),
         type = "beta",
@@ -236,7 +236,7 @@ prepare_channel_default <- function(y, Y, channel,
       channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
       channel$delta_prior_distr <- "normal"
       priors$delta <- data.frame(
-        parameter = bnames[channel$L_varying],
+        parameter = paste0("delta", bnames[channel$L_varying]),
         response = y,
         prior = paste0("normal(", m, ", ", s, ")"),
         type = "delta",
@@ -245,7 +245,6 @@ prepare_channel_default <- function(y, Y, channel,
       channel$tau_prior_npars <- 2
       channel$tau_prior_pars <- cbind(0, rep(1, channel$K_varying))
       channel$tau_prior_distr <- "normal"
-      bnames <- gsub(paste0("^", y), "", coef_names)
       priors$tau <- data.frame(
         parameter = paste0("tau", bnames[channel$L_varying]),
         response = y,
@@ -298,8 +297,9 @@ prepare_channel_categorical <- function(y, Y, channel,
   if (is.null(priors)) {
     priors <- list()
     # default priors
-    bnames <- gsub(paste0("^", y), "beta", attr(coef_names, "simplified")$names)
-    levels_ <- attr(coef_names, "simplified")$levels
+    bnames <- gsub(paste0("^", y), "", coef_names)
+   # bnames <- gsub(paste0("^", y), "beta", attr(coef_names, "simplified")$names)
+    levels_ <- attr(coef_names, "levels")#$levels
     sd_gamma <- 2 / sd_x
     k <- grep("(Intercept)", bnames)
     if (!is.null(k)) sd_gamma[k] <- 5 # TODO arbitrary, perhaps should depend on S
@@ -314,7 +314,7 @@ prepare_channel_categorical <- function(y, Y, channel,
       channel$beta_prior_distr <- "normal"
       channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
       priors$beta <- data.frame(
-        parameter = bnames[channel$L_fixed],
+        parameter = paste0("beta", bnames[channel$L_fixed]),
         response = y,
         prior = paste0("normal(", m, ", ", s, ")"),
         type = "beta",
@@ -328,7 +328,7 @@ prepare_channel_categorical <- function(y, Y, channel,
       channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
       channel$delta_prior_distr <- "normal"
       priors$delta <- data.frame(
-        parameter = bnames[channel$L_varying],
+        parameter = paste0("delta", bnames[channel$L_varying]),
         response = y,
         prior = paste0("normal(", m, ", ", s, ")"),
         type = "delta",
@@ -337,7 +337,6 @@ prepare_channel_categorical <- function(y, Y, channel,
       channel$tau_prior_npars <- 2
       channel$tau_prior_pars <- cbind(0, rep(1, channel$K_varying))
       channel$tau_prior_distr <- "normal"
-      bnames <- gsub(paste0("^", y), "", attr(coef_names, "simplified")$names)
       priors$tau <- data.frame(
         parameter = paste0("tau", bnames[channel$L_varying]),
         response = y,
