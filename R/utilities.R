@@ -247,12 +247,13 @@ full_model.matrix <- function(formula, data) {
   attr(model_matrix, "fixed") <- vector(mode = "list", length = n_models)
   attr(model_matrix, "varying") <- vector(mode = "list", length = n_models)
   for (i in seq_along(model_matrices)) {
-    attr(model_matrix, "assign")[[i]] <-
-      which(u_names %in% colnames(model_matrices[[i]]))
+    cols <- colnames(model_matrices[[i]])
+    assign <- match(cols, u_names)
+    attr(model_matrix, "assign")[[i]] <- sort(assign)
     attr(model_matrix, "fixed")[[i]] <-
-      which(attr(model_matrices[[i]], "assign") %in% formula[[i]]$fixed)
+      assign[(attr(model_matrices[[i]], "assign") %in% formula[[i]]$fixed)]
     attr(model_matrix, "varying")[[i]] <-
-      which(attr(model_matrices[[i]], "assign") %in% formula[[i]]$varying)
+      assign[(attr(model_matrices[[i]], "assign") %in% formula[[i]]$varying)]
   }
   model_matrix
 }
