@@ -162,6 +162,7 @@ dynamite <- function(formula, data, group, time,
     }
     x
   })
+  names(coef_names) <- resp_all
   specials <- evaluate_specials(formula, data)
   converted <- convert_data(formula, responses, specials, group,
                             full_time, model_matrix, coef_names, priors)
