@@ -105,7 +105,7 @@ dynamite <- function(formula, data, group, time,
   n_rows <- nrow(data)
   n_resp <- length(resp_all)
   data_names <- names(data)
-  lag_map <- extract_lags(unlist(get_pred(formula)))
+  lag_map <- extract_lags(get_pred(formula))
   lag_all <- attr(formula, "lags")
   lags_uneval <- rep(TRUE, nrow(lag_map))
   lags_lhs <- NULL
@@ -144,11 +144,11 @@ dynamite <- function(formula, data, group, time,
   if (any(lags_uneval)) {
     idx_uneval <- which(lags_uneval)
     n_uneval <- sum(lag_map$k[idx_uneval])
-    map_lhs <- character(n_uneval)
-    map_rhs <- character(n_uneval)
-    map_def <- character(n_uneval)
-    map_rank <- integer(n_uneval)
-    idx <- 1
+    map_lhs <- character(sum(n_uneval))
+    map_rhs <- character(sum(n_uneval))
+    map_def <- character(sum(n_uneval))
+    map_rank <- integer(sum(n_uneval))
+    idx <- 0
     for (i in idx_uneval) {
       if (lag_map$k[i] <= 0) {
         stop_("Only positive shift values are allowed in lag()")
@@ -171,26 +171,28 @@ dynamite <- function(formula, data, group, time,
         #map_def[idx] <- paste0(map_lhs[idx], " ~ ", map_rhs)
         if (j == lag_map$k[i]) {
           for (l in seq_len(n_resp)) {
-            formula[[l]]$predictors <- gsub(lag_map$src[i],
-                                            map_lhs[idx],
-                                            formula[[l]]$predictors,
-                                            fixed = TRUE)
+            formula[[l]]$formula <- gsub_formula(
+              pattern = lag_map$src[i],
+              replacement = map_lhs[idx],
+              formula = formula[[l]]$formula,
+              fixed = TRUE
+            )
           }
         }
       }
     }
   }
-  for (j in seq_len(n_resp)) {
-    if (length(formula[[j]]$predictors) > 0) {
-      formula[[j]]$formula <- reformulate(
-        termlabels = formula[[j]]$predictors,
-        response = resp_all[j],
-        intercept = attr(terms(formula[[j]]$formula), "intercept")
-      )
-    } else {
-      formula[[j]]$formula <- as.formula(paste0(resp_all[j], "~ 1"))
-    }
-  }
+  # for (j in seq_len(n_resp)) {
+  #   if (length(formula[[j]]$predictors) > 0) {
+  #     formula[[j]]$formula <- reformulate(
+  #       termlabels = formula[[j]]$predictors,
+  #       response = resp_all[j],
+  #       intercept = attr(terms(formula[[j]]$formula), "intercept")
+  #     )
+  #   } else {
+  #     formula[[j]]$formula <- as.formula(paste0(resp_all[j], "~ 1"))
+  #   }
+  # }
   # EVALUATION ORDER
   # 1st: initial values of deterministic channels
   # 2nd: lag-terms in order of precedence
@@ -212,36 +214,41 @@ dynamite <- function(formula, data, group, time,
   det_init <- has_initial(formula_det)
   if (any(!det_init)) {
     data[1 + id_offset, resp_det] <-
-      full_model.matrix_pseudo(formula_det[!det_init], data[1 + id_offset, ])
+      full_model.matrix_pseudo(get_form(formula_det[!det_init]), data[1 + id_offset, ])
   }
   if (any(det_init)) {
     data[1 + id_offset, resp_det[det_init]] <-
-      full_model.matrix_pseudo(formula_det[det_init], data[1 + id_offset, ], initial = TRUE)
+      full_model.matrix_pseudo(get_initial(formula_det[det_init]), data[1 + id_offset, ])
   }
 
   # Lags (both deterministic and stochastic)
-  def_new <- c(lags_def, map_def)
-  n_def <- length(def_new)
-  if (n_def > 0) {
-    formula_new <- vector(mode = "list", length = n_def)
-    u_defs <- which(!duplicated(def_new))
-    def_new <- def_new[u_defs]
-    lhs_new <- c(lags_lhs, map_lhs)[u_defs]
-    rank_new <- c(lags_rank, map_rank)[u_defs]
+  lhs_new <- c(lags_lhs, map_lhs)
+  n_new <- length(lhs_new)
+  if (n_new > 0) {
+    formula_new <- vector(mode = "list", length = n_new)
+    u_lhs <- which(!duplicated(lhs_new))
+    lhs_new <- c(lags_lhs, map_lhs)[u_lhs]
+    rhs_new <- c(lags_rhs, map_rhs)[u_lhs]
+    rank_new <- c(lags_rank, map_rank)[u_lhs]
     idx <- 0
     for (r in 1:max(rank_new)) {
       new_idx <- which(rank_new == r)
       new_start <- idx + 1
       for (i in new_idx) {
         idx <- idx + 1
-        formula_new[[idx]] <- as.formula(def_new[i])
+        formula_new[[idx]] <- as.formula(paste0(" ~ ", rhs_new[i]))
       }
       new_end <- idx
       if (n_time > 1) {
+        id_offset_vec <- rep(id_offset, each = 2)
+        model_idx <- seq(2, 2 * n_id, by = 2)
         for (i in 2:n_time) {
-          data[i + id_offset, lhs_new[new_idx]] <-
-            full_model.matrix_fast(formula_new[new_start:new_end],
-                                   data[i + id_offset, ])
+          past_idx <- (i-1):i + id_offset_vec
+          data_idx <- i + id_offset
+          # TODO deterministic here!!
+          data[data_idx, lhs_new[new_idx]] <-
+            full_model.matrix_pseudo(formula_new[new_start:new_end],
+                                     data[past_idx, ])[model_idx,]
         }
       }
     }

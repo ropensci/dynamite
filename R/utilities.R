@@ -48,22 +48,45 @@ named_list <- function(...) {
 #     grep(pattern = ys, x, perl = TRUE)
 # }
 
-#' Get left-hand side of a formula
+#' Get the left-hand side of a formula
 #'
 #' @param x A `formula` object
 #'
 #' @noRd
 formula_lhs <- function(x) {
-  as.character(x[[2]])
+  if (length(x) == 3) {
+    as.character(x[[2]])
+  } else {
+    ""
+  }
 }
 
-#' Get right-hand side of formula
+#' Get the right-hand side of formula
 #'
 #' @param x A `formula` object
 #'
 #' @noRd
 formula_rhs <- function(x) {
+  if (length(x) == 3) {
+    deparse(x[[3]])
+  } else {
+    deparse(x[[2]])
+  }
+}
+
+#' Get the right-hand side terms of a formula
+#'
+#' @param x A `formula` object
+#'
+#' @noRd
+formula_terms <- function(x) {
   attr(terms(x), "term.labels")
+}
+
+#' Replace terms in a formula based on a regular expression
+gsub_formula <- function(pattern, replacement, formula, ...) {
+  formula_str <- deparse(formula)
+  as.formula(gsub(pattern, replacement, formula_str, ...))
 }
 
 # Collapse argument vector with a newline ignoring zero-length entries

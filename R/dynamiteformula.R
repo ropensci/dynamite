@@ -30,10 +30,8 @@ dynamiteformula <- function(formula, family) {
   y <- formula_lhs(formula)
   if (is_deterministic(family)) {
     x <- formula_initials(formula)
-    pred <- character(0)
   } else {
     x <- formula_specials(formula)
-    pred <- formula_rhs(x$formula)
   }
   structure(
     list(
@@ -41,7 +39,6 @@ dynamiteformula <- function(formula, family) {
         formula = x$formula,
         family = family,
         response = y,
-        predictors = pred,
         fixed = x$fixed,
         varying = x$varying,
         specials = x$specials
@@ -104,14 +101,23 @@ get_resp <- function(x) {
   sapply(x, "[[", "response")
 }
 
-#' Get all predictor variables of a dynamiteformula object
+#' Get the RHS of all formulas of a dynamiteformula object as a character vector
 #'
 #' @param x A `dynamiteformula` object
 #'
 #' @noRd
 get_pred <- function(x) {
-  lapply(x, "[[", "predictors")
+  sapply(x, function(y) formula_rhs(y$formula))
 }
+
+# #' Get all predictor variables of a dynamiteformula object
+# #'
+# #' @param x A `dynamiteformula` object
+# #'
+# #' @noRd
+# get_pred <- function(x) {
+#   lapply(x, "[[", "predictors")
+# }
 
 #' Get all formulas of a dynamiteformula object
 #'
