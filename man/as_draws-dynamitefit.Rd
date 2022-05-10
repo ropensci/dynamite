@@ -7,15 +7,12 @@
 \alias{as_draws.dynamitefit}
 \title{Convert \code{dynamite} Output to \code{draws_df} Format}
 \usage{
-\method{as_draws_df}{dynamitefit}(x, parameter_types, ...)
+\method{as_draws_df}{dynamitefit}(x, ...)
 
-\method{as_draws}{dynamitefit}(x, ...)
+\method{as_draws}{dynamitefit}(x, responses = NULL, types = NULL, ...)
 }
 \arguments{
 \item{x}{An object of class \code{dynamitefit}.}
-
-\item{parameter_types}{What parameters should be returned? Possible choices are
-\code{"beta"}, \code{"tau"}, ... #TODO}
 
 \item{...}{Ignored.}
 }
@@ -26,5 +23,8 @@ A \code{draws_df} object.
 Converts the output from \code{dynamite} call to a
 \code{draws_df} format of the \code{posterior} package, enabling the use
 of diagnostics and plotting methods of \code{posterior} and \code{bayesplot}
-packages.
+packages. Note that this function extracts all variables from the model fit,
+and the naming of variables coincides with the internal declarations. For
+more user-friendly object, use \code{as.data.frame} method on the output of
+the \code{dynamite} function.
 }

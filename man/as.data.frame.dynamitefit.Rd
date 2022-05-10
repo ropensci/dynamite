@@ -2,9 +2,16 @@
 % Please edit documentation in R/as_data_frame.R
 \name{as.data.frame.dynamitefit}
 \alias{as.data.frame.dynamitefit}
-\title{Extract samples from the dynamitefit object as data frame.}
+\title{Extract Samples From the dynamitefit Object as a Data Frame.}
 \usage{
-\method{as.data.frame}{dynamitefit}(x, row.names = NULL, optional = FALSE, parameter_types, ...)
+\method{as.data.frame}{dynamitefit}(
+  x,
+  row.names = NULL,
+  optional = FALSE,
+  responses = NULL,
+  types = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{The estimated \code{dynamite} model.}
@@ -14,12 +21,12 @@ names for the data frame.}
 
 \item{optional}{Ignored.}
 
-\item{parameter_types}{What type of parameters should be returned? Possible
-choices are \code{"beta"}, \code{"tau"}, \code{"a"}, \code{"beta"}, or
-\code{"all"} (default). #TODO sigmas etc? others? Or just return all of these...}
+\item{responses}{TODO}
+
+\item{types}{TODO}
 
 \item{...}{Ignored.}
 }
 \description{
-Extract samples from the dynamitefit object as data frame.
+Extract Samples From the dynamitefit Object as a Data Frame.
 }

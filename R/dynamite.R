@@ -201,6 +201,7 @@ dynamite <- function(formula, data, group, time,
       group_var = group_var,
       specials = specials,
       model_vars = model_vars,
+      responses = attr(responses, "resp_class"),
       data = data,
       spline = list(
         B = sampling_vars$Bs,
