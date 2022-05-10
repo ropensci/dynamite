@@ -20,17 +20,20 @@
 convert_data <- function(formula, responses, specials, group, time,
                          model_matrix, priors = NULL) {
 
+  resp_names <- colnames(responses)
+  n_channels <- length(resp_names)
   # A list of variables for stan sampling without grouping by channel
   sampling_vars <- list()
+  empty_list <- setNames(vector(mode = "list", length = n_channels), resp_names)
   # A list containing a list for each channel consisting of variables used to construct the stan model code
-  model_vars <- list()
+  model_vars <- empty_list
   # A list for getting current prior definitions
-  prior_list <- list()
+  prior_list <- empty_list
 
   T_full <- length(time)
   groups <- !is.null(group)
   # free_obs <- (fixed + 1):T_full
-  n_channels <- length(get_resp(formula))
+
   spline_defs <- attr(formula, "splines")
   has_splines <- !is.null(spline_defs)
   lb <- ""
@@ -86,7 +89,7 @@ convert_data <- function(formula, responses, specials, group, time,
   warn_nosplines <- FALSE
   for (i in seq_len(n_channels)) {
     channel <- list()
-    resp <- formula[[i]]$response
+    resp <- resp_names[i] #formula[[i]]$response
     form_specials <- specials[[i]]
     channel$resp <- resp
     channel$L_fixed <- as.array(fixed_pars[[i]])
@@ -177,7 +180,7 @@ convert_data <- function(formula, responses, specials, group, time,
       )
     )
     prior_list[[resp]] <- prep$priors
-    model_vars[[i]] <- prep$channel
+    model_vars[[resp]] <- prep$channel
     sampling_vars <- c(sampling_vars, prep$sampling_vars)
   }
   # TODO move this before prep
