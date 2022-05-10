@@ -143,29 +143,37 @@ dynamite <- function(formula, data, group, time,
   }
   responses <- data[, resp_all, drop = FALSE]
   # Needs sapply/lapply instead of apply to keep factors as factors
-  attr(responses, "resp_class") <- sapply(responses, class)
+  attr(responses, "resp_class") <- lapply(responses, function(x) {
+    cl <- class(x)
+    attr(cl, "levels") <- levels(x)
+    cl
+    })
   model_matrix <- full_model.matrix(formula, data)
-  resp_levels <- lapply(responses, levels)
+  #resp_levels <- lapply(responses, levels)
   # TODO: simplify I(lag(variable, 1)) to something shorter, e.g. lag_1(variable)?
   # TODO: shorten variable and or channel name if they are very long?
   # TODO: NOTE! you can use lag_map to get the variables within the complicated definition for formatting
-  u_names <- colnames(model_matrix)
-  coef_names <- lapply(seq_along(resp_all), function(i) {
-    x <- paste0(resp_all[i], "_", u_names[attr(model_matrix, "assign")[[i]]])
-    if (is_categorical(formula[[i]]$family)) {
-      attr(x, "levels") <- resp_levels[[i]][-length(resp_levels[[i]])]
-    #   # for prior names, there's probably more elegant way...
-    #   #Need to keep in mind as.data.frame function, and fixed vs varying
-    #   simplified <- list(names = x, levels = levels_)
-    #   x <- paste0(x, "_", rep(levels_, each = length(x)))
-    #   attr(x, "simplified") <- simplified
-    }
-    x
-  })
-  names(coef_names) <- resp_all
+  # u_names <- colnames(model_matrix)
+  # coef_names <- lapply(seq_along(resp_all), function(i) {
+  #   fixed <- attr(model_matrix, "fixed")[[i]]
+  #   varying <- attr(model_matrix, "varying")[[i]]
+  #   #beta <- onlyif(length(fixed) > 0, paste0(resp_all[i], "_", u_names[fixed]))
+  #   #delta <- onlyif(length(varying) > 0, paste0(resp_all[i], "_", u_names[varying]))
+  #   list(beta = u_names[fixed], delta = u_names[varying])
+  #  # if (is_categorical(formula[[i]]$family)) {
+  #   #  attr(x, "levels") <- resp_levels[[i]][-length(resp_levels[[i]])]
+  #   #   # for prior names, there's probably more elegant way...
+  #   #   #Need to keep in mind as.data.frame function, and fixed vs varying
+  #   #   simplified <- list(names = x, levels = levels_)
+  #   #   x <- paste0(x, "_", rep(levels_, each = length(x)))
+  #   #   attr(x, "simplified") <- simplified
+  #   #}
+  #   #x
+  # })
+  # names(coef_names) <- resp_all
   specials <- evaluate_specials(formula, data)
   converted <- convert_data(formula, responses, specials, group,
-                            full_time, model_matrix, coef_names, priors)
+                            full_time, model_matrix, priors)
   model_vars <- converted$model_vars
   sampling_vars <- converted$sampling_vars
   model_priors <- converted$priors
@@ -187,14 +195,11 @@ dynamite <- function(formula, data, group, time,
   out <- structure(
     list(
       stanfit = stanfit,
-      coef_names = coef_names,
       # TODO what else do we need to return?
       time = time,
       time_var = time_var,
       group_var = group_var,
-      levels = resp_levels,
       specials = specials,
-      # TODO: extract only D for as.data.frame and J for predict
       model_vars = model_vars,
       data = data,
       spline = list(

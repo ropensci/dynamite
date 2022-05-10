@@ -243,17 +243,19 @@ full_model.matrix <- function(formula, data) {
   u_names <- unique(colnames(model_matrix))
   model_matrix <- model_matrix[, u_names, drop = FALSE]
   n_models <- length(model_matrices)
-  attr(model_matrix, "assign") <- vector(mode = "list", length = n_models)
-  attr(model_matrix, "fixed") <- vector(mode = "list", length = n_models)
-  attr(model_matrix, "varying") <- vector(mode = "list", length = n_models)
+  y_names <- get_resp(formula)
+  empty_list <- setNames(vector(mode = "list", length = n_models), y_names)
+  attr(model_matrix, "assign") <- empty_list
+  attr(model_matrix, "fixed") <- empty_list
+  attr(model_matrix, "varying") <- empty_list
   for (i in seq_along(model_matrices)) {
     cols <- colnames(model_matrices[[i]])
     assign <- match(cols, u_names)
     attr(model_matrix, "assign")[[i]] <- sort(assign)
-    attr(model_matrix, "fixed")[[i]] <-
-      assign[(attr(model_matrices[[i]], "assign") %in% formula[[i]]$fixed)]
-    attr(model_matrix, "varying")[[i]] <-
-      assign[(attr(model_matrices[[i]], "assign") %in% formula[[i]]$varying)]
+    fixed <- assign[attr(model_matrices[[i]], "assign") %in% formula[[i]]$fixed]
+    attr(model_matrix, "fixed")[[i]] <- setNames(fixed, u_names[fixed])
+    varying <- assign[attr(model_matrices[[i]], "assign") %in% formula[[i]]$varying]
+    attr(model_matrix, "varying")[[i]] <- setNames(varying, u_names[varying])
   }
   model_matrix
 }

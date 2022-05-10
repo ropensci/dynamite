@@ -14,12 +14,11 @@
 #' @param time \[`numeric`]\cr A vector defining the observation times for
 #'   for each individual.
 #' @param model_matrix \[`data.frame`]\cr Output of `full_model.matrix`.
-#' @param coef_names TODO
 #' @param priors TODO
 #'
 #' @noRd
 convert_data <- function(formula, responses, specials, group, time,
-                         model_matrix, coef_names, priors = NULL) {
+                         model_matrix, priors = NULL) {
 
   # A list of variables for stan sampling without grouping by channel
   sampling_vars <- list()
@@ -69,6 +68,7 @@ convert_data <- function(formula, responses, specials, group, time,
     ),
     c(3, 1, 2)
   )
+  # placeholder for NAs in Stan
   X[is.na(X)] <- 0
   assigned <- attr(model_matrix, "assign")
   fixed_pars <- attr(model_matrix, "fixed")
@@ -80,7 +80,8 @@ convert_data <- function(formula, responses, specials, group, time,
   # }
   # sd_x[sd_x < 0.1] <- 0.1 # Intercept and other constants at time 1
   # use sd over all time points so we get reasonable prior scale for covariates which are constant at t=1
-  sd_x <- pmax(0.5, apply(X, 3, sd, na.rm = TRUE))
+  sd_x <- setNames(pmax(0.5, apply(X, 3, sd, na.rm = TRUE)),
+                   colnames(model_matrix))
   resp_classes <- attr(responses, "resp_class")
   warn_nosplines <- FALSE
   for (i in seq_len(n_channels)) {
@@ -171,8 +172,7 @@ convert_data <- function(formula, responses, specials, group, time,
         Y = Y,
         channel,
         sd_x = sd_x,
-        resp_class = resp_classes[resp],
-        coef_names = coef_names[[i]],
+        resp_class = resp_classes[[resp]],
         priors = priors
       )
     )
@@ -206,15 +206,14 @@ convert_data <- function(formula, responses, specials, group, time,
 #' @param channel \[`list()`]\cr Channel-specific helper variables.
 #' @param sd_gamma TODO
 #' @param resp_class \[`character()`]\cr Class(es) of the response `Y`.
-#' @param coef_names TODO
 #' @param priors TODO
 #'
 #' @noRd
 prepare_channel_default <- function(y, Y, channel,
-                                    sd_gamma, resp_class, coef_names, priors) {
+                                    sd_gamma, resp_class, priors) {
   if (is.null(priors)) {
     priors <- list()
-    bnames <- gsub(paste0("^", y), "", coef_names)
+
     if (channel$has_fixed) {
       m <- rep(0, channel$K_fixed)
       s <- sd_gamma[channel$J_fixed]
@@ -222,7 +221,7 @@ prepare_channel_default <- function(y, Y, channel,
       channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
       channel$beta_prior_distr <- "normal"
       priors$beta <- data.frame(
-        parameter = paste0("beta", bnames[channel$L_fixed]),
+        parameter = paste0("beta_", y, "_", names(s)),
         response = y,
         prior = paste0("normal(", m, ", ", s, ")"),
         type = "beta",
@@ -236,7 +235,7 @@ prepare_channel_default <- function(y, Y, channel,
       channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
       channel$delta_prior_distr <- "normal"
       priors$delta <- data.frame(
-        parameter = paste0("delta", bnames[channel$L_varying]),
+        parameter = paste0("delta_", y, "_", names(s)),
         response = y,
         prior = paste0("normal(", m, ", ", s, ")"),
         type = "delta",
@@ -246,7 +245,7 @@ prepare_channel_default <- function(y, Y, channel,
       channel$tau_prior_pars <- cbind(0, rep(1, channel$K_varying))
       channel$tau_prior_distr <- "normal"
       priors$tau <- data.frame(
-        parameter = paste0("tau", bnames[channel$L_varying]),
+        parameter = paste0("tau_", y, "_", names(s)),
         response = y,
         prior = "normal(0, 1)",
         type = "tau",
@@ -286,8 +285,9 @@ prepare_channel_default <- function(y, Y, channel,
 }
 
 # TODO documentation, same as prepare_channel_default
-prepare_channel_categorical <- function(y, Y, channel,
-                                        sd_x, resp_class, coef_names, priors) {
+prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
+                                        priors) {
+
   S_y <- length(unique(na.exclude(as.vector(Y))))
   channel$S <- S_y
   if (!("factor" %in% resp_class)) {
@@ -295,18 +295,13 @@ prepare_channel_categorical <- function(y, Y, channel,
           "categorical family supports only factors.")
   }
   if (is.null(priors)) {
+    # remove the first level which acts as reference
+    resp_levels <- attr(resp_class, "levels")[-1]
     priors <- list()
-    # default priors
-    bnames <- gsub(paste0("^", y), "", coef_names)
-   # bnames <- gsub(paste0("^", y), "beta", attr(coef_names, "simplified")$names)
-    levels_ <- attr(coef_names, "levels")#$levels
     sd_gamma <- 2 / sd_x
-    k <- grep("(Intercept)", bnames)
-    if (!is.null(k)) sd_gamma[k] <- 5 # TODO arbitrary, perhaps should depend on S
-    if (any(!is.finite(sd_gamma))) { # never happens due to pmax(0.5,sd_x)
-      warn_nonfinite(y)
-      sd_gamma[!is.finite(sd_gamma)] <- 0.1
-    }
+    # TODO arbitrary, perhaps should depend on S
+    sd_gamma[which(names(sd_gamma) == "(Intercept)")] <- 5
+
     if (channel$has_fixed) {
       m <- rep(0, channel$K_fixed * (S_y - 1))
       s <- rep(sd_gamma[channel$J_fixed], S_y - 1)
@@ -314,11 +309,11 @@ prepare_channel_categorical <- function(y, Y, channel,
       channel$beta_prior_distr <- "normal"
       channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
       priors$beta <- data.frame(
-        parameter = paste0("beta", bnames[channel$L_fixed]),
+        parameter = paste0("beta_", y, "_", names(s)),
         response = y,
         prior = paste0("normal(", m, ", ", s, ")"),
         type = "beta",
-        category = rep(levels_, each = channel$K_fixed)
+        category = rep(resp_levels, each = channel$K_fixed)
       )
     }
     if (channel$has_varying) {
@@ -328,17 +323,17 @@ prepare_channel_categorical <- function(y, Y, channel,
       channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
       channel$delta_prior_distr <- "normal"
       priors$delta <- data.frame(
-        parameter = paste0("delta", bnames[channel$L_varying]),
+        parameter = paste0("delta_", y, "_", names(s)),
         response = y,
         prior = paste0("normal(", m, ", ", s, ")"),
         type = "delta",
-        category = rep(levels_, each = channel$K_varying)
+        category = rep(resp_levels, each = channel$K_varying)
       )
       channel$tau_prior_npars <- 2
       channel$tau_prior_pars <- cbind(0, rep(1, channel$K_varying))
       channel$tau_prior_distr <- "normal"
       priors$tau <- data.frame(
-        parameter = paste0("tau", bnames[channel$L_varying]),
+        parameter = paste0("tau_", y, "_", names(s)),
         response = y,
         prior = "normal(0, 1)",
         type = "tau",
@@ -378,23 +373,14 @@ prepare_channel_categorical <- function(y, Y, channel,
 }
 
 # TODO documentation, same as prepare_channel_default
-prepare_channel_gaussian <- function(y, Y, channel,
-                                     sd_x, resp_class, coef_names, priors) {
+prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
     stop_("Response variable ", y, " is invalid: ",
           "gaussian family is not supported for factors.")
   }
   sd_gamma <- 2 / sd_x
-  k <- grep("(Intercept)", coef_names)
-  if (!is.null(k)) sd_gamma[k] <- 10
-  if (any(!is.finite(sd_gamma))) {
-    warn_nonfinite(y)
-    sd_gamma[!is.finite(sd_gamma)] <- 0.1
-  }
-  out <- prepare_channel_default(
-    y, Y, channel,
-    sd_gamma, resp_class, coef_names, priors
-  )
+  sd_gamma[which(names(sd_gamma) == "(Intercept)")] <- 10
+  out <- prepare_channel_default(y, Y, channel, sd_gamma, resp_class, priors)
   if (is.null(priors)) {
     if (ncol(Y) > 1) {
       s <- 1 / mean(apply(Y, 1, sd, na.rm = TRUE))
@@ -405,7 +391,7 @@ prepare_channel_gaussian <- function(y, Y, channel,
     out$priors <- dplyr::bind_rows(
       out$priors,
       data.frame(
-        parameter = "sigma",
+        parameter = paste0("sigma_", y),
         response = y,
         prior = out$channel$sigma_prior_distr,
         type = "sigma",
@@ -423,8 +409,8 @@ prepare_channel_gaussian <- function(y, Y, channel,
 }
 
 # TODO documentation, same as prepare_channel_default
-prepare_channel_binomial <- function(y, Y, channel,
-                                     sd_x, resp_class, coef_names, priors) {
+prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
+
   if (any(Y < 0) || any(is.logical(Y)) || any(Y != as.integer(Y))) {
     stop_("Response variable ", y, " is invalid: ",
           "binomial family supports only non-negative integers.")
@@ -434,21 +420,13 @@ prepare_channel_binomial <- function(y, Y, channel,
           "binomial family is not supported for factors.")
   }
   sd_gamma <- 2 / sd_x
-  k <- grep("(Intercept)", coef_names)
-  if (!is.null(k)) sd_gamma[k] <- 2.5
-  if (any(!is.finite(sd_gamma))) {
-    warn_nonfinite(y)
-    sd_gamma[!is.finite(sd_gamma)] <- 0.1
-  }
-  prepare_channel_default(
-    y, Y, channel,
-    sd_gamma, resp_class, coef_names, priors
-  )
+  sd_gamma[which(names(sd_gamma) == "(Intercept)")] <- 2.5
+  prepare_channel_default(y, Y, channel,sd_gamma, resp_class, priors)
 }
 
 # TODO documentation, same as prepare_channel_default
-prepare_channel_bernoulli <- function(y, Y, channel,
-                                      sd_x, resp_class, coef_names, priors) {
+prepare_channel_bernoulli <- function(y, Y, channel, sd_x, resp_class,
+                                      priors) {
   if (!all(Y %in% 0:1) || any(is.logical(Y))) {
     stop_("Response variable ", y, " is invalid: ",
           "bernoulli family supports only 0/1 integers.")
@@ -457,15 +435,11 @@ prepare_channel_bernoulli <- function(y, Y, channel,
     stop_("Response variable ", y, " is invalid: ",
           "bernoulli family is not supported for factors.")
   }
-  prepare_channel_binomial(
-    y, Y, channel,
-    sd_x, resp_class, coef_names, priors
-  )
+  prepare_channel_binomial(y, Y, channel, sd_x, resp_class, priors)
 }
 
 # TODO documentation, same as prepare_channel_default
-prepare_channel_poisson <- function(y, Y, channel,
-                                    sd_x, resp_class, coef_names, priors) {
+prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
   if (any(Y < 0) || any(Y != as.integer(Y))) {
     stop_("Response variable ", y, " is invalid: ",
           "Poisson family supports only non-negative integers.")
@@ -475,21 +449,12 @@ prepare_channel_poisson <- function(y, Y, channel,
           "Poisson family is not supported for factors.")
   }
   sd_gamma <- 2 / sd_x
-  k <- grep("(Intercept)", coef_names)
-  if (!is.null(k)) sd_gamma[k] <- 10
-  if (any(!is.finite(sd_gamma))) {
-    warn_nonfinite(y)
-    sd_gamma[!is.finite(sd_gamma)] <- 0.1
-  }
-  prepare_channel_default(
-    y, Y, channel,
-    sd_gamma, resp_class, coef_names, priors
-  )
+  sd_gamma[which(names(sd_gamma) == "(Intercept)")] <- 10
+  prepare_channel_default(y, Y, channel, sd_gamma, resp_class, priors)
 }
 
 # TODO documentation, same as prepare_channel_default
-prepare_channel_negbin <- function(y, Y, channel,
-                                   sd_x, resp_class, coef_names, priors) {
+prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
   if (any(Y < 0) || any(Y != as.integer(Y))) {
     stop_("Response variable ", y, " is invalid: ",
           "negative binomial family supports only non-negative integers.")
@@ -499,22 +464,14 @@ prepare_channel_negbin <- function(y, Y, channel,
           "negative binomial family is not supported for factors.")
   }
   sd_gamma <- 2 / sd_x
-  k <- grep("(Intercept)", coef_names)
-  if (!is.null(k)) sd_gamma[k] <- 10
-  if (any(!is.finite(sd_gamma))) {
-    sd_gamma[!is.finite(sd_gamma)] <- 0.1
-    warn_nonfinite(y)
-  }
-  out <- prepare_channel_default(
-    y, Y, channel,
-    sd_gamma, resp_class, coef_names, priors
-  )
+  sd_gamma[which(names(sd_gamma) == "(Intercept)")] <- 10
+  out <- prepare_channel_default(y, Y, channel, sd_gamma, resp_class, priors)
   if (is.null(priors)) {
     out$channel$phi_prior_distr <- "exponential(1)"
     out$priors <- dplyr::bind_rows(
       out$priors,
       data.frame(
-        parameter = "phi",
+        parameter = paste0("phi_", y),
         response = y,
         prior = out$channel$phi_prior_distr,
         type = "phi",
