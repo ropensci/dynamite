@@ -22,41 +22,41 @@ formula_specials <- function(x) {
   xt_variables <- attr(xt, "variables")
   fixed_icpt <- 0
   special_vars <- unlist(xt_specials)
-  fixed_rhs <- character(0)
+  fixed_terms <- character(0)
   if (!is.null(xt_specials[["fixed"]])) {
-    fixed_form <- eval(xt_variables[[xt_specials[["fixed"]] + 1]][[2]])
-    fixed_rhs <- formula_rhs(fixed_form)
+    fixed_form <- xt_variables[[xt_specials[["fixed"]] + 1]][[2]]
+    fixed_terms <- formula_terms(fixed_form)
     fixed_icpt <- attr(terms(fixed_form), "intercept")
   }
-  varying_rhs <- character(0)
+  varying_terms <- character(0)
   varying_icpt <- 0
   if (!is.null(xt_specials[["varying"]])) {
-    varying_form <- eval(xt_variables[[xt_specials[["varying"]] + 1]][[2]])
-    varying_rhs <- formula_rhs(varying_form)
+    varying_form <- xt_variables[[xt_specials[["varying"]] + 1]][[2]]
+    varying_terms <- formula_terms(varying_form)
     varying_icpt <- attr(terms(varying_form), "intercept")
   }
   if (!is.null(special_vars)) {
-    form_rhs <- formula_rhs(x)[-(special_vars - 1)]
+    form_terms <- formula_terms(x)[-(special_vars - 1)]
   } else {
-    form_rhs <- formula_rhs(x)
+    form_terms <- formula_terms(x)
   }
-  fixed_rhs <- union(form_rhs, fixed_rhs)
+  fixed_terms <- union(form_terms, fixed_terms)
   fixed_icpt <- attr(xt, "intercept") || fixed_icpt
-  common_rhs <- intersect(fixed_rhs, varying_rhs)
-  if (length(common_rhs) > 0) {
-    stop_("Variables ", common_rhs,
-          " specified as both time-constant and time-varying.")
+  common_terms <- intersect(fixed_terms, varying_terms)
+  if (length(common_terms) > 0) {
+    stop_("Variables ", cs(common_terms), " ",
+          "specified as both time-constant and time-varying.")
   }
-  full_rhs <- c(fixed_rhs, varying_rhs)
+  full_terms <- c(fixed_terms, varying_terms)
   any_icpt <- fixed_icpt || varying_icpt
   if (fixed_icpt && varying_icpt) {
     warning_("Both time-independent and time-varying intercept specified. ",
              "Defaulting to time-varying intercept.")
     fixed_icpt <- FALSE
   }
-  if (length(full_rhs) > 0) {
+  if (length(full_terms) > 0) {
     x <- reformulate(
-      termlabels = full_rhs,
+      termlabels = full_terms,
       response = xt_variables[[2]],
       intercept = 1 * any_icpt
     )
@@ -68,12 +68,50 @@ formula_specials <- function(x) {
     }
     x <- as.formula(paste0(y, "~ 1"))
   }
-  out$fixed <- c(ifelse_(fixed_icpt, 0, integer(0)),
-                 which(full_rhs %in% fixed_rhs))
-  out$varying <- c(ifelse_(varying_icpt, 0, integer(0)),
-                   which(full_rhs %in% varying_rhs))
   out$formula <- x
+  out$fixed <- c(ifelse_(fixed_icpt, 0, integer(0)),
+                 which(full_terms %in% fixed_terms))
+  out$varying <- c(ifelse_(varying_icpt, 0, integer(0)),
+                   which(full_terms %in% varying_terms))
+  out$specials$rank <- Inf
   out
+}
+
+#' Process formulas for deterministic channels and get past value definitions
+#'
+#' @param x A `formula` object
+#'
+#' @noRd
+formula_past <- function(formula) {
+  formula_str <- deparse(formula)
+  form_comp <- regexpr(
+    pattern = "^(?<resp>[^~]+) ~ (?<def>[^~]+) \\+ (?:past\\((?<past>.+)\\)){0,1}.*$",
+    text = formula_str,
+    perl = TRUE
+  )
+  start <- attr(form_comp, "capture.start")
+  end <- start + attr(form_comp, "capture.length") - 1
+  form_resp <- substr(formula_str, start[1], end[1])
+  form_def <- substr(formula_str, start[2], end[2])
+  form_past <- substr(formula_str, start[3], end[3])
+  form_both <- c(form_def, form_past)
+  if (any(grepl("fixed\\(.+\\)", form_both))) {
+    warning_("fixed() definitions of a determinstic channel for ",
+             as.character(formula_lhs(formula)), " will be ignored")
+  }
+  if (any(grepl("varying\\(.+\\)", form_both))) {
+    warning_("varying() definitions of a determinstic channel for ",
+             as.character(formula_lhs(formula)), " will be ignored")
+  }
+  list(
+    formula = as.formula(paste0(form_resp, "~", form_def)),
+    specials = list(
+      past = try_(strsplit(form_past, ",")[[1]], type = "numeric"),
+      rank = Inf
+    ),
+    fixed = integer(0),
+    varying = integer(0)
+  )
 }
 
 #' Computes all specials defined in a formula in the context of the data
@@ -88,7 +126,8 @@ evaluate_specials <- function(formula, data) {
     if (length(formula[[i]]$specials) > 0) {
       out <- list()
       for (spec in formula_special_funs) {
-        if (!is.null(spec_formula <- formula[[i]]$specials[[spec]])) {
+        spec_formula <- formula[[i]]$specials[[spec]]
+        if (!is.null(spec_formula)) {
           out[[spec]] <- eval(spec_formula, envir = list2env(data))
         }
       }

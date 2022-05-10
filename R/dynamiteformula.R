@@ -3,32 +3,71 @@
 #' TODO description and details of all features
 #'
 #' @param formula \[`formula`]\cr An R formula describing the model.
-#' @param family \[`call`]\cr A call to a family function, e.g., `gaussian()`.
-#' @param ... TODO
+#' @param family \[`call`, `character(1)`]\cr
+#'   A call to a family function, e.g., `gaussian()` or the family
+#'   name as character, e.g., `"gaussian"`.
 #'
 #' @export
-dynamiteformula <- function(formula, family, ...) {
+dynamiteformula <- function(formula, family) {
   if (!is.formula(formula)) {
-    stop_("Argument 'formula' is not a formula.")
+    stop_("Argument 'formula' is not a formula")
   }
-  family_call <- is_valid_family_call(substitute(family))
-  if (!family_call$supported) {
-    stop_("Unsupported family object")
+  family <- substitute(family)
+  if (is.character(family)) {
+    if (is_supported(family[1])) {
+      family <- do.call(paste0(family, "_"), args = list())
+    } else {
+      stop_("Family '", family[1], "'is not supported")
+    }
+  } else {
+    family_call <- is_valid_family_call(family)
+    if (!family_call$supported) {
+      stop_("Unsupported family object '", family_call, "'")
+    } else {
+      family <- eval(family_call$call)
+    }
   }
-  x <- formula_specials(formula)
+  y <- as.character(formula_lhs(formula))
+  if (is_deterministic(family)) {
+    x <- formula_past(formula)
+  } else {
+    x <- formula_specials(formula)
+  }
   structure(
     list(
-      list(
+      dynamitechannel(
         formula = x$formula,
-        family = eval(family_call$call),
-        response = formula_lhs(x$formula),
-        predictors = formula_rhs(x$formula),
+        family = family,
+        response = y,
         fixed = x$fixed,
         varying = x$varying,
         specials = x$specials
       )
     ),
     class = "dynamiteformula"
+  )
+}
+
+#' Create a channel for a dynamiteformula directly
+#'
+#' @param formula See [`dynamiteformula()`]
+#' @param family See [`dynamiteformula()`]
+#' @param response \[`character(1)`] Name of the response
+#' @param fixed \[`integer()`] Time-invariant covariate indices
+#' @param varying \[`integer()`] Time-varying covariate indices
+#' @param specials See [`dynamiteformula()`]
+#'
+#'@noRd
+dynamitechannel <- function(formula, family, response,
+                            fixed = integer(0), varying = integer(0),
+                            specials = list()) {
+  list(
+    formula = formula,
+    family = family,
+    response = response,
+    fixed = fixed,
+    varying = varying,
+    specials = specials
   )
 }
 
@@ -45,37 +84,10 @@ is.dynamiteformula <- function(x) {
   inherits(x, "dynamiteformula")
 }
 
-#' Prepare a deterministic auxiliary channel
-#'
-#' @param formula \[`formula`]\cr An \R formula describing how the LHS
-#'     variable is defined
-#'
+#' @describeIn dynamiteformula Prepare a deterministic auxiliary channel
 #' @export
-auxiliary <- function(formula) {
-  if (!is.formula(formula)) {
-    stop_("Argument 'formula' is not a formula.")
-  }
-  x <- formula_specials(formula)
-  structure(
-    list(
-      formula = x$formula,
-      specials = x$specials
-    ),
-    class = "auxiliary"
-  )
-}
-
-#' @rdname auxiliary
-#' @export
-aux <- auxiliary
-
-#' Checks if argument is an auxiliary channel definition
-#'
-#' @param x An \R object
-#'
-#' @noRd
-is.auxiliary <- function(x) {
-  inherits(x, "auxiliary")
+aux <- function(formula) {
+  dynamiteformula(formula, family = "deterministic")
 }
 
 #' Join two dynamiteformulas
@@ -89,7 +101,7 @@ is.auxiliary <- function(x) {
     out <- add_dynamiteformula(e1, e2)
   } else {
     stop_("Method '+.dynamiteformula is not supported for ",
-          class(e1), " objects.")
+          class(e1), " objects")
   }
   out
 }
@@ -108,27 +120,79 @@ is.formula <- function(x) {
 #' @param x A `dynamiteformula` object
 #'
 #' @noRd
-get_resp <- function(x) {
+get_responses <- function(x) {
   sapply(x, "[[", "response")
 }
 
-#' Get all predictor variables of a dynamiteformula object
+#' Get the RHS of all formulas of a dynamiteformula object as a character vector
 #'
 #' @param x A `dynamiteformula` object
 #'
 #' @noRd
-get_pred <- function(x) {
-  lapply(x, "[[", "predictors")
+get_predictors <- function(x) {
+  sapply(x, function(y) as.character(formula_rhs(y$formula)))
 }
+
+# #' Get all predictor variables of a dynamiteformula object
+# #'
+# #' @param x A `dynamiteformula` object
+# #'
+# #' @noRd
+# get_pred <- function(x) {
+#   lapply(x, "[[", "predictors")
+# }
 
 #' Get all formulas of a dynamiteformula object
 #'
 #' @param x A `dynamiteformula` object
 #'
 #' @noRd
-get_form <- function(x) {
+get_formulas <- function(x) {
   lapply(x, "[[", "formula")
 }
+
+#' Get indices of deterministic channels in dynamiteformula
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
+which_deterministic <- function(x) {
+  which(sapply(x, function(y) is_deterministic(y$family)))
+}
+
+#' Get indices of stochastic channels in dynamiteformula
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
+which_stochastic <- function(x) {
+  which(sapply(x, function(y) !is_deterministic(y$family)))
+}
+
+#' Get channels with past value definitions
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
+has_past <- function(x) {
+  sapply(x, function(y) length(y$specials$past) > 0)
+}
+
+#' Get past value definitions of a dynamiteformula
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
+get_past <- function(x) {
+  out <- lapply(x, function(y) y$specials$past)
+  out[lengths(out) != 0]
+}
+
+get_ranks <- function(x) {
+  sapply(x, function(y) y$specials$rank)
+}
+
+
 
 #' Check whether a dynamiteformula contains an intercept
 #'
@@ -152,8 +216,6 @@ add_dynamiteformula <- function(e1, e2) {
     out <- set_lags(e1, e2)
   } else if (is.splines(e2)) {
     out <- set_splines(e1, e2)
-  } else if (is.auxiliary(e2)) {
-    out <- add_auxiliary(e1, e2)
   } else {
     stop_(
       "Unable to add an object of class ", class(e2),
@@ -172,7 +234,7 @@ add_dynamiteformula <- function(e1, e2) {
 #' @noRd
 join_dynamiteformulas <- function(e1, e2) {
   out <- c(e1, e2)
-  resp_all <- get_resp(out)
+  resp_all <- get_responses(out)
   resp_duped <- duplicated(resp_all)
   if (any(resp_duped)) {
     stop_("Multiple definitions for response variables: ",
@@ -183,19 +245,6 @@ join_dynamiteformulas <- function(e1, e2) {
   }
   if (!is.null(attr(e1, "splines")) && !is.null(attr(e2, "splines"))) {
     stop_("Multiple definitions for splines")
-  }
-  aux_l <- attr(e1, "auxiliary")
-  aux_r <- attr(e2, "auxiliary")
-  if (!is.null(aux_l) && !is.null(aux_r)) {
-    aux_all <- c(sapply(aux_l, formula_lhs),
-                 sapply(aux_r, formula_lhs))
-    aux_duped <- duplicated(aux_all)
-    if (any(aux_duped)) {
-      stop_("Multiple definitions for auxiliary variables: ",
-            aux_all[aux_duped])
-    }
-    attr(e1, "aux") <- c(aux_l, aux_r)
-    attr(e2, "aux") <- NULL
   }
   attributes(out) <- c(attributes(e1), attributes(e2))
   class(out) <- "dynamiteformula"
@@ -227,27 +276,5 @@ set_splines <- function(e1, e2) {
     stop_("Multiple definitions for splines")
   }
   attr(e1, "splines") <- e2
-  e1
-}
-
-#' Add an auxiliary channel to dynamiteformula
-#'
-#' @param e1 A `dynamiteformula` object
-#' @param e2 An `aux` object
-#'
-#' @noRd
-add_auxiliary <- function(e1, e2) {
-  aux_l <- attr(e1, "auxiliary")
-  if (!is.null(aux_l)) {
-    new_aux <- formula_lhs(e2)
-    if (new_aux %in% sapply(aux_l, formula_lhs)) {
-      stop_("An auxiliary channel has already been defined for ",
-            new_aux)
-    } else {
-      attr(e1, "auxiliary") <- c(aux_l, list(e2))
-    }
-  } else {
-    attr(e1, "auxiliary") <- list(e2)
-  }
   e1
 }

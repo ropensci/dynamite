@@ -23,9 +23,10 @@ dynamitefamily_ <- function(name) {
     stop_(name, " is not a supported family")
   }
   # do something
-  out <- list(name = name)
-  class(out) <- c("dynamitefamily")
-  out
+  structure(
+    list(name = name),
+    class = "dynamitefamily"
+  )
 }
 
 #' Is an object dynamitefamily object?
@@ -73,7 +74,7 @@ is_valid_family_call <- function(x) {
 
 #' Check if a family is supported
 #'
-#' @param \[`character(1)`]\cr Name of the family.
+#' @param \[`character(1)`]\cr Name of the family
 #'
 #' @noRd
 is_supported <- function(name) {
@@ -93,13 +94,15 @@ discrete_distributions <- c(
   "poisson"
 )
 
+# TODO add gamma
 supported_families <- c(
   "binomial",
-  "bernoulli", # separate as stan has separate (more efficient) pmf for it
+  "bernoulli", # separate as Stan has more efficient pmf for it
   "categorical",
   "negbin",
   "gaussian",
-  "poisson" # TODO add gamma
+  "poisson",
+  "deterministic"
 )
 
 # Generate 'family_' and 'is_family' convenience functions

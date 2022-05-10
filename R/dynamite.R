@@ -44,6 +44,9 @@ dynamite <- function(formula, data, group, time,
     if (!is.character(group_var)) {
       group_var <- deparse(group_var)
     }
+    if (is.null(data[[group_var]])) {
+      stop_("Grouping variable '", group_var, "' is not present in the data")
+    }
   }
   if (missing(time)) {
     stop_("Argument 'time' is missing.")
@@ -51,6 +54,9 @@ dynamite <- function(formula, data, group, time,
   time_var <- substitute(time)
   if (!is.character(time_var)) {
     time_var <- deparse(time_var)
+  }
+  if (is.null(data[[time_var]])) {
+    stop_("Time index variable '", time_var, "' is not present in the data")
   }
   data <- data |>
     dplyr::mutate(dplyr::across(where(is.character), as.factor)) |>
@@ -66,7 +72,8 @@ dynamite <- function(formula, data, group, time,
     full_time <- seq(time[1], time[length(time)], by = time_scale)
     time_groups <- data |>
       dplyr::group_by(!!as.symbol(group_var)) |>
-      dplyr::summarise(has_missing = !identical({{ time_var }}, full_time))
+      dplyr::summarise(has_missing =
+                         !identical(!!as.symbol(time_var), full_time))
     if (any(time_groups$has_missing)) {
       full_data_template <- expand.grid(
         time = time,
@@ -92,54 +99,160 @@ dynamite <- function(formula, data, group, time,
   #     # TODO is there a better term or a way to convey this?
   #     stop_("Observed time series must not contain gaps.")
   # }
-  resp_all <- get_resp(formula)
+  channels_det <- which_deterministic(formula)
+  channels_stoch <- which_stochastic(formula)
+  #resp_det <- get_responses(formula_det)
+  resp_all <- get_responses(formula)
+  #form_det <- get_formulas(formula_det)
   n_rows <- nrow(data)
-  n_resp <- length(resp_all)
-  lag_map <- extract_lags(unlist(get_pred(formula)))
-  unprocessed_lags <- rep(TRUE, nrow(lag_map))
+  n_channels <- length(resp_all)
   data_names <- names(data)
-  if (!is.null(lag_all <- attr(formula, "lags"))) {
+  lag_map <- extract_lags(get_predictors(formula))
+  lag_all <- attr(formula, "lags")
+  lags_uneval <- rep(TRUE, nrow(lag_map))
+  lags_channel <- list()
+  lags_lhs <- NULL
+  #lags_rhs <- NULL
+  # <- NULL
+  if (!is.null(lag_all)) {
+    n_lag <- lag_all$k *
+    lags_channel <- vector(mode = "list", length = n_lag)
     type <- lag_all$type
-    pred_lag <- character(lag_all$k * n_resp)
+    lags_lhs <- character(n_lag)
+    #lags_rhs <- character(n_lag)
+    lags_rank <- integer(n_lag)
     for (i in seq_len(lag_all$k)) {
-      for (j in seq_len(n_resp)) {
-        ix <- (i - 1) * n_resp + j
-        pred_lag[ix] <- paste0("I(lag_(", resp_all[j], ", ", i, "))")
+      for (j in seq_along(channels_stoch)) {
+        k <- channels_stoch[j]
+        idx <- (i - 1) * n_channels + j
+        lags_lhs[idx] <- paste0(resp_all[k], "_lag_", i)
+        if (i == 1) {
+          lags_rhs <- paste0("lag_(", resp_all[k], ", 1)")
+        } else {
+          lags_rhs <- paste0("lag_(", resp_all[k], "_lag_", i - 1, ", 1)")
+        }
+        #lags_rank[idx] <- i
+        lags_channel[[idx]] <- dynamitechannel(
+          formula = as.formula(paste0(lags_lhs[idx], " ~ ", lags_rhs)),
+          family = deterministic_(),
+          response = lags_lhs[idx],
+        )
+        attr(lags_channel[[idx]], "stoch_origin") <- (i == 1)
       }
     }
-    for (j in seq_len(n_resp)) {
-      c(formula[[j]]$predictors) <- pred_lag
-      c(formula[[j]][[type]]) <- which(formula[[j]]$predictors %in% pred_lag)
+    for (j in seq_len(n_channels)) {
+      c(formula[[j]]$predictors) <- lags_lhs
+      c(formula[[j]][[type]]) <- which(formula[[j]]$predictors %in% lags_rhs)
     }
-    unprocessed_lags[lag_map$def %in% resp_all & lag_map$k <= lag_all$k] <- FALSE
+    lags_uneval[lag_map$def %in% resp_all & lag_map$k <= lag_all$k] <- FALSE
   }
-  if (any(unprocessed_lags)) {
-    for (i in which(unprocessed_lags)) {
+  map_lhs <- NULL
+  map_rank <- NULL
+  if (any(lags_uneval)) {
+    idx_uneval <- which(lags_uneval)
+    n_uneval <- sum(lag_map$k[idx_uneval])
+    map_channel <- vector(mode = "list", length = n_uneval)
+    idx <- 0
+    for (i in idx_uneval) {
       if (lag_map$k[i] <= 0) {
-        stop_("Only positive shift values are allowed in lag().")
+        stop_("Only positive shift values are allowed in lag()")
       }
-      if (is_as_is(lag_map$src[i])) {
-        lag_map$scr[i] <- gsub("lag", "lag_", lag_map$src[i])
+      y <- lag_map$def[i]
+      # if (is_as_is(lag_map$src[i])) {
+      #   lag_map$scr[i] <- gsub("lag", "lag_", lag_map$src[i])
+      # }
+      # if (is_as_is(lag_map$def[i])) {
+      #   lag_map$def[i] <- gsub("I\\((.*)\\)", "\\1", lag_map$def[i])
+      # }
+      y_idx <- which(resp_all == y)
+      y_past <- NULL
+      y_stoch <- TRUE
+      if (is_deterministic(formula[[y_idx]]$family)) {
+        y_past <- formula[[y_idx]]$specials$past
+        y_past_len <- length(y_past)
+        if (y_past_len < lag_map$k[i]) {
+          stop_("Deterministic channel '", y, "' requires ", lag_map$k[i], " ",
+                "initial values, but only ", y_past_len, " values ",
+                "have been specified")
+        }
+        y_stoch <- FALSE
+        proc_past <- seq(from = y_past_len, by = -1, length.out = lag_map$k[i])
+        formula[[y_idx]]$specials$past <-
+          formula[[y_idx]]$specials$past[-proc_past]
       }
-      if (is_as_is(lag_map$def[i])) {
-        lag_map$def[i] <- gsub("I\\((.*)\\)", "\\1", lag_map$def[i])
-      }
-      pred_lag <- paste0("I(lag_(", lag_map$def[i], ", ", lag_map$k[i], "))")
-      for (j in seq_len(n_resp)) {
-        formula[[j]]$predictors <- gsub(lag_map$src[i], pred_lag,
-                                        formula[[j]]$predictors, fixed = TRUE)
+      for (j in 1:lag_map$k[i]) {
+        idx <- idx + 1
+        if (j == 1) {
+          map_rhs <- paste0("lag_(", y, ", ", j, ")")
+        } else {
+          map_rhs <- paste0("lag_(", y, "_lag_", j - 1, ", 1)")
+        }
+        map_lhs <- paste0(y, "_lag_", j)
+        map_channel[[idx]] <- dynamitechannel(
+          formula = as.formula(paste0(map_lhs, " ~ ", map_rhs)),
+          family = deterministic_(),
+          response = map_lhs,
+          specials = list(past = y_past[j], rank = j)
+        )
+        attr(map_channel[[idx]], "stoch_origin") <- y_stoch && (j == 1)
+        for (l in seq_len(n_channels)) {
+          formula[[l]]$formula <- gsub_formula(
+            pattern = lag_map$src[i],
+            replacement = map_lhs,
+            formula = formula[[l]]$formula,
+            fixed = TRUE
+          )
+        }
       }
     }
   }
-  for (j in seq_len(n_resp)) {
-    if (length(formula[[j]]$predictors) > 0) {
-      formula[[j]]$formula <- reformulate(
-        termlabels = formula[[j]]$predictors,
-        response = resp_all[j],
-        intercept = attr(terms(formula[[j]]$formula), "intercept")
-      )
-    } else {
-      formula[[j]]$formula <- as.formula(paste0(resp_all[j], "~ 1"))
+  formula_det <- c(formula[channels_det], lags_channel, map_channel)
+  resp_det <- get_responses(formula_det)
+  rank_det <- get_ranks(formula_det)
+  n_time <- length(full_time)
+  n_id <- length(unique(group))
+  id_offset <- seq(0, n_time * (n_id - 1), by = n_time)
+  det_init <- has_past(formula_det)
+  if (any(det_init)) {
+    idx <- which(det_init)
+    for (i in idx) {
+      data[1 + id_offset, formula_det[[i]]$response] <-
+        formula_det[[i]]$specials$past
+    }
+  }
+  if (any(!det_init)) {
+    det_from_stoch <- sapply(formula_det, function(y){
+      isTRUE(attr(y, "stoch_origin"))
+    })
+    det_a <- !det_init & det_from_stoch
+    det_b <- !det_init & !det_from_stoch
+    if (any(det_a)) {
+      data_eval <- data[rep(1 + id_offset, each = 2),]
+      eval_idx <- seq(1, n_id, by = 2)
+      data_eval[eval_idx,] <- NA
+      data[1 + id_offset, resp_det[det_a]] <-
+        full_model.matrix_pseudo(get_formulas(formula_det[det_a]),
+                                 data_eval)[eval_idx + 1, ]
+    }
+    if (any(det_b)) {
+      data[1 + id_offset, resp_det[det_b]] <-
+        full_model.matrix_pseudo(get_formulas(formula_det[det_b]),
+                                 data[1 + id_offset, ])
+    }
+  }
+  if (length(formula_det) > 0 && n_time > 1) {
+    id_offset_vec <- rep(id_offset, each = 2)
+    model_idx <- seq(2, 2 * n_id, by = 2)
+    u_rank <- sort(unique(rank_det))
+    for (i in 2:n_time) {
+      past_idx <- (i - 1):i + id_offset_vec
+      data_idx <- i + id_offset
+      for (j in u_rank) {
+        idx <- which(rank_det == j)
+        data[data_idx, get_responses(formula_det[idx])] <-
+          full_model.matrix_pseudo(get_formulas(formula_det[idx]),
+                                   data[past_idx, ])[model_idx,]
+      }
     }
   }
   responses <- data[, resp_all, drop = FALSE]
@@ -148,8 +261,8 @@ dynamite <- function(formula, data, group, time,
     cl <- class(x)
     attr(cl, "levels") <- levels(x)
     cl
-    })
-  model_matrix <- full_model.matrix(formula, data)
+  })
+  model_matrix <- full_model.matrix(formula[channels_stoch], data)
   #resp_levels <- lapply(responses, levels)
   # TODO: simplify I(lag(variable, 1)) to something shorter, e.g. lag_1(variable)?
   # TODO: shorten variable and or channel name if they are very long?
@@ -172,13 +285,14 @@ dynamite <- function(formula, data, group, time,
   #   #x
   # })
   # names(coef_names) <- resp_all
-  specials <- evaluate_specials(formula, data)
-  converted <- convert_data(formula, responses, specials, group,
-                            full_time, model_matrix, priors)
+  specials <- evaluate_specials(formula[channels_stoch], data)
+  converted <- convert_data(formula[channels_stoch], responses[channels_stoch],
+                            specials, group, full_time, model_matrix, priors)
+
   model_vars <- converted$model_vars
   sampling_vars <- converted$sampling_vars
   model_priors <- converted$priors
-  model_code <- create_blocks(formula, indent = 2L, vars = model_vars)
+  model_code <- create_blocks(formula[channels_stoch], indent = 2L, vars = model_vars)
   model_vars[grep("_prior_distr_", names(model_vars))] <- NULL
   # debug <- dots$debug
   model <- if (!is.null(debug) && isTRUE(debug$no_compile)) {

@@ -48,22 +48,45 @@ named_list <- function(...) {
 #     grep(pattern = ys, x, perl = TRUE)
 # }
 
-#' Get left-hand side of a formula
+#' Get the left-hand side of a formula
 #'
 #' @param x A `formula` object
 #'
 #' @noRd
 formula_lhs <- function(x) {
-  as.character(x[[2]])
+  if (length(x) == 3) {
+    x[[2]]
+  } else {
+    NULL
+  }
 }
 
-#' Get right-hand side of formula
+#' Get the right-hand side of formula
 #'
 #' @param x A `formula` object
 #'
 #' @noRd
 formula_rhs <- function(x) {
+  if (length(x) == 3) {
+    x[[3]]
+  } else {
+    x[[2]]
+  }
+}
+
+#' Get the right-hand side terms of a formula
+#'
+#' @param x A `formula` object
+#'
+#' @noRd
+formula_terms <- function(x) {
   attr(terms(x), "term.labels")
+}
+
+#' Replace terms in a formula based on a regular expression
+gsub_formula <- function(pattern, replacement, formula, ...) {
+  formula_str <- deparse(formula)
+  as.formula(gsub(pattern, replacement, formula_str, ...))
 }
 
 # Collapse argument vector with a newline ignoring zero-length entries
@@ -77,7 +100,7 @@ formula_rhs <- function(x) {
 #'
 #' @noRd
 cs <- function(x) {
-  paste0(x, collapse = ",")
+  paste0(x, collapse = ", ")
 }
 
 #' Paste and optionally parse character strings containing glue syntax
@@ -230,65 +253,23 @@ onlyif <- function(test, yes) {
   }
 }
 
-#' Combine model.matrix objects of all formulas of a dynamiteformula into one
+#' Convert a formula into an expression of mathematical equality
 #'
-#' @param formula A `dynamiteformula` object
-#' @param data A `data.frame` containing the variables in the model
+#' @param formula A `formula` object without a response
 #'
 #' @noRd
-full_model.matrix <- function(formula, data) {
-  model_matrices <- lapply(get_form(formula), model.matrix.lm,
-                           data = data, na.action = na.pass)
-  model_matrix <- do.call(cbind, model_matrices)
-  u_names <- unique(colnames(model_matrix))
-  model_matrix <- model_matrix[, u_names, drop = FALSE]
-  n_models <- length(model_matrices)
-  y_names <- get_resp(formula)
-  empty_list <- setNames(vector(mode = "list", length = n_models), y_names)
-  attr(model_matrix, "assign") <- empty_list
-  attr(model_matrix, "fixed") <- empty_list
-  attr(model_matrix, "varying") <- empty_list
-  for (i in seq_along(model_matrices)) {
-    cols <- colnames(model_matrices[[i]])
-    assign <- match(cols, u_names)
-    attr(model_matrix, "assign")[[i]] <- sort(assign)
-    fixed <- assign[attr(model_matrices[[i]], "assign") %in% formula[[i]]$fixed]
-    attr(model_matrix, "fixed")[[i]] <- setNames(fixed, u_names[fixed])
-    varying <- assign[attr(model_matrices[[i]], "assign") %in% formula[[i]]$varying]
-    attr(model_matrix, "varying")[[i]] <- setNames(varying, u_names[varying])
-  }
-  model_matrix
+
+formula2expression <- function(formula) {
+  str2expression(deparse(formula))
 }
 
-#' A version of full_model.matrix for prediction
+#' Evaluate a formula as an expression
 #'
-#' @param formula A `dynamiteformula` object
-#' @param data A `data.frame` containing the variables in the model
-#' @param u_names TODO
+#' @param formula A `formula` object
 #'
 #' @noRd
-full_model.matrix_predict <- function(formula, data, u_names) {
-  idx <- seq(2, nrow(data), by = 2)
-  model_matrices <- lapply(get_form(formula), function(x) {
-    model.matrix.lm(x, data,
-      na.action = na.pass
-    )[idx, ]
-  })
-  model_matrix <- do.call(cbind, model_matrices)
-  model_matrix[, u_names, drop = FALSE]
-}
-
-#' A fast version of full_model.matrix
-#'
-#' @param formula A `dynamiteformula` object
-#' @param data A `data.frame` containing the variables in the model
-#' @param u_names TODO
-#'
-#' @noRd
-full_model.matrix_fast <- function(formula, data, u_names) {
-  model_matrices <- lapply(get_form(formula), model.matrix, data)
-  model_matrix <- do.call(cbind, model_matrices)
-  model_matrix[, u_names, drop = FALSE]
+eval_formula <- function(formula, envir) {
+  eval(expr = formula2expression(formula_rhs(formula)), envir = envir)
 }
 
 # TODO is needed?

@@ -3,19 +3,27 @@
 \name{dynamiteformula}
 \alias{dynamiteformula}
 \alias{obs}
+\alias{aux}
 \title{Model formula for \pkg{dynamite}}
 \usage{
-dynamiteformula(formula, family, ...)
+dynamiteformula(formula, family)
 
-obs(formula, family, ...)
+obs(formula, family)
+
+aux(formula)
 }
 \arguments{
 \item{formula}{[\code{formula}]\cr An R formula describing the model.}
 
-\item{family}{[\code{call}]\cr A call to a family function, e.g., \code{gaussian()}.}
-
-\item{...}{TODO}
+\item{family}{[\code{call}, \code{character(1)}]\cr
+A call to a family function, e.g., \code{gaussian()} or the family
+name as character, e.g., \code{"gaussian"}.}
 }
 \description{
 TODO description and details of all features
 }
+\section{Functions}{
+\itemize{
+\item \code{aux}: Prepare a deterministic auxiliary channel
+}}
+

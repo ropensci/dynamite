@@ -61,19 +61,19 @@ extract_lags <- function(x) {
   has_lag <- find_lags(x, processed = FALSE)
   lag_terms <- x[has_lag]
   # TODO allow vector k
-  lag_comp <- regexpr(
-    pattern = "^(?<src>lag\\(\\s*(?<def>.*?)\\s*(?:,\\s*(?<k>[0-9]+)){0,1}\\s*\\))$",
+  lag_regex <- gregexec(
+    pattern = "(?<src>lag\\(\\s*(?<def>[^\\+]+?)\\s*(?:,\\s*(?<k>[0-9]+)){0,1}\\s*\\))",
     text = lag_terms,
     perl = TRUE
   )
   lag_map <- list()
-  for (comp in attr(lag_comp, "capture.name")) {
-    start <- attr(lag_comp, "capture.start")[, comp]
-    end <- start + attr(lag_comp, "capture.length")[, comp] - 1
-    lag_map[[comp]] <- trimws(substr(lag_terms, start, end))
-  }
-  lag_map <- list2DF(lag_map)
+  lag_matches <- regmatches(lag_terms, lag_regex)
+  lag_map <- do.call("cbind", args = lag_matches)
+  lag_map <- as.data.frame(t(lag_map)[,-1])
   lag_map$k <- as.integer(lag_map$k)
   lag_map$k[is.na(lag_map$k)] <- 1L
-  lag_map[!duplicated(lag_map), ]
+  lag_map <- lag_map[!duplicated(lag_map), ] |>
+    dplyr::group_by(def) |>
+    dplyr::filter(k == max(k)) |>
+    dplyr::ungroup()
 }
