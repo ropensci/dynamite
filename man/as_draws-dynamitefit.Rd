@@ -9,7 +9,7 @@
 \usage{
 \method{as_draws_df}{dynamitefit}(x, ...)
 
-\method{as_draws}{dynamitefit}(x, responses = NULL, types = NULL, ...)
+\method{as_draws}{dynamitefit}(x, ...)
 }
 \arguments{
 \item{x}{An object of class \code{dynamitefit}.}

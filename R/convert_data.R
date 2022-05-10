@@ -4,6 +4,7 @@
 #' default/user-modifiable prior definitions.
 #'
 #' @importFrom rlang .data
+#' @importFrom stats setNames
 #'
 #' @param formula \[`dynamiteformula`]\cr The model formula.
 #' @param responses \[`data.frame`]\cr A data.frame with the

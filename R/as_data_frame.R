@@ -7,6 +7,7 @@
 #' @param responses TODO
 #' @param types TODO
 #' @param ... Ignored.
+#' @importFrom tidyr unnest
 #' @export
 as.data.frame.dynamitefit <- function(x, row.names = NULL,
                                       optional = FALSE, responses = NULL,
@@ -75,12 +76,12 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL,
     }
     d
   }
-  x$priors %>%
-    dplyr::select(response, type) %>%
-    dplyr::filter(response %in% responses & type %in% types) %>%
-    dplyr::distinct() %>%
-    dplyr::rowwise() %>%
-    dplyr::mutate(value = list(values(type, response))) %>%
-    tidyr::unnest(cols = value)
+  x$priors |>
+    dplyr::select(.data$response, .data$type) |>
+    dplyr::filter(.data$response %in% responses & .data$type %in% types) |>
+    dplyr::distinct() |>
+    dplyr::rowwise() |>
+    dplyr::mutate(value = list(values(.data$type, .data$response))) |>
+    tidyr::unnest(cols = .data$value)
 
 }
