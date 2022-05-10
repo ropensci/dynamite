@@ -31,7 +31,7 @@ convert_data <- function(formula, responses, specials, group, time,
   T_full <- length(time)
   groups <- !is.null(group)
   # free_obs <- (fixed + 1):T_full
-  n_channels <- length(get_resp(formula))
+  n_channels <- length(formula)
   spline_defs <- attr(formula, "splines")
   has_splines <- !is.null(spline_defs)
   lb <- ""

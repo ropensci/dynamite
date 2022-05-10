@@ -5,7 +5,6 @@
 #' @noRd
 formula_specials <- function(x) {
   out <- list(formula = NULL, specials = NULL, coefs = NULL)
-
   xt <- terms(x, specials = formula_special_funs)
   xt_specials <- attr(xt, "specials")[formula_special_funs]
   xt_variables <- attr(xt, "variables")
@@ -18,17 +17,6 @@ formula_specials <- function(x) {
   if (length(special_vars) > 0) {
     x <- formula(drop.terms(xt, special_vars - 1, keep.response = TRUE))
   }
-
-  #xt <- terms(x, specials = "initial")
-  #xt_specials <- attr(xt, "specials")[["initial"]]
-  #xt_variables <- attr(xt, "variables")
-  #if (!is.null(xt_specials)) {
-  #  out$initial <- xt_variables[[xt_specials + 1]][[2]]
-  #  if (has_lags(deparse(out$initial))) {
-  #    stop_("Initial value definition cannot contain lagged values")
-  #  }
-  #}
-
   xt <- terms(x, specials = c("fixed", "varying"))
   xt_specials <- attr(xt, "specials")[c("fixed", "varying")]
   xt_variables <- attr(xt, "variables")
@@ -80,45 +68,46 @@ formula_specials <- function(x) {
     }
     x <- as.formula(paste0(y, "~ 1"))
   }
+  out$formula <- x
   out$fixed <- c(ifelse_(fixed_icpt, 0, integer(0)),
                  which(full_terms %in% fixed_terms))
   out$varying <- c(ifelse_(varying_icpt, 0, integer(0)),
                    which(full_terms %in% varying_terms))
-  out$formula <- x
+  out$specials$rank <- Inf
   out
 }
 
-#' Process formulas for deterministic channels and get initial value definitions
+#' Process formulas for deterministic channels and get past value definitions
 #'
 #' @param x A `formula` object
 #'
 #' @noRd
-formula_initials <- function(formula) {
+formula_past <- function(formula) {
   formula_str <- deparse(formula)
   form_comp <- regexpr(
-    pattern = "^.+ ~ (?<def>[^~]+) \\+ (?:initial\\(~(?<init>.+)\\)){0,1}.*$",
+    pattern = "^(?<resp>[^~]+) ~ (?<def>[^~]+) \\+ (?:past\\((?<past>.+)\\)){0,1}.*$",
     text = formula_str,
     perl = TRUE
   )
   start <- attr(form_comp, "capture.start")
   end <- start + attr(form_comp, "capture.length") - 1
-  form_def <- substr(formula_str, start[1], end[1])
-  form_init <- substr(formula_str, start[2], end[2])
-  form_both <- c(form_def, form_init)
-  if (any(grepl("fixed", form_both))) {
-    warning_("fixed(.) definitions of a determinstic channel for ",
-             formula_lhs(formula), " will be ignored")
+  form_resp <- substr(formula_str, start[1], end[1])
+  form_def <- substr(formula_str, start[2], end[2])
+  form_past <- substr(formula_str, start[3], end[3])
+  form_both <- c(form_def, form_past)
+  if (any(grepl("fixed\\(.+\\)", form_both))) {
+    warning_("fixed() definitions of a determinstic channel for ",
+             as.character(formula_lhs(formula)), " will be ignored")
   }
-  if (any(grepl("varying", form_both))) {
-    warning_("varying(.) definitions of a determinstic channel for ",
-             formula_lhs(formula), " will be ignored")
+  if (any(grepl("varying\\(.+\\)", form_both))) {
+    warning_("varying() definitions of a determinstic channel for ",
+             as.character(formula_lhs(formula)), " will be ignored")
   }
   list(
-    formula = as.formula(paste0("~", form_def)),
+    formula = as.formula(paste0(form_resp, "~", form_def)),
     specials = list(
-      initial = ifelse_(nzchar(form_init),
-                        as.formula(paste0("~", form_init)),
-                        NULL)
+      past = try_(strsplit(form_past, ",")[[1]], type = "numeric"),
+      rank = Inf
     ),
     fixed = integer(0),
     varying = integer(0)

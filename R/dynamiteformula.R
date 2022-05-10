@@ -27,15 +27,15 @@ dynamiteformula <- function(formula, family) {
       family <- eval(family_call$call)
     }
   }
-  y <- formula_lhs(formula)
+  y <- as.character(formula_lhs(formula))
   if (is_deterministic(family)) {
-    x <- formula_initials(formula)
+    x <- formula_past(formula)
   } else {
     x <- formula_specials(formula)
   }
   structure(
     list(
-      list(
+      dynamitechannel(
         formula = x$formula,
         family = family,
         response = y,
@@ -45,6 +45,29 @@ dynamiteformula <- function(formula, family) {
       )
     ),
     class = "dynamiteformula"
+  )
+}
+
+#' Create a channel for a dynamiteformula directly
+#'
+#' @param formula See [`dynamiteformula()`]
+#' @param family See [`dynamiteformula()`]
+#' @param response \[`character(1)`] Name of the response
+#' @param fixed \[`integer()`] Time-invariant covariate indices
+#' @param varying \[`integer()`] Time-varying covariate indices
+#' @param specials See [`dynamiteformula()`]
+#'
+#'@noRd
+dynamitechannel <- function(formula, family, response,
+                            fixed = integer(0), varying = integer(0),
+                            specials = list()) {
+  list(
+    formula = formula,
+    family = family,
+    response = response,
+    fixed = fixed,
+    varying = varying,
+    specials = specials
   )
 }
 
@@ -78,7 +101,7 @@ aux <- function(formula) {
     out <- add_dynamiteformula(e1, e2)
   } else {
     stop_("Method '+.dynamiteformula is not supported for ",
-          class(e1), " objects.")
+          class(e1), " objects")
   }
   out
 }
@@ -97,7 +120,7 @@ is.formula <- function(x) {
 #' @param x A `dynamiteformula` object
 #'
 #' @noRd
-get_resp <- function(x) {
+get_responses <- function(x) {
   sapply(x, "[[", "response")
 }
 
@@ -106,8 +129,8 @@ get_resp <- function(x) {
 #' @param x A `dynamiteformula` object
 #'
 #' @noRd
-get_pred <- function(x) {
-  sapply(x, function(y) formula_rhs(y$formula))
+get_predictors <- function(x) {
+  sapply(x, function(y) as.character(formula_rhs(y$formula)))
 }
 
 # #' Get all predictor variables of a dynamiteformula object
@@ -124,48 +147,52 @@ get_pred <- function(x) {
 #' @param x A `dynamiteformula` object
 #'
 #' @noRd
-get_form <- function(x) {
+get_formulas <- function(x) {
   lapply(x, "[[", "formula")
 }
 
-#' Get dynamiteformula of deterministic channels
+#' Get indices of deterministic channels in dynamiteformula
 #'
 #' @param x A `dynamiteformula` object
 #'
 #' @noRd
-get_deterministic <- function(x) {
-  deter <- which(sapply(x, function(y) is_deterministic(y$family)))
-  x[deter]
+which_deterministic <- function(x) {
+  which(sapply(x, function(y) is_deterministic(y$family)))
 }
 
-#' Get dynamiteformula of stochastic channels
+#' Get indices of stochastic channels in dynamiteformula
 #'
 #' @param x A `dynamiteformula` object
 #'
 #' @noRd
-get_stochastic <- function(x) {
-  stoch <- which(sapply(x, function(y) !is_deterministic(y$family)))
-  x[stoch]
+which_stochastic <- function(x) {
+  which(sapply(x, function(y) !is_deterministic(y$family)))
 }
 
-#' Get initial value definitions of a dynamiteformula
+#' Get channels with past value definitions
 #'
 #' @param x A `dynamiteformula` object
 #'
 #' @noRd
-get_initial <- function(x) {
-  out <- lapply(x, function(y) y$specials$initial)
+has_past <- function(x) {
+  sapply(x, function(y) length(y$specials$past) > 0)
+}
+
+#' Get past value definitions of a dynamiteformula
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
+get_past <- function(x) {
+  out <- lapply(x, function(y) y$specials$past)
   out[lengths(out) != 0]
 }
 
-#' Get channels with initial value definitions
-#'
-#' @param x A `dynamiteformula` object
-#'
-#' @noRd
-has_initial <- function(x) {
-  sapply(x, function(y) !is.null(y$specials$initial))
+get_ranks <- function(x) {
+  sapply(x, function(y) y$specials$rank)
 }
+
+
 
 #' Check whether a dynamiteformula contains an intercept
 #'
@@ -207,7 +234,7 @@ add_dynamiteformula <- function(e1, e2) {
 #' @noRd
 join_dynamiteformulas <- function(e1, e2) {
   out <- c(e1, e2)
-  resp_all <- get_resp(out)
+  resp_all <- get_responses(out)
   resp_duped <- duplicated(resp_all)
   if (any(resp_duped)) {
     stop_("Multiple definitions for response variables: ",

@@ -5,7 +5,7 @@
 #'
 #' @noRd
 full_model.matrix <- function(formula, data) {
-  model_matrices <- lapply(get_form(formula), model.matrix.lm,
+  model_matrices <- lapply(get_formulas(formula), model.matrix.lm,
                            data = data, na.action = na.pass)
   model_matrix <- do.call(cbind, model_matrices)
   u_names <- unique(colnames(model_matrix))
@@ -35,7 +35,7 @@ full_model.matrix <- function(formula, data) {
 #' @noRd
 full_model.matrix_predict <- function(formula, data, u_names) {
   idx <- seq(2, nrow(data), by = 2)
-  model_matrices <- lapply(get_form(formula), function(x) {
+  model_matrices <- lapply(get_formulas(formula), function(x) {
     model.matrix.lm(x, data,
                     na.action = na.pass
     )[idx, ]

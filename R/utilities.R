@@ -55,9 +55,9 @@ named_list <- function(...) {
 #' @noRd
 formula_lhs <- function(x) {
   if (length(x) == 3) {
-    as.character(x[[2]])
+    x[[2]]
   } else {
-    ""
+    NULL
   }
 }
 
@@ -68,9 +68,9 @@ formula_lhs <- function(x) {
 #' @noRd
 formula_rhs <- function(x) {
   if (length(x) == 3) {
-    deparse(x[[3]])
+    x[[3]]
   } else {
-    deparse(x[[2]])
+    x[[2]]
   }
 }
 
@@ -259,8 +259,7 @@ onlyif <- function(test, yes) {
 #'
 #' @noRd
 formula2expression <- function(formula) {
-  formula_str <- deparse(formula)
-  str2expression(substr(formula_str, 2, nchar(formula_str)))
+  str2expression(deparse(formula))
 }
 
 #' Evaluate a formula as an expression
@@ -269,7 +268,7 @@ formula2expression <- function(formula) {
 #'
 #' @noRd
 eval_formula <- function(formula, envir) {
-  eval(expr = formula2expression(formula), envir = envir)
+  eval(expr = formula2expression(formula_rhs(formula)), envir = envir)
 }
 
 # TODO is needed?
