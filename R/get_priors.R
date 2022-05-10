@@ -2,7 +2,7 @@
 #'
 #' TODO description
 #'
-#' @param formula \[`dynamiteformula`]\cr The model formula.
+#' @param dformula \[`dynamiteformula`]\cr The model formula.
 #'   See [dynamiteformula()].
 #' @param data \[`data.frame`]\cr The data frame containing the variables in
 #'   the model.
@@ -12,11 +12,11 @@
 #'   time axis.
 #'
 #' @export
-get_priors <- function(formula, data, group, time) {
+get_priors <- function(dformula, data, group, time) {
   out <- do.call(
     "dynamite",
     list(
-      formula = formula,
+      dformula = dformula,
       data = data,
       group = substitute(group),
       time = substitute(time),
@@ -30,11 +30,11 @@ get_priors <- function(formula, data, group, time) {
 #' TODO documentation
 #' @inheritParams get_priors
 #' @export
-get_code <- function(formula, data, group, time) {
+get_code <- function(dformula, data, group, time) {
   out <- do.call(
     "dynamite",
     list(
-      formula = formula,
+      dformula = dformula,
       data = data,
       group = substitute(group),
       time = substitute(time),
@@ -47,11 +47,11 @@ get_code <- function(formula, data, group, time) {
 #' TODO documentation
 #' @inheritParams get_priors
 #' @export
-get_data <- function(formula, data, group, time) {
+get_data <- function(dformula, data, group, time) {
   out <- do.call(
     "dynamite",
     list(
-      formula = formula,
+      dformula = dformula,
       data = data,
       group = substitute(group),
       time = substitute(time),

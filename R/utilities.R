@@ -84,15 +84,27 @@ formula_terms <- function(x) {
 }
 
 #' Replace terms in a formula based on a regular expression
+#'
+#' @param pattern See [gsub()]
+#' @param replacement See [gsub()]
+#' @param formula A `formula` object
+#' @param ... See [gsub()]
+#'
+#' @noRd
 gsub_formula <- function(pattern, replacement, formula, ...) {
   formula_str <- deparse(formula)
   as.formula(gsub(pattern, replacement, formula_str, ...))
 }
 
-# Collapse argument vector with a newline ignoring zero-length entries
-# collapse_rows <- function(x) {
-#     paste0(x[nzchar(x)], collapse = "\n")
-# }
+#' Add terms to the left hand side of a formula
+#'
+#' @param formula A `formula` object
+#' @param x A character vector of terms to add
+#'
+#' @noRd
+increment_formula <- function(formula, x) {
+  as.formula(paste0(deparse(formula), " + ", paste0(x, collapse = " + ")))
+}
 
 #' Create a comma-separated character string to represent a Stan integer array
 #'

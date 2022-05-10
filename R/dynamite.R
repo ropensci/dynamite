@@ -1,7 +1,7 @@
 #' Estimate a Bayesian Dynamic Multivariate Panel Model
 #'
 #' @importFrom stats as.formula
-#' @param formula \[`dynamiteformula`]\cr The model formula. See 'Details'.
+#' @param dformula \[`dynamiteformula`]\cr The model formula. See 'Details'.
 #' @param data \[`data.frame`]\cr The data frame containing the variables in
 #'   the model.
 #' @param group \[`character(1)`]\cr A column name of `data` that denotes the
@@ -33,7 +33,7 @@
 #'     geom_line() +
 #'     facet_wrap(~ variable, scales = "free_y")
 #' }
-dynamite <- function(formula, data, group, time,
+dynamite <- function(dformula, data, group, time,
                      priors = NULL, debug = NULL, ...) {
   # dots <- list(...) #Note: Use explicit debug-argument as otherwise it is passed to sampling with an error
   data <- droplevels(data) # TODO document this in return value
@@ -99,27 +99,22 @@ dynamite <- function(formula, data, group, time,
   #     # TODO is there a better term or a way to convey this?
   #     stop_("Observed time series must not contain gaps.")
   # }
-  channels_det <- which_deterministic(formula)
-  channels_stoch <- which_stochastic(formula)
-  #resp_det <- get_responses(formula_det)
-  resp_all <- get_responses(formula)
-  #form_det <- get_formulas(formula_det)
+  channels_det <- which_deterministic(dformula)
+  channels_stoch <- which_stochastic(dformula)
+  resp_all <- get_responses(dformula)
   n_rows <- nrow(data)
   n_channels <- length(resp_all)
   data_names <- names(data)
-  lag_map <- extract_lags(get_predictors(formula))
-  lag_all <- attr(formula, "lags")
+  lag_map <- extract_lags(get_predictors(dformula))
+  lag_all <- attr(dformula, "lags")
   lags_uneval <- rep(TRUE, nrow(lag_map))
   lags_channel <- list()
   lags_lhs <- NULL
-  #lags_rhs <- NULL
-  # <- NULL
   if (!is.null(lag_all)) {
-    n_lag <- lag_all$k *
+    n_lag <- lag_all$k * n_channels
     lags_channel <- vector(mode = "list", length = n_lag)
     type <- lag_all$type
     lags_lhs <- character(n_lag)
-    #lags_rhs <- character(n_lag)
     lags_rank <- integer(n_lag)
     for (i in seq_len(lag_all$k)) {
       for (j in seq_along(channels_stoch)) {
@@ -131,7 +126,6 @@ dynamite <- function(formula, data, group, time,
         } else {
           lags_rhs <- paste0("lag_(", resp_all[k], "_lag_", i - 1, ", 1)")
         }
-        #lags_rank[idx] <- i
         lags_channel[[idx]] <- dynamitechannel(
           formula = as.formula(paste0(lags_lhs[idx], " ~ ", lags_rhs)),
           family = deterministic_(),
@@ -141,8 +135,10 @@ dynamite <- function(formula, data, group, time,
       }
     }
     for (j in seq_len(n_channels)) {
-      c(formula[[j]]$predictors) <- lags_lhs
-      c(formula[[j]][[type]]) <- which(formula[[j]]$predictors %in% lags_rhs)
+      dformula[[j]]$formula <- dynamiteformula_(
+        increment_formula(dformula[[j]]$formula, lag_lhs),
+        dformula[[j]]$family
+      )
     }
     lags_uneval[lag_map$def %in% resp_all & lag_map$k <= lag_all$k] <- FALSE
   }
@@ -158,17 +154,11 @@ dynamite <- function(formula, data, group, time,
         stop_("Only positive shift values are allowed in lag()")
       }
       y <- lag_map$def[i]
-      # if (is_as_is(lag_map$src[i])) {
-      #   lag_map$scr[i] <- gsub("lag", "lag_", lag_map$src[i])
-      # }
-      # if (is_as_is(lag_map$def[i])) {
-      #   lag_map$def[i] <- gsub("I\\((.*)\\)", "\\1", lag_map$def[i])
-      # }
       y_idx <- which(resp_all == y)
       y_past <- NULL
       y_stoch <- TRUE
-      if (is_deterministic(formula[[y_idx]]$family)) {
-        y_past <- formula[[y_idx]]$specials$past
+      if (is_deterministic(dformula[[y_idx]]$family)) {
+        y_past <- dformula[[y_idx]]$specials$past
         y_past_len <- length(y_past)
         if (y_past_len < lag_map$k[i]) {
           stop_("Deterministic channel '", y, "' requires ", lag_map$k[i], " ",
@@ -177,8 +167,8 @@ dynamite <- function(formula, data, group, time,
         }
         y_stoch <- FALSE
         proc_past <- seq(from = y_past_len, by = -1, length.out = lag_map$k[i])
-        formula[[y_idx]]$specials$past <-
-          formula[[y_idx]]$specials$past[-proc_past]
+        dformula[[y_idx]]$specials$past <-
+          dformula[[y_idx]]$specials$past[-proc_past]
       }
       for (j in 1:lag_map$k[i]) {
         idx <- idx + 1
@@ -195,33 +185,33 @@ dynamite <- function(formula, data, group, time,
           specials = list(past = y_past[j], rank = j)
         )
         attr(map_channel[[idx]], "stoch_origin") <- y_stoch && (j == 1)
-        for (l in seq_len(n_channels)) {
-          formula[[l]]$formula <- gsub_formula(
+        for (k in seq_len(n_channels)) {
+          dformula[[k]]$formula <- gsub_formula(
             pattern = lag_map$src[i],
             replacement = map_lhs,
-            formula = formula[[l]]$formula,
+            formula = dformula[[k]]$formula,
             fixed = TRUE
           )
         }
       }
     }
   }
-  formula_det <- c(formula[channels_det], lags_channel, map_channel)
-  resp_det <- get_responses(formula_det)
-  rank_det <- get_ranks(formula_det)
+  dformula_det <- c(dformula[channels_det], lags_channel, map_channel)
+  resp_det <- get_responses(dformula_det)
+  rank_det <- get_ranks(dformula_det)
   n_time <- length(full_time)
   n_id <- length(unique(group))
   id_offset <- seq(0, n_time * (n_id - 1), by = n_time)
-  det_init <- has_past(formula_det)
+  det_init <- has_past(dformula_det)
   if (any(det_init)) {
     idx <- which(det_init)
     for (i in idx) {
-      data[1 + id_offset, formula_det[[i]]$response] <-
-        formula_det[[i]]$specials$past
+      data[1 + id_offset, dformula_det[[i]]$response] <-
+        dformula_det[[i]]$specials$past
     }
   }
   if (any(!det_init)) {
-    det_from_stoch <- sapply(formula_det, function(y){
+    det_from_stoch <- sapply(dformula_det, function(y){
       isTRUE(attr(y, "stoch_origin"))
     })
     det_a <- !det_init & det_from_stoch
@@ -231,16 +221,16 @@ dynamite <- function(formula, data, group, time,
       eval_idx <- seq(1, n_id, by = 2)
       data_eval[eval_idx,] <- NA
       data[1 + id_offset, resp_det[det_a]] <-
-        full_model.matrix_pseudo(get_formulas(formula_det[det_a]),
+        full_model.matrix_pseudo(get_formulas(dformula_det[det_a]),
                                  data_eval)[eval_idx + 1, ]
     }
     if (any(det_b)) {
       data[1 + id_offset, resp_det[det_b]] <-
-        full_model.matrix_pseudo(get_formulas(formula_det[det_b]),
+        full_model.matrix_pseudo(get_formulas(dformula_det[det_b]),
                                  data[1 + id_offset, ])
     }
   }
-  if (length(formula_det) > 0 && n_time > 1) {
+  if (length(dformula_det) > 0 && n_time > 1) {
     id_offset_vec <- rep(id_offset, each = 2)
     model_idx <- seq(2, 2 * n_id, by = 2)
     u_rank <- sort(unique(rank_det))
@@ -249,8 +239,8 @@ dynamite <- function(formula, data, group, time,
       data_idx <- i + id_offset
       for (j in u_rank) {
         idx <- which(rank_det == j)
-        data[data_idx, get_responses(formula_det[idx])] <-
-          full_model.matrix_pseudo(get_formulas(formula_det[idx]),
+        data[data_idx, get_responses(dformula_det[idx])] <-
+          full_model.matrix_pseudo(get_formulas(dformula_det[idx]),
                                    data[past_idx, ])[model_idx,]
       }
     }
@@ -262,37 +252,17 @@ dynamite <- function(formula, data, group, time,
     attr(cl, "levels") <- levels(x)
     cl
   })
-  model_matrix <- full_model.matrix(formula[channels_stoch], data)
-  #resp_levels <- lapply(responses, levels)
-  # TODO: simplify I(lag(variable, 1)) to something shorter, e.g. lag_1(variable)?
-  # TODO: shorten variable and or channel name if they are very long?
-  # TODO: NOTE! you can use lag_map to get the variables within the complicated definition for formatting
-  # u_names <- colnames(model_matrix)
-  # coef_names <- lapply(seq_along(resp_all), function(i) {
-  #   fixed <- attr(model_matrix, "fixed")[[i]]
-  #   varying <- attr(model_matrix, "varying")[[i]]
-  #   #beta <- onlyif(length(fixed) > 0, paste0(resp_all[i], "_", u_names[fixed]))
-  #   #delta <- onlyif(length(varying) > 0, paste0(resp_all[i], "_", u_names[varying]))
-  #   list(beta = u_names[fixed], delta = u_names[varying])
-  #  # if (is_categorical(formula[[i]]$family)) {
-  #   #  attr(x, "levels") <- resp_levels[[i]][-length(resp_levels[[i]])]
-  #   #   # for prior names, there's probably more elegant way...
-  #   #   #Need to keep in mind as.data.frame function, and fixed vs varying
-  #   #   simplified <- list(names = x, levels = levels_)
-  #   #   x <- paste0(x, "_", rep(levels_, each = length(x)))
-  #   #   attr(x, "simplified") <- simplified
-  #   #}
-  #   #x
-  # })
-  # names(coef_names) <- resp_all
-  specials <- evaluate_specials(formula[channels_stoch], data)
-  converted <- convert_data(formula[channels_stoch], responses[channels_stoch],
+  model_matrix <- full_model.matrix(dformula[channels_stoch], data)
+  specials <- evaluate_specials(dformula[channels_stoch], data)
+  converted <- convert_data(dformula[channels_stoch], responses[channels_stoch],
                             specials, group, full_time, model_matrix, priors)
 
   model_vars <- converted$model_vars
   sampling_vars <- converted$sampling_vars
   model_priors <- converted$priors
-  model_code <- create_blocks(formula[channels_stoch], indent = 2L, vars = model_vars)
+  model_code <- create_blocks(dformula = dformula[channels_stoch],
+                              indent = 2L,
+                              vars = model_vars)
   model_vars[grep("_prior_distr_", names(model_vars))] <- NULL
   # debug <- dots$debug
   model <- if (!is.null(debug) && isTRUE(debug$no_compile)) {
@@ -324,7 +294,7 @@ dynamite <- function(formula, data, group, time,
       ),
       priors = dplyr::bind_rows(model_priors),
       prediction_basis = list(
-        formula = formula,
+        dformula = dformula,
         # fixed = fixed,
         # past = model_matrix[(n_rows - fixed):n_rows,],
         # start = model_matrix[1:fixed,], # Needed for some posterior predictive checks?

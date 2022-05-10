@@ -15,7 +15,7 @@ dynamitefamily <- function(name) {
 #'
 #' Checks that a given family is supported by the package
 #'
-#' @param name \[`character(1)`]\cr Name of the family.#'
+#' @param name \[`character(1)`]\cr Name of the family.
 #' @noRd
 dynamitefamily_ <- function(name) {
   name <- tolower(as.character(name)[1])
@@ -29,7 +29,7 @@ dynamitefamily_ <- function(name) {
   )
 }
 
-#' Is an object dynamitefamily object?
+#' Is an object a dynamitefamily object?
 #'
 #' Checks if argument is a dynamitefamily object
 #'
@@ -63,7 +63,7 @@ is_discrete <- function(x) {
 #' Checks if a function call is of the form family(...),
 #' where 'family' is supported by the package.
 #'
-#' @param x A language object.
+#' @param x A language object
 #'
 #' @noRd
 is_valid_family_call <- function(x) {

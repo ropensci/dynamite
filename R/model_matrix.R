@@ -1,11 +1,11 @@
 #' Combine model.matrix objects of all formulas of a dynamiteformula into one
 #'
-#' @param formula A `dynamiteformula` object
+#' @param dformula A `dynamiteformula` object
 #' @param data A `data.frame` containing the variables in the model
 #'
 #' @noRd
-full_model.matrix <- function(formula, data) {
-  model_matrices <- lapply(get_formulas(formula), model.matrix.lm,
+full_model.matrix <- function(dformula, data) {
+  model_matrices <- lapply(get_formulas(dformula), model.matrix.lm,
                            data = data, na.action = na.pass)
   model_matrix <- do.call(cbind, model_matrices)
   u_names <- unique(colnames(model_matrix))
@@ -19,32 +19,30 @@ full_model.matrix <- function(formula, data) {
     assign <- match(cols, u_names)
     attr(model_matrix, "assign")[[i]] <- sort(assign)
     attr(model_matrix, "fixed")[[i]] <-
-      assign[(attr(model_matrices[[i]], "assign") %in% formula[[i]]$fixed)]
+      assign[(attr(model_matrices[[i]], "assign") %in% dformula[[i]]$fixed)]
     attr(model_matrix, "varying")[[i]] <-
-      assign[(attr(model_matrices[[i]], "assign") %in% formula[[i]]$varying)]
+      assign[(attr(model_matrices[[i]], "assign") %in% dformula[[i]]$varying)]
   }
   model_matrix
 }
 
 #' A version of full_model.matrix for prediction
 #'
-#' @param formula A `dynamiteformula` object
+#' @param dformula A `dynamiteformula` object
 #' @param data A `data.frame` containing the variables in the model
 #' @param u_names TODO
 #'
 #' @noRd
-full_model.matrix_predict <- function(formula, data, u_names) {
+full_model.matrix_predict <- function(dformula, data, u_names) {
   idx <- seq(2, nrow(data), by = 2)
-  model_matrices <- lapply(get_formulas(formula), function(x) {
-    model.matrix.lm(x, data,
-                    na.action = na.pass
-    )[idx, ]
+  model_matrices <- lapply(get_formulas(dformula), function(x) {
+    model.matrix.lm(x, data, na.action = na.pass)[idx, ]
   })
   model_matrix <- do.call(cbind, model_matrices)
   model_matrix[, u_names, drop = FALSE]
 }
 
-#' A fast version of full_model.matrix
+#' A fast version of full_model.matrix using formulas directly
 #'
 #' @param formula_list A list of formulas
 #' @param data A `data.frame` containing the variables in the model

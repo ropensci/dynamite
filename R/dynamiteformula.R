@@ -27,18 +27,13 @@ dynamiteformula <- function(formula, family) {
       family <- eval(family_call$call)
     }
   }
-  y <- as.character(formula_lhs(formula))
-  if (is_deterministic(family)) {
-    x <- formula_past(formula)
-  } else {
-    x <- formula_specials(formula)
-  }
+  x <- dynamiteformula_(formula, family)
   structure(
     list(
       dynamitechannel(
         formula = x$formula,
         family = family,
-        response = y,
+        response = x$response,
         fixed = x$fixed,
         varying = x$varying,
         specials = x$specials
@@ -46,6 +41,19 @@ dynamiteformula <- function(formula, family) {
     ),
     class = "dynamiteformula"
   )
+}
+
+#' @describeIn dynamiteformula Internal version of dynamiteformula
+#'
+#' @noRd
+dynamiteformula_ <- function(formula, family) {
+  if (is_deterministic(family)) {
+    out <- formula_past(formula)
+  } else {
+    out <- formula_specials(formula)
+  }
+  out$response <- as.character(formula_lhs(formula))
+  out
 }
 
 #' Create a channel for a dynamiteformula directly
@@ -133,15 +141,6 @@ get_predictors <- function(x) {
   sapply(x, function(y) as.character(formula_rhs(y$formula)))
 }
 
-# #' Get all predictor variables of a dynamiteformula object
-# #'
-# #' @param x A `dynamiteformula` object
-# #'
-# #' @noRd
-# get_pred <- function(x) {
-#   lapply(x, "[[", "predictors")
-# }
-
 #' Get all formulas of a dynamiteformula object
 #'
 #' @param x A `dynamiteformula` object
@@ -188,20 +187,24 @@ get_past <- function(x) {
   out[lengths(out) != 0]
 }
 
-get_ranks <- function(x) {
-  sapply(x, function(y) y$specials$rank)
-}
-
-
-
-#' Check whether a dynamiteformula contains an intercept
+#' Get ranks of channels for evaluation order of precedence
 #'
 #' @param x A `dynamiteformula` object
 #'
 #' @noRd
-has_intercept <- function(x) {
-  attr(terms(x$formula), "intercept") == 1
+get_ranks <- function(x) {
+  sapply(x, function(y) y$specials$rank)
 }
+
+# TODO can delete? this is not used
+# #' Check whether a dynamiteformula contains an intercept
+# #'
+# #' @param x A `dynamiteformula` object
+# #'
+# #' @noRd
+# has_intercept <- function(x) {
+#   attr(terms(x$formula), "intercept") == 1
+# }
 
 #' Internal +.dynamiteformula for model constructions
 #'

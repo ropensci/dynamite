@@ -51,7 +51,7 @@ fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, ...) {
     stop_("Model definition implies ", fixed, " fixed time points, ",
           "but 'newdata' has only ", n_time, " time points.")
   }
-  resp_all <- get_resp(basis$formula)
+  resp_all <- get_resp(basis$dformula)
   samples <- rstan::extract(object$stanfit)
   u_names <- unique(names(basis$start))
   model_matrix <- full_model.matrix_fast(

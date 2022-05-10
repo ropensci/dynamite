@@ -1,13 +1,13 @@
 #' Wrapper to parse Stan model blocks based on the family of the response
 #'
 #' @param prefix A character string indicating the Stan model block name
-#' @param formula A `dynamiteformula` object
+#' @param family A supported family name
 #' @param args Channel specific component of `model_vars`
 #'   (see [create_blocks()])
 #'
 #' @noRd
-lines_wrap <- function(prefix, formula, args) {
-  lines_expr <- paste0(prefix, "_lines_", formula$family)
+lines_wrap <- function(prefix, family, args) {
+  lines_expr <- paste0(prefix, "_lines_", family)
   lines_env <- list2env(args)
   eval(eval(as.name(lines_expr)), envir = lines_env)
 }

@@ -66,20 +66,20 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
           " fixed time points, but 'newdata' has only ",
           n_time, " time points.")
   }
-  resp_all <- get_resp(basis$formula)
+  resp_all <- get_resp(basis$dformula)
   # TODO check that fixed time points do not contain NAs
   for (resp in resp_all) {
     if (is.null(newdata[[resp]])) {
       newdata[[resp]] <- NA
     }
   }
-  specials <- evaluate_specials(basis$formula, newdata)
+  specials <- evaluate_specials(basis$dformula, newdata)
 
   if (type != "response") {
     # create separate column for each level of categorical variables
     for (i in seq_along(resp_all)) {
       resp <- resp_all[i]
-      if (is_categorical(basis$formula[[i]]$family)) {
+      if (is_categorical(basis$dformula[[i]]$family)) {
         resp_levels <- object$levels[[resp]]
         newdata[, c(glue::glue("{resp}_{resp_levels}"))] <- NA # TODO: glued names to formula?
       } else {
@@ -96,7 +96,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
       rep(0:fixed, times = n_id * n_draws)
     idx_i <- seq(i, n, by = n_time)
     model_matrix <- full_model.matrix_predict(
-      basis$formula,
+      basis$dformula,
       newdata[idx, ],
       u_names
     )
@@ -104,14 +104,14 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
       resp <- resp_all[j]
       if (any(is.na(newdata[idx_i, resp]))) { # TODO partial missingness?
         sim <- do.call(
-          paste0("predict_", basis$formula[[j]]$family),
+          paste0("predict_", basis$dformula[[j]]$family),
           list(
             model_matrix = model_matrix[, basis$J[[j]], drop = FALSE],
             samples = samples, specials[[j]], resp,
             time = i - fixed, type, n_draws = n_draws
           )
         )
-        if (is_categorical(basis$formula[[j]]$family)) {
+        if (is_categorical(basis$dformula[[j]]$family)) {
           resp_levels <- object$levels[[resp]]
           if (type != "response") {
             idx_resp <- which(names(newdata) %in%
@@ -131,7 +131,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
   if (type != "response") {
     for (i in seq_along(resp_all)) {
       resp <- resp_all[i]
-      if (is_categorical(basis$formula[[i]]$family)) {
+      if (is_categorical(basis$dformula[[i]]$family)) {
         newdata[[resp]] <- NULL
       } else {
         newdata[[resp]] <- newdata[[c(glue::glue("{resp}_store"))]]

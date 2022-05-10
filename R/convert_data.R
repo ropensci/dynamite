@@ -6,7 +6,7 @@
 #' @importFrom rlang .data
 #' @importFrom stats setNames
 #'
-#' @param formula \[`dynamiteformula`]\cr The model formula.
+#' @param dformula \[`dynamiteformula`]\cr The model formula.
 #' @param responses \[`data.frame`]\cr A data.frame with the
 #'   response columns only.
 #' @param specials \[`list`]\cr A list of formula specials for each channel
@@ -18,7 +18,7 @@
 #' @param priors TODO
 #'
 #' @noRd
-convert_data <- function(formula, responses, specials, group, time,
+convert_data <- function(dformula, responses, specials, group, time,
                          model_matrix, priors = NULL) {
 
   resp_names <- colnames(responses)
@@ -33,15 +33,14 @@ convert_data <- function(formula, responses, specials, group, time,
 
   T_full <- length(time)
   groups <- !is.null(group)
-  # free_obs <- (fixed + 1):T_full
 
-  spline_defs <- attr(formula, "splines")
+  spline_defs <- attr(dformula, "splines")
   has_splines <- !is.null(spline_defs)
   lb <- ""
   shrinkage <- FALSE
   if (has_splines) {
-    lb <- attr(formula, "splines")$lb_tau
-    shrinkage <- attr(formula, "splines")$shrinkage
+    lb <- attr(dformula, "splines")$lb_tau
+    shrinkage <- attr(dformula, "splines")$shrinkage
     bs_opts <- spline_defs$bs_opts
     bs_opts$x <- time
     if (is.null(bs_opts$Boundary.knots)) {
@@ -90,7 +89,7 @@ convert_data <- function(formula, responses, specials, group, time,
   warn_nosplines <- FALSE
   for (i in seq_len(n_channels)) {
     channel <- list()
-    resp <- resp_names[i] #formula[[i]]$response
+    resp <- resp_names[i]
     form_specials <- specials[[i]]
     channel$resp <- resp
     channel$L_fixed <- as.array(fixed_pars[[i]])
@@ -163,7 +162,7 @@ convert_data <- function(formula, responses, specials, group, time,
       }
     }
     Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))
-    family <- formula[[i]]$family
+    family <- dformula[[i]]$family
     if (is_gaussian(family)) {
       sampling_vars[[resp]] <- t(Y)
     } else {
@@ -288,7 +287,8 @@ prepare_channel_default <- function(y, Y, channel,
   list(channel = channel, priors = priors)
 }
 
-# TODO documentation, same as prepare_channel_default
+#' @describein prepare_channel_default Prepare a categorical channel
+#' @noRd
 prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
                                         priors) {
 
@@ -376,7 +376,8 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
   list(channel = channel, priors = priors)
 }
 
-# TODO documentation, same as prepare_channel_default
+#' @describein prepare_channel_default Prepare a gaussian channel
+#' @noRd
 prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
     stop_("Response variable ", y, " is invalid: ",
@@ -412,7 +413,8 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   out
 }
 
-# TODO documentation, same as prepare_channel_default
+#' @describein prepare_channel_default Prepare a binomial channel
+#' @noRd
 prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
 
   if (any(Y < 0) || any(is.logical(Y)) || any(Y != as.integer(Y))) {
@@ -428,7 +430,8 @@ prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
   prepare_channel_default(y, Y, channel,sd_gamma, resp_class, priors)
 }
 
-# TODO documentation, same as prepare_channel_default
+#' @describein prepare_channel_default Prepare a bernoulli channel
+#' @noRd
 prepare_channel_bernoulli <- function(y, Y, channel, sd_x, resp_class,
                                       priors) {
   if (!all(Y %in% 0:1) || any(is.logical(Y))) {
@@ -442,7 +445,8 @@ prepare_channel_bernoulli <- function(y, Y, channel, sd_x, resp_class,
   prepare_channel_binomial(y, Y, channel, sd_x, resp_class, priors)
 }
 
-# TODO documentation, same as prepare_channel_default
+#' @describein prepare_channel_default Prepare a Poisson channel
+#' @noRd
 prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
   if (any(Y < 0) || any(Y != as.integer(Y))) {
     stop_("Response variable ", y, " is invalid: ",
@@ -457,7 +461,8 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
   prepare_channel_default(y, Y, channel, sd_gamma, resp_class, priors)
 }
 
-# TODO documentation, same as prepare_channel_default
+#' @describein prepare_channel_default Prepare a negative binomial channel
+#' @noRd
 prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
   if (any(Y < 0) || any(Y != as.integer(Y))) {
     stop_("Response variable ", y, " is invalid: ",
@@ -491,6 +496,11 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
   out
 }
 
+#' Give a warning about nonfinite standard deviation
+#'
+#' @param y Response varible the warning is related to
+#'
+#' @noRd
 warn_nonfinite <- function(y) {
   warning_(
     "Found nonfinite prior standard deviation when using default priors ",
