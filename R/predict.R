@@ -66,7 +66,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
           " fixed time points, but 'newdata' has only ",
           n_time, " time points.")
   }
-  resp_all <- get_resp(basis$dformula)
+  resp_all <- get_responses(basis$dformula)
   # TODO check that fixed time points do not contain NAs
   for (resp in resp_all) {
     if (is.null(newdata[[resp]])) {

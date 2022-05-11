@@ -136,7 +136,7 @@ dynamite <- function(dformula, data, group, time,
     }
     for (j in seq_len(n_channels)) {
       dformula[[j]]$formula <- dynamiteformula_(
-        increment_formula(dformula[[j]]$formula, lag_lhs),
+        increment_formula(dformula[[j]]$formula, lags_lhs),
         dformula[[j]]$family
       )
     }

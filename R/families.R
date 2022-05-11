@@ -40,24 +40,6 @@ is.dynamitefamily <- function(x) {
   inherits(x, "dynamitefamily")
 }
 
-#' Check if response of a family is continuous
-#'
-#' @param x A `dynamitefamily` object.
-#'
-#' @noRd
-is_continuous <- function(x) {
-  x$name %in% continuous_distributions
-}
-
-#' Check if response of a family is discrete
-#'
-#' @param x A `dynamitefamily` object.
-#'
-#' @noRd
-is_discrete <- function(x) {
-  x$name %in% discrete_distributions
-}
-
 #' Validate calls to family functions
 #'
 #' Checks if a function call is of the form family(...),
@@ -80,19 +62,6 @@ is_valid_family_call <- function(x) {
 is_supported <- function(name) {
   name %in% supported_families
 }
-
-# TODO needed?
-continuous_distributions <- c(
-  "gaussian",
-  "gamma"
-)
-
-# TODO needed?
-discrete_distributions <- c(
-  "categorical",
-  "binomial",
-  "poisson"
-)
 
 # TODO add gamma
 supported_families <- c(

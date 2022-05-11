@@ -4,10 +4,10 @@
 \alias{get_code}
 \title{TODO documentation}
 \usage{
-get_code(formula, data, group, time)
+get_code(dformula, data, group, time)
 }
 \arguments{
-\item{formula}{[\code{dynamiteformula}]\cr The model formula.
+\item{dformula}{[\code{dynamiteformula}]\cr The model formula.
 See \code{\link[=dynamiteformula]{dynamiteformula()}}.}
 
 \item{data}{[\code{data.frame}]\cr The data frame containing the variables in

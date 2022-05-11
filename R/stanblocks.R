@@ -27,7 +27,7 @@ create_blocks.default <- function(dformula, indent = 2L, vars, ...) {
 
 #' Create the 'Functions' block of the Stan model code
 #'
-#' @param formula A `dynamiteformula` defining the model
+#' @param dformula A `dynamiteformula` defining the model
 #' @param idt An indeter function created by [indenter_()]
 #' @param vars `model_vars` component of [convert_data()] output
 #'

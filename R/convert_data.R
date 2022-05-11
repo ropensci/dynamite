@@ -287,7 +287,7 @@ prepare_channel_default <- function(y, Y, channel,
   list(channel = channel, priors = priors)
 }
 
-#' @describein prepare_channel_default Prepare a categorical channel
+#' @describeIn prepare_channel_default Prepare a categorical channel
 #' @noRd
 prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
                                         priors) {
@@ -376,7 +376,7 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
   list(channel = channel, priors = priors)
 }
 
-#' @describein prepare_channel_default Prepare a gaussian channel
+#' @describeIn prepare_channel_default Prepare a gaussian channel
 #' @noRd
 prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
@@ -413,7 +413,7 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   out
 }
 
-#' @describein prepare_channel_default Prepare a binomial channel
+#' @describeIn prepare_channel_default Prepare a binomial channel
 #' @noRd
 prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
 
@@ -430,7 +430,7 @@ prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
   prepare_channel_default(y, Y, channel,sd_gamma, resp_class, priors)
 }
 
-#' @describein prepare_channel_default Prepare a bernoulli channel
+#' @describeIn prepare_channel_default Prepare a bernoulli channel
 #' @noRd
 prepare_channel_bernoulli <- function(y, Y, channel, sd_x, resp_class,
                                       priors) {
@@ -445,7 +445,7 @@ prepare_channel_bernoulli <- function(y, Y, channel, sd_x, resp_class,
   prepare_channel_binomial(y, Y, channel, sd_x, resp_class, priors)
 }
 
-#' @describein prepare_channel_default Prepare a Poisson channel
+#' @describeIn prepare_channel_default Prepare a Poisson channel
 #' @noRd
 prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
   if (any(Y < 0) || any(Y != as.integer(Y))) {
@@ -461,7 +461,7 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
   prepare_channel_default(y, Y, channel, sd_gamma, resp_class, priors)
 }
 
-#' @describein prepare_channel_default Prepare a negative binomial channel
+#' @describeIn prepare_channel_default Prepare a negative binomial channel
 #' @noRd
 prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
   if (any(Y < 0) || any(Y != as.integer(Y))) {

@@ -73,7 +73,7 @@ extract_lags <- function(x) {
   lag_map$k <- as.integer(lag_map$k)
   lag_map$k[is.na(lag_map$k)] <- 1L
   lag_map <- lag_map[!duplicated(lag_map), ] |>
-    dplyr::group_by(def) |>
-    dplyr::filter(k == max(k)) |>
+    dplyr::group_by(.data$def) |>
+    dplyr::filter(.data$k == max(.data$k)) |>
     dplyr::ungroup()
 }

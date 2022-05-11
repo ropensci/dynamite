@@ -4,10 +4,10 @@
 \alias{create_blocks}
 \title{Create code blocks for the Stan model}
 \usage{
-create_blocks(formula, ...)
+create_blocks(dformula, ...)
 }
 \arguments{
-\item{formula}{A \code{dynamiteformula} defining the model}
+\item{dformula}{A \code{dynamiteformula} defining the model}
 
 \item{...}{TODO}
 }
