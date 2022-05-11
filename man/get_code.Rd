@@ -31,3 +31,9 @@ time axis.}
 Returns the Stan code of the model. Mostly useful for debugging or for
 building customized version of the model.
 }
+\examples{
+
+d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
+cat(get_code(obs(y ~ x, family = gaussian()),
+  data = d, time = "time", group = "id"))
+}

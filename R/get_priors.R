@@ -23,7 +23,7 @@
 #' @examples
 #'
 #' d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
-#' get_priors(obs(y ~ x, family = gaussian),
+#' get_priors(obs(y ~ x, family = gaussian()),
 #'   data = d, time = "time", group = "id")
 #'
 get_priors <- function(x, data, group, time, ...) {
@@ -60,6 +60,11 @@ get_priors.dynamitefit <- function(x, ...) {
 #' @inheritParams get_priors
 #' @rdname get_code
 #' @export
+#' @examples
+#'
+#' d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
+#' cat(get_code(obs(y ~ x, family = gaussian()),
+#'   data = d, time = "time", group = "id"))
 get_code <- function(x, data, group, time, ...) {
   UseMethod("get_code", x)
 }
@@ -91,6 +96,11 @@ get_code.dynamitefit <- function(x, ...) {
 #' @inheritParams get_priors
 #' @rdname get_data
 #' @export
+#' @examples
+#'
+#' d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
+#' str(get_data(obs(y ~ x, family = gaussian()),
+#'   data = d, time = "time", group = "id"))
 get_data <- function(x, data, group, time, ...) {
   UseMethod("get_data", x)
 }

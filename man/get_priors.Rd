@@ -35,7 +35,7 @@ supplying this data frame to \code{dynamite} function using the argument \code{p
 \examples{
 
 d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
-get_priors(obs(y ~ x, family = gaussian),
+get_priors(obs(y ~ x, family = gaussian()),
   data = d, time = "time", group = "id")
 
 }
