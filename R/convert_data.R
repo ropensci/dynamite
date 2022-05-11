@@ -6,10 +6,12 @@
 #' @importFrom rlang .data
 #' @importFrom stats setNames
 #'
-#' @param dformula \[`dynamiteformula`]\cr The model formula.
+#' @param dformula \[`dynamiteformula`]\cr The model formula of stochastic
+#'   channels
 #' @param responses \[`data.frame`]\cr A data.frame with the
-#'   response columns only.
-#' @param specials \[`list`]\cr A list of formula specials for each channel
+#'   response columns only for stochastic channels.
+#' @param specials \[`list`]\cr A list of formula specials for each
+#'   stochastic channel
 #' @param group \[`vector`]\cr A vector defining group membership of each
 #'   individual.
 #' @param time \[`numeric`]\cr A vector defining the observation times for
@@ -26,7 +28,8 @@ convert_data <- function(dformula, responses, specials, group, time,
   # A list of variables for stan sampling without grouping by channel
   sampling_vars <- list()
   empty_list <- setNames(vector(mode = "list", length = n_channels), resp_names)
-  # A list containing a list for each channel consisting of variables used to construct the stan model code
+  # A list containing a list for each channel consisting of
+  # variables used to construct the stan model code
   model_vars <- empty_list
   # A list for getting current prior definitions
   prior_list <- empty_list
@@ -39,8 +42,8 @@ convert_data <- function(dformula, responses, specials, group, time,
   lb <- ""
   shrinkage <- FALSE
   if (has_splines) {
-    lb <- attr(dformula, "splines")$lb_tau
-    shrinkage <- attr(dformula, "splines")$shrinkage
+    lb <- spline_defs$lb_tau
+    shrinkage <- spline_defs$shrinkage
     bs_opts <- spline_defs$bs_opts
     bs_opts$x <- time
     if (is.null(bs_opts$Boundary.knots)) {
