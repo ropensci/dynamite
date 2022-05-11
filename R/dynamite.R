@@ -107,7 +107,6 @@ dynamite <- function(dformula, data, group, time,
   data_names <- names(data)
   lag_map <- extract_lags(get_predictors(dformula))
   lag_all <- attr(dformula, "lags")
-  lags_uneval <- rep(TRUE, nrow(lag_map))
   lags_channel <- list()
   lags_lhs <- NULL
   if (!is.null(lag_all)) {
@@ -140,58 +139,64 @@ dynamite <- function(dformula, data, group, time,
         dformula[[j]]$family
       )
     }
-    lags_uneval[lag_map$def %in% resp_all & lag_map$k <= lag_all$k] <- FALSE
+    if (nrow(lag_map) > 0) {
+      lag_map <- lag_map[!(lag_map$resp %in% resp_all & lag_map$k <= lag_all$k), ]
+    }
   }
   map_lhs <- NULL
-  map_rank <- NULL
-  if (any(lags_uneval)) {
-    idx_uneval <- which(lags_uneval)
-    n_uneval <- sum(lag_map$k[idx_uneval])
-    map_channel <- vector(mode = "list", length = n_uneval)
+  map_channel <- list()
+  n_lags <- nrow(lag_map)
+  if (n_lags > 0) {
+    if (any(lag_map$k <= 0)) {
+      stop_("Only positive shift values are allowed in lag()")
+    }
+    map_channel <- vector(mode = "list", length = n_lags)
+    lag_resp <- unique(lag_map$resp)
     idx <- 0
-    for (i in idx_uneval) {
-      if (lag_map$k[i] <= 0) {
-        stop_("Only positive shift values are allowed in lag()")
-      }
-      y <- lag_map$def[i]
+    for (y in lag_resp) {
+      lag_idx <- which(lag_map$resp == y)
       y_idx <- which(resp_all == y)
       y_past <- NULL
       y_stoch <- TRUE
       if (is_deterministic(dformula[[y_idx]]$family)) {
         y_past <- dformula[[y_idx]]$specials$past
         y_past_len <- length(y_past)
-        if (y_past_len < lag_map$k[i]) {
-          stop_("Deterministic channel '", y, "' requires ", lag_map$k[i], " ",
+        lag_max <- max(lag_map$k[lag_idx])
+        if (y_past_len < lag_max) {
+          stop_("Deterministic channel '", y, "' requires ", lag_max, " ",
                 "initial values, but only ", y_past_len, " values ",
                 "have been specified")
         }
         y_stoch <- FALSE
-        proc_past <- seq(from = y_past_len, by = -1, length.out = lag_map$k[i])
+        proc_past <- seq(from = y_past_len, by = -1, length.out = lag_max)
         dformula[[y_idx]]$specials$past <-
           dformula[[y_idx]]$specials$past[-proc_past]
       }
-      for (j in 1:lag_map$k[i]) {
-        idx <- idx + 1
-        if (j == 1) {
-          map_rhs <- paste0("lag_(", y, ", ", j, ")")
+      for (i in seq_along(lag_idx)) {
+        j <- lag_idx[i]
+        if (i == 1) {
+          map_rhs <- paste0("lag_(", y, ", 1)")
         } else {
-          map_rhs <- paste0("lag_(", y, "_lag_", j - 1, ", 1)")
+          map_rhs <- paste0("lag_(", y, "_lag_", i - 1, ", 1)")
         }
-        map_lhs <- paste0(y, "_lag_", j)
+        map_lhs <- paste0(y, "_lag_", i)
+        idx <- idx + 1
         map_channel[[idx]] <- dynamitechannel(
           formula = as.formula(paste0(map_lhs, " ~ ", map_rhs)),
           family = deterministic_(),
           response = map_lhs,
-          specials = list(past = y_past[j], rank = j)
+          specials = list(past = y_past[i], rank = i)
         )
-        attr(map_channel[[idx]], "stoch_origin") <- y_stoch && (j == 1)
-        for (k in seq_len(n_channels)) {
-          dformula[[k]]$formula <- gsub_formula(
-            pattern = lag_map$src[i],
-            replacement = map_lhs,
-            formula = dformula[[k]]$formula,
-            fixed = TRUE
-          )
+        attr(map_channel[[idx]], "stoch_origin") <- y_stoch && (i == 1)
+        if (lag_map$present[j]) {
+          for (k in seq_len(n_channels)) {
+            dformula[[k]]$formula <- gsub_formula(
+              pattern = lag_map$src[j],
+              replacement = map_lhs,
+              formula = dformula[[k]]$formula,
+              fixed = TRUE
+            )
+          }
         }
       }
     }
@@ -232,16 +237,21 @@ dynamite <- function(dformula, data, group, time,
   }
   if (length(dformula_det) > 0 && n_time > 1) {
     id_offset_vec <- rep(id_offset, each = 2)
-    model_idx <- seq(2, 2 * n_id, by = 2)
+    model_idx <- seq(3, 3 * n_id, by = 3)
+    # TODO check if separate evaluation data frame is needed
+    data_eval <- data[rep(1, n_id * 3),]
+    data_eval[,] <- NA
+    eval_idx <- rep(1:2, n_id)  + rep(seq(1, 3 * n_id, by = 3), each = 2)
     u_rank <- sort(unique(rank_det))
     for (i in 2:n_time) {
       past_idx <- (i - 1):i + id_offset_vec
       data_idx <- i + id_offset
       for (j in u_rank) {
+        data_eval[eval_idx,] <- data[past_idx,]
         idx <- which(rank_det == j)
         data[data_idx, get_responses(dformula_det[idx])] <-
           full_model.matrix_pseudo(get_formulas(dformula_det[idx]),
-                                   data[past_idx, ])[model_idx,]
+                                   data_eval)[model_idx,]
       }
     }
   }
