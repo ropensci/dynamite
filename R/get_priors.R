@@ -86,7 +86,7 @@ get_code.dynamitefit <- function(x, ...) {
 
 #' Extract the Model Data of the Dynamite Model
 #'
-#' Returns the input data to Stan model. Mostly useful for debugging
+#' Returns the input data to Stan model. Mostly useful for debugging.
 #'
 #' @inheritParams get_priors
 #' @rdname get_data
@@ -104,10 +104,10 @@ get_data.dynamiteformula <- function(x, data, group, time, ...) {
       data = data,
       group = substitute(group),
       time = substitute(time),
-      debug = list(no_compile = TRUE, model_data = TRUE)
+      debug = list(no_compile = TRUE, sampling_vars = TRUE)
     )
   )
-  out$model_data
+  out$sampling_vars
 }
 #' @rdname get_data
 #' @export
@@ -120,8 +120,8 @@ get_data.dynamitefit <- function(x, ...) {
       data = x$data,
       group = x$group_var,
       time = x$time_var,
-      debug = list(no_compile = TRUE, model_data = TRUE)
+      debug = list(no_compile = TRUE, sampling_vars = TRUE)
     )
   )
-  out$model_data
+  out$sampling_vars
 }

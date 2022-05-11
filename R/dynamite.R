@@ -322,9 +322,6 @@ dynamite <- function(dformula, data, group, time,
       if (!"try-error" %in% class(got)) {
         out[[opt]] <- got
       }
-      if (opt == "model_data") {
-        out[[opt]] <- sampling_vars
-      }
     }
   }
   out
