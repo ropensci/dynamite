@@ -24,14 +24,16 @@ formula_specials <- function(x) {
   special_vars <- unlist(xt_specials)
   fixed_terms <- character(0)
   if (!is.null(xt_specials[["fixed"]])) {
-    fixed_form <- xt_variables[[xt_specials[["fixed"]] + 1]][[2]]
+    # eval to ensure fixed_form is a formula
+    fixed_form <- eval(xt_variables[[xt_specials[["fixed"]] + 1]][[2]])
     fixed_terms <- formula_terms(fixed_form)
     fixed_icpt <- attr(terms(fixed_form), "intercept")
   }
   varying_terms <- character(0)
   varying_icpt <- 0
   if (!is.null(xt_specials[["varying"]])) {
-    varying_form <- xt_variables[[xt_specials[["varying"]] + 1]][[2]]
+    # eval to ensure varying_form is a formula
+    varying_form <- eval(xt_variables[[xt_specials[["varying"]] + 1]][[2]])
     varying_terms <- formula_terms(varying_form)
     varying_icpt <- attr(terms(varying_form), "intercept")
   }
