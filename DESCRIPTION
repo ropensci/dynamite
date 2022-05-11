@@ -20,7 +20,7 @@ Imports:
     methods,
     posterior,
     rlang,
-    rstan (>= 2.18.1),
+    rstan (>= 2.26.11),
     tidyr
 Suggests: 
     covr,
