@@ -263,15 +263,17 @@ dynamite <- function(dformula, data, group, time,
     attr(cl, "levels") <- levels(x)
     cl
   })
-  model_matrix <- full_model.matrix(dformula[channels_stoch], data)
-  specials <- evaluate_specials(dformula[channels_stoch], data)
-  converted <- convert_data(dformula[channels_stoch], responses[channels_stoch],
-                            specials, group, full_time, model_matrix, priors)
+  dformula_stoch <- dformula[channels_stoch]
+  attr(dformula_stoch, "splines") <- attr(dformula, "splines")
+  model_matrix <- full_model.matrix(dformula_stoch, data)
+  specials <- evaluate_specials(dformula_stoch, data)
+  converted <- convert_data(dformula_stoch, responses, specials,
+                            group, full_time, model_matrix, priors)
 
   model_vars <- converted$model_vars
   sampling_vars <- converted$sampling_vars
   model_priors <- converted$priors
-  model_code <- create_blocks(dformula = dformula[channels_stoch],
+  model_code <- create_blocks(dformula = dformula_stoch,
                               indent = 2L,
                               vars = model_vars)
   model_vars[grep("_prior_distr_", names(model_vars))] <- NULL
