@@ -110,13 +110,11 @@ convert_data <- function(dformula, responses, specials, group, time,
       }))
       c(obs, rep(0, nc - length(obs)))
     })
-    dim(obs_idx) <- c(T_full, N)
-    obs_len <- apply(obs_idx, 2, function(x) {
-      sum(x > 0)
-    })
+    dim(obs_idx) <- c(N, T_full)
+    obs_len <- colSums(obs_idx > 0)
     channel$has_missing <- any(obs_len < N)
     if (channel$has_missing) {
-      sampling_vars[[paste0("obs_", resp)]] <- t(obs_idx)
+      sampling_vars[[paste0("obs_", resp)]] <- obs_idx
       sampling_vars[[paste0("n_obs_", resp)]] <- obs_len
       channel$obs <- glue::glue("obs_{resp}[1:n_obs_{resp}[t], t]")
     } else {
