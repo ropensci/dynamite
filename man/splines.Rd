@@ -35,7 +35,7 @@ definition for the splines will not be overridden by another call to
 \item{Boundary.knots}{[\code{numeric()}]\cr See \code{\link[splines:bs]{splines::bs()}}.}
 
 \item{lb_tau}{[\code{numeric(1)}]\cr Hard constraint on the lower bound of the
-standard deviation parameters $\tau$ of the random walk priors. Can be
+standard deviation parameters \eqn{\tau} of the random walk priors. Can be
 useful in avoiding divergences in some cases. See also \code{noncentered}
 argument.}
 

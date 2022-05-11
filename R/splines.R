@@ -16,7 +16,7 @@
 #'    definition for the splines will not be overridden by another call to
 #'    `splines()`. If `TRUE`, any existing definitions will be replaced.
 #' @param lb_tau \[`numeric(1)`]\cr Hard constraint on the lower bound of the
-#'   standard deviation parameters $\tau$ of the random walk priors. Can be
+#'   standard deviation parameters \eqn{\tau} of the random walk priors. Can be
 #'   useful in avoiding divergences in some cases. See also `noncentered`
 #'   argument.
 #' @param noncentered  \[`logical()`]\cr If `TRUE`, use noncentered
