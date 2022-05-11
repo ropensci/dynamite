@@ -39,8 +39,8 @@ convert_data <- function(dformula, responses, specials, group, time,
   lb <- ""
   shrinkage <- FALSE
   if (has_splines) {
-    lb <- attr(dformula, "splines")$lb_tau
-    shrinkage <- attr(dformula, "splines")$shrinkage
+    lb <- spline_defs$lb_tau
+    shrinkage <- spline_defs$shrinkage
     bs_opts <- spline_defs$bs_opts
     bs_opts$x <- time
     if (is.null(bs_opts$Boundary.knots)) {

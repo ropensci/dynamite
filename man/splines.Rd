@@ -2,7 +2,7 @@
 % Please edit documentation in R/splines.R
 \name{splines}
 \alias{splines}
-\title{Define the B-splines used for the regression coefficients of the model.}
+\title{Define the B-splines Used for the Time-varying Coefficients of the Model.}
 \usage{
 splines(
   shrinkage = FALSE,
@@ -16,26 +16,40 @@ splines(
 )
 }
 \arguments{
-\item{shrinkage}{a logical value. If `TRUE`` (the default) a shrinkage prior is used
-for smoothing the splines. Default is FALSE. TODO: Needs more testing.}
+\item{shrinkage}{[\code{logical(1)}]\cr If \code{TRUE}, a common global shrinkage
+parameter \eqn{\lambda} is used for the splines so that the standard
+deviation of the random walk prior is of the spline coefficients is
+\eqn{\lambda\tau}. Default is \code{FALSE}.
+TODO: Needs more testing whether this is useful.}
 
-\item{override}{a logical value. If \code{FALSE} (the default), an existing
-definition for the splines will not be overridden by another call to \code{splines}.
-If \code{TRUE}, any existing definitions will be replaced.}
+\item{override}{[\code{logical(1)}]\cr If \code{FALSE} (the default), an existing
+definition for the splines will not be overridden by another call to
+\code{splines()}. If \code{TRUE}, any existing definitions will be replaced.}
 
-\item{df}{see \code{\link[splines:bs]{splines::bs()}}.}
+\item{df}{[\code{integer(1)}]\cr See \code{\link[splines:bs]{splines::bs()}}.}
 
-\item{knots}{see \code{\link[splines:bs]{splines::bs()}}.}
+\item{knots}{[\code{numeric()}]\cr See \code{\link[splines:bs]{splines::bs()}}.}
 
-\item{degree}{see \code{\link[splines:bs]{splines::bs()}}.}
+\item{degree}{[\code{integer(1)}]\cr See \code{\link[splines:bs]{splines::bs()}}.}
 
-\item{Boundary.knots}{see \code{\link[splines:bs]{splines::bs()}}.}
+\item{Boundary.knots}{[\code{numeric()}]\cr See \code{\link[splines:bs]{splines::bs()}}.}
 
-\item{lb_tau}{TODO.}
+\item{lb_tau}{[\code{numeric(1)}]\cr Hard constraint on the lower bound of the
+standard deviation parameters $\tau$ of the random walk priors. Can be
+useful in avoiding divergences in some cases. See also \code{noncentered}
+argument.}
 
-\item{noncentered}{TODO.}
+\item{noncentered}{[\code{logical()}]\cr If \code{TRUE}, use noncentered
+parameterization for the spline coefficients. Default is \code{FALSE}. Try
+changing this if you encounter divergences or other problems in sampling.
+Can be a single logical value, or vector of logical values, defining the
+parameterization separately for each channel.}
 }
 \description{
+This function can be used as part of \code{dynamiteformula} to define the splines
+for the time-varying coeffients \eqn{\delta}.
+}
+\details{
 TODO: Think the naming of this option, we have a "local" shrinkage due to
 the random walk prior of the spline coefficients, and the this "global" shrinkage over
 splines. Need to avoid confusion with the traditional global-local shrinkage priories (e.g. horseshoe)

@@ -38,3 +38,9 @@ potential values for these variables.
 The spline coefficients \code{alpha} are never returned, but they can be
 obtained with \code{as_draws} function among all the other parameters.
 }
+\examples{
+fit <- dynamite(
+  obs(y ~ -1 + x + varying(~1), family = gaussian()) + splines(df = 10),
+  data = gaussian_example, time = time, group = id,
+  iter = 100, chains = 1, refresh = 0)
+}

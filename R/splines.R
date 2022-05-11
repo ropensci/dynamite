@@ -1,19 +1,33 @@
-#' Define the B-splines used for the regression coefficients of the model.
+#' Define the B-splines Used for the Time-varying Coefficients of the Model.
+#'
+#' This function can be used as part of `dynamiteformula` to define the splines
+#' for the time-varying coeffients \eqn{\delta}.
 #'
 #' TODO: Think the naming of this option, we have a "local" shrinkage due to
 #' the random walk prior of the spline coefficients, and the this "global" shrinkage over
 #' splines. Need to avoid confusion with the traditional global-local shrinkage priories (e.g. horseshoe)
-#' @param shrinkage a logical value. If `TRUE`` (the default) a shrinkage prior is used
-#'    for smoothing the splines. Default is FALSE. TODO: Needs more testing.
-#' @param override a logical value. If `FALSE` (the default), an existing
-#'    definition for the splines will not be overridden by another call to \code{splines}.
-#'    If \code{TRUE}, any existing definitions will be replaced.
-#' @param lb_tau TODO.
-#' @param noncentered TODO.
-#' @param df see [splines::bs()].
-#' @param knots see [splines::bs()].
-#' @param degree see [splines::bs()].
-#' @param Boundary.knots see [splines::bs()].
+#'
+#' @param shrinkage \[`logical(1)`]\cr If `TRUE`, a common global shrinkage
+#'   parameter \eqn{\lambda} is used for the splines so that the standard
+#'   deviation of the random walk prior is of the spline coefficients is
+#'   \eqn{\lambda\tau}. Default is `FALSE`.
+#'   TODO: Needs more testing whether this is useful.
+#' @param override \[`logical(1)`]\cr If `FALSE` (the default), an existing
+#'    definition for the splines will not be overridden by another call to
+#'    `splines()`. If `TRUE`, any existing definitions will be replaced.
+#' @param lb_tau \[`numeric(1)`]\cr Hard constraint on the lower bound of the
+#'   standard deviation parameters $\tau$ of the random walk priors. Can be
+#'   useful in avoiding divergences in some cases. See also `noncentered`
+#'   argument.
+#' @param noncentered  \[`logical()`]\cr If `TRUE`, use noncentered
+#'   parameterization for the spline coefficients. Default is `FALSE`. Try
+#'   changing this if you encounter divergences or other problems in sampling.
+#'   Can be a single logical value, or vector of logical values, defining the
+#'   parameterization separately for each channel.
+#' @param df \[`integer(1)`]\cr See [splines::bs()].
+#' @param knots \[`numeric()`]\cr See [splines::bs()].
+#' @param degree \[`integer(1)`]\cr See [splines::bs()].
+#' @param Boundary.knots \[`numeric()`]\cr See [splines::bs()].
 #' @export
 splines <- function(shrinkage = FALSE, override = FALSE,
                     df = NULL, knots = NULL, degree = 3,
@@ -38,8 +52,8 @@ splines <- function(shrinkage = FALSE, override = FALSE,
         df = df,
         knots = knots,
         degree = degree,
-        # Always include intercept as we don't have separate intercept for betas
-        # Now first spline coefficient corresponds to beta_1
+        # Always include intercept as we don't have separate intercept for
+        # deltas. Now first spline coefficient corresponds to delta_1
         intercept = TRUE,
         Boundary.knots = Boundary.knots
       )
