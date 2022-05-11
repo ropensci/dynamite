@@ -256,7 +256,7 @@ dynamite <- function(dformula, data, group, time,
       }
     }
   }
-  responses <- data[, resp_all, drop = FALSE]
+  responses <- data[, resp_all[channels_stoch], drop = FALSE]
   # Needs sapply/lapply instead of apply to keep factors as factors
   attr(responses, "resp_class") <- lapply(responses, function(x) {
     cl <- class(x)

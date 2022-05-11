@@ -75,7 +75,8 @@ convert_data <- function(dformula, responses, specials, group, time,
     c(3, 1, 2)
   )
   # placeholder for NAs in Stan
-  X[is.na(X)] <- 0
+  X_na <- is.na(X)
+  X[X_na] <- 0
   assigned <- attr(model_matrix, "assign")
   fixed_pars <- attr(model_matrix, "fixed")
   varying_pars <- attr(model_matrix, "varying")
@@ -93,6 +94,17 @@ convert_data <- function(dformula, responses, specials, group, time,
   for (i in seq_len(n_channels)) {
     channel <- list()
     resp <- resp_names[i]
+    if (groups) {
+      resp_split <- split(responses[, resp], group)
+    } else {
+      resp_split <- responses[, resp]
+    }
+    Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))
+    Y_na <- is.na(Y)
+    # Separate copy of Y for Stan, so that added zeros do not influence channel
+    # preparation nor influence other checks related to response variables.
+    Y_out <- Y
+    Y_out[Y_na] <- 0
     form_specials <- specials[[i]]
     channel$resp <- resp
     channel$L_fixed <- as.array(fixed_pars[[i]])
@@ -103,15 +115,17 @@ convert_data <- function(dformula, responses, specials, group, time,
     channel$K <- length(assigned[[i]])
     channel$K_fixed <- length(fixed_pars[[i]])
     channel$K_varying <- length(varying_pars[[i]])
-    obs_idx <- apply(X[, , channel$J, drop = FALSE], 1, function(x) {
-      nc <- nrow(x)
-      obs <- which(apply(x, 1, function(y) {
-        all(!is.na(y))
-      }))
-      c(obs, rep(0, nc - length(obs)))
-    })
-    dim(obs_idx) <- c(N, T_full)
-    obs_len <- colSums(obs_idx > 0)
+    obs_idx <- array(0, dim = c(N, T_full))
+    obs_len <- integer(T_full)
+    for (j in seq_len(T_full)) {
+      x_na <- X_na[j, , channel$J, drop = FALSE]
+      dim(x_na) <- c(N, channel$K)
+      y_na <- Y_na[j, ]
+      obs_XY <- which(apply(x_na, 1, function(z) all(!z)) & !y_na)
+      obs_XY_len <- length(obs_XY)
+      obs_idx[, j] <- c(obs_XY, rep(0, N - obs_XY_len))
+      obs_len[j] <- obs_XY_len
+    }
     channel$has_missing <- any(obs_len < N)
     if (channel$has_missing) {
       sampling_vars[[paste0("obs_", resp)]] <- obs_idx
@@ -141,11 +155,6 @@ convert_data <- function(dformula, responses, specials, group, time,
     } else {
       channel$noncentered <- FALSE
     }
-    if (groups) {
-      resp_split <- split(responses[, resp], group)
-    } else {
-      resp_split <- responses[, resp]
-    }
     if (length(form_specials) > 0) {
       for (spec in formula_special_funs) {
         if (!is.null(form_specials[[spec]])) {
@@ -162,12 +171,11 @@ convert_data <- function(dformula, responses, specials, group, time,
         }
       }
     }
-    Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))
     family <- dformula[[i]]$family
     if (is_gaussian(family)) {
-      sampling_vars[[resp]] <- t(Y)
+      sampling_vars[[resp]] <- t(Y_out)
     } else {
-      sampling_vars[[resp]] <- Y
+      sampling_vars[[resp]] <- Y_out
     }
     prep <- do.call(
       paste0("prepare_channel_", family),
