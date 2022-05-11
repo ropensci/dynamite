@@ -62,18 +62,26 @@ extract_lags <- function(x) {
   lag_terms <- x[has_lag]
   # TODO allow vector k
   lag_regex <- gregexec(
-    pattern = "(?<src>lag\\(\\s*(?<def>[^\\+]+?)\\s*(?:,\\s*(?<k>[0-9]+)){0,1}\\s*\\))",
+    pattern = "(?<src>lag\\(\\s*(?<resp>[^\\+]+?)\\s*(?:,\\s*(?<k>[0-9]+)){0,1}\\s*\\))",
     text = lag_terms,
     perl = TRUE
   )
   lag_map <- list()
   lag_matches <- regmatches(lag_terms, lag_regex)
-  lag_map <- do.call("cbind", args = lag_matches)
-  lag_map <- as.data.frame(t(lag_map)[,-1])
-  lag_map$k <- as.integer(lag_map$k)
-  lag_map$k[is.na(lag_map$k)] <- 1L
-  lag_map <- lag_map[!duplicated(lag_map), ] |>
-    dplyr::group_by(.data$def) |>
-    dplyr::filter(.data$k == max(.data$k)) |>
-    dplyr::ungroup()
+  if (length(lag_matches) > 0) {
+    lag_map <- do.call("cbind", args = lag_matches)
+    lag_map <- as.data.frame(t(lag_map)[,-1])
+    lag_map$k <- as.integer(lag_map$k)
+    lag_map$k[is.na(lag_map$k)] <- 1L
+    lag_map$present <- TRUE
+    lag_map |>
+      dplyr::distinct() |>
+      dplyr::group_by(.data$resp) |>
+      tidyr::complete(k = tidyr::full_seq(c(1, .data$k), 1),
+                      fill = list(src = "", present = FALSE)) |>
+      dplyr::arrange(.data$resp, .data$k) |>
+      dplyr::ungroup()
+  } else {
+    data.frame()
+  }
 }

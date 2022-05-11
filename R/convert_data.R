@@ -416,8 +416,10 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
 #' @describeIn prepare_channel_default Prepare a binomial channel
 #' @noRd
 prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
-
-  if (any(Y < 0) || any(is.logical(Y)) || any(Y != as.integer(Y))) {
+  Y_obs <- Y[!is.na(Y)]
+  if (any(Y_obs < 0) ||
+      any(is.logical(Y_obs)) ||
+      any(Y_obs != as.integer(Y_obs))) {
     stop_("Response variable ", y, " is invalid: ",
           "binomial family supports only non-negative integers.")
   }
@@ -434,7 +436,9 @@ prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
 #' @noRd
 prepare_channel_bernoulli <- function(y, Y, channel, sd_x, resp_class,
                                       priors) {
-  if (!all(Y %in% 0:1) || any(is.logical(Y))) {
+  # TODO should bernoulli autoconvert logical to integer?
+  Y_obs <- Y[!is.na(Y)]
+  if (!all(Y_obs %in% 0:1) || any(is.logical(Y_obs))) {
     stop_("Response variable ", y, " is invalid: ",
           "bernoulli family supports only 0/1 integers.")
   }
@@ -448,7 +452,8 @@ prepare_channel_bernoulli <- function(y, Y, channel, sd_x, resp_class,
 #' @describeIn prepare_channel_default Prepare a Poisson channel
 #' @noRd
 prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
-  if (any(Y < 0) || any(Y != as.integer(Y))) {
+  Y_obs <- Y[!is.na(Y)]
+  if (any(Y_obs < 0) || any(Y_obs != as.integer(Y_obs))) {
     stop_("Response variable ", y, " is invalid: ",
           "Poisson family supports only non-negative integers.")
   }
@@ -464,7 +469,8 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
 #' @describeIn prepare_channel_default Prepare a negative binomial channel
 #' @noRd
 prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
-  if (any(Y < 0) || any(Y != as.integer(Y))) {
+  Y_obs <- Y[!is.na(Y)]
+  if (any(Y_obs < 0) || any(Y_obs != as.integer(Y_obs))) {
     stop_("Response variable ", y, " is invalid: ",
           "negative binomial family supports only non-negative integers.")
   }
