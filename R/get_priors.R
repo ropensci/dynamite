@@ -31,6 +31,7 @@ get_priors <- function(x, data, group, time, ...) {
 }
 #' @method get_priors dynamiteformula
 #' @rdname get_priors
+#' @export
 get_priors.dynamiteformula <- function(x, data, group, time, ...) {
   out <- do.call(
     "dynamite",
@@ -46,6 +47,7 @@ get_priors.dynamiteformula <- function(x, data, group, time, ...) {
 }
 #' @method get_priors dynamitefit
 #' @rdname get_priors
+#' @export
 get_priors.dynamitefit <- function(x, ...) {
   x$priors
 }
@@ -62,6 +64,7 @@ get_code <- function(x, data, group, time, ...) {
   UseMethod("get_code", x)
 }
 #' @rdname get_code
+#' @export
 get_code.dynamiteformula <- function(x, data, group, time, ...) {
   out <- do.call(
     "dynamite",
@@ -76,14 +79,14 @@ get_code.dynamiteformula <- function(x, data, group, time, ...) {
   out$model_code
 }
 #' @rdname get_code
+#' @export
 get_code.dynamitefit <- function(x, ...) {
   x$stanfit@stanmodel
 }
 
 #' Extract the Model Data of the Dynamite Model
 #'
-#' Returns the input data to Stan model. Mostly useful for debugging or for
-#' building customized version of the model.
+#' Returns the input data to Stan model. Mostly useful for debugging
 #'
 #' @inheritParams get_priors
 #' @rdname get_data
@@ -92,6 +95,7 @@ get_data <- function(x, data, group, time, ...) {
   UseMethod("get_data", x)
 }
 #' @rdname get_data
+#' @export
 get_data.dynamiteformula <- function(x, data, group, time, ...) {
   out <- do.call(
     "dynamite",
@@ -106,6 +110,7 @@ get_data.dynamiteformula <- function(x, data, group, time, ...) {
   out$model_data
 }
 #' @rdname get_data
+#' @export
 get_data.dynamitefit <- function(x, ...) {
 
   out <- do.call(

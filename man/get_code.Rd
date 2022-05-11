@@ -2,10 +2,13 @@
 % Please edit documentation in R/get_priors.R
 \name{get_code}
 \alias{get_code}
+\alias{get_code.dynamiteformula}
 \alias{get_code.dynamitefit}
 \title{Extract the Stan Code of the Dynamite Model}
 \usage{
 get_code(x, data, group, time, ...)
+
+\method{get_code}{dynamiteformula}(x, data, group, time, ...)
 
 \method{get_code}{dynamitefit}(x, ...)
 }
