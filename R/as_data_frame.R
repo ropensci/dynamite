@@ -1,17 +1,25 @@
 #' Extract Samples From the dynamitefit Object as a Data Frame.
 #'
+#' You can use the arguments `responses` and `types` to extract only a subset
+#' of the model parameters (i.e. only certain types of parameters related to a
+#' certain response variable). The prior data frame (from `get_priors`) shows
+#' potential values for these variables.
+#'
+#' @note The spline coefficients `alpha` are never returned, but they can be
+#' obtained with `as_draws` function among all the other parameters.
+#'
 #' @param x The estimated \code{dynamite} model.
-#' @param row.names \code{NULL} (default) or a character vector giving the row
-#' names for the data frame.
+#' @param row.names Ignored.
 #' @param optional Ignored.
-#' @param responses TODO
-#' @param types TODO
+#' @param responses  \[`character()`]\cr Response(s) for which the  samples
+#' should be extracted.
+#' @param types \[`character()`]\cr Type(s) of the parameters for which the
+#' samples should be extracted.
 #' @param ... Ignored.
 #' @importFrom tidyr unnest
 #' @export
-as.data.frame.dynamitefit <- function(x, row.names = NULL,
-                                      optional = FALSE, responses = NULL,
-  types = NULL, ...) {
+as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
+                                      responses = NULL, types = NULL, ...) {
 
   if (is.null(responses)) {
     responses <- unique(x$priors$response)

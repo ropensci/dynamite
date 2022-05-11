@@ -2,13 +2,19 @@
 % Please edit documentation in R/get_priors.R
 \name{get_priors}
 \alias{get_priors}
-\title{Get prior definitions for a dynamite model}
+\alias{get_priors.dynamiteformula}
+\alias{get_priors.dynamitefit}
+\title{Get Prior Definitions for a Dynamite Model}
 \usage{
-get_priors(dformula, data, group, time)
+get_priors(x, data, group, time, ...)
+
+\method{get_priors}{dynamiteformula}(x, data, group, time, ...)
+
+\method{get_priors}{dynamitefit}(x, ...)
 }
 \arguments{
-\item{dformula}{[\code{dynamiteformula}]\cr The model formula.
-See \code{\link[=dynamiteformula]{dynamiteformula()}}.}
+\item{x}{[\code{dynamiteformula} or \code{dynamitefit}]\cr The model formula or
+existing \code{dynamitefit} object. See \code{\link[=dynamiteformula]{dynamiteformula()}} and \code{\link[=dynamite]{dynamite()}}.}
 
 \item{data}{[\code{data.frame}]\cr The data frame containing the variables in
 the model.}
@@ -18,7 +24,18 @@ unique groups.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time axis.}
+
+\item{...}{Ignored.}
 }
 \description{
-TODO description
+Extracts the priors used in the dynamite model as a data frame. You
+can then alter the priors by changing the contents of the \code{prior} column and
+supplying this data frame to \code{dynamite} function using the argument \code{priors}.
+}
+\examples{
+
+d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
+get_priors(obs(y ~ x, family = gaussian),
+  data = d, time = "time", group = "id")
+
 }

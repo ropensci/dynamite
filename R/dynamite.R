@@ -35,7 +35,8 @@
 #' }
 dynamite <- function(dformula, data, group, time,
                      priors = NULL, debug = NULL, ...) {
-  # dots <- list(...) #Note: Use explicit debug-argument as otherwise it is passed to sampling with an error
+  # stored for return object
+  original_dformula <- dformula
   data <- droplevels(data) # TODO document this in return value
   if (missing(group)) {
     group <- group_var <- NULL
@@ -281,6 +282,7 @@ dynamite <- function(dformula, data, group, time,
     list(
       stanfit = stanfit,
       # TODO what else do we need to return?
+      formula = original_dformula,
       time = time,
       time_var = time_var,
       group_var = group_var,

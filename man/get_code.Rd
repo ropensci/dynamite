@@ -2,13 +2,16 @@
 % Please edit documentation in R/get_priors.R
 \name{get_code}
 \alias{get_code}
-\title{TODO documentation}
+\alias{get_code.dynamitefit}
+\title{Extract the Stan Code of the Dynamite Model}
 \usage{
-get_code(dformula, data, group, time)
+get_code(x, data, group, time, ...)
+
+\method{get_code}{dynamitefit}(x, ...)
 }
 \arguments{
-\item{dformula}{[\code{dynamiteformula}]\cr The model formula.
-See \code{\link[=dynamiteformula]{dynamiteformula()}}.}
+\item{x}{[\code{dynamiteformula} or \code{dynamitefit}]\cr The model formula or
+existing \code{dynamitefit} object. See \code{\link[=dynamiteformula]{dynamiteformula()}} and \code{\link[=dynamite]{dynamite()}}.}
 
 \item{data}{[\code{data.frame}]\cr The data frame containing the variables in
 the model.}
@@ -18,7 +21,10 @@ unique groups.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time axis.}
+
+\item{...}{Ignored.}
 }
 \description{
-TODO documentation
+Returns the Stan code of the model. Mostly useful for debugging or for
+building customized version of the model.
 }

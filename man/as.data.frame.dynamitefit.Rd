@@ -16,17 +16,25 @@
 \arguments{
 \item{x}{The estimated \code{dynamite} model.}
 
-\item{row.names}{\code{NULL} (default) or a character vector giving the row
-names for the data frame.}
+\item{row.names}{Ignored.}
 
 \item{optional}{Ignored.}
 
-\item{responses}{TODO}
+\item{responses}{[\code{character()}]\cr Response(s) for which the  samples
+should be extracted.}
 
-\item{types}{TODO}
+\item{types}{[\code{character()}]\cr Type(s) of the parameters for which the
+samples should be extracted.}
 
 \item{...}{Ignored.}
 }
 \description{
-Extract Samples From the dynamitefit Object as a Data Frame.
+You can use the arguments \code{responses} and \code{types} to extract only a subset
+of the model parameters (i.e. only certain types of parameters related to a
+certain response variable). The prior data frame (from \code{get_priors}) shows
+potential values for these variables.
+}
+\note{
+The spline coefficients \code{alpha} are never returned, but they can be
+obtained with \code{as_draws} function among all the other parameters.
 }

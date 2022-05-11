@@ -2,13 +2,19 @@
 % Please edit documentation in R/get_priors.R
 \name{get_data}
 \alias{get_data}
-\title{TODO documentation}
+\alias{get_data.dynamiteformula}
+\alias{get_data.dynamitefit}
+\title{Extract the Model Data of the Dynamite Model}
 \usage{
-get_data(dformula, data, group, time)
+get_data(x, data, group, time, ...)
+
+\method{get_data}{dynamiteformula}(x, data, group, time, ...)
+
+\method{get_data}{dynamitefit}(x, ...)
 }
 \arguments{
-\item{dformula}{[\code{dynamiteformula}]\cr The model formula.
-See \code{\link[=dynamiteformula]{dynamiteformula()}}.}
+\item{x}{[\code{dynamiteformula} or \code{dynamitefit}]\cr The model formula or
+existing \code{dynamitefit} object. See \code{\link[=dynamiteformula]{dynamiteformula()}} and \code{\link[=dynamite]{dynamite()}}.}
 
 \item{data}{[\code{data.frame}]\cr The data frame containing the variables in
 the model.}
@@ -18,7 +24,10 @@ unique groups.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time axis.}
+
+\item{...}{Ignored.}
 }
 \description{
-TODO documentation
+Returns the input data to Stan model. Mostly useful for debugging or for
+building customized version of the model.
 }
