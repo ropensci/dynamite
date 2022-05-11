@@ -39,9 +39,12 @@ jobs:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
-
+      # Install Stanheaders as an extra so it's dependencies are installed too
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: rcmdcheck, rstan
+          cache-version: 2
+          extra-packages: |
+            rcmdcheck
+            StanHeaders
 
       - uses: r-lib/actions/check-r-package@v2
