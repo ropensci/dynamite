@@ -70,7 +70,7 @@ extract_lags <- function(x) {
   lag_matches <- regmatches(lag_terms, lag_regex)
   if (length(lag_matches) > 0) {
     lag_map <- do.call("cbind", args = lag_matches)
-    lag_map <- as.data.frame(t(lag_map)[,-1])
+    lag_map <- as.data.frame(t(lag_map)[, -1, drop = FALSE])
     lag_map$k <- as.integer(lag_map$k)
     lag_map$k[is.na(lag_map$k)] <- 1L
     lag_map$present <- TRUE

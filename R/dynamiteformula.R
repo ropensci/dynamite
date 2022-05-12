@@ -32,7 +32,7 @@ dynamiteformula <- function(formula, family) {
     list(
       dynamitechannel(
         formula = x$formula,
-        family = family,
+        family = x$family,
         response = x$response,
         fixed = x$fixed,
         varying = x$varying,
@@ -52,6 +52,7 @@ dynamiteformula_ <- function(formula, family) {
   } else {
     out <- formula_specials(formula)
   }
+  out$family <- family
   out$response <- as.character(formula_lhs(formula))
   out
 }
