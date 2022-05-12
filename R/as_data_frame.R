@@ -24,10 +24,23 @@
 #' @export
 #' @examples
 #' results <- as.data.frame(gaussian_example_fit,
-#'   responses = "y", types = "beta")
+#'   responses = "y", types = "beta", summary = FALSE)
 #' results |>
 #'   dplyr::group_by(parameter) |>
 #'   dplyr::summarise(mean = mean(value), sd = sd(value))
+#'
+#' # basic summaries can be obtained automatically with summary = TRUE:
+#' as.data.frame(gaussian_example_fit,
+#'   responses = "y", types = "beta", summary = TRUE)
+#'
+#' # Compute MCMC diagnostics via posterior package
+#' # For this we need to first convert to wide format
+#' # and then to draws_df object
+#' results |>
+#'   dplyr::select(parameter, value, iter, chain) |>
+#'   tidyr::pivot_wider(values_from = value, names_from = parameter) |>
+#'   posterior::as_draws() |>
+#'   posterior::summarise_draws()
 #'
 as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
                                       responses = NULL, types = NULL,
@@ -127,9 +140,11 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     out <- out |>
       dplyr::group_by(.data$parameter, .data$time,
                       .data$response, .data$type) |>
-      dplyr::summarise(mean = mean(.data$value),
-                `2.5%` = quantile(.data$value, 0.025),
-                `97.5%` = quantile(.data$value, 0.975)) |>
+      dplyr::summarise(
+        mean = mean(.data$value),
+        sd = sd(.data$value),
+        `2.5%` = quantile(.data$value, 0.025),
+        `97.5%` = quantile(.data$value, 0.975)) |>
       dplyr::ungroup()
   }
   out
