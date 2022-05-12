@@ -23,11 +23,10 @@
 #' @importFrom tidyr unnest
 #' @export
 #' @examples
-#' data(gaussian_example_fit)
 #' results <- as.data.frame(gaussian_example_fit,
 #'   responses = "y", types = "beta")
 #' results |>
-#'   dplyr::group_by(variable) |>
+#'   dplyr::group_by(parameter) |>
 #'   dplyr::summarise(mean = mean(value), sd = sd(value))
 #'
 as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,

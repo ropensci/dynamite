@@ -44,11 +44,10 @@ The spline coefficients \code{alpha} are never returned, but they can be
 obtained with \code{as_draws} function among all the other parameters.
 }
 \examples{
-data(gaussian_example_fit)
 results <- as.data.frame(gaussian_example_fit,
   responses = "y", types = "beta")
 results |>
-  dplyr::group_by(variable) |>
+  dplyr::group_by(parameter) |>
   dplyr::summarise(mean = mean(value), sd = sd(value))
 
 }

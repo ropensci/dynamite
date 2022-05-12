@@ -10,7 +10,6 @@
 #' @param ... Ignored.
 #' @importFrom stats coef
 #' @examples
-#' data(gaussian_example_fit)
 #' betas <- coef(gaussian_example_fit, type = "beta")
 #' deltas <- coef(gaussian_example_fit, type = "delta")
 #'
