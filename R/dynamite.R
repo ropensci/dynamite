@@ -130,12 +130,13 @@ dynamite <- function(dformula, data, group, time,
           formula = as.formula(paste0(lags_lhs[idx], " ~ ", lags_rhs)),
           family = deterministic_(),
           response = lags_lhs[idx],
+          specials = list(rank = i)
         )
         attr(lags_channel[[idx]], "stoch_origin") <- (i == 1)
       }
     }
     for (j in seq_len(n_channels)) {
-      dformula[[j]]$formula <- dynamiteformula_(
+      dformula[[j]] <- dynamiteformula_(
         increment_formula(dformula[[j]]$formula, lags_lhs),
         dformula[[j]]$family
       )
