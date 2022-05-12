@@ -12,25 +12,52 @@
 #' @param row.names Ignored.
 #' @param optional Ignored.
 #' @param responses  \[`character()`]\cr Response(s) for which the  samples
-#' should be extracted.
+#' should be extracted. Possible options are `unique(x$priors$response)`
 #' @param types \[`character()`]\cr Type(s) of the parameters for which the
-#' samples should be extracted.
+#' samples should be extracted. Possible options are `unique(x$priors$type)`.
+#' @param summary \[`logical(1)`]\cr If `TRUE` (default), returns posterior
+#'   mean and lower and upper limits of the 95% posterior intervals for all
+#'   parameters. If `FALSE`, returns all the posterior samples instead.
 #' @param ... Ignored.
 #' @importFrom tidyr unnest
 #' @export
 #' @examples
-#' fit <- dynamite(
-#'   obs(y ~ -1 + x + varying(~1), family = gaussian()) + splines(df = 10),
-#'   data = gaussian_example, time = time, group = id,
-#'   iter = 100, chains = 1, refresh = 0)
+#'
+#' results <- as.data.frame(gaussian_example_fit,
+#'   responses = "y", types = "beta")
+#' results |>
+#'   dplyr::group_by(variable) |>
+#'   dplyr::summarise(mean = mean(value), sd = sd(value))
+#'
 as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
-                                      responses = NULL, types = NULL, ...) {
+                                      responses = NULL, types = NULL,
+                                      summary = TRUE, ...) {
 
   if (is.null(responses)) {
     responses <- unique(x$priors$response)
+  } else {
+    z <- !(responses %in% unique(x$priors$response))
+    if (sum(!z) == 0) {
+      stop("Model does not contain any of the input responses. ")
+    }
+    if (any(z)) {
+      warning("Model does not contain response(s) ",
+              paste0(responses[z], collapse = ", "))
+    }
+
   }
   if (is.null(types)) {
     types <- unique(x$priors$type)
+  } else {
+    z <- !(types %in% unique(x$priors$type))
+    if (sum(!z) == 0) {
+      stop("Model does not contain any variables of chosen type(s). ")
+    }
+    if (any(z)) {
+      warning("Model does not contain variable type(s) ",
+              paste0(types[z], collapse = ", "))
+    }
+
   }
 
 
@@ -89,12 +116,20 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     }
     d
   }
-  x$priors |>
+  out <- x$priors |>
     dplyr::select(.data$response, .data$type) |>
     dplyr::filter(.data$response %in% responses & .data$type %in% types) |>
     dplyr::distinct() |>
     dplyr::rowwise() |>
     dplyr::mutate(value = list(values(.data$type, .data$response))) |>
     tidyr::unnest(cols = .data$value)
-
+  if (summary) {
+    out <- out |>
+      dplyr::group_by(.data$parameter, .data$time, response, type) |>
+      dplyr::summarise(mean = mean(value),
+                `2.5%` = quantile(value, 0.025),
+                `97.5%` = quantile(value, 0.975)) |>
+      ungroup()
+  }
+  out
 }
