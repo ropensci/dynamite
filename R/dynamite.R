@@ -136,10 +136,24 @@ dynamite <- function(dformula, data, group, time,
       }
     }
     for (j in seq_len(n_channels)) {
-      dformula[[j]] <- dynamiteformula_(
-        increment_formula(dformula[[j]]$formula, lags_lhs),
-        dformula[[j]]$family
-      )
+      if (identical(type, "varying")) {
+        dformula[[j]] <- dynamiteformula_(
+          formula = increment_varying(
+            formula = dformula[[j]]$formula,
+            x = lags_lhs,
+            varying_idx = dformula[[j]]$varying
+          ),
+          family = dformula[[j]]$family
+        )
+      } else {
+        dformula[[j]] <- dynamiteformula_(
+          formula = increment_fixed(
+            formula = dformula[[j]]$formula,
+            x = lags_lhs
+          ),
+          family = dformula[[j]]$family
+        )
+      }
     }
     if (nrow(lag_map) > 0) {
       lag_map <- lag_map[!(lag_map$resp %in% resp_all & lag_map$k <= lag_all$k), ]
