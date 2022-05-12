@@ -8,6 +8,7 @@
 #' @note The spline coefficients `alpha` are never returned, but they can be
 #' obtained with `as_draws` function among all the other parameters.
 #'
+#' @importFrom stats quantile
 #' @param x The estimated \code{dynamite} model.
 #' @param row.names Ignored.
 #' @param optional Ignored.
@@ -22,7 +23,7 @@
 #' @importFrom tidyr unnest
 #' @export
 #' @examples
-#'
+#' data(gaussian_example_fit)
 #' results <- as.data.frame(gaussian_example_fit,
 #'   responses = "y", types = "beta")
 #' results |>
@@ -125,11 +126,12 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     tidyr::unnest(cols = .data$value)
   if (summary) {
     out <- out |>
-      dplyr::group_by(.data$parameter, .data$time, response, type) |>
-      dplyr::summarise(mean = mean(value),
-                `2.5%` = quantile(value, 0.025),
-                `97.5%` = quantile(value, 0.975)) |>
-      ungroup()
+      dplyr::group_by(.data$parameter, .data$time,
+                      .data$response, .data$type) |>
+      dplyr::summarise(mean = mean(.data$value),
+                `2.5%` = quantile(.data$value, 0.025),
+                `97.5%` = quantile(.data$value, 0.975)) |>
+      dplyr::ungroup()
   }
   out
 }

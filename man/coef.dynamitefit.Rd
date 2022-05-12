@@ -2,15 +2,28 @@
 % Please edit documentation in R/coef.R
 \name{coef.dynamitefit}
 \alias{coef.dynamitefit}
-\title{Extract regression coefficients of dynamitefit}
+\title{Extract Regression Coefficients of Dynamite Model}
 \usage{
-\method{coef}{dynamitefit}(object, ...)
+\method{coef}{dynamitefit}(object, type = c("beta", "delta"), summary = TRUE, ...)
 }
 \arguments{
 \item{object}{An object of class \code{dynamitefit}.}
 
+\item{type}{[\code{character(1)}]\cr Either \code{beta} (the default) for
+time-invariant coefficients or \code{delta} for time-varying coefficients.}
+
+\item{summary}{[\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
+mean and lower and upper limits of the 95\% posterior intervals for all
+parameters. If \code{FALSE}, returns all the posterior samples instead.}
+
 \item{...}{Ignored.}
 }
 \description{
-Extract regression coefficients of dynamitefit
+Extract Regression Coefficients of Dynamite Model
+}
+\examples{
+data(gaussian_example_fit)
+betas <- coef(gaussian_example_fit, type = "beta")
+deltas <- coef(gaussian_example_fit, type = "delta")
+
 }

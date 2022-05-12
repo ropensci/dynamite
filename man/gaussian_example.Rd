@@ -5,21 +5,27 @@
 \alias{gaussian_example}
 \title{Simulated Data of Gaussian Responses}
 \format{
-A data frame with 3000 rows and 4 variables:
+A data frame with 3000 rows and 5 variables:
 \describe{
 \item{y}{The response variable}
 \item{x}{Single continuous covariate}
+\item{z}{Single binary covariate}
 \item{id}{Variable defining individuals (1 to 100)}
 \item{time}{Variable defining the time point of the measurement (1 to 30)}
 }
+}
+\source{
+The data was generated according to a script in
+\url{https://github.com/santikka/dynamite/blob/main/data-raw/gaussian_example.R}
 }
 \usage{
 gaussian_example
 }
 \description{
-A simulated data containing gaussian response variables with one covariate.
-The data was generated from a model with intercept, effect of
-covariate x and the lagged value of the response variable, with all effects
-being time-varying according to a spline with 20 degrees of freedom.
+A simulated data containing gaussian response variables with two covariates.
+The data was generated from a model with time-varying effects of
+covariate x and the lagged value of the response variable, time-varying
+intercept, and time-invariant effect of covariate z. The time-varying
+coefficients vary according to a spline with 20 degrees of freedom.
 }
 \keyword{datasets}

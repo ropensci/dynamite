@@ -10,6 +10,7 @@
   optional = FALSE,
   responses = NULL,
   types = NULL,
+  summary = TRUE,
   ...
 )
 }
@@ -21,10 +22,14 @@
 \item{optional}{Ignored.}
 
 \item{responses}{[\code{character()}]\cr Response(s) for which the  samples
-should be extracted.}
+should be extracted. Possible options are \code{unique(x$priors$response)}}
 
 \item{types}{[\code{character()}]\cr Type(s) of the parameters for which the
-samples should be extracted.}
+samples should be extracted. Possible options are \code{unique(x$priors$type)}.}
+
+\item{summary}{[\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
+mean and lower and upper limits of the 95\% posterior intervals for all
+parameters. If \code{FALSE}, returns all the posterior samples instead.}
 
 \item{...}{Ignored.}
 }
@@ -39,8 +44,11 @@ The spline coefficients \code{alpha} are never returned, but they can be
 obtained with \code{as_draws} function among all the other parameters.
 }
 \examples{
-fit <- dynamite(
-  obs(y ~ -1 + x + varying(~1), family = gaussian()) + splines(df = 10),
-  data = gaussian_example, time = time, group = id,
-  iter = 100, chains = 1, refresh = 0)
+data(gaussian_example_fit)
+results <- as.data.frame(gaussian_example_fit,
+  responses = "y", types = "beta")
+results |>
+  dplyr::group_by(variable) |>
+  dplyr::summarise(mean = mean(value), sd = sd(value))
+
 }

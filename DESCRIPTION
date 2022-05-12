@@ -34,4 +34,4 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE, roclets = c ("namespace", "rd",
     "srr::srr_stats_roclet"))
 RoxygenNote: 7.1.2
-LazyData: true
+LazyData: false
