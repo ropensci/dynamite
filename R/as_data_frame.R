@@ -25,6 +25,7 @@
 #' @examples
 #' results <- as.data.frame(gaussian_example_fit,
 #'   responses = "y", types = "beta", summary = FALSE)
+#'
 #' results |>
 #'   dplyr::group_by(parameter) |>
 #'   dplyr::summarise(mean = mean(value), sd = sd(value))
@@ -37,8 +38,22 @@
 #' # For this we need to first convert to wide format
 #' # and then to draws_df object
 #' results |>
-#'   dplyr::select(parameter, value, iter, chain) |>
+#'   dplyr::select(parameter, value, .iteration, .chain) |>
 #'   tidyr::pivot_wider(values_from = value, names_from = parameter) |>
+#'   posterior::as_draws() |>
+#'   posterior::summarise_draws()
+#'
+#' # Time-varying coefficients delta
+#' as.data.frame(gaussian_example_fit,
+#'   responses = "y", types = "delta", summary = TRUE)
+#'
+#' as.data.frame(gaussian_example_fit,
+#'   responses = "y", types = "delta", summary = FALSE) |>
+#'   dplyr::select(parameter, value, time, .iteration, .chain) |>
+#'   tidyr::pivot_wider(
+#'     values_from = value,
+#'     names_from = c(parameter, time),
+#'     names_sep = "_t=") |>
 #'   posterior::as_draws() |>
 #'   posterior::summarise_draws()
 #'
@@ -91,8 +106,8 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         value = c(draws),
         time = NA,
         category = rep(category, each = n_vars * n_draws),
-        iter = 1:nrow(draws),
-        chain = rep(1:ncol(draws), each = nrow(draws)))
+        .iteration = 1:nrow(draws),
+        .chain = rep(1:ncol(draws), each = nrow(draws)))
     }
     if (type == "delta") {
       var_names <- paste0("delta_", response, "_",
@@ -104,8 +119,8 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         value = c(draws),
         time = rep(x$time, each = n_draws),
         category = rep(category, each = n_time * n_vars * n_draws),
-        iter = 1:nrow(draws),
-        chain = rep(1:ncol(draws), each = nrow(draws)))
+        .iteration = 1:nrow(draws),
+        .chain = rep(1:ncol(draws), each = nrow(draws)))
     }
     if (type == "tau") {
       var_names <- paste0("tau_", response, "_",
@@ -115,8 +130,8 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         value = c(draws),
         time = NA,
         category = NA,
-        iter = 1:nrow(draws),
-        chain = rep(1:ncol(draws), each = nrow(draws)))
+        .iteration = 1:nrow(draws),
+        .chain = rep(1:ncol(draws), each = nrow(draws)))
     }
     if (type %in% c("sigma", "phi")) {
       d <- data.frame(
@@ -124,8 +139,8 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         value = c(draws),
         time = NA,
         category = NA,
-        iter = 1:nrow(draws),
-        chain = rep(1:ncol(draws), each = nrow(draws)))
+        .iteration = 1:nrow(draws),
+        .chain = rep(1:ncol(draws), each = nrow(draws)))
     }
     d
   }
