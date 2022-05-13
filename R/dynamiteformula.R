@@ -27,6 +27,9 @@ dynamiteformula <- function(formula, family) {
       family <- eval(family_call$call)
     }
   }
+  if (has_as_is(deparse(formula))) {
+    stop_("The use of I(.) is not supported by dynamiteformula")
+  }
   x <- dynamiteformula_(formula, family)
   structure(
     list(
@@ -238,17 +241,35 @@ add_dynamiteformula <- function(e1, e2) {
 #' @noRd
 join_dynamiteformulas <- function(e1, e2) {
   out <- c(e1, e2)
-  resp_all <- get_responses(out)
+  resp_list <- list()
+  resp_list[[1]] <- get_responses(e1)
+  resp_list[[2]] <- get_responses(e2)
+  resp_all <- unlist(resp_list)
   resp_duped <- duplicated(resp_all)
   if (any(resp_duped)) {
-    stop_("Multiple definitions for response variables: ",
-          resp_all[resp_duped])
+    stop_("Multiple definitions for response variable(s): ",
+          cs(resp_all[resp_duped]))
   }
   if (!is.null(attr(e1, "lag_all")) && !is.null(attr(e2, "lag_all"))) {
     stop_("Multiple definitions for lags")
   }
   if (!is.null(attr(e1, "splines")) && !is.null(attr(e2, "splines"))) {
     stop_("Multiple definitions for splines")
+  }
+  rhs_list <- list()
+  rhs_list[[1]] <- get_predictors(e1)
+  rhs_list[[2]] <- get_predictors(e2)
+  for (i in 1:2) {
+    resp_a <- resp_list[[i]]
+    resp_b <- resp_list[[3-i]]
+    rhs <- rhs_list[[3-i]]
+    simul_resp <- which(resp_a %in% rhs)
+    if (length(simul_resp) > 0) {
+      simul_rhs <- which(rhs %in% resp_a)
+      stop_("Simultaneous regression is not supported, response variables '",
+            cs(resp_a[simul_resp]), "' appear in the formulas of '",
+            cs(resp_b[simul_rhs]), "'")
+    }
   }
   attributes(out) <- c(attributes(e1), attributes(e2))
   class(out) <- "dynamiteformula"
