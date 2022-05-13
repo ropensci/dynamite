@@ -413,7 +413,7 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
     )
   } else {
     pdef <- priors |>
-      dplyr::filter(.data$response == y && .data$type == "sigma")
+      dplyr::filter(.data$response == y & .data$type == "sigma")
     if (nrow(pdef) == 1) {
       out$channel$sigma_prior_distr <- pdef$prior
     }
@@ -509,7 +509,7 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
       )
     )
   } else {
-    pdef <- priors |> dplyr::filter(.data$response == y && .data$type == "phi")
+    pdef <- priors |> dplyr::filter(.data$response == y & .data$type == "phi")
     if (nrow(pdef) == 1) {
       out$channel$phi_prior_distr <- pdef$prior
     }
