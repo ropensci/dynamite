@@ -74,21 +74,14 @@ convert_data <- function(dformula, responses, specials, group, time,
     ),
     c(3, 1, 2)
   )
+  sd_x <- setNames(pmax(0.5, apply(X, 3, sd, na.rm = TRUE)),
+                   colnames(model_matrix))
   # placeholder for NAs in Stan
   X_na <- is.na(X)
   X[X_na] <- 0
   assigned <- attr(model_matrix, "assign")
   fixed_pars <- attr(model_matrix, "fixed")
   varying_pars <- attr(model_matrix, "varying")
-  # if (N > 1) {
-  #     sd_x <- apply(X[1, , ], 2, sd)
-  # } else {
-  #     sd_x <- apply(X[, 1, ], 2, sd)
-  # }
-  # sd_x[sd_x < 0.1] <- 0.1 # Intercept and other constants at time 1
-  # use sd over all time points so we get reasonable prior scale for covariates which are constant at t=1
-  sd_x <- setNames(pmax(0.5, apply(X, 3, sd, na.rm = TRUE)),
-                   colnames(model_matrix))
   resp_classes <- attr(responses, "resp_class")
   warn_nosplines <- FALSE
   for (i in seq_len(n_channels)) {
@@ -222,12 +215,12 @@ convert_data <- function(dformula, responses, specials, group, time,
 #'
 #' @noRd
 prepare_channel_default <- function(y, Y, channel,
-                                    sd_gamma, resp_class, priors) {
+                                    mean_gamma, sd_gamma, resp_class, priors) {
   if (is.null(priors)) {
     priors <- list()
 
     if (channel$has_fixed) {
-      m <- rep(0, channel$K_fixed)
+      m <- mean_gamma[channel$J_fixed]
       s <- sd_gamma[channel$J_fixed]
       channel$beta_prior_npars <- 2
       channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
@@ -241,7 +234,7 @@ prepare_channel_default <- function(y, Y, channel,
        )
     }
     if (channel$has_varying) {
-      m <- rep(0, channel$K_varying)
+      m <- mean_gamma[channel$J_varying]
       s <- sd_gamma[channel$J_varying]
       channel$delta_prior_npars <- 2
       channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
@@ -392,16 +385,22 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
     stop_("Response variable ", y, " is invalid: ",
           "gaussian family is not supported for factors.")
   }
-  sd_gamma <- 2 / sd_x
-  sd_gamma[which(names(sd_gamma) == "(Intercept)")] <- 10
-  out <- prepare_channel_default(y, Y, channel, sd_gamma, resp_class, priors)
+  if (ncol(Y) > 1) {
+    s_y <- 1 / mean(apply(Y, 1, sd, na.rm = TRUE))
+  } else {
+    s_y <- sd(Y, na.rm = TRUE)
+  }
+  sd_gamma <- 2 * s_y / sd_x
+  mean_gamma <- rep(0, length(sd_gamma))
+  idx <- which(names(sd_gamma) == "(Intercept)")
+  sd_gamma[idx] <- 2 * s_y
+  mean_gamma[idx] <- mean(Y)
+
+  out <- prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma,
+                                 resp_class, priors)
   if (is.null(priors)) {
-    if (ncol(Y) > 1) {
-      s <- 1 / mean(apply(Y, 1, sd, na.rm = TRUE))
-    } else {
-      s <- sd(Y, na.rm = TRUE)
-    }
-    out$channel$sigma_prior_distr <- paste0("exponential(", s, ")")
+
+    out$channel$sigma_prior_distr <- paste0("exponential(", s_y, ")")
     out$priors <- dplyr::bind_rows(
       out$priors,
       data.frame(
@@ -438,7 +437,9 @@ prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
   }
   sd_gamma <- 2 / sd_x
   sd_gamma[which(names(sd_gamma) == "(Intercept)")] <- 2.5
-  prepare_channel_default(y, Y, channel,sd_gamma, resp_class, priors)
+  mean_gamma <- rep(0, length(sd_gamma))
+  prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma, resp_class,
+                          priors)
 }
 
 #' @describeIn prepare_channel_default Prepare a bernoulli channel
@@ -446,6 +447,7 @@ prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
 prepare_channel_bernoulli <- function(y, Y, channel, sd_x, resp_class,
                                       priors) {
   # TODO should bernoulli autoconvert logical to integer?
+  # Maybe, if so, then autoconversions in categorical should be done as well?
   Y_obs <- Y[!is.na(Y)]
   if (!all(Y_obs %in% 0:1) || any(is.logical(Y_obs))) {
     stop_("Response variable ", y, " is invalid: ",
@@ -472,7 +474,9 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
   }
   sd_gamma <- 2 / sd_x
   sd_gamma[which(names(sd_gamma) == "(Intercept)")] <- 10
-  prepare_channel_default(y, Y, channel, sd_gamma, resp_class, priors)
+  mean_gamma <- rep(0, length(sd_gamma))
+  prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma, resp_class,
+                          priors)
 }
 
 #' @describeIn prepare_channel_default Prepare a negative binomial channel
@@ -489,7 +493,9 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
   }
   sd_gamma <- 2 / sd_x
   sd_gamma[which(names(sd_gamma) == "(Intercept)")] <- 10
-  out <- prepare_channel_default(y, Y, channel, sd_gamma, resp_class, priors)
+  mean_gamma <- rep(0, length(sd_gamma))
+  out <- prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma,
+                                 resp_class, priors)
   if (is.null(priors)) {
     out$channel$phi_prior_distr <- "exponential(1)"
     out$priors <- dplyr::bind_rows(
