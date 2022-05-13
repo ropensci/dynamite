@@ -32,8 +32,8 @@ Extracts the priors used in the dynamite model as a data frame. You
 can then alter the priors by changing the contents of the \code{prior} column and
 supplying this data frame to \code{dynamite} function using the argument \code{priors}.
 }
-\details{
-Wwarning! Currently the structure of the \code{prior} argument is not checked in
+\note{
+Warning! Currently the structure of the \code{prior} argument is not checked in
 the \code{dynamite} function, and it is assumed that no rows are deleted and
 the ordering of the rows is not changed (i.e. only \code{prior} column is
 altered).
