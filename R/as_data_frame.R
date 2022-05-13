@@ -5,8 +5,6 @@
 #' certain response variable). The prior data frame (from `get_priors`) shows
 #' potential values for these variables.
 #'
-#' @note The spline coefficients `alpha` are never returned, but they can be
-#' obtained with `as_draws` function among all the other parameters.
 #'
 #' @importFrom stats quantile
 #' @param x The estimated \code{dynamite} model.
@@ -20,6 +18,8 @@
 #'   mean and lower and upper limits of the 95% posterior intervals for all
 #'   parameters. If `FALSE`, returns all the posterior samples instead.
 #' @param ... Ignored.
+#' @return A `tibble` containing either samples or summary statistics of the
+#'   model parameters in a long format. For wide format, see [dynamite::as_draws()].
 #' @importFrom tidyr unnest
 #' @export
 #' @examples
@@ -153,7 +153,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     tidyr::unnest(cols = .data$value)
   if (summary) {
     out <- out |>
-      dplyr::group_by(.data$parameter, .data$time,
+      dplyr::group_by(.data$parameter, .data$time, .data$category,
                       .data$response, .data$type) |>
       dplyr::summarise(
         mean = mean(.data$value),
