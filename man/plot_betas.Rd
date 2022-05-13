@@ -11,12 +11,6 @@ plot_betas(model, level = 0.05)
 
 \item{level}{[\code{numeric(1)}]\cr Level for posterior intervals.
 Default is 0.05, leading to 90\\% intervals.}
-
-\item{alpha}{[\code{numeric(1)}]\cr Opacity  level for \code{geom_ribbon}.
-Default is 0.5.}
-
-\item{scales}{[\code{character(1)}] Should y-axis of the panels be \code{"fixed"}
-(the default) or \code{"free"}? See \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}.}
 }
 \value{
 A \code{ggplot} object.
