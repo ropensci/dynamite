@@ -4,7 +4,7 @@
 #' can then alter the priors by changing the contents of the `prior` column and
 #' supplying this data frame to `dynamite` function using the argument `priors`.
 #'
-#' @warning Currently the structure of the `prior` argument is not checked in
+#' Wwarning! Currently the structure of the `prior` argument is not checked in
 #' the `dynamite` function, and it is assumed that no rows are deleted and
 #' the ordering of the rows is not changed (i.e. only `prior` column is
 #' altered).

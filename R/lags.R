@@ -51,7 +51,7 @@ find_lags <- function(x, processed = FALSE) {
 
 #' Extract lag definitions
 #'
-#' Extract variables and shifts of lagged terms of the form lag(var, shift)
+#' Extract variables and shifts of lagged terms of the form lag(var, k)
 #' and return them as a data frame for post processing.
 #'
 #' @param x \[`character(1)`]\cr A character vector of length one.
@@ -62,7 +62,7 @@ extract_lags <- function(x) {
   lag_terms <- x[has_lag]
   # TODO allow vector k
   lag_regex <- gregexec(
-    pattern = "(?<src>lag\\(\\s*(?<resp>[^\\+]+?)\\s*(?:,\\s*(?<k>[0-9]+)){0,1}\\s*\\))",
+    pattern = "(?<src>lag\\(\\s*(?<var>[^\\+]+?)\\s*(?:,\\s*(?<k>[0-9]+)){0,1}\\s*\\))",
     text = lag_terms,
     perl = TRUE
   )
@@ -76,10 +76,10 @@ extract_lags <- function(x) {
     lag_map$present <- TRUE
     lag_map |>
       dplyr::distinct() |>
-      dplyr::group_by(.data$resp) |>
+      dplyr::group_by(.data$var) |>
       tidyr::complete(k = tidyr::full_seq(c(1, .data$k), 1),
                       fill = list(src = "", present = FALSE)) |>
-      dplyr::arrange(.data$resp, .data$k) |>
+      dplyr::arrange(.data$var, .data$k) |>
       dplyr::ungroup()
   } else {
     data.frame()

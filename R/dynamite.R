@@ -156,62 +156,90 @@ dynamite <- function(dformula, data, group, time,
       }
     }
     if (nrow(lag_map) > 0) {
-      lag_map <- lag_map[!(lag_map$resp %in% resp_all & lag_map$k <= lag_all$k), ]
+      lag_map <- lag_map[!(lag_map$var %in% resp_all & lag_map$k <= lag_all$k), ]
     }
   }
   map_lhs <- NULL
   map_channel <- list()
-  n_lags <- nrow(lag_map)
+  n_lags <- lag_map |> dplyr::filter(.data$var %in% resp_all) |> nrow()
   if (n_lags > 0) {
     if (any(lag_map$k <= 0)) {
       stop_("Only positive shift values are allowed in lag()")
     }
     map_channel <- vector(mode = "list", length = n_lags)
-    lag_resp <- unique(lag_map$resp)
+    lag_resp <- unique(lag_map$var)
     idx <- 0
     for (y in lag_resp) {
-      lag_idx <- which(lag_map$resp == y)
+      lag_idx <- which(lag_map$var == y)
       y_idx <- which(resp_all == y)
-      y_past <- NULL
-      y_stoch <- TRUE
-      if (is_deterministic(dformula[[y_idx]]$family)) {
-        y_past <- dformula[[y_idx]]$specials$past
-        y_past_len <- length(y_past)
-        lag_max <- max(lag_map$k[lag_idx])
-        if (y_past_len < lag_max) {
-          stop_("Deterministic channel '", y, "' requires ", lag_max, " ",
-                "initial values, but only ", y_past_len, " values ",
-                "have been specified")
+      if (length(y_idx) == 1) {
+        y_past <- NULL
+        y_stoch <- TRUE
+        if (is_deterministic(dformula[[y_idx]]$family)) {
+          y_past <- dformula[[y_idx]]$specials$past
+          y_past_len <- length(y_past)
+          lag_max <- max(lag_map$k[lag_idx])
+          if (y_past_len < lag_max) {
+            stop_("Deterministic channel '", y, "' requires ", lag_max, " ",
+                  "initial values, but only ", y_past_len, " values ",
+                  "have been specified")
+          }
+          y_stoch <- FALSE
+          proc_past <- seq(from = y_past_len, by = -1, length.out = lag_max)
+          dformula[[y_idx]]$specials$past <-
+            dformula[[y_idx]]$specials$past[-proc_past]
         }
-        y_stoch <- FALSE
-        proc_past <- seq(from = y_past_len, by = -1, length.out = lag_max)
-        dformula[[y_idx]]$specials$past <-
-          dformula[[y_idx]]$specials$past[-proc_past]
-      }
-      for (i in seq_along(lag_idx)) {
-        j <- lag_idx[i]
-        if (i == 1) {
-          map_rhs <- paste0("lag_(", y, ", 1)")
+        for (i in seq_along(lag_idx)) {
+          j <- lag_idx[i]
+          if (i == 1) {
+            map_rhs <- paste0("lag_(", y, ", 1)")
+          } else {
+            map_rhs <- paste0("lag_(", y, "_lag", i - 1, ", 1)")
+          }
+          map_lhs <- paste0(y, "_lag", i)
+          idx <- idx + 1
+          map_channel[[idx]] <- dynamitechannel(
+            formula = as.formula(paste0(map_lhs, " ~ ", map_rhs)),
+            family = deterministic_(),
+            response = map_lhs,
+            specials = list(past = y_past[i], rank = i)
+          )
+          attr(map_channel[[idx]], "stoch_origin") <- y_stoch && (i == 1)
+          if (lag_map$present[j]) {
+            for (k in seq_len(n_channels)) {
+              dformula[[k]]$formula <- gsub_formula(
+                pattern = lag_map$src[j],
+                replacement = map_lhs,
+                formula = dformula[[k]]$formula,
+                fixed = TRUE
+              )
+            }
+          }
+        }
+      } else {
+        data_idx <- which(data_names == y)
+        if (length(data_idx) == 0) {
+          stop_("Unable to construct lagged values of '", y, "' ",
+                "no such variable is present in the data")
         } else {
-          map_rhs <- paste0("lag_(", y, "_lag_", i - 1, ", 1)")
-        }
-        map_lhs <- paste0(y, "_lag_", i)
-        idx <- idx + 1
-        map_channel[[idx]] <- dynamitechannel(
-          formula = as.formula(paste0(map_lhs, " ~ ", map_rhs)),
-          family = deterministic_(),
-          response = map_lhs,
-          specials = list(past = y_past[i], rank = i)
-        )
-        attr(map_channel[[idx]], "stoch_origin") <- y_stoch && (i == 1)
-        if (lag_map$present[j]) {
-          for (k in seq_len(n_channels)) {
-            dformula[[k]]$formula <- gsub_formula(
-              pattern = lag_map$src[j],
-              replacement = map_lhs,
-              formula = dformula[[k]]$formula,
-              fixed = TRUE
-            )
+          for (i in seq_along(lag_idx)) {
+            j <- lag_idx[i]
+            if (lag_map$present[j]) {
+              lag_k <- lag_map$k[j]
+              lag_var <- paste0(data_names[data_idx], "_lag", lag_k)
+              data <- data |>
+                dplyr::group_by(!!as.symbol(group_var)) |>
+                dplyr::mutate(!!lag_var := lag_(.data[[y]], lag_k)) |>
+                dplyr::ungroup()
+              for (k in seq_len(n_channels)) {
+                dformula[[k]]$formula <- gsub_formula(
+                  pattern = lag_map$src[j],
+                  replacement = lag_var,
+                  formula = dformula[[k]]$formula,
+                  fixed = TRUE
+                )
+              }
+            }
           }
         }
       }
@@ -239,7 +267,7 @@ dynamite <- function(dformula, data, group, time,
     det_b <- !det_init & !det_from_stoch
     if (any(det_a)) {
       data_eval <- data[rep(1 + id_offset, each = 2),]
-      eval_idx <- seq(1, n_id, by = 2)
+      eval_idx <- seq(1, 2 * n_id, by = 2)
       data_eval[eval_idx,] <- NA
       data[1 + id_offset, resp_det[det_a]] <-
         full_model.matrix_pseudo(get_formulas(dformula_det[det_a]),
