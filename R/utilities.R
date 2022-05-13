@@ -212,13 +212,13 @@ indenter_ <- function(m = 2) {
   }
 }
 
-#' Check if x is a string of the form I(.)
+#' Check if x contains a string of the form I(.)
 #'
 #' @param x A character string
 #'
 #' @noRd
-is_as_is <- function(x) {
-  grepl("I\\(.*\\)", x, perl = TRUE)
+has_as_is <- function(x) {
+  grepl("I\\(.+\\)", x, perl = TRUE)
 }
 
 #' Stop function execution without displaying the call

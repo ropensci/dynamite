@@ -27,6 +27,9 @@ dynamiteformula <- function(formula, family) {
       family <- eval(family_call$call)
     }
   }
+  if (has_as_is(deparse(formula))) {
+    stop_("The use of I(.) is not supported by dynamiteformula")
+  }
   x <- dynamiteformula_(formula, family)
   structure(
     list(
