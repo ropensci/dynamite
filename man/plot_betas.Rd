@@ -10,7 +10,7 @@ plot_betas(model, level = 0.05)
 \item{model}{An object of class \code{dynamitefit}.}
 
 \item{level}{[\code{numeric(1)}]\cr Level for posterior intervals.
-Default is 0.05, leading to 90\\% intervals.}
+Default is 0.05, leading to 90\% intervals.}
 }
 \value{
 A \code{ggplot} object.

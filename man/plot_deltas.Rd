@@ -10,9 +10,9 @@ plot_deltas(model, level = 0.05, alpha = 0.5, scales = "fixed")
 \item{model}{An object of class \code{dynamitefit}.}
 
 \item{level}{[\code{numeric(1)}]\cr Level for posterior intervals.
-Default is 0.05, leading to 90\\% intervals.}
+Default is 0.05, leading to 90\% intervals.}
 
-\item{alpha}{[\code{numeric(1)}]\cr Opacity  level for \code{geom_ribbon}.
+\item{alpha}{[\code{numeric(1)}]\cr Opacity level for \code{geom_ribbon}.
 Default is 0.5.}
 
 \item{scales}{[\code{character(1)}] Should y-axis of the panels be \code{"fixed"}

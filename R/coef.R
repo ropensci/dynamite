@@ -19,10 +19,10 @@ coef.dynamitefit <- function(object, type = c("beta", "delta"),
 
 #' Visualize Time-varying Regression Coefficients of the Dynamite Model
 #'
-#' @param model An object of class \code{dynamitefit}.
+#' @param model An object of class `dynamitefit`.
 #' @param level \[`numeric(1)`]\cr Level for posterior intervals.
-#'   Default is 0.05, leading to 90\% intervals.
-#' @param alpha \[`numeric(1)`]\cr Opacity  level for \code{geom_ribbon}.
+#'   Default is 0.05, leading to 90% intervals.
+#' @param alpha \[`numeric(1)`]\cr Opacity level for `geom_ribbon`.
 #'   Default is 0.5.
 #' @param scales \[`character(1)`] Should y-axis of the panels be `"fixed"`
 #'   (the default) or `"free"`? See [ggplot2::facet_wrap()].
@@ -31,7 +31,6 @@ coef.dynamitefit <- function(object, type = c("beta", "delta"),
 #' @examples
 #' plot_deltas(gaussian_example_fit, scales = "free") +
 #'   ggplot2::theme_minimal()
-
 plot_deltas <- function(model, level = 0.05, alpha = 0.5, scales = "fixed"){
 
   title <- paste0("Posterior mean and ", 100 * (1 - 2 * level),
@@ -51,9 +50,9 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5, scales = "fixed"){
 
 #' Visualize Time-invariant Regression Coefficients of the Dynamite Model
 #'
-#' @param model An object of class \code{dynamitefit}.
+#' @param model An object of class `dynamitefit`.
 #' @param level \[`numeric(1)`]\cr Level for posterior intervals.
-#'   Default is 0.05, leading to 90\% intervals.
+#'   Default is 0.05, leading to 90% intervals.
 #' @return A `ggplot` object.
 #' @export
 #' @examples
