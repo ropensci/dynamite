@@ -36,8 +36,8 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5, scales = "fixed"){
   title <- paste0("Posterior mean and ", 100 * (1 - 2 * level),
                   "% intervals of the time-varying coefficients")
   coef(model, "delta", probs = c(level, 1 - level)) |>
-    dplyr::mutate(parameter = gsub("delta_", "", parameter)) |>
-    ggplot2::ggplot(aes(.data$time, .data$mean)) +
+    dplyr::mutate(parameter = gsub("delta_", "", .data$parameter)) |>
+    ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean)) +
     ggplot2::geom_ribbon(ggplot2::aes_string(
       ymin = paste0("q", 100 * level),
       ymax = paste0("q", 100 * (1 - level))),
@@ -63,8 +63,8 @@ plot_betas <- function(model, level = 0.05){
                   "% intervals of the time-invariant coefficients")
 
   coef(model, "beta", probs = c(level, 1 - level)) |>
-    dplyr::mutate(parameter = gsub("beta_", "", parameter)) |>
-    ggplot2::ggplot(aes(.data$mean, .data$parameter)) +
+    dplyr::mutate(parameter = gsub("beta_", "", .data$parameter)) |>
+    ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter)) +
     ggplot2::geom_pointrange(ggplot2::aes_string(
       xmin = paste0("q", 100 * level),
       xmax = paste0("q", 100 * (1 - level)))) +
