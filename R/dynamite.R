@@ -1,6 +1,7 @@
 #' Estimate a Bayesian Dynamic Multivariate Panel Model
 #'
 #' @importFrom stats as.formula
+#' @importFrom rlang := {{
 #' @param dformula \[`dynamiteformula`]\cr The model formula. See 'Details'.
 #' @param data \[`data.frame`]\cr The data frame containing the variables in
 #'   the model.
@@ -72,9 +73,9 @@ dynamite <- function(dformula, data, group, time,
   } else {
     full_time <- seq(time[1], time[length(time)], by = time_scale)
     time_groups <- data |>
-      dplyr::group_by(!!as.symbol(group_var)) |>
+      dplyr::group_by(.data[[group_var]]) |>
       dplyr::summarise(has_missing =
-                         !identical(!!as.symbol(time_var), full_time))
+                         !identical(.data[[time_var]], full_time))
     if (any(time_groups$has_missing)) {
       full_data_template <- expand.grid(
         time = time,
@@ -158,10 +159,12 @@ dynamite <- function(dformula, data, group, time,
     if (nrow(lag_map) > 0) {
       lag_map <- lag_map[!(lag_map$var %in% resp_all & lag_map$k <= lag_all$k), ]
     }
+    n_lags <- lag_map |> dplyr::filter(.data$var %in% resp_all) |> nrow()
+  } else {
+    n_lags <- 0
   }
   map_lhs <- NULL
   map_channel <- list()
-  n_lags <- lag_map |> dplyr::filter(.data$var %in% resp_all) |> nrow()
   if (n_lags > 0) {
     if (any(lag_map$k <= 0)) {
       stop_("Only positive shift values are allowed in lag()")
@@ -228,8 +231,8 @@ dynamite <- function(dformula, data, group, time,
               lag_k <- lag_map$k[j]
               lag_var <- paste0(data_names[data_idx], "_lag", lag_k)
               data <- data |>
-                dplyr::group_by(!!as.symbol(group_var)) |>
-                dplyr::mutate(!!lag_var := lag_(.data[[y]], lag_k)) |>
+                dplyr::group_by(.data[[group_var]]) |>
+                dplyr::mutate({{lag_var}} := lag_(.data[[y]], lag_k)) |>
                 dplyr::ungroup()
               for (k in seq_len(n_channels)) {
                 dformula[[k]]$formula <- gsub_formula(
