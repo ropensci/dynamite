@@ -7,12 +7,18 @@
 \alias{as_draws.dynamitefit}
 \title{Convert \code{dynamite} Output to \code{draws_df} Format}
 \usage{
-\method{as_draws_df}{dynamitefit}(x, ...)
+\method{as_draws_df}{dynamitefit}(x, responses = NULL, types = NULL, ...)
 
-\method{as_draws}{dynamitefit}(x, ...)
+\method{as_draws}{dynamitefit}(x, responses = NULL, types = NULL, ...)
 }
 \arguments{
 \item{x}{An object of class \code{dynamitefit}.}
+
+\item{responses}{[\code{character()}]\cr Response(s) for which the  samples
+should be extracted. Possible options are \code{unique(x$priors$response)}}
+
+\item{types}{[\code{character()}]\cr Type(s) of the parameters for which the
+samples should be extracted. Possible options are \code{unique(x$priors$type)}.}
 
 \item{...}{Ignored.}
 }
@@ -23,8 +29,10 @@ A \code{draws_df} object.
 Converts the output from \code{dynamite} call to a
 \code{draws_df} format of the \code{posterior} package, enabling the use
 of diagnostics and plotting methods of \code{posterior} and \code{bayesplot}
-packages. Note that this function extracts all variables from the model fit,
-and the naming of variables coincides with the internal declarations. For
-more user-friendly object, use \code{as.data.frame} method on the output of
-the \code{dynamite} function.
+packages. Note that this function returns all variables in a wide format,
+whereas \code{\link[=as.data.frame]{as.data.frame()}} uses the long format.
+}
+\examples{
+as_draws(gaussian_example_fit, types = c("sigma", "beta"))
+
 }

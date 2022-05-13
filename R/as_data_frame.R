@@ -15,11 +15,15 @@
 #' @param types \[`character()`]\cr Type(s) of the parameters for which the
 #' samples should be extracted. Possible options are `unique(x$priors$type)`.
 #' @param summary \[`logical(1)`]\cr If `TRUE` (default), returns posterior
-#'   mean and lower and upper limits of the 95% posterior intervals for all
-#'   parameters. If `FALSE`, returns all the posterior samples instead.
+#'   mean, standard deviation, and posterior quantiles (as defined by the
+#'   `probs` argument) for all parameters. If `FALSE`, returns the posterior
+#'   samples instead.
+#' @param probs \[`numeric()`]\cr Quantiles of interest. Default is
+#'   `c(0.05, 0.95)`.
 #' @param ... Ignored.
 #' @return A `tibble` containing either samples or summary statistics of the
-#'   model parameters in a long format. For wide format, see [dynamite::as_draws()].
+#'   model parameters in a long format. For wide format, see
+#'   [dynamite::as_draws()].
 #' @importFrom tidyr unnest
 #' @export
 #' @examples
@@ -59,35 +63,26 @@
 #'
 as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
                                       responses = NULL, types = NULL,
-                                      summary = TRUE, ...) {
+                                      summary = TRUE, probs = c(0.05, 0.95),
+                                      ...) {
 
   if (is.null(responses)) {
     responses <- unique(x$priors$response)
   } else {
     z <- !(responses %in% unique(x$priors$response))
-    if (sum(!z) == 0) {
-      stop("Model does not contain any of the input responses. ")
+    if(any(z)) {
+      stop("Model does not contain response variable(s) ", responses[z], ".")
     }
-    if (any(z)) {
-      warning("Model does not contain response(s) ",
-              paste0(responses[z], collapse = ", "))
-    }
-
   }
+
   if (is.null(types)) {
     types <- unique(x$priors$type)
   } else {
     z <- !(types %in% unique(x$priors$type))
-    if (sum(!z) == 0) {
-      stop("Model does not contain any variables of chosen type(s). ")
+    if(any(z)) {
+      stop("Model does not contain any parameters of type(s) ", types[z], ".")
     }
-    if (any(z)) {
-      warning("Model does not contain variable type(s) ",
-              paste0(types[z], collapse = ", "))
-    }
-
   }
-
 
   values <- function(type, response) {
 
@@ -158,8 +153,8 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       dplyr::summarise(
         mean = mean(.data$value),
         sd = sd(.data$value),
-        `2.5%` = quantile(.data$value, 0.025),
-        `97.5%` = quantile(.data$value, 0.975)) |>
+        # use quantile2 from posterior for simpler (more R-friendly) names
+        dplyr::as_tibble(as.list(posterior::quantile2(.data$value, probs = probs)))) |>
       dplyr::ungroup()
   }
   out

@@ -7,7 +7,7 @@
 #' whereas [dynamite::as.data.frame()] uses the long format.
 #'
 #' @param x An object of class \code{dynamitefit}.
-#' @param ... Ignored.
+#' @inheritParams as.data.frame.dynamitefit
 #' @return A \code{draws_df} object.
 #' @importFrom posterior as_draws as_draws_df
 #' @aliases as_draws as_draws_df
@@ -36,6 +36,6 @@ as_draws_df.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
 #' @export as_draws
 #' @rdname as_draws-dynamitefit
 #' @method as_draws dynamitefit
-as_draws.dynamitefit <- function(x, ...) {
-  as_draws_df.dynamitefit(x, ...)
+as_draws.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
+  as_draws_df.dynamitefit(x, responses, types, ...)
 }

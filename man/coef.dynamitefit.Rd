@@ -4,7 +4,13 @@
 \alias{coef.dynamitefit}
 \title{Extract Regression Coefficients of Dynamite Model}
 \usage{
-\method{coef}{dynamitefit}(object, type = c("beta", "delta"), summary = TRUE, ...)
+\method{coef}{dynamitefit}(
+  object,
+  type = c("beta", "delta"),
+  summary = TRUE,
+  probs = c(0.05, 0.95),
+  ...
+)
 }
 \arguments{
 \item{object}{An object of class \code{dynamitefit}.}
@@ -13,8 +19,12 @@
 time-invariant coefficients or \code{delta} for time-varying coefficients.}
 
 \item{summary}{[\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
-mean and lower and upper limits of the 95\% posterior intervals for all
-parameters. If \code{FALSE}, returns all the posterior samples instead.}
+mean, standard deviation, and posterior quantiles (as defined by the
+\code{probs} argument) for all parameters. If \code{FALSE}, returns the posterior
+samples instead.}
+
+\item{probs}{[\code{numeric()}]\cr Quantiles of interest. Default is
+\code{c(0.05, 0.95)}.}
 
 \item{...}{Ignored.}
 }

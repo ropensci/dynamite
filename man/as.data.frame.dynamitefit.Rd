@@ -11,6 +11,7 @@
   responses = NULL,
   types = NULL,
   summary = TRUE,
+  probs = c(0.05, 0.95),
   ...
 )
 }
@@ -28,20 +29,25 @@ should be extracted. Possible options are \code{unique(x$priors$response)}}
 samples should be extracted. Possible options are \code{unique(x$priors$type)}.}
 
 \item{summary}{[\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
-mean and lower and upper limits of the 95\% posterior intervals for all
-parameters. If \code{FALSE}, returns all the posterior samples instead.}
+mean, standard deviation, and posterior quantiles (as defined by the
+\code{probs} argument) for all parameters. If \code{FALSE}, returns the posterior
+samples instead.}
+
+\item{probs}{[\code{numeric()}]\cr Quantiles of interest. Default is
+\code{c(0.05, 0.95)}.}
 
 \item{...}{Ignored.}
+}
+\value{
+A \code{tibble} containing either samples or summary statistics of the
+model parameters in a long format. For wide format, see
+\code{\link[=as_draws]{as_draws()}}.
 }
 \description{
 You can use the arguments \code{responses} and \code{types} to extract only a subset
 of the model parameters (i.e. only certain types of parameters related to a
 certain response variable). The prior data frame (from \code{get_priors}) shows
 potential values for these variables.
-}
-\note{
-The spline coefficients \code{alpha} are never returned, but they can be
-obtained with \code{as_draws} function among all the other parameters.
 }
 \examples{
 results <- as.data.frame(gaussian_example_fit,

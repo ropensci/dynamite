@@ -17,6 +17,7 @@ Depends:
 Imports: 
     dplyr,
     glue,
+    ggplot2,
     methods,
     posterior,
     rlang,
