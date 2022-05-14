@@ -6,7 +6,6 @@
 #'   time-invariant coefficients or `delta` for time-varying coefficients.
 #' @inheritParams as.data.frame.dynamitefit
 #' @param ... Ignored.
-#' @importFrom stats coef
 #' @examples
 #' betas <- coef(gaussian_example_fit, type = "beta")
 #' deltas <- coef(gaussian_example_fit, type = "delta")

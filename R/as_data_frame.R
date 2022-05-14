@@ -6,7 +6,6 @@
 #' potential values for these variables.
 #'
 #'
-#' @importFrom stats quantile
 #' @param x The estimated \code{dynamite} model.
 #' @param row.names Ignored.
 #' @param optional Ignored.
@@ -24,7 +23,6 @@
 #' @return A `tibble` containing either samples or summary statistics of the
 #'   model parameters in a long format. For wide format, see
 #'   [dynamite::as_draws()].
-#' @importFrom tidyr unnest
 #' @export
 #' @examples
 #' results <- as.data.frame(gaussian_example_fit,

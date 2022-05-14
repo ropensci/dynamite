@@ -9,7 +9,6 @@
 #' @param x An object of class \code{dynamitefit}.
 #' @inheritParams as.data.frame.dynamitefit
 #' @return A \code{draws_df} object.
-#' @importFrom posterior as_draws as_draws_df
 #' @aliases as_draws as_draws_df
 #' @export
 #' @export as_draws_df

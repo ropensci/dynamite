@@ -1,7 +1,5 @@
 #' Estimate a Bayesian Dynamic Multivariate Panel Model
 #'
-#' @importFrom stats as.formula
-#' @importFrom rlang :=
 #' @param dformula \[`dynamiteformula`]\cr The model formula. See 'Details'.
 #' @param data \[`data.frame`]\cr The data frame containing the variables in
 #'   the model.

@@ -3,9 +3,6 @@
 #' Prepares data for Stan sampling, Stan model code construction and
 #' default/user-modifiable prior definitions.
 #'
-#' @importFrom rlang .data
-#' @importFrom stats setNames
-#'
 #' @param dformula \[`dynamiteformula`]\cr The model formula of stochastic
 #'   channels
 #' @param responses \[`data.frame`]\cr A data.frame with the

@@ -9,7 +9,6 @@
 #' @param newdata TODO
 #' @param n_draws TODO
 #' @param ... Ignored.
-#' @importFrom stats fitted
 fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, ...) {
   if (is.null(n_draws)) {
     n_draws <- ndraws(object)
