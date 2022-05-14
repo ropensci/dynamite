@@ -40,7 +40,8 @@ get_priors.dynamiteformula <- function(x, data, group, time, ...) {
       data = data,
       group = substitute(group),
       time = substitute(time),
-      debug = list(no_compile = TRUE)
+      debug = list(no_compile = TRUE),
+      ...
     )
   )
   out$priors
@@ -78,7 +79,8 @@ get_code.dynamiteformula <- function(x, data, group, time, ...) {
       data = data,
       group = substitute(group),
       time = substitute(time),
-      debug = list(no_compile = TRUE, model_code = TRUE)
+      debug = list(no_compile = TRUE, model_code = TRUE),
+      ...
     )
   )
   out$model_code
@@ -114,7 +116,8 @@ get_data.dynamiteformula <- function(x, data, group, time, ...) {
       data = data,
       group = substitute(group),
       time = substitute(time),
-      debug = list(no_compile = TRUE, sampling_vars = TRUE)
+      debug = list(no_compile = TRUE, sampling_vars = TRUE),
+      ...
     )
   )
   out$sampling_vars
@@ -130,6 +133,7 @@ get_data.dynamitefit <- function(x, ...) {
       data = x$data,
       group = x$group_var,
       time = x$time_var,
+      priors = x$priors,
       debug = list(no_compile = TRUE, sampling_vars = TRUE)
     )
   )

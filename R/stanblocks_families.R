@@ -326,7 +326,7 @@ model_lines_default <- quote({
                             collapse = ", ")
       mtext_fixed <- "beta_{y} ~ {beta_prior_distr}({dpars_fixed});"
     } else {
-      mtext_fixed <- "beta_{y}[k] ~ {beta_prior_distr};"
+      mtext_fixed <- "beta_{y}[{{{cs(1:K_fixed)}}}] ~ {beta_prior_distr};"
     }
   }
   if (has_varying) {
