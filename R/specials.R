@@ -105,10 +105,13 @@ formula_past <- function(formula) {
     warning_("varying() definitions of a determinstic channel for ",
              as.character(formula_lhs(formula)), " will be ignored")
   }
+  past_str <- strsplit(form_past, ",")[[1]]
+  na_str <- grepl("NA", past_str)
+  past_str[na_str] <- NA
   list(
     formula = as.formula(paste0(form_resp, "~", form_def)),
     specials = list(
-      past = try_(strsplit(form_past, ",")[[1]], type = "numeric"),
+      past = try_(past_str, type = "numeric"),
       rank = Inf
     ),
     fixed = integer(0),

@@ -157,8 +157,8 @@ dynamite <- function(dformula, data, group, time,
     if (nrow(lag_map) > 0) {
       lag_map <- lag_map[!(lag_map$var %in% resp_all & lag_map$k <= lag_all$k), ]
     }
-    lag_map <- lag_map |> dplyr::filter(.data$var %in% resp_all)
   }
+  lag_map <- lag_map |> dplyr::filter(.data$var %in% resp_all)
   n_lags <- nrow(lag_map)
   map_lhs <- NULL
   map_channel <- list()
@@ -173,6 +173,7 @@ dynamite <- function(dformula, data, group, time,
       lag_idx <- which(lag_map$var == y)
       y_idx <- which(resp_all == y)
       if (length(y_idx) == 1) {
+        y_past_offset <- 0
         y_past <- NULL
         y_stoch <- TRUE
         if (is_deterministic(dformula[[y_idx]]$family)) {
@@ -183,6 +184,9 @@ dynamite <- function(dformula, data, group, time,
             stop_("Deterministic channel '", y, "' requires ", lag_max, " ",
                   "initial values, but only ", y_past_len, " values ",
                   "have been specified")
+          }
+          if (y_past_len > lag_max) {
+            y_past_offset <- 1
           }
           y_stoch <- FALSE
           proc_past <- seq(from = y_past_len, by = -1, length.out = lag_max)
@@ -202,7 +206,7 @@ dynamite <- function(dformula, data, group, time,
             formula = as.formula(paste0(map_lhs, " ~ ", map_rhs)),
             family = deterministic_(),
             response = map_lhs,
-            specials = list(past = y_past[i], rank = i)
+            specials = list(past = y_past[i + y_past_offset], rank = i)
           )
           attr(map_channel[[idx]], "stoch_origin") <- y_stoch && (i == 1)
           if (lag_map$present[j]) {

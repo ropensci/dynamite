@@ -547,7 +547,8 @@ model_lines_negbin <- quote({
   mtext_def <- eval(model_lines_default)
   d <- phi_prior_distr
   phi_term <- "phi_{y} ~ {d};"
-  likelihood_term <- "{y}[t, {obs}] ~ neg_binomial_2_log_glm(X[t][{obs}, {{{cs(J)}}}], 0, gamma_{y}, phi_{y});"
+  offset_term <- ifelse_(has_offset, glue::glue("to_vector(offset_{y}[t, {obs}])"), "0")
+  likelihood_term <- "{y}[t, {obs}] ~ neg_binomial_2_log_glm(X[t][{obs}, {{{cs(J)}}}], {offset_term}, gamma_{y}, phi_{y});"
   mtext <- paste_rows(
     phi_term,
     "{{",
