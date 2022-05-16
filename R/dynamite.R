@@ -157,10 +157,9 @@ dynamite <- function(dformula, data, group, time,
     if (nrow(lag_map) > 0) {
       lag_map <- lag_map[!(lag_map$var %in% resp_all & lag_map$k <= lag_all$k), ]
     }
-    n_lags <- lag_map |> dplyr::filter(.data$var %in% resp_all) |> nrow()
-  } else {
-    n_lags <- 0
+    lag_map <- lag_map |> dplyr::filter(.data$var %in% resp_all)
   }
+  n_lags <- nrow(lag_map)
   map_lhs <- NULL
   map_channel <- list()
   if (n_lags > 0) {

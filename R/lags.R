@@ -82,6 +82,11 @@ extract_lags <- function(x) {
       dplyr::arrange(.data$var, .data$k) |>
       dplyr::ungroup()
   } else {
-    data.frame()
+    data.frame(
+      src = character(0),
+      var = character(0),
+      k = integer(0),
+      present = logical(0)
+    )
   }
 }
