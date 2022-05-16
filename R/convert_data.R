@@ -145,20 +145,18 @@ convert_data <- function(dformula, responses, specials, group, time,
     } else {
       channel$noncentered <- FALSE
     }
-    if (length(form_specials) > 0) {
-      for (spec in formula_special_funs) {
-        if (!is.null(form_specials[[spec]])) {
-          if (groups) {
-            spec_split <- split(form_specials[[spec]], group)
-          } else {
-            spec_split <- form_specials[[spec]]
-          }
-          sampling_vars[[paste0(spec, "_", resp)]] <-
-            array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
-          channel[[paste0("has_", spec)]] <- TRUE
+    for (spec in formula_special_funs) {
+      if (!is.null(form_specials[[spec]])) {
+        if (groups) {
+          spec_split <- split(form_specials[[spec]], group)
         } else {
-          channel[[paste0("has_", spec)]] <- FALSE
+          spec_split <- form_specials[[spec]]
         }
+        sampling_vars[[paste0(spec, "_", resp)]] <-
+          array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
+        channel[[paste0("has_", spec)]] <- TRUE
+      } else {
+        channel[[paste0("has_", spec)]] <- FALSE
       }
     }
     family <- dformula[[i]]$family
