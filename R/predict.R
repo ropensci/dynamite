@@ -34,52 +34,57 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
     time <- object$time
   } else {
     if (!(object$group_var %in% names(newdata))) {
-      stop_("Grouping variable", object$group_var, "not found in 'newdata'.")
+      stop_("Grouping variable", object$group_var, "not found in 'newdata'")
     }
     group <- newdata[[object$group_var]]
     if (is.factor(group)) group <- droplevels(group)
     # TODO doesn't really matter at least at the moment
     if (!all(group %in% object$data[[object$group_var]])) {
       stop_("Grouping variable", object$group_var,
-            "contains new levels not found in the original data.")
+            "contains new levels not found in the original data")
     }
 
     if (!(object$time_var %in% names(newdata))) {
-      stop_("Time index variable", object$time_var, "not found in 'newdata'.")
+      stop_("Time index variable", object$time_var, "not found in 'newdata'")
     }
     # sort just in case
-    newdata <- dplyr::arrange(newdata, dplyr::across(dplyr::all_of(c(object$group_var, object$time_var))))
+    newdata <- newdata |>
+      dplyr::arrange(
+        dplyr::across(
+          dplyr::all_of(c(object$group_var, object$time_var))
+        )
+      )
     # TODO just use the original time points starting from start_time
     time <- unique(newdata[[object$time_var]])
     if (!all(time %in% object$time)) {
       stop_("Timing variable", object$time_var,
-            "contains time points not found in the original data.")
+            "contains time points not found in the original data")
     }
   }
 
-  basis <- object$prediction_basis
-  fixed <- basis$fixed
+  #basis <- object$prediction_basis
+  #fixed <- basis$fixed
   n_time <- length(time)
   n_id <- length(unique(group))
-  if (n_time <= fixed) {
-    stop_("Model definition implies ", fixed,
-          " fixed time points, but 'newdata' has only ",
-          n_time, " time points.")
-  }
-  resp_all <- get_responses(basis$dformula)
+  #if (n_time <= fixed) {
+  #  stop_("Model definition implies ", fixed,
+  #        " fixed time points, but 'newdata' has only ",
+  #        n_time, " time points.")
+  #}
+  resp_all <- get_responses(dformula)
   # TODO check that fixed time points do not contain NAs
   for (resp in resp_all) {
     if (is.null(newdata[[resp]])) {
       newdata[[resp]] <- NA
     }
   }
-  specials <- evaluate_specials(basis$dformula, newdata)
+  specials <- evaluate_specials(dformula, newdata)
 
   if (type != "response") {
     # create separate column for each level of categorical variables
     for (i in seq_along(resp_all)) {
       resp <- resp_all[i]
-      if (is_categorical(basis$dformula[[i]]$family)) {
+      if (is_categorical(dformula[[i]]$family)) {
         resp_levels <- object$levels[[resp]]
         newdata[, c(glue::glue("{resp}_{resp_levels}"))] <- NA # TODO: glued names to formula?
       } else {
@@ -91,7 +96,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
   samples <- rstan::extract(object$stanfit)
   u_names <- unique(names(basis$start))
   n <- nrow(newdata)
-  for (i in (fixed + 1):n_time) {
+  for (i in seq_along(full_time)) {
     idx <- rep(seq(i - fixed, n, by = n_time), each = 1 + fixed) +
       rep(0:fixed, times = n_id * n_draws)
     idx_i <- seq(i, n, by = n_time)

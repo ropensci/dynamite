@@ -1,25 +1,24 @@
-#' Convert data
+#' Prepare data for Stan
 #'
 #' Prepares data for Stan sampling, Stan model code construction and
 #' default/user-modifiable prior definitions.
 #'
 #' @param dformula \[`dynamiteformula`]\cr The model formula of stochastic
 #'   channels
-#' @param responses \[`data.frame`]\cr A data.frame with the
-#'   response columns only for stochastic channels.
-#' @param specials \[`list`]\cr A list of formula specials for each
-#'   stochastic channel
-#' @param group \[`vector`]\cr A vector defining group membership of each
-#'   individual.
-#' @param time \[`numeric`]\cr A vector defining the observation times for
-#'   for each individual.
-#' @param model_matrix \[`data.frame`]\cr Output of `full_model.matrix`.
 #' @param priors TODO
 #'
 #' @noRd
-convert_data <- function(dformula, responses, specials, group, time,
-                         model_matrix, priors = NULL) {
+prepare_stan_data <- function(dformula, data, group_var, time_var, priors = NULL) {
 
+  responses <- data[, get_responses(dformula), drop = FALSE]
+  # Needs sapply/lapply instead of apply to keep factors as factors
+  attr(responses, "resp_class") <- lapply(responses, function(x) {
+    cl <- class(x)
+    attr(cl, "levels") <- levels(x)
+    cl
+  })
+  model_matrix <- full_model.matrix(dformula, data)
+  specials <- evaluate_specials(dformula, data)
   resp_names <- colnames(responses)
   n_channels <- length(resp_names)
   # A list of variables for stan sampling without grouping by channel
@@ -31,6 +30,8 @@ convert_data <- function(dformula, responses, specials, group, time,
   # A list for getting current prior definitions
   prior_list <- empty_list
 
+  group <- data[[group_var]]
+  time <- sort(unique(data[[time_var]]))
   T_full <- length(time)
   groups <- !is.null(group)
 
@@ -73,8 +74,8 @@ convert_data <- function(dformula, responses, specials, group, time,
   )
   sd_x <- setNames(pmax(0.5, apply(X, 3, sd, na.rm = TRUE)),
                    colnames(model_matrix))
-  # placeholder for NAs in Stan
   X_na <- is.na(X)
+  # Placeholder for NAs in Stan
   X[X_na] <- 0
   assigned <- attr(model_matrix, "assign")
   fixed_pars <- attr(model_matrix, "fixed")
@@ -94,6 +95,7 @@ convert_data <- function(dformula, responses, specials, group, time,
     # Separate copy of Y for Stan, so that added zeros do not influence channel
     # preparation nor influence other checks related to response variables.
     Y_out <- Y
+    # Placeholder for NAs in Stan
     Y_out[Y_na] <- 0
     form_specials <- specials[[i]]
     channel$resp <- resp
@@ -192,7 +194,8 @@ convert_data <- function(dformula, responses, specials, group, time,
   list(
     model_vars = model_vars,
     sampling_vars = sampling_vars,
-    priors = prior_list
+    priors = prior_list,
+    responses = responses
   )
 }
 
