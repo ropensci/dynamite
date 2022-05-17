@@ -36,14 +36,70 @@ dynamite <- function(dformula, data, group, time,
                      priors = NULL, debug = NULL, ...) {
   # stored for return object
   original_dformula <- dformula
-  data <- droplevels(data) # TODO document this in return value
-  if (missing(group)) {
+  if (!is.data.frame(data)) {
+    stop_("Argument 'data' is not a data.frame object")
+  }
+  parsed <- parse_data(data, group, time)
+  dformulas <- parse_lags(dformula, parsed$data)
+  data <- evaluate_deterministic(dformulas$det, parsed$data,
+                                 parsed$group_var, parsed$time_var)
+  stan_data <- prepare_stan_data(dformulas$stoch, data,
+                                 parsed$group_var, parsed$time_var, priors)
+  model_code <- create_blocks(dformula = dformulas$stoch, indent = 2L,
+                              vars = stan_data$model_vars)
+  # TODO needs to be NULL?
+  # model_vars[grep("_prior_distr_", names(model_vars))] <- NULL
+  # debug <- dots$debug
+  model <- if (!is.null(debug) && isTRUE(debug$no_compile)) {
+    NULL
+  } else {
+    message("Compiling Stan model")
+    rstan::stan_model(model_code = stan_data$model_code)
+  }
+  stanfit <- if (isTRUE(debug$no_compile) || isTRUE(debug$no_sampling)) {
+    NULL
+  } else {
+    rstan::sampling(model, data = stan_data$sampling_vars, ...)
+  }
+  # TODO return the function call for potential update method?
+  out <- structure(
+    list(
+      stanfit = stanfit,
+      # TODO what else do we need to return?
+      dformula = original_dformula,
+      dformulas = dformulas,
+      data = data,
+      time_var = parsed$time_var,
+      group_var = parsed$group_var,
+      stan_data = stan_data
+      #spline = list(
+      #  B = sampling_vars$Bs,
+      #  D = sampling_vars$D
+      #),
+      #priors = dplyr::bind_rows(model_priors),
+      #ord = data_names[!data_names %in% c(group_var, time_var)],
+      #J = attr(model_matrix, "assign")
+    ),
+    class = "dynamitefit"
+  )
+  # Adds any object in the environment of this function to the return object
+  # if its name is icluded in the debug argument
+  for (opt in names(debug)) {
+    if (debug[[opt]]) {
+      got <- try(get(x = opt), silent = TRUE)
+      if (!"try-error" %in% class(got)) {
+        out[[opt]] <- got
+      }
+    }
+  }
+  out
+}
+
+parse_data <- function(data, group, time) {
+  if (missing(group) || is.null(group)) {
     group <- group_var <- NULL
   } else {
-    group_var <- substitute(group)
-    if (!is.character(group_var)) {
-      group_var <- deparse(group_var)
-    }
+    group_var <- try_(group = group, type = "character")
     if (is.null(data[[group_var]])) {
       stop_("Grouping variable '", group_var, "' is not present in the data")
     }
@@ -51,13 +107,12 @@ dynamite <- function(dformula, data, group, time,
   if (missing(time)) {
     stop_("Argument 'time' is missing.")
   }
-  time_var <- substitute(time)
-  if (!is.character(time_var)) {
-    time_var <- deparse(time_var)
-  }
+  time_var <- try_(time = time, type = "character")
   if (is.null(data[[time_var]])) {
     stop_("Time index variable '", time_var, "' is not present in the data")
   }
+  data <- droplevels(data) # TODO document this in return value
+  group <- data[[group_var]]
   data <- data |>
     dplyr::mutate(dplyr::across(where(is.character), as.factor)) |>
     dplyr::arrange(dplyr::across(dplyr::all_of(c(group_var, time_var))))
@@ -77,28 +132,17 @@ dynamite <- function(dformula, data, group, time,
     if (any(time_groups$has_missing)) {
       full_data_template <- expand.grid(
         time = time,
-        group = unique(data[[group_var]])
+        group = unique(e$data[[group_var]])
       )
       names(full_data_template) <- c(time_var, group_var)
       data <- full_data_template |>
         dplyr::left_join(data, by = c(group_var, time_var))
     }
   }
-  group <- data[[group_var]]
-  # TODO Maybe having a continuous range of non-NA values for
-  # each individual is useful for some special case?
-  # data_mis <- data[ ,c(group_var, time_var)]
-  # data_mis$obs <- complete.cases(data)
-  # time_segments <- data_mis |>
-  #     dplyr::group_by(dplyr::across(dplyr::all_of(c(group_var)))) |>
-  #     dplyr::summarise(last_obs = which(obs)[sum(obs)],
-  #                      valid_missingness_pattern_ =
-  #                          all(obs[1:last_obs] == cummin(obs[1:last_obs])) ||
-  #                          all(obs[1:last_obs] == cummax(obs[1:last_obs])))
-  # if (any(!time_segments$valid_missingness_pattern_)) {
-  #     # TODO is there a better term or a way to convey this?
-  #     stop_("Observed time series must not contain gaps.")
-  # }
+  named_list(data, group_var, time_var)
+}
+
+parse_lags <- function(dformula, data) {
   channels_det <- which_deterministic(dformula)
   channels_stoch <- which_stochastic(dformula)
   resp_all <- get_responses(dformula)
@@ -231,7 +275,7 @@ dynamite <- function(dformula, data, group, time,
             if (lag_map$present[j]) {
               lag_k <- lag_map$k[j]
               lag_var <- paste0(data_names[data_idx], "_lag", lag_k)
-              data <- data |>
+              data |>
                 dplyr::group_by(.data[[group_var]]) |>
                 dplyr::mutate({{lag_var}} := lag_(.data[[y]], lag_k)) |>
                 dplyr::ungroup()
@@ -249,129 +293,28 @@ dynamite <- function(dformula, data, group, time,
       }
     }
   }
-  dformula_det <- c(dformula[channels_det], lags_channel, map_channel)
-  resp_det <- get_responses(dformula_det)
-  rank_det <- get_ranks(dformula_det)
-  n_time <- length(full_time)
-  n_id <- length(unique(group))
-  id_offset <- seq(0, n_time * (n_id - 1), by = n_time)
-  det_init <- has_past(dformula_det)
-  if (any(det_init)) {
-    idx <- which(det_init)
-    for (i in idx) {
-      data[1 + id_offset, dformula_det[[i]]$response] <-
-        dformula_det[[i]]$specials$past
-    }
-  }
-  if (any(!det_init)) {
-    det_from_stoch <- sapply(dformula_det, function(y){
-      isTRUE(attr(y, "stoch_origin"))
-    })
-    det_a <- !det_init & det_from_stoch
-    det_b <- !det_init & !det_from_stoch
-    if (any(det_a)) {
-      data_eval <- data[rep(1 + id_offset, each = 2),]
-      eval_idx <- seq(1, 2 * n_id, by = 2)
-      data_eval[eval_idx,] <- NA
-      data[1 + id_offset, resp_det[det_a]] <-
-        full_model.matrix_pseudo(get_formulas(dformula_det[det_a]),
-                                 data_eval)[eval_idx + 1, ]
-    }
-    if (any(det_b)) {
-      data[1 + id_offset, resp_det[det_b]] <-
-        full_model.matrix_pseudo(get_formulas(dformula_det[det_b]),
-                                 data[1 + id_offset, ])
-    }
-  }
-  if (length(dformula_det) > 0 && n_time > 1) {
-    id_offset_vec <- rep(id_offset, each = 2)
-    model_idx <- seq(3, 3 * n_id, by = 3)
-    # TODO check if separate evaluation data frame is needed
-    data_eval <- data[rep(1, n_id * 3),]
-    data_eval[,] <- NA
-    eval_idx <- rep(1:2, n_id)  + rep(seq(1, 3 * n_id, by = 3), each = 2)
-    u_rank <- sort(unique(rank_det))
-    for (i in 2:n_time) {
-      past_idx <- (i - 1):i + id_offset_vec
-      data_idx <- i + id_offset
-      for (j in u_rank) {
-        data_eval[eval_idx,] <- data[past_idx,]
-        idx <- which(rank_det == j)
-        data[data_idx, get_responses(dformula_det[idx])] <-
-          full_model.matrix_pseudo(get_formulas(dformula_det[idx]),
-                                   data_eval)[model_idx,]
-      }
-    }
-  }
-  responses <- data[, resp_all[channels_stoch], drop = FALSE]
-  # Needs sapply/lapply instead of apply to keep factors as factors
-  attr(responses, "resp_class") <- lapply(responses, function(x) {
-    cl <- class(x)
-    attr(cl, "levels") <- levels(x)
-    cl
-  })
-  dformula_stoch <- dformula[channels_stoch]
-  attr(dformula_stoch, "splines") <- attr(dformula, "splines")
-  model_matrix <- full_model.matrix(dformula_stoch, data)
-  specials <- evaluate_specials(dformula_stoch, data)
-  converted <- convert_data(dformula_stoch, responses, specials,
-                            group, full_time, model_matrix, priors)
-
-  model_vars <- converted$model_vars
-  sampling_vars <- converted$sampling_vars
-  model_priors <- converted$priors
-  model_code <- create_blocks(dformula = dformula_stoch,
-                              indent = 2L,
-                              vars = model_vars)
-  model_vars[grep("_prior_distr_", names(model_vars))] <- NULL
-  # debug <- dots$debug
-  model <- if (!is.null(debug) && isTRUE(debug$no_compile)) {
-    NULL
-  } else {
-    message("Compiling Stan model")
-    rstan::stan_model(model_code = model_code)
-  }
-  stanfit <- if (isTRUE(debug$no_compile) || isTRUE(debug$no_sampling)) {
-    NULL
-  } else {
-    rstan::sampling(model, data = sampling_vars, ...)
-  }
-  # TODO return the function call for potential update method?
-  out <- structure(
-    list(
-      stanfit = stanfit,
-      # TODO what else do we need to return?
-      formula = original_dformula,
-      time = time,
-      time_var = time_var,
-      group_var = group_var,
-      specials = specials,
-      model_vars = model_vars,
-      responses = attr(responses, "resp_class"),
-      data = data,
-      spline = list(
-        B = sampling_vars$Bs,
-        D = sampling_vars$D
-      ),
-      priors = dplyr::bind_rows(model_priors),
-      prediction_basis = list(
-        dformula = dformula,
-        # fixed = fixed,
-        # past = model_matrix[(n_rows - fixed):n_rows,],
-        # start = model_matrix[1:fixed,], # Needed for some posterior predictive checks?
-        ord = data_names[!data_names %in% c(group_var, time_var)],
-        J = attr(model_matrix, "assign")
-      )
-    ),
-    class = "dynamitefit"
+  list(
+    all = dformula,
+    det = c(dformula[channels_det], lags_channel, map_channel),
+    stoch = structure(
+      dformula[channels_stoch],
+      splines = attr(dformula, "splines")
+    )
   )
-  for (opt in names(debug)) {
-    if (debug[[opt]]) {
-      got <- try(get(x = opt), silent = TRUE)
-      if (!"try-error" %in% class(got)) {
-        out[[opt]] <- got
-      }
-    }
-  }
-  out
 }
+
+
+# TODO Maybe having a continuous range of non-NA values for
+# each individual is useful for some special case?
+# data_mis <- data[ ,c(group_var, time_var)]
+# data_mis$obs <- complete.cases(data)
+# time_segments <- data_mis |>
+#     dplyr::group_by(dplyr::across(dplyr::all_of(c(group_var)))) |>
+#     dplyr::summarise(last_obs = which(obs)[sum(obs)],
+#                      valid_missingness_pattern_ =
+#                          all(obs[1:last_obs] == cummin(obs[1:last_obs])) ||
+#                          all(obs[1:last_obs] == cummax(obs[1:last_obs])))
+# if (any(!time_segments$valid_missingness_pattern_)) {
+#     # TODO is there a better term or a way to convey this?
+#     stop_("Observed time series must not contain gaps.")
+# }
