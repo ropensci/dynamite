@@ -118,10 +118,11 @@ increment_varying <- function(formula, x, varying_idx) {
   varying_icpt <- 0 %in% varying_idx
   v_icpt <- ifelse_(varying_icpt, "", "-1")
   varying_idx <- varying_idx[varying_idx > 0]
+  n_varying <- length(varying_idx)
   x_plus <- paste0(" + ", paste0(x, collapse = " + "))
   ft <- terms(formula)
   tr <- attr(ft, "term.labels")
-  if (length(varying_idx) < length(tr)) {
+  if (n_varying > 0 && n_varying < length(tr)) {
     formula <- drop.terms(ft, dropx = varying_idx, keep.response = TRUE)
     formula_str <- deparse(formula)
   } else {
