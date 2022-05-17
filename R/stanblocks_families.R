@@ -21,8 +21,7 @@ vectorizable_prior <- function(x) {
   length(x) == 1 && !grepl("\\(", x)
 }
 
-
-# Data --------------------------------------------------------------------
+# Data block --------------------------------------------------------------
 
 data_lines_default <- quote({
   paste_rows(
@@ -89,9 +88,7 @@ data_lines_negbin <- quote({
   paste_rows(dtext_def, dtext, .parse = FALSE)
 })
 
-
-# Transformed data --------------------------------------------------------
-
+# Transformed data block --------------------------------------------------
 
 transformed_data_lines_default <- quote({
   mtext_fixed <- ""
@@ -188,8 +185,7 @@ transformed_data_lines_negbin <- quote({
   eval(transformed_data_lines_default)
 })
 
-
-# Parameters --------------------------------------------------------------
+# Parameters block --------------------------------------------------------
 
 parameters_lines_default <- quote({
   aname <- ifelse_(noncentered, "alpha_raw_", "alpha_")
@@ -328,7 +324,7 @@ transformed_parameters_lines_negbin <- quote({
   eval(transformed_parameters_lines_default)
 })
 
-# Model -------------------------------------------------------------------
+# Model block -------------------------------------------------------------
 
 model_lines_default <- quote({
   mtext_fixed <- ""
@@ -554,7 +550,8 @@ model_lines_negbin <- quote({
   mtext_def <- eval(model_lines_default)
   d <- phi_prior_distr
   phi_term <- "phi_{y} ~ {d};"
-  likelihood_term <- "{y}[t, {obs}] ~ neg_binomial_2_log_glm(X[t][{obs}, {{{cs(J)}}}], 0, gamma_{y}, phi_{y});"
+  offset_term <- ifelse_(has_offset, glue::glue("to_vector(offset_{y}[t, {obs}])"), "0")
+  likelihood_term <- "{y}[t, {obs}] ~ neg_binomial_2_log_glm(X[t][{obs}, {{{cs(J)}}}], {offset_term}, gamma_{y}, phi_{y});"
   mtext <- paste_rows(
     phi_term,
     "{{",
@@ -570,9 +567,7 @@ model_lines_negbin <- quote({
   paste_rows(mtext_def, mtext, .parse = FALSE)
 })
 
-
-# Generated quantities ----------------------------------------------------
-
+# Generated quantities block ----------------------------------------------
 
 generated_quantities_lines_default <- quote({
   ""
