@@ -71,6 +71,8 @@ convert_data <- function(dformula, responses, specials, group, time,
     ),
     c(3, 1, 2)
   )
+  X_means <- apply(X, 3, mean, na.rm = TRUE)
+  for(i in 1:K) X[, , i] <- X[, , i] - X_means[i]
   sd_x <- setNames(pmax(0.5, apply(X, 3, sd, na.rm = TRUE)),
                    colnames(model_matrix))
   # placeholder for NAs in Stan
@@ -191,6 +193,7 @@ convert_data <- function(dformula, responses, specials, group, time,
   sampling_vars$K <- K
   sampling_vars$X <- X
   sampling_vars$T <- T_full
+  sampling_vars$X_means <- x_means
   list(
     model_vars = model_vars,
     sampling_vars = sampling_vars,
@@ -390,7 +393,8 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   sd_gamma <- 2 * s_y / sd_x
   mean_gamma <- rep(0, length(sd_gamma))
   idx <- which(names(sd_gamma) == "(Intercept)")
-  sd_gamma[idx] <- 2 * s_y
+  # scale intercept's prior sd with the scale of observations
+  sd_gamma[idx] <- 2 * mean(Y)
   mean_gamma[idx] <- mean(Y)
 
   out <- prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma,

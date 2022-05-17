@@ -21,6 +21,9 @@ vectorizable_prior <- function(x) {
   length(x) == 1 && !grepl("\\(", x)
 }
 
+
+# Data --------------------------------------------------------------------
+
 data_lines_default <- quote({
   paste_rows(
     "// Data for response {y}",
@@ -85,6 +88,10 @@ data_lines_negbin <- quote({
   )
   paste_rows(dtext_def, dtext, .parse = FALSE)
 })
+
+
+# Transformed data --------------------------------------------------------
+
 
 transformed_data_lines_default <- quote({
   mtext_fixed <- ""
@@ -181,6 +188,9 @@ transformed_data_lines_negbin <- quote({
   eval(transformed_data_lines_default)
 })
 
+
+# Parameters --------------------------------------------------------------
+
 parameters_lines_default <- quote({
   aname <- ifelse_(noncentered, "alpha_raw_", "alpha_")
   paste_rows(
@@ -228,6 +238,9 @@ parameters_lines_negbin <- quote({
     .indent = idt(c(0, 1))
   )
 })
+
+
+# Transformed parameters --------------------------------------------------
 
 transformed_parameters_lines_default <- quote({
   mtext <- ""
@@ -314,6 +327,8 @@ transformed_parameters_lines_poisson <- quote({
 transformed_parameters_lines_negbin <- quote({
   eval(transformed_parameters_lines_default)
 })
+
+# Model -------------------------------------------------------------------
 
 model_lines_default <- quote({
   mtext_fixed <- ""
@@ -554,6 +569,10 @@ model_lines_negbin <- quote({
   )
   paste_rows(mtext_def, mtext, .parse = FALSE)
 })
+
+
+# Generated quantities ----------------------------------------------------
+
 
 generated_quantities_lines_default <- quote({
   ""
