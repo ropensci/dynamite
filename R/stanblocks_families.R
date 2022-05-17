@@ -188,21 +188,35 @@ transformed_data_lines_negbin <- quote({
 # Parameters block --------------------------------------------------------
 
 parameters_lines_default <- quote({
-  aname <- ifelse_(noncentered, "alpha_raw_", "alpha_")
+
+  intercept <- ""
+  if (has_intercept) {
+    intercept <- "real a_{y}[T];"
+  }
+
+  aname <- ifelse_(noncentered, "omega_raw_", "omega_")
   paste_rows(
     onlyif(has_fixed, "vector[{K_fixed}] beta_{y};"),
     onlyif(has_varying, "matrix[{K_varying}, D] {aname}{y};"),
     onlyif(has_varying, "vector<lower={lb}>[{K_varying}] tau_{y};"),
+    intercept,
     .indent = idt(1)
   )
 })
 
 parameters_lines_categorical <- quote({
-  aname <- ifelse_(noncentered, "alpha_raw_", "alpha_")
+
+  intercept <- ""
+  if (has_intercept) {
+    intercept <- "vector[{S - 1}] a_{y}[T];"
+  }
+
+  aname <- ifelse_(noncentered, "omega_raw_", "omega_")
   paste_rows(
     onlyif(has_fixed, "matrix[{K_fixed}, {S - 1}] beta_{y};"),
     onlyif(has_varying, "matrix[{K_varying}, D] {aname}{y}[{S - 1}];"),
     onlyif(has_varying, "vector<lower={lb}>[{K_varying}] tau_{y};"),
+    intercept,
     .indent = idt(1)
   )
 })
@@ -247,10 +261,10 @@ transformed_parameters_lines_default <- quote({
     if (noncentered) {
       lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
       mtext_varying_noncentered <- paste_rows(
-        "matrix[{K_varying}, D] alpha_{y};",
-        "alpha_{y}[, 1] = alpha_raw_{y}[, 1];",
+        "matrix[{K_varying}, D] omega_{y};",
+        "omega_{y}[, 1] = omega_raw_{y}[, 1];",
         "for (i in 2:D) {{",
-          "alpha_{y}[, i] = alpha_{y}[, i - 1] + alpha_raw_{y}[, i] .* tau_{y}{lambda_term}",
+          "omega_{y}[, i] = omega_{y}[, i - 1] + omega_raw_{y}[, i] .* tau_{y}{lambda_term}",
         "}}",
         .indent = idt(c(1, 1, 1, 2, 1)),
         .parse = FALSE
@@ -258,7 +272,7 @@ transformed_parameters_lines_default <- quote({
     }
     mtext_varying <- paste_rows(
       "for (t in 1:T) {{",
-        "delta_{y}[t] = alpha_{y} * Bs[, t];",
+        "delta_{y}[t] = omega_{y} * Bs[, t];",
       "}}",
       .indent = idt(c(1, 2, 1)),
       .parse = FALSE
@@ -278,11 +292,11 @@ transformed_parameters_lines_categorical <- quote({
     if (noncentered) {
       lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
       mtext_varying_noncentered <- paste_rows(
-        "matrix[{K_varying}, D] alpha_{y}[{S - 1}];",
+        "matrix[{K_varying}, D] omega_{y}[{S - 1}];",
         "for (s in 1:{S - 1}) {{",
-          "alpha_{y}[s, , 1] = alpha_raw_{y}[s, , 1];",
+          "omega_{y}[s, , 1] = omega_raw_{y}[s, , 1];",
           "for (i in 2:D) {{",
-            "alpha_{y}[s, , i] = alpha_{y}[s, , i - 1] + alpha_raw_{y}[s, , i] .* tau_{y}{lambda_term}",
+            "omega_{y}[s, , i] = omega_{y}[s, , i - 1] + omega_raw_{y}[s, , i] .* tau_{y}{lambda_term}",
           "}}",
         "}}",
         .indent = idt(c(1, 1, 2, 2, 3, 2, 1)),
@@ -292,7 +306,7 @@ transformed_parameters_lines_categorical <- quote({
     mtext_varying <- paste_rows(
       "for (s in 1:{S - 1}) {{",
         "for (t in 1:T) {{",
-          "delta_{y}[t, , s] = alpha_{y}[s] * Bs[, t];",
+          "delta_{y}[t, , s] = omega_{y}[s] * Bs[, t];",
         "}}",
       "}}",
       .indent = idt(c(1, 2, 3, 2, 1)),
@@ -327,9 +341,13 @@ transformed_parameters_lines_negbin <- quote({
 # Model block -------------------------------------------------------------
 
 model_lines_default <- quote({
+  mtext_intercept <- ""
   mtext_fixed <- ""
   mtext_varying <- ""
   mtext_tau <- ""
+  if (has_intercept) {
+    mtext_intercept <- "mean(a_{y}) ~ {alpha_prior_distr};"
+  }
   if (has_fixed) {
     if (vectorizable_prior(beta_prior_distr)) {
       np <- beta_prior_npars
@@ -346,12 +364,12 @@ model_lines_default <- quote({
         np <- delta_prior_npars
         dpars_varying <- paste0("delta_prior_pars_", y, "[, ", 1:np, "]",
                                 collapse = ", ")
-        mtext_varying <- "alpha_raw_{y}[, 1] ~ {delta_prior_distr}({dpars_varying});"
+        mtext_varying <- "omega_raw_{y}[, 1] ~ {delta_prior_distr}({dpars_varying});"
       } else {
-        mtext_varying <- "alpha_raw_{y}[{{{cs(1:K_varying)}}}, 1] ~ {delta_prior_distr};"
+        mtext_varying <- "omega_raw_{y}[{{{cs(1:K_varying)}}}, 1] ~ {delta_prior_distr};"
       }
       mtext_varying <- paste_rows(mtext_varying,
-        "to_vector(alpha_raw_{y}[, 2:D]) ~ std_normal();",
+        "to_vector(omega_raw_{y}[, 2:D]) ~ std_normal();",
         .indent = idt(c(0, 1)),
         .parse = FALSE
       )
@@ -360,17 +378,17 @@ model_lines_default <- quote({
         np <- delta_prior_npars
         dpars_varying <- paste0("delta_prior_pars_", y, "[, ", 1:np, "]",
                                 collapse = ", ")
-        mtext_varying <- "alpha_{y}[, 1] ~ {delta_prior_distr}({dpars_varying});"
+        mtext_varying <- "omega_{y}[, 1] ~ {delta_prior_distr}({dpars_varying});"
       } else {
-        mtext_varying <- "alpha_{y}[{{{cs(1:K_varying)}}}, 1] ~ {delta_prior_distr};"
+        mtext_varying <- "omega_{y}[{{{cs(1:K_varying)}}}, 1] ~ {delta_prior_distr};"
       }
       mtext_varying <- paste_rows(
         mtext_varying,
         "for(i in 2:D) {{",
         ifelse_(
           shrinkage,
-          "alpha_{y}[, i] ~ normal(alpha_{y}[, i - 1], lambda[i - 1] * tau_{y});",
-          "alpha_{y}[, i] ~ normal(alpha_{y}[, i - 1], tau_{y});"
+          "omega_{y}[, i] ~ normal(omega_{y}[, i - 1], lambda[i - 1] * tau_{y});",
+          "omega_{y}[, i] ~ normal(omega_{y}[, i - 1], tau_{y});"
         ),
         "}}",
         .indent = idt(c(0, 1, 2, 1)),
@@ -385,13 +403,18 @@ model_lines_default <- quote({
       mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {d};"
     }
   }
-  paste_rows(mtext_fixed, mtext_varying, mtext_tau, .indent = idt(c(1, 1, 1)))
+  paste_rows(mtext_intercept, mtext_fixed, mtext_varying, mtext_tau,
+             .indent = idt(c(1, 1, 1, 1)))
 })
 
 model_lines_categorical <- quote({
+  mtext_intercept <- ""
   mtext_fixed <- ""
   mtext_varying <- ""
   mtext_tau <- ""
+  if (has_intercept) {
+    mtext_intercept <- "for(s in 1:{S - 1}) mean(a_{y}[s]) ~ {alpha_prior_distr};"
+  }
   if (has_fixed) {
     if (vectorizable_prior(beta_prior_distr)) {
       np <- beta_prior_npars
@@ -417,12 +440,12 @@ model_lines_categorical <- quote({
       } else {
         k <- rep(1:K_fixed, S - 1)
         s <- rep(1:(S - 1), each = K_fixed)
-        mtext_varying <- "alpha_raw_{y}[{s},{k},1] ~ {delta_prior_distr};"
+        mtext_varying <- "omega_raw_{y}[{s},{k},1] ~ {delta_prior_distr};"
       }
       mtext_varying <- paste_rows(
         mtext_varying,
         "for (s in 1:{S - 1}) {{",
-          "to_vector(alpha_raw_{y}[s, ,2:D]) ~ std_normal();",
+          "to_vector(omega_raw_{y}[s, ,2:D]) ~ std_normal();",
         "}}",
         .indent = idt(c(0, 1, 2, 1)),
         .parse = FALSE
@@ -433,13 +456,13 @@ model_lines_categorical <- quote({
         dpars_varying <- paste0("delta_prior_pars_", y, "[, ", 1:np, "]",
                                 collapse = ", ")
         # can't convert vector[] to vector
-        # mtext_varying <- c(idt(1), "to_vector(to_matrix(alpha_raw_", i, "[, , 1])') ~ ", d, "(", paste0("delta_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
+        # mtext_varying <- c(idt(1), "to_vector(to_matrix(omega_raw_", i, "[, , 1])') ~ ", d, "(", paste0("delta_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
         # TODO: this works but might give a false warning about missing jacobian which needs to be suppressed?
         mtext_varying <- "to_vector(delta_{y}[1]) ~ {delta_prior_distr}({dpars_varying});"
       } else {
         k <- rep(1:K_fixed, S - 1)
         s <- rep(1:(S - 1), each = K_varying)
-        mtext_varying <- "alpha_{y}[{s}, {k}, 1] ~ {delta_prior_distr};"
+        mtext_varying <- "omega_{y}[{s}, {k}, 1] ~ {delta_prior_distr};"
       }
       mtext_varying <- paste_rows(
         mtext_varying,
@@ -447,8 +470,8 @@ model_lines_categorical <- quote({
           "for(i in 2:D) {{",
           ifelse_(
            shrinkage,
-           "alpha_{y}[s, , i] ~ normal(alpha_{y}[s, , i - 1], lambda[i - 1] * tau_{y});",
-           "alpha_{y}[s, , i] ~ normal(alpha_{y}[s, , i - 1], tau_{y});"
+           "omega_{y}[s, , i] ~ normal(omega_{y}[s, , i - 1], lambda[i - 1] * tau_{y});",
+           "omega_{y}[s, , i] ~ normal(omega_{y}[s, , i - 1], tau_{y});"
           ),
           "}}",
         "}}",
@@ -467,7 +490,7 @@ model_lines_categorical <- quote({
   }
   likelihood_term <- "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], zeros_S_{y}, append_col(zeros_K_{y}, gamma_{y}));"
   paste_rows(
-    mtext_fixed, mtext_varying, mtext_tau,
+    mtext_intercept, mtext_fixed, mtext_varying, mtext_tau,
     "{{",
       "matrix[{K}, {S-1}] gamma_{y};",
       "for (t in 1:T) {{",
@@ -570,11 +593,45 @@ model_lines_negbin <- quote({
 # Generated quantities block ----------------------------------------------
 
 generated_quantities_lines_default <- quote({
-  ""
+  if (has_intercept) {
+    paste_rows(
+      "real alpha{y} = 0;",
+      "{{",
+        "vector[{K}] gamma_{y};",
+        "for (t in 1:T) {{",
+          onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+          onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
+          "alpha{y} += a_{y}[t] - X_m[{{{cs(J)}}}, t] * gamma_{y};",
+        "}}",
+        "alpha{y} /= T;",
+      "}}",
+      .indent = idt(c(1, 1, 2, 2, 3, 3, 3, 2, 2, 1)),
+      .parse = FALSE
+    )
+  } else {
+    ""
+  }
 })
 
 generated_quantities_lines_categorical <- quote({
-  eval(generated_quantities_lines_default)
+  if (has_intercept) {
+    paste_rows(
+      "vector[{S - 1}] alpha{y} = zeros_S_{y};",
+      "{{",
+        "vector[{K}] gamma_{y};",
+        "for (t in 1:T) {{",
+          onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+          onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
+          "alpha{y} += a_{y}[t] - X_m[{{{cs(J)}}}, t] * gamma_{y};",
+        "}}",
+        "alpha{y} /= T;",
+      "}}",
+      .indent = idt(c(1, 1, 2, 2, 3, 3, 3, 2, 2, 1)),
+      .parse = FALSE
+    )
+  } else {
+    ""
+  }
 })
 
 generated_quantities_lines_gaussian <- quote({

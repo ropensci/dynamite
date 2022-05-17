@@ -45,7 +45,7 @@ create_data <- function(dformula, idt, vars) {
     "int<lower=1> N; // number of individuals",
     "int<lower=1> K; // total number of covariates across all channels",
     "matrix[N, K] X[T]; // centered covariates as an array of N x K matrices",
-    "vector[K] X_m; // Means of all covariates",
+    "matrix[K, T] X_m; // Means of all covariates",
     onlyif(has_splines, "int<lower=0> D; // number of B-splines"),
     onlyif(has_splines, "matrix[D, T] Bs; // B-spline basis matrix"),
     .indent = idt(1),
@@ -115,17 +115,6 @@ create_transformed_parameters <- function(dformula, idt, vars) {
 #' @describeIn create_function Create the 'Model' block of the Stan model code
 #' @noRd
 create_model <- function(dformula, idt, vars) {
-  # TODO: Without global shrinkage prior it probably makes sense to use user-defined prior for tau
-  # With lambda&tau, need more testing if this is fine or do we need to support other forms
-  # e.g. as in https://arxiv.org/abs/1611.01310 and https://www.mdpi.com/2225-1146/8/2/20
-  # priors <- character(0)
-
-  # if (!is.null(spline_defs <- attr(formula, "splines"))) {
-  #     if (spline_defs$shrinkage) {
-  #         priors <- paste0(idt(1), "lambda ~ std_normal();  // prior for shrinkage terms")
-  #     }
-  # }
-  #spline_defs <- attr(formula, "splines")
   mod <- character(length(dformula))
   for (i in seq_along(dformula)) {
     family <- dformula[[i]]$family$name
