@@ -96,13 +96,10 @@ dynamite <- function(dformula, data, group, time,
 }
 
 parse_data <- function(data, group, time) {
-  if (missing(group)) {
+  if (missing(group) || is.null(group)) {
     group <- group_var <- NULL
   } else {
-    group_var <- substitute(group)
-    if (!is.character(group_var)) {
-      group_var <- deparse(group_var)
-    }
+    group_var <- try_(group = group, type = "character")
     if (is.null(data[[group_var]])) {
       stop_("Grouping variable '", group_var, "' is not present in the data")
     }
@@ -110,10 +107,7 @@ parse_data <- function(data, group, time) {
   if (missing(time)) {
     stop_("Argument 'time' is missing.")
   }
-  time_var <- substitute(time)
-  if (!is.character(time_var)) {
-    time_var <- deparse(time_var)
-  }
+  time_var <- try_(time = time, type = "character")
   if (is.null(data[[time_var]])) {
     stop_("Time index variable '", time_var, "' is not present in the data")
   }

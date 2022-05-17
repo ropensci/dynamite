@@ -43,22 +43,22 @@ test_that("single channel models are valid", {
     obs_poisson <- obs(y6 ~ x3 + offset(offset), family = poisson()), NA
   )
   expect_error(
-    dynamite(obs_categorical, test_data, group, time, debug = debug), NA
+    dynamite(obs_categorical, test_data, "group", "time", debug = debug), NA
   )
   expect_error(
-    dynamite(obs_gaussian, test_data, group, time, debug = debug), NA
+    dynamite(obs_gaussian, test_data, "group", "time", debug = debug), NA
   )
   expect_error(
-    dynamite(obs_binomial, test_data, group, time, debug = debug), NA
+    dynamite(obs_binomial, test_data, "group", "time", debug = debug), NA
   )
   expect_error(
-    dynamite(obs_bernoulli, test_data, group, time, debug = debug), NA
+    dynamite(obs_bernoulli, test_data, "group", "time", debug = debug), NA
   )
   expect_error(
-    dynamite(obs_negbinom, test_data, group, time, debug = debug), NA
+    dynamite(obs_negbinom, test_data, "group", "time", debug = debug), NA
   )
   expect_error(
-    dynamite(obs_poisson, test_data, group, time, debug = debug), NA
+    dynamite(obs_poisson, test_data, "group", "time", debug = debug), NA
   )
 
 })
@@ -76,7 +76,7 @@ test_that("Multichannel models are valid", {
   )
 
   expect_error(
-    dynamite(obs_all, test_data, group, time, debug = debug), NA
+    dynamite(obs_all, test_data, "group", "time", debug = debug), NA
   )
 
 })
@@ -112,19 +112,19 @@ test_that("Lags are parsed", {
   )
 
   expect_error(
-    dynamite(obs_a, test_data, group, time, debug = debug), NA
+    dynamite(obs_a, test_data, "group", "time", debug = debug), NA
   )
 
   expect_error(
-    dynamite(obs_b, test_data, group, time, debug = debug), NA
+    dynamite(obs_b, test_data, "group", "time", debug = debug), NA
   )
 
   expect_error(
-    dynamite(obs_c, test_data, group, time, debug = debug), NA
+    dynamite(obs_c, test_data, "group", "time", debug = debug), NA
   )
 
   expect_error(
-    dynamite(obs_d, test_data, group, time, debug = debug), NA
+    dynamite(obs_d, test_data, "group", "time", debug = debug), NA
   )
 
 })
@@ -139,7 +139,7 @@ test_that("Deterministic channels are parsed", {
   )
 
   expect_error(
-    dynamite(obs_det, test_data, group, time, debug = debug), NA
+    dynamite(obs_det, test_data, "group", "time", debug = debug), NA
   )
 
 })

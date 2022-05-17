@@ -51,7 +51,11 @@ is.dynamitefamily <- function(x) {
 is_valid_family_call <- function(x) {
   family <- as.character(x[[1]])[1]
   x[[1]] <- as.symbol(paste0(family, "_"))
-  return(list(supported = is_supported(family), call = x))
+  list(
+    supported = is_supported(family),
+    call = x,
+    call_str = family
+  )
 }
 
 #' Check if a family is supported

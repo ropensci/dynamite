@@ -10,19 +10,19 @@
 #' @export
 dynamiteformula <- function(formula, family) {
   if (!is.formula(formula)) {
-    stop_("Argument 'formula' is not a formula")
+    stop_("Argument 'formula' is not a formula object")
   }
   family <- substitute(family)
   if (is.character(family)) {
     if (is_supported(family[1])) {
       family <- do.call(paste0(family, "_"), args = list())
     } else {
-      stop_("Family '", family[1], "'is not supported")
+      stop_("Family '", family[1], "' is not supported")
     }
   } else {
     family_call <- is_valid_family_call(family)
     if (!family_call$supported) {
-      stop_("Unsupported family object '", family_call, "'")
+      stop_("Unsupported family call '", family_call$call_str, "()'")
     } else {
       family <- eval(family_call$call)
     }
@@ -250,7 +250,7 @@ join_dynamiteformulas <- function(e1, e2) {
     stop_("Multiple definitions for response variable(s): ",
           cs(resp_all[resp_duped]))
   }
-  if (!is.null(attr(e1, "lag_all")) && !is.null(attr(e2, "lag_all"))) {
+  if (!is.null(attr(e1, "lags")) && !is.null(attr(e2, "lags"))) {
     stop_("Multiple definitions for lags")
   }
   if (!is.null(attr(e1, "splines")) && !is.null(attr(e2, "splines"))) {
