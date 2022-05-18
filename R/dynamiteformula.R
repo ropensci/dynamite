@@ -142,7 +142,7 @@ get_responses <- function(x) {
 #'
 #' @noRd
 get_predictors <- function(x) {
-  sapply(x, function(y) as.character(formula_rhs(y$formula)))
+  sapply(x, function(y) deparse(formula_rhs(y$formula)))
 }
 
 #' Get all formulas of a dynamiteformula object

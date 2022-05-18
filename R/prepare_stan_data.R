@@ -3,22 +3,25 @@
 #' Prepares data for Stan sampling, Stan model code construction and
 #' default/user-modifiable prior definitions.
 #'
+#' @param e \[`environment`]\cr An environment containing the data
 #' @param dformula \[`dynamiteformula`]\cr The model formula of stochastic
 #'   channels
+#' @param group_var \[`character(1)`]\cr The grouping variable name
+#' @param time_var \[`character(1)`]\cr The time index variable name
 #' @param priors TODO
 #'
 #' @noRd
-prepare_stan_data <- function(dformula, data, group_var, time_var, priors = NULL) {
+prepare_stan_data <- function(e, dformula, group_var, time_var, priors = NULL) {
 
-  responses <- data[, get_responses(dformula), drop = FALSE]
+  responses <- e$data[, get_responses(dformula), drop = FALSE]
   # Needs sapply/lapply instead of apply to keep factors as factors
   attr(responses, "resp_class") <- lapply(responses, function(x) {
     cl <- class(x)
     attr(cl, "levels") <- levels(x)
     cl
   })
-  model_matrix <- full_model.matrix(dformula, data)
-  specials <- evaluate_specials(dformula, data)
+  model_matrix <- full_model.matrix(dformula, e$data)
+  specials <- evaluate_specials(dformula, e$data)
   resp_names <- colnames(responses)
   n_channels <- length(resp_names)
   # A list of variables for stan sampling without grouping by channel
@@ -30,8 +33,8 @@ prepare_stan_data <- function(dformula, data, group_var, time_var, priors = NULL
   # A list for getting current prior definitions
   prior_list <- empty_list
 
-  group <- data[[group_var]]
-  time <- sort(unique(data[[time_var]]))
+  group <- e$data[[group_var]]
+  time <- sort(unique(e$data[[time_var]]))
   T_full <- length(time)
   groups <- !is.null(group)
 

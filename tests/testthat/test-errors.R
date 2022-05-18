@@ -86,4 +86,28 @@ test_that("time variable not in data fails", {
   )
 })
 
+test_that("single time point fails", {
+  expect_error(
+    dynamite(dformula = obs_test, data = data.frame(y = 1, x = 1, z = 1),
+             group = "x", time = "z"),
+    "There must be at least two time points in the data"
+  )
+})
 
+test_that("negative lag fails", {
+  expect_error(
+    dynamite(dformula = obs(y ~ lag(y, -1), family = gaussian()),
+             data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
+             group = "x", time = "z"),
+    "Only positive shift values are allowed in lag()"
+  )
+})
+
+test_that("missing lag variable fails", {
+  expect_error(
+    dynamite(dformula = obs(y ~ lag(d, 1), family = gaussian()),
+             data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
+             group = "x", time = "z"),
+    "Unable to construct lagged values of 'd', no such variables are present in the data"
+  )
+})

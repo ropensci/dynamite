@@ -62,7 +62,7 @@ extract_lags <- function(x) {
   lag_terms <- x[has_lag]
   # TODO allow vector k
   lag_regex <- gregexec(
-    pattern = "(?<src>lag\\(\\s*(?<var>[^\\+]+?)\\s*(?:,\\s*(?<k>[0-9]+)){0,1}\\s*\\))",
+    pattern = "(?<src>lag\\(\\s*(?<var>[^\\+]+?)\\s*(?:,\\s*(?<k>\\-{0,1}[0-9]+)){0,1}\\s*\\))",
     text = lag_terms,
     perl = TRUE
   )

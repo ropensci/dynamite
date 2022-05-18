@@ -39,14 +39,14 @@ dynamite <- function(dformula, data, group, time,
   if (!is.data.frame(data)) {
     stop_("Argument 'data' is not a data.frame object")
   }
-  parsed <- parse_data(data, group, time)
-  dformulas <- parse_lags(dformula, parsed$data)
-  data <- evaluate_deterministic(dformulas$det, parsed$data,
-                                 parsed$group_var, parsed$time_var)
-  stan_data <- prepare_stan_data(dformulas$stoch, data,
-                                 parsed$group_var, parsed$time_var, priors)
+  e <- new.env()
+  e$data <- data
+  vars <- parse_data(e, group, time)
+  dformulas <- parse_lags(e, dformula, vars$group, vars$time)
+  evaluate_deterministic(e, dformulas$det, vars$group, vars$time)
+  stan <- prepare_stan_data(e, dformulas$stoch, vars$group, vars$time, priors)
   model_code <- create_blocks(dformula = dformulas$stoch, indent = 2L,
-                              vars = stan_data$model_vars)
+                              vars = stan$model_vars)
   # TODO needs to be NULL?
   # model_vars[grep("_prior_distr_", names(model_vars))] <- NULL
   # debug <- dots$debug
@@ -54,12 +54,12 @@ dynamite <- function(dformula, data, group, time,
     NULL
   } else {
     message("Compiling Stan model")
-    rstan::stan_model(model_code = stan_data$model_code)
+    rstan::stan_model(model_code = stan$model_code)
   }
   stanfit <- if (isTRUE(debug$no_compile) || isTRUE(debug$no_sampling)) {
     NULL
   } else {
-    rstan::sampling(model, data = stan_data$sampling_vars, ...)
+    rstan::sampling(model, data = stan$sampling_vars, ...)
   }
   # TODO return the function call for potential update method?
   out <- structure(
@@ -69,9 +69,9 @@ dynamite <- function(dformula, data, group, time,
       dformula = original_dformula,
       dformulas = dformulas,
       data = data,
-      time_var = parsed$time_var,
-      group_var = parsed$group_var,
-      stan_data = stan_data
+      time_var = vars$time,
+      group_var = vars$group,
+      stan = stan
       #spline = list(
       #  B = sampling_vars$Bs,
       #  D = sampling_vars$D
@@ -95,12 +95,12 @@ dynamite <- function(dformula, data, group, time,
   out
 }
 
-parse_data <- function(data, group, time) {
+parse_data <- function(e, group, time) {
   if (missing(group) || is.null(group)) {
     group <- group_var <- NULL
   } else {
     group_var <- try_(group = group, type = "character")
-    if (is.null(data[[group_var]])) {
+    if (is.null(e$data[[group_var]])) {
       stop_("Grouping variable '", group_var, "' is not present in the data")
     }
   }
@@ -108,15 +108,17 @@ parse_data <- function(data, group, time) {
     stop_("Argument 'time' is missing.")
   }
   time_var <- try_(time = time, type = "character")
-  if (is.null(data[[time_var]])) {
+  if (is.null(e$data[[time_var]])) {
     stop_("Time index variable '", time_var, "' is not present in the data")
   }
-  data <- droplevels(data) # TODO document this in return value
-  group <- data[[group_var]]
-  data <- data |>
+  e$data <- droplevels(e$data) # TODO document this in return value
+  e$data <- e$data |>
     dplyr::mutate(dplyr::across(where(is.character), as.factor)) |>
     dplyr::arrange(dplyr::across(dplyr::all_of(c(group_var, time_var))))
-  time <- sort(unique(data[[time_var]]))
+  time <- sort(unique(e$data[[time_var]]))
+  if (length(time) == 1) {
+    stop_("There must be at least two time points in the data")
+  }
   full_time <- NULL
   # TODO convert Dates etc. to integers before this
   time_ivals <- diff(time)
@@ -125,7 +127,7 @@ parse_data <- function(data, group, time) {
     stop_("Observations must occur at regular time intervals.")
   } else {
     full_time <- seq(time[1], time[length(time)], by = time_scale)
-    time_groups <- data |>
+    time_groups <- e$data |>
       dplyr::group_by(.data[[group_var]]) |>
       dplyr::summarise(has_missing =
                          !identical(.data[[time_var]], full_time))
@@ -135,20 +137,20 @@ parse_data <- function(data, group, time) {
         group = unique(e$data[[group_var]])
       )
       names(full_data_template) <- c(time_var, group_var)
-      data <- full_data_template |>
-        dplyr::left_join(data, by = c(group_var, time_var))
+      e$data <- full_data_template |>
+        dplyr::left_join(e$data, by = c(group_var, time_var))
     }
   }
-  named_list(data, group_var, time_var)
+  list(group = group_var, time = time_var)
 }
 
-parse_lags <- function(dformula, data) {
+parse_lags <- function(e, dformula, group_var, time_var) {
   channels_det <- which_deterministic(dformula)
   channels_stoch <- which_stochastic(dformula)
   resp_all <- get_responses(dformula)
-  n_rows <- nrow(data)
+  n_rows <- nrow(e$data)
   n_channels <- length(resp_all)
-  data_names <- names(data)
+  data_names <- names(e$data)
   lag_map <- extract_lags(get_predictors(dformula))
   lag_all <- attr(dformula, "lags")
   lags_channel <- list()
@@ -202,8 +204,13 @@ parse_lags <- function(dformula, data) {
       lag_map <- lag_map[!(lag_map$var %in% resp_all & lag_map$k <= lag_all$k), ]
     }
   }
-  lag_map <- lag_map |> dplyr::filter(.data$var %in% resp_all)
-  n_lags <- nrow(lag_map)
+  mis_vars <- which(!lag_map$var %in% c(resp_all, data_names))
+  if (length(mis_vars)) {
+    stop_("Unable to construct lagged values of '",
+          cs(lag_map$var[mis_vars]), "', ",
+          "no such variables are present in the data")
+  }
+  n_lags <- lag_map |> dplyr::filter(.data$var %in% resp_all) |> nrow()
   map_lhs <- NULL
   map_channel <- list()
   if (n_lags > 0) {
@@ -266,27 +273,22 @@ parse_lags <- function(dformula, data) {
         }
       } else {
         data_idx <- which(data_names == y)
-        if (length(data_idx) == 0) {
-          stop_("Unable to construct lagged values of '", y, "' ",
-                "no such variable is present in the data")
-        } else {
-          for (i in seq_along(lag_idx)) {
-            j <- lag_idx[i]
-            if (lag_map$present[j]) {
-              lag_k <- lag_map$k[j]
-              lag_var <- paste0(data_names[data_idx], "_lag", lag_k)
-              data |>
-                dplyr::group_by(.data[[group_var]]) |>
-                dplyr::mutate({{lag_var}} := lag_(.data[[y]], lag_k)) |>
-                dplyr::ungroup()
-              for (k in seq_len(n_channels)) {
-                dformula[[k]]$formula <- gsub_formula(
-                  pattern = lag_map$src[j],
-                  replacement = lag_var,
-                  formula = dformula[[k]]$formula,
-                  fixed = TRUE
-                )
-              }
+        for (i in seq_along(lag_idx)) {
+          j <- lag_idx[i]
+          if (lag_map$present[j]) {
+            lag_k <- lag_map$k[j]
+            lag_var <- paste0(data_names[data_idx], "_lag", lag_k)
+            e$data <- e$data |>
+              dplyr::group_by(.data[[group_var]]) |>
+              dplyr::mutate({{lag_var}} := lag_(.data[[y]], lag_k)) |>
+              dplyr::ungroup()
+            for (k in seq_len(n_channels)) {
+              dformula[[k]]$formula <- gsub_formula(
+                pattern = lag_map$src[j],
+                replacement = lag_var,
+                formula = dformula[[k]]$formula,
+                fixed = TRUE
+              )
             }
           }
         }
