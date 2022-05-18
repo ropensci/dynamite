@@ -46,7 +46,7 @@ formula_specials <- function(x) {
   fixed_icpt <- attr(xt, "intercept") || fixed_icpt
   common_terms <- intersect(fixed_terms, varying_terms)
   if (length(common_terms) > 0) {
-    stop_("Variables ", cs(common_terms), " ",
+    stop_("Variables '", cs(common_terms), "' ",
           "specified as both time-constant and time-varying.")
   }
   full_terms <- c(fixed_terms, varying_terms)
@@ -65,8 +65,8 @@ formula_specials <- function(x) {
   } else {
     y <- as.character(xt_variables[[2]])
     if (!any_icpt) {
-      stop_("Invalid formula for response ", y, ". ",
-            "There are no predictors nor an intercept.")
+      stop_("Invalid formula for response variable '", y, "', ",
+            "there are no predictors nor an intercept")
     }
     x <- as.formula(paste0(y, "~ 1"))
   }

@@ -112,8 +112,8 @@ aux <- function(formula) {
   if (is.dynamiteformula(e1)) {
     out <- add_dynamiteformula(e1, e2)
   } else {
-    stop_("Method '+.dynamiteformula is not supported for ",
-          class(e1), " objects")
+    stop_("Method '+.dynamiteformula' is not supported for '",
+          class(e1), "' objects")
   }
   out
 }
@@ -181,16 +181,6 @@ has_past <- function(x) {
   sapply(x, function(y) length(y$specials$past) > 0)
 }
 
-#' Get past value definitions of a dynamiteformula
-#'
-#' @param x A `dynamiteformula` object
-#'
-#' @noRd
-get_past <- function(x) {
-  out <- lapply(x, function(y) y$specials$past)
-  out[lengths(out) != 0]
-}
-
 #' Get ranks of channels for evaluation order of precedence
 #'
 #' @param x A `dynamiteformula` object
@@ -225,8 +215,8 @@ add_dynamiteformula <- function(e1, e2) {
     out <- set_splines(e1, e2)
   } else {
     stop_(
-      "Unable to add an object of class ", class(e2),
-      " to an object of class 'dynamiteformula'"
+      "Unable to add an object of class '", class(e2),
+      "' to an object of class 'dynamiteformula'"
     )
   }
   out

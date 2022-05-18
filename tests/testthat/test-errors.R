@@ -1,6 +1,5 @@
 obs_test <- obs(y ~ x, family = gaussian())
 
-
 # Formula errors ----------------------------------------------------------
 
 test_that("nonformula to dynamiteformula fails", {
@@ -22,6 +21,13 @@ test_that("unrecognized family call fails", {
   expect_error(
     obs(y ~ x, family = myfamily()),
     "Unsupported family call 'myfamily\\(\\)'"
+  )
+})
+
+test_that("as-is use fails", {
+  expect_error(
+    obs(y ~ I(x), family = gaussian()),
+    "The use of I\\(.\\) is not supported by dynamiteformula"
   )
 })
 
@@ -54,6 +60,36 @@ test_that("simultaneity fails", {
   expect_error(
     obs_test + obs(x ~ y, family = "gaussian"),
     "Simultaneous regression is not supported, response variables 'y' appear in the formulas of 'x'"
+  )
+})
+
+test_that("adding nondynamiteformula to dynamiteformula fails", {
+  expect_error(
+    obs_test + 1.0,
+    "Unable to add an object of class 'numeric' to an object of class 'dynamiteformula'"
+  )
+})
+
+test_that("plus method fails for nondynamiteformula", {
+  expect_error(
+    `+.dynamiteformula`(data.frame(), numeric()),
+    "Method '\\+\\.dynamiteformula' is not supported for 'data.frame' objects"
+  )
+})
+
+# Formula specials errors -------------------------------------------------
+
+test_that("Specification as both fixed and varying fails", {
+  expect_error(
+    obs(y ~ x + varying(~ x), family = gaussian()),
+    "Variables 'x' specified as both time-constant and time-varying"
+  )
+})
+
+test_that("No intercept of predictors fails", {
+  expect_error(
+    obs(y ~ -1, family = gaussian()),
+    "Invalid formula for response variable 'y', there are no predictors nor an intercept"
   )
 })
 
