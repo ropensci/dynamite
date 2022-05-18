@@ -33,6 +33,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
     group <- newdata[[object$group_var]]
     time <- object$time
   } else {
+    # TODO newdata must start from full_time[1]
     if (!(object$group_var %in% names(newdata))) {
       stop_("Grouping variable", object$group_var, "not found in 'newdata'")
     }
@@ -71,20 +72,21 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
   #        " fixed time points, but 'newdata' has only ",
   #        n_time, " time points.")
   #}
-  resp_all <- get_responses(dformula)
+  resp_stoch <- get_responses(object$dformulas$stoch)
+  resp_det <- get_responses(object$dformulas$det)
   # TODO check that fixed time points do not contain NAs
-  for (resp in resp_all) {
+  for (resp in resp_stoch) {
     if (is.null(newdata[[resp]])) {
       newdata[[resp]] <- NA
     }
   }
-  specials <- evaluate_specials(dformula, newdata)
+  specials <- evaluate_specials(object$dformulas$stoch, newdata)
 
   if (type != "response") {
     # create separate column for each level of categorical variables
-    for (i in seq_along(resp_all)) {
-      resp <- resp_all[i]
-      if (is_categorical(dformula[[i]]$family)) {
+    for (i in seq_along(resp_stoch)) {
+      resp <- resp_stoch[i]
+      if (is_categorical(dformulas$stoch[[i]]$family)) {
         resp_levels <- object$levels[[resp]]
         newdata[, c(glue::glue("{resp}_{resp_levels}"))] <- NA # TODO: glued names to formula?
       } else {
@@ -92,46 +94,51 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
       }
     }
   }
-  newdata <- data.frame(newdata, draw = rep(1:n_draws, each = nrow(newdata)))
+  e <- new.env()
+  e$data <- data.frame(newdata, draw = rep(1:n_draws, each = nrow(newdata)))
+  assign_initial_values(e, object$dformulas$det, seq(1, n, by = n_time),
+                        n_time, n_id)
   samples <- rstan::extract(object$stanfit)
-  u_names <- unique(names(basis$start))
+  #u_names <- unique(names(basis$start))
   n <- nrow(newdata)
-  for (i in seq_along(full_time)) {
-    idx <- rep(seq(i - fixed, n, by = n_time), each = 1 + fixed) +
-      rep(0:fixed, times = n_id * n_draws)
+  for (i in 2:n_time) {
+    k <- n_id * n_draws
+    idx <- rep(seq(i - 1, n, by = n_time), each = 2) + rep(0:1, times =k)
     idx_i <- seq(i, n, by = n_time)
     model_matrix <- full_model.matrix_predict(
-      basis$dformula,
-      newdata[idx, ],
-      u_names
+      dformula$stoch,
+      e$data[idx, ],
+      object$u_names
     )
-    for (j in seq_along(resp_all)) {
+    for (j in seq_along(resp_stoch)) {
       resp <- resp_all[j]
-      if (any(is.na(newdata[idx_i, resp]))) { # TODO partial missingness?
+      J <- object$stan$model_vars[[i]]$J
+      if (any(is.na(e$data[idx_i, resp]))) { # TODO partial missingness?
         sim <- do.call(
-          paste0("predict_", basis$dformula[[j]]$family),
+          paste0("predict_", object$dformulas$stoch[[j]]$family),
           list(
-            model_matrix = model_matrix[, basis$J[[j]], drop = FALSE],
+            model_matrix = model_matrix[, J[[j]], drop = FALSE],
             samples = samples, specials[[j]], resp,
             time = i - fixed, type, n_draws = n_draws
           )
         )
-        if (is_categorical(basis$dformula[[j]]$family)) {
+        if (is_categorical(object$dformulas$stoch[[j]]$family)) {
           resp_levels <- object$levels[[resp]]
           if (type != "response") {
             idx_resp <- which(names(newdata) %in%
                                 c(glue::glue("{resp}_{resp_levels}")))
-            newdata[idx_i, idx_resp] <- sim$mean_or_link
+            e$data[idx_i, idx_resp] <- sim$mean_or_link
           }
-          newdata[idx_i, resp] <- resp_levels[sim$response]
+          e$data[idx_i, resp] <- resp_levels[sim$response]
         } else {
           if (type != "response") {
-            newdata[idx_i, c(glue::glue("{resp}_store"))] <- sim$mean_or_link
+            e$data[idx_i, c(glue::glue("{resp}_store"))] <- sim$mean_or_link
           }
-          newdata[idx_i, resp] <- sim$response
+          e$data[idx_i, resp] <- sim$response
         }
       }
     }
+    assign_deterministic(e, object$dformulas$det, idx, idx_i, k)
   }
   if (type != "response") {
     for (i in seq_along(resp_all)) {

@@ -1,16 +1,26 @@
 # TODO documentation
 evaluate_deterministic <- function(e, dformula, group_var, time_var) {
-  resp <- get_responses(dformula)
-  rank <- get_ranks(dformula)
+
   n_time <- length(unique(e$data[[time_var]]))
   n_id <- length(unique(e$data[[group_var]]))
-  id_offset <- seq(0, n_time * (n_id - 1), by = n_time)
+  idx_base <- seq(0, n_time * (n_id - 1), by = n_time)
+  assign_initial_values(e, dformula, idx_base + 1, n_time, n_id)
+  if (length(dformula) > 0 && n_time > 1) {
+    for (i in 2:n_time) {
+      idx <- rep(idx_base, each = 2) + (i-1):i
+      idx_i <- idx_base + i
+      assign_deterministic(e, dformula, idx, idx_i, n_id)
+    }
+  }
+}
+
+assign_initial_values <- function(e, dformula, idx, n_time, n_id) {
+  resp <- get_responses(dformula)
   init <- has_past(dformula)
   if (any(init)) {
-    idx <- which(init)
-    for (i in idx) {
-      e$data[1 + id_offset, dformula[[i]]$response] <-
-        dformula[[i]]$specials$past
+    init_idx <- which(init)
+    for (i in init_idx) {
+      e$data[idx, dformula[[i]]$response] <- dformula[[i]]$specials$past
     }
   }
   if (any(!init)) {
@@ -20,37 +30,33 @@ evaluate_deterministic <- function(e, dformula, group_var, time_var) {
     det_pre <- !init & det_from_stoch
     stoch_pre <- !init & !det_from_stoch
     if (any(det_pre)) {
-      data_eval <- e$data[rep(1 + id_offset, each = 2),]
-      eval_idx <- seq(1, 2 * n_id, by = 2)
-      data_eval[eval_idx,] <- NA
-      e$data[1 + id_offset, resp[det_pre]] <-
+      data_eval <- e$data[rep(idx, each = 2),]
+      eval_idx <- 1 + seq(1, 2 * n_id, by = 2)
+      data_eval[eval_idx - 1,] <- NA
+      e$data[idx, resp[det_pre]] <-
         full_model.matrix_pseudo(get_formulas(dformula[det_pre]),
-                                 data_eval)[eval_idx + 1, ]
+                                 data_eval)[eval_idx, ]
     }
     if (any(stoch_pre)) {
-      e$data[1 + id_offset, resp[stoch_pre]] <-
+      e$data[idx, resp[stoch_pre]] <-
         full_model.matrix_pseudo(get_formulas(dformula[stoch_pre]),
-                                 e$data[1 + id_offset, ])
+                                 e$data[idx, ])
     }
   }
-  if (length(dformula) > 0 && n_time > 1) {
-    id_offset_vec <- rep(id_offset, each = 2)
-    model_idx <- seq(3, 3 * n_id, by = 3)
-    # TODO check if separate evaluation data frame is needed
-    data_eval <- e$data[rep(1, n_id * 3),]
-    data_eval[,] <- NA
-    eval_idx <- rep(1:2, n_id)  + rep(seq(1, 3 * n_id, by = 3), each = 2)
-    u_rank <- sort(unique(rank))
-    for (i in 2:n_time) {
-      past_idx <- (i - 1):i + id_offset_vec
-      data_idx <- i + id_offset
-      for (j in u_rank) {
-        data_eval[eval_idx,] <- e$data[past_idx,]
-        idx <- which(rank == j)
-        e$data[data_idx, get_responses(dformula[idx])] <-
-          full_model.matrix_pseudo(get_formulas(dformula[idx]),
-                                   data_eval)[model_idx,]
-      }
-    }
+}
+
+assign_deterministic <- function(e, dformula, idx, idx_i, k) {
+  rl <- attr(dformula, "rank_list")
+  n_rank <- length(rl)
+  data_eval <- e$data[rep(1, k * 3),]
+  data_eval[,] <- NA
+  eval_idx <- rep(1:2, k)  + rep(seq(1, 3 * k, by = 3), each = 2)
+  model_idx <- seq(3, 3 * k, by = 3)
+  for (j in seq_len(n_rank)) {
+    det_idx <- rl[[j]]
+    data_eval[eval_idx,] <- e$data[idx,]
+    e$data[idx_i, get_responses(dformula[det_idx])] <-
+      full_model.matrix_pseudo(get_formulas(dformula[det_idx]),
+                               data_eval)[model_idx,]
   }
 }

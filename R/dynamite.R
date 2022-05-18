@@ -295,9 +295,16 @@ parse_lags <- function(e, dformula, group_var, time_var) {
       }
     }
   }
+  dformula_det <- c(dformula[channels_det], lags_channel, map_channel)
+  if (length(dformula_det) > 0) {
+    rank <- get_ranks(dformula_det)
+    u_rank <- sort(unique(rank))
+    rank_list <- lapply(u_rank, function(x) which(rank == x))
+    attr(dformula_det, "rank_list") <- rank_list
+  }
   list(
     all = dformula,
-    det = c(dformula[channels_det], lags_channel, map_channel),
+    det = dformula_det,
     stoch = structure(
       dformula[channels_stoch],
       splines = attr(dformula, "splines")

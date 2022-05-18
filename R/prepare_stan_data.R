@@ -198,7 +198,8 @@ prepare_stan_data <- function(e, dformula, group_var, time_var, priors = NULL) {
     model_vars = model_vars,
     sampling_vars = sampling_vars,
     priors = prior_list,
-    responses = responses
+    responses = responses,
+    u_names = names(model_matrix)
   )
 }
 
