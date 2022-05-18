@@ -124,7 +124,7 @@ parse_data <- function(e, group, time) {
   time_ivals <- diff(time)
   time_scale <- min(diff(time))
   if (any(time_ivals[!is.na(time_ivals)] %% time_scale > 0)) {
-    stop_("Observations must occur at regular time intervals.")
+    stop_("Observations must occur at regular time intervals")
   } else {
     full_time <- seq(time[1], time[length(time)], by = time_scale)
     time_groups <- e$data |>

@@ -87,7 +87,7 @@ formula_specials <- function(x) {
 formula_past <- function(formula) {
   formula_str <- deparse(formula)
   form_comp <- regexpr(
-    pattern = "^(?<resp>[^~]+) ~ (?<def>[^~]+) \\+ (?:past\\((?<past>.+)\\)){0,1}.*$",
+    pattern = "^(?<resp>[^~]+) ~ (?<def>[^~]+?)(?: \\+ past\\((?<past>.+)\\)){0,1}$",
     text = formula_str,
     perl = TRUE
   )
@@ -95,6 +95,9 @@ formula_past <- function(formula) {
   end <- start + attr(form_comp, "capture.length") - 1
   form_resp <- substr(formula_str, start[1], end[1])
   form_def <- substr(formula_str, start[2], end[2])
+  if (grepl("past\\(", form_def, perl = TRUE)) {
+    stop_("Past values term must be the last term of the formula")
+  }
   form_past <- substr(formula_str, start[3], end[3])
   form_both <- c(form_def, form_past)
   if (any(grepl("fixed\\(.+\\)", form_both))) {

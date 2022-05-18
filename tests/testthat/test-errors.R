@@ -39,20 +39,34 @@ test_that("duplicate response definition fails", {
 })
 
 test_that("duplicate spline definition fails", {
-  obs_lhs <- obs_test + splines()
-  obs_rhs <- obs(z ~ x, family = gaussian()) + splines()
   expect_error(
-    obs_lhs + obs_rhs,
+    obs_test + splines() + splines(),
     "Multiple definitions for splines"
   )
 })
 
-test_that("duplicate lags definition fails", {
+test_that("duplicate algs definition fails", {
+  expect_error(
+    obs_test + lags() + lags(),
+    "Multiple definitions for lags"
+  )
+})
+
+test_that("attempting to add dynamiteformulas with lag definitions fails", {
   obs_lhs <- obs_test + lags(k = 1)
   obs_rhs <- obs(z ~ x, family = gaussian()) + lags(k = 2)
   expect_error(
     obs_lhs + obs_rhs,
-    "Multiple definitions for lags"
+    "Both dynamiteformulas contain a lags definition"
+  )
+})
+
+test_that("attempting to add dynamiteformulas with splines definitions fails", {
+  obs_lhs <- obs_test + splines()
+  obs_rhs <- obs(z ~ x, family = gaussian()) + splines()
+  expect_error(
+    obs_lhs + obs_rhs,
+    "Both dynamiteformulas contain a splines definition"
   )
 })
 
@@ -90,6 +104,13 @@ test_that("No intercept of predictors fails", {
   expect_error(
     obs(y ~ -1, family = gaussian()),
     "Invalid formula for response variable 'y', there are no predictors nor an intercept"
+  )
+})
+
+test_that("past in the middle of formula fails", {
+  expect_error(
+    aux(y ~ x + past(0) + z),
+    "Past values term must be the last term of the formula"
   )
 })
 
@@ -145,5 +166,27 @@ test_that("missing lag variable fails", {
              data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
              group = "x", time = "z"),
     "Unable to construct lagged values of 'd', no such variables are present in the data"
+  )
+})
+
+test_that("irregular time intervals fails", {
+  data_irreg <- data.frame(
+    y = c(1, 2, 3, 4, 5),
+    x = c(1, 1, 1, 2, 2),
+    t = c(2, 5, 7, 3.5, 5.75)
+  )
+  expect_error(
+    dynamite(obs_test, data = data_irreg, group = "x", time = "t"),
+    "Observations must occur at regular time intervals"
+  )
+})
+
+test_that("deterministic insufficient initial values fails", {
+  expect_error(
+    dynamite(dformula = aux(d ~ lag(d, 1)),
+             data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
+             group = "x",
+             time = "z"),
+    "Deterministic channel 'd' requires 1 initial values, but only 0 values have been specified"
   )
 })

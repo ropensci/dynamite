@@ -241,10 +241,10 @@ join_dynamiteformulas <- function(e1, e2) {
           cs(resp_all[resp_duped]))
   }
   if (!is.null(attr(e1, "lags")) && !is.null(attr(e2, "lags"))) {
-    stop_("Multiple definitions for lags")
+    stop_("Both dynamiteformulas contain a lags definition")
   }
   if (!is.null(attr(e1, "splines")) && !is.null(attr(e2, "splines"))) {
-    stop_("Multiple definitions for splines")
+    stop_("Both dynamiteformulas contain a splines definition")
   }
   rhs_list <- list()
   rhs_list[[1]] <- get_predictors(e1)
