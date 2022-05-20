@@ -87,12 +87,12 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     draws <- rstan::extract(
       x$stanfit, pars = paste0(type, "_", response), permuted = FALSE)
     n_draws <- prod(dim(draws)[1:2])
-    category <- attr(x$responses[[response]], "levels")[-1]
+    category <- attr(x$stan$responses[[response]], "levels")[-1]
     if(is.null(category)) category <- NA
 
     if (type == "beta") {
       var_names <- paste0("beta_", response, "_",
-                          names(x$model_vars[[response]]$L_fixed))
+                          names(x$stan$model_vars[[response]]$L_fixed))
       n_vars <- length(var_names)
       d <- data.frame(
         parameter = rep(var_names, each = n_draws),
@@ -104,7 +104,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     }
     if (type == "delta") {
       var_names <- paste0("delta_", response, "_",
-                          names(x$model_vars[[response]]$L_varying))
+                          names(x$stan$model_vars[[response]]$L_varying))
       n_vars <- length(var_names)
       n_time <- length(x$time)
       d <- data.frame(
@@ -117,7 +117,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     }
     if (type == "tau") {
       var_names <- paste0("tau_", response, "_",
-                          names(x$model_vars[[response]]$L_varying))
+                          names(x$stan$model_vars[[response]]$L_varying))
       d <- data.frame(
         parameter = rep(var_names, each = n_draws),
         value = c(draws),

@@ -69,14 +69,14 @@ dynamite <- function(dformula, data, group, time,
       dformula = original_dformula,
       dformulas = dformulas,
       data = data,
+      stan = stan,
       time_var = vars$time,
       group_var = vars$group,
-      stan = stan
+      priors = dplyr::bind_rows(stan$priors)
       #spline = list(
       #  B = sampling_vars$Bs,
       #  D = sampling_vars$D
       #),
-      #priors = dplyr::bind_rows(model_priors),
       #ord = data_names[!data_names %in% c(group_var, time_var)],
       #J = attr(model_matrix, "assign")
     ),

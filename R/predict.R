@@ -84,7 +84,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
     # create separate column for each level of categorical variables
     for (i in seq_along(resp_stoch)) {
       resp <- resp_stoch[i]
-      if (is_categorical(dformulas$stoch[[i]]$family)) {
+      if (is_categorical(object$dformulas$stoch[[i]]$family)) {
         resp_levels <- object$levels[[resp]]
         newdata[, c(glue::glue("{resp}_{resp_levels}"))] <- NA # TODO: glued names to formula?
       } else {
@@ -116,7 +116,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
           list(
             model_matrix = model_matrix[, J[[j]], drop = FALSE],
             samples = samples, specials[[j]], resp,
-            time = i - fixed, type, n_draws = n_draws
+            time = i - 1, type, n_draws = n_draws
           )
         )
         if (is_categorical(object$dformulas$stoch[[j]]$family)) {
@@ -138,9 +138,9 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
     assign_deterministic(e, object$dformulas$det, idx, idx_i, k)
   }
   if (type != "response") {
-    for (i in seq_along(resp_all)) {
-      resp <- resp_all[i]
-      if (is_categorical(basis$dformula[[i]]$family)) {
+    for (i in seq_along(resp_stoch)) {
+      resp <- resp_stoch[i]
+      if (is_categorical(object$dformulas$stoch[[i]]$family)) {
         newdata[[resp]] <- NULL
       } else {
         newdata[[resp]] <- newdata[[c(glue::glue("{resp}_store"))]]
