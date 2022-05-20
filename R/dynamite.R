@@ -54,7 +54,7 @@ dynamite <- function(dformula, data, group, time,
     NULL
   } else {
     message("Compiling Stan model")
-    rstan::stan_model(model_code = stan$model_code)
+    rstan::stan_model(model_code = model_code)
   }
   stanfit <- if (isTRUE(debug$no_compile) || isTRUE(debug$no_sampling)) {
     NULL

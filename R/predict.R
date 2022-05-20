@@ -31,7 +31,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
   if (is.null(newdata)) {
     newdata <- object$data
     group <- newdata[[object$group_var]]
-    time <- object$time
+    time <- newdata[[object$time_var]]
   } else {
     # TODO newdata must start from full_time[1]
     if (!(object$group_var %in% names(newdata))) {
@@ -62,10 +62,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
             "contains time points not found in the original data")
     }
   }
-
-  #basis <- object$prediction_basis
-  #fixed <- basis$fixed
-  n_time <- length(time)
+  n_time <- length(unique(time))
   n_id <- length(unique(group))
   #if (n_time <= fixed) {
   #  stop_("Model definition implies ", fixed,
@@ -94,25 +91,24 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
       }
     }
   }
+  k <- n_id * n_draws
   e <- new.env()
   e$data <- data.frame(newdata, draw = rep(1:n_draws, each = nrow(newdata)))
+  n <- nrow(e$data)
   assign_initial_values(e, object$dformulas$det, seq(1, n, by = n_time),
                         n_time, n_id)
   samples <- rstan::extract(object$stanfit)
-  #u_names <- unique(names(basis$start))
-  n <- nrow(newdata)
   for (i in 2:n_time) {
-    k <- n_id * n_draws
-    idx <- rep(seq(i - 1, n, by = n_time), each = 2) + rep(0:1, times =k)
+    idx <- rep(seq(i - 1, n, by = n_time), each = 2) + rep(0:1, times = k)
     idx_i <- seq(i, n, by = n_time)
     model_matrix <- full_model.matrix_predict(
-      dformula$stoch,
+      object$dformulas$stoch,
       e$data[idx, ],
       object$u_names
     )
     for (j in seq_along(resp_stoch)) {
-      resp <- resp_all[j]
-      J <- object$stan$model_vars[[i]]$J
+      resp <- resp_stoch[j]
+      J <- object$stan$model_vars[[j]]$J
       if (any(is.na(e$data[idx_i, resp]))) { # TODO partial missingness?
         sim <- do.call(
           paste0("predict_", object$dformulas$stoch[[j]]$family),
@@ -151,10 +147,9 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
       }
     }
   }
-
   # TODO return either full newdata or just the responses
   # newdata[, resp_all, drop = FALSE]
-  newdata
+  e$data
 }
 
 predict.dynamitefit_forecast <- function(object, newdata, type, n_draws) {
