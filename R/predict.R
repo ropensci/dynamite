@@ -29,26 +29,34 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
   # TODO needs to support different starting value? Although nothing is done for the time points without NA so perhaps not necessary?
 
   if (is.null(newdata)) {
-    newdata <- object$data
-    group <- newdata[[object$group_var]]
-    time <- newdata[[object$time_var]]
+    newdata <- object$data |>
+      dplyr::arrange(
+        dplyr::across(
+          dplyr::all_of(c(object$group_var, object$time_var))
+        )
+      )
+    group <- unique(newdata[[object$group_var]])
+    time <- unique(newdata[[object$time_var]])
   } else {
     # TODO newdata must start from full_time[1]
     if (!(object$group_var %in% names(newdata))) {
-      stop_("Grouping variable", object$group_var, "not found in 'newdata'")
+      stop_("Grouping variable '", object$group_var, "' not found in 'newdata'")
     }
     group <- newdata[[object$group_var]]
-    if (is.factor(group)) group <- droplevels(group)
+    if (is.factor(group)) {
+      # TODO is this necessary? only length of unique values matters
+      group <- droplevels(group)
+    }
+    group <- unique(group)
     # TODO doesn't really matter at least at the moment
     if (!all(group %in% object$data[[object$group_var]])) {
-      stop_("Grouping variable", object$group_var,
+      stop_("Grouping variable '", object$group_var, "' ",
             "contains new levels not found in the original data")
     }
-
     if (!(object$time_var %in% names(newdata))) {
-      stop_("Time index variable", object$time_var, "not found in 'newdata'")
+      stop_("Time index variable '", object$time_var, "' ",
+            "not found in 'newdata'")
     }
-    # sort just in case
     newdata <- newdata |>
       dplyr::arrange(
         dplyr::across(
@@ -58,27 +66,20 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
     # TODO just use the original time points starting from start_time
     time <- unique(newdata[[object$time_var]])
     if (!all(time %in% object$time)) {
-      stop_("Timing variable", object$time_var,
+      stop_("Timing variable '", object$time_var, "' ",
             "contains time points not found in the original data")
     }
   }
-  n_time <- length(unique(time))
-  n_id <- length(unique(group))
-  #if (n_time <= fixed) {
-  #  stop_("Model definition implies ", fixed,
-  #        " fixed time points, but 'newdata' has only ",
-  #        n_time, " time points.")
-  #}
+  n_time <- length(time)
+  n_id <- length(group)
   resp_stoch <- get_responses(object$dformulas$stoch)
   resp_det <- get_responses(object$dformulas$det)
-  # TODO check that fixed time points do not contain NAs
   for (resp in resp_stoch) {
     if (is.null(newdata[[resp]])) {
       newdata[[resp]] <- NA
     }
   }
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
-
   if (type != "response") {
     # create separate column for each level of categorical variables
     for (i in seq_along(resp_stoch)) {
