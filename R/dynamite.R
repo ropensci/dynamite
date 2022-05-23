@@ -73,17 +73,11 @@ dynamite <- function(dformula, data, group, time,
       time_var = vars$time,
       group_var = vars$group,
       priors = dplyr::bind_rows(stan$priors)
-      #spline = list(
-      #  B = sampling_vars$Bs,
-      #  D = sampling_vars$D
-      #),
-      #ord = data_names[!data_names %in% c(group_var, time_var)],
-      #J = attr(model_matrix, "assign")
     ),
     class = "dynamitefit"
   )
   # Adds any object in the environment of this function to the return object
-  # if its name is icluded in the debug argument
+  # if its name is included in the debug argument in the form `name = TRUE`
   for (opt in names(debug)) {
     if (debug[[opt]]) {
       got <- try(get(x = opt), silent = TRUE)
@@ -308,7 +302,8 @@ parse_lags <- function(e, dformula, group_var, time_var) {
     stoch = structure(
       dformula[channels_stoch],
       splines = attr(dformula, "splines")
-    )
+    ),
+    max_lag = max(lag_map$k, lag_all$k, 0)
   )
 }
 
