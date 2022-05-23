@@ -29,17 +29,26 @@ fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, ...) {
     stop_("Model definition implies ", fixed, " fixed time points, ",
           "but 'newdata' has only ", n_time, " time points.")
   }
-  resp_all <- get_responses(basis$dformula)
+  resp_stoch <- get_responses(object$dformulas$stoch)
   samples <- rstan::extract(object$stanfit)
-  u_names <- unique(names(basis$start))
+  J <- lapply(seq_along(resp_stoch), function(j) {
+    object$stan$model_vars[[j]]$J
+  })
+  J_fixed <- lapply(seq_along(resp_stoch), function(j) {
+    object$stan$model_vars[[j]]$J_fixed
+  })
+  J_varying <- lapply(seq_along(resp_stoch), function(j) {
+    object$stan$model_vars[[j]]$J_varying
+  })
   model_matrix <- full_model.matrix_fast(
-    basis$formula,
-    newdata, u_names
+    object$dformulas$stoch,
+    newdata,
+    object$stan$u_names
   )
   # create separate column for each level of categorical variables
-  for (i in seq_along(resp_all)) {
-    resp <- resp_all[i]
-    if (is_categorical(basis$formula[[i]]$family)) {
+  for (i in seq_along(resp_stoch)) {
+    resp <- resp_stoch[i]
+    if (is_categorical(object$dformulas$stoch[[i]]$family)) {
       resp_levels <- object$levels[[resp]]
       # TODO: glued names to formula?
       newdata[, c(glue::glue("{resp}_{resp_levels}"))] <- NA
@@ -48,29 +57,29 @@ fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, ...) {
   }
   newdata <- data.frame(newdata, draw = rep(1:n_draws, each = nrow(newdata)))
   n <- nrow(newdata)
-  for (i in (fixed + 1):n_time) {
-    idx_i <- seq(i, n, by = n_time) # TODO fix for a case of unequal number of time points per group
+  for (i in 2:n_time) {
+    idx_i <- seq(i, n, by = n_time)
     idx_i2 <- seq(i, nrow(model_matrix), by = n_time)
-    for (j in seq_along(resp_all)) {
-      resp <- resp_all[j]
+    for (j in seq_along(resp_stoch)) {
+      resp <- resp_stoch[j]
       s <- matrix(samples[[paste0("beta_", resp)]][1:n_draws, i - fixed, ],
                   nrow = n_draws)
 
-      if (is_categorical(basis$formula[[j]]$family)) {
+      if (is_categorical(object$dformulas$stoch[[j]]$family)) {
         idx_resp <- which(names(newdata) %in%
                             c(glue::glue("{resp}_{resp_levels}")))
         newdata[idx_i, idx_resp] <- do.call(
-          paste0("fitted_", basis$formula[[j]]$family),
+          paste0("fitted_", object$dformulas$stoch[[j]]$family),
           list(
-            model_matrix = model_matrix[idx_i2, basis$J[[j]], drop = FALSE],
+            model_matrix = model_matrix[idx_i2, J[[j]], drop = FALSE],
             samples = s
           )
         )
       } else {
         newdata[idx_i, resp] <- do.call(
-          paste0("fitted_", basis$formula[[j]]$family),
+          paste0("fitted_", object$dformulas$stoch[[j]]$family),
           list(
-            model_matrix = model_matrix[idx_i2, basis$J[[j]], drop = FALSE],
+            model_matrix = model_matrix[idx_i2, J[[j]], drop = FALSE],
             samples = s
           )
         )

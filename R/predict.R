@@ -57,15 +57,15 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   }
   non_na <- newdata |>
     dplyr::group_by(.data[[group_var]]) |>
-    dplyr::summarise(obs = complete.cases(
+    dplyr::summarise(obs = stats::complete.cases(
       dplyr::across(
         dplyr::all_of(resp_stoch)
       )
     ), .groups = "keep")
   fixed_obs <- non_na |>
     dplyr::summarise(
-      first_obs = which(obs)[1],
-      horizon = all(obs[first_obs:(first_obs + n_fixed - 1)])
+      first_obs = which(.data$obs)[1],
+      horizon = all(.data$obs[.data$first_obs:(.data$first_obs + n_fixed - 1)])
     )
   lacking_obs <- is.na(fixed_obs$horizon) | (fixed_obs$horizon < n_fixed)
   if (any(lacking_obs)) {

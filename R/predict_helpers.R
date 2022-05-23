@@ -1,3 +1,4 @@
+# TODO documentation
 check_newdata <- function(newdata, data, group_var, time_var) {
   if (is.null(newdata)) {
     newdata <- data |>
@@ -33,7 +34,7 @@ check_newdata <- function(newdata, data, group_var, time_var) {
     # TODO just use the original time points starting from start_time
     time <- unique(newdata[[time_var]])
     if (!all(time %in% data[[time_var]])) {
-      stop_("Timing variable '", object$time_var, "' ",
+      stop_("Timing variable '", time_var, "' ",
             "contains time points not found in the original data")
     }
   }
