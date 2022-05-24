@@ -1,7 +1,10 @@
 # Some stuff that might be useful
 
 # This is needed to use tidyselect's where which is not exported.
-utils::globalVariables("where")
+utils::globalVariables(c(".", ".I", ".N", ".SD", "where"))
+
+# Data table awareness
+.datatable.aware = TRUE
 
 #' Create a list with names defined by the arguments
 #'

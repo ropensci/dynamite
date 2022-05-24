@@ -29,9 +29,19 @@ is.lags <- function(x) {
 #' @param k \[`integer(1)`: \sQuote{1}]\cr Number of positions to lag by.
 #'
 #' @noRd
-lag_ <- function(x, k = 1) {
+lag_ <- function(x, k) {
   xlen <- length(x)
-  c(rep(NA, k), x[1:(length(x) - k)])
+  lag_idx <- seq_len(xlen - k)
+  # Need to ensure that NA's have the same type as the original values
+  # for data.table
+  out <- vector(mode = mode(x), length = xlen)
+  out[1:k] <- NA
+  out[k + lag_idx] <- x[lag_idx]
+  out
+}
+
+lag_eval <- function(x) {
+  rep(x[1], 2)
 }
 
 #' Find lag terms in a character vector

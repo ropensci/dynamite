@@ -1,12 +1,7 @@
 # TODO documentation
 check_newdata <- function(newdata, data, group_var, time_var) {
   if (is.null(newdata)) {
-    newdata <- data |>
-      dplyr::arrange(
-        dplyr::across(
-          dplyr::all_of(c(group_var, time_var))
-        )
-      )
+    newdata <- data
   } else {
     if (!(group_var %in% names(newdata))) {
       stop_("Grouping variable '", group_var, "' not found in 'newdata'")
@@ -25,13 +20,6 @@ check_newdata <- function(newdata, data, group_var, time_var) {
     if (!(time_var %in% names(newdata))) {
       stop_("Time index variable '", time_var, "' not found in 'newdata'")
     }
-    newdata <- newdata |>
-      dplyr::arrange(
-        dplyr::across(
-          dplyr::all_of(c(group_var, time_var))
-        )
-      )
-    # TODO just use the original time points starting from start_time
     time <- unique(newdata[[time_var]])
     if (!all(time %in% data[[time_var]])) {
       stop_("Timing variable '", time_var, "' ",

@@ -35,16 +35,29 @@
 dynamite <- function(dformula, data, group, time,
                      priors = NULL, debug = NULL, ...) {
   # stored for return object
-  original_dformula <- dformula
   if (!is.data.frame(data)) {
     stop_("Argument 'data' is not a data.frame object")
   }
-  e <- new.env()
-  e$data <- data
-  vars <- parse_data(e, group, time)
-  dformulas <- parse_lags(e, dformula, vars$group, vars$time)
-  evaluate_deterministic(e, dformulas$det, vars$group, vars$time)
-  stan <- prepare_stan_data(e, dformulas$stoch, vars$group, vars$time, priors)
+  if (missing(group) || is.null(group)) {
+    group <- group_var <- NULL
+  } else {
+    group_var <- try_(group = group, type = "character")
+    if (is.null(data[[group_var]])) {
+      stop_("Grouping variable '", group_var, "' is not present in the data")
+    }
+  }
+  if (missing(time)) {
+    stop_("Argument 'time' is missing.")
+  }
+  time_var <- try_(time = time, type = "character")
+  if (is.null(data[[time_var]])) {
+    stop_("Time index variable '", time_var, "' is not present in the data")
+  }
+  original_dformula <- dformula
+  data <- parse_data(data, group_var, time_var)
+  dformulas <- parse_lags(data, dformula, group_var, time_var)
+  evaluate_deterministic(data, dformulas$det, group_var, time_var)
+  stan <- prepare_stan_data(data, dformulas$stoch, group_var, time_var, priors)
   model_code <- create_blocks(dformula = dformulas$stoch, indent = 2L,
                               vars = stan$model_vars)
   # TODO needs to be NULL?
@@ -70,8 +83,8 @@ dynamite <- function(dformula, data, group, time,
       dformulas = dformulas,
       data = data,
       stan = stan,
-      time_var = vars$time,
-      group_var = vars$group,
+      group_var = group_var,
+      time_var = time_var,
       priors = dplyr::bind_rows(stan$priors)
     ),
     class = "dynamitefit"
@@ -89,27 +102,12 @@ dynamite <- function(dformula, data, group, time,
   out
 }
 
-parse_data <- function(e, group, time) {
-  if (missing(group) || is.null(group)) {
-    group <- group_var <- NULL
-  } else {
-    group_var <- try_(group = group, type = "character")
-    if (is.null(e$data[[group_var]])) {
-      stop_("Grouping variable '", group_var, "' is not present in the data")
-    }
-  }
-  if (missing(time)) {
-    stop_("Argument 'time' is missing.")
-  }
-  time_var <- try_(time = time, type = "character")
-  if (is.null(e$data[[time_var]])) {
-    stop_("Time index variable '", time_var, "' is not present in the data")
-  }
-  e$data <- droplevels(e$data) # TODO document this in return value
-  e$data <- e$data |>
-    dplyr::mutate(dplyr::across(where(is.character), as.factor)) |>
-    dplyr::arrange(dplyr::across(dplyr::all_of(c(group_var, time_var))))
-  time <- sort(unique(e$data[[time_var]]))
+parse_data <- function(data, group_var, time_var) {
+
+  data <- droplevels(data) # TODO document this in return value
+  data <- data |>
+    dplyr::mutate(dplyr::across(where(is.character), as.factor))
+  time <- sort(unique(data[[time_var]]))
   if (length(time) == 1) {
     stop_("There must be at least two time points in the data")
   }
@@ -121,30 +119,29 @@ parse_data <- function(e, group, time) {
     stop_("Observations must occur at regular time intervals")
   } else {
     full_time <- seq(time[1], time[length(time)], by = time_scale)
-    time_groups <- e$data |>
+    time_groups <- data |>
       dplyr::group_by(.data[[group_var]]) |>
-      dplyr::summarise(has_missing =
-                         !identical(.data[[time_var]], full_time))
+      dplyr::summarise(has_missing = !identical(.data[[time_var]], full_time))
     if (any(time_groups$has_missing)) {
       full_data_template <- expand.grid(
         time = time,
-        group = unique(e$data[[group_var]])
+        group = unique(data[[group_var]])
       )
       names(full_data_template) <- c(time_var, group_var)
-      e$data <- full_data_template |>
-        dplyr::left_join(e$data, by = c(group_var, time_var))
+      data <- full_data_template |>
+        dplyr::left_join(data, by = c(group_var, time_var))
     }
   }
-  list(group = group_var, time = time_var)
+  data.table::as.data.table(data, key = c(group_var, time_var))
 }
 
-parse_lags <- function(e, dformula, group_var, time_var) {
+parse_lags <- function(data, dformula, group_var, time_var) {
   channels_det <- which_deterministic(dformula)
   channels_stoch <- which_stochastic(dformula)
   resp_all <- get_responses(dformula)
-  n_rows <- nrow(e$data)
+  n_rows <- data[,.N]
   n_channels <- length(resp_all)
-  data_names <- names(e$data)
+  data_names <- names(data)
   lag_map <- extract_lags(get_predictors(dformula))
   lag_all <- attr(dformula, "lags")
   lags_channel <- list()
@@ -161,9 +158,9 @@ parse_lags <- function(e, dformula, group_var, time_var) {
         idx <- (i - 1) * n_channels + j
         lags_lhs[idx] <- paste0(resp_all[k], "_lag_", i)
         if (i == 1) {
-          lags_rhs <- paste0("lag_(", resp_all[k], ", 1)")
+          lags_rhs <- paste0("lag_eval(", resp_all[k], ")")
         } else {
-          lags_rhs <- paste0("lag_(", resp_all[k], "_lag_", i - 1, ", 1)")
+          lags_rhs <- paste0("lag_eval(", resp_all[k], "_lag_", i - 1, ")")
         }
         lags_channel[[idx]] <- dynamitechannel(
           formula = as.formula(paste0(lags_lhs[idx], " ~ ", lags_rhs)),
@@ -241,9 +238,9 @@ parse_lags <- function(e, dformula, group_var, time_var) {
         for (i in seq_along(lag_idx)) {
           j <- lag_idx[i]
           if (i == 1) {
-            map_rhs <- paste0("lag_(", y, ", 1)")
+            map_rhs <- paste0("lag_eval(", y, ")")
           } else {
-            map_rhs <- paste0("lag_(", y, "_lag", i - 1, ", 1)")
+            map_rhs <- paste0("lag_eval(", y, "_lag", i - 1, ")")
           }
           map_lhs <- paste0(y, "_lag", i)
           idx <- idx + 1
@@ -272,10 +269,8 @@ parse_lags <- function(e, dformula, group_var, time_var) {
           if (lag_map$present[j]) {
             lag_k <- lag_map$k[j]
             lag_var <- paste0(data_names[data_idx], "_lag", lag_k)
-            e$data <- e$data |>
-              dplyr::group_by(.data[[group_var]]) |>
-              dplyr::mutate({{lag_var}} := lag_(.data[[y]], lag_k)) |>
-              dplyr::ungroup()
+            data[, (lag_var) := lapply(.SD, lag_, k = lag_k),
+                 .SDcols = y, by = group_var]
             for (k in seq_len(n_channels)) {
               dformula[[k]]$formula <- gsub_formula(
                 pattern = lag_map$src[j],
@@ -292,9 +287,7 @@ parse_lags <- function(e, dformula, group_var, time_var) {
   dformula_det <- c(dformula[channels_det], lags_channel, map_channel)
   if (length(dformula_det) > 0) {
     rank <- get_ranks(dformula_det)
-    u_rank <- sort(unique(rank))
-    rank_list <- lapply(u_rank, function(x) which(rank == x))
-    attr(dformula_det, "rank_list") <- rank_list
+    attr(dformula_det, "rank_order") <- order(rank)
   }
   list(
     all = dformula,

@@ -44,6 +44,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   time <- unique(newdata[[time_var]])
   n_time <- length(time)
   n_id <- length(group)
+  n_new <- nrow(newdata)
   resp_stoch <- get_responses(object$dformulas$stoch)
   resp_det <- get_responses(object$dformulas$det)
   for (resp in resp_stoch) {
@@ -76,7 +77,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
     predict_idx <- unlist(lapply(seq_len(n_id), function(i) {
       (fixed_obs$first_obs[i] + n_fixed):n_time + (i - 1) * n_time
     }))
-    newdata[predict_idx, resp_stoch] <- NA
+    newdata[predict_idx, c(resp_stoch, resp_det)] <- NA
   }
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
   if (type != "response") {
@@ -85,18 +86,25 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
       resp <- resp_stoch[i]
       if (is_categorical(object$dformulas$stoch[[i]]$family)) {
         resp_levels <- object$levels[[resp]]
-        newdata[, c(glue::glue("{resp}_{resp_levels}"))] <- NA # TODO: glued names to formula?
+        newdata[, (glue::glue("{resp}_{resp_levels}")) := NA_integer_] # TODO: glued names to formula?
       } else {
-        newdata[[c(glue::glue("{resp}_store"))]] <- newdata[[resp]]
+        newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
       }
     }
   }
   k <- n_id * n_draws
-  e <- new.env()
-  e$data <- data.frame(newdata, draw = rep(1:n_draws, each = nrow(newdata)))
-  n <- nrow(e$data)
-  assign_initial_values(e, object$dformulas$det, seq(1, n, by = n_time),
-                        n_time, n_id)
+  newdata <- data.table::as.data.table(newdata)
+  newdata <- newdata[rep(seq_len(n_new), n_draws), ]
+  newdata[, ("draw") := rep(1:n_draws, each = n_new)]
+  data.table::setkeyv(newdata, c("draw", group_var, time_var))
+  n <- nrow(newdata)
+  newdata_names <- names(newdata)
+  full_group <- c("draw", group_var)
+  assign_initial_values(newdata, object$dformulas$det, full_group)
+  exprs <- lapply(get_formulas(object$dformulas$det), function(x) {
+    formula2expression(formula_rhs(x))
+  })
+  ro <- attr(object$dformulas$det, "rank_order")
   samples <- rstan::extract(object$stanfit)
   J <- lapply(seq_along(resp_stoch), function(j) {
     object$stan$model_vars[[j]]$J
@@ -110,15 +118,15 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   for (i in 2:n_time) {
     idx <- rep(seq(i - 1, n, by = n_time), each = 2) + rep(0:1, times = k)
     idx_i <- seq(i, n, by = n_time)
-    assign_deterministic(e, object$dformulas$det, idx, idx_i, k)
+    assign_deterministic(newdata, resp_det, exprs, ro, idx, idx_i, full_group)
     model_matrix <- full_model.matrix_predict(
       object$dformulas$stoch,
-      e$data[idx, ],
+      newdata[idx, ],
       object$stan$u_names
     )
     for (j in seq_along(resp_stoch)) {
       resp <- resp_stoch[j]
-      na_i <- which(is.na(e$data[idx_i, resp]))
+      na_i <- which(is.na(newdata[idx_i, .SD, .SDcols = resp]))
       idx_pred <- idx_i[na_i]
       if (length(na_i) > 0) {
         sim <- do.call(
@@ -133,16 +141,16 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
         if (is_categorical(object$dformulas$stoch[[j]]$family)) {
           resp_levels <- object$levels[[resp]]
           if (type != "response") {
-            idx_resp <- which(names(newdata) %in%
+            idx_resp <- which(newdata_names %in%
                                 c(glue::glue("{resp}_{resp_levels}")))
-            e$data[idx_pred, idx_resp] <- sim$mean_or_link
+            newdata[idx_pred, (newdata_names[idx_resp]) := sim$mean_or_link]
           }
-          e$data[idx_pred, resp] <- resp_levels[sim$response]
+          newdata[idx_pred, (resp) := resp_levels[sim$response]]
         } else {
           if (type != "response") {
-            e$data[idx_pred, c(glue::glue("{resp}_store"))] <- sim$mean_or_link
+            newdata[idx_pred, (glue::glue("{resp}_store")) := sim$mean_or_link]
           }
-          e$data[idx_pred, resp] <- sim$response
+          newdata[idx_pred, (resp) := sim$response]
         }
       }
     }
@@ -160,7 +168,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   }
   # TODO return either full newdata or just the responses
   # newdata[, resp_all, drop = FALSE]
-  e$data
+  newdata
 }
 
 predict.dynamitefit_forecast <- function(object, newdata, type, n_draws) {
