@@ -45,7 +45,7 @@ create_data <- function(dformula, idt, vars) {
     "int<lower=1> N; // number of individuals",
     "int<lower=1> K; // total number of covariates across all channels",
     "matrix[N, K] X[T]; // centered covariates as an array of N x K matrices",
-    "matrix[K, T] X_m; // Means of all covariates",
+    "row_vector[K] X_m; // Means of all covariates at first time point",
     onlyif(has_splines, "int<lower=0> D; // number of B-splines"),
     onlyif(has_splines, "matrix[D, T] Bs; // B-spline basis matrix"),
     .indent = idt(1),

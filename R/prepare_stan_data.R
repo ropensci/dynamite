@@ -72,10 +72,11 @@ prepare_stan_data <- function(dformula, data, group_var, time_var, priors = NULL
     ),
     c(3, 1, 2)
   )
-  X_means <- apply(X, 3, mean, na.rm = TRUE)
-  for(i in 1:K) X[, , i] <- X[, , i] - X_means[i]
-  sd_x <- setNames(pmax(0.5, apply(X, 3, sd, na.rm = TRUE)),
+  sd_x <- setNames(apply(X, 3, sd, na.rm = TRUE),
                    colnames(model_matrix))
+  # needed for default priors, 0.5 is pretty arbitrary
+  sd_x <- pmax(0.5, sd_x)
+  x_means <- apply(X[1, , drop = FALSE], 3, mean, na.rm = TRUE)
   X_na <- is.na(X)
   # Placeholder for NAs in Stan
   X[X_na] <- 0
@@ -128,6 +129,9 @@ prepare_stan_data <- function(dformula, data, group_var, time_var, priors = NULL
     } else {
       channel$obs <- ""
     }
+    # TODO, needs more detail, is intercept time varying or fixed?
+    channel$has_fixed_intercept <- has_intercept(dformula[[i]])
+    channel$has_varying_intercept <- has_intercept(dformula[[i]])
     channel$has_fixed <- channel$K_fixed > 0
     channel$has_varying <- channel$K_varying > 0
     channel$lb <- lb
@@ -193,7 +197,7 @@ prepare_stan_data <- function(dformula, data, group_var, time_var, priors = NULL
   sampling_vars$K <- K
   sampling_vars$X <- X
   sampling_vars$T <- T_full
-  sampling_vars$X_means <- x_means
+  sampling_vars$X_m <- x_means
   list(
     model_vars = model_vars,
     sampling_vars = sampling_vars,

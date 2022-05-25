@@ -190,16 +190,17 @@ transformed_data_lines_negbin <- quote({
 parameters_lines_default <- quote({
 
   intercept <- ""
-  if (has_intercept) {
-    intercept <- "real a_{y}[T];"
+  if (has_fixed_intercept || has_varying_intercept) {
+    intercept <- "real a_{y};"
   }
-
   aname <- ifelse_(noncentered, "omega_raw_", "omega_")
   paste_rows(
     onlyif(has_fixed, "vector[{K_fixed}] beta_{y};"),
     onlyif(has_varying, "matrix[{K_varying}, D] {aname}{y};"),
     onlyif(has_varying, "vector<lower={lb}>[{K_varying}] tau_{y};"),
     intercept,
+    onlyif(has_varying_intercept, "vector[D - 1] omega_raw_alpha_{y};"),
+    onlyif(has_varying_intercept, "real<lower={lb}> tau_alpha_{y};"),
     .indent = idt(1)
   )
 })
@@ -207,16 +208,17 @@ parameters_lines_default <- quote({
 parameters_lines_categorical <- quote({
 
   intercept <- ""
-  if (has_intercept) {
-    intercept <- "vector[{S - 1}] a_{y}[T];"
+  if (has_fixed_intercept) {
+    intercept <- "vector[{S - 1}] a_{y};"
   }
-
   aname <- ifelse_(noncentered, "omega_raw_", "omega_")
   paste_rows(
     onlyif(has_fixed, "matrix[{K_fixed}, {S - 1}] beta_{y};"),
     onlyif(has_varying, "matrix[{K_varying}, D] {aname}{y}[{S - 1}];"),
     onlyif(has_varying, "vector<lower={lb}>[{K_varying}] tau_{y};"),
     intercept,
+    onlyif(has_varying_intercept, "vector[D - 1] omega_raw_alpha_{y}[{S - 1}];"),
+    onlyif(has_varying_intercept, "real<lower={lb}> tau_alpha_{y};"),
     .indent = idt(1)
   )
 })
@@ -253,11 +255,10 @@ parameters_lines_negbin <- quote({
 # Transformed parameters --------------------------------------------------
 
 transformed_parameters_lines_default <- quote({
-  mtext <- ""
   mtext_varying_noncentered <- ""
   mtext_varying <- ""
+  mtext_intercept <- ""
   if (has_varying) {
-    mtext <- "vector[{K_varying}] delta_{y}[T];"
     if (noncentered) {
       lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
       mtext_varying_noncentered <- paste_rows(
@@ -271,15 +272,45 @@ transformed_parameters_lines_default <- quote({
       )
     }
     mtext_varying <- paste_rows(
+      "vector[{K_varying}] delta_{y}[T];",
       "for (t in 1:T) {{",
         "delta_{y}[t] = omega_{y} * Bs[, t];",
       "}}",
-      .indent = idt(c(1, 2, 1)),
+      .indent = idt(c(1, 1, 2, 1)),
       .parse = FALSE
     )
   }
-  paste_rows(mtext, mtext_varying_noncentered, mtext_varying,
-    .indent = idt(c(1, 0, 0))
+  if (has_varying_intercept) {
+    mtext_intercept <- paste_rows(
+      "vector[D] omega_alpha_{y};",
+      "{{",
+      "vector[{K}] gamma_{y};",
+      onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+      onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1];"),
+      "omega_alpha_{y}[1] = a_{y} - X_m * gamma_{y};",
+      "for (i in 2:D) {{",
+      "omega_alpha_{y}[i] = omega_alpha_{y}[i - 1] + omega_raw_alpha{y}[i - 1] .* tau_alpha_{y}",
+      "}}",
+      "}}",
+      .indent = idt(c(1, 1, 2, 2, 2, 2, 2, 3, 2, 1)),
+      .parse = FALSE
+    )
+  }
+  if (has_fixed_intercept) {
+    mtext_intercept <- paste_rows(
+      "real alpha_{y};",
+      "{{",
+        "vector[{K}] gamma_{y};",
+        onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+        onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1];"),
+        "real alpha_{y} = a_{y} - X_m * gamma_{y};",
+      "}}",
+      .indent = idt(c(1, 2, 2, 2, 2, 1)),
+      .parse = FALSE
+    )
+  }
+  paste_rows(mtext, mtext_varying_noncentered, mtext_varying, mtext_intercept,
+    .indent = idt(c(1, 0, 0, 0))
   )
 })
 
@@ -287,6 +318,7 @@ transformed_parameters_lines_categorical <- quote({
   mtext <- ""
   mtext_varying_noncentered <- ""
   mtext_varying <- ""
+  mtext_intercept <- ""
   if (has_varying) {
     mtext <- "matrix[{K_varying}, {S - 1}] delta_{y}[T];"
     if (noncentered) {
@@ -313,8 +345,21 @@ transformed_parameters_lines_categorical <- quote({
       .parse = FALSE
     )
   }
-  paste_rows(mtext, mtext_varying_noncentered, mtext_varying,
-    .indent = idt(c(1, 0, 0))
+  if (has_fixed_intercept || has_varying_intercept) {
+    mtext_intercept <- paste_rows(
+      "vector[{S - 1}] alpha_{y};",
+      "for (s in 1:{S - 1}) {{",
+        "vector[{K}] gamma_{y};",
+        onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y}[, s];"),
+        onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1, , s];"),
+        "real alpha_{y}[s] = a_{y}[s] - X_m * gamma_{y};",
+      "}}",
+      .indent = idt(c(1, 2, 2, 2, 2, 1)),
+      .parse = FALSE
+    )
+  }
+  paste_rows(mtext, mtext_varying_noncentered, mtext_varying, mtext_intercept,
+    .indent = idt(c(1, 0, 0, 0))
   )
 })
 
@@ -345,8 +390,18 @@ model_lines_default <- quote({
   mtext_fixed <- ""
   mtext_varying <- ""
   mtext_tau <- ""
-  if (has_intercept) {
-    mtext_intercept <- "mean(a_{y}) ~ {alpha_prior_distr};"
+
+  if (has_fixed_intercept || has_varying_intercept) {
+    mtext_intercept <- "a_{y} ~ {alpha_prior_distr};"
+    if (has_varying_intercept) {
+      mtext_intercept <- paste_rows(
+        mtext_intercept,
+        "omega_raw_alpha_{y} ~ std_normal();",
+        "tau_alpha_{y} ~ {tau_alpha_prior_distr}",
+        .indent = idt(c(0, 0, 0)),
+        .parse = FALSE
+      )
+    }
   }
   if (has_fixed) {
     if (vectorizable_prior(beta_prior_distr)) {
@@ -368,7 +423,8 @@ model_lines_default <- quote({
       } else {
         mtext_varying <- "omega_raw_{y}[{{{cs(1:K_varying)}}}, 1] ~ {delta_prior_distr};"
       }
-      mtext_varying <- paste_rows(mtext_varying,
+      mtext_varying <- paste_rows(
+        mtext_varying,
         "to_vector(omega_raw_{y}[, 2:D]) ~ std_normal();",
         .indent = idt(c(0, 1)),
         .parse = FALSE
@@ -383,6 +439,7 @@ model_lines_default <- quote({
         mtext_varying <- "omega_{y}[{{{cs(1:K_varying)}}}, 1] ~ {delta_prior_distr};"
       }
       mtext_varying <- paste_rows(
+        onlyif(has_varying_intercept, mtext_varying_intercept),
         mtext_varying,
         "for(i in 2:D) {{",
         ifelse_(
@@ -412,8 +469,8 @@ model_lines_categorical <- quote({
   mtext_fixed <- ""
   mtext_varying <- ""
   mtext_tau <- ""
-  if (has_intercept) {
-    mtext_intercept <- "for(s in 1:{S - 1}) mean(a_{y}[s]) ~ {alpha_prior_distr};"
+  if (has_fixed_intercept || has_varying_intercept) {
+    mtext_intercept <- "for(s in 1:{S - 1}) a_{y}[s] ~ {alpha_prior_distr};"
   }
   if (has_fixed) {
     if (vectorizable_prior(beta_prior_distr)) {

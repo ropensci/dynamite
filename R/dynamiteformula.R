@@ -200,15 +200,14 @@ get_ranks <- function(x) {
   sapply(x, function(y) y$specials$rank)
 }
 
-# TODO can delete? this is not used
-# #' Check whether a dynamiteformula contains an intercept
-# #'
-# #' @param x A `dynamiteformula` object
-# #'
-# #' @noRd
-# has_intercept <- function(x) {
-#   attr(terms(x$formula), "intercept") == 1
-# }
+#' Check whether a dynamiteformula contains an intercept
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
+has_intercept <- function(x) {
+  attr(terms(x$formula), "intercept") == 1
+}
 
 #' Internal +.dynamiteformula for model constructions
 #'
