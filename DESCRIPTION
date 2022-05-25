@@ -15,7 +15,7 @@ BugReports: https://github.com/santikka/dynamite/issues
 Depends: 
     R (>= 4.1.0)
 Imports: 
-    data.table,
+    data.table (>= 1.14.3),
     dplyr,
     glue,
     ggplot2,
