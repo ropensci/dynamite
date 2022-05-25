@@ -9,6 +9,7 @@ full_model.matrix <- function(dformula, data) {
                            data = data, na.action = na.pass)
   model_matrix <- do.call(cbind, model_matrices)
   u_names <- unique(colnames(model_matrix))
+  u_names <- u_names[u_names != "(Intercept)"]
   model_matrix <- model_matrix[, u_names, drop = FALSE]
   n_models <- length(model_matrices)
   y_names <- get_responses(dformula)

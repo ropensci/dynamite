@@ -290,7 +290,7 @@ transformed_parameters_lines_default <- quote({
         onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1];"),
         "omega_alpha_{y}[1] = a_{y} - X_m * gamma_{y};",
         "for (i in 2:D) {{",
-          "omega_alpha_{y}[i] = omega_alpha_{y}[i - 1] + omega_raw_alpha{y}[i - 1] .* tau_alpha_{y}",
+          "omega_alpha_{y}[i] = omega_alpha_{y}[i - 1] + omega_raw_alpha_{y}[i - 1] * tau_alpha_{y};",
         "}}",
       "}}",
       "for (t in 1:T) {{",
@@ -309,22 +309,20 @@ transformed_parameters_lines_default <- quote({
         onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1];"),
         "real alpha_{y} = a_{y} - X_m * gamma_{y};",
       "}}",
-      .indent = idt(c(1, 2, 2, 2, 2, 1)),
+      .indent = idt(c(1, 1, 2, 2, 2, 2, 1)),
       .parse = FALSE
     )
   }
-  paste_rows(mtext, mtext_varying_noncentered, mtext_varying, mtext_intercept,
-    .indent = idt(c(1, 0, 0, 0))
+  paste_rows(mtext_varying_noncentered, mtext_varying, mtext_intercept,
+    .indent = idt(c(1, 0, 0))
   )
 })
 
 transformed_parameters_lines_categorical <- quote({
-  mtext <- ""
   mtext_varying_noncentered <- ""
   mtext_varying <- ""
   mtext_intercept <- ""
   if (has_varying) {
-    mtext <- "matrix[{K_varying}, {S - 1}] delta_{y}[T];"
     if (noncentered) {
       lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
       mtext_varying_noncentered <- paste_rows(
@@ -340,12 +338,13 @@ transformed_parameters_lines_categorical <- quote({
       )
     }
     mtext_varying <- paste_rows(
+      "matrix[{K_varying}, {S - 1}] delta_{y}[T];",
       "for (s in 1:{S - 1}) {{",
         "for (t in 1:T) {{",
           "delta_{y}[t, , s] = omega_{y}[s] * Bs[, t];",
         "}}",
       "}}",
-      .indent = idt(c(1, 2, 3, 2, 1)),
+      .indent = idt(c(1, 1, 2, 3, 2, 1)),
       .parse = FALSE
     )
   }
@@ -359,7 +358,7 @@ transformed_parameters_lines_categorical <- quote({
         onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1, , s]';"),
         "omega_alpha_{y}[s, 1] = a_{y}[s] - X_m * gamma_{y};",
         "for (i in 2:D) {{",
-          "omega_alpha_{y}[s, i] = omega_alpha_{y}[s, i - 1] + omega_raw_alpha{y}[s, i - 1] .* tau_alpha_{y}",
+          "omega_alpha_{y}[s, i] = omega_alpha_{y}[s, i - 1] + omega_raw_alpha_{y}[s, i - 1] * tau_alpha_{y};",
         "}}",
         "for (t in 1:T) {{",
           "alpha_{y}[t, s] = omega_alpha_{y}[s] * Bs[, t];",
@@ -382,7 +381,7 @@ transformed_parameters_lines_categorical <- quote({
       .parse = FALSE
     )
   }
-  paste_rows(mtext, mtext_varying_noncentered, mtext_varying, mtext_intercept,
+  paste_rows(mtext_varying_noncentered, mtext_varying, mtext_intercept,
     .indent = idt(c(1, 0, 0, 0))
   )
 })
@@ -422,7 +421,7 @@ model_lines_default <- quote({
         mtext_intercept,
         "omega_raw_alpha_{y} ~ std_normal();",
         "tau_alpha_{y} ~ {tau_alpha_prior_distr}",
-        .indent = idt(c(0, 0, 0)),
+        .indent = idt(c(0, 1, 1)),
         .parse = FALSE
       )
     }
@@ -463,7 +462,6 @@ model_lines_default <- quote({
         mtext_varying <- "omega_{y}[{{{cs(1:K_varying)}}}, 1] ~ {delta_prior_distr};"
       }
       mtext_varying <- paste_rows(
-        onlyif(has_varying_intercept, mtext_varying_intercept),
         mtext_varying,
         "for(i in 2:D) {{",
         ifelse_(

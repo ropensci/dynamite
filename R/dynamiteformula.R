@@ -39,7 +39,9 @@ dynamiteformula <- function(formula, family) {
         response = x$response,
         fixed = x$fixed,
         varying = x$varying,
-        specials = x$specials
+        specials = x$specials,
+        has_fixed_intercept = x$has_fixed_intercept,
+        has_varying_intercept = x$has_varying_intercept
       )
     ),
     class = "dynamiteformula"
@@ -72,14 +74,18 @@ dynamiteformula_ <- function(formula, family) {
 #'@noRd
 dynamitechannel <- function(formula, family, response,
                             fixed = integer(0), varying = integer(0),
-                            specials = list()) {
+                            specials = list(),
+                            has_fixed_intercept = FALSE,
+                            has_varying_intercept = FALSE) {
   list(
     formula = formula,
     family = family,
     response = response,
     fixed = fixed,
     varying = varying,
-    specials = specials
+    specials = specials,
+    has_fixed_intercept = has_fixed_intercept,
+    has_varying_intercept = has_varying_intercept
   )
 }
 
