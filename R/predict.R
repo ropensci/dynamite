@@ -9,7 +9,7 @@
 #'   or `"link"`.
 #' @param n_draws Number of posterior samples to use, default is all.
 #' @param n_fixed Number of observations per individual that should be assumed
-#'  fixed and will not be predicted
+#'  fixed and will not be predicted (counting from the first non-NA observation)
 #' @param ... Ignored.
 #' @export
 predict.dynamitefit <- function(object, newdata = NULL,
@@ -25,10 +25,11 @@ predict.dynamitefit <- function(object, newdata = NULL,
 
 predict.dynamitefit_counterfactual <- function(object, newdata, type,
                                                n_draws, n_fixed) {
+  # TODO break this function into smaller parts
   if (is.null(n_draws)) {
     n_draws <- ndraws(object)
   }
-  fixed <- object$dformulas$max_lag
+  fixed <- attr(object$dformulas$lag, "max_lag")
   if (is.null(n_fixed)) {
     n_fixed <- fixed
   }
@@ -45,8 +46,13 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   n_time <- length(time)
   n_id <- length(group)
   n_new <- nrow(newdata)
+  formulas_stoch <- get_formulas(object$dformulas$stoch)
   resp_stoch <- get_responses(object$dformulas$stoch)
   resp_det <- get_responses(object$dformulas$det)
+  lag_lhs <- get_responses(object$dformulas$lag)
+  lag_rhs <- get_predictors(object$dformulas$lag)
+  n_det <- length(resp_det)
+  n_lag <- length(lag_lhs)
   for (resp in resp_stoch) {
     if (is.null(newdata[[resp]])) {
       stop_("Response variable '", resp, "' not found in 'newdata'")
@@ -77,7 +83,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
     predict_idx <- unlist(lapply(seq_len(n_id), function(i) {
       (fixed_obs$first_obs[i] + n_fixed):n_time + (i - 1) * n_time
     }))
-    newdata[predict_idx, c(resp_stoch, resp_det)] <- NA
+    newdata[predict_idx, c(resp_stoch, resp_det, lag_lhs)] <- NA
   }
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
   if (type != "response") {
@@ -100,11 +106,8 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   n <- nrow(newdata)
   newdata_names <- names(newdata)
   full_group <- c("draw", group_var)
-  assign_initial_values(newdata, object$dformulas$det, full_group)
-  exprs <- lapply(get_formulas(object$dformulas$det), function(x) {
-    formula2expression(formula_rhs(x))
-  })
-  ro <- attr(object$dformulas$det, "rank_order")
+  idx <- seq.int(1L, n, by = n_time)
+  assign_initial_values(newdata, object$dformulas$det, object$formulas$lag, idx)
   samples <- rstan::extract(object$stanfit)
   J <- lapply(seq_along(resp_stoch), function(j) {
     object$stan$model_vars[[j]]$J
@@ -115,24 +118,33 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   J_varying <- lapply(seq_along(resp_stoch), function(j) {
     object$stan$model_vars[[j]]$J_varying
   })
-  for (i in 2:n_time) {
-    idx <- rep(seq(i - 1, n, by = n_time), each = 2) + rep(0:1, times = k)
-    idx_i <- seq(i, n, by = n_time)
-    assign_deterministic(newdata, resp_det, exprs, ro, idx, idx_i, full_group)
+  cl <- get_quoted(object$dformulas$lag)
+  ro <- attr(object$dformulas$lag, "rank_order")
+  for (i in 2L:n_time) {
+    #idx <- rep(seq.int(i - 1L, n, by = n_time), each = 2) + rep(0L:1L, times = k)
+    #idx_i <- seq.int(i, n, by = n_time)
+    idx <- idx + 1L
+    if (n_lag > 0) {
+      assign_lags(newdata, ro, idx, lag_lhs, lag_rhs)
+    }
+    if (n_det) {
+      assign_deterministic(newdata, cl, idx)
+    }
     model_matrix <- full_model.matrix_predict(
-      object$dformulas$stoch,
-      newdata[idx, ],
+      formulas_stoch,
+      newdata,
+      idx,
       object$stan$u_names
     )
     for (j in seq_along(resp_stoch)) {
       resp <- resp_stoch[j]
-      na_i <- which(is.na(newdata[idx_i, .SD, .SDcols = resp]))
-      idx_pred <- idx_i[na_i]
-      if (length(na_i) > 0) {
+      idx_na <- which(is.na(newdata[idx, .SD, .SDcols = resp]))
+      idx_pred <- idx[idx_na]
+      if (length(idx_na) > 0) {
         sim <- do.call(
           paste0("predict_", object$dformulas$stoch[[j]]$family),
           list(
-            model_matrix = model_matrix[na_i, J[[j]], drop = FALSE],
+            model_matrix = model_matrix[idx_na, J[[j]], drop = FALSE],
             samples = samples, specials[[j]], resp,
             time = i - 1, type, n_draws = n_draws,
             J_fixed = J_fixed[[j]], J_varying = J_varying[[j]]

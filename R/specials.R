@@ -75,7 +75,6 @@ formula_specials <- function(x) {
                  which(full_terms %in% fixed_terms))
   out$varying <- c(ifelse_(varying_icpt, 0, integer(0)),
                    which(full_terms %in% varying_terms))
-  out$specials$rank <- Inf
   out
 }
 

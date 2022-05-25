@@ -29,7 +29,7 @@ or \code{"link"}.}
 \item{n_draws}{Number of posterior samples to use, default is all.}
 
 \item{n_fixed}{Number of observations per individual that should be assumed
-fixed and will not be predicted}
+fixed and will not be predicted (counting from the first non-NA observation)}
 
 \item{...}{Ignored.}
 }

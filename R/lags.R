@@ -40,10 +40,6 @@ lag_ <- function(x, k) {
   out
 }
 
-lag_eval <- function(x) {
-  rep(x[1], 2)
-}
-
 #' Find lag terms in a character vector
 #'
 #' @param x \[`character()`]\cr A character vector
