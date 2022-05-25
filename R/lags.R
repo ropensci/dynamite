@@ -29,24 +29,28 @@ is.lags <- function(x) {
 #' @param k \[`integer(1)`: \sQuote{1}]\cr Number of positions to lag by.
 #'
 #' @noRd
-lag_ <- function(x, k = 1) {
+lag_ <- function(x, k) {
   xlen <- length(x)
-  c(rep(NA, k), x[1:(length(x) - k)])
+  lag_idx <- seq_len(xlen - k)
+  # Need to ensure that NA's have the same type as the original values
+  # for data.table
+  out <- vector(mode = mode(x), length = xlen)
+  out[1:k] <- NA
+  out[k + lag_idx] <- x[lag_idx]
+  out
+}
+
+lag_eval <- function(x) {
+  rep(x[1], 2)
 }
 
 #' Find lag terms in a character vector
 #'
-#' @param x \[`character(1)`]\cr A character vector of length one.
-#' @param processed \[`logical()`: \sQuote(FALSE)]\cr If true, assumes that
-#'   the character string does not contain 'as is' definitions via `I()`.
+#' @param x \[`character()`]\cr A character vector
 #'
 #' @noRd
-find_lags <- function(x, processed = FALSE) {
-  if (processed) {
-    grepl("I\\(lag_\\(.+\\)\\)", x, perl = TRUE)
-  } else {
-    grepl("lag\\(.+\\)", x, perl = TRUE)
-  }
+find_lags <- function(x) {
+  grepl("lag\\(.+\\)", x, perl = TRUE)
 }
 
 #' Extract lag definitions
@@ -58,11 +62,11 @@ find_lags <- function(x, processed = FALSE) {
 #'
 #' @noRd
 extract_lags <- function(x) {
-  has_lag <- find_lags(x, processed = FALSE)
+  has_lag <- find_lags(x)
   lag_terms <- x[has_lag]
   # TODO allow vector k
   lag_regex <- gregexec(
-    pattern = "(?<src>lag\\(\\s*(?<var>[^\\+]+?)\\s*(?:,\\s*(?<k>[0-9]+)){0,1}\\s*\\))",
+    pattern = "(?<src>lag\\(\\s*(?<var>[^\\+]+?)\\s*(?:,\\s*(?<k>\\-{0,1}[0-9]+)){0,1}\\s*\\))",
     text = lag_terms,
     perl = TRUE
   )

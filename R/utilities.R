@@ -1,35 +1,10 @@
 # Some stuff that might be useful
 
 # This is needed to use tidyselect's where which is not exported.
-utils::globalVariables("where")
+utils::globalVariables(c(".", ".I", ".N", ".SD", "where"))
 
-
-#' A Shortcut function to update lists and vectors
-#'
-#' @param x A list or a vector
-#' @param value An element to add to the list or vector
-#'
-#' @noRd
-`c<-` <- function(x, value) {
-  c(x, value)
-}
-
-# Internal placeholder for match.call
-# t_ <- function(f, type = "rw") {
-#   invisible(NULL)
-# }
-
-# TODO check if used somewhere
-#' Remove all whitespace characters from a character vector
-#'
-#' @param x A character vector
-#'
-#' @noRd
-rm_ws <- function(x) {
-  y <- gsub("[ \t\r\n]", "", x, perl = TRUE)
-  dim(y) <- dim(x)
-  y
-}
+# Data table awareness
+.datatable.aware = TRUE
 
 #' Create a list with names defined by the arguments
 #'

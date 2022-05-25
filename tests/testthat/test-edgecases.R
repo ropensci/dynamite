@@ -133,8 +133,8 @@ test_that("Deterministic channels are parsed", {
 
   expect_error(
     obs_det <- obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1), family = negbin()) +
-      obs(d ~ lag(d, 1) + lag(f, 2) + x1 + past(0, 0), family = deterministic()) +
-      obs(f ~ lag(y5, 1) + x1 * 3 + 1 + past(0, 1, 2), family = deterministic()),
+      aux(d ~ lag(d, 1) + lag(f, 2) + x2 + past(0, 0)) +
+      aux(f ~ lag(y5, 1) + x2 * 3 + 1 + past(0, 1, 2)),
     NA
   )
 

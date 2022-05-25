@@ -112,8 +112,8 @@ aux <- function(formula) {
   if (is.dynamiteformula(e1)) {
     out <- add_dynamiteformula(e1, e2)
   } else {
-    stop_("Method '+.dynamiteformula is not supported for ",
-          class(e1), " objects")
+    stop_("Method '+.dynamiteformula' is not supported for '",
+          class(e1), "' objects")
   }
   out
 }
@@ -142,7 +142,7 @@ get_responses <- function(x) {
 #'
 #' @noRd
 get_predictors <- function(x) {
-  sapply(x, function(y) as.character(formula_rhs(y$formula)))
+  sapply(x, function(y) deparse(formula_rhs(y$formula)))
 }
 
 #' Get all formulas of a dynamiteformula object
@@ -181,16 +181,6 @@ has_past <- function(x) {
   sapply(x, function(y) length(y$specials$past) > 0)
 }
 
-#' Get past value definitions of a dynamiteformula
-#'
-#' @param x A `dynamiteformula` object
-#'
-#' @noRd
-get_past <- function(x) {
-  out <- lapply(x, function(y) y$specials$past)
-  out[lengths(out) != 0]
-}
-
 #' Get ranks of channels for evaluation order of precedence
 #'
 #' @param x A `dynamiteformula` object
@@ -224,8 +214,8 @@ add_dynamiteformula <- function(e1, e2) {
     out <- set_splines(e1, e2)
   } else {
     stop_(
-      "Unable to add an object of class ", class(e2),
-      " to an object of class 'dynamiteformula'"
+      "Unable to add an object of class '", class(e2),
+      "' to an object of class 'dynamiteformula'"
     )
   }
   out
@@ -250,10 +240,10 @@ join_dynamiteformulas <- function(e1, e2) {
           cs(resp_all[resp_duped]))
   }
   if (!is.null(attr(e1, "lags")) && !is.null(attr(e2, "lags"))) {
-    stop_("Multiple definitions for lags")
+    stop_("Both dynamiteformulas contain a lags definition")
   }
   if (!is.null(attr(e1, "splines")) && !is.null(attr(e2, "splines"))) {
-    stop_("Multiple definitions for splines")
+    stop_("Both dynamiteformulas contain a splines definition")
   }
   rhs_list <- list()
   rhs_list[[1]] <- get_predictors(e1)

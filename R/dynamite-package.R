@@ -5,12 +5,14 @@
 #' @docType package
 #' @name dynamite-package
 #' @import methods
+#' @import data.table
 #' @importFrom rstan sampling
 #' @importFrom posterior as_draws as_draws_df
-#' @importFrom rlang .data :=
+#' @importFrom rlang .data
 #' @importFrom stats drop.terms formula model.matrix model.matrix.lm na.exclude
 #' @importFrom stats quantile coef setNames as.formula fitted na.pass terms
 #' @importFrom stats plogis rbinom reformulate rnbinom rnorm rpois runif sd
+# #' @importFrom data.table ":=" "%like%" "%between%"
 
 #' @references
 #' Stan Development Team (2020). RStan: the R interface to Stan.

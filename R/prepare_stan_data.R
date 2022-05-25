@@ -3,14 +3,18 @@
 #' Prepares data for Stan sampling, Stan model code construction and
 #' default/user-modifiable prior definitions.
 #'
+#' @param data \[`data.table`]\cr The data used for model fitting
 #' @param dformula \[`dynamiteformula`]\cr The model formula of stochastic
 #'   channels
+#' @param group_var \[`character(1)`]\cr The grouping variable name
+#' @param time_var \[`character(1)`]\cr The time index variable name
 #' @param priors TODO
 #'
 #' @noRd
-prepare_stan_data <- function(dformula, data, group_var, time_var, priors = NULL) {
+prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL) {
 
-  responses <- data[, get_responses(dformula), drop = FALSE]
+  resp_names <- get_responses(dformula)
+  responses <- as.data.frame(data[, .SD, .SDcols = resp_names])
   # Needs sapply/lapply instead of apply to keep factors as factors
   attr(responses, "resp_class") <- lapply(responses, function(x) {
     cl <- class(x)
@@ -19,7 +23,7 @@ prepare_stan_data <- function(dformula, data, group_var, time_var, priors = NULL
   })
   model_matrix <- full_model.matrix(dformula, data)
   specials <- evaluate_specials(dformula, data)
-  resp_names <- colnames(responses)
+  #resp_names <- colnames(responses)
   n_channels <- length(resp_names)
   # A list of variables for stan sampling without grouping by channel
   sampling_vars <- list()
@@ -202,7 +206,8 @@ prepare_stan_data <- function(dformula, data, group_var, time_var, priors = NULL
     model_vars = model_vars,
     sampling_vars = sampling_vars,
     priors = prior_list,
-    responses = responses
+    responses = responses,
+    u_names = colnames(model_matrix)
   )
 }
 

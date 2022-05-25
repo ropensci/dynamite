@@ -8,135 +8,157 @@
 #' @param type Type of prediction, `"response"` (default), `"mean"`
 #'   or `"link"`.
 #' @param n_draws Number of posterior samples to use, default is all.
+#' @param n_fixed Number of observations per individual that should be assumed
+#'  fixed and will not be predicted
 #' @param ... Ignored.
 #' @export
 predict.dynamitefit <- function(object, newdata = NULL,
                                 mode = c("counterfactual", "forecast"),
                                 type = c("response", "mean", "link"),
-                                n_draws = NULL, ...) {
+                                n_draws = NULL, n_fixed = NULL, ...) {
   mode <- match.arg(mode)
   type <- match.arg(type)
   do.call(paste0("predict.dynamitefit_", mode),
           list(object = object, newdata = newdata,
-               type = type, n_draws = n_draws))
+               type = type, n_draws = n_draws, n_fixed = n_fixed))
 }
 
-predict.dynamitefit_counterfactual <- function(object, newdata,
-                                               type, n_draws = NULL) {
+predict.dynamitefit_counterfactual <- function(object, newdata, type,
+                                               n_draws, n_fixed) {
   if (is.null(n_draws)) {
     n_draws <- ndraws(object)
   }
-  # TODO needs to support different starting value? Although nothing is done for the time points without NA so perhaps not necessary?
-
+  fixed <- object$dformulas$max_lag
+  if (is.null(n_fixed)) {
+    n_fixed <- fixed
+  }
+  # TODO check that n_draws is positive and <= actual number of draws
+  # TODO impute predictor values
+  group_var <- object$group_var
+  time_var <- object$time_var
   if (is.null(newdata)) {
-    newdata <- object$data
-    group <- newdata[[object$group_var]]
-    time <- object$time
-  } else {
-    if (!(object$group_var %in% names(newdata))) {
-      stop_("Grouping variable", object$group_var, "not found in 'newdata'")
-    }
-    group <- newdata[[object$group_var]]
-    if (is.factor(group)) group <- droplevels(group)
-    # TODO doesn't really matter at least at the moment
-    if (!all(group %in% object$data[[object$group_var]])) {
-      stop_("Grouping variable", object$group_var,
-            "contains new levels not found in the original data")
-    }
-
-    if (!(object$time_var %in% names(newdata))) {
-      stop_("Time index variable", object$time_var, "not found in 'newdata'")
-    }
-    # sort just in case
-    newdata <- newdata |>
-      dplyr::arrange(
-        dplyr::across(
-          dplyr::all_of(c(object$group_var, object$time_var))
-        )
-      )
-    # TODO just use the original time points starting from start_time
-    time <- unique(newdata[[object$time_var]])
-    if (!all(time %in% object$time)) {
-      stop_("Timing variable", object$time_var,
-            "contains time points not found in the original data")
-    }
+    newdata_null <- TRUE
   }
-
-  #basis <- object$prediction_basis
-  #fixed <- basis$fixed
+  newdata <- check_newdata(newdata, object$data, group_var, time_var)
+  group <- unique(newdata[[group_var]])
+  time <- unique(newdata[[time_var]])
   n_time <- length(time)
-  n_id <- length(unique(group))
-  #if (n_time <= fixed) {
-  #  stop_("Model definition implies ", fixed,
-  #        " fixed time points, but 'newdata' has only ",
-  #        n_time, " time points.")
-  #}
-  resp_all <- get_responses(dformula)
-  # TODO check that fixed time points do not contain NAs
-  for (resp in resp_all) {
+  n_id <- length(group)
+  n_new <- nrow(newdata)
+  resp_stoch <- get_responses(object$dformulas$stoch)
+  resp_det <- get_responses(object$dformulas$det)
+  for (resp in resp_stoch) {
     if (is.null(newdata[[resp]])) {
-      newdata[[resp]] <- NA
+      stop_("Response variable '", resp, "' not found in 'newdata'")
     }
   }
-  specials <- evaluate_specials(dformula, newdata)
-
+  if (n_fixed < fixed) {
+    stop_("The model implies at least ", fixed, " fixed time points, ",
+          "but only ", n_fixed, " were specified")
+  }
+  non_na <- newdata |>
+    dplyr::group_by(.data[[group_var]]) |>
+    dplyr::summarise(obs = stats::complete.cases(
+      dplyr::across(
+        dplyr::all_of(resp_stoch)
+      )
+    ), .groups = "keep")
+  fixed_obs <- non_na |>
+    dplyr::summarise(
+      first_obs = which(.data$obs)[1],
+      horizon = all(.data$obs[.data$first_obs:(.data$first_obs + n_fixed - 1)])
+    )
+  lacking_obs <- is.na(fixed_obs$horizon) | (fixed_obs$horizon < n_fixed)
+  if (any(lacking_obs)) {
+    groups_lacking <- unique(fixed_obs[lacking_obs, group_var])
+    stop_("Insufficient non-NA observations in groups: ", cs(groups_lacking))
+  }
+  if (newdata_null) {
+    predict_idx <- unlist(lapply(seq_len(n_id), function(i) {
+      (fixed_obs$first_obs[i] + n_fixed):n_time + (i - 1) * n_time
+    }))
+    newdata[predict_idx, c(resp_stoch, resp_det)] <- NA
+  }
+  specials <- evaluate_specials(object$dformulas$stoch, newdata)
   if (type != "response") {
     # create separate column for each level of categorical variables
-    for (i in seq_along(resp_all)) {
-      resp <- resp_all[i]
-      if (is_categorical(dformula[[i]]$family)) {
+    for (i in seq_along(resp_stoch)) {
+      resp <- resp_stoch[i]
+      if (is_categorical(object$dformulas$stoch[[i]]$family)) {
         resp_levels <- object$levels[[resp]]
-        newdata[, c(glue::glue("{resp}_{resp_levels}"))] <- NA # TODO: glued names to formula?
+        newdata[, (glue::glue("{resp}_{resp_levels}")) := NA_integer_] # TODO: glued names to formula?
       } else {
-        newdata[[c(glue::glue("{resp}_store"))]] <- newdata[[resp]]
+        newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
       }
     }
   }
-  newdata <- data.frame(newdata, draw = rep(1:n_draws, each = nrow(newdata)))
-  samples <- rstan::extract(object$stanfit)
-  u_names <- unique(names(basis$start))
+  k <- n_id * n_draws
+  newdata <- data.table::as.data.table(newdata)
+  newdata <- newdata[rep(seq_len(n_new), n_draws), ]
+  newdata[, ("draw") := rep(1:n_draws, each = n_new)]
+  data.table::setkeyv(newdata, c("draw", group_var, time_var))
   n <- nrow(newdata)
-  for (i in seq_along(full_time)) {
-    idx <- rep(seq(i - fixed, n, by = n_time), each = 1 + fixed) +
-      rep(0:fixed, times = n_id * n_draws)
+  newdata_names <- names(newdata)
+  full_group <- c("draw", group_var)
+  assign_initial_values(newdata, object$dformulas$det, full_group)
+  exprs <- lapply(get_formulas(object$dformulas$det), function(x) {
+    formula2expression(formula_rhs(x))
+  })
+  ro <- attr(object$dformulas$det, "rank_order")
+  samples <- rstan::extract(object$stanfit)
+  J <- lapply(seq_along(resp_stoch), function(j) {
+    object$stan$model_vars[[j]]$J
+  })
+  J_fixed <- lapply(seq_along(resp_stoch), function(j) {
+    object$stan$model_vars[[j]]$J_fixed
+  })
+  J_varying <- lapply(seq_along(resp_stoch), function(j) {
+    object$stan$model_vars[[j]]$J_varying
+  })
+  for (i in 2:n_time) {
+    idx <- rep(seq(i - 1, n, by = n_time), each = 2) + rep(0:1, times = k)
     idx_i <- seq(i, n, by = n_time)
+    assign_deterministic(newdata, resp_det, exprs, ro, idx, idx_i, full_group)
     model_matrix <- full_model.matrix_predict(
-      basis$dformula,
+      object$dformulas$stoch,
       newdata[idx, ],
-      u_names
+      object$stan$u_names
     )
-    for (j in seq_along(resp_all)) {
-      resp <- resp_all[j]
-      if (any(is.na(newdata[idx_i, resp]))) { # TODO partial missingness?
+    for (j in seq_along(resp_stoch)) {
+      resp <- resp_stoch[j]
+      na_i <- which(is.na(newdata[idx_i, .SD, .SDcols = resp]))
+      idx_pred <- idx_i[na_i]
+      if (length(na_i) > 0) {
         sim <- do.call(
-          paste0("predict_", basis$dformula[[j]]$family),
+          paste0("predict_", object$dformulas$stoch[[j]]$family),
           list(
-            model_matrix = model_matrix[, basis$J[[j]], drop = FALSE],
+            model_matrix = model_matrix[na_i, J[[j]], drop = FALSE],
             samples = samples, specials[[j]], resp,
-            time = i - fixed, type, n_draws = n_draws
+            time = i - 1, type, n_draws = n_draws,
+            J_fixed = J_fixed[[j]], J_varying = J_varying[[j]]
           )
         )
-        if (is_categorical(basis$dformula[[j]]$family)) {
+        if (is_categorical(object$dformulas$stoch[[j]]$family)) {
           resp_levels <- object$levels[[resp]]
           if (type != "response") {
-            idx_resp <- which(names(newdata) %in%
+            idx_resp <- which(newdata_names %in%
                                 c(glue::glue("{resp}_{resp_levels}")))
-            newdata[idx_i, idx_resp] <- sim$mean_or_link
+            newdata[idx_pred, (newdata_names[idx_resp]) := sim$mean_or_link]
           }
-          newdata[idx_i, resp] <- resp_levels[sim$response]
+          newdata[idx_pred, (resp) := resp_levels[sim$response]]
         } else {
           if (type != "response") {
-            newdata[idx_i, c(glue::glue("{resp}_store"))] <- sim$mean_or_link
+            newdata[idx_pred, (glue::glue("{resp}_store")) := sim$mean_or_link]
           }
-          newdata[idx_i, resp] <- sim$response
+          newdata[idx_pred, (resp) := sim$response]
         }
       }
     }
   }
   if (type != "response") {
-    for (i in seq_along(resp_all)) {
-      resp <- resp_all[i]
-      if (is_categorical(basis$dformula[[i]]$family)) {
+    for (i in seq_along(resp_stoch)) {
+      resp <- resp_stoch[i]
+      if (is_categorical(object$dformulas$stoch[[i]]$family)) {
         newdata[[resp]] <- NULL
       } else {
         newdata[[resp]] <- newdata[[c(glue::glue("{resp}_store"))]]
@@ -144,7 +166,6 @@ predict.dynamitefit_counterfactual <- function(object, newdata,
       }
     }
   }
-
   # TODO return either full newdata or just the responses
   # newdata[, resp_all, drop = FALSE]
   newdata
