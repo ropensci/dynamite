@@ -56,24 +56,3 @@ full_model.matrix_fast <- function(formula_list, data, u_names) {
   model_matrix <- do.call(cbind, model_matrices)
   model_matrix[, u_names, drop = FALSE]
 }
-
-#' A pseudo version of full_model.matrix, where the evaluation is assumed
-#' 'as.is', i.e., the model tilde is assumed to represent a mathematical
-#' equality
-#'
-#' @param formula_list A list of `formula` objects
-#' @param data A `data.frame` containing the variables in the model
-#' @param initial
-#'
-#' @noRd
-full_model.matrix_pseudo <- function(formula_list, data) {
-  data_env <- list2env(data)
-  model_matrices <- lapply(formula_list, eval_formula, envir = data_env)
-  out <- do.call(cbind, model_matrices)
-  if (nrow(out) == 1) {
-    # TODO warn about recycling?
-    out[rep(1, nrow(data)),]
-  } else {
-    out
-  }
-}
