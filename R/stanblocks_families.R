@@ -377,12 +377,12 @@ transformed_parameters_lines_categorical <- quote({
         onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1, , s];"),
         "real alpha_{y}[s] = a_{y}[s] - X_m * gamma_{y};",
       "}}",
-      .indent = idt(c(1, 2, 2, 2, 2, 1)),
+      .indent = idt(c(1, 1, 2, 2, 2, 2, 1)),
       .parse = FALSE
     )
   }
   paste_rows(mtext_varying_noncentered, mtext_varying, mtext_intercept,
-    .indent = idt(c(1, 0, 0, 0))
+    .indent = idt(c(1, 0, 0))
   )
 })
 
@@ -500,7 +500,7 @@ model_lines_categorical <- quote({
           "omega_raw_alpha_{y}[s] ~ std_normal();",
         "}}",
         "tau_alpha_{y} ~ {tau_alpha_prior_distr}",
-        .indent = idt(c(0, 0, 0)),
+        .indent = idt(c(0, 0, 1, 0, 0)),
         .parse = FALSE
       )
     }
@@ -578,7 +578,10 @@ model_lines_categorical <- quote({
       mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {tau_prior_distr};"
     }
   }
-  likelihood_term <- "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], zeros_S_{y}, append_col(zeros_K_{y}, gamma_{y}));"
+  intercept <- glue::glue("zeros_S_{y}")
+  if (has_fixed_intercept) intercept <-  glue::glue("alpha_{y}")
+  if (has_varying_intercept) intercept <- glue::glue("alpha_{y}[t]")
+  likelihood_term <- "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], {intercept}, append_col(zeros_K_{y}, gamma_{y}));"
   paste_rows(
     mtext_intercept, mtext_fixed, mtext_varying, mtext_tau,
     "{{",
@@ -589,7 +592,7 @@ model_lines_categorical <- quote({
         likelihood_term,
       "}}",
     "}}",
-    .indent = idt(c(1, 1, 1, 1, 2, 2, 3, 3, 3, 2, 1))
+    .indent = idt(c(1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 2, 1))
   )
 })
 
@@ -598,8 +601,8 @@ model_lines_gaussian <- quote({
   d <- sigma_prior_distr
   sigma_term <- "sigma_{y} ~ {d};"
   intercept <- "0"
-  if (has_fixed_intercept) intercept <-  "alpha_{y}"
-  if (has_varying_intercept) intercept <- "alpha_{y}[t]"
+  if (has_fixed_intercept) intercept <-  glue::glue("alpha_{y}")
+  if (has_varying_intercept) intercept <- glue::glue("alpha_{y}[t]")
   likelihood_term <- "{y}[{obs}, t] ~ normal_id_glm(X[t][{obs}, {{{cs(J)}}}], {intercept}, gamma_{y}, sigma_{y});"
   mtext <- paste_rows(
     sigma_term,
@@ -622,8 +625,8 @@ model_lines_binomial <- quote({
   varying_term <- onlyif(has_varying, glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"))
   plus <- onlyif(has_fixed && has_varying, " + ")
   intercept <- ""
-  if (has_fixed_intercept) intercept <-  "alpha_{y} + "
-  if (has_varying_intercept) intercept <- "alpha_{y}[t] + "
+  if (has_fixed_intercept) intercept <-  glue::glue("alpha_{y} + ")
+  if (has_varying_intercept) intercept <- glue::glue("alpha_{y}[t] + ")
   likelihood_term <- "{y}[t, {obs}] ~ binomial_logit(trials_{y}[t, {obs}], {intercept}{fixed_term}{plus}{varying_term});"
   mtext <- paste_rows("for (t in 1:T) {{", likelihood_term, "}}",
                       .indent = idt(c(1, 2, 1)))
@@ -633,8 +636,8 @@ model_lines_binomial <- quote({
 model_lines_bernoulli <- quote({
   mtext_def <- eval(model_lines_default)
   intercept <- "0"
-  if (has_fixed_intercept) intercept <-  "alpha_{y}"
-  if (has_varying_intercept) intercept <- "alpha_{y}[t]"
+  if (has_fixed_intercept) intercept <-  glue::glue("alpha_{y}")
+  if (has_varying_intercept) intercept <- glue::glue("alpha_{y}[t]")
   likelihood_term <- "{y}[t, {obs}] ~ bernoulli_logit_glm(X[t][{obs}, {{{cs(J)}}}], {intercept}, gamma_{y});"
   mtext <- paste_rows(
     "{{",
@@ -654,8 +657,8 @@ model_lines_poisson <- quote({
   mtext_def <- eval(model_lines_default)
   offset_term <- ifelse_(has_offset, glue::glue("to_vector(offset_{y}[t, {obs}])"), "0")
   intercept <- ""
-  if (has_fixed_intercept) intercept <-  "alpha_{y} + "
-  if (has_varying_intercept) intercept <- "alpha_{y}[t] + "
+  if (has_fixed_intercept) intercept <-  glue::glue("alpha_{y} + ")
+  if (has_varying_intercept) intercept <- glue::glue("alpha_{y}[t] + ")
   likelihood_term <- "{y}[t, {obs}] ~ poisson_log_glm(X[t][{obs}, {{{cs(J)}}}], {intercept}{offset_term}, gamma_{y});"
   mtext <- paste_rows(
     "{{",
@@ -677,8 +680,8 @@ model_lines_negbin <- quote({
   phi_term <- "phi_{y} ~ {d};"
   offset_term <- ifelse_(has_offset, glue::glue("to_vector(offset_{y}[t, {obs}])"), "0")
   intercept <- ""
-  if (has_fixed_intercept) intercept <-  "alpha_{y} + "
-  if (has_varying_intercept) intercept <- "alpha_{y}[t] + "
+  if (has_fixed_intercept) intercept <-  glue::glue("alpha_{y} + ")
+  if (has_varying_intercept) intercept <- glue::glue("alpha_{y}[t] + ")
   likelihood_term <- "{y}[t, {obs}] ~ neg_binomial_2_log_glm(X[t][{obs}, {{{cs(J)}}}], {intercept}{offset_term}, gamma_{y}, phi_{y});"
   mtext <- paste_rows(
     phi_term,

@@ -80,7 +80,22 @@ test_that("Multichannel models are valid", {
   )
 
 })
+test_that("intercepts are handled correctly", {
 
+  expect_error(
+    obs_all_alpha <- obs(y1 ~ -1 + x1, family = categorical()) +
+      obs(y2 ~ -1 + x2 + varying(~1), family = gaussian()) +
+      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = binomial()) +
+      obs(y4 ~ x1 + varying(~-1 + x2), family = bernoulli()) +
+      splines(df = 5),
+    NA
+  )
+
+  expect_error(
+    dynamite(obs_all_alpha, test_data, "group", "time", debug = debug), NA
+  )
+
+})
 test_that("Lags are parsed", {
 
   expect_error(

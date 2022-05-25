@@ -7,9 +7,18 @@
 full_model.matrix <- function(dformula, data) {
   model_matrices <- lapply(get_formulas(dformula), model.matrix.lm,
                            data = data, na.action = na.pass)
+  # remove intercepts from model matrices
+  model_matrices <- lapply(model_matrices, function(x) {
+    idx <- which(attr(x, "assign") == 0)
+    if (length(idx) > 0) {
+      a <- attr(x, "assign")[-idx]
+      x <- x[, -idx,  drop = FALSE]
+      attr(x, "assign") <- a
+    }
+    x
+  })
   model_matrix <- do.call(cbind, model_matrices)
   u_names <- unique(colnames(model_matrix))
-  u_names <- u_names[u_names != "(Intercept)"]
   model_matrix <- model_matrix[, u_names, drop = FALSE]
   n_models <- length(model_matrices)
   y_names <- get_responses(dformula)
@@ -20,10 +29,11 @@ full_model.matrix <- function(dformula, data) {
   for (i in seq_along(model_matrices)) {
     cols <- colnames(model_matrices[[i]])
     assign <- match(cols, u_names)
+    assign_i <- attr(model_matrices[[i]], "assign")
     attr(model_matrix, "assign")[[i]] <- sort(assign)
-    fixed <- assign[attr(model_matrices[[i]], "assign") %in% dformula[[i]]$fixed]
+    fixed <- assign[assign_i %in% dformula[[i]]$fixed]
     attr(model_matrix, "fixed")[[i]] <- setNames(fixed, u_names[fixed])
-    varying <- assign[attr(model_matrices[[i]], "assign") %in% dformula[[i]]$varying]
+    varying <- assign[assign_i %in% dformula[[i]]$varying]
     attr(model_matrix, "varying")[[i]] <- setNames(varying, u_names[varying])
   }
   model_matrix
