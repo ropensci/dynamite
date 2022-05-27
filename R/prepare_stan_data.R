@@ -81,6 +81,8 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
   sd_x <- setNames(pmax(0.5, sd_x),
                    colnames(model_matrix))
   x_means <- apply(X[1, , , drop = FALSE], 3, mean, na.rm = TRUE)
+  # For missing lagged covariates etc
+  x_means[is.na(x_means)] <- 0
   X_na <- is.na(X)
   # Placeholder for NAs in Stan
   X[X_na] <- 0
