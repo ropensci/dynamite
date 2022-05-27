@@ -681,8 +681,8 @@ model_lines_categorical <- quote({
     }
   }
   intercept <- glue::glue("zeros_S_{y}")
-  if (has_fixed_intercept) intercept <-  glue::glue("alpha_{y}")
-  if (has_varying_intercept) intercept <- glue::glue("alpha_{y}[t]")
+  if (has_fixed_intercept) intercept <-  glue::glue("append_row(0, alpha_{y})")
+  if (has_varying_intercept) intercept <- glue::glue("append_row(0, alpha_{y}[t])")
   likelihood_term <- "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], {intercept}, append_col(zeros_K_{y}, gamma_{y}));"
   paste_rows(
     mtext_intercept, mtext_fixed, mtext_varying, mtext_tau,
