@@ -74,13 +74,14 @@ fitted_negbin <- function(model_matrix, samples) {
 predict_gaussian <- function(model_matrix, samples, specials,
                              resp, time, type, n_draws, J_fixed, J_varying) {
   alpha <- samples[[paste0("alpha_", resp)]]
+  a_time <- ifelse_(ncol(alpha) == 1, 1, time)
   beta <- samples[[paste0("beta_", resp)]]
   delta <- samples[[paste0("delta_", resp)]]
   n_id <- nrow(model_matrix) / n_draws
   sim <- sim_r <- numeric(nrow(model_matrix))
   for (k in seq_len(n_draws)) {
     idx_k <- ((k - 1) * n_id + 1):(k * n_id)
-    xbeta <- model_matrix[idx_k, J_fixed, drop = FALSE] %*% beta[k, ] +
+    xbeta <- alpha[k, a_time] + model_matrix[idx_k, J_fixed, drop = FALSE] %*% beta[k, ] +
       model_matrix[idx_k, J_varying, drop = FALSE] %*% delta[k, time, ]
     sim[idx_k] <- xbeta
     sigma <- samples[[paste0("sigma_", resp)]][k]
