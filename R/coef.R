@@ -59,7 +59,6 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5, scales = "fixed",
                   "% intervals of the time-varying coefficients")
   coef(model, "delta", probs = c(level, 1 - level),
        include_alpha = include_alpha) |>
-    dplyr::mutate(parameter = gsub("delta_", "", .data$parameter)) |>
     ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean)) +
     ggplot2::geom_ribbon(ggplot2::aes_string(
       ymin = paste0("q", 100 * level),
@@ -85,7 +84,6 @@ plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
 
   coef(model, "beta", probs = c(level, 1 - level),
        include_alpha = include_alpha) |>
-    dplyr::mutate(parameter = gsub("beta_", "", .data$parameter)) |>
     ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter)) +
     ggplot2::geom_pointrange(ggplot2::aes_string(
       xmin = paste0("q", 100 * level),
