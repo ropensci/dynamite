@@ -130,9 +130,20 @@ transformed_data_lines_categorical <- quote({
     "vector[{S}] zeros_S_{y} = rep_vector(0, {S});",
     .indent = idt(1)
   )
+  mtext_alpha <- ""
   mtext_fixed <- ""
   mtext_varying <- ""
   mtext_tau <- ""
+  if (write_alpha) {
+    k <- S - 1
+    i <- rep(1:k, alpha_prior_npars)
+    j <- rep(1:alpha_prior_npars, each = k)
+    mtext_alpha <- paste_rows(
+      "matrix[{k}, {alpha_prior_npars}] alpha_prior_pars_{y};",
+      "alpha_prior_pars_{y}[{i},{j}] = {alpha_prior_pars};",
+      .indent = idt(1)
+    )
+  }
   if (write_beta) {
     k <- (K_fixed * (S - 1))
     i <- rep(1:k, beta_prior_npars)
@@ -162,7 +173,8 @@ transformed_data_lines_categorical <- quote({
       .indent = idt(1)
     )
   }
-  paste_rows(mtext, mtext_fixed, mtext_varying, mtext_tau, .parse = FALSE)
+  paste_rows(mtext, mtext_alpha, mtext_fixed, mtext_varying, mtext_tau,
+             .parse = FALSE)
 })
 
 transformed_data_lines_gaussian <- quote({
@@ -555,7 +567,15 @@ model_lines_categorical <- quote({
   mtext_varying <- ""
   mtext_tau <- ""
   if (has_fixed_intercept || has_varying_intercept) {
-    mtext_intercept <- "for (s in 1:{S - 1}) a_{y}[s] ~ {alpha_prior_distr};"
+    if (vectorizable_prior(alpha_prior_distr)) {
+      np <- alpha_prior_npars
+      dpars_alpha <- paste0("alpha_prior_pars_", y, "[, ", 1:np, "]",
+                            collapse = ", ")
+      mtext_intercept <- "to_vector(a_{y}) ~ {alpha_prior_distr}({dpars_alpha});"
+    } else {
+      s <- 1:(S - 1)
+      mtext_intercept <- "a_{y}[{s}] ~ {beta_prior_distr};"
+    }
     if (has_varying_intercept) {
       if (noncentered) {
         mtext_omega <- paste_rows(

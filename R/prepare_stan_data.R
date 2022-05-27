@@ -380,13 +380,15 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
       )
     }
     if (channel$has_fixed_intercept || channel$has_varying_intercept) {
+      m <- rep(0, S_y - 1)
+      s <- rep(2, S_y - 1)
       channel$alpha_prior_npars <- 2
-      channel$alpha_prior_pars <- cbind(numeric(S_y), 2, deparse.level = 0)
+      channel$alpha_prior_pars <- cbind(m, s, deparse.level = 0)
       channel$alpha_prior_distr <- "normal"
       priors$alpha <- data.frame(
         parameter = paste0("alpha_", y),
         response = y,
-        prior = paste0("normal(0, 2)"),
+        prior = paste0("normal(", m, ", ", s, ")"),
         type = "alpha",
         category = resp_levels
       )
@@ -418,7 +420,7 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
           pars <- strsplit(sub(".*\\((.*)\\).*", "\\1", pdef$prior), ",")
           pars <- do.call("rbind", lapply(pars, as.numeric))
           channel[[paste0(ptype, "_prior_npars")]] <- ncol(pars)
-          channel[[paste0(ptype, "_prior_parsy")]] <- pars
+          channel[[paste0(ptype, "_prior_pars")]] <- pars
           channel[[paste0(ptype, "_prior_distr")]] <- dists[1]
         } else {
           channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior # write separate priors
@@ -426,6 +428,9 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
       }
     }
   }
+  channel$write_alpha <-
+    (channel$has_fixed_intercept || channel$has_varying_intercept) &&
+    length(channel$alpha_prior_distr) == 1
   channel$write_beta <- channel$has_fixed &&
     length(channel$beta_prior_distr) == 1
   channel$write_delta <- channel$has_varying &&
