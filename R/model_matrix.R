@@ -7,16 +7,7 @@
 full_model.matrix <- function(dformula, data) {
   model_matrices <- lapply(get_formulas(dformula), model.matrix.lm,
                            data = data, na.action = na.pass)
-  # remove intercepts from model matrices
-  model_matrices <- lapply(model_matrices, function(x) {
-    idx <- which(attr(x, "assign") == 0)
-    if (length(idx) > 0) {
-      a <- attr(x, "assign")[-idx]
-      x <- x[, -idx,  drop = FALSE]
-      attr(x, "assign") <- a
-    }
-    x
-  })
+  model_matrices <- lapply(model_matrices, remove_intercept)
   model_matrix <- do.call(cbind, model_matrices)
   u_names <- unique(colnames(model_matrix))
   model_matrix <- model_matrix[, u_names, drop = FALSE]
@@ -51,6 +42,7 @@ full_model.matrix_predict <- function(formula_list, newdata, idx, u_names) {
   model_matrices <- lapply(formula_list, function(x) {
     model.matrix.lm(x, newdata_sub, na.action = na.pass)
   })
+  model_matrices <- lapply(model_matrices, remove_intercept)
   model_matrix <- do.call(cbind, model_matrices)
   model_matrix[, u_names, drop = FALSE]
 }
@@ -64,6 +56,21 @@ full_model.matrix_predict <- function(formula_list, newdata, idx, u_names) {
 #' @noRd
 full_model.matrix_fast <- function(formula_list, data, u_names) {
   model_matrices <- lapply(formula_list, model.matrix, data)
+  model_matrices <- lapply(model_matrices, remove_intercept)
   model_matrix <- do.call(cbind, model_matrices)
   model_matrix[, u_names, drop = FALSE]
+}
+
+#' Remove Intercept from the Model Matrix
+#'
+#' @param x A model matrix from `model.matrix.lm`.
+#' @noRd
+remove_intercept <- function(x) {
+  idx <- which(attr(x, "assign") == 0)
+  if (length(idx) > 0) {
+    a <- attr(x, "assign")[-idx]
+    x <- x[, -idx,  drop = FALSE]
+    attr(x, "assign") <- a
+  }
+  x
 }
