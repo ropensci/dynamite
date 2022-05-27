@@ -106,11 +106,11 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
     Y_out[Y_na] <- 0
     form_specials <- specials[[i]]
     channel$resp <- resp
-    channel$L_fixed <- as.array(fixed_pars[[i]])
-    channel$L_varying <- as.array(varying_pars[[i]])
+    channel$L_fixed <- as.array(which(assigned[[i]] %in% fixed_pars[[i]]))
+    channel$L_varying <- as.array(which(assigned[[i]] %in% varying_pars[[i]]))
     channel$J <- as.array(assigned[[i]])
-    channel$J_fixed <- as.array(assigned[[i]][channel$L_fixed])
-    channel$J_varying <- as.array(assigned[[i]][channel$L_varying])
+    channel$J_fixed <- as.array(fixed_pars[[i]]) #as.array(assigned[[i]][channel$L_fixed])
+    channel$J_varying <- as.array(varying_pars[[i]]) #as.array(assigned[[i]][channel$L_varying])
     channel$K <- length(assigned[[i]])
     channel$K_fixed <- length(fixed_pars[[i]])
     channel$K_varying <- length(varying_pars[[i]])
