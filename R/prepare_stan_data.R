@@ -444,10 +444,10 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   }
   if (ncol(Y) > 1) {
     sd_y <- mean(apply(Y, 1, sd, na.rm = TRUE))
-    mean_y <- Y[1]
+    mean_y <- mean(Y[1, ])
   } else {
     sd_y <- sd(Y, na.rm = TRUE)
-    mean_y <- mean(Y[1, ])
+    mean_y <- Y[1]
   }
   sd_gamma <- 2 * sd_y / sd_x
   mean_gamma <- rep(0, length(sd_gamma))
@@ -533,9 +533,9 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
   # TODO could be adjusted
   sd_y <- 1
   if (ncol(Y) > 1) {
-    mean_y <- log(Y[1])
-  } else {
     mean_y <- log(mean(Y[1, ]))
+  } else {
+    mean_y <- log(Y[1])
   }
   sd_gamma <- 2 / sd_x
   mean_gamma <- rep(0, length(sd_gamma))
@@ -558,9 +558,9 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
   # TODO could be adjusted
   sd_y <- 1
   if (ncol(Y) > 1) {
-    mean_y <- log(Y[1])
-  } else {
     mean_y <- log(mean(Y[1, ]))
+  } else {
+    mean_y <- log(Y[1])
   }
   sd_gamma <- 2 / sd_x
   mean_gamma <- rep(0, length(sd_gamma))
