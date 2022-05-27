@@ -41,15 +41,15 @@ full_model.matrix <- function(dformula, data) {
 
 #' A version of full_model.matrix for prediction
 #'
-#' @param dformula A `dynamiteformula` object
-#' @param data A `data.frame` containing the variables in the model
+#' @param formula_list A `list` of `formula` objects
+#' @param newdata A `data.frame` containing the variables in the model
 #' @param u_names TODO
 #'
 #' @noRd
-full_model.matrix_predict <- function(dformula, data, u_names) {
-  idx <- seq(2, nrow(data), by = 2)
-  model_matrices <- lapply(get_formulas(dformula), function(x) {
-    model.matrix.lm(x, data, na.action = na.pass)[idx, ]
+full_model.matrix_predict <- function(formula_list, newdata, idx, u_names) {
+  newdata_sub <- as.data.frame(newdata[idx, ])
+  model_matrices <- lapply(formula_list, function(x) {
+    model.matrix.lm(x, newdata_sub, na.action = na.pass)
   })
   model_matrix <- do.call(cbind, model_matrices)
   model_matrix[, u_names, drop = FALSE]
@@ -57,7 +57,7 @@ full_model.matrix_predict <- function(dformula, data, u_names) {
 
 #' A fast version of full_model.matrix using formulas directly
 #'
-#' @param formula_list A list of formulas
+#' @param formula_list A `list` of `formula` objects
 #' @param data A `data.frame` containing the variables in the model
 #' @param u_names A character vector of unique predictor names
 #'
@@ -66,25 +66,4 @@ full_model.matrix_fast <- function(formula_list, data, u_names) {
   model_matrices <- lapply(formula_list, model.matrix, data)
   model_matrix <- do.call(cbind, model_matrices)
   model_matrix[, u_names, drop = FALSE]
-}
-
-#' A pseudo version of full_model.matrix, where the evaluation is assumed
-#' 'as.is', i.e., the model tilde is assumed to represent a mathematical
-#' equality
-#'
-#' @param formula_list A list of `formula` objects
-#' @param data A `data.frame` containing the variables in the model
-#' @param initial
-#'
-#' @noRd
-full_model.matrix_pseudo <- function(formula_list, data) {
-  data_env <- list2env(data)
-  model_matrices <- lapply(formula_list, eval_formula, envir = data_env)
-  out <- do.call(cbind, model_matrices)
-  if (nrow(out) == 1) {
-    # TODO warn about recycling?
-    out[rep(1, nrow(data)),]
-  } else {
-    out
-  }
 }

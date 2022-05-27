@@ -268,25 +268,6 @@ onlyif <- function(test, yes) {
   }
 }
 
-#' Convert a formula into an expression of mathematical equality
-#'
-#' @param formula A `formula` object without a response
-#'
-#' @noRd
-
-formula2expression <- function(formula) {
-  str2expression(deparse(formula))
-}
-
-#' Evaluate a formula as an expression
-#'
-#' @param formula A `formula` object
-#'
-#' @noRd
-eval_formula <- function(formula, envir) {
-  eval(expr = formula2expression(formula_rhs(formula)), envir = envir)
-}
-
 # TODO is needed?
 # Startup message for the package
 .onAttach <- function(libname, pkgname) {

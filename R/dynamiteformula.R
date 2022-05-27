@@ -139,7 +139,7 @@ is.formula <- function(x) {
 #'
 #' @noRd
 get_responses <- function(x) {
-  sapply(x, "[[", "response")
+  unlist(sapply(x, "[[", "response"))
 }
 
 #' Get the RHS of all formulas of a dynamiteformula object as a character vector
@@ -158,6 +158,22 @@ get_predictors <- function(x) {
 #' @noRd
 get_formulas <- function(x) {
   lapply(x, "[[", "formula")
+}
+
+#' Get a quoted expression of deterministic channel definitions
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
+get_quoted <- function(x) {
+  resp <- get_responses(x)
+  if (length(resp) > 0) {
+    expr <- lapply(x, function(x) deparse(formula_rhs(x$formula)))
+    quote_str <- paste0("`:=`(", paste0(resp, " = ", expr, collapse = ","), ")")
+    str2lang(quote_str)
+  } else {
+    NULL
+  }
 }
 
 #' Get indices of deterministic channels in dynamiteformula
@@ -185,24 +201,6 @@ which_stochastic <- function(x) {
 #' @noRd
 has_past <- function(x) {
   sapply(x, function(y) length(y$specials$past) > 0)
-}
-
-#' Get ranks of channels for evaluation order of precedence
-#'
-#' @param x A `dynamiteformula` object
-#'
-#' @noRd
-get_ranks <- function(x) {
-  sapply(x, function(y) y$specials$rank)
-}
-
-#' Check whether a dynamiteformula contains an intercept
-#'
-#' @param x A `dynamiteformula` object
-#'
-#' @noRd
-has_intercept <- function(x) {
-  attr(terms(x$formula), "intercept") == 1
 }
 
 #' Internal +.dynamiteformula for model constructions

@@ -74,8 +74,7 @@ formula_specials <- function(x) {
   out$fixed <- which(full_terms %in% fixed_terms)
   out$has_fixed_intercept <- as.logical(fixed_icpt)
   out$varying <- which(full_terms %in% varying_terms)
-  out$has_varying_intercept <- as.logical(varying_icpt)
-  out$specials$rank <- Inf
+  out$has_varying_intercept <- as.logical(varying_icpt) 
   out
 }
 
