@@ -3,7 +3,10 @@
 #' @export
 #' @param object An object of class \code{dynamitefit}.
 #' @param type  \[`character(1)`]\cr Either `beta` (the default) for
-#'   time-invariant coefficients or `delta` for time-varying coefficients.
+#'   time-invariant coefficients (including the intercept `alpha` in case it
+#'   is time-invariant),  or `delta` for time-varying coefficients (including
+#'   the intercept if it is time-varying).
+#'   #TODO alpha is not yet included, need mechanism to check its type
 #' @inheritParams as.data.frame.dynamitefit
 #' @param ... Ignored.
 #' @examples
@@ -18,6 +21,7 @@ coef.dynamitefit <- function(object, type = c("beta", "delta"),
 
 #' Visualize Time-varying Regression Coefficients of the Dynamite Model
 #'
+#' # TODO Include also alpha it is time-varying?
 #' @param model An object of class `dynamitefit`.
 #' @param level \[`numeric(1)`]\cr Level for posterior intervals.
 #'   Default is 0.05, leading to 90% intervals.
@@ -49,6 +53,7 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5, scales = "fixed"){
 
 #' Visualize Time-invariant Regression Coefficients of the Dynamite Model
 #'
+#' # TODO Include also alpha it is time-invariant?
 #' @param model An object of class `dynamitefit`.
 #' @param level \[`numeric(1)`]\cr Level for posterior intervals.
 #'   Default is 0.05, leading to 90% intervals.
