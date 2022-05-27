@@ -22,7 +22,7 @@ time axis.}
 
 \item{debug}{TODO}
 
-\item{...}{TODO}
+\item{...}{Additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}.}
 }
 \description{
 Estimate a Bayesian Dynamic Multivariate Panel Model

@@ -9,7 +9,7 @@
 #'   time axis.
 #' @param priors TODO
 #' @param debug TODO
-#' @param ... Additional arguments to [stan::sampling()].
+#' @param ... Additional arguments to [rstan::sampling()].
 #' @export
 #' @examples
 #' \dontrun{

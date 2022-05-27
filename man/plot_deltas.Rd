@@ -4,7 +4,13 @@
 \alias{plot_deltas}
 \title{Visualize Time-varying Regression Coefficients of the Dynamite Model}
 \usage{
-plot_deltas(model, level = 0.05, alpha = 0.5, scales = "fixed")
+plot_deltas(
+  model,
+  level = 0.05,
+  alpha = 0.5,
+  scales = "fixed",
+  include_alpha = TRUE
+)
 }
 \arguments{
 \item{model}{An object of class \code{dynamitefit}.}

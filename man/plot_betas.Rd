@@ -4,7 +4,7 @@
 \alias{plot_betas}
 \title{Visualize Time-invariant Regression Coefficients of the Dynamite Model}
 \usage{
-plot_betas(model, level = 0.05)
+plot_betas(model, level = 0.05, include_alpha = TRUE)
 }
 \arguments{
 \item{model}{An object of class \code{dynamitefit}.}

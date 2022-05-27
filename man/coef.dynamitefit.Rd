@@ -9,6 +9,7 @@
   type = c("beta", "delta"),
   summary = TRUE,
   probs = c(0.05, 0.95),
+  include_alpha = TRUE,
   ...
 )
 }
@@ -16,7 +17,7 @@
 \item{object}{An object of class \code{dynamitefit}.}
 
 \item{type}{[\code{character(1)}]\cr Either \code{beta} (the default) for
-time-invariant coefficients or \code{delta} for time-varying coefficients.}
+time-invariant coefficients,  or \code{delta} for time-varying coefficients.}
 
 \item{summary}{[\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
 mean, standard deviation, and posterior quantiles (as defined by the
@@ -26,10 +27,14 @@ samples instead.}
 \item{probs}{[\code{numeric()}]\cr Quantiles of interest. Default is
 \code{c(0.05, 0.95)}.}
 
+\item{include_alpha}{[\code{logical(1)}]\cr If \code{TRUE} (default), extracts also
+time-invariant intercept term alpha if time-invariant parameters beta are
+extracted, and time-varying alpha if time-varying delta are extracted.}
+
 \item{...}{Ignored.}
 }
 \description{
-Extract Regression Coefficients of Dynamite Model
+Extracts either time-varying or time-invariant parameters of the model.
 }
 \examples{
 betas <- coef(gaussian_example_fit, type = "beta")

@@ -38,7 +38,6 @@ coef.dynamitefit <- function(object, type = c("beta", "delta"),
 
 #' Visualize Time-varying Regression Coefficients of the Dynamite Model
 #'
-#' # TODO Include also alpha it is time-varying?
 #' @param model An object of class `dynamitefit`.
 #' @param level \[`numeric(1)`]\cr Level for posterior intervals.
 #'   Default is 0.05, leading to 90% intervals.
