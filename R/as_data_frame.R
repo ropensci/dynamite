@@ -90,6 +90,25 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     category <- attr(x$stan$responses[[response]], "levels")[-1]
     if(is.null(category)) category <- NA
 
+    if (type == "alpha") {
+      n_time <- length(x$time)
+      d <- data.frame(
+        parameter = paste0("alpha_", response),
+        value = c(draws),
+        time = rep(x$time, each = n_draws),
+        category = rep(category, each = n_time * n_draws),
+        .iteration = 1:nrow(draws),
+        .chain = rep(1:ncol(draws), each = nrow(draws)))
+    }
+    if (type == "tau_alpha") {
+      d <- data.frame(
+        parameter = paste0("tau_alpha_", response),
+        value = c(draws),
+        time = NA,
+        category = NA,
+        .iteration = 1:nrow(draws),
+        .chain = rep(1:ncol(draws), each = nrow(draws)))
+    }
     if (type == "beta") {
       var_names <- paste0("beta_", response, "_",
                           names(x$stan$model_vars[[response]]$L_fixed))

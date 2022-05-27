@@ -76,8 +76,11 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
     ),
     c(3, 1, 2)
   )
-  sd_x <- setNames(pmax(0.5, apply(X, 3, sd, na.rm = TRUE)),
+  sd_x <- apply(X, 3, sd, na.rm = TRUE)
+  # needed for default priors, 0.5 is pretty arbitrary
+  sd_x <- setNames(pmax(0.5, sd_x),
                    colnames(model_matrix))
+  x_means <- apply(X[1, , , drop = FALSE], 3, mean, na.rm = TRUE)
   X_na <- is.na(X)
   # Placeholder for NAs in Stan
   X[X_na] <- 0
@@ -103,11 +106,11 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
     Y_out[Y_na] <- 0
     form_specials <- specials[[i]]
     channel$resp <- resp
-    channel$L_fixed <- as.array(fixed_pars[[i]])
-    channel$L_varying <- as.array(varying_pars[[i]])
+    channel$L_fixed <- as.array(which(assigned[[i]] %in% fixed_pars[[i]]))
+    channel$L_varying <- as.array(which(assigned[[i]] %in% varying_pars[[i]]))
     channel$J <- as.array(assigned[[i]])
-    channel$J_fixed <- as.array(assigned[[i]][channel$L_fixed])
-    channel$J_varying <- as.array(assigned[[i]][channel$L_varying])
+    channel$J_fixed <- as.array(fixed_pars[[i]]) #as.array(assigned[[i]][channel$L_fixed])
+    channel$J_varying <- as.array(varying_pars[[i]]) #as.array(assigned[[i]][channel$L_varying])
     channel$K <- length(assigned[[i]])
     channel$K_fixed <- length(fixed_pars[[i]])
     channel$K_varying <- length(varying_pars[[i]])
@@ -130,6 +133,8 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
     } else {
       channel$obs <- ""
     }
+    channel$has_fixed_intercept <- dformula[[i]]$has_fixed_intercept
+    channel$has_varying_intercept <- dformula[[i]]$has_varying_intercept
     channel$has_fixed <- channel$K_fixed > 0
     channel$has_varying <- channel$K_varying > 0
     channel$lb <- lb
@@ -195,6 +200,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
   sampling_vars$K <- K
   sampling_vars$X <- X
   sampling_vars$T <- T_full
+  sampling_vars$X_m <- x_means
   list(
     model_vars = model_vars,
     sampling_vars = sampling_vars,
@@ -210,15 +216,15 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
 #' Stan model code construction, and prior definitions.
 #'
 #' @param y \[`character(1)`]\cr Name of the response variable of the channel.
-#' @param Y \[`vector()`]\cr A vector of values of the response variable.
+#' @param Y \[`matrix()`]\cr A matrix of values of the response variable.
 #' @param channel \[`list()`]\cr Channel-specific helper variables.
 #' @param sd_gamma TODO
 #' @param resp_class \[`character()`]\cr Class(es) of the response `Y`.
 #' @param priors TODO
 #'
 #' @noRd
-prepare_channel_default <- function(y, Y, channel,
-                                    mean_gamma, sd_gamma, resp_class, priors) {
+prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
+                                    mean_y, sd_y, resp_class, priors) {
   if (is.null(priors)) {
     priors <- list()
 
@@ -260,13 +266,37 @@ prepare_channel_default <- function(y, Y, channel,
         category = ""
       )
     }
+    if (channel$has_fixed_intercept || channel$has_varying_intercept) {
+      channel$alpha_prior_npars <- 2
+      channel$alpha_prior_pars <- c(mean_y, 2 * sd_y)
+      channel$alpha_prior_distr <-  paste0("normal(", mean_y, ", ", 2 * sd_y, ")")
+      priors$alpha <- data.frame(
+        parameter = paste0("alpha_", y),
+        response = y,
+        prior = channel$alpha_prior_distr,
+        type = "alpha",
+        category = ""
+      )
+      if (channel$has_varying_intercept) {
+        channel$tau_alpha_prior_npars <- 2
+        channel$tau_alpha_prior_pars <- c(0, 1)
+        channel$tau_alpha_prior_distr <- "normal(0, 1)"
+        priors$tau_alpha <- data.frame(
+          parameter = paste0("tau_alpha_", y),
+          response = y,
+          prior = "normal(0, 1)",
+          type = "tau_alpha",
+          category = ""
+        )
+      }
+    }
     priors <- dplyr::bind_rows(priors)
   } else {
     # TODO add a warning to documentation that the only the 'prior' column
     # of the priors data.frame should be altered (i.e. there's no checks for names or reordering of rows)
     # Or arrange...
     priors <- priors |> dplyr::filter(.data$response == y)
-    for (ptype in c("beta", "delta", "tau")) {
+    for (ptype in c("beta", "delta", "tau", "alpha", "tau_alpha")) {
       pdef <- priors |> dplyr::filter(.data$type == ptype)
       if (nrow(pdef) > 0) {
         dists <- sub("\\(.*", "", pdef$prior)
@@ -308,8 +338,6 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
     resp_levels <- attr(resp_class, "levels")[-1]
     priors <- list()
     sd_gamma <- 2 / sd_x
-    # TODO arbitrary, perhaps should depend on S
-    sd_gamma[which(names(sd_gamma) == "(Intercept)")] <- 5
 
     if (channel$has_fixed) {
       m <- rep(0, channel$K_fixed * (S_y - 1))
@@ -349,13 +377,37 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
         category = ""
       )
     }
+    if (channel$has_fixed_intercept || channel$has_varying_intercept) {
+      channel$alpha_prior_npars <- 2
+      channel$alpha_prior_pars <- cbind(numeric(S_y), 2, deparse.level = 0)
+      channel$alpha_prior_distr <- "normal"
+      priors$alpha <- data.frame(
+        parameter = paste0("alpha_", y),
+        response = y,
+        prior = paste0("normal(0, 2)"),
+        type = "alpha",
+        category = resp_levels
+      )
+      if (channel$has_varying_intercept) {
+        channel$tau_alpha_prior_npars <- 2
+        channel$tau_alpha_prior_pars <- c(0, 1)
+        channel$tau_alpha_prior_distr <- "normal"
+        priors$tau_alpha <- data.frame(
+          parameter = paste0("tau_alpha_", y),
+          response = y,
+          prior = paste0("normal(0, 1)"),
+          type = "tau_alpha",
+          category = ""
+        )
+      }
+    }
     priors <- dplyr::bind_rows(priors)
   } else {
     # TODO add a warning to documentation that the only the 'prior' column
     # of the priors data.frame should be altered (i.e. there's no checks for names or reordering of rows)
     # Or arrange...
     priors <- priors |> dplyr::filter(.data$response == y)
-    for (ptype in c("beta", "delta", "tau")) {
+    for (ptype in c("beta", "delta", "tau", "alpha", "tau_alpha")) {
       pdef <- priors |> dplyr::filter(.data$type == ptype)
       if (nrow(pdef) > 0) {
         dists <- sub("\\(.*", "", pdef$prior)
@@ -389,21 +441,20 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
           "gaussian family is not supported for factors.")
   }
   if (ncol(Y) > 1) {
-    s_y <- 1 / mean(apply(Y, 1, sd, na.rm = TRUE))
+    sd_y <- mean(apply(Y, 1, sd, na.rm = TRUE))
+    mean_y <- Y[1]
   } else {
-    s_y <- sd(Y, na.rm = TRUE)
+    sd_y <- sd(Y, na.rm = TRUE)
+    mean_y <- mean(Y[1, ])
   }
-  sd_gamma <- 2 * s_y / sd_x
+  sd_gamma <- 2 * sd_y / sd_x
   mean_gamma <- rep(0, length(sd_gamma))
-  idx <- which(names(sd_gamma) == "(Intercept)")
-  sd_gamma[idx] <- 2 * s_y
-  mean_gamma[idx] <- mean(Y)
 
   out <- prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma,
-                                 resp_class, priors)
+                                 mean_y, sd_y, resp_class, priors)
   if (is.null(priors)) {
 
-    out$channel$sigma_prior_distr <- paste0("exponential(", s_y, ")")
+    out$channel$sigma_prior_distr <- paste0("exponential(", 1 / sd_y, ")")
     out$priors <- dplyr::bind_rows(
       out$priors,
       data.frame(
@@ -438,11 +489,13 @@ prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
     stop_("Response variable ", y, " is invalid: ",
           "binomial family is not supported for factors.")
   }
+  # TODO could be adjusted
+  sd_y <- 0.5
+  mean_y <- 0
   sd_gamma <- 2 / sd_x
-  sd_gamma[which(names(sd_gamma) == "(Intercept)")] <- 2.5
   mean_gamma <- rep(0, length(sd_gamma))
-  prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma, resp_class,
-                          priors)
+  prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
+                          resp_class, priors)
 }
 
 #' @describeIn prepare_channel_default Prepare a bernoulli channel
@@ -475,11 +528,17 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
     stop_("Response variable ", y, " is invalid: ",
           "Poisson family is not supported for factors.")
   }
+  # TODO could be adjusted
+  sd_y <- 1
+  if (ncol(Y) > 1) {
+    mean_y <- log(Y[1])
+  } else {
+    mean_y <- log(mean(Y[1, ]))
+  }
   sd_gamma <- 2 / sd_x
-  sd_gamma[which(names(sd_gamma) == "(Intercept)")] <- 10
   mean_gamma <- rep(0, length(sd_gamma))
-  prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma, resp_class,
-                          priors)
+  prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma,  mean_y, sd_y,
+                          resp_class, priors)
 }
 
 #' @describeIn prepare_channel_default Prepare a negative binomial channel
@@ -494,11 +553,17 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
     stop_("Response variable ", y, " is invalid: ",
           "negative binomial family is not supported for factors.")
   }
+  # TODO could be adjusted
+  sd_y <- 1
+  if (ncol(Y) > 1) {
+    mean_y <- log(Y[1])
+  } else {
+    mean_y <- log(mean(Y[1, ]))
+  }
   sd_gamma <- 2 / sd_x
-  sd_gamma[which(names(sd_gamma) == "(Intercept)")] <- 10
   mean_gamma <- rep(0, length(sd_gamma))
   out <- prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma,
-                                 resp_class, priors)
+                                 mean_y, sd_y, resp_class, priors)
   if (is.null(priors)) {
     out$channel$phi_prior_distr <- "exponential(1)"
     out$priors <- dplyr::bind_rows(

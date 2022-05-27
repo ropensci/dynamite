@@ -71,10 +71,10 @@ formula_specials <- function(x) {
     x <- as.formula(paste0(y, "~ 1"))
   }
   out$formula <- x
-  out$fixed <- c(ifelse_(fixed_icpt, 0, integer(0)),
-                 which(full_terms %in% fixed_terms))
-  out$varying <- c(ifelse_(varying_icpt, 0, integer(0)),
-                   which(full_terms %in% varying_terms))
+  out$fixed <- which(full_terms %in% fixed_terms)
+  out$has_fixed_intercept <- as.logical(fixed_icpt)
+  out$varying <- which(full_terms %in% varying_terms)
+  out$has_varying_intercept <- as.logical(varying_icpt) 
   out
 }
 
