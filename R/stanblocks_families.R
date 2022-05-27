@@ -574,7 +574,7 @@ model_lines_categorical <- quote({
       mtext_intercept <- "to_vector(a_{y}) ~ {alpha_prior_distr}({dpars_alpha});"
     } else {
       s <- 1:(S - 1)
-      mtext_intercept <- "a_{y}[{s}] ~ {beta_prior_distr};"
+      mtext_intercept <- "a_{y}[{s}] ~ {alpha_prior_distr};"
     }
     if (has_varying_intercept) {
       if (noncentered) {
