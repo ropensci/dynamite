@@ -1,13 +1,18 @@
 #' Add each lagged response as a predictor to each channel.
-#' @param k \[`integer(1)`: \sQuote{1}]\cr Indicates how many previous
-#'   observations should be included.
+#' @param k \[`integer()`: \sQuote{1}]\cr
+#'   If `k` is a single integer, then all lags up to an including `k` of all
+#'   channels will be included for each channel. If `k` is an integer vector,
+#'   then lags indicated by `k` will be included for each channel.
 #' @param type \[`integer(1)`: \sQuote{"fixed"}]\cr Either
 #'   `"fixed"` or `"varying"` which indicates whether the coefficients of the
 #'   lag terms should vary in time or not.
 #' @export
 lags <- function(k = 1L, type = c("fixed", "varying")) {
   type <- match.arg(type)
-  k <- try_(k, type = "integer")[1]
+  k <- try_(k = k, type = "integer")
+  if (length(k) == 1) {
+    k <- 1:k
+  }
   structure(
     list(k = k, type = type),
     class = "lags"
