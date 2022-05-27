@@ -193,13 +193,13 @@ parameters_lines_default <- quote({
   if (has_fixed_intercept || has_varying_intercept) {
     intercept <- "real a_{y};"
   }
-  aname <- ifelse_(noncentered, "omega_raw_", "omega_")
+  oname <- ifelse_(noncentered, "omega_raw_", "omega_")
   paste_rows(
     onlyif(has_fixed, "vector[{K_fixed}] beta_{y};"),
-    onlyif(has_varying, "matrix[{K_varying}, D] {aname}{y};"),
+    onlyif(has_varying, "matrix[{K_varying}, D] {oname}{y};"),
     onlyif(has_varying, "vector<lower={lb}>[{K_varying}] tau_{y};"),
     intercept,
-    onlyif(has_varying_intercept, "vector[D - 1] omega_raw_alpha_{y};"),
+    onlyif(has_varying_intercept, "row_vector[D - 1] omega_raw_alpha_{y};"),
     onlyif(has_varying_intercept, "real<lower={lb}> tau_alpha_{y};"),
     .indent = idt(1)
   )
@@ -211,13 +211,13 @@ parameters_lines_categorical <- quote({
   if (has_fixed_intercept || has_varying_intercept) {
     intercept <- "vector[{S - 1}] a_{y};"
   }
-  aname <- ifelse_(noncentered, "omega_raw_", "omega_")
+  oname <- ifelse_(noncentered, "omega_raw_", "omega_")
   paste_rows(
     onlyif(has_fixed, "matrix[{K_fixed}, {S - 1}] beta_{y};"),
-    onlyif(has_varying, "matrix[{K_varying}, D] {aname}{y}[{S - 1}];"),
+    onlyif(has_varying, "matrix[{K_varying}, D] {oname}{y}[{S - 1}];"),
     onlyif(has_varying, "vector<lower={lb}>[{K_varying}] tau_{y};"),
     intercept,
-    onlyif(has_varying_intercept, "vector[D - 1] omega_raw_alpha_{y}[{S - 1}];"),
+    onlyif(has_varying_intercept, "row_vector[D - 1] omega_raw_alpha_{y}[{S - 1}];"),
     onlyif(has_varying_intercept, "real<lower={lb}> tau_alpha_{y};"),
     .indent = idt(1)
   )
@@ -283,12 +283,12 @@ transformed_parameters_lines_default <- quote({
   if (has_varying_intercept) {
     mtext_intercept <- paste_rows(
       "real alpha_{y}[T];",
-      "vector[D] omega_alpha_{y};",
+      "row_vector[D] omega_alpha_{y};",
       "{{",
         "vector[{K}] gamma_{y};",
         onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
         onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1];"),
-        "omega_alpha_{y}[1] = a_{y} - X_m * gamma_{y};",
+        "omega_alpha_{y}[1] = a_{y} - X_m[{{{cs(J)}}}] * gamma_{y};",
         "for (i in 2:D) {{",
           "omega_alpha_{y}[i] = omega_alpha_{y}[i - 1] + omega_raw_alpha_{y}[i - 1] * tau_alpha_{y};",
         "}}",
@@ -307,7 +307,7 @@ transformed_parameters_lines_default <- quote({
         "vector[{K}] gamma_{y};",
         onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
         onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1];"),
-        "real alpha_{y} = a_{y} - X_m * gamma_{y};",
+        "alpha_{y} = a_{y} - X_m[{{{cs(J)}}}] * gamma_{y};",
       "}}",
       .indent = idt(c(1, 1, 2, 2, 2, 2, 1)),
       .parse = FALSE
@@ -351,12 +351,12 @@ transformed_parameters_lines_categorical <- quote({
   if (has_varying_intercept) {
     mtext_intercept <- paste_rows(
       "vector[{S - 1}] alpha_{y}[T];",
-      "vector[D] omega_alpha_{y}[{S - 1}];",
+      "row_vector[D] omega_alpha_{y}[{S - 1}];",
       "for (s in 1:{S - 1}) {{",
         "vector[{K}] gamma_{y};",
         onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y}[, s];"),
         onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1, , s]';"),
-        "omega_alpha_{y}[s, 1] = a_{y}[s] - X_m * gamma_{y};",
+        "omega_alpha_{y}[s, 1] = a_{y}[s] - X_m[{{{cs(J)}}}] * gamma_{y};",
         "for (i in 2:D) {{",
           "omega_alpha_{y}[s, i] = omega_alpha_{y}[s, i - 1] + omega_raw_alpha_{y}[s, i - 1] * tau_alpha_{y};",
         "}}",
@@ -375,7 +375,7 @@ transformed_parameters_lines_categorical <- quote({
         "vector[{K}] gamma_{y};",
         onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y}[, s];"),
         onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1, , s];"),
-        "real alpha_{y}[s] = a_{y}[s] - X_m * gamma_{y};",
+        "alpha_{y}[s] = a_{y}[s] - X_m[{{{cs(J)}}}] * gamma_{y};",
       "}}",
       .indent = idt(c(1, 1, 2, 2, 2, 2, 1)),
       .parse = FALSE
@@ -420,7 +420,7 @@ model_lines_default <- quote({
       mtext_intercept <- paste_rows(
         mtext_intercept,
         "omega_raw_alpha_{y} ~ std_normal();",
-        "tau_alpha_{y} ~ {tau_alpha_prior_distr}",
+        "tau_alpha_{y} ~ {tau_alpha_prior_distr};",
         .indent = idt(c(0, 1, 1)),
         .parse = FALSE
       )
@@ -463,7 +463,7 @@ model_lines_default <- quote({
       }
       mtext_varying <- paste_rows(
         mtext_varying,
-        "for(i in 2:D) {{",
+        "for (i in 2:D) {{",
         ifelse_(
           shrinkage,
           "omega_{y}[, i] ~ normal(omega_{y}[, i - 1], lambda[i - 1] * tau_{y});",
@@ -492,14 +492,14 @@ model_lines_categorical <- quote({
   mtext_varying <- ""
   mtext_tau <- ""
   if (has_fixed_intercept || has_varying_intercept) {
-    mtext_intercept <- "for(s in 1:{S - 1}) a_{y}[s] ~ {alpha_prior_distr};"
+    mtext_intercept <- "for (s in 1:{S - 1}) a_{y}[s] ~ {alpha_prior_distr};"
     if (has_varying_intercept) {
       mtext_intercept <- paste_rows(
         mtext_intercept,
         "for (s in 1:{S - 1}) {{",
           "omega_raw_alpha_{y}[s] ~ std_normal();",
         "}}",
-        "tau_alpha_{y} ~ {tau_alpha_prior_distr}",
+        "tau_alpha_{y} ~ {tau_alpha_prior_distr};",
         .indent = idt(c(0, 0, 1, 0, 0)),
         .parse = FALSE
       )
@@ -557,7 +557,7 @@ model_lines_categorical <- quote({
       mtext_varying <- paste_rows(
         mtext_varying,
         "for (s in 1:{S - 1}) {{",
-          "for(i in 2:D) {{",
+          "for (i in 2:D) {{",
           ifelse_(
            shrinkage,
            "omega_{y}[s, , i] ~ normal(omega_{y}[s, , i - 1], lambda[i - 1] * tau_{y});",

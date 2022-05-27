@@ -66,8 +66,8 @@ create_data <- function(dformula, idt, vars) {
 #'   block of the Stan model code
 #' @noRd
 create_transformed_data <- function(dformula, idt, vars) {
-  tr_data <- character(length(formula))
-  for (i in seq_along(formula)) {
+  tr_data <- character(length(dformula))
+  for (i in seq_along(dformula)) {
     family <- dformula[[i]]$family$name
     line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
     tr_data[i] <- lines_wrap("transformed_data", family, line_args)
@@ -104,7 +104,7 @@ create_parameters <- function(dformula, idt, vars) {
 create_transformed_parameters <- function(dformula, idt, vars) {
   spline_defs <- attr(dformula, "splines")
   tr_pars <- character(length(dformula))
-  for (i in seq_along(formula)) {
+  for (i in seq_along(dformula)) {
     family <- dformula[[i]]$family$name
     line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
     tr_pars[i] <- lines_wrap("transformed_parameters", family, line_args)
