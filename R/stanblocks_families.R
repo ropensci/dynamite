@@ -281,22 +281,45 @@ transformed_parameters_lines_default <- quote({
     )
   }
   if (has_varying_intercept) {
-    mtext_intercept <- paste_rows(
+    mtext_omega_alpha_1 <- paste_rows(
       "real alpha_{y}[T];",
-      "row_vector[D] omega_alpha_{y};",
+      "real omega_alpha_1_{y};",
       "{{",
         "vector[{K}] gamma_{y};",
         onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
         onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1];"),
-        "omega_alpha_{y}[1] = a_{y} - X_m[{{{cs(J)}}}] * gamma_{y};",
-        "for (i in 2:D) {{",
-          "omega_alpha_{y}[i] = omega_alpha_{y}[i - 1] + omega_raw_alpha_{y}[i - 1] * tau_alpha_{y};",
-        "}}",
+        "omega_alpha_1_{y} = a_{y} - X_m[{{{cs(J)}}}] * gamma_{y};",
       "}}",
+      .indent = idt(c(1, 1, 1, 2, 2, 2, 2, 1)),
+      .parse = FALSE
+    )
+    if (noncentered) {
+      lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
+      mtext_omega_alpha <- paste_rows(
+        "row_vector[D] omega_alpha_{y};",
+        "omega_alpha_{y}[1] = omega_alpha_1_{y};",
+        "for (i in 2:D) {{",
+          "omega_alpha_{y}[i] = omega_alpha_{y}[i - 1] + omega_raw_alpha_{y}[i - 1] * tau_alpha_{y}{lambda_term}",
+        "}}",
+        .indent = idt(c(1, 1, 1, 2, 1)),
+        .parse = FALSE
+      )
+    } else {
+      mtext_omega_alpha <- paste_rows(
+        "row_vector[D] omega_alpha_{y};",
+        "omega_alpha_{y}[1] = omega_alpha_1_{y};",
+        "omega_alpha_{y}[2:D] = omega_raw_alpha_{y};",
+        .indent = idt(c(1, 1, 1)),
+        .parse = FALSE
+      )
+    }
+    mtext_intercept <- paste_rows(
+      mtext_omega_alpha_1,
+      mtext_omega_alpha,
       "for (t in 1:T) {{",
         "alpha_{y}[t] = omega_alpha_{y} * Bs[, t];",
       "}}",
-      .indent = idt(c(1, 1, 1, 2, 2, 2, 2, 2, 3, 2, 1, 1, 2, 1)),
+      .indent = idt(c(0, 0, 1, 2, 1)),
       .parse = FALSE
     )
   }
@@ -349,22 +372,49 @@ transformed_parameters_lines_categorical <- quote({
     )
   }
   if (has_varying_intercept) {
-    mtext_intercept <- paste_rows(
+    mtext_omega_alpha_1 <- paste_rows(
       "vector[{S - 1}] alpha_{y}[T];",
-      "row_vector[D] omega_alpha_{y}[{S - 1}];",
+      "real omega_alpha_1_{y}[{S - 1}];",
       "for (s in 1:{S - 1}) {{",
         "vector[{K}] gamma_{y};",
         onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y}[, s];"),
-        onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1, , s]';"),
-        "omega_alpha_{y}[s, 1] = a_{y}[s] - X_m[{{{cs(J)}}}] * gamma_{y};",
-        "for (i in 2:D) {{",
-          "omega_alpha_{y}[s, i] = omega_alpha_{y}[s, i - 1] + omega_raw_alpha_{y}[s, i - 1] * tau_alpha_{y};",
-        "}}",
-        "for (t in 1:T) {{",
-          "alpha_{y}[t, s] = omega_alpha_{y}[s] * Bs[, t];",
-        "}}",
+        onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1, , s];"),
+        "omega_alpha_1_{y}[s] = a_{y}[s] - X_m[{{{cs(J)}}}] * gamma_{y};",
       "}}",
-      .indent = idt(c(1, 1, 1, 2, 2, 2, 2, 2, 3, 2, 2, 3, 2, 1)),
+      .indent = idt(c(1, 1, 1, 2, 2, 2, 2, 1)),
+      .parse = FALSE
+    )
+    if (noncentered) {
+      lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
+      mtext_omega_alpha <- paste_rows(
+        "row_vector[D] omega_alpha_{y}[{S - 1}];",
+        "for (s in 1:{S - 1}) {{",
+          "omega_alpha_{y}[s, 1] = omega_alpha_1_{y}[s];",
+          "for (i in 2:D) {{",
+            "omega_alpha_{y}[s, i] = omega_alpha_{y}[s, i - 1] + omega_raw_alpha_{y}[s, i - 1] * tau_alpha_{y}{lambda_term}",
+          "}}",
+        "}}",
+        .indent = idt(c(1, 1, 2, 2, 3, 2, 1)),
+        .parse = FALSE
+      )
+    } else {
+      mtext_omega_alpha <- paste_rows(
+        "row_vector[D] omega_alpha_{y}[{S - 1}];",
+        "for (s in {S - 1}) {{",
+          "omega_alpha_{y}[s, 1] = omega_alpha_1_{y}[s];",
+          "omega_alpha_{y}[s, 2:D] = omega_raw_alpha_{y}[s];",
+        "}}",
+        .indent = idt(c(1, 1, 2, 2, 1)),
+        .parse = FALSE
+      )
+    }
+    mtext_intercept <- paste_rows(
+      mtext_omega_alpha_1,
+      mtext_omega_alpha,
+      "for (t in 1:T) {{",
+        "alpha_{y}[t] = omega_alpha_{y} * Bs[, t];",
+      "}}",
+      .indent = idt(c(0, 0, 1, 2, 1)),
       .parse = FALSE
     )
   }
@@ -417,11 +467,24 @@ model_lines_default <- quote({
   if (has_fixed_intercept || has_varying_intercept) {
     mtext_intercept <- "a_{y} ~ {alpha_prior_distr};"
     if (has_varying_intercept) {
+      if (noncentered) {
+        mtext_omega <- "omega_raw_alpha_{y} ~ std_normal();"
+      } else {
+        lambda_term <- ifelse_(shrinkage, " * lambda[i - 1]", "")
+        mtext_omega <- paste_rows(
+          "omega_raw_alpha_{y}[2] ~ normal(omega_alpha_1_{y}, tau_alpha_{y}{lambda_term});",
+          "for (i in 3:(D - 1)) {{",
+            "omega_raw_alpha_{y}[i] ~ normal(omega_raw_alpha_{y}[i - 1], tau_alpha_{y}{lambda_term});",
+          "}}",
+          .indent = idt(c(1, 1, 2, 1)),
+          .parse = FALSE
+        )
+      }
       mtext_intercept <- paste_rows(
         mtext_intercept,
-        "omega_raw_alpha_{y} ~ std_normal();",
+        mtext_omega,
         "tau_alpha_{y} ~ {tau_alpha_prior_distr};",
-        .indent = idt(c(0, 1, 1)),
+        .indent = idt(c(0, 0, 1)),
         .parse = FALSE
       )
     }
@@ -494,13 +557,32 @@ model_lines_categorical <- quote({
   if (has_fixed_intercept || has_varying_intercept) {
     mtext_intercept <- "for (s in 1:{S - 1}) a_{y}[s] ~ {alpha_prior_distr};"
     if (has_varying_intercept) {
+      if (noncentered) {
+        mtext_omega <- paste_rows(
+          "for (s in 1:{S - 1}) {{",
+            "omega_raw_alpha_{y}[s] ~ std_normal();",
+          "}}",
+          .indent = idt(c(1, 2, 1)),
+          .parse = FALSE
+        )
+      } else {
+        lambda_term <- ifelse_(shrinkage, " * lambda[i - 1]", "")
+        mtext_omega <- paste_rows(
+          "for (s in 1:{S - 1}) {{",
+            "omega_raw_alpha_{y}[s, 2] ~ normal(omega_alpha_1_{y}[s], tau_alpha_{y}{lambda_term});",
+            "for (i in 3:(D - 1)) {{",
+              "omega_raw_alpha_{y}[s, i] ~ normal(omega_raw_alpha_{y}[s, i - 1], tau_alpha_{y}{lambda_term});",
+            "}}",
+          "}}",
+          .indent = idt(c(1, 2, 2, 3, 2, 1)),
+          .parse = FALSE
+        )
+      }
       mtext_intercept <- paste_rows(
         mtext_intercept,
-        "for (s in 1:{S - 1}) {{",
-          "omega_raw_alpha_{y}[s] ~ std_normal();",
-        "}}",
+        mtext_omega,
         "tau_alpha_{y} ~ {tau_alpha_prior_distr};",
-        .indent = idt(c(0, 0, 1, 0, 0)),
+        .indent = idt(c(0, 0, 1)),
         .parse = FALSE
       )
     }
