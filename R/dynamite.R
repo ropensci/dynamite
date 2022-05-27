@@ -139,47 +139,51 @@ parse_lags <- function(data, dformula, group_var, time_var) {
   channels_det <- which_deterministic(dformula)
   channels_stoch <- which_stochastic(dformula)
   resp_all <- get_responses(dformula)
+  resp_stoch <- resp_all[channels_stoch]
   n_rows <- data[,.N]
   n_channels <- length(resp_all)
   data_names <- names(data)
   lag_map <- extract_lags(get_predictors(dformula))
-  lag_all <- attr(dformula, "lags")
+  lag_ext <- attr(dformula, "lags")
   lags_channel <- list()
   lags_rank <- integer(0)
   lags_lhs <- NULL
-  if (!is.null(lag_all)) {
-    n_lag <- lag_all$k * n_channels
+  max_lag <- 0L
+  if (!is.null(lag_ext)) {
+    lag_k <- lag_ext$k
+    lag_type <- lag_ext$type
+    max_lag <- max(lag_k)
+    n_lag <- max_lag *  length(resp_stoch)
     lags_channel <- vector(mode = "list", length = n_lag)
     lags_rank <- integer(n_lag)
-    type <- lag_all$type
     lags_lhs <- character(n_lag)
     lags_rank <- integer(n_lag)
-    for (i in seq_len(lag_all$k)) {
+    lags_increment <- logical(n_lag)
+    for (i in seq_len(max_lag)) {
       for (j in seq_along(channels_stoch)) {
-        k <- channels_stoch[j]
-        idx <- (i - 1) * n_channels + j
-        lags_lhs[idx] <- paste0(resp_all[k], "_lag_", i)
+        y <- resp_stoch[j]
+        idx <- (i - 1) * n_lag + j
+        lags_lhs[idx] <- paste0(y, "_lag_", i)
         if (i == 1) {
-          lags_rhs <- resp_all[k]
+          lags_rhs <- y
         } else {
-          lags_rhs <- paste0(resp_all[k], "_lag_", i - 1)
+          lags_rhs <- paste0(y, "_lag_", i - 1)
         }
         lags_rank[idx] <- i
+        lags_increment[idx] <- i %in% lag_k
         lags_channel[[idx]] <- dynamitechannel(
           formula = as.formula(paste0(lags_lhs[idx], " ~ ", lags_rhs)),
           family = deterministic_(),
           response = lags_lhs[idx]
         )
-        data[, (lags_lhs[idx]) := .SD, .SDcols = resp_all[k]]
-        data[, (lags_lhs[idx]) := NA]
       }
     }
     for (j in seq_len(n_channels)) {
-      if (identical(type, "varying")) {
+      if (identical(lag_type, "varying")) {
         dformula[[j]] <- dynamiteformula_(
           formula = increment_varying(
             formula = dformula[[j]]$formula,
-            x = lags_lhs,
+            x = lags_lhs[lags_increment],
             varying_idx = dformula[[j]]$varying
           ),
           family = dformula[[j]]$family
@@ -188,15 +192,14 @@ parse_lags <- function(data, dformula, group_var, time_var) {
         dformula[[j]] <- dynamiteformula_(
           formula = increment_fixed(
             formula = dformula[[j]]$formula,
-            x = lags_lhs
+            x = lags_lhs[lags_increment]
           ),
           family = dformula[[j]]$family
         )
       }
     }
-    if (nrow(lag_map) > 0) {
-      lag_map <- lag_map[!(lag_map$var %in% resp_all & lag_map$k <= lag_all$k), ]
-    }
+    lag_map <- lag_map |>
+      dplyr::filter(!(.data$var %in% resp_all & .data$k %in% lag_ext$k))
   }
   mis_vars <- which(!lag_map$var %in% c(resp_all, data_names))
   if (length(mis_vars)) {
@@ -292,7 +295,7 @@ parse_lags <- function(data, dformula, group_var, time_var) {
   dformula_det <- dformula[channels_det]
   dformula_lag <- c(lags_channel, map_channel)
   attr(dformula_lag, "rank_order") <- order(c(lags_rank, map_rank))
-  attr(dformula_lag, "max_lag") <- max(lag_map$k, lag_all$k, 0)
+  attr(dformula_lag, "max_lag") <- max(lag_map$k, max_lag, 0)
   list(
     all = dformula,
     det = dformula_det,
