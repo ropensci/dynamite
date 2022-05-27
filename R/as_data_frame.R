@@ -80,8 +80,21 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     if(any(z)) {
       stop("Model does not contain any parameters of type(s) ", types[z], ".")
     }
+    # if (include_alpha && "alpha" %in% x$priors$type && !("alpha" %in% types) &&
+    #     any(c("beta", "delta") %in% types)) {
+    #   types <- c("alpha", types)
+      # if (all(c("beta", "delta") %in% types)) {
+      #   types <- c("alpha", types)
+      # }
+      # if (delta %in% types && "tau_alpha" %in% x$priors$type) {
+      #   types <- c("alpha", types)
+      # }
+      # if (beta %in% types && !("tau_alpha" %in% x$priors$type)) {
+      #   types <- c("alpha", types)
+      # }
+    #}
   }
-
+  time_points <- sort(unique(x$data[[x$time_var]]))
   values <- function(type, response) {
 
     draws <- rstan::extract(
@@ -91,11 +104,18 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     if(is.null(category)) category <- NA
 
     if (type == "alpha") {
-      n_time <- length(x$time)
+      resp <- get_responses(x$dformula)
+      varying <- x$dformula[[which(resp == response)]]$has_varying_intercept
+      if (varying) {
+        n_time <- length(time_points)
+      } else {
+        n_time <- 1
+        time_points <- NA
+      }
       d <- data.frame(
         parameter = paste0("alpha_", response),
         value = c(draws),
-        time = rep(x$time, each = n_draws),
+        time = rep(time_points, each = n_draws),
         category = rep(category, each = n_time * n_draws),
         .iteration = 1:nrow(draws),
         .chain = rep(1:ncol(draws), each = nrow(draws)))
@@ -111,7 +131,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     }
     if (type == "beta") {
       var_names <- paste0("beta_", response, "_",
-                          names(x$stan$model_vars[[response]]$L_fixed))
+                          names(x$stan$model_vars[[response]]$J_fixed))
       n_vars <- length(var_names)
       d <- data.frame(
         parameter = rep(var_names, each = n_draws),
@@ -123,20 +143,20 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     }
     if (type == "delta") {
       var_names <- paste0("delta_", response, "_",
-                          names(x$stan$model_vars[[response]]$L_varying))
+                          names(x$stan$model_vars[[response]]$J_varying))
       n_vars <- length(var_names)
-      n_time <- length(x$time)
+      n_time <- length(time_points)
       d <- data.frame(
         parameter = rep(var_names, each = n_time * n_draws),
         value = c(draws),
-        time = rep(x$time, each = n_draws),
+        time = rep(time_points, each = n_draws),
         category = rep(category, each = n_time * n_vars * n_draws),
         .iteration = 1:nrow(draws),
         .chain = rep(1:ncol(draws), each = nrow(draws)))
     }
     if (type == "tau") {
       var_names <- paste0("tau_", response, "_",
-                          names(x$stan$model_vars[[response]]$L_varying))
+                          names(x$stan$model_vars[[response]]$J_varying))
       d <- data.frame(
         parameter = rep(var_names, each = n_draws),
         value = c(draws),
