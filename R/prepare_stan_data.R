@@ -455,7 +455,7 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
     sd_y <- sd(Y, na.rm = TRUE)
     mean_y <- Y[1]
   }
-  if(is.na(sd_y)) {
+  if(is.na(sd_y) || sd_y == 0) {
     sd_y <- 1
   }
   if(is.na(mean_y)) {
