@@ -229,7 +229,26 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
                                     mean_y, sd_y, resp_class, priors) {
   if (is.null(priors)) {
     priors <- list()
-
+    if (channel$has_fixed_intercept || channel$has_varying_intercept) {
+      channel$alpha_prior_distr <-  paste0("normal(", mean_y, ", ", 2 * sd_y, ")")
+      priors$alpha <- data.frame(
+        parameter = paste0("alpha_", y),
+        response = y,
+        prior = channel$alpha_prior_distr,
+        type = "alpha",
+        category = ""
+      )
+      if (channel$has_varying_intercept) {
+        channel$tau_alpha_prior_distr <- "normal(0, 1)"
+        priors$tau_alpha <- data.frame(
+          parameter = paste0("tau_alpha_", y),
+          response = y,
+          prior = "normal(0, 1)",
+          type = "tau_alpha",
+          category = ""
+        )
+      }
+    }
     if (channel$has_fixed) {
       m <- mean_gamma[channel$J_fixed]
       s <- sd_gamma[channel$J_fixed]
@@ -268,32 +287,18 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
         category = ""
       )
     }
-    if (channel$has_fixed_intercept || channel$has_varying_intercept) {
-      channel$alpha_prior_distr <-  paste0("normal(", mean_y, ", ", 2 * sd_y, ")")
-      priors$alpha <- data.frame(
-        parameter = paste0("alpha_", y),
-        response = y,
-        prior = channel$alpha_prior_distr,
-        type = "alpha",
-        category = ""
-      )
-      if (channel$has_varying_intercept) {
-        channel$tau_alpha_prior_distr <- "normal(0, 1)"
-        priors$tau_alpha <- data.frame(
-          parameter = paste0("tau_alpha_", y),
-          response = y,
-          prior = "normal(0, 1)",
-          type = "tau_alpha",
-          category = ""
-        )
-      }
-    }
     priors <- dplyr::bind_rows(priors)
   } else {
     # TODO add a warning to documentation that the only the 'prior' column
     # of the priors data.frame should be altered (i.e. there's no checks for names or reordering of rows)
     # Or arrange...
     priors <- priors |> dplyr::filter(.data$response == y)
+    for (ptype in c("alpha", "tau_alpha")) {
+      pdef <- priors |> dplyr::filter(.data$type == ptype)
+      if (nrow(pdef) > 0) {
+        channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
+      }
+    }
     for (ptype in c("beta", "delta", "tau")) {
       pdef <- priors |> dplyr::filter(.data$type == ptype)
       if (nrow(pdef) > 0) {
@@ -308,12 +313,6 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
         } else {
           channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
         }
-      }
-    }
-    for (ptype in c("alpha", "tau_alpha")) {
-      pdef <- priors |> dplyr::filter(.data$type == ptype)
-      if (nrow(pdef) > 0) {
-        channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
       }
     }
   }
@@ -343,6 +342,32 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
     priors <- list()
     sd_gamma <- 2 / sd_x
 
+    if (channel$has_fixed_intercept || channel$has_varying_intercept) {
+      m <- rep(0, S_y - 1)
+      s <- rep(2, S_y - 1)
+      channel$alpha_prior_npars <- 2
+      channel$alpha_prior_pars <- cbind(m, s, deparse.level = 0)
+      channel$alpha_prior_distr <- "normal"
+      priors$alpha <- data.frame(
+        parameter = paste0("alpha_", y),
+        response = y,
+        prior = paste0("normal(", m, ", ", s, ")"),
+        type = "alpha",
+        category = resp_levels
+      )
+      if (channel$has_varying_intercept) {
+        channel$tau_alpha_prior_npars <- 2
+        channel$tau_alpha_prior_pars <- c(0, 1)
+        channel$tau_alpha_prior_distr <- "normal"
+        priors$tau_alpha <- data.frame(
+          parameter = paste0("tau_alpha_", y),
+          response = y,
+          prior = paste0("normal(0, 1)"),
+          type = "tau_alpha",
+          category = ""
+        )
+      }
+    }
     if (channel$has_fixed) {
       m <- rep(0, channel$K_fixed * (S_y - 1))
       s <- rep(sd_gamma[channel$J_fixed], S_y - 1)
@@ -381,39 +406,13 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
         category = ""
       )
     }
-    if (channel$has_fixed_intercept || channel$has_varying_intercept) {
-      m <- rep(0, S_y - 1)
-      s <- rep(2, S_y - 1)
-      channel$alpha_prior_npars <- 2
-      channel$alpha_prior_pars <- cbind(m, s, deparse.level = 0)
-      channel$alpha_prior_distr <- "normal"
-      priors$alpha <- data.frame(
-        parameter = paste0("alpha_", y),
-        response = y,
-        prior = paste0("normal(", m, ", ", s, ")"),
-        type = "alpha",
-        category = resp_levels
-      )
-      if (channel$has_varying_intercept) {
-        channel$tau_alpha_prior_npars <- 2
-        channel$tau_alpha_prior_pars <- c(0, 1)
-        channel$tau_alpha_prior_distr <- "normal"
-        priors$tau_alpha <- data.frame(
-          parameter = paste0("tau_alpha_", y),
-          response = y,
-          prior = paste0("normal(0, 1)"),
-          type = "tau_alpha",
-          category = ""
-        )
-      }
-    }
     priors <- dplyr::bind_rows(priors)
   } else {
     # TODO add a warning to documentation that the only the 'prior' column
     # of the priors data.frame should be altered (i.e. there's no checks for names or reordering of rows)
     # Or arrange...
     priors <- priors |> dplyr::filter(.data$response == y)
-    for (ptype in c("beta", "delta", "tau", "alpha", "tau_alpha")) {
+    for (ptype in c("alpha", "tau_alpha", "beta", "delta", "tau")) {
       pdef <- priors |> dplyr::filter(.data$type == ptype)
       if (nrow(pdef) > 0) {
         dists <- sub("\\(.*", "", pdef$prior)
