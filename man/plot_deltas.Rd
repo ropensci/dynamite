@@ -23,6 +23,10 @@ Default is 0.5.}
 
 \item{scales}{[\code{character(1)}] Should y-axis of the panels be \code{"fixed"}
 (the default) or \code{"free"}? See \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}.}
+
+\item{include_alpha}{[\code{logical(1)}]\cr If \code{TRUE} (default), extracts also
+time-invariant intercept term alpha if time-invariant parameters beta are
+extracted, and time-varying alpha if time-varying delta are extracted.}
 }
 \value{
 A \code{ggplot} object.

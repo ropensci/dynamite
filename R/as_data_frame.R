@@ -80,19 +80,6 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     if(any(z)) {
       stop("Model does not contain any parameters of type(s) ", types[z], ".")
     }
-    # if (include_alpha && "alpha" %in% x$priors$type && !("alpha" %in% types) &&
-    #     any(c("beta", "delta") %in% types)) {
-    #   types <- c("alpha", types)
-      # if (all(c("beta", "delta") %in% types)) {
-      #   types <- c("alpha", types)
-      # }
-      # if (delta %in% types && "tau_alpha" %in% x$priors$type) {
-      #   types <- c("alpha", types)
-      # }
-      # if (beta %in% types && !("tau_alpha" %in% x$priors$type)) {
-      #   types <- c("alpha", types)
-      # }
-    #}
   }
   time_points <- sort(unique(x$data[[x$time_var]]))
   values <- function(type, response) {

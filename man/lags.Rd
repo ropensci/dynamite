@@ -7,8 +7,10 @@
 lags(k = 1L, type = c("fixed", "varying"))
 }
 \arguments{
-\item{k}{[\code{integer(1)}: \sQuote{1}]\cr Indicates how many previous
-observations should be included.}
+\item{k}{[\code{integer()}: \sQuote{1}]\cr
+If \code{k} is a single integer, then all lags up to an including \code{k} of all
+channels will be included for each channel. If \code{k} is an integer vector,
+then lags indicated by \code{k} will be included for each channel.}
 
 \item{type}{[\code{integer(1)}: \sQuote{"fixed"}]\cr Either
 \code{"fixed"} or \code{"varying"} which indicates whether the coefficients of the

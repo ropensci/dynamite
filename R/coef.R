@@ -45,7 +45,9 @@ coef.dynamitefit <- function(object, type = c("beta", "delta"),
 #'   Default is 0.5.
 #' @param scales \[`character(1)`] Should y-axis of the panels be `"fixed"`
 #'   (the default) or `"free"`? See [ggplot2::facet_wrap()].
-#' @inheritParams as.data.frame.dynamitefit
+#' @param include_alpha \[`logical(1)`]\cr If `TRUE` (default), extracts also
+#'   time-invariant intercept term alpha if time-invariant parameters beta are
+#'   extracted, and time-varying alpha if time-varying delta are extracted.
 #' @return A `ggplot` object.
 #' @export
 #' @examples

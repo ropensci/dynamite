@@ -11,6 +11,10 @@ plot_betas(model, level = 0.05, include_alpha = TRUE)
 
 \item{level}{[\code{numeric(1)}]\cr Level for posterior intervals.
 Default is 0.05, leading to 90\% intervals.}
+
+\item{include_alpha}{[\code{logical(1)}]\cr If \code{TRUE} (default), extracts also
+time-invariant intercept term alpha if time-invariant parameters beta are
+extracted, and time-varying alpha if time-varying delta are extracted.}
 }
 \value{
 A \code{ggplot} object.
