@@ -8,7 +8,7 @@
 #'   name as character, e.g., `"gaussian"`.
 #'
 #' @export
-dynamiteformula <- function(formula, family) {
+dynamiteformula <- function(formula, family, random_intercept = FALSE) {
   if (!is.formula(formula)) {
     stop_("Argument 'formula' is not a formula object")
   }
@@ -30,7 +30,7 @@ dynamiteformula <- function(formula, family) {
   if (has_as_is(deparse(formula))) {
     stop_("The use of I(.) is not supported by dynamiteformula")
   }
-  x <- dynamiteformula_(formula, family)
+  x <- dynamiteformula_(formula, family, random_intercept)
   structure(
     list(
       dynamitechannel(
@@ -41,7 +41,8 @@ dynamiteformula <- function(formula, family) {
         varying = x$varying,
         specials = x$specials,
         has_fixed_intercept = x$has_fixed_intercept,
-        has_varying_intercept = x$has_varying_intercept
+        has_varying_intercept = x$has_varying_intercept,
+        has_random_intercept = x$has_random_intercept
       )
     ),
     class = "dynamiteformula"
@@ -51,7 +52,7 @@ dynamiteformula <- function(formula, family) {
 #' @describeIn dynamiteformula Internal version of dynamiteformula
 #'
 #' @noRd
-dynamiteformula_ <- function(formula, family) {
+dynamiteformula_ <- function(formula, family, random_intercept = FALSE) {
   if (is_deterministic(family)) {
     out <- formula_past(formula)
   } else {
@@ -59,6 +60,10 @@ dynamiteformula_ <- function(formula, family) {
   }
   out$family <- family
   out$response <- as.character(formula_lhs(formula))
+  out$has_random_intercept <- random_intercept
+  if(random_intercept && family == "categorical") {
+    stop("Random intercepts are not yet supported for categorical family. ")
+  }
   out
 }
 
@@ -70,13 +75,19 @@ dynamiteformula_ <- function(formula, family) {
 #' @param fixed \[`integer()`] Time-invariant covariate indices
 #' @param varying \[`integer()`] Time-varying covariate indices
 #' @param specials See [`dynamiteformula()`]
-#'
+#' @param has_fixed_intercept \[`logical(1)`] Does the channel contain fixed
+#'   intercept?
+#' @param has_varying_intercept \[`logical(1)`] Does the channel contain
+#'   varying intercept?
+#' @param has_rand_intercept \[`logical(1)`] Does the channel contain random
+#'   individual-level intercept term?
 #'@noRd
 dynamitechannel <- function(formula, family, response,
                             fixed = integer(0), varying = integer(0),
                             specials = list(),
                             has_fixed_intercept = FALSE,
-                            has_varying_intercept = FALSE) {
+                            has_varying_intercept = FALSE,
+                            has_random_intercept = FALSE) {
   list(
     formula = formula,
     family = family,
@@ -85,7 +96,8 @@ dynamitechannel <- function(formula, family, response,
     varying = varying,
     specials = specials,
     has_fixed_intercept = has_fixed_intercept,
-    has_varying_intercept = has_varying_intercept
+    has_varying_intercept = has_varying_intercept,
+    has_random_intercept = has_random_intercept
   )
 }
 

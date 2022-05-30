@@ -6,9 +6,9 @@
 \alias{aux}
 \title{Model formula for \pkg{dynamite}}
 \usage{
-dynamiteformula(formula, family)
+dynamiteformula(formula, family, random_intercept = FALSE)
 
-obs(formula, family)
+obs(formula, family, random_intercept = FALSE)
 
 aux(formula)
 }

@@ -137,6 +137,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
     }
     channel$has_fixed_intercept <- dformula[[i]]$has_fixed_intercept
     channel$has_varying_intercept <- dformula[[i]]$has_varying_intercept
+    channel$has_random_intercept <- dformula[[i]]$has_random_intercept
     channel$has_fixed <- channel$K_fixed > 0
     channel$has_varying <- channel$K_varying > 0
     channel$lb <- lb
@@ -229,6 +230,16 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
                                     mean_y, sd_y, resp_class, priors) {
   if (is.null(priors)) {
     priors <- list()
+    if (channel$has_random_intercept) {
+      channel$sigma_u_prior_distr <-  paste0("normal(", 0, ", ", 2 * sd_y, ")")
+      priors$alpha <- data.frame(
+        parameter = paste0("sigma_u_", y),
+        response = y,
+        prior = channel$sigma_u_prior_distr,
+        type = "sigma_u",
+        category = ""
+      )
+    }
     if (channel$has_fixed_intercept || channel$has_varying_intercept) {
       channel$alpha_prior_distr <-  paste0("normal(", mean_y, ", ", 2 * sd_y, ")")
       priors$alpha <- data.frame(
