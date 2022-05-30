@@ -6,6 +6,7 @@
 #' @param hmc_diagnostics \[`logical(1)`]\cr if `TRUE` (default), prints the
 #' summary of Stan's HMC sampler diagnostics. See [rstan::check_hmc_diagnostics()]
 #' for details.
+#' @param ... Ignored.
 #' @method print dynamitefit
 #' @export
 print.dynamitefit <- function(x, hmc_diagnostics = TRUE,...) {

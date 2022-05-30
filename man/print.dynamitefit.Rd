@@ -12,6 +12,8 @@
 \item{hmc_diagnostics}{[\code{logical(1)}]\cr if \code{TRUE} (default), prints the
 summary of Stan's HMC sampler diagnostics. See \code{\link[rstan:check_hmc_diagnostics]{rstan::check_hmc_diagnostics()}}
 for details.}
+
+\item{...}{Ignored.}
 }
 \description{
 Prints the summary information of the estimated dynamite model.
