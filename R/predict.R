@@ -25,7 +25,6 @@ predict.dynamitefit <- function(object, newdata = NULL,
 
 predict.dynamitefit_counterfactual <- function(object, newdata, type,
                                                n_draws, n_fixed) {
-  # TODO break this function into smaller parts
   if (is.null(n_draws)) {
     n_draws <- ndraws(object)
   }
@@ -105,24 +104,49 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   data.table::setkeyv(newdata, c("draw", group_var, time_var))
   n <- nrow(newdata)
   newdata_names <- names(newdata)
-  full_group <- c("draw", group_var)
   idx <- seq.int(1L, n, by = n_time)
+  idx_par <- rep(1L:n_draws, each = n_id)
   assign_initial_values(newdata, object$dformulas$det, object$formulas$lag, idx)
   samples <- rstan::extract(object$stanfit)
-  J <- lapply(seq_along(resp_stoch), function(j) {
-    object$stan$model_vars[[j]]$J
-  })
-  J_fixed <- lapply(seq_along(resp_stoch), function(j) {
-    object$stan$model_vars[[j]]$J_fixed
-  })
-  J_varying <- lapply(seq_along(resp_stoch), function(j) {
-    object$stan$model_vars[[j]]$J_varying
-  })
+  eval_envs <- vector(mode = "list", length = length(resp_stoch))
+  for (j in seq_along(resp_stoch)) {
+    resp <- resp_stoch[j]
+    resp_family <- object$dformulas$stoch[[j]]$family
+    eval_envs[[j]] <- new.env()
+    eval_envs[[j]]$call <- eval(str2lang(paste0("predict_", resp_family)))
+    eval_envs[[j]]$type <- type
+    eval_envs[[j]]$newdata <- newdata # reference
+    eval_envs[[j]]$J_fixed <- object$stan$model_vars[[j]]$J_fixed
+    eval_envs[[j]]$J_varying <- object$stan$model_vars[[j]]$J_varying
+    eval_envs[[j]]$k <- k
+    eval_envs[[j]]$resp <- resp_stoch[j]
+    eval_envs[[j]]$specials <- specials[[j]]
+    eval_envs[[j]]$phi <- samples[[paste0("phi_", resp)]][idx_par]
+    eval_envs[[j]]$sigma <- samples[[paste0("sigma_", resp)]][idx_par]
+    if (is_categorical(resp_family)) {
+      resp_levels <-  attr(class(object$stan$responses[,resp]), "levels")
+      eval_envs[[j]]$alpha <-
+        samples[[paste0("alpha_", resp)]][idx_par, , , drop=FALSE]
+      eval_envs[[j]]$beta <-
+        samples[[paste0("beta_", resp_stoch[j])]][idx_par, , , drop = FALSE]
+      eval_envs[[j]]$delta <-
+        samples[[paste0("delta_", resp_stoch[j])]][idx_par, , , , drop = FALSE]
+      eval_envs[[j]]$resp_levels <- resp_levels
+      eval_envs[[j]]$S <- dim(samples[[paste0("beta_", resp)]])[4] + 1
+      eval_envs[[j]]$idx_resp <- which(newdata_names %in%
+                          c(glue::glue("{resp}_{resp_levels}")))
+    } else {
+      eval_envs[[j]]$alpha <-
+        samples[[paste0("alpha_", resp)]][idx_par, , drop = FALSE]
+      eval_envs[[j]]$beta <-
+        samples[[paste0("beta_", resp_stoch[j])]][idx_par, , drop = FALSE]
+      eval_envs[[j]]$delta <-
+        samples[[paste0("delta_", resp_stoch[j])]][idx_par, , , drop = FALSE]
+    }
+  }
   cl <- get_quoted(object$dformulas$lag)
   ro <- attr(object$dformulas$lag, "rank_order")
   for (i in 2L:n_time) {
-    #idx <- rep(seq.int(i - 1L, n, by = n_time), each = 2) + rep(0L:1L, times = k)
-    #idx_i <- seq.int(i, n, by = n_time)
     idx <- idx + 1L
     if (n_lag > 0) {
       assign_lags(newdata, ro, idx, lag_lhs, lag_rhs)
@@ -137,33 +161,15 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
       object$stan$u_names
     )
     for (j in seq_along(resp_stoch)) {
-      resp <- resp_stoch[j]
+      e <- eval_envs[[j]]
       idx_na <- which(is.na(newdata[idx, .SD, .SDcols = resp]))
-      idx_pred <- idx[idx_na]
+      e$idx <- idx
+      e$time <- i - 1
+      e$idx_pred <- idx[idx_na]
+      e$model_matrix <- model_matrix
+      e$a_time <- ifelse_(ncol(e$alpha) == 1, 1, i - 1)
       if (length(idx_na) > 0) {
-        sim <- do.call(
-          paste0("predict_", object$dformulas$stoch[[j]]$family),
-          list(
-            model_matrix = model_matrix[idx_na, J[[j]], drop = FALSE],
-            samples = samples, specials[[j]], resp,
-            time = i - 1, type, n_draws = n_draws,
-            J_fixed = J_fixed[[j]], J_varying = J_varying[[j]]
-          )
-        )
-        if (is_categorical(object$dformulas$stoch[[j]]$family)) {
-          resp_levels <- object$levels[[resp]]
-          if (type != "response") {
-            idx_resp <- which(newdata_names %in%
-                                c(glue::glue("{resp}_{resp_levels}")))
-            newdata[idx_pred, (newdata_names[idx_resp]) := sim$mean_or_link]
-          }
-          newdata[idx_pred, (resp) := resp_levels[sim$response]]
-        } else {
-          if (type != "response") {
-            newdata[idx_pred, (glue::glue("{resp}_store")) := sim$mean_or_link]
-          }
-          newdata[idx_pred, (resp) := sim$response]
-        }
+        eval(e$call, envir = e)
       }
     }
   }

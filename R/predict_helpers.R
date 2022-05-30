@@ -38,11 +38,13 @@ softmax <- function(x) {
   exp(x - log_sum_exp(x))
 }
 
-fitted_gaussian <- function(model_matrix, samples) {
-  c(model_matrix %*% matrix(samples, nrow = ncol(model_matrix), byrow = TRUE))
-}
+# Fitted expressions ------------------------------------------------------
 
-fitted_categorical <- function(model_matrix, samples) {
+fitted_gaussian <- quote({
+  c(model_matrix %*% matrix(samples, nrow = ncol(model_matrix), byrow = TRUE))
+})
+
+fitted_categorical <- quote({
   n_draws <- nrow(samples)
   n_id <- nrow(model_matrix)
   sim <- matrix(NA, n_draws * n_id, dim(samples)[4] + 1)
@@ -52,134 +54,114 @@ fitted_categorical <- function(model_matrix, samples) {
     maxs <- apply(xbeta, 1, max)
     sim[idx_k, ] <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
   }
-  sim
-}
+})
 
-fitted_bernoulli <- function(model_matrix, samples) {
+fitted_bernoulli <- quote({
   plogis(c(model_matrix %*% t(samples)))
-}
+})
 
-fitted_binomial <- function(model_matrix, samples) {
+fitted_binomial <- quote({
   fitted_bernoulli(model_matrix, samples)
-}
+})
 
-fitted_poisson <- function(model_matrix, samples) {
+fitted_poisson <- quote({
   exp(c(model_matrix %*% t(samples)))
-}
+})
 
-fitted_negbin <- function(model_matrix, samples) {
+fitted_negbin <- quote({
   exp(c(model_matrix %*% t(samples)))
-}
+})
 
-predict_gaussian <- function(model_matrix, samples, specials,
-                             resp, time, type, n_draws, J_fixed, J_varying) {
-  alpha <- samples[[paste0("alpha_", resp)]]
-  a_time <- ifelse_(ncol(alpha) == 1, 1, time)
-  beta <- samples[[paste0("beta_", resp)]]
-  delta <- samples[[paste0("delta_", resp)]]
-  n_id <- nrow(model_matrix) / n_draws
-  sim <- sim_r <- numeric(nrow(model_matrix))
-  for (k in seq_len(n_draws)) {
-    idx_k <- ((k - 1) * n_id + 1):(k * n_id)
-    xbeta <- alpha[k, a_time] + model_matrix[idx_k, J_fixed, drop = FALSE] %*% beta[k, ] +
-      model_matrix[idx_k, J_varying, drop = FALSE] %*% delta[k, time, ]
-    sim[idx_k] <- xbeta
-    sigma <- samples[[paste0("sigma_", resp)]][k]
-    sim_r[idx_k] <- rnorm(n_id, xbeta, sigma)
+# Predict expressions -----------------------------------------------------
+
+predict_default <- quote({
+  xbeta <- alpha[, a_time] +
+    .rowSums(x = model_matrix[, J_fixed, drop = FALSE] * beta,
+             m = k, n = J_fixed) +
+    .rowSums(x = model_matrix[, J_varying, drop = FALSE] * delta[, time, ],
+             m = k, n = J_varying)
+  if (type == "link") {
+    data.table::set(x = newdata, i = idx_pred, j = glue::glue("{resp}_store"),
+                    value = xbeta)
   }
-  list(response = sim_r, mean_or_link = sim)
-}
+})
 
-predict_categorical <- function(model_matrix, samples, specials,
-                                resp, time, type, n_draws) {
-  beta <- samples[[paste0("beta_", resp)]]
-  n_id <- nrow(model_matrix) / n_draws
-  S <- dim(samples[[paste0("beta_", resp)]])[4] + 1
-  sim <- matrix(NA, nrow(model_matrix), S)
-  sim_r <- numeric(nrow(model_matrix))
-  for (k in seq_len(n_draws)) {
-    idx_k <- ((k - 1) * n_id + 1):(k * n_id)
-    xbeta <- cbind(model_matrix[idx_k, , drop = FALSE] %*% beta[k, time, , ], 0)
-    maxs <- apply(xbeta, 1, max)
-    if (type == "link") {
-      sim[idx_k, ] <- xbeta
-    }
-    if (type == "mean") {
-      sim[idx_k, ] <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
-    }
-    sim_r[idx_k] <- max.col(xbeta - log(-log(runif(S * n_id))))
+predict_gaussian <- quote({
+  eval(predict_default)
+  if (type == "mean") {
+    data.table::set(x = newdata, i = idx_pred, j = glue::glue("{resp}_store"),
+                    value = xbeta)
   }
-  list(response = sim_r, mean_or_link = sim)
-}
+  data.table::set(x = newdata, i = idx_pred, j = resp,
+                  value = rnorm(k, xbeta, sigma))
+})
 
-predict_bernoulli <- function(model_matrix, samples, specials,
-                              resp, time, type, n_draws) {
-  predict_binomial(model_matrix, samples, specials, resp, time, type, n_draws)
-}
+predict_categorical <- quote({
+  xbeta <- alpha[idx_par, a_time, , drop = FALSE] +
+    cbind(rowSums(model_matrix[, J_fixed, drop = FALSE] * beta) +
+            rowSums(model_matrix[, J_varying, drop = FALSE] *
+                      delta[, time, , , drop = FALSE]),
+          0)
+  maxs <- apply(xbeta, 1, max)
+  if (type == "link") {
+    data.table::set(
+      x = newdata,
+      i = idx_pred,
+      j = glue::glue("{resp}_{resp_levels}"),
+      value = xbeta)
+  }
+  if (type == "mean") {
+    data.table::set(
+      x = newdata,
+      i = idx_pred,
+      j = glue::glue("{resp}_{resp_levels}"),
+      value = exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+    )
+  }
+  data.table::set(x = newdata, i = idx_pred, j = resp,
+                  value = max.col(xbeta - log(-log(runif(S * k)))))
+})
 
-predict_binomial <- function(model_matrix, samples, specials,
-                             resp, time, type, n_draws) {
-  beta <- samples[[paste0("beta_", resp)]]
-  n_id <- nrow(model_matrix) / n_draws
-  sim <- sim_r <- numeric(nrow(model_matrix))
+predict_bernoulli <- quote({
+  eval(predict_binomial)
+})
+
+predict_binomial <- quote({
+  eval(predict_default)
+  if (type == "mean") {
+    data.table::set(x = newdata, i = idx_pred, j = glue::glue("{resp}_store"),
+                    value = plogis(xbeta))
+  }
   trials <- specials$trials
   if (is.null(trials)) {
     trials <- rep(1, n_id)
   }
-  for (k in seq_len(n_draws)) {
-    idx_k <- ((k - 1) * n_id + 1):(k * n_id)
-    xbeta <- model_matrix[idx_k, , drop = FALSE] %*% beta[k, time, ]
-    if (type == "link") {
-      sim[idx_k, ] <- xbeta
-    }
-    if (type == "mean") {
-      sim[idx_k] <- plogis(xbeta)
-    }
-    sim_r[idx_k] <- rbinom(n_id, trials, plogis(xbeta))
-  }
-  list(response = sim_r, mean_or_link = sim)
-}
+  data.table::set(x = newdata, i = idx_pred, j = resp,
+                  value = rbinom(k, trials, plogis(xbeta)))
+})
 
-predict_poisson <- function(model_matrix, samples, specials,
-                            resp, time, type, n_draws) {
-  beta <- samples[[paste0("beta_", resp)]]
-  n_id <- nrow(model_matrix) / n_draws
-  sim <- sim_r <- numeric(nrow(model_matrix))
+predict_poisson <- quote({
+  eval(predict_default)
   offset <- specials$offset
   has_offset <- is.null(offset)
-  for (k in seq_len(n_draws)) {
-    idx_k <- ((k - 1) * n_id + 1):(k * n_id)
-    xbeta <- model_matrix[idx_k, , drop = FALSE] %*% beta[k, time, ]
-    exp_xbeta <- if (has_offset) exp(xbeta + offset) else exp(xbeta)
-    if (type == "link") {
-      sim[idx_k, ] <- xbeta
-    }
-    if (type == "mean") {
-      sim[idx_k] <- exp_xbeta
-    }
-    sim_r[idx_k] <- rpois(n_id, exp_xbeta)
+  exp_xbeta <- ifelse_(has_offset, exp(xbeta + offset), exp(xbeta))
+  if (type == "mean") {
+    data.table::set(x = newdata, i = idx_pred, j = glue::glue("{resp}_store"),
+                    value = exp_xbeta)
   }
-  list(response = sim_r, mean_or_link = sim)
-}
+  data.table::set(x = newdata, i = idx_pred, j = resp,
+                  value = rpois(k, exp_xbeta))
+})
 
-predict_negbin <- function(model_matrix, samples, specials,
-                           resp, time, type, n_draws) {
-  beta <- samples[[paste0("beta_", resp)]]
-  phi <- samples[[paste0("phi_", resp)]]
-  n_id <- nrow(model_matrix) / n_draws
-  sim <- sim_r <- numeric(nrow(model_matrix))
-  for (k in seq_len(n_draws)) {
-    idx_k <- ((k - 1) * n_id + 1):(k * n_id)
-    xbeta <- model_matrix[idx_k, , drop = FALSE] %*% beta[k, time, ]
-    exp_xbeta <- exp(xbeta)
-    if (type == "link") {
-      sim[idx_k, ] <- xbeta
-    }
-    if (type == "mean") {
-      sim[idx_k] <- exp_xbeta
-    }
-
-    sim_r[idx_k] <- rnbinom(n_id, size = phi[k], mu = exp_xbeta)
+predict_negbin <- quote({
+  eval(predict_default)
+  offset <- specials$offset
+  has_offset <- is.null(offset)
+  exp_xbeta <- ifelse_(has_offset, exp(xbeta + offset), exp(xbeta))
+  if (type == "mean") {
+    data.table::set(x = newdata, i = idx_pred, j = glue::glue("{resp}_store"),
+                    value = exp_xbeta)
   }
-  list(response = sim_r, mean_or_link = sim)
-}
+  data.table::set(x = newdata, i = idx_pred, j = resp,
+                  value = rnbinom(n_id, size = phi, mu = exp_xbeta))
+})

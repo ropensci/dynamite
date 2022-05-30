@@ -9,7 +9,7 @@
 lines_wrap <- function(prefix, family, args) {
   lines_expr <- paste0(prefix, "_lines_", family)
   lines_env <- list2env(args)
-  eval(eval(as.name(lines_expr)), envir = lines_env)
+  eval(eval(str2lang(lines_expr)), envir = lines_env)
 }
 
 #' Checks if a prior definition is vectorizable
