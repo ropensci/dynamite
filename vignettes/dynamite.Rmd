@@ -22,50 +22,51 @@ library(dynamite)
 
 # Introduction
 
-Longitudinal (panel) data consisting of multiple individuals measured over multiple time point is common in various fields such as sociology and econometrics. For example, analysing individual-level life-course data is valuable for assessing how policy reforms and interventions could come to affect the lives of individuals and the stability of their families. 
+Longitudinal (panel) data consisting of multiple individuals measured over multiple time points is common in various fields such as sociology and econometrics. For example, analysing individual-level life-course data is valuable for assessing how policy reforms and interventions could come to affect the lives of individuals and the stability of their families. 
 
-Several approaches, e.g., [@arellano1991; @allison2017] have been developed to analyse panel data where the past values of the response variable are used as predictors in the current time point. Classic dynamic panel models consider single univariate response variable, using the other individual's measurements as fixed predictors, while cross-lagged panel models are allow simultaneous modelling of multiple responses [@allison2017]. The estimation methods are often based on instrumental variables with maximum likelihood or generalized method of moments. Many of these popular models can be estimated with the R [@R] packages plm [@croissant2008] and [@rosseel2012]. 
+Several approaches, e.g., [@arellano1991; @allison2017] have been developed to analyse panel data where the past values of the response variable are used as predictors in the current time point. Classic dynamic panel models consider a single univariate response variable, using the other individuals' measurements as fixed predictors, while cross-lagged panel models allow simultaneous modelling of multiple responses [@allison2017]. The estimation methods for these models are often based on instrumental variables with maximum likelihood or generalized method of moments. Many of these popular models can be estimated with the R [@R] packages plm [@croissant2008] and [@rosseel2012]. 
 
-In traditional dynamic panel data models, the effects of predictors are typically assumed to be time-invariant, although some extensions to time-varying effects have emerged [@hayakawa2019]. On the other hand, there are various methods to model time-varying effects in (generalized) regression models based on state space models [@harvey1982; @durbin2012], with various R implementations [@helske2022; @knaus2021; @brodersen2014] The state space modelling approaches are highly flexible but often computationally heavy due to assumed latent processes for the regression coefficients and analytically intractable marginal likelihood. Methods based on the varying coefficients models [@hastie1993; @eubank2004] can be computationally more convenient, especially when the varying coefficients are based on splines. Some of the R implementations of time-varying coeffient models include [@ng2021; @casas2019; @dziak2021].
+In traditional dynamic panel data models, the effects of predictors are typically assumed to be time-invariant, although some extensions to time-varying effects have emerged [@hayakawa2019]. On the other hand, there are various methods to model time-varying effects in (generalized) regression models based on state space models [@harvey1982; @durbin2012], with various R implementations [@helske2022; @knaus2021; @brodersen2014]. The state space modelling approaches are highly flexible but often computationally demanding due to assumed latent processes for the regression coefficients and an analytically intractable marginal likelihood. Methods based on the varying coefficients models [@hastie1993; @eubank2004] can be computationally more convenient, especially when the varying coefficients are based on splines. Some of the R implementations of time-varying coefficient models include [@ng2021; @casas2019; @dziak2021].
 
-Despite large literature and available software to model various types of dynamic panel data, many of the aforementioned methods/software lack some of the folloing important features:
+Despite extensive literature and available software to model various types of dynamic panel data, many of the aforementioned methods/software lack some of the following important features:
 
 
 * Joint modelling of multiple measurements per individual (multiple channels)
 * Non-gaussian data
-* realistic predictions/simulations due to the lagged dependent variables
-* parameter and predictive uncertainty (bayes)
+* Realistic predictions/simulations due to the lagged dependent variables
+* Quantification of parameter and predictive uncertainty (bayes)
 * User-friendly and efficient interface
+* Simultaneous time-varying and time-invariant effects
 
-The dynamite package aims to accomodate all of these.
+The dynamite package aims to accommodate all of the aforementioned features
 
 # Model
 
-Consider an individual $i$ with observations $y_{i,t} = (y^1_{i,t}, \ldots, y^c_{i,t},\ldots, y^C_{i,t})$, $t=1,\ldots,T$, i.e. at each time point $t$ we have $C$ observations from individual $i$. Assume that each element of $y_{i,t}$ can depend on the past values $y_{i,t-1}$, as well as additional exogenous covariates $x_{i,t}$. Then, assuming that the elements of $y_{i,t}$ are independent given $y_{i, t-1}$ and $x_{i,t}$, we have
-$$
+Consider an individual $i$ with observations $y_{i,t} = (y^1_{i,t}, \ldots, y^c_{i,t},\ldots, y^C_{i,t})$, $t=1,\ldots,T$, $i = 1,\ldots,N$ i.e. at each time point $t$ we have $C$ observations from $N$ individuals. Assume that each element of $y_{i,t}$ can depend on the past values $y_{i,t-1}$, as well as additional exogenous covariates $x_{i,t}$. Then, assuming that the elements of $y_{i,t}$ are independent given $y_{i, t-1}$ and $x_{i,t}$, we have
+\[
 \begin{aligned}
 y_{i,t} &\sim p_t(y_{i,t} | y_{i,t-1},  x_{i,t}) = \prod_{c=1}^C p^c_t(y^c_{i,t} | y^1_{i,t-1}, \ldots, y^C_{i,t-1}, x_{i,t}).
 \end{aligned}
-$$
+\]
 Here the parameters of the conditional distributions $p^c$ depend on time, which allows us to take into account the fact that the dynamics of our system can evolve over time. 
 
 For $p^c_t$, given a suitable link function depending on our distributional assumptions, we define a linear predictor $\eta^c_{t}$ for the channel $c$ with a following general form:
-$$
+\[
 \begin{aligned}
-\eta^c_{t} &= \alpha^c_{t} + Z^c_{t} \beta^c + X^c_{t} \delta^c_{t}\
+\eta^c_{t} &= \alpha^c_{t} + Z^c_{t} \beta^c + X^c_{t} \delta^c_{t}
 \end{aligned}
-$$
+\]
 where $\alpha_t$ (possibly time-varying) is the intercept term, $Z^c_t$ defines the predictors corresponding to the vector of time-invariant coefficients  $\beta^c$, and similarly for the time-varying part $X^c_{t} \delta^c_{t}$. For time-varying coefficients $\delta$ (and similarly for $\alpha$), we use Bayesian P-splines (penalized B-splines) [@lang2004] where
-$$
+\[
 \delta^c_{k,t} = B_t \omega_k^c, \quad k=1,\ldots,K,
-$$
+\]
 where $K$ is the number of covariates, $B_t$ is a vector of B-spline values at time $t$ and $\omega_k^c$ is vector of corresponding spline coefficients. In general the number of B-splines $D$ used for constructing the splines for the study period $1,\ldots,T$ can be chosen freely, bit too large $D$ can result in overfitting. To mitigate this, we define a random walk prior for $\omega^c_k$ as
-$$
+\[
 \begin{aligned}
 \omega^c_{k,1} &\sim p(\omega^c_{k,1}),\
 \omega^c_{k,d} &\sim N(\omega^c_{k,d-1}, (\tau^c_k)^2), \quad d=2,\ldots, D.\
 \end{aligned}
-$$
+\]
 with user defined prior $p(\omega^c_{k,1})$ on the first coefficient, which due to the structure of $B_1$ corresponds to the prior on the $\delta^c_{k,1}$. Here, the parameter $\tau^c_k$ controls the smoothness of the spline curves.
 
-
+# References

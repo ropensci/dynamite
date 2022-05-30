@@ -38,7 +38,7 @@ full_model.matrix <- function(dformula, data) {
 #'
 #' @noRd
 full_model.matrix_predict <- function(formula_list, newdata, idx, u_names) {
-  newdata_sub <- as.data.frame(newdata[idx, ])
+  newdata_sub <- newdata[idx, ]
   model_matrices <- lapply(formula_list, function(x) {
     model.matrix.lm(x, newdata_sub, na.action = na.pass)
   })
