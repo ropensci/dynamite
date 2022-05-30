@@ -2,18 +2,17 @@
 % Please edit documentation in R/print.R
 \name{print.dynamitefit}
 \alias{print.dynamitefit}
-\title{Print Summary of dynamite Object}
+\title{Print Summary of Dynamite Object}
 \usage{
-\method{print}{dynamitefit}(x, pars, ...)
+\method{print}{dynamitefit}(x, hmc_diagnostics = TRUE, ...)
 }
 \arguments{
 \item{x}{An output from \code{\link{dynamite}}.}
 
-\item{pars}{A character vector of parameter names.
-The default is to print summary of spline coefficient standard deviations tau.}
-
-\item{...}{Additional arguments to \code{\link{print.stanfit}}.}
+\item{hmc_diagnostics}{[\code{logical(1)}]\cr if \code{TRUE} (default), prints the
+summary of Stan's HMC sampler diagnostics. See \code{\link[rstan:check_hmc_diagnostics]{rstan::check_hmc_diagnostics()}}
+for details.}
 }
 \description{
-Prints the summary information of time-invariant model parameters.
+Prints the summary information of the estimated dynamite model.
 }
