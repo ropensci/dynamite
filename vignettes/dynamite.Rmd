@@ -1,6 +1,8 @@
 ---
 title: "dynamite"
-output: rmarkdown::html_vignette
+link-citations: true
+output: html_document
+bibliography: dynamite.bib
 vignette: >
   %\VignetteIndexEntry{dynamite}
   %\VignetteEngine{knitr::rmarkdown}
@@ -18,3 +20,56 @@ knitr::opts_chunk$set(
 library(dynamite)
 ```
 
+# Introduction
+
+Longitudinal data consisting of multiple individuals measured over multiple time point is common in various fields such as social sciences and econometrics. For example, in sociology, analysing individual-level life-course data is valuable for assessing how policy reforms and interventions could come to affect the lives of individuals and the stability of their families. 
+
+Several approaches, e.g., [@arellano1991; @allison2017] have been developed to analyse dynamic panel data where the past values of the response variable are used as predictor in the current time point. Often these approaches consider a single univariate response variable, while using the other individual's measurements as fixed predictors. The estimation methods are often based on instrumental variables with maximum likelihood or generalized method of moments. Many of the popular methods can be used within R [@R] via the R package plm [@croissant2008]. 
+
+In traditional dynamic panel data models, the effects of predictors are typically assumed to be time-invariant, although some extensions to time-varying effects have emerged [@hayakawa2019]. On the other hand, there are various methods to model time-varying effects in (generalized) regression models based on state space models [@harvey1982; @durbin2012], with various R implementations [@helske2022; @knaus2021; @brodersen2014] The state space modelling approaches are highly flexible but often computationally heavy due to assumed latent processes for the regression coefficients and analytically intractable marginal likelihood. Methods based on the varying coefficients models [@hastie1993; @eubank2004] can be computationally more convenient, especially when the varying coefficients are based on splines. Some of the R implementations of time-varying coeffient models include [@ng2021; @casas2019; @dziak2021].
+
+Despite large literature and available software to model various types of dynamic panel data, many of the aforementioned methods/software lack some important features:
+
+
+* Joint modelling of multiple measurements per individual (multiple channels)
+* Non-gaussian data
+* realistic predictions/simulations due to lagged dependent variables
+* parameter and predictive uncertainty (bayes)
+* User-friendly and efficient interface
+
+The dynamite package aims to accomodate all of these.
+
+# Model
+
+Vanhaa tekstiä.
+
+Consider an individual $i$ with observations $y_{i,t} = (y^1_{i,t}, \ldots, y^c_{i,t},\ldots, y^C_{i,t})$, $t=1,\ldots,T$, i.e. at each time point $t$ we have $C$ observations from individual $i$. Assume that each element of $y_{i,t}$ can depend on the past values $y_{i,t-1}$, as well as additional exogenous covariates $x_{i,t}$. Then, assuming that the elements of $y_{i,t}$ are independent given $y_{i, t-1}$ and $x_{i,t}$, we have
+$$
+\begin{aligned}
+y_{i,t} &\sim p_t(y_{i,t} | y_{i,t-1},  x_{i,t}) = p^1_t(y^1_{i,t} | y^1_{i,t-1}, y^2_{i,t-1}, x_{i,t})p^2_t(y^2_{i,t} | y^1_{i,t-1}, y^2_{i,t-1}, x_{i,t}).
+\end{aligned}
+$$
+Here the parameters of the conditional distributions $p^1$ and $p^2$ depend on time, which allows us to take into account the fact that the dynamics of our system can evolve over time. For example, something something life courses.
+For $p^c_t$, given a suitable link function depending our distributional assumptions, we define a linear predictor $\eta^c_{t}$ for the channel $c$ with a following general form:
+$$
+\begin{aligned}
+\eta^c_{t} &= X^c_{t} \beta^c_{t}\
+\beta^c_{k,t} &= B_t \delta_k^c, \quad k=1,\ldots,K,
+\end{aligned}
+$$
+where $K$ is the number of covariates, $B_t$ is a vector of B-spline values at time $t$ and $\delta_k^c$ is vector of corresponding spline coefficients. In general the number of B-splines $D$ (number of knots) used for constructing the splines for the study period $1,\ldots,T$ can be chosen freely, and can often result in overfitting. To mitigate this, we define a random walk prior for $\delta^c_k$ as
+$$
+\begin{aligned}
+\delta^c_{k,1} &\sim N(0, 1),\
+\delta^c_{k,d} &\sim N(\delta^c_{k,d-1}, (\tau^c_k)^2), \quad d=2,\ldots, D.\
+\end{aligned}
+$$
+Here $\tau^c_k$ controls the "wigglyness" of the spline curves. In some cases it can be though that the splines change values in approximately same time points. For this, we can construct a global shrinkage series $\lambda_2,\ldots, \lambda_D$ and define
+$$
+\begin{aligned}
+\delta^c_{k,d} &\sim N(\delta^c_{k,d-1}, (\tau^c_k\lambda_d)^2)\
+\tau^c_k &\sim Cauchy(0, 1)^+ \quad \textrm{(half-Cauchy distribution)}\
+\lambda_d &\sim N(0, 1)^+  \quad \textrm{(half-Normal distribution)}
+\end{aligned}
+$$
+(not fully tested but might work)
