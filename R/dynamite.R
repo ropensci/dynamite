@@ -179,24 +179,15 @@ parse_lags <- function(data, dformula, group_var, time_var) {
       }
     }
     for (j in seq_len(n_channels)) {
-      if (identical(lag_type, "varying")) {
-        dformula[[j]] <- dynamiteformula_(
-          formula = increment_varying(
-            formula = dformula[[j]]$formula,
-            x = lags_lhs[lags_increment],
-            varying_idx = dformula[[j]]$varying
-          ),
-          family = dformula[[j]]$family
-        )
-      } else {
-        dformula[[j]] <- dynamiteformula_(
-          formula = increment_fixed(
-            formula = dformula[[j]]$formula,
-            x = lags_lhs[lags_increment]
-          ),
-          family = dformula[[j]]$family
-        )
-      }
+      dformula[[j]] <- dynamiteformula_(
+        formula = increment_formula(
+          formula = dformula[[j]]$formula,
+          x = lags_lhs[lags_increment],
+          type = lag_type,
+          varying_idx = dformula[[j]]$varying
+        ),
+        family = dformula[[j]]$family
+      )
     }
     lag_map <- lag_map |>
       dplyr::filter(!(.data$var %in% resp_all & .data$k %in% lag_ext$k))
