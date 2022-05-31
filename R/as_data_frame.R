@@ -2,9 +2,19 @@
 #'
 #' You can use the arguments `responses` and `types` to extract only a subset
 #' of the model parameters (i.e. only certain types of parameters related to a
-#' certain response variable). The prior data frame (from `get_priors`) shows
-#' potential values for these variables.
+#' certain response variable).
 #'
+#' Potential values for the types argument are
+#'  * `alpha` Intercept terms (time-invariant or time-varying).
+#'  * `beta` Time-invariant regression coefficients.
+#'  * `delta` Time-varying regression coefficients.
+#'  * `nu` Random intercepts.
+#'  * `tau` Standard deviations of the spline coefficients of `delta`.
+#'  * `tau_alpha` Standard deviations of the spline coefficients of
+#'    time-varying `alpha`.
+#'  * `sigma_nu` Standard deviation of the random intercepts `nu`
+#'  * `sigma` Standard deviations of gaussian responses
+#'  * `phi` Dispersion parameters of  negative binomial distribution.
 #'
 #' @param x The estimated \code{dynamite} model.
 #' @param row.names Ignored.
@@ -12,7 +22,7 @@
 #' @param responses  \[`character()`]\cr Response(s) for which the  samples
 #' should be extracted. Possible options are `unique(x$priors$response)`
 #' @param types \[`character()`]\cr Type(s) of the parameters for which the
-#' samples should be extracted. Possible options are `unique(x$priors$type)`.
+#' samples should be extracted. See details of possible values.
 #' @param summary \[`logical(1)`]\cr If `TRUE` (default), returns posterior
 #'   mean, standard deviation, and posterior quantiles (as defined by the
 #'   `probs` argument) for all parameters. If `FALSE`, returns the posterior
@@ -74,14 +84,19 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
   }
 
   if (is.null(types)) {
-    types <- unique(x$priors$type)
+    types <- c("alpha", "beta", "delta", "nu", "tau", "tau_alpha",
+               "sigma_nu", "sigma", "phi")
   } else {
-    z <- !(types %in% unique(x$priors$type))
-    if(any(z)) {
-      stop("Model does not contain any parameters of type(s) ", types[z], ".")
-    }
+    types <- match.arg(types,
+                       c("alpha", "beta", "delta", "nu", "tau",
+                         "tau_alpha", "sigma_nu", "sigma", "phi"), TRUE)
   }
+  types <- types[unlist(lapply(types, function(y) {
+    any(grepl(paste0("^", y), x$stanfit@sim$pars_oi))
+    }))]
+
   time_points <- sort(unique(x$data[[x$time_var]]))
+
   values <- function(type, response) {
 
     draws <- rstan::extract(
@@ -89,6 +104,18 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     n_draws <- prod(dim(draws)[1:2])
     category <- attr(x$stan$responses[[response]], "levels")[-1]
     if(is.null(category)) category <- NA
+
+    if (type == "nu") {
+      n_group <- dim(draws)[3]
+      d <- data.frame(
+        parameter = paste0("nu_", response),
+        value = c(draws),
+        time = NA,
+        category = NA,
+        group = rep(1:n_group, each = n_draws),
+        .iteration = 1:nrow(draws),
+        .chain = rep(1:ncol(draws), each = nrow(draws)))
+    }
 
     if (type == "alpha") {
       resp <- get_responses(x$dformula)
@@ -104,15 +131,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         value = c(draws),
         time = rep(time_points, each = n_draws),
         category = rep(category, each = n_time * n_draws),
-        .iteration = 1:nrow(draws),
-        .chain = rep(1:ncol(draws), each = nrow(draws)))
-    }
-    if (type == "tau_alpha") {
-      d <- data.frame(
-        parameter = paste0("tau_alpha_", response),
-        value = c(draws),
-        time = NA,
-        category = NA,
+        group = NA,
         .iteration = 1:nrow(draws),
         .chain = rep(1:ncol(draws), each = nrow(draws)))
     }
@@ -125,6 +144,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         value = c(draws),
         time = NA,
         category = rep(category, each = n_vars * n_draws),
+        group = NA,
         .iteration = 1:nrow(draws),
         .chain = rep(1:ncol(draws), each = nrow(draws)))
     }
@@ -138,6 +158,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         value = c(draws),
         time = rep(time_points, each = n_draws),
         category = rep(category, each = n_time * n_vars * n_draws),
+        group = NA,
         .iteration = 1:nrow(draws),
         .chain = rep(1:ncol(draws), each = nrow(draws)))
     }
@@ -149,15 +170,17 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         value = c(draws),
         time = NA,
         category = NA,
+        group = NA,
         .iteration = 1:nrow(draws),
         .chain = rep(1:ncol(draws), each = nrow(draws)))
     }
-    if (type %in% c("sigma", "phi")) {
+    if (type %in% c("tau_alpha", "sigma", "phi", "sigma_nu")) {
       d <- data.frame(
         parameter = paste0(type, "_", response),
         value = c(draws),
         time = NA,
         category = NA,
+        group = NA,
         .iteration = 1:nrow(draws),
         .chain = rep(1:ncol(draws), each = nrow(draws)))
     }

@@ -18,7 +18,7 @@
 should be extracted. Possible options are \code{unique(x$priors$response)}}
 
 \item{types}{[\code{character()}]\cr Type(s) of the parameters for which the
-samples should be extracted. Possible options are \code{unique(x$priors$type)}.}
+samples should be extracted. See details of possible values.}
 
 \item{...}{Ignored.}
 }

@@ -26,7 +26,7 @@
 should be extracted. Possible options are \code{unique(x$priors$response)}}
 
 \item{types}{[\code{character()}]\cr Type(s) of the parameters for which the
-samples should be extracted. Possible options are \code{unique(x$priors$type)}.}
+samples should be extracted. See details of possible values.}
 
 \item{summary}{[\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
 mean, standard deviation, and posterior quantiles (as defined by the
@@ -46,8 +46,22 @@ model parameters in a long format. For wide format, see
 \description{
 You can use the arguments \code{responses} and \code{types} to extract only a subset
 of the model parameters (i.e. only certain types of parameters related to a
-certain response variable). The prior data frame (from \code{get_priors}) shows
-potential values for these variables.
+certain response variable).
+}
+\details{
+Potential values for the types argument are
+\itemize{
+\item \code{alpha} Intercept terms (time-invariant or time-varying).
+\item \code{beta} Time-invariant regression coefficients.
+\item \code{delta} Time-varying regression coefficients.
+\item \code{nu} Random intercepts.
+\item \code{tau} Standard deviations of the spline coefficients of \code{delta}.
+\item \code{tau_alpha} Standard deviations of the spline coefficients of
+time-varying \code{alpha}.
+\item \code{sigma_nu} Standard deviation of the random intercepts \code{nu}
+\item \code{sigma} Standard deviations of gaussian responses
+\item \code{phi} Dispersion parameters of  negative binomial distribution.
+}
 }
 \examples{
 results <- as.data.frame(gaussian_example_fit,

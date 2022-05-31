@@ -231,12 +231,12 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
   if (is.null(priors)) {
     priors <- list()
     if (channel$has_random_intercept) {
-      channel$sigma_u_prior_distr <-  paste0("normal(", 0, ", ", 2 * sd_y, ")")
-      priors$alpha <- data.frame(
+      channel$sigma_nu_prior_distr <-  paste0("normal(", 0, ", ", sd_y, ")")
+      priors$sigma_nu <- data.frame(
         parameter = paste0("sigma_u_", y),
         response = y,
-        prior = channel$sigma_u_prior_distr,
-        type = "sigma_u",
+        prior = channel$sigma_nu_prior_distr,
+        type = "sigma_nu",
         category = ""
       )
     }
@@ -304,7 +304,7 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
     # of the priors data.frame should be altered (i.e. there's no checks for names or reordering of rows)
     # Or arrange...
     priors <- priors |> dplyr::filter(.data$response == y)
-    for (ptype in c("alpha", "tau_alpha")) {
+    for (ptype in c("alpha", "tau_alpha", "sigma_nu")) {
       pdef <- priors |> dplyr::filter(.data$type == ptype)
       if (nrow(pdef) > 0) {
         channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior

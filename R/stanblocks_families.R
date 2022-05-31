@@ -202,8 +202,9 @@ transformed_data_lines_negbin <- quote({
 parameters_lines_default <- quote({
 
   re <- paste_rows(
-    "real sigma_u_{y};",
-    "vector[N] u_{y};"
+    "real sigma_nu_{y};",
+    "vector[N] nu_{y};",
+    .parse = FALSE
   )
 
   intercept <- ""
@@ -226,8 +227,8 @@ parameters_lines_default <- quote({
 parameters_lines_categorical <- quote({
 
   re <- paste_rows(
-    "real sigma_u_{y};",
-    "vector[N] u_{y}[{S - 1}];"
+    "real sigma_nu_{y};",
+    "vector[N] nu_{y}[{S - 1}];"
   )
 
   intercept <- ""
@@ -491,9 +492,9 @@ model_lines_default <- quote({
 
   if (has_random_intercept) {
     mtext_u <- paste_rows(
-      "sigma_u_{y} ~ {u_prior_distr};",
-      "u_{y} ~ normal(0, sigma_u_{y});",
-      .indent = idt(c(1, 1)),
+      "sigma_nu_{y} ~ {sigma_nu_prior_distr};",
+      "nu_{y} ~ normal(0, sigma_nu_{y});",
+      .indent = idt(c(0, 1)),
       .parse = FALSE
     )
   }
@@ -591,9 +592,9 @@ model_lines_categorical <- quote({
 
   if (has_random_intercept) {
     mtext_u <- paste_rows(
-      "sigma_u_{y} ~ {u_prior_distr};",
-      "to_vector(u_{y}) ~ normal(0, sigma_u_{y});",
-      .indent = idt(c(1, 1)),
+      "sigma_nu_{y} ~ {sigma_nu_prior_distr};",
+      "to_vector(nu_{y}) ~ normal(0, sigma_nu_{y});",
+      .indent = idt(c(0, 1)),
       .parse = FALSE
     )
   }
@@ -739,19 +740,19 @@ model_lines_gaussian <- quote({
   mtext_def <- eval(model_lines_default)
   d <- sigma_prior_distr
   sigma_term <- "sigma_{y} ~ {d};"
-  intercept_a <- intercept_u <- ""
+  intercept_alpha <- intercept_nu <- ""
   if (has_fixed_intercept) {
-    intercept_a <- glue::glue("alpha_{y}")
+    intercept_alpha <- glue::glue("alpha_{y}")
   }
   if (has_varying_intercept) {
-    intercept_a <- glue::glue("alpha_{y}[t]")
+    intercept_alpha <- glue::glue("alpha_{y}[t]")
   }
   if (has_random_intercept) {
-    intercept_u <- glue::glue("u_{y}")
+    intercept_nu <- glue::glue("nu_{y}[{obs}]")
   }
-  plus <- onlyif(nchar(intercept_a) > 0 && has_random_intercept, " + ")
-  if (nchar(intercept_a) > 0 || has_random_intercept) {
-    intercept <- glue::glue("{intercept_a}{plus}{intercept_u}")
+  plus <- ifelse_(nchar(intercept_alpha) > 0 && has_random_intercept, " + ", "")
+  if (nchar(intercept_alpha) > 0 || has_random_intercept) {
+    intercept <- glue::glue("{intercept_alpha}{plus}{intercept_nu}")
   } else {
     intercept <- "0"
   }
@@ -775,23 +776,23 @@ model_lines_binomial <- quote({
   mtext_def <- eval(model_lines_default)
   fixed_term <- onlyif(has_fixed, glue::glue("X[t][{obs}, {{{cs(J_fixed)}}}] * beta_{y}"))
   varying_term <- onlyif(has_varying, glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"))
-  intercept_a <- intercept_u <- ""
+  intercept_alpha <- intercept_nu <- ""
   if (has_fixed_intercept) {
-    intercept_a <- glue::glue("alpha_{y}")
+    intercept_alpha <- glue::glue("alpha_{y}")
   }
   if (has_varying_intercept) {
-    intercept_a <- glue::glue("alpha_{y}[t]")
+    intercept_alpha <- glue::glue("alpha_{y}[t]")
   }
   if (has_random_intercept) {
-    intercept_u <- glue::glue("u_{y}")
+    intercept_nu <- glue::glue("nu_{y}[{obs}]")
   }
-  plus_i <- ifelse_(nchar(intercept_a) > 0 && has_random_intercept, " + ", "")
+  plus_i <- ifelse_(nchar(intercept_alpha) > 0 && has_random_intercept, " + ", "")
   plus_c <- ifelse_(has_fixed && has_varying, " + ", "")
   plus_ic <- ifelse_((has_varying_intercept || has_random_intercept) &&
                       (has_fixed || has_varying), " + ", "")
 
-  if (nchar(intercept_a) > 0 || has_random_intercept) {
-    intercept <- glue::glue("{intercept_a}{plus_i}{intercept_u}")
+  if (nchar(intercept_alpha) > 0 || has_random_intercept) {
+    intercept <- glue::glue("{intercept_alpha}{plus_i}{intercept_nu}")
   } else {
     intercept <- ""
   }
@@ -803,19 +804,19 @@ model_lines_binomial <- quote({
 
 model_lines_bernoulli <- quote({
   mtext_def <- eval(model_lines_default)
-  intercept_a <- intercept_u <- ""
+  intercept_alpha <- intercept_nu <- ""
   if (has_fixed_intercept) {
-    intercept_a <- glue::glue("alpha_{y}")
+    intercept_alpha <- glue::glue("alpha_{y}")
   }
   if (has_varying_intercept) {
-    intercept_a <- glue::glue("alpha_{y}[t]")
+    intercept_alpha <- glue::glue("alpha_{y}[t]")
   }
   if (has_random_intercept) {
-    intercept_u <- glue::glue("u_{y}")
+    intercept_nu <- glue::glue("nu_{y}[{obs}]")
   }
-  plus <- ifelse(nchar(intercept_a) > 0 && has_random_intercept, " + ", "")
-  if (nchar(intercept_a) > 0 || has_random_intercept) {
-    intercept <- glue::glue("{intercept_a}{plus}{intercept_u}")
+  plus <- ifelse(nchar(intercept_alpha) > 0 && has_random_intercept, " + ", "")
+  if (nchar(intercept_alpha) > 0 || has_random_intercept) {
+    intercept <- glue::glue("{intercept_alpha}{plus}{intercept_nu}")
   } else {
     intercept <- "0"
   }
@@ -837,19 +838,19 @@ model_lines_bernoulli <- quote({
 model_lines_poisson <- quote({
   mtext_def <- eval(model_lines_default)
   offset_term <- ifelse_(has_offset, glue::glue("to_vector(offset_{y}[t, {obs}])"), "")
-  intercept_a <- intercept_u <- ""
+  intercept_alpha <- intercept_nu <- ""
   if (has_fixed_intercept) {
-    intercept_a <- glue::glue("alpha_{y}")
+    intercept_alpha <- glue::glue("alpha_{y}")
   }
   if (has_varying_intercept) {
-    intercept_a <- glue::glue("alpha_{y}[t]")
+    intercept_alpha <- glue::glue("alpha_{y}[t]")
   }
   if (has_random_intercept) {
-    intercept_u <- glue::glue("u_{y}")
+    intercept_nu <- glue::glue("nu_{y}[{obs}]")
   }
-  plus1 <- ifelse_(nchar(intercept_a) > 0 && has_random_intercept, " + ", "")
-  if (nchar(intercept_a) > 0 || has_random_intercept) {
-    intercept <- glue::glue("{intercept_a}{plus1}{intercept_u}")
+  plus1 <- ifelse_(nchar(intercept_alpha) > 0 && has_random_intercept, " + ", "")
+  if (nchar(intercept_alpha) > 0 || has_random_intercept) {
+    intercept <- glue::glue("{intercept_alpha}{plus1}{intercept_nu}")
   } else {
     intercept <- ""
   }
@@ -878,19 +879,19 @@ model_lines_negbin <- quote({
   d <- phi_prior_distr
   phi_term <- "phi_{y} ~ {d};"
   offset_term <- ifelse_(has_offset, glue::glue("to_vector(offset_{y}[t, {obs}])"), "")
-  intercept_a <- intercept_u <- ""
+  intercept_alpha <- intercept_nu <- ""
   if (has_fixed_intercept) {
-    intercept_a <- glue::glue("alpha_{y}")
+    intercept_alpha <- glue::glue("alpha_{y}")
   }
   if (has_varying_intercept) {
-    intercept_a <- glue::glue("alpha_{y}[t]")
+    intercept_alpha <- glue::glue("alpha_{y}[t]")
   }
   if (has_random_intercept) {
-    intercept_u <- glue::glue("u_{y}")
+    intercept_nu <- glue::glue("nu_{y}[{obs}]")
   }
-  plus1 <- onlyif(nchar(intercept_a) > 0 && has_random_intercept, " + ")
-  if (nchar(intercept_a) > 0 || has_random_intercept) {
-    intercept <- glue::glue("{intercept_a}{plus1}{intercept_u}")
+  plus1 <- ifelse_(nchar(intercept_alpha) > 0 && has_random_intercept, " + ", "")
+  if (nchar(intercept_alpha) > 0 || has_random_intercept) {
+    intercept <- glue::glue("{intercept_alpha}{plus1}{intercept_nu}")
   } else {
     intercept <- ""
   }
