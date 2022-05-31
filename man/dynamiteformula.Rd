@@ -18,6 +18,9 @@ aux(formula)
 \item{family}{[\code{call}, \code{character(1)}]\cr
 A call to a family function, e.g., \code{gaussian()} or the family
 name as character, e.g., \code{"gaussian"}.}
+
+\item{random_intercept}{[\code{logical(1)}]\cr If \code{TRUE}, adds
+individual-level intercepts to the channel.}
 }
 \description{
 TODO description and details of all features

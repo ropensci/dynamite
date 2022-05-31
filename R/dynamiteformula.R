@@ -6,7 +6,8 @@
 #' @param family \[`call`, `character(1)`]\cr
 #'   A call to a family function, e.g., `gaussian()` or the family
 #'   name as character, e.g., `"gaussian"`.
-#'
+#' @param random_intercept \[`logical(1)`]\cr If `TRUE`, adds
+#'   individual-level intercepts to the channel.
 #' @export
 dynamiteformula <- function(formula, family, random_intercept = FALSE) {
   if (!is.formula(formula)) {
