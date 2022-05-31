@@ -203,7 +203,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
   sampling_vars$K <- K
   sampling_vars$X <- X
   sampling_vars$T <- T_full
-  sampling_vars$X_m <- x_means
+  sampling_vars$X_m <- as.array(x_means)
   list(
     model_vars = model_vars,
     sampling_vars = sampling_vars,
