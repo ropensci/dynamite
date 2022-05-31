@@ -7,5 +7,11 @@ test_that("coefficients can be extracted", {
 })
 
 test_that("fit object can be printed", {
-  expect_error(capture.output(print(gaussian_example_fit)), NA)
+  expect_error(
+    capture.output(
+      capture.output(
+        print(gaussian_example_fit),
+        type = "message"),
+      type = "output"),
+    NA)
 })
