@@ -74,94 +74,100 @@ fitted_negbin <- quote({
 
 # Predict expressions -----------------------------------------------------
 
-predict_default <- quote({
-  xbeta <- alpha[, a_time] +
-    .rowSums(x = model_matrix[, J_fixed, drop = FALSE] * beta,
-             m = k, n = J_fixed) +
-    .rowSums(x = model_matrix[, J_varying, drop = FALSE] * delta[, time, ],
-             m = k, n = J_varying)
-  if (type == "link") {
-    data.table::set(x = newdata, i = idx_pred, j = glue::glue("{resp}_store"),
-                    value = xbeta)
+generate_predict_call <- function(resp, family, has_fixed, has_varying,
+                                  has_fixed_intercept, has_varying_intercept,
+                                  has_random_intercept, has_offset) {
+  if (is_categorical(family)) {
+    glue::glue(predict_categorical) |> str2lang()
+  } else {
+    glue::glue(
+      "{{\n",
+      paste0(
+        "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '  0', '')}",
+        "{ifelse_(has_fixed_intercept, '  xbeta <- alpha', '')}",
+        "{ifelse_(has_varying_intercept, '  xbeta <- alpha[, a_time]', '')}",
+        "{ifelse_(has_random_intercept, ' + nu', '')}",
+        "{ifelse_(has_fixed,",
+          "' + .rowSums(x = model_matrix[, J_fixed, drop = FALSE] * beta, m = k, n = J_fixed)', '')}",
+          "{ifelse_(has_varying,",
+        "' + .rowSums(x = model_matrix[, J_varying, drop = FALSE] * delta[, time, ], m = k, n = J_varying)', '')}\n"
+      ),
+      paste0(
+      "  if (type == 'link') {{",
+      "    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store', value = xbeta)",
+      "  }}"
+      ),
+      eval(str2lang(paste0("predict_", family))),
+      "}}"
+    ) |> str2lang()
   }
-})
+}
 
-predict_gaussian <- quote({
-  eval(predict_default)
-  if (type == "mean") {
-    data.table::set(x = newdata, i = idx_pred, j = glue::glue("{resp}_store"),
-                    value = xbeta)
-  }
-  data.table::set(x = newdata, i = idx_pred, j = resp,
-                  value = rnorm(k, xbeta, sigma))
-})
+predict_gaussian <- "
+  if (type == 'mean') {{
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store', value = xbeta)
+  }}
+  data.table::set(x = newdata, i = idx_pred, j = '{resp}', value = rnorm(k, xbeta, sigma))
+"
 
-predict_categorical <- quote({
-  xbeta <- alpha[idx_par, a_time, , drop = FALSE] +
-    cbind(rowSums(model_matrix[, J_fixed, drop = FALSE] * beta) +
-            rowSums(model_matrix[, J_varying, drop = FALSE] *
-                      delta[, time, , , drop = FALSE]),
-          0)
+predict_categorical <- "
+  xbeta <- alpha[idx_par, a_time, , drop = FALSE] {ifelse_(has_fixed || has_varying, '+', '')}
+    cbind(
+      {ifelse_(has_fixed,
+         rowSums(model_matrix[, J_fixed, drop = FALSE] * beta)', '')}
+      {ifelse_(has_fixed && has_varying), '+', ''}
+      {ifelse_(has_varying,
+         rowSums(model_matrix[, J_varying, drop = FALSE] * delta[, time, , , drop = FALSE])', '')}
+      {ifelse_(has_fixed || has_varying, ', 0', '0')}
+    )
   maxs <- apply(xbeta, 1, max)
-  if (type == "link") {
+  if (type == 'link') {{
     data.table::set(
       x = newdata,
       i = idx_pred,
-      j = glue::glue("{resp}_{resp_levels}"),
+      j = '{resp}_{resp_levels}',
       value = xbeta)
-  }
-  if (type == "mean") {
+  }}
+  if (type == 'mean') {{
     data.table::set(
       x = newdata,
       i = idx_pred,
-      j = glue::glue("{resp}_{resp_levels}"),
+      j = '{resp}_{resp_levels}',
       value = exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
     )
-  }
-  data.table::set(x = newdata, i = idx_pred, j = resp,
-                  value = max.col(xbeta - log(-log(runif(S * k)))))
-})
+  }}
+  data.table::set(x = newdata, i = idx_pred, j = '{resp}', value = max.col(xbeta - log(-log(runif(S * k)))))
+"
 
-predict_bernoulli <- quote({
-  eval(predict_binomial)
-})
+predict_binomial <- "
+  if (type == 'mean') {{
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store', value = plogis(xbeta))
+  }}
+  data.table::set(x = newdata, i = idx_pred, j = '{resp}', value = rbinom(k, trials, plogis(xbeta)))
+"
 
-predict_binomial <- quote({
-  eval(predict_default)
-  if (type == "mean") {
-    data.table::set(x = newdata, i = idx_pred, j = glue::glue("{resp}_store"),
-                    value = plogis(xbeta))
-  }
-  trials <- specials$trials
-  if (is.null(trials)) {
-    trials <- rep(1, n_id)
-  }
-  data.table::set(x = newdata, i = idx_pred, j = resp,
-                  value = rbinom(k, trials, plogis(xbeta)))
-})
+predict_bernoulli <- "
+  if (type == 'mean') {{
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store', value = plogis(xbeta))
+  }}
+  data.table::set(x = newdata, i = idx_pred, j = '{resp}', value = rbinom(k, 1, plogis(xbeta)))
+"
 
-predict_poisson <- quote({
-  eval(predict_default)
-  offset <- specials$offset
-  has_offset <- is.null(offset)
-  exp_xbeta <- ifelse_(has_offset, exp(xbeta + offset), exp(xbeta))
-  if (type == "mean") {
-    data.table::set(x = newdata, i = idx_pred, j = glue::glue("{resp}_store"),
+predict_poisson <- "
+  exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
+  if (type == 'mean') {{
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
                     value = exp_xbeta)
-  }
-  data.table::set(x = newdata, i = idx_pred, j = resp,
+  }}
+  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
                   value = rpois(k, exp_xbeta))
-})
+"
 
-predict_negbin <- quote({
-  eval(predict_default)
-  offset <- specials$offset
-  has_offset <- is.null(offset)
-  exp_xbeta <- ifelse_(has_offset, exp(xbeta + offset), exp(xbeta))
-  if (type == "mean") {
-    data.table::set(x = newdata, i = idx_pred, j = glue::glue("{resp}_store"),
-                    value = exp_xbeta)
+predict_negbin <- "
+  exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
+  if (type == 'mean') {{
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store', value = exp_xbeta)
   }
-  data.table::set(x = newdata, i = idx_pred, j = resp,
+  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
                   value = rnbinom(n_id, size = phi, mu = exp_xbeta))
-})
+"

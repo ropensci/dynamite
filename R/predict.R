@@ -108,41 +108,64 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   idx_par <- rep(1L:n_draws, each = n_id)
   assign_initial_values(newdata, object$dformulas$det, object$formulas$lag, idx)
   samples <- rstan::extract(object$stanfit)
-  eval_envs <- vector(mode = "list", length = length(resp_stoch))
+  model_vars <- object$stan$model_vars
+  n_resp <- length(resp_stoch)
+  eval_envs <- vector(mode = "list", length = n_resp)
   for (j in seq_along(resp_stoch)) {
     resp <- resp_stoch[j]
     resp_family <- object$dformulas$stoch[[j]]$family
     eval_envs[[j]] <- new.env()
-    eval_envs[[j]]$call <- eval(str2lang(paste0("predict_", resp_family)))
     eval_envs[[j]]$type <- type
     eval_envs[[j]]$newdata <- newdata # reference
-    eval_envs[[j]]$J_fixed <- object$stan$model_vars[[j]]$J_fixed
-    eval_envs[[j]]$J_varying <- object$stan$model_vars[[j]]$J_varying
+    eval_envs[[j]]$J_fixed <- model_vars[[j]]$J_fixed
+    eval_envs[[j]]$J_varying <- model_vars[[j]]$J_varying
     eval_envs[[j]]$k <- k
     eval_envs[[j]]$resp <- resp_stoch[j]
-    eval_envs[[j]]$specials <- specials[[j]]
     eval_envs[[j]]$phi <- samples[[paste0("phi_", resp)]][idx_par]
     eval_envs[[j]]$sigma <- samples[[paste0("sigma_", resp)]][idx_par]
+    eval_envs[[j]]$offset <- specials[[j]]$offset
+    eval_envs[[j]]$trials <- specials[[j]]$trials
     if (is_categorical(resp_family)) {
       resp_levels <-  attr(class(object$stan$responses[,resp]), "levels")
-      eval_envs[[j]]$alpha <-
-        samples[[paste0("alpha_", resp)]][idx_par, , , drop=FALSE]
+      if (model_vars[[j]]$has_fixed_intercept) {
+        eval_envs[[j]]$alpha <-
+          samples[[paste0("alpha_", resp)]][idx_par, , drop=FALSE]
+      } else if (model_vars[[j]]$has_varying_intercept) {
+        eval_envs[[j]]$alpha <-
+          samples[[paste0("alpha_", resp)]][idx_par, , , drop=FALSE]
+      }
       eval_envs[[j]]$beta <-
         samples[[paste0("beta_", resp_stoch[j])]][idx_par, , , drop = FALSE]
       eval_envs[[j]]$delta <-
         samples[[paste0("delta_", resp_stoch[j])]][idx_par, , , , drop = FALSE]
+      eval_envs[[j]]$nu <-
+        samples[[paste0("nu_", resp)]][idx_par, , drop = FALSE]
       eval_envs[[j]]$resp_levels <- resp_levels
       eval_envs[[j]]$S <- dim(samples[[paste0("beta_", resp)]])[4] + 1
       eval_envs[[j]]$idx_resp <- which(newdata_names %in%
                           c(glue::glue("{resp}_{resp_levels}")))
     } else {
-      eval_envs[[j]]$alpha <-
-        samples[[paste0("alpha_", resp)]][idx_par, , drop = FALSE]
+      if (model_vars[[j]]$has_fixed_intercept) {
+        eval_envs[[j]]$alpha <-
+          samples[[paste0("alpha_", resp)]][idx_par, drop = FALSE]
+      } else if (model_vars[[j]]$has_varying_intercept) {
+        eval_envs[[j]]$alpha <-
+          samples[[paste0("alpha_", resp)]][idx_par, , drop = FALSE]
+      }
       eval_envs[[j]]$beta <-
         samples[[paste0("beta_", resp_stoch[j])]][idx_par, , drop = FALSE]
       eval_envs[[j]]$delta <-
         samples[[paste0("delta_", resp_stoch[j])]][idx_par, , , drop = FALSE]
+      eval_envs[[j]]$nu <- samples[[paste0("nu_", resp)]][idx_par]
     }
+    eval_envs[[j]]$call <-
+      generate_predict_call(resp, resp_family,
+                            model_vars[[j]]$has_fixed,
+                            model_vars[[j]]$has_varying,
+                            model_vars[[j]]$has_fixed_intercept,
+                            model_vars[[j]]$has_varying_intercept,
+                            model_vars[[j]]$has_random_intercept,
+                            model_vars[[j]]$has_offset)
   }
   cl <- get_quoted(object$dformulas$lag)
   ro <- attr(object$dformulas$lag, "rank_order")
@@ -162,13 +185,13 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
     )
     for (j in seq_along(resp_stoch)) {
       e <- eval_envs[[j]]
-      idx_na <- which(is.na(newdata[idx, .SD, .SDcols = resp]))
+      idx_na <- is.na(newdata[idx, .SD, .SDcols = resp])
       e$idx <- idx
       e$time <- i - 1
-      e$idx_pred <- idx[idx_na]
+      e$idx_pred <- idx[which(idx_na)]
       e$model_matrix <- model_matrix
       e$a_time <- ifelse_(ncol(e$alpha) == 1, 1, i - 1)
-      if (length(idx_na) > 0) {
+      if (any(idx_na)) {
         eval(e$call, envir = e)
       }
     }
