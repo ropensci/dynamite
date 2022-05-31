@@ -32,11 +32,21 @@ Extracts the priors used in the dynamite model as a data frame. You
 can then alter the priors by changing the contents of the \code{prior} column and
 supplying this data frame to \code{dynamite} function using the argument \code{priors}.
 }
+\details{
+Note that the prior for the intercept term \code{alpha} is actually defined
+in a centered form, so the prior is related to the \code{alpha} when the
+covariates at the first time point are centered around their means. In other
+words, the prior is defined for \code{alpha + x_m * gamma} where \code{x_m} is vector
+of covariate means and gamma contains the corresponding coefficients (\code{beta}
+and \code{delta_1}). If you want to use prior directly on \code{alpha}, remove
+intercept from the formula and add a dummy covariate consisting of ones to
+the model.
+}
 \note{
-Warning! Currently the structure of the \code{prior} argument is not checked in
-the \code{dynamite} function, and it is assumed that no rows are deleted and
-the ordering of the rows is not changed (i.e. only \code{prior} column is
-altered).
+Warning! Currently the structure of the \code{prior} argument is not
+checked in the \code{dynamite} function, and it is assumed that no rows are
+deleted and the ordering of the rows is not changed (i.e. only \code{prior}
+column is altered).
 }
 \examples{
 
