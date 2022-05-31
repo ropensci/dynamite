@@ -71,42 +71,42 @@ gsub_formula <- function(pattern, replacement, formula, ...) {
   as.formula(gsub(pattern, replacement, formula_str, ...))
 }
 
-#' Add fixed terms to the left hand side of a formula
+#' Add fixed or varying terms to a formula
 #'
 #' @param formula A `formula` object
 #' @param x A character vector of terms to add
-#'
-#' @noRd
-increment_fixed <- function(formula, x) {
-  paste0(deparse(formula), " + ", paste0(x, collapse = " + ")) |> as.formula()
-}
-
-#' Add varying(~.) terms to a formula
-#'
-#' @param formula A `formula` object
-#' @param x A character vector of terms to add
+#' @param type Either 'fixed' or 'varying' indicating type of terms to add
 #' @param varying_idx indices of left-hand side terms that have
 #'   time-varying coefficients
 #'
 #' @noRd
-increment_varying <- function(formula, x, varying_idx) {
+increment_formula <- function(formula, x, type, varying_idx) {
   varying_icpt <- 0 %in% varying_idx
-  v_icpt <- ifelse_(varying_icpt, "", "-1")
+  v_icpt <- ifelse_(varying_icpt, "1 + ", "-1 + ")
   varying_idx <- varying_idx[varying_idx > 0]
   n_varying <- length(varying_idx)
-  x_plus <- paste0(" + ", paste0(x, collapse = " + "))
+  x_plus <- paste0(x, collapse = " + ")
   ft <- terms(formula)
   tr <- attr(ft, "term.labels")
+  v <- paste0(tr[varying_idx], collapse = " + ")
   if (n_varying > 0 && n_varying < length(tr)) {
     formula <- drop.terms(ft, dropx = varying_idx, keep.response = TRUE)
     formula_str <- deparse(formula)
   } else {
     formula_str <- paste0(as.character(formula_lhs(formula)),
-                          " ~ ", ifelse_(varying_icpt, "-1", ""))
+                          " ~ ", ifelse_(varying_icpt, "-1", "1"))
   }
-  v_plus <- paste0(" + ", paste0(tr[varying_idx], collapse = " + "))
-  glue::glue("{formula_str} + varying(~{v_icpt}{v_plus}{x_plus})") |>
-    as.formula()
+  if (identical(type, "varying")) {
+    v <- paste(v, x_plus, sep = " + ")
+    out_str <- glue::glue("{formula_str} + varying(~{v_icpt}{v})")
+  } else {
+    if (n_varying > 0 || varying_icpt) {
+      out_str <- glue::glue("{formula_str} + {x_plus} + varying(~{v_icpt}{v})")
+    } else {
+      out_str <- glue::glue("{formula_str} + {x_plus}")
+    }
+  }
+  as.formula(out_str)
 }
 
 #' Create a comma-separated character string to represent a Stan integer array
