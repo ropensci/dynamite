@@ -30,7 +30,7 @@ print.dynamitefit <- function(x, hmc_diagnostics = TRUE,...) {
     print(rstan::get_elapsed_time(x$stanfit))
 
     cat("\nSummary statistics of the time-invariant parameters:\n")
-    print(draws |> dplyr::select(matches("([^\\]])$", perl = TRUE)) |>
+    print(draws |> dplyr::select(dplyr::matches("([^\\]])$", perl = TRUE)) |>
       posterior::summarise_draws())
 
   } else {

@@ -4,10 +4,19 @@
 #' can then alter the priors by changing the contents of the `prior` column and
 #' supplying this data frame to `dynamite` function using the argument `priors`.
 #'
-#' @note Warning! Currently the structure of the `prior` argument is not checked in
-#' the `dynamite` function, and it is assumed that no rows are deleted and
-#' the ordering of the rows is not changed (i.e. only `prior` column is
-#' altered).
+#' Note that the prior for the intercept term `alpha` is actually defined
+#' in a centered form, so the prior is related to the `alpha` when the
+#' covariates at the first time point are centered around their means. In other
+#' words, the prior is defined for `alpha + x_m * gamma` where `x_m` is vector
+#' of covariate means and gamma contains the corresponding coefficients (`beta`
+#' and `delta_1`). If you want to use prior directly on `alpha`, remove
+#' intercept from the formula and add a dummy covariate consisting of ones to
+#' the model.
+#'
+#' @note Warning! Currently the structure of the `prior` argument is not
+#' checked in the `dynamite` function, and it is assumed that no rows are
+#' deleted and the ordering of the rows is not changed (i.e. only `prior`
+#' column is altered).
 #'
 #' @param x \[`dynamiteformula` or `dynamitefit`]\cr The model formula or
 #'   existing `dynamitefit` object. See [dynamiteformula()] and [dynamite()].
