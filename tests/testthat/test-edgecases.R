@@ -23,7 +23,6 @@ test_data <- data.frame(
 debug <- list(no_compile = TRUE)
 
 test_that("single channel models are valid", {
-
   expect_error(
     obs_categorical <- obs(y1 ~ x1, family = categorical()), NA
   )
@@ -60,11 +59,9 @@ test_that("single channel models are valid", {
   expect_error(
     dynamite(obs_poisson, test_data, "group", "time", debug = debug), NA
   )
-
 })
 
 test_that("Multichannel models are valid", {
-
   expect_error(
     obs_all <- obs(y1 ~ x1, family = categorical()) +
       obs(y2 ~ x2, family = gaussian()) +
@@ -74,14 +71,12 @@ test_that("Multichannel models are valid", {
       obs(y6 ~ x3 + offset(offset), family = poisson()),
     NA
   )
-
   expect_error(
     dynamite(obs_all, test_data, "group", "time", debug = debug), NA
   )
-
 })
-test_that("intercepts are handled correctly", {
 
+test_that("intercepts are handled correctly", {
   expect_error(
     obs_all_alpha <- obs(y1 ~ -1 + x1, family = categorical()) +
       obs(y2 ~ -1 + x2 + varying(~1), family = gaussian()) +
@@ -90,34 +85,29 @@ test_that("intercepts are handled correctly", {
       splines(df = 5),
     NA
   )
-
   expect_error(
     dynamite(obs_all_alpha, test_data, "group", "time", debug = debug), NA
   )
-
 })
-test_that("Lags are parsed", {
 
+test_that("Lags are parsed", {
   expect_error(
     obs_a <- obs(y1 ~ x1 + lag(y2, 1), family = categorical()) +
       obs(y2 ~ x2 + lag(y1, 1), family = gaussian()),
     NA
   )
-
   expect_error(
     obs_b <- obs(y1 ~ -1 + x1 + varying(~ lag(y2, 1)), family = categorical()) +
       obs(y2 ~ -1 + x2 + varying(~lag(y1, 1)), family = gaussian()) +
       splines(),
     NA
   )
-
   expect_error(
     obs_c <- obs(y1 ~ x1, family = categorical()) +
       obs(y2 ~ x2, family = gaussian()) +
       lags(k = 1, type = "fixed"),
     NA
   )
-
   expect_error(
     obs_d <- obs(y1 ~ x1, family = categorical()) +
       obs(y2 ~ x2, family = gaussian()) +
@@ -125,36 +115,28 @@ test_that("Lags are parsed", {
       splines(),
     NA
   )
-
   expect_error(
     dynamite(obs_a, test_data, "group", "time", debug = debug), NA
   )
-
   expect_error(
     dynamite(obs_b, test_data, "group", "time", debug = debug), NA
   )
-
   expect_error(
     dynamite(obs_c, test_data, "group", "time", debug = debug), NA
   )
-
   expect_error(
     dynamite(obs_d, test_data, "group", "time", debug = debug), NA
   )
-
 })
 
 test_that("Deterministic channels are parsed", {
-
   expect_error(
     obs_det <- obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1), family = negbin()) +
       aux(d ~ lag(d, 1) + lag(f, 2) + x2 + past(0, 0)) +
       aux(f ~ lag(y5, 1) + x2 * 3 + 1 + past(0, 1, 2)),
     NA
   )
-
   expect_error(
     dynamite(obs_det, test_data, "group", "time", debug = debug), NA
   )
-
 })

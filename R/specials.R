@@ -135,7 +135,6 @@ evaluate_specials <- function(formula, data) {
       for (spec in formula_special_funs) {
         spec_formula <- formula[[i]]$specials[[spec]]
         if (!is.null(spec_formula)) {
-          #out[[spec]] <- eval(spec_formula, envir = list2env(data))
           out[[spec]] <- data[, eval(spec_formula)]
         }
       }

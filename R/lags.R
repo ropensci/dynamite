@@ -42,6 +42,9 @@ lag_ <- function(x, k) {
   out <- vector(mode = mode(x), length = xlen)
   out[1:k] <- NA
   out[k + lag_idx] <- x[lag_idx]
+  if (is.factor(x)) {
+    out <- as.factor(x)
+  }
   out
 }
 

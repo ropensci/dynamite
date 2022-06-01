@@ -74,7 +74,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   ro <- attr(object$dformulas$lag, "rank_order")
   eval_envs <- prepare_eval_envs(object, newdata, type = "predict",
                                  n_id, n_draws, resp_stoch)
-  for (i in (fixed + 1):n_time) {
+  for (i in 2L:n_time) {
     idx <- idx + 1L
     if (n_lag > 0) {
       assign_lags(newdata, ro, idx, lag_lhs, lag_rhs)

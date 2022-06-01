@@ -1,21 +1,18 @@
 # TODO documentation
 assign_initial_values <- function(data, dd, dl, idx) {
   resp_det <- get_responses(dd)
-  init <- has_past(dd)
-  if (any(init)) {
-    init_idx <- which(init)
-    for (i in init_idx) {
-      data[idx, (resp_det[i]) := dd[[i]]$specials$past]
-    }
+  for (i in seq_along(dd)) {
+    data[idx, (resp_det[i]) := NA_real_]
   }
   if (length(dl) > 0) {
-    ro <- attr(dl, "rank_order")
     init <- has_past(dl)
     lag_lhs <- get_responses(dl)
     lag_rhs <- get_predictors(dl)
     for (i in seq_along(dl)) {
       if (init[i]) {
-        data[idx, (lag_lhs[i]) := dl[[i]]$specials$past]
+        fixed <- dl[[i]]$specials$past_offset
+        idx_fixed <- idx + fixed
+        data[idx_fixed, (lag_lhs[i]) := dl[[i]]$specials$past]
       } else {
         data[idx, (lag_lhs[i]) := data[idx,][[lag_rhs[i]]]]
         data[idx, (lag_lhs[i]) := NA]
