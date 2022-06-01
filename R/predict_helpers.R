@@ -44,16 +44,14 @@ check_newdata <- function(newdata, data, type, families_stoch,
 
 clear_nonfixed <- function(newdata, resp_stoch, resp_det, lag_lhs, group_var,
                            n_fixed, n_id, n_time) {
-  #non_na <- newdata |>
-  #  dplyr::group_by(.data[[group_var]]) |>
-  #  dplyr::summarise(
-  #    obs = stats::complete.cases(
-  #      dplyr::across(
-  #        dplyr::all_of(resp_stoch)
-  #      )
-  #    ), .groups = "keep")
-  non_na <- newdata[, lapply(.SD, complete.cases),
-                    .SDcols = resp_stoch, by = group_var]
+  non_na <- newdata |>
+    dplyr::group_by(.data[[group_var]]) |>
+    dplyr::summarise(
+      obs = stats::complete.cases(
+        dplyr::across(
+          dplyr::all_of(resp_stoch)
+        )
+      ), .groups = "keep")
   fixed_obs <- non_na |>
     dplyr::summarise(
       first_obs = which(.data$obs)[1],
@@ -70,12 +68,14 @@ clear_nonfixed <- function(newdata, resp_stoch, resp_det, lag_lhs, group_var,
   newdata[predict_idx, c(resp_stoch, resp_det, lag_lhs) := NA]
 }
 
-prepare_eval_envs <- function(object, newdata, type,
+prepare_eval_envs <- function(object, newdata, type, n_id, n_draws,
                               resp_stoch, model_matrix = NULL) {
   samples <- rstan::extract(object$stanfit)
   model_vars <- object$stan$model_vars
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
   n_resp <- length(resp_stoch)
+  idx_par <- rep(1L:n_draws, each = n_id)
+  k <- n_id * n_draws
   eval_envs <- vector(mode = "list", length = n_resp)
   for (j in seq_len(n_resp)) {
     resp <- resp_stoch[j]
@@ -84,7 +84,9 @@ prepare_eval_envs <- function(object, newdata, type,
     eval_envs[[j]]$type <- type
     eval_envs[[j]]$newdata <- newdata # reference
     eval_envs[[j]]$J_fixed <- model_vars[[j]]$J_fixed
+    eval_envs[[j]]$K_fixed <- model_vars[[j]]$K_fixed
     eval_envs[[j]]$J_varying <- model_vars[[j]]$J_varying
+    eval_envs[[j]]$K_varying <- model_vars[[j]]$K_varying
     eval_envs[[j]]$k <- k
     eval_envs[[j]]$resp <- resp_stoch[j]
     eval_envs[[j]]$phi <- samples[[paste0("phi_", resp)]][idx_par]
@@ -128,13 +130,13 @@ prepare_eval_envs <- function(object, newdata, type,
       eval_envs[[j]]$nu <- samples[[paste0("nu_", resp)]][idx_par]
     }
     eval_envs[[j]]$call <-
-      generate_fitted_call(resp, resp_family, type,
-                           model_vars[[j]]$has_fixed,
-                           model_vars[[j]]$has_varying,
-                           model_vars[[j]]$has_fixed_intercept,
-                           model_vars[[j]]$has_varying_intercept,
-                           model_vars[[j]]$has_random_intercept,
-                           model_vars[[j]]$has_offset)
+      generate_sim_call(resp, resp_family, type,
+                        model_vars[[j]]$has_fixed,
+                        model_vars[[j]]$has_varying,
+                        model_vars[[j]]$has_fixed_intercept,
+                        model_vars[[j]]$has_varying_intercept,
+                        model_vars[[j]]$has_random_intercept,
+                        model_vars[[j]]$has_offset)
   }
   eval_envs
 }
@@ -162,11 +164,9 @@ generate_sim_call<- function(resp, family, type, has_fixed, has_varying,
         "{ifelse_(has_varying_intercept, '  xbeta <- alpha[, a_time]', '')}",
         "{ifelse_(has_random_intercept, ' + nu', '')}",
         "{ifelse_(has_fixed,",
-        "' + .rowSums(x = model_matrix[, J_fixed, drop = FALSE] * ",
-        "beta, m = k, n = J_fixed)', '')}",
-        "{ifelse_(has_varying,",
-        "' + .rowSums(x = model_matrix[, J_varying, drop = FALSE] * ",
-        "delta[, time, ], m = k, n = J_varying)', '')}\n"
+          "' + .rowSums(x = model_matrix[, J_fixed, drop = FALSE] * beta, m = k, n = K_fixed)', '')}",
+          "{ifelse_(has_varying,",
+          "' + .rowSums(x = model_matrix[, J_varying, drop = FALSE] * delta[, time, ], m = k, n = K_varying)', '')}\n"
       ),
       ifelse(identical(type, "predict"),
         paste0(

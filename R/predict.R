@@ -62,8 +62,6 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   n_lag <- length(lag_lhs)
   clear_nonfixed(newdata, resp_stoch, resp_det, lag_lhs, group_var,
                  n_fixed, n_id, n_time)
-  k <- n_id * n_draws
-  print(class(newdata))
   data.table::setDT(newdata)
   newdata <- newdata[rep(seq_len(n_new), n_draws), ]
   newdata[, ("draw") := rep(1:n_draws, each = n_new)]
@@ -74,7 +72,8 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   assign_initial_values(newdata, object$dformulas$det, object$formulas$lag, idx)
   cl <- get_quoted(object$dformulas$lag)
   ro <- attr(object$dformulas$lag, "rank_order")
-  eval_envs <- prepare_eval_envs(object, type = "predict", newdata, resp_stoch)
+  eval_envs <- prepare_eval_envs(object, newdata, type = "predict",
+                                 n_id, n_draws, resp_stoch)
   for (i in (fixed + 1):n_time) {
     idx <- idx + 1L
     if (n_lag > 0) {
@@ -91,12 +90,12 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
     )
     for (j in seq_along(resp_stoch)) {
       e <- eval_envs[[j]]
-      idx_na <- is.na(newdata[idx, .SD, .SDcols = resp])
+      idx_na <- is.na(newdata[idx, .SD, .SDcols = resp_stoch[j]])
       e$idx <- idx
       e$time <- i - 1
       e$idx_pred <- idx[which(idx_na)]
       e$model_matrix <- model_matrix
-      e$a_time <- ifelse_(ncol(e$alpha) == 1, 1, i - 1)
+      e$a_time <- ifelse_(NCOL(e$alpha) == 1, 1, i - 1)
       if (any(idx_na)) {
         eval(e$call, envir = e)
       }
@@ -113,9 +112,8 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
       }
     }
   }
-  # TODO return either full newdata or just the responses
-  # newdata[, resp_all, drop = FALSE]
-  newdata
+  # for consistency with other output types
+  as.data.frame(newdata)
 }
 
 predict.dynamitefit_forecast <- function(object, newdata, type, n_draws) {
