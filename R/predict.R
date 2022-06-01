@@ -119,6 +119,8 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
     eval_envs[[j]]$newdata <- newdata # reference
     eval_envs[[j]]$J_fixed <- model_vars[[j]]$J_fixed
     eval_envs[[j]]$J_varying <- model_vars[[j]]$J_varying
+    eval_envs[[j]]$K_fixed <- model_vars[[j]]$K_fixed
+    eval_envs[[j]]$K_varying <- model_vars[[j]]$K_varying
     eval_envs[[j]]$k <- k
     eval_envs[[j]]$resp <- resp_stoch[j]
     eval_envs[[j]]$phi <- samples[[paste0("phi_", resp)]][idx_par]
@@ -190,7 +192,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
       e$time <- i - 1
       e$idx_pred <- idx[which(idx_na)]
       e$model_matrix <- model_matrix
-      e$a_time <- ifelse_(ncol(e$alpha) == 1, 1, i - 1)
+      e$a_time <- ifelse_(NCOL(e$alpha) == 1, 1, i - 1)
       if (any(idx_na)) {
         eval(e$call, envir = e)
       }
@@ -207,9 +209,8 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
       }
     }
   }
-  # TODO return either full newdata or just the responses
-  # newdata[, resp_all, drop = FALSE]
-  newdata
+  # for consistency with other output types
+  as.data.frame(newdata)
 }
 
 predict.dynamitefit_forecast <- function(object, newdata, type, n_draws) {

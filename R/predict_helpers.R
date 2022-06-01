@@ -88,9 +88,9 @@ generate_predict_call <- function(resp, family, has_fixed, has_varying,
         "{ifelse_(has_varying_intercept, '  xbeta <- alpha[, a_time]', '')}",
         "{ifelse_(has_random_intercept, ' + nu', '')}",
         "{ifelse_(has_fixed,",
-          "' + .rowSums(x = model_matrix[, J_fixed, drop = FALSE] * beta, m = k, n = J_fixed)', '')}",
+          "' + .rowSums(x = model_matrix[, J_fixed, drop = FALSE] * beta, m = k, n = K_fixed)', '')}",
           "{ifelse_(has_varying,",
-        "' + .rowSums(x = model_matrix[, J_varying, drop = FALSE] * delta[, time, ], m = k, n = J_varying)', '')}\n"
+        "' + .rowSums(x = model_matrix[, J_varying, drop = FALSE] * delta[, time, ], m = k, n = K_varying)', '')}\n"
       ),
       paste0(
       "  if (type == 'link') {{",
