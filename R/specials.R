@@ -74,7 +74,7 @@ formula_specials <- function(x) {
   out$fixed <- which(full_terms %in% fixed_terms)
   out$has_fixed_intercept <- as.logical(fixed_icpt)
   out$varying <- which(full_terms %in% varying_terms)
-  out$has_varying_intercept <- as.logical(varying_icpt) 
+  out$has_varying_intercept <- as.logical(varying_icpt)
   out
 }
 
@@ -84,7 +84,7 @@ formula_specials <- function(x) {
 #'
 #' @noRd
 formula_past <- function(formula) {
-  formula_str <- deparse(formula)
+  formula_str <- deparse1(formula)
   form_comp <- regexpr(
     pattern = "^(?<resp>[^~]+) ~ (?<def>[^~]+?)(?: \\+ past\\((?<past>.+)\\)){0,1}$",
     text = formula_str,

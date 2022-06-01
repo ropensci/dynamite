@@ -67,7 +67,7 @@ formula_terms <- function(x) {
 #'
 #' @noRd
 gsub_formula <- function(pattern, replacement, formula, ...) {
-  formula_str <- deparse(formula)
+  formula_str <- deparse1(formula)
   as.formula(gsub(pattern, replacement, formula_str, ...))
 }
 
@@ -91,7 +91,7 @@ increment_formula <- function(formula, x, type, varying_idx) {
   v <- paste0(tr[varying_idx], collapse = " + ")
   if (n_varying > 0 && n_varying < length(tr)) {
     formula <- drop.terms(ft, dropx = varying_idx, keep.response = TRUE)
-    formula_str <- deparse(formula)
+    formula_str <- deparse1(formula)
   } else {
     formula_str <- paste0(as.character(formula_lhs(formula)),
                           " ~ ", ifelse_(varying_icpt, "-1", "1"))

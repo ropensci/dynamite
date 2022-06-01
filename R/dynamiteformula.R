@@ -28,7 +28,7 @@ dynamiteformula <- function(formula, family, random_intercept = FALSE) {
       family <- eval(family_call$call)
     }
   }
-  if (has_as_is(deparse(formula))) {
+  if (has_as_is(deparse1(formula))) {
     stop_("The use of I(.) is not supported by dynamiteformula")
   }
   x <- dynamiteformula_(formula, family, random_intercept)
@@ -161,7 +161,7 @@ get_responses <- function(x) {
 #'
 #' @noRd
 get_predictors <- function(x) {
-  sapply(x, function(y) deparse(formula_rhs(y$formula)))
+  sapply(x, function(y) deparse1(formula_rhs(y$formula)))
 }
 
 #' Get all formulas of a dynamiteformula object
@@ -190,7 +190,7 @@ get_families <- function(x) {
 get_quoted <- function(x) {
   resp <- get_responses(x)
   if (length(resp) > 0) {
-    expr <- lapply(x, function(x) deparse(formula_rhs(x$formula)))
+    expr <- lapply(x, function(x) deparse1(formula_rhs(x$formula)))
     quote_str <- paste0("`:=`(", paste0(resp, " = ", expr, collapse = ","), ")")
     str2lang(quote_str)
   } else {
