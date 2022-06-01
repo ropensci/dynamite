@@ -104,7 +104,6 @@ dynamite <- function(dformula, data, group, time,
 }
 
 parse_data <- function(data, group_var, time_var) {
-
   data <- droplevels(data) # TODO document this in return value
   data <- data |>
     dplyr::mutate(dplyr::across(where(is.character), as.factor))
@@ -144,6 +143,15 @@ parse_lags <- function(data, dformula, group_var, time_var) {
   resp_stoch <- resp_all[channels_stoch]
   n_rows <- data[,.N]
   n_channels <- length(resp_all)
+  for (i in seq_len(n_channels)) {
+    dformula[[i]]$formula <- gsub_formula(
+      pattern = "lag\\(([^\\,\\)]+)\\)",
+      replacement = "lag\\(\\1, 1\\)",
+      formula = dformula[[i]]$formula,
+      fixed = FALSE,
+      perl = TRUE,
+    )
+  }
   data_names <- names(data)
   predictors <- get_predictors(dformula)
   lag_map <- extract_lags(predictors)
@@ -223,6 +231,7 @@ parse_lags <- function(data, dformula, group_var, time_var) {
         y_obs_lags <- NULL
         y_stoch <- TRUE
         y_deterministic <- is_deterministic(dformula[[y_idx]]$family)
+        y_type <- dformula[[y_idx]]$specials$resp_type
         if (y_deterministic) {
           y_past <- dformula[[y_idx]]$specials$past
           y_past_len <- length(y_past)
@@ -249,7 +258,8 @@ parse_lags <- function(data, dformula, group_var, time_var) {
           map_rank[idx] <- i
           if (!is.null(y_past)) {
             spec <- list(past = y_past[y_past_idx],
-                         past_offset = max_lag)
+                         past_offset = max_lag,
+                         resp_type = y_type)
           } else {
             spec <- NULL
           }

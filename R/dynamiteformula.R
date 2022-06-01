@@ -56,11 +56,15 @@ dynamiteformula <- function(formula, family, random_intercept = FALSE) {
 dynamiteformula_ <- function(formula, family, random_intercept = FALSE) {
   if (is_deterministic(family)) {
     out <- formula_past(formula)
+    resp_parsed <- formula_response(deparse1(formula_lhs(formula)))
+    out$specials$resp_type <- resp_parsed$type
+    # TODO automatically add factor() to factor channels
+    out$response <- resp_parsed$resp
   } else {
     out <- formula_specials(formula)
+    out$response <- deparse1(formula_lhs(formula))
   }
   out$family <- family
-  out$response <- as.character(formula_lhs(formula))
   out$has_random_intercept <- random_intercept
   if(random_intercept && family == "categorical") {
     stop("Random intercepts are not yet supported for categorical family. ")

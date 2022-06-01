@@ -132,8 +132,8 @@ test_that("Lags are parsed", {
 test_that("Deterministic channels are parsed", {
   expect_error(
     obs_det <- obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1), family = negbin()) +
-      aux(d ~ lag(d, 1) + lag(f, 2) + x2 + past(0, 0)) +
-      aux(f ~ lag(y5, 1) + x2 * 3 + 1 + past(0, 1, 2)),
+      aux(numeric(d) ~ lag(d, 1) + lag(f, 2) + x2 + past(0)) +
+      aux(numeric(f) ~ lag(y5, 1) + x2 * 3 + 1 + past(0, 1)),
     NA
   )
   expect_error(

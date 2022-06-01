@@ -121,6 +121,29 @@ formula_past <- function(formula) {
   )
 }
 
+#' Process response variables for deterministic channels
+#'
+#' @param x a character vector of length 1
+formula_response <- function(x) {
+  if (grepl("factor\\(.*\\)", x, perl = TRUE)) {
+    list(type = "factor",
+         resp = gsub("factor\\((.*)\\)", "\\1", x, perl = TRUE))
+  } else if (grepl("numeric\\(.*\\)", x, perl = TRUE)) {
+    list(type = "numeric",
+         resp = gsub("numeric\\((.*)\\)", "\\1", x, perl = TRUE))
+  } else if (grepl("integer\\(.*\\)", x, perl = TRUE)) {
+    list(type = "integer",
+         resp = gsub("integer\\((.*)\\)", "\\1", x, perl = TRUE))
+  } else if (grepl("logical\\(.*\\)", x, perl = TRUE)) {
+    list(type = "logical",
+         resp = gsub("logical\\((.*)\\)", "\\1", x, perl = TRUE))
+  } else {
+    warning_("No type specified for deterministic channel '", x, "' ",
+             "assuming type is 'numeric'")
+    list(type = "numeric", resp = x)
+  }
+}
+
 #' Computes all specials defined in a formula in the context of the data
 #'
 #' @param formula A `dynamiteformula` object

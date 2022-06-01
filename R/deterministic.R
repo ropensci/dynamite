@@ -2,7 +2,10 @@
 assign_initial_values <- function(data, dd, dl, idx) {
   resp_det <- get_responses(dd)
   for (i in seq_along(dd)) {
-    data[idx, (resp_det[i]) := NA_real_]
+    # TODO force type definition in aux
+    as_fun <- paste0("as.", dd[[i]]$specials$resp_type)
+    data[idx, (resp_det[i]) := NA]
+    data[, (resp_det[i]) := lapply(.SD, as_fun), .SDcols = resp_det[i]]
   }
   if (length(dl) > 0) {
     init <- has_past(dl)
@@ -10,9 +13,11 @@ assign_initial_values <- function(data, dd, dl, idx) {
     lag_rhs <- get_predictors(dl)
     for (i in seq_along(dl)) {
       if (init[i]) {
+        as_fun <- paste0("as.", dl[[i]]$specials$resp_type)
         fixed <- dl[[i]]$specials$past_offset
         idx_fixed <- idx + fixed
-        data[idx_fixed, (lag_lhs[i]) := dl[[i]]$specials$past]
+        past <- do.call(as_fun, args = list(dl[[i]]$specials$past))
+        data[idx_fixed, (lag_lhs[i]) := past]
       } else {
         data[idx, (lag_lhs[i]) := data[idx,][[lag_rhs[i]]]]
         data[idx, (lag_lhs[i]) := NA]

@@ -183,7 +183,7 @@ test_that("irregular time intervals fails", {
 
 test_that("deterministic insufficient initial values fails", {
   expect_error(
-    dynamite(dformula = aux(d ~ lag(d, 1)),
+    dynamite(dformula = aux(numeric(d) ~ lag(d, 1)),
              data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
              group = "x",
              time = "z"),
