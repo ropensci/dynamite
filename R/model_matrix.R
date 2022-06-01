@@ -38,7 +38,7 @@ full_model.matrix <- function(dformula, data) {
 #'
 #' @noRd
 full_model.matrix_predict <- function(formula_list, newdata, idx, u_names) {
-  newdata_sub <- data.table::setDF(newdata[idx, ])
+  newdata_sub <- newdata[idx, ]
   model_matrices <- lapply(formula_list, function(x) {
     model.matrix.lm(x, newdata_sub, na.action = na.pass)
   })
@@ -50,12 +50,14 @@ full_model.matrix_predict <- function(formula_list, newdata, idx, u_names) {
 #' A fast version of full_model.matrix using formulas directly
 #'
 #' @param formula_list A `list` of `formula` objects
-#' @param data A `data.frame` containing the variables in the model
+#' @param newdata A `data.frame` containing the variables in the model
 #' @param u_names A character vector of unique predictor names
 #'
 #' @noRd
-full_model.matrix_fast <- function(formula_list, data, u_names) {
-  model_matrices <- lapply(formula_list, model.matrix, data)
+full_model.matrix_fast <- function(formula_list, newdata, u_names) {
+  model_matrices <- lapply(formula_list, function(x) {
+    model.matrix.lm(x, newdata, na.action = na.pass)
+  })
   model_matrices <- lapply(model_matrices, remove_intercept)
   model_matrix <- do.call(cbind, model_matrices)
   model_matrix[, u_names, drop = FALSE]

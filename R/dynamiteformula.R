@@ -173,6 +173,15 @@ get_formulas <- function(x) {
   lapply(x, "[[", "formula")
 }
 
+#' Get all family objects of a dynamiteformula object
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
+get_families <- function(x) {
+  lapply(x, "[[", "family")
+}
+
 #' Get a quoted expression of deterministic channel definitions
 #'
 #' @param x A `dynamiteformula` object

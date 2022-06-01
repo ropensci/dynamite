@@ -132,7 +132,8 @@ parse_data <- function(data, group_var, time_var) {
         dplyr::left_join(data, by = c(group_var, time_var))
     }
   }
-  data.table::as.data.table(data, key = c(group_var, time_var))
+  data.table::setDT(data, key = c(group_var, time_var))
+  data
 }
 
 parse_lags <- function(data, dformula, group_var, time_var) {

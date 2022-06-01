@@ -1,84 +1,158 @@
 # TODO documentation
-check_newdata <- function(newdata, data, group_var, time_var) {
-  if (is.null(newdata)) {
-    newdata <- data
-  } else {
-    if (!(group_var %in% names(newdata))) {
-      stop_("Grouping variable '", group_var, "' not found in 'newdata'")
-    }
-    group <- newdata[[group_var]]
-    if (is.factor(group)) {
-      # TODO is this necessary? only length of unique values matters
-      group <- droplevels(group)
-    }
-    group <- unique(group)
-    # TODO doesn't really matter at least at the moment
-    if (!all(group %in% data[[group_var]])) {
-      stop_("Grouping variable '", group_var, "' ",
-            "contains new levels not found in the original data")
-    }
-    if (!(time_var %in% names(newdata))) {
-      stop_("Time index variable '", time_var, "' not found in 'newdata'")
-    }
-    time <- unique(newdata[[time_var]])
-    if (!all(time %in% data[[time_var]])) {
-      stop_("Timing variable '", time_var, "' ",
-            "contains time points not found in the original data")
+check_newdata <- function(newdata, data, type, families_stoch,
+                          resp_stoch, group_var, time_var) {
+  if (!(group_var %in% names(newdata))) {
+    stop_("Grouping variable '", group_var, "' not found in 'newdata'")
+  }
+  group <- newdata[[group_var]]
+  if (is.factor(group)) {
+    # TODO is this necessary? only length of unique values matters
+    group <- droplevels(group)
+  }
+  group <- unique(group)
+  # TODO doesn't really matter at least at the moment
+  if (!all(group %in% data[[group_var]])) {
+    stop_("Grouping variable '", group_var, "' ",
+          "contains new levels not found in the original data")
+  }
+  if (!(time_var %in% names(newdata))) {
+    stop_("Time index variable '", time_var, "' not found in 'newdata'")
+  }
+  time <- unique(newdata[[time_var]])
+  if (!all(time %in% data[[time_var]])) {
+    stop_("Timing variable '", time_var, "' ",
+          "contains time points not found in the original data")
+  }
+  for (resp in resp_stoch) {
+    if (is.null(newdata[[resp]])) {
+      stop_("Response variable '", resp, "' not found in 'newdata'")
     }
   }
-  newdata
-}
-
-log_sum_exp <- function(x) {
-  m <- max(x)
-  m + log(sum(exp(x - m)))
-}
-
-softmax <- function(x) {
-  exp(x - log_sum_exp(x))
-}
-
-# Fitted expressions ------------------------------------------------------
-
-fitted_gaussian <- quote({
-  c(model_matrix %*% matrix(samples, nrow = ncol(model_matrix), byrow = TRUE))
-})
-
-fitted_categorical <- quote({
-  n_draws <- nrow(samples)
-  n_id <- nrow(model_matrix)
-  sim <- matrix(NA, n_draws * n_id, dim(samples)[4] + 1)
-  for (k in seq_len(n_draws)) {
-    idx_k <- ((k - 1) * n_id + 1):(k * n_id)
-    xbeta <- cbind(model_matrix %*% samples[k, , , ], 0)
-    maxs <- apply(xbeta, 1, max)
-    sim[idx_k, ] <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+  if (type != "response") {
+    # create separate column for each level of categorical variables
+    for (i in seq_along(resp_stoch)) {
+      resp <- resp_stoch[i]
+      if (is_categorical(families_stoch[[i]])) {
+        resp_levels <- object$levels[[resp]]
+        newdata[, (glue::glue("{resp}_{resp_levels}")) := NA_integer_]
+      } else {
+        newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
+      }
+    }
   }
-})
+}
 
-fitted_bernoulli <- quote({
-  plogis(c(model_matrix %*% t(samples)))
-})
+clear_nonfixed <- function(newdata, resp_stoch, resp_det, lag_lhs, group_var,
+                           n_fixed, n_id, n_time) {
+  #non_na <- newdata |>
+  #  dplyr::group_by(.data[[group_var]]) |>
+  #  dplyr::summarise(
+  #    obs = stats::complete.cases(
+  #      dplyr::across(
+  #        dplyr::all_of(resp_stoch)
+  #      )
+  #    ), .groups = "keep")
+  non_na <- newdata[, lapply(.SD, complete.cases),
+                    .SDcols = resp_stoch, by = group_var]
+  fixed_obs <- non_na |>
+    dplyr::summarise(
+      first_obs = which(.data$obs)[1],
+      horizon = all(.data$obs[.data$first_obs:(.data$first_obs + n_fixed - 1)])
+    )
+  lacking_obs <- is.na(fixed_obs$horizon) | (fixed_obs$horizon < n_fixed)
+  if (any(lacking_obs)) {
+    groups_lacking <- unique(fixed_obs[lacking_obs, group_var])
+    stop_("Insufficient non-NA observations in groups: ", cs(groups_lacking))
+  }
+  predict_idx <- unlist(lapply(seq_len(n_id), function(i) {
+    (fixed_obs$first_obs[i] + n_fixed):n_time + (i - 1) * n_time
+  }))
+  newdata[predict_idx, c(resp_stoch, resp_det, lag_lhs) := NA]
+}
 
-fitted_binomial <- quote({
-  fitted_bernoulli(model_matrix, samples)
-})
+prepare_eval_envs <- function(object, newdata, type,
+                              resp_stoch, model_matrix = NULL) {
+  samples <- rstan::extract(object$stanfit)
+  model_vars <- object$stan$model_vars
+  specials <- evaluate_specials(object$dformulas$stoch, newdata)
+  n_resp <- length(resp_stoch)
+  eval_envs <- vector(mode = "list", length = n_resp)
+  for (j in seq_len(n_resp)) {
+    resp <- resp_stoch[j]
+    resp_family <- object$dformulas$stoch[[j]]$family
+    eval_envs[[j]] <- new.env()
+    eval_envs[[j]]$type <- type
+    eval_envs[[j]]$newdata <- newdata # reference
+    eval_envs[[j]]$J_fixed <- model_vars[[j]]$J_fixed
+    eval_envs[[j]]$J_varying <- model_vars[[j]]$J_varying
+    eval_envs[[j]]$k <- k
+    eval_envs[[j]]$resp <- resp_stoch[j]
+    eval_envs[[j]]$phi <- samples[[paste0("phi_", resp)]][idx_par]
+    eval_envs[[j]]$sigma <- samples[[paste0("sigma_", resp)]][idx_par]
+    eval_envs[[j]]$offset <- specials[[j]]$offset
+    eval_envs[[j]]$trials <- specials[[j]]$trials
+    if (!is.null(model_matrix)) {
+      eval_envs[[j]]$model_matrix <- model_matrix
+    }
+    if (is_categorical(resp_family)) {
+      resp_levels <-  attr(class(object$stan$responses[,resp]), "levels")
+      if (model_vars[[j]]$has_fixed_intercept) {
+        eval_envs[[j]]$alpha <-
+          samples[[paste0("alpha_", resp)]][idx_par, , drop=FALSE]
+      } else if (model_vars[[j]]$has_varying_intercept) {
+        eval_envs[[j]]$alpha <-
+          samples[[paste0("alpha_", resp)]][idx_par, , , drop=FALSE]
+      }
+      eval_envs[[j]]$beta <-
+        samples[[paste0("beta_", resp_stoch[j])]][idx_par, , , drop = FALSE]
+      eval_envs[[j]]$delta <-
+        samples[[paste0("delta_", resp_stoch[j])]][idx_par, , , , drop = FALSE]
+      eval_envs[[j]]$nu <-
+        samples[[paste0("nu_", resp)]][idx_par, , drop = FALSE]
+      eval_envs[[j]]$resp_levels <- resp_levels
+      eval_envs[[j]]$S <- dim(samples[[paste0("beta_", resp)]])[4] + 1
+      eval_envs[[j]]$idx_resp <- which(newdata_names %in%
+                                         c(glue::glue("{resp}_{resp_levels}")))
+    } else {
+      if (model_vars[[j]]$has_fixed_intercept) {
+        eval_envs[[j]]$alpha <-
+          samples[[paste0("alpha_", resp)]][idx_par, drop = FALSE]
+      } else if (model_vars[[j]]$has_varying_intercept) {
+        eval_envs[[j]]$alpha <-
+          samples[[paste0("alpha_", resp)]][idx_par, , drop = FALSE]
+      }
+      eval_envs[[j]]$beta <-
+        samples[[paste0("beta_", resp_stoch[j])]][idx_par, , drop = FALSE]
+      eval_envs[[j]]$delta <-
+        samples[[paste0("delta_", resp_stoch[j])]][idx_par, , , drop = FALSE]
+      eval_envs[[j]]$nu <- samples[[paste0("nu_", resp)]][idx_par]
+    }
+    eval_envs[[j]]$call <-
+      generate_fitted_call(resp, resp_family, type,
+                           model_vars[[j]]$has_fixed,
+                           model_vars[[j]]$has_varying,
+                           model_vars[[j]]$has_fixed_intercept,
+                           model_vars[[j]]$has_varying_intercept,
+                           model_vars[[j]]$has_random_intercept,
+                           model_vars[[j]]$has_offset)
+  }
+  eval_envs
+}
 
-fitted_poisson <- quote({
-  exp(c(model_matrix %*% t(samples)))
-})
+#log_sum_exp <- function(x) {
+#  m <- max(x)
+#  m + log(sum(exp(x - m)))
+#}
 
-fitted_negbin <- quote({
-  exp(c(model_matrix %*% t(samples)))
-})
+#softmax <- function(x) {
+#  exp(x - log_sum_exp(x))
+#}
 
-# Predict expressions -----------------------------------------------------
-
-generate_predict_call <- function(resp, family, has_fixed, has_varying,
-                                  has_fixed_intercept, has_varying_intercept,
-                                  has_random_intercept, has_offset) {
+generate_sim_call<- function(resp, family, type, has_fixed, has_varying,
+                             has_fixed_intercept, has_varying_intercept,
+                             has_random_intercept, has_offset) {
   if (is_categorical(family)) {
-    glue::glue(predict_categorical) |> str2lang()
+    glue::glue("{type}_categorical") |> str2lang()
   } else {
     glue::glue(
       "{{\n",
@@ -88,26 +162,79 @@ generate_predict_call <- function(resp, family, has_fixed, has_varying,
         "{ifelse_(has_varying_intercept, '  xbeta <- alpha[, a_time]', '')}",
         "{ifelse_(has_random_intercept, ' + nu', '')}",
         "{ifelse_(has_fixed,",
-          "' + .rowSums(x = model_matrix[, J_fixed, drop = FALSE] * beta, m = k, n = J_fixed)', '')}",
-          "{ifelse_(has_varying,",
-        "' + .rowSums(x = model_matrix[, J_varying, drop = FALSE] * delta[, time, ], m = k, n = J_varying)', '')}\n"
+        "' + .rowSums(x = model_matrix[, J_fixed, drop = FALSE] * ",
+        "beta, m = k, n = J_fixed)', '')}",
+        "{ifelse_(has_varying,",
+        "' + .rowSums(x = model_matrix[, J_varying, drop = FALSE] * ",
+        "delta[, time, ], m = k, n = J_varying)', '')}\n"
       ),
-      paste0(
-      "  if (type == 'link') {{",
-      "    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store', value = xbeta)",
-      "  }}"
+      ifelse(identical(type, "predict"),
+        paste0(
+          "  if (type == 'link') {{",
+          "    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
+                             value = xbeta)",
+          "  }}"
+        ),
+        ""
       ),
-      eval(str2lang(paste0("predict_", family))),
+      eval(str2lang(paste0(type, "_", family))),
       "}}"
     ) |> str2lang()
   }
 }
 
+# Fitted expressions ------------------------------------------------------
+
+fitted_gaussian <- "
+  data.table::set(x = newdata, i = idx, j = '{resp}', value = xbeta)
+"
+
+fitted_categorical <- "
+  xbeta <- alpha[idx_par, a_time, , drop = FALSE] {ifelse_(has_fixed || has_varying, '+', '')}
+    cbind(
+      {ifelse_(has_fixed,
+         rowSums(model_matrix[, J_fixed, drop = FALSE] * beta)', '')}
+      {ifelse_(has_fixed && has_varying), '+', ''}
+      {ifelse_(has_varying,
+         rowSums(model_matrix[, J_varying, drop = FALSE] * delta[, time, , , drop = FALSE])', '')}
+      {ifelse_(has_fixed || has_varying, ', 0', '0')}
+    )
+  maxs <- apply(xbeta, 1, max)
+  data.table::set(
+    x = newdata,
+    i = idx_pred,
+    j = '{resp}_{resp_levels}',
+    value = exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+  )
+"
+
+fitted_bernoulli <- "
+  data.table::set(x = newdata, i = idx, j = '{resp}', value = plogis(xbeta))
+"
+
+fitted_binomial <- "
+  data.table::set(x = newdata, i = idx, j = '{resp}', value = plogis(xbeta))
+"
+
+fitted_poisson <- "
+  exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
+  data.table::set(x = newdata, i = idx, j = '{resp}', value = exp_xbeta)
+"
+
+fitted_negbin <- "
+  exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
+  data.table::set(x = newdata, i = idx, j = '{resp}', value = exp_xbeta)
+"
+
+# Predict expressions -----------------------------------------------------
+
 predict_gaussian <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store', value = xbeta)
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
+                    value = xbeta)
   }}
-  data.table::set(x = newdata, i = idx_pred, j = '{resp}', value = rnorm(k, xbeta, sigma))
+  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
+                  value = rnorm(k, xbeta, sigma))
 "
 
 predict_categorical <- "
@@ -136,21 +263,26 @@ predict_categorical <- "
       value = exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
     )
   }}
-  data.table::set(x = newdata, i = idx_pred, j = '{resp}', value = max.col(xbeta - log(-log(runif(S * k)))))
+  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
+                  value = max.col(xbeta - log(-log(runif(S * k)))))
 "
 
 predict_binomial <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store', value = plogis(xbeta))
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
+                    value = plogis(xbeta))
   }}
-  data.table::set(x = newdata, i = idx_pred, j = '{resp}', value = rbinom(k, trials, plogis(xbeta)))
+  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
+                  value = rbinom(k, trials, plogis(xbeta)))
 "
 
 predict_bernoulli <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store', value = plogis(xbeta))
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
+                    value = plogis(xbeta))
   }}
-  data.table::set(x = newdata, i = idx_pred, j = '{resp}', value = rbinom(k, 1, plogis(xbeta)))
+  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
+                  value = rbinom(k, 1, plogis(xbeta)))
 "
 
 predict_poisson <- "
@@ -166,8 +298,9 @@ predict_poisson <- "
 predict_negbin <- "
   exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store', value = exp_xbeta)
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
+                    value = exp_xbeta)
   }
   data.table::set(x = newdata, i = idx_pred, j = '{resp}',
-                  value = rnbinom(n_id, size = phi, mu = exp_xbeta))
+                  value = rnbinom(k, size = phi, mu = exp_xbeta))
 "
