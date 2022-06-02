@@ -75,7 +75,7 @@ test_that("single channel models are valid", {
   )
 })
 
-test_that("Multichannel models are valid", {
+test_that("multichannel models are valid", {
   expect_error(
     obs_all <- obs(y1 ~ x1, family = categorical()) +
       obs(y2 ~ x2, family = gaussian()) +
@@ -106,7 +106,7 @@ test_that("intercepts are handled correctly", {
   )
 })
 
-test_that("Lags are parsed", {
+test_that("lags are parsed", {
   expect_error(
     obs_a <- obs(y1 ~ x1 + lag(y2, 1), family = categorical()) +
       obs(y2 ~ x2 + lag(y1, 1), family = gaussian()),
@@ -145,7 +145,7 @@ test_that("Lags are parsed", {
   )
 })
 
-test_that("Deterministic channels are parsed", {
+test_that("deterministic channels are parsed", {
   expect_error(
     obs_det <- obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1), family = negbin()) +
       aux(numeric(d) ~ lag(d, 1) + lag(f, 2) + x2 + past(0)) +
@@ -154,5 +154,12 @@ test_that("Deterministic channels are parsed", {
   )
   expect_error(
     dynamite(obs_det, test_data, "group", "time", debug = debug), NA
+  )
+})
+
+test_that("manual fixed() terms work", {
+  expect_error(
+    obs_fixed <- obs(y1 ~ fixed(~x1 + lag(y2, 1)), family = categorical()),
+    NA
   )
 })

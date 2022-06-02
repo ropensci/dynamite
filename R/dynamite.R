@@ -155,6 +155,13 @@ parse_lags <- function(data, dformula, group_var, time_var) {
   }
   data_names <- names(data)
   predictors <- get_predictors(dformula)
+  terms_stoch <- unique(unlist(get_terms(dformula[channels_stoch])))
+  non_lags <- extract_nonlags(terms_stoch)
+  mis_vars <- which(!non_lags %in% c(resp_stoch, data_names))
+  if (length(mis_vars) > 0) {
+    stop_("Variables '", cs(non_lags[mis_vars]), "' used in the formula ",
+          "are not present in the data")
+  }
   lag_map <- extract_lags(predictors)
   lag_ext <- attr(dformula, "lags")
   lags_channel <- list()
@@ -205,7 +212,7 @@ parse_lags <- function(data, dformula, group_var, time_var) {
       dplyr::filter(!(.data$var %in% resp_all & .data$k %in% lag_ext$k))
   }
   mis_vars <- which(!lag_map$var %in% c(resp_all, data_names))
-  if (length(mis_vars)) {
+  if (length(mis_vars) > 0) {
     stop_("Unable to construct lagged values of '",
           cs(lag_map$var[mis_vars]), "', ",
           "no such variables are present in the data")
@@ -337,7 +344,12 @@ evaluate_deterministic <- function(data, dd, dl, group_var, time_var) {
     lag_lhs <- get_responses(dl)
     lag_rhs <- get_predictors(dl)
     if (n_det) {
-      assign_deterministic(data, cl, idx)
+      res <- try(assign_deterministic(data, cl, idx), silent = TRUE)
+      if ("try-error" %in% class(res)) {
+        stop_("Unable to evaluate the definitions of deterministic channels.\n",
+              "Defintions possibly contain incorrect or missing variables:\n",
+              res)
+      }
     }
     for (i in seq.int(fixed + 2L, n_time)) {
       idx <- idx + 1L

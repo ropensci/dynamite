@@ -4,7 +4,7 @@
 \alias{fitted.dynamitefit}
 \title{Extract fitted values of dynamitefit}
 \usage{
-\method{fitted}{dynamitefit}(object, newdata = NULL, n_draws = NULL, ...)
+\method{fitted}{dynamitefit}(object, newdata = NULL, n_draws = NULL, n_fixed = NULL, ...)
 }
 \arguments{
 \item{object}{An object of class \code{dynamitefit}.}
@@ -12,6 +12,8 @@
 \item{newdata}{TODO}
 
 \item{n_draws}{TODO}
+
+\item{n_fixed}{TODO}
 
 \item{...}{Ignored.}
 }
