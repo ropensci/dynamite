@@ -113,7 +113,7 @@ formula_past <- function(formula) {
   list(
     formula = as.formula(paste0(form_resp, "~", form_def)),
     specials = list(
-      past = try_(past_str, type = "numeric"),
+      past = past_str,
       rank = Inf
     ),
     fixed = integer(0),

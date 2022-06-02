@@ -29,6 +29,7 @@ assign_initial_values <- function(data, dd, dl, idx) {
 assign_deterministic <- function(data, cl, idx) {
   # This should work in the next version of data.table
   data[idx, cl, env = list(cl = cl)]
+  invisible(NULL)
 }
 
 assign_lags <- function(data, ro, idx, lag_lhs, lag_rhs) {

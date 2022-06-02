@@ -58,7 +58,12 @@ dynamiteformula_ <- function(formula, family, random_intercept = FALSE) {
     out <- formula_past(formula)
     resp_parsed <- formula_response(deparse1(formula_lhs(formula)))
     out$specials$resp_type <- resp_parsed$type
-    # TODO automatically add factor() to factor channels
+    if (!is.null(out$specials$past)) {
+      out$specials$past <- do.call(
+        what = paste0("as.", resp_parsed$type),
+        args = list(out$specials$past)
+      )
+    }
     out$response <- resp_parsed$resp
   } else {
     out <- formula_specials(formula)
@@ -66,8 +71,8 @@ dynamiteformula_ <- function(formula, family, random_intercept = FALSE) {
   }
   out$family <- family
   out$has_random_intercept <- random_intercept
-  if(random_intercept && family == "categorical") {
-    stop("Random intercepts are not yet supported for categorical family. ")
+  if (random_intercept && is_categorical(family)) {
+    stop_("Random intercepts are not yet supported for the categorical family")
   }
   out
 }
@@ -166,7 +171,19 @@ get_responses <- function(x) {
 #' @noRd
 get_predictors <- function(x) {
   sapply(x, function(y) deparse1(formula_rhs(y$formula)))
+
 }
+
+#' Get terms of all formulas of a dynamiteformula
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
+get_terms <- function(x) {
+  sapply(x, function(y) attr(terms(y$formula), "term.labels"))
+}
+
+#' Get the individual
 
 #' Get all formulas of a dynamiteformula object
 #'

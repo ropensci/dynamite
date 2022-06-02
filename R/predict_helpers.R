@@ -68,75 +68,68 @@ clear_nonfixed <- function(newdata, resp_stoch, resp_det, lag_lhs, group_var,
   newdata[predict_idx, c(resp_stoch, resp_det, lag_lhs) := NA]
 }
 
-prepare_eval_envs <- function(object, newdata, type, n_id, n_draws,
-                              resp_stoch, model_matrix = NULL) {
+prepare_eval_envs <- function(object, newdata, type, resp_stoch,
+                              n_id, n_draws) {
   samples <- rstan::extract(object$stanfit)
   model_vars <- object$stan$model_vars
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
   n_resp <- length(resp_stoch)
   idx_par <- rep(1L:n_draws, each = n_id)
-  k <- n_id * n_draws
   eval_envs <- vector(mode = "list", length = n_resp)
   for (j in seq_len(n_resp)) {
     resp <- resp_stoch[j]
     resp_family <- object$dformulas$stoch[[j]]$family
-    eval_envs[[j]] <- new.env()
-    eval_envs[[j]]$type <- type
-    eval_envs[[j]]$newdata <- newdata # reference
-    eval_envs[[j]]$J_fixed <- model_vars[[j]]$J_fixed
-    eval_envs[[j]]$K_fixed <- model_vars[[j]]$K_fixed
-    eval_envs[[j]]$J_varying <- model_vars[[j]]$J_varying
-    eval_envs[[j]]$K_varying <- model_vars[[j]]$K_varying
-    eval_envs[[j]]$k <- k
-    eval_envs[[j]]$resp <- resp_stoch[j]
-    eval_envs[[j]]$phi <- samples[[paste0("phi_", resp)]][idx_par]
-    eval_envs[[j]]$sigma <- samples[[paste0("sigma_", resp)]][idx_par]
-    eval_envs[[j]]$offset <- specials[[j]]$offset
-    eval_envs[[j]]$trials <- specials[[j]]$trials
-    if (!is.null(model_matrix)) {
-      eval_envs[[j]]$model_matrix <- model_matrix
-    }
+    alpha <- paste0("alpha_", resp)
+    beta <- paste0("beta_", resp)
+    delta <- paste0("delta_", resp)
+    phi <- paste0("phi_", resp)
+    sigma <- paste0("sigma_", resp)
+    nu <- paste0("nu_", resp)
+    e <- new.env()
+    e$type <- type
+    e$newdata <- newdata # reference
+    e$J_fixed <- model_vars[[j]]$J_fixed
+    e$K_fixed <- model_vars[[j]]$K_fixed
+    e$J_varying <- model_vars[[j]]$J_varying
+    e$K_varying <- model_vars[[j]]$K_varying
+    e$k <- n_id * n_draws
+    e$resp <- resp_stoch[j]
+    e$phi <- samples[[phi]][idx_par]
+    e$sigma <- samples[[sigma]][idx_par]
+    e$offset <- specials[[j]]$offset
+    e$trials <- specials[[j]]$trials
     if (is_categorical(resp_family)) {
       resp_levels <-  attr(class(object$stan$responses[,resp]), "levels")
       if (model_vars[[j]]$has_fixed_intercept) {
-        eval_envs[[j]]$alpha <-
-          samples[[paste0("alpha_", resp)]][idx_par, , drop=FALSE]
+        e$alpha <-samples[[alpha]][idx_par, , drop = FALSE]
       } else if (model_vars[[j]]$has_varying_intercept) {
-        eval_envs[[j]]$alpha <-
-          samples[[paste0("alpha_", resp)]][idx_par, , , drop=FALSE]
+        e$alpha <- samples[[alpha]][idx_par, , , drop = FALSE]
       }
-      eval_envs[[j]]$beta <-
-        samples[[paste0("beta_", resp_stoch[j])]][idx_par, , , drop = FALSE]
-      eval_envs[[j]]$delta <-
-        samples[[paste0("delta_", resp_stoch[j])]][idx_par, , , , drop = FALSE]
-      eval_envs[[j]]$nu <-
-        samples[[paste0("nu_", resp)]][idx_par, , drop = FALSE]
-      eval_envs[[j]]$resp_levels <- resp_levels
-      eval_envs[[j]]$S <- dim(samples[[paste0("beta_", resp)]])[4] + 1
-      eval_envs[[j]]$idx_resp <- which(newdata_names %in%
-                                         c(glue::glue("{resp}_{resp_levels}")))
+      e$beta <- samples[[beta]][idx_par, , , drop = FALSE]
+      e$delta <- samples[[delta]][idx_par, , , , drop = FALSE]
+      e$nu <- samples[[nu]][idx_par, , drop = FALSE]
+      e$resp_levels <- resp_levels
+      e$S <- dim(samples[[beta]])[4] + 1
+      e$idx_resp <- which(newdata_names %in%
+                            c(glue::glue("{resp}_{resp_levels}")))
     } else {
       if (model_vars[[j]]$has_fixed_intercept) {
-        eval_envs[[j]]$alpha <-
-          samples[[paste0("alpha_", resp)]][idx_par, drop = FALSE]
+        e$alpha <- samples[[alpha]][idx_par, drop = FALSE]
       } else if (model_vars[[j]]$has_varying_intercept) {
-        eval_envs[[j]]$alpha <-
-          samples[[paste0("alpha_", resp)]][idx_par, , drop = FALSE]
+        e$alpha <- samples[[alpha]][idx_par, , drop = FALSE]
       }
-      eval_envs[[j]]$beta <-
-        samples[[paste0("beta_", resp_stoch[j])]][idx_par, , drop = FALSE]
-      eval_envs[[j]]$delta <-
-        samples[[paste0("delta_", resp_stoch[j])]][idx_par, , , drop = FALSE]
-      eval_envs[[j]]$nu <- samples[[paste0("nu_", resp)]][idx_par]
+      e$beta <- samples[[beta]][idx_par, , drop = FALSE]
+      e$delta <- samples[[delta]][idx_par, , , drop = FALSE]
+      e$nu <- samples[[nu]][idx_par]
     }
-    eval_envs[[j]]$call <-
-      generate_sim_call(resp, resp_family, type,
-                        model_vars[[j]]$has_fixed,
-                        model_vars[[j]]$has_varying,
-                        model_vars[[j]]$has_fixed_intercept,
-                        model_vars[[j]]$has_varying_intercept,
-                        model_vars[[j]]$has_random_intercept,
-                        model_vars[[j]]$has_offset)
+    e$call <- generate_sim_call(resp, resp_family, type,
+                                model_vars[[j]]$has_fixed,
+                                model_vars[[j]]$has_varying,
+                                model_vars[[j]]$has_fixed_intercept,
+                                model_vars[[j]]$has_varying_intercept,
+                                model_vars[[j]]$has_random_intercept,
+                                model_vars[[j]]$has_offset)
+    eval_envs[[j]] <- e
   }
   eval_envs
 }

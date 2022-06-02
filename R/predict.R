@@ -29,7 +29,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   if (is.null(n_draws)) {
     n_draws <- ndraws(object)
   }
-  fixed <- attr(object$dformulas$lag, "max_lag")
+  fixed <- as.integer(attr(object$dformulas$lag, "max_lag"))
   if (is.null(n_fixed)) {
     n_fixed <- fixed
   } else if (n_fixed < fixed) {
@@ -39,7 +39,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   if (is.null(newdata)) {
     newdata <- object$data
   } else {
-    data.table::setDT(newdata)
+    newdata <- data.table::as.data.table(newdata)
   }
   # TODO impute predictor values
   group_var <- object$group_var
@@ -68,13 +68,13 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   data.table::setkeyv(newdata, c("draw", group_var, time_var))
   n <- newdata[,.N]
   idx <- seq.int(1L, n, by = n_time)
-  idx_par <- rep(1L:n_draws, each = n_id)
   assign_initial_values(newdata, object$dformulas$det, object$formulas$lag, idx)
   cl <- get_quoted(object$dformulas$lag)
   ro <- attr(object$dformulas$lag, "rank_order")
-  eval_envs <- prepare_eval_envs(object, newdata, type = "predict",
-                                 n_id, n_draws, resp_stoch)
-  for (i in 2L:n_time) {
+  eval_envs <- prepare_eval_envs(object, newdata, type = "predict", resp_stoch,
+                                 n_id, n_draws)
+  idx <- idx + fixed - 1L
+  for (i in (fixed + 1):n_time) {
     idx <- idx + 1L
     if (n_lag > 0) {
       assign_lags(newdata, ro, idx, lag_lhs, lag_rhs)
