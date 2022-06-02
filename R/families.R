@@ -75,7 +75,9 @@ supported_families <- c(
   "negbin",
   "gaussian",
   "poisson",
-  "deterministic"
+  "deterministic",
+  "gamma",
+  "exponential"
 )
 
 # Generate 'family_' and 'is_family' convenience functions

@@ -100,7 +100,7 @@ test_that("Specification as both fixed and varying fails", {
   )
 })
 
-test_that("No intercept of predictors fails", {
+test_that("No intercept or predictors fails", {
   expect_error(
     obs(y ~ -1, family = gaussian()),
     "Invalid formula for response variable 'y', there are no predictors nor an intercept"

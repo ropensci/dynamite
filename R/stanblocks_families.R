@@ -88,6 +88,24 @@ data_lines_negbin <- quote({
   paste_rows(dtext_def, dtext, .parse = FALSE)
 })
 
+data_lines_exponential <- quote({
+  dtext_def <- eval(data_lines_default)
+  dtext <- paste_rows(
+    "matrix[N, T] {y};",
+    .indent = idt(1)
+  )
+  paste_rows(dtext_def, dtext, .parse = FALSE)
+})
+
+data_lines_gamma <- quote({
+  dtext_def <- eval(data_lines_default)
+  dtext <- paste_rows(
+    "matrix[N, T] {y};",
+    .indent = idt(1)
+  )
+  paste_rows(dtext_def, dtext, .parse = FALSE)
+})
+
 # Transformed data block --------------------------------------------------
 
 transformed_data_lines_default <- quote({
@@ -197,6 +215,14 @@ transformed_data_lines_negbin <- quote({
   eval(transformed_data_lines_default)
 })
 
+transformed_data_lines_exponential <- quote({
+  eval(transformed_data_lines_default)
+})
+
+transformed_data_lines_gamma <- quote({
+  eval(transformed_data_lines_default)
+})
+
 # Parameters block --------------------------------------------------------
 
 parameters_lines_default <- quote({
@@ -276,6 +302,17 @@ parameters_lines_negbin <- quote({
   )
 })
 
+parameters_lines_exponential <- quote({
+  eval(parameters_lines_default)
+})
+
+parameters_lines_gamma <- quote({
+  paste_rows(
+    eval(parameters_lines_default),
+    "real<lower=0> phi_{y};",
+    .indent = idt(c(0, 1))
+  )
+})
 
 # Transformed parameters --------------------------------------------------
 
@@ -478,6 +515,14 @@ transformed_parameters_lines_poisson <- quote({
 })
 
 transformed_parameters_lines_negbin <- quote({
+  eval(transformed_parameters_lines_default)
+})
+
+transformed_parameters_lines_exponential <- quote({
+  eval(transformed_parameters_lines_default)
+})
+
+transformed_parameters_lines_gamma <- quote({
   eval(transformed_parameters_lines_default)
 })
 
@@ -916,6 +961,72 @@ model_lines_negbin <- quote({
   paste_rows(mtext_def, mtext, .parse = FALSE)
 })
 
+model_lines_exponential <- quote({
+  mtext_def <- eval(model_lines_default)
+  fixed_term <- onlyif(has_fixed, glue::glue("X[t][{obs}, {{{cs(J_fixed)}}}] * beta_{y}"))
+  varying_term <- onlyif(has_varying, glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"))
+  intercept_alpha <- intercept_nu <- ""
+  if (has_fixed_intercept) {
+    intercept_alpha <- glue::glue("alpha_{y}")
+  }
+  if (has_varying_intercept) {
+    intercept_alpha <- glue::glue("alpha_{y}[t]")
+  }
+  if (has_random_intercept) {
+    intercept_nu <- glue::glue("nu_{y}[{obs}]")
+  }
+  plus_i <- ifelse_(nchar(intercept_alpha) > 0 && has_random_intercept, " + ", "")
+  plus_c <- ifelse_(has_fixed && has_varying, " + ", "")
+  plus_ic <- ifelse_((has_varying_intercept || has_random_intercept) &&
+                       (has_fixed || has_varying), " + ", "")
+
+  if (nchar(intercept_alpha) > 0 || has_random_intercept) {
+    intercept <- glue::glue("{intercept_alpha}{plus_i}{intercept_nu}")
+  } else {
+    intercept <- ""
+  }
+  likelihood_term <- "{y}[{obs}, t] ~ exponential(exp(-({intercept}{plus_ic}{fixed_term}{plus_c}{varying_term})));"
+  mtext <- paste_rows("for (t in 1:T) {{", likelihood_term, "}}",
+                      .indent = idt(c(1, 2, 1)))
+  paste_rows(mtext_def, mtext, .parse = FALSE)
+})
+
+model_lines_gamma <- quote({
+  mtext_def <- eval(model_lines_default)
+  d <- phi_prior_distr
+  phi_term <- "phi_{y} ~ {d};"
+  fixed_term <- onlyif(has_fixed, glue::glue("X[t][{obs}, {{{cs(J_fixed)}}}] * beta_{y}"))
+  varying_term <- onlyif(has_varying, glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"))
+  intercept_alpha <- intercept_nu <- ""
+  if (has_fixed_intercept) {
+    intercept_alpha <- glue::glue("alpha_{y}")
+  }
+  if (has_varying_intercept) {
+    intercept_alpha <- glue::glue("alpha_{y}[t]")
+  }
+  if (has_random_intercept) {
+    intercept_nu <- glue::glue("nu_{y}[{obs}]")
+  }
+  plus_i <- ifelse_(nchar(intercept_alpha) > 0 && has_random_intercept, " + ", "")
+  plus_c <- ifelse_(has_fixed && has_varying, " + ", "")
+  plus_ic <- ifelse_((has_varying_intercept || has_random_intercept) &&
+                       (has_fixed || has_varying), " + ", "")
+
+  if (nchar(intercept_alpha) > 0 || has_random_intercept) {
+    intercept <- glue::glue("{intercept_alpha}{plus_i}{intercept_nu}")
+  } else {
+    intercept <- ""
+  }
+  likelihood_term <- "{y}[{obs}, t] ~ gamma(phi_{y}, phi_{y} * exp(-({intercept}{plus_ic}{fixed_term}{plus_c}{varying_term})));"
+  mtext <- paste_rows(
+    phi_term,
+    "for (t in 1:T) {{",
+    likelihood_term,
+    "}}",
+    .indent = idt(c(1, 1, 2, 1)))
+  paste_rows(mtext_def, mtext, .parse = FALSE)
+})
+
 # Generated quantities block ----------------------------------------------
 
 generated_quantities_lines_default <- quote({
@@ -943,5 +1054,13 @@ generated_quantities_lines_poisson <- quote({
 })
 
 generated_quantities_lines_negbin <- quote({
+  eval(generated_quantities_lines_default)
+})
+
+generated_quantities_lines_exponential <- quote({
+  eval(generated_quantities_lines_default)
+})
+
+generated_quantities_lines_gamma <- quote({
   eval(generated_quantities_lines_default)
 })

@@ -226,6 +226,13 @@ fitted_negbin <- "
   data.table::set(x = newdata, i = idx, j = '{resp}', value = exp_xbeta)
 "
 
+fitted_exponential <- "
+  data.table::set(x = newdata, i = idx, j = '{resp}', value = exp(xbeta))
+"
+
+fitted_gamma <- "
+  data.table::set(x = newdata, i = idx, j = '{resp}', value = exp(xbeta))
+"
 # Predict expressions -----------------------------------------------------
 
 predict_gaussian <- "
@@ -303,4 +310,22 @@ predict_negbin <- "
   }
   data.table::set(x = newdata, i = idx_pred, j = '{resp}',
                   value = rnbinom(k, size = phi, mu = exp_xbeta))
+"
+
+predict_exponential <- "
+  if (type == 'mean') {{
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
+                    value = exp(xbeta))
+  }
+  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
+                  value = rexp(k, rate = exp(-xbeta)))
+"
+
+predict_gamma <- "
+  if (type == 'mean') {{
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
+                    value = exp(xbeta))
+  }
+  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
+                  value = rgamma(k, shape = phi, rate = phi * exp(-xbeta)))
 "

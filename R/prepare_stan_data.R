@@ -616,6 +616,83 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
   out
 }
 
+#' @describeIn prepare_channel_default Prepare a gamma channel
+#' @noRd
+prepare_channel_exponential <- function(y, Y, channel, sd_x, resp_class,
+                                        priors) {
+  Y_obs <- Y[!is.na(Y)]
+  if (any(Y_obs <= 0)) {
+    stop_("Response variable ", y, " is invalid: ",
+          "exponential family supports only positive values.")
+  }
+  if ("factor" %in% resp_class) {
+    stop_("Response variable ", y, " is invalid: ",
+          "exponential family is not supported for factors.")
+  }
+  # TODO could be adjusted
+  sd_y <- 1
+  if (ncol(Y) > 1) {
+    mean_y <- log(mean(Y[1, ], na.rm = TRUE))
+  } else {
+    mean_y <- log(Y[1])
+  }
+  if(is.na(mean_y)) {
+    mean_y <- 0
+  }
+  sd_gamma <- 2 / sd_x
+  mean_gamma <- rep(0, length(sd_gamma))
+  prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma,
+                                 mean_y, sd_y, resp_class, priors)
+
+}
+
+#' @describeIn prepare_channel_default Prepare a gamma channel
+#' @noRd
+prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
+  Y_obs <- Y[!is.na(Y)]
+  if (any(Y_obs <= 0)) {
+    stop_("Response variable ", y, " is invalid: ",
+          "gamma family supports only positive values.")
+  }
+  if ("factor" %in% resp_class) {
+    stop_("Response variable ", y, " is invalid: ",
+          "gamma family is not supported for factors.")
+  }
+  # TODO could be adjusted
+  sd_y <- 1
+  if (ncol(Y) > 1) {
+    mean_y <- log(mean(Y[1, ], na.rm = TRUE))
+  } else {
+    mean_y <- log(Y[1])
+  }
+  if(is.na(mean_y)) {
+    mean_y <- 0
+  }
+  sd_gamma <- 2 / sd_x
+  mean_gamma <- rep(0, length(sd_gamma))
+  out <- prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma,
+                                 mean_y, sd_y, resp_class, priors)
+  if (is.null(priors)) {
+    out$channel$phi_prior_distr <- "exponential(1)"
+    out$priors <- dplyr::bind_rows(
+      out$priors,
+      data.frame(
+        parameter = paste0("phi_", y),
+        response = y,
+        prior = out$channel$phi_prior_distr,
+        type = "phi",
+        category = ""
+      )
+    )
+  } else {
+    pdef <- priors |> dplyr::filter(.data$response == y & .data$type == "phi")
+    if (nrow(pdef) == 1) {
+      out$channel$phi_prior_distr <- pdef$prior
+    }
+  }
+  out
+}
+
 #' Give a warning about nonfinite standard deviation
 #'
 #' @param y Response varible the warning is related to
