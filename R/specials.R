@@ -86,7 +86,7 @@ formula_specials <- function(x) {
 formula_past <- function(formula) {
   formula_str <- deparse1(formula)
   form_comp <- regexpr(
-    pattern = "^(?<resp>[^~]+) ~ (?<def>[^~]+?)(?: \\+ past\\((?<past>.+)\\)){0,1}$",
+    pattern = "^(?<resp>[^~]+) ~ (?<def>.+?)(?: \\+ past\\((?<past>.+)\\)){0,1}$",
     text = formula_str,
     perl = TRUE
   )
@@ -99,13 +99,13 @@ formula_past <- function(formula) {
   }
   form_past <- substr(formula_str, start[3], end[3])
   form_both <- c(form_def, form_past)
-  if (any(grepl("fixed\\(.+\\)", form_both))) {
-    warning_("fixed() definitions of a determinstic channel for ",
-             as.character(formula_lhs(formula)), " will be ignored")
+  if (any(grepl("fixed\\(.+\\)", form_both, perl = TRUE))) {
+    warning_("fixed() definitions of a determinstic channel '",
+             deparse1(formula_lhs(formula)), "' will be ignored")
   }
-  if (any(grepl("varying\\(.+\\)", form_both))) {
-    warning_("varying() definitions of a determinstic channel for ",
-             as.character(formula_lhs(formula)), " will be ignored")
+  if (any(grepl("varying\\(.+\\)", form_both, perl = TRUE))) {
+    warning_("varying() definitions of a determinstic channel '",
+             deparse1(formula_lhs(formula)), "' will be ignored")
   }
   past_str <- strsplit(form_past, ",")[[1]]
   na_str <- grepl("NA", past_str)

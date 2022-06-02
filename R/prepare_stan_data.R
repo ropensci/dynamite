@@ -148,7 +148,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
               "contains time-varying definitions ",
               "but splines have not been defined.")
         # TODO switch back to warning after defining default splines?
-        warn_nosplines <- TRUE
+        #warn_nosplines <- TRUE
       }
       if (warn_nosplines) {
         channel$has_varying <- FALSE
@@ -194,11 +194,11 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
     model_vars[[resp]] <- prep$channel
     sampling_vars <- c(sampling_vars, prep$sampling_vars)
   }
-  # TODO move this before prep
-  if (warn_nosplines) {
-    warning_("All channels will now default to time-constant ",
-             "coefficients for all predictors.")
-  }
+  # TODO do we have default splines?
+  #if (warn_nosplines) {
+  #  warning_("All channels will now default to time-constant ",
+  #           "coefficients for all predictors.")
+  #}
   sampling_vars$N <- N
   sampling_vars$K <- K
   sampling_vars$X <- X
@@ -345,7 +345,7 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
   channel$S <- S_y
   if (!("factor" %in% resp_class)) {
     stop_("Response variable ", y, " is invalid: ",
-          "categorical family supports only factors.")
+          "categorical family supports only factors")
   }
   if (is.null(priors)) {
     # remove the first level which acts as reference
@@ -456,8 +456,8 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
 #' @noRd
 prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
-    stop_("Response variable ", y, " is invalid: ",
-          "gaussian family is not supported for factors.")
+    stop_("Response variable '", y, "' is invalid: ",
+          "gaussian family is not supported for factors")
   }
   if (ncol(Y) > 1) {
     sd_y <- mean(apply(Y, 1, sd, na.rm = TRUE))
@@ -503,16 +503,14 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
 #' @describeIn prepare_channel_default Prepare a binomial channel
 #' @noRd
 prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
-  Y_obs <- Y[!is.na(Y)]
-  if (any(Y_obs < 0) ||
-      any(is.logical(Y_obs)) ||
-      any(Y_obs != as.integer(Y_obs))) {
-    stop_("Response variable ", y, " is invalid: ",
-          "binomial family supports only non-negative integers.")
-  }
   if ("factor" %in% resp_class) {
-    stop_("Response variable ", y, " is invalid: ",
-          "binomial family is not supported for factors.")
+    stop_("Response variable '", y, "' is invalid: ",
+          "binomial family is not supported for factors")
+  }
+  Y_obs <- Y[!is.na(Y)]
+  if (any(Y_obs < 0) || any(Y_obs != as.integer(Y_obs))) {
+    stop_("Response variable '", y, "' is invalid: ",
+          "binomial family supports only non-negative integers")
   }
   # TODO could be adjusted
   sd_y <- 0.5
@@ -527,31 +525,30 @@ prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
 #' @noRd
 prepare_channel_bernoulli <- function(y, Y, channel, sd_x, resp_class,
                                       priors) {
-  # TODO should bernoulli autoconvert logical to integer?
-  # Maybe, if so, then autoconversions in categorical should be done as well?
-  Y_obs <- Y[!is.na(Y)]
-  if (!all(Y_obs %in% 0:1) || any(is.logical(Y_obs))) {
-    stop_("Response variable ", y, " is invalid: ",
-          "bernoulli family supports only 0/1 integers.")
-  }
   if ("factor" %in% resp_class) {
-    stop_("Response variable ", y, " is invalid: ",
-          "bernoulli family is not supported for factors.")
+    stop_("Response variable '", y, "' is invalid: ",
+          "bernoulli family is not supported for factors")
   }
+  Y_obs <- Y[!is.na(Y)]
+  if (!all(Y_obs %in% 0:1)) {
+    stop_("Response variable '", y, "' is invalid: ",
+          "bernoulli family supports only 0/1 integers")
+  }
+
   prepare_channel_binomial(y, Y, channel, sd_x, resp_class, priors)
 }
 
 #' @describeIn prepare_channel_default Prepare a Poisson channel
 #' @noRd
 prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
+  if ("factor" %in% resp_class) {
+    stop_("Response variable '", y, "' is invalid: ",
+          "Poisson family is not supported for factors")
+  }
   Y_obs <- Y[!is.na(Y)]
   if (any(Y_obs < 0) || any(Y_obs != as.integer(Y_obs))) {
-    stop_("Response variable ", y, " is invalid: ",
-          "Poisson family supports only non-negative integers.")
-  }
-  if ("factor" %in% resp_class) {
-    stop_("Response variable ", y, " is invalid: ",
-          "Poisson family is not supported for factors.")
+    stop_("Response variable '", y, "' is invalid: ",
+          "Poisson family supports only non-negative integers")
   }
   # TODO could be adjusted
   sd_y <- 1
@@ -572,14 +569,14 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
 #' @describeIn prepare_channel_default Prepare a negative binomial channel
 #' @noRd
 prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
+  if ("factor" %in% resp_class) {
+    stop_("Response variable '", y, "' is invalid: ",
+          "negative binomial family is not supported for factors")
+  }
   Y_obs <- Y[!is.na(Y)]
   if (any(Y_obs < 0) || any(Y_obs != as.integer(Y_obs))) {
-    stop_("Response variable ", y, " is invalid: ",
-          "negative binomial family supports only non-negative integers.")
-  }
-  if ("factor" %in% resp_class) {
-    stop_("Response variable ", y, " is invalid: ",
-          "negative binomial family is not supported for factors.")
+    stop_("Response variable '", y, "' is invalid: ",
+          "negative binomial family supports only non-negative integers")
   }
   # TODO could be adjusted
   sd_y <- 1
@@ -624,7 +621,7 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
 warn_nonfinite <- function(y) {
   warning_(
     "Found nonfinite prior standard deviation when using default priors ",
-    "for regression coeffients for response ", y, " ",
+    "for regression coeffients for response '", y, "' ",
     "indicating constant covariate: Switching to N(0, 0.01) prior."
   )
 }

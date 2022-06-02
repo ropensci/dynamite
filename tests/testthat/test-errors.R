@@ -91,6 +91,13 @@ test_that("plus method fails for nondynamiteformula", {
   )
 })
 
+test_that("categorical random intercept fails", {
+  expect_error(
+    obs(y ~ x, family = categorical(), random_intercept = TRUE),
+    "Random intercepts are not yet supported for the categorical family"
+  )
+})
+
 # Formula specials errors -------------------------------------------------
 
 test_that("Specification as both fixed and varying fails", {
@@ -169,6 +176,24 @@ test_that("missing lag variable fails", {
   )
 })
 
+test_that("missing predictor fails", {
+  expect_error(
+    dynamite(dformula = obs(y ~ w, family = gaussian()),
+             data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
+             group = "x", time = "z"),
+    "Variables 'w' used in the formula are not present in the data"
+  )
+})
+
+test_that("invalid deterministic channel definition fails", {
+  expect_error(
+    dynamite(dformula = aux(integer(d) ~ 1 + w),
+             data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
+             group = "x", time = "z"),
+    "Unable to evaluate the definitions of deterministic channels.+"
+  )
+})
+
 test_that("irregular time intervals fails", {
   data_irreg <- data.frame(
     y = c(1, 2, 3, 4, 5),
@@ -188,5 +213,55 @@ test_that("deterministic insufficient initial values fails", {
              group = "x",
              time = "z"),
     "Deterministic channel 'd' requires 1 initial values, but only 0 values have been specified"
+  )
+})
+
+# Data type errors --------------------------------------------------------
+
+test_that("factor types for non-categorical families fails", {
+  test_data <- data.frame(y = factor(c(0, 1)), x = c(1, 1), z = c(1, 2))
+  expect_error(
+    dynamite(dformula = obs(y ~ 1, family = gaussian()),
+             data = test_data, group = "x", time = "z"),
+    "Response variable 'y' is invalid: gaussian family is not supported for factors"
+  )
+  expect_error(
+    dynamite(dformula = obs(y ~ 1, family = bernoulli()),
+             data = test_data, group = "x", time = "z"),
+    "Response variable 'y' is invalid: bernoulli family is not supported for factors"
+  )
+  expect_error(
+    dynamite(dformula = obs(y ~ 1, family = binomial()),
+             data = test_data, group = "x", time = "z"),
+    "Response variable 'y' is invalid: binomial family is not supported for factors"
+  )
+  expect_error(
+    dynamite(dformula = obs(y ~ 1, family = poisson()),
+             data = test_data, group = "x", time = "z"),
+    "Response variable 'y' is invalid: Poisson family is not supported for factors"
+  )
+  expect_error(
+    dynamite(dformula = obs(y ~ 1, family = negbin()),
+             data = test_data, group = "x", time = "z"),
+    "Response variable 'y' is invalid: negative binomial family is not supported for factors"
+  )
+})
+
+test_that("negative values for binomial, negbin and poisson fails", {
+  test_data <- data.frame(y = c(-1, -2), x = c(1, 1), z = c(1, 2))
+  expect_error(
+    dynamite(dformula = obs(y ~ 1, family = binomial()),
+             data = test_data, group = "x", time = "z"),
+    "Response variable 'y' is invalid: binomial family supports only non-negative integers"
+  )
+  expect_error(
+    dynamite(dformula = obs(y ~ 1, family = poisson()),
+             data = test_data, group = "x", time = "z"),
+    "Response variable 'y' is invalid: Poisson family supports only non-negative integers"
+  )
+  expect_error(
+    dynamite(dformula = obs(y ~ 1, family = negbin()),
+             data = test_data, group = "x", time = "z"),
+    "Response variable 'y' is invalid: negative binomial family supports only non-negative integers"
   )
 })
