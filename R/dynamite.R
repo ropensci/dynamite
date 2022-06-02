@@ -132,7 +132,8 @@ parse_data <- function(data, group_var, time_var) {
         dplyr::left_join(data, by = c(group_var, time_var))
     }
   }
-  data.table::setDT(data, key = c(group_var, time_var))
+  data <- as.data.table(data)
+  data.table::setkeyv(data, c(group_var, time_var))
   data
 }
 
