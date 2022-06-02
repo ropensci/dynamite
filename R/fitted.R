@@ -7,6 +7,7 @@
 #' @param object An object of class \code{dynamitefit}.
 #' @param newdata TODO
 #' @param n_draws TODO
+#' @param n_fixed TODO
 #' @param ... Ignored.
 fitted.dynamitefit <- function(object, newdata = NULL,
                                n_draws = NULL, n_fixed = NULL, ...) {
@@ -29,11 +30,12 @@ fitted.dynamitefit <- function(object, newdata = NULL,
   time_var <- object$time_var
   formulas_stoch <- get_formulas(object$dformulas$stoch)
   families_stoch <- get_families(object$dformulas$stoch)
+  categories <- lapply(attr(object$stan$responses, "resp_class"),
+                       "attr", "levels")
   resp_stoch <- get_responses(object$dformulas$stoch)
   check_newdata(newdata, object$data, type = "response",
-                families_stoch, resp_stoch,
+                families_stoch, resp_stoch, categories,
                 group_var, time_var)
-
   group <- unique(newdata[[group_var]])
   time <- unique(newdata[[time_var]])
   n_time <- length(time)
@@ -53,11 +55,12 @@ fitted.dynamitefit <- function(object, newdata = NULL,
                                  n_id, n_draws)
   for (i in seq.int(fixed + 1L, n_time)) {
     idx <- idx + 1L
+    model_matrix_sub <- model_matrix[idx, ]
     for (j in seq_along(resp_stoch)) {
       e <- eval_envs[[j]]
       e$idx <- idx
       e$time <- i - 1
-      e$model_matrix <- model_matrix[idx, ]
+      e$model_matrix <- model_matrix_sub
       e$a_time <- ifelse_(NCOL(e$alpha) == 1, 1, i - 1)
       eval(e$call, envir = e)
     }

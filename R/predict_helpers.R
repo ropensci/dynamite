@@ -1,6 +1,6 @@
 # TODO documentation
-check_newdata <- function(newdata, data, type, families_stoch,
-                          resp_stoch, group_var, time_var) {
+check_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
+                          categories, group_var, time_var) {
   if (!(group_var %in% names(newdata))) {
     stop_("Grouping variable '", group_var, "' not found in 'newdata'")
   }
@@ -33,7 +33,7 @@ check_newdata <- function(newdata, data, type, families_stoch,
     for (i in seq_along(resp_stoch)) {
       resp <- resp_stoch[i]
       if (is_categorical(families_stoch[[i]])) {
-        resp_levels <- object$levels[[resp]]
+        resp_levels <- categories[[resp]]
         newdata[, (glue::glue("{resp}_{resp_levels}")) := NA_integer_]
       } else {
         newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
@@ -73,6 +73,7 @@ prepare_eval_envs <- function(object, newdata, type, resp_stoch,
   samples <- rstan::extract(object$stanfit)
   model_vars <- object$stan$model_vars
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
+  newdata_names <- names(newdata)
   n_resp <- length(resp_stoch)
   idx_par <- rep(1L:n_draws, each = n_id)
   eval_envs <- vector(mode = "list", length = n_resp)

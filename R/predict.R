@@ -46,12 +46,14 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   time_var <- object$time_var
   formulas_stoch <- get_formulas(object$dformulas$stoch)
   families_stoch <- get_families(object$dformulas$stoch)
+  categories <- lapply(attr(object$stan$responses, "resp_class"),
+                       "attr", "levels")
   resp_stoch <- get_responses(object$dformulas$stoch)
   resp_det <- get_responses(object$dformulas$det)
   lag_lhs <- get_responses(object$dformulas$lag)
   lag_rhs <- get_predictors(object$dformulas$lag)
   check_newdata(newdata, object$data, type = "predict",
-                families_stoch, resp_stoch,
+                families_stoch, resp_stoch, categories,
                 group_var, time_var)
   group <- unique(newdata[[group_var]])
   time <- unique(newdata[[time_var]])

@@ -124,6 +124,8 @@ formula_past <- function(formula) {
 #' Process response variables for deterministic channels
 #'
 #' @param x a character vector of length 1
+#'
+#' @noRd
 formula_response <- function(x) {
   if (grepl("factor\\(.*\\)", x, perl = TRUE)) {
     list(type = "factor",
