@@ -28,22 +28,25 @@ check_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
       stop_("Response variable '", resp, "' not found in 'newdata'")
     }
   }
-  if (type != "response") {
-    # create separate column for each level of categorical variables
-    for (i in seq_along(resp_stoch)) {
-      resp <- resp_stoch[i]
-      if (is_categorical(families_stoch[[i]])) {
-        resp_levels <- categories[[resp]]
-        newdata[, (glue::glue("{resp}_{resp_levels}")) := NA_integer_]
-      } else {
-        newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
+  # create separate column for each level of categorical variables
+  for (i in seq_along(resp_stoch)) {
+    resp <- resp_stoch[i]
+    if (is_categorical(families_stoch[[i]])) {
+      resp_levels <- categories[[resp]]
+      newdata[, (glue::glue("{resp}_{resp_levels}")) := NA_integer_]
+    } else {
+      newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
+      newdata[, (glue::glue("{resp}_new")) := newdata[[resp]]]
+      if (!identical(type, "response")) {
+        newdata[, (glue::glue("{resp}_new")) := NA]
       }
     }
   }
+  data.table::setkeyv(newdata, c(group_var, time_var))
 }
 
-clear_nonfixed <- function(newdata, resp_stoch, resp_det, lag_lhs, group_var,
-                           n_fixed, n_id, n_time) {
+clear_nonfixed <- function(newdata, newdata_null, resp_stoch,
+                           group_var, clear_names, n_fixed, n_id, n_time) {
   non_na <- newdata |>
     dplyr::group_by(.data[[group_var]]) |>
     dplyr::summarise(
@@ -62,14 +65,22 @@ clear_nonfixed <- function(newdata, resp_stoch, resp_det, lag_lhs, group_var,
     groups_lacking <- unique(fixed_obs[lacking_obs, group_var])
     stop_("Insufficient non-NA observations in groups: ", cs(groups_lacking))
   }
-  predict_idx <- unlist(lapply(seq_len(n_id), function(i) {
-    (fixed_obs$first_obs[i] + n_fixed):n_time + (i - 1) * n_time
-  }))
-  newdata[predict_idx, c(resp_stoch, resp_det, lag_lhs) := NA]
+  if (newdata_null) {
+    predict_idx <- unlist(lapply(seq_len(n_id), function(i) {
+      (fixed_obs$first_obs[i] + n_fixed):n_time + (i - 1) * n_time
+    }))
+    newdata[predict_idx, c(resp_stoch) := NA]
+    newdata_names <- names(newdata)
+    for (name in newdata_names) {
+      if (name %in% clear_names) {
+        newdata[ , (name) := NULL]
+      }
+    }
+  }
 }
 
-prepare_eval_envs <- function(object, newdata, type, resp_stoch,
-                              n_id, n_draws) {
+prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
+                              resp_stoch, n_id, n_draws) {
   samples <- rstan::extract(object$stanfit)
   model_vars <- object$stan$model_vars
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
@@ -87,7 +98,7 @@ prepare_eval_envs <- function(object, newdata, type, resp_stoch,
     sigma <- paste0("sigma_", resp)
     nu <- paste0("nu_", resp)
     e <- new.env()
-    e$type <- type
+    e$type <- predict_type
     e$newdata <- newdata # reference
     e$J_fixed <- model_vars[[j]]$J_fixed
     e$K_fixed <- model_vars[[j]]$K_fixed
@@ -123,7 +134,7 @@ prepare_eval_envs <- function(object, newdata, type, resp_stoch,
       e$delta <- samples[[delta]][idx_par, , , drop = FALSE]
       e$nu <- samples[[nu]][idx_par]
     }
-    e$call <- generate_sim_call(resp, resp_family, type,
+    e$call <- generate_sim_call(resp, resp_family, eval_type,
                                 model_vars[[j]]$has_fixed,
                                 model_vars[[j]]$has_varying,
                                 model_vars[[j]]$has_fixed_intercept,
@@ -162,11 +173,11 @@ generate_sim_call<- function(resp, family, type, has_fixed, has_varying,
           "{ifelse_(has_varying,",
           "' + .rowSums(x = model_matrix[, J_varying, drop = FALSE] * delta[, time, ], m = k, n = K_varying)', '')}\n"
       ),
-      ifelse(identical(type, "predict"),
+      ifelse_(identical(type, "predict"),
         paste0(
           "  if (type == 'link') {{",
-          "    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
-                             value = xbeta)",
+          "    data.table::set(x = newdata, i = idx_pred, j = '{resp}_new',
+                               value = xbeta)",
           "  }}"
         ),
         ""
@@ -231,7 +242,7 @@ fitted_gamma <- "
 
 predict_gaussian <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_new',
                     value = xbeta)
   }}
   data.table::set(x = newdata, i = idx_pred, j = '{resp}',
@@ -270,7 +281,7 @@ predict_categorical <- "
 
 predict_binomial <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_new',
                     value = plogis(xbeta))
   }}
   data.table::set(x = newdata, i = idx_pred, j = '{resp}',
@@ -279,7 +290,7 @@ predict_binomial <- "
 
 predict_bernoulli <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_new',
                     value = plogis(xbeta))
   }}
   data.table::set(x = newdata, i = idx_pred, j = '{resp}',
@@ -289,7 +300,7 @@ predict_bernoulli <- "
 predict_poisson <- "
   exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_new',
                     value = exp_xbeta)
   }}
   data.table::set(x = newdata, i = idx_pred, j = '{resp}',
@@ -308,7 +319,7 @@ predict_negbin <- "
 
 predict_exponential <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_new',
                     value = exp(xbeta))
   }
   data.table::set(x = newdata, i = idx_pred, j = '{resp}',
@@ -317,7 +328,7 @@ predict_exponential <- "
 
 predict_gamma <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_new',
                     value = exp(xbeta))
   }
   data.table::set(x = newdata, i = idx_pred, j = '{resp}',

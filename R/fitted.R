@@ -14,7 +14,7 @@ fitted.dynamitefit <- function(object, newdata = NULL,
   if (is.null(n_draws)) {
     n_draws <- ndraws(object)
   }
-  fixed <- as.integer(attr(object$dformulas$lag, "max_lag"))
+  fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
   if (is.null(n_fixed)) {
     n_fixed <- fixed
   } else if (n_fixed < fixed) {
@@ -22,9 +22,13 @@ fitted.dynamitefit <- function(object, newdata = NULL,
           "but only ", n_fixed, " were specified")
   }
   if (is.null(newdata)) {
-    newdata <- object$data
+    newdata <- data.table::copy(object$data)
   } else {
-    data.table::setDT(newdata)
+    if (data.table::is.data.table(newdata)) {
+      newdata <- data.table::copy(newdata)
+    } else {
+      newdata <- data.table::as.data.table(newdata)
+    }
   }
   group_var <- object$group_var
   time_var <- object$time_var
@@ -51,8 +55,9 @@ fitted.dynamitefit <- function(object, newdata = NULL,
   newdata[, ("draw") := rep(1:n_draws, each = n_new)]
   data.table::setkeyv(newdata, c("draw", group_var, time_var))
   idx <- seq.int(fixed, newdata[,.N], by = n_time)
-  eval_envs <- prepare_eval_envs(object, newdata, type = "fitted", resp_stoch,
-                                 n_id, n_draws)
+  eval_envs <- prepare_eval_envs(object, newdata,
+                                 eval_type = "fitted", predict_type = "response",
+                                 resp_stoch, n_id, n_draws)
   for (i in seq.int(fixed + 1L, n_time)) {
     idx <- idx + 1L
     model_matrix_sub <- model_matrix[idx, ]

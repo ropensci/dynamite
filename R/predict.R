@@ -29,17 +29,22 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   if (is.null(n_draws)) {
     n_draws <- ndraws(object)
   }
-  fixed <- as.integer(attr(object$dformulas$lag, "max_lag"))
+  fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
   if (is.null(n_fixed)) {
     n_fixed <- fixed
   } else if (n_fixed < fixed) {
     stop_("The model implies at least ", fixed, " fixed time points, ",
           "but only ", n_fixed, " were specified")
   }
-  if (is.null(newdata)) {
-    newdata <- object$data
+  newdata_null <- is.null(newdata)
+  if (newdata_null) {
+    newdata <- data.table::copy(object$data)
   } else {
-    newdata <- data.table::as.data.table(newdata)
+    if (data.table::is.data.table(newdata)) {
+      newdata <- data.table::copy(newdata)
+    } else {
+      newdata <- data.table::as.data.table(newdata)
+    }
   }
   # TODO impute predictor values
   group_var <- object$group_var
@@ -50,39 +55,48 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
                        "attr", "levels")
   resp_stoch <- get_responses(object$dformulas$stoch)
   resp_det <- get_responses(object$dformulas$det)
-  lag_lhs <- get_responses(object$dformulas$lag)
-  lag_rhs <- get_predictors(object$dformulas$lag)
-  check_newdata(newdata, object$data, type = "predict",
-                families_stoch, resp_stoch, categories,
-                group_var, time_var)
+  lhs_det <- get_responses(object$dformulas$lag_det)
+  rhs_det <- get_predictors(object$dformulas$lag_det)
+  lhs_stoch <- get_responses(object$dformulas$lag_stoch)
+  rhs_stoch <- get_predictors(object$dformulas$lag_stoch)
+  check_newdata(newdata, object$data, type, families_stoch,
+                resp_stoch, categories, group_var, time_var)
   group <- unique(newdata[[group_var]])
   time <- unique(newdata[[time_var]])
+  cl <- get_quoted(object$dformulas$det)
   n_time <- length(time)
   n_id <- length(group)
   n_new <- nrow(newdata)
   n_det <- length(resp_det)
-  n_lag <- length(lag_lhs)
-  clear_nonfixed(newdata, resp_stoch, resp_det, lag_lhs, group_var,
+  n_lag_det <- length(lhs_det)
+  n_lag_stoch <- length(lhs_stoch)
+  if (n_lag_det > 0) {
+    ro_det <- attr(object$dformulas$lag_det, "rank_order")
+  }
+  if (n_lag_stoch > 0) {
+    ro_stoch <- 1:n_lag_stoch
+  }
+  clear_nonfixed(newdata, newdata_null, resp_stoch, group_var,
+                 clear_names = c(resp_det, lhs_det, lhs_stoch),
                  n_fixed, n_id, n_time)
-  data.table::setDT(newdata)
   newdata <- newdata[rep(seq_len(n_new), n_draws), ]
   newdata[, ("draw") := rep(1:n_draws, each = n_new)]
-  data.table::setkeyv(newdata, c("draw", group_var, time_var))
   n <- newdata[,.N]
   idx <- seq.int(1L, n, by = n_time)
-  assign_initial_values(newdata, object$dformulas$det, object$formulas$lag, idx)
-  cl <- get_quoted(object$dformulas$lag)
-  ro <- attr(object$dformulas$lag, "rank_order")
-  eval_envs <- prepare_eval_envs(object, newdata, type = "predict", resp_stoch,
-                                 n_id, n_draws)
+  assign_initial_values(newdata, object$dformulas$det,
+                        object$dformulas$lag_det, object$dformulas$lag_stoch,
+                        idx)
+  eval_envs <- prepare_eval_envs(object, newdata,
+                                 eval_type = "predict", predict_type = type,
+                                 resp_stoch, n_id, n_draws)
   idx <- idx + fixed - 1L
   for (i in (fixed + 1):n_time) {
     idx <- idx + 1L
-    if (n_lag > 0) {
-      assign_lags(newdata, ro, idx, lag_lhs, lag_rhs)
+    if (n_lag_det > 0 && idx > fixed + 1) {
+      assign_lags(newdata, ro_det, idx, lhs_det, rhs_det)
     }
-    if (n_det > 0) {
-      assign_deterministic(newdata, cl, idx)
+    if (n_lag_stoch > 0) {
+      assign_lags(newdata, ro_stoch, idx, lhs_stoch, rhs_stoch)
     }
     model_matrix <- full_model.matrix_predict(
       formulas_stoch,
@@ -102,20 +116,27 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
         eval(e$call, envir = e)
       }
     }
-  }
-  if (type != "response") {
-    for (i in seq_along(resp_stoch)) {
-      resp <- resp_stoch[i]
-      if (is_categorical(object$dformulas$stoch[[i]]$family)) {
-        newdata[[resp]] <- NULL
-      } else {
-        newdata[[resp]] <- newdata[[c(glue::glue("{resp}_store"))]]
-        newdata[[c(glue::glue("{resp}_store"))]] <- NULL
-      }
+    if (n_det > 0) {
+      assign_deterministic(newdata, cl, idx)
     }
   }
+  for (i in seq_along(resp_stoch)) {
+    resp <- resp_stoch[i]
+    store <- glue::glue("{resp}_store")
+    if (is_categorical(object$dformulas$stoch[[i]]$family)) {
+      #newdata[[resp]] <- NULL
+      # TODO categorical case
+    }
+    if (identical(type, "response")) {
+      newdata[[glue::glue("{resp}_new")]] <- newdata[[resp]]
+    }
+    newdata[[resp]] <- newdata[[store]]
+    newdata[[store]] <- NULL
+    newdata[,c(lhs_det, lhs_stoch) := NULL]
+  }
+
   # for consistency with other output types
-  as.data.frame(newdata)
+  data.table::setDF(newdata)
 }
 
 predict.dynamitefit_forecast <- function(object, newdata, type, n_draws) {
