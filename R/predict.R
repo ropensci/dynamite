@@ -136,7 +136,12 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   }
 
   # for consistency with other output types
+<<<<<<< HEAD
   data.table::setDF(newdata)
+=======
+  # TODO remove extra columns, e.g. _store and lags (but not aux?)
+  as.data.frame(newdata)
+>>>>>>> d8e5d54258ea3f3ba4a2e8dc068b7ee9fb70a9a6
 }
 
 predict.dynamitefit_forecast <- function(object, newdata, type, n_draws) {
