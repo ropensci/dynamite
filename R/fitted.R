@@ -24,7 +24,8 @@ fitted.dynamitefit <- function(object, newdata = NULL,
   if (is.null(newdata)) {
     newdata <- object$data
   } else {
-    data.table::setDT(newdata)
+    newdata <- data.table::as.data.table(newdata)
+    #data.table::setDT(newdata)
   }
   group_var <- object$group_var
   time_var <- object$time_var
@@ -46,7 +47,8 @@ fitted.dynamitefit <- function(object, newdata = NULL,
   model_matrix <- full_model.matrix_fast(formulas_stoch, newdata,
                                          object$stan$u_names)
   model_matrix <- model_matrix[rep(seq_len(n_new), n_draws), ]
-  data.table::setDT(newdata)
+  #data.table::setDT(newdata)
+  newdata <- data.table::as.data.table(newdata)
   newdata <- newdata[rep(seq_len(n_new), n_draws), ]
   newdata[, ("draw") := rep(1:n_draws, each = n_new)]
   data.table::setkeyv(newdata, c("draw", group_var, time_var))

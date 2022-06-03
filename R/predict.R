@@ -64,7 +64,8 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   n_lag <- length(lag_lhs)
   clear_nonfixed(newdata, resp_stoch, resp_det, lag_lhs, group_var,
                  n_fixed, n_id, n_time)
-  data.table::setDT(newdata)
+  #data.table::setDT(newdata)
+  newdata <- data.table::as.data.table(newdata)
   newdata <- newdata[rep(seq_len(n_new), n_draws), ]
   newdata[, ("draw") := rep(1:n_draws, each = n_new)]
   data.table::setkeyv(newdata, c("draw", group_var, time_var))
@@ -115,6 +116,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
     }
   }
   # for consistency with other output types
+  # TODO remove extra columns, e.g. _store and lags (but not aux?)
   as.data.frame(newdata)
 }
 
