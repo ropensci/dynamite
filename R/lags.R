@@ -35,18 +35,10 @@ is.lags <- function(x) {
 #'
 #' @noRd
 lag_ <- function(x, k) {
-  xlen <- length(x)
-  lag_idx <- seq_len(xlen - k)
-  # Need to ensure that NA's have the same type as the original values
-  # for data.table
-  # TODO is this enough?
-  # out <- vector(mode = mode(x), length = xlen)
+  lag_idx <- seq_len(length(x) - k)
   out <- x
   out[1:k] <- NA
   out[k + lag_idx] <- x[lag_idx]
-  # if (is.factor(x)) {
-  #   out <- factor(x, levels = levels(x))
-  # }
   out
 }
 
