@@ -39,12 +39,14 @@ lag_ <- function(x, k) {
   lag_idx <- seq_len(xlen - k)
   # Need to ensure that NA's have the same type as the original values
   # for data.table
-  out <- vector(mode = mode(x), length = xlen)
+  # TODO is this enough?
+  # out <- vector(mode = mode(x), length = xlen)
+  out <- x
   out[1:k] <- NA
   out[k + lag_idx] <- x[lag_idx]
-  if (is.factor(x)) {
-    out <- as.factor(x)
-  }
+  # if (is.factor(x)) {
+  #   out <- factor(x, levels = levels(x))
+  # }
   out
 }
 
