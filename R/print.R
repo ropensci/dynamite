@@ -11,7 +11,7 @@
 #' @export
 print.dynamitefit <- function(x, hmc_diagnostics = TRUE,...) {
   if (!is.null(x$stanfit)) {
-    if (hmc_diagnostics) {
+    if (hmc_diagnostics && x$stanfit@stan_args[[1]]$algorithm == "NUTS") {
       rstan::check_hmc_diagnostics(x$stanfit)
     }
     draws <- suppressWarnings(as_draws(x))
