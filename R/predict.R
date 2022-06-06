@@ -123,12 +123,12 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   for (i in seq_along(resp_stoch)) {
     resp <- resp_stoch[i]
     store <- glue::glue("{resp}_store")
-    if (is_categorical(object$dformulas$stoch[[i]]$family)) {
-      #newdata[[resp]] <- NULL
-      # TODO categorical case
-    }
     if (identical(type, "response")) {
       newdata[[glue::glue("{resp}_new")]] <- newdata[[resp]]
+    } else {
+      if (is_categorical(object$dformulas$stoch[[i]]$family)) {
+        newdata[[glue::glue("{resp}_new")]] <- NULL
+      }
     }
     newdata[[resp]] <- newdata[[store]]
     newdata[[store]] <- NULL

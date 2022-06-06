@@ -93,8 +93,13 @@ increment_formula <- function(formula, x, type, varying_idx) {
     formula <- drop.terms(ft, dropx = varying_idx, keep.response = TRUE)
     formula_str <- deparse1(formula)
   } else {
-    formula_str <- paste0(as.character(formula_lhs(formula)),
-                          " ~ ", ifelse_(varying_icpt, "-1", "1"))
+    rhs_orig <- deparse1(formula_rhs(formula))
+    formula_str <- paste0(
+      deparse1(formula_lhs(formula)),
+      " ~ ", ifelse_(varying_icpt, "-1", "1"),
+      ifelse_(nzchar(rhs_orig), " + ", ""),
+      rhs_orig
+    )
   }
   if (identical(type, "varying")) {
     v <- paste(v, x_plus, sep = " + ")
