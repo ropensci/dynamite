@@ -142,7 +142,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
     channel$has_varying <- channel$K_varying > 0
     channel$lb <- lb
     channel$shrinkage <- shrinkage
-    if (channel$has_varying) {
+    if (channel$has_varying || channel$has_varying_intercept) {
       if (!has_splines) {
         stop_("Model for response variable ", resp, " ",
               "contains time-varying definitions ",

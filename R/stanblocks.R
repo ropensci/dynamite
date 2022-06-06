@@ -39,7 +39,8 @@ create_functions <- function(dformula, idt, vars) {
 #' @describeIn create_function Create the 'Data' block of the Stan model code
 #' @noRd
 create_data <- function(dformula, idt, vars) {
-  has_splines <- any(unlist(lapply(vars, "[[", "has_varying")))
+  has_splines <- any(unlist(lapply(vars, "[[", "has_varying"))) ||
+    any(unlist(lapply(vars, "[[", "has_varying_intercept")))
   mtext <- paste_rows(
     "int<lower=1> T; // number of time points",
     "int<lower=1> N; // number of individuals",
