@@ -462,7 +462,7 @@ transformed_parameters_lines_categorical <- quote({
     } else {
       mtext_omega_alpha <- paste_rows(
         "row_vector[D] omega_alpha_{y}[{S - 1}];",
-        "for (s in {S - 1}) {{",
+        "for (s in 1:{S - 1}) {{",
           "omega_alpha_{y}[s, 1] = omega_alpha_1_{y}[s];",
           "omega_alpha_{y}[s, 2:D] = omega_raw_alpha_{y}[s];",
         "}}",
@@ -474,9 +474,12 @@ transformed_parameters_lines_categorical <- quote({
       mtext_omega_alpha_1,
       mtext_omega_alpha,
       "for (t in 1:T) {{",
-        "alpha_{y}[t] = omega_alpha_{y} * Bs[, t];",
+        # TODO is this correct?
+        "for (s in 1:{S - 1}) {{",
+          "alpha_{y}[t, s] = omega_alpha_{y}[s] * Bs[, t];",
+        "}}",
       "}}",
-      .indent = idt(c(0, 0, 1, 2, 1)),
+      .indent = idt(c(0, 0, 1, 2, 3, 2, 1)),
       .parse = FALSE
     )
   }
@@ -633,6 +636,7 @@ model_lines_categorical <- quote({
   mtext_intercept <- ""
   mtext_fixed <- ""
   mtext_varying <- ""
+  mtext_tau_alpha <- ""
   mtext_tau <- ""
 
   if (has_random_intercept) {
@@ -675,10 +679,18 @@ model_lines_categorical <- quote({
           .parse = FALSE
         )
       }
+      if (vectorizable_prior(tau_alpha_prior_distr)) {
+        np <- tau_alpha_prior_npars
+        dpars_tau_alpha <- paste0("tau_alpha_prior_pars_", y, "[, ", 1:np, "]",
+                                   collapse = ", ")
+        mtext_tau_alpha <- "tau_alpha_{y} ~ {tau_alpha_prior_distr}({dpars_tau});"
+      } else {
+        mtext_tau_alpha <- "tau_alpha_{y} ~ {tau_alpha_prior_distr};"
+      }
       mtext_intercept <- paste_rows(
         mtext_intercept,
         mtext_omega,
-        "tau_alpha_{y} ~ {tau_alpha_prior_distr};",
+        mtext_tau_alpha,
         .indent = idt(c(0, 0, 1)),
         .parse = FALSE
       )
