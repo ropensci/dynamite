@@ -145,6 +145,22 @@ test_that("lags are parsed", {
   )
 })
 
+
+test_that("lags() and lag() give equal results", {
+  f1 <- expect_error(
+    obs(y1 ~ x1, family = categorical()) +
+      obs(y2 ~ x2, family = gaussian()) +
+      lags(k = 1, type = "fixed"),
+    NA)
+  f2 <- expect_error(
+    obs(y1 ~ x1 + lag(y1) + lag(y2), family = categorical()) +
+      obs(y2 ~ x2 + lag(y1) + lag(y2), family = gaussian()),
+    NA)
+  expect_identical(
+    get_priors(f1, test_data, "group", "time"),
+    get_priors(f2, test_data, "group", "time"))
+})
+
 test_that("deterministic channels are parsed", {
   expect_error(
     obs_det <- obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1), family = negbin()) +

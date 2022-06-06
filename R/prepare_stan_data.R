@@ -233,7 +233,7 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
     if (channel$has_random_intercept) {
       channel$sigma_nu_prior_distr <-  paste0("normal(", 0, ", ", sd_y, ")")
       priors$sigma_nu <- data.frame(
-        parameter = paste0("sigma_u_", y),
+        parameter = paste0("sigma_nu_", y),
         response = y,
         prior = channel$sigma_nu_prior_distr,
         type = "sigma_nu",
@@ -367,13 +367,11 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
         category = resp_levels
       )
       if (channel$has_varying_intercept) {
-        channel$tau_alpha_prior_npars <- 2
-        channel$tau_alpha_prior_pars <- c(0, 1)
-        channel$tau_alpha_prior_distr <- "normal"
+        channel$tau_alpha_prior_distr <- "normal(0, 1);"
         priors$tau_alpha <- data.frame(
           parameter = paste0("tau_alpha_", y),
           response = y,
-          prior = paste0("normal(0, 1)"),
+          prior = "normal(0, 1)",
           type = "tau_alpha",
           category = ""
         )

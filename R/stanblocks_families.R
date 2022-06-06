@@ -679,14 +679,7 @@ model_lines_categorical <- quote({
           .parse = FALSE
         )
       }
-      if (vectorizable_prior(tau_alpha_prior_distr)) {
-        np <- tau_alpha_prior_npars
-        dpars_tau_alpha <- paste0("tau_alpha_prior_pars_", y, "[, ", 1:np, "]",
-                                   collapse = ", ")
-        mtext_tau_alpha <- "tau_alpha_{y} ~ {tau_alpha_prior_distr}({dpars_tau});"
-      } else {
-        mtext_tau_alpha <- "tau_alpha_{y} ~ {tau_alpha_prior_distr};"
-      }
+      mtext_tau_alpha <- "tau_alpha_{y} ~ {tau_alpha_prior_distr};"
       mtext_intercept <- paste_rows(
         mtext_intercept,
         mtext_omega,
@@ -774,7 +767,7 @@ model_lines_categorical <- quote({
   if (has_varying_intercept) intercept <- glue::glue("append_row(0, alpha_{y}[t])")
   # categorical_logit_glm does not support id-varying intercept
   if (has_random_intercept) {
-    # TODO
+    # TODO?
     stop("Categorical family does not yet support random intercepts.")
   } else {
     likelihood_term <- "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], {intercept}, append_col(zeros_K_{y}, gamma_{y}));"
