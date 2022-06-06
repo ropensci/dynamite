@@ -555,8 +555,8 @@ model_lines_default <- quote({
       } else {
         lambda_term <- ifelse_(shrinkage, " * lambda[i - 1]", "")
         mtext_omega <- paste_rows(
-          "omega_raw_alpha_{y}[2] ~ normal(omega_alpha_1_{y}, tau_alpha_{y}{lambda_term});",
-          "for (i in 3:(D - 1)) {{",
+          "omega_raw_alpha_{y}[1] ~ normal(omega_alpha_1_{y}, tau_alpha_{y}{lambda_term});",
+          "for (i in 2:(D - 1)) {{",
             "omega_raw_alpha_{y}[i] ~ normal(omega_raw_alpha_{y}[i - 1], tau_alpha_{y}{lambda_term});",
           "}}",
           .indent = idt(c(1, 1, 2, 1)),
@@ -671,8 +671,8 @@ model_lines_categorical <- quote({
         lambda_term <- ifelse_(shrinkage, " * lambda[i - 1]", "")
         mtext_omega <- paste_rows(
           "for (s in 1:{S - 1}) {{",
-            "omega_raw_alpha_{y}[s, 2] ~ normal(omega_alpha_1_{y}[s], tau_alpha_{y}{lambda_term});",
-            "for (i in 3:(D - 1)) {{",
+            "omega_raw_alpha_{y}[s, 1] ~ normal(omega_alpha_1_{y}[s], tau_alpha_{y}{lambda_term});",
+            "for (i in 2:(D - 1)) {{",
               "omega_raw_alpha_{y}[s, i] ~ normal(omega_raw_alpha_{y}[s, i - 1], tau_alpha_{y}{lambda_term});",
             "}}",
           "}}",
