@@ -270,16 +270,16 @@ add_dynamiteformula <- function(e1, e2) {
 
 #' Join two model definitions and verify compatibility
 #'
-#'
 #' @param e1 A `dynamiteformula` object
 #' @param e2 A `dynamiteformula` object
 #'
 #' @noRd
 join_dynamiteformulas <- function(e1, e2) {
   out <- c(e1, e2)
-  resp_list <- list()
-  resp_list[[1]] <- get_responses(e1)
-  resp_list[[2]] <- get_responses(e2)
+  resp_list <- list(
+    get_responses(e1),
+    get_responses(e2)
+  )
   resp_all <- unlist(resp_list)
   resp_duped <- duplicated(resp_all)
   if (any(resp_duped)) {
@@ -292,19 +292,30 @@ join_dynamiteformulas <- function(e1, e2) {
   if (!is.null(attr(e1, "splines")) && !is.null(attr(e2, "splines"))) {
     stop_("Both dynamiteformulas contain a splines definition")
   }
-  rhs_list <- list()
-  rhs_list[[1]] <- get_predictors(e1)
-  rhs_list[[2]] <- get_predictors(e2)
+  rhs_list <- list(
+    remove_lags(get_predictors(e1)),
+    remove_lags(get_predictors(e2))
+  )
+  stoch_list <- list(
+    which_stochastic(e1),
+    which_stochastic(e2)
+  )
   for (i in 1:2) {
     resp_a <- resp_list[[i]]
-    resp_b <- resp_list[[3-i]]
-    rhs <- rhs_list[[3-i]]
-    simul_resp <- which(resp_a %in% rhs)
-    if (length(simul_resp) > 0) {
-      simul_rhs <- which(rhs %in% resp_a)
-      stop_("Simultaneous regression is not supported, response variables '",
-            cs(resp_a[simul_resp]), "' appear in the formulas of '",
-            cs(resp_b[simul_rhs]), "'")
+    resp_b <- resp_list[[3-i]][stoch_list[[3-i]]]
+    rhs <- rhs_list[[3-i]][stoch_list[[3-i]]]
+    if (length(rhs) > 0) {
+      simul_resp <- lapply(resp_a, grepl, x = rhs, fixed = TRUE)
+      simul_idx <- lapply(simul_resp, which)
+      simul <- lengths(simul_idx) > 0
+      if (any(simul)) {
+        resp_idx <- which(simul)[1]
+        simul_lhs <- resp_a[resp_idx]
+        simul_rhs <- resp_b[simul_idx[[resp_idx]][1]]
+        stop_("Simultaneous regression is not supported, response variable '",
+              simul_lhs, "' appears in the formula of '",
+              simul_rhs, "'")
+      }
     }
   }
   attributes(out) <- c(attributes(e1), attributes(e2))

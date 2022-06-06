@@ -157,6 +157,14 @@ test_that("deterministic channels are parsed", {
   )
 })
 
+test_that("deterministic simultaneity is supported", {
+  expect_error(
+      obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1), family = negbin()) +
+      aux(numeric(d) ~ y5 + 3),
+    NA
+  )
+})
+
 test_that("manual fixed() terms work", {
   expect_error(
     obs_fixed <- obs(y1 ~ fixed(~x1 + lag(y2, 1)), family = categorical()),

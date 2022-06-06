@@ -1,4 +1,4 @@
-obs_test <- obs(y ~ x, family = gaussian())
+obs_test <- obs(y ~ x + w, family = gaussian())
 
 # Formula errors ----------------------------------------------------------
 
@@ -71,9 +71,21 @@ test_that("attempting to add dynamiteformulas with splines definitions fails", {
 })
 
 test_that("simultaneity fails", {
+  obs_lhs <-
+    obs(q ~ w + e + r + lag(i), family = gaussian()) +
+    obs(t ~ y + u, family = gaussian()) +
+    obs(i ~ o + p + a + lag(f), family = gaussian())
+  obs_rhs <-
+    obs(f ~ h + l + lag(x), family = gaussian()) +
+    obs(x ~ q + z, family = gaussian())
   expect_error(
-    obs_test + obs(x ~ y, family = "gaussian"),
-    "Simultaneous regression is not supported, response variables 'y' appear in the formulas of 'x'"
+    obs_rhs + obs_lhs,
+    "Simultaneous regression is not supported, response variable 'q' appears in the formula of 'x'"
+  )
+  # should fail for deterministic as well
+  expect_error(
+    obs(y ~ x, family = gaussian()) + aux(integer(x) ~ y),
+    "Simultaneous regression is not supported, response variable 'x' appears in the formula of 'y'"
   )
 })
 

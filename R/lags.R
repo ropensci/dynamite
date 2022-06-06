@@ -48,16 +48,26 @@ lag_ <- function(x, k) {
 #'
 #' @noRd
 find_lags <- function(x) {
-  grepl("lag\\(.+\\)", x, perl = TRUE)
+  grepl("lag\\([^\\)]+\\)", x, perl = TRUE)
 }
 
 #' Extract non-lag variables
 #'
-#' @param x \[`character(1)`]\cr A character vector of length one.
+#' @param x \[`character(1)`]\cr A character vector
+#'
 #' @noRd
 extract_nonlags <- function(x) {
   has_lag <- find_lags(x)
   x[!has_lag]
+}
+
+#' Removes lagged terms from a character vector
+#'
+#' @param x \[`character(1)`]\cr A character vector
+#'
+#' @noRd
+remove_lags <- function(x) {
+  gsub("lag\\([^\\)]+\\)", "", x, perl = TRUE)
 }
 
 #' Extract lag definitions
