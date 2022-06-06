@@ -32,15 +32,16 @@ check_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
   for (i in seq_along(resp_stoch)) {
     resp <- resp_stoch[i]
     if (is_categorical(families_stoch[[i]])) {
-      resp_levels <- categories[[resp]]
-      newdata[, (glue::glue("{resp}_{resp_levels}")) := NA_integer_]
-    } else {
-      newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
-      newdata[, (glue::glue("{resp}_new")) := newdata[[resp]]]
       if (!identical(type, "response")) {
-        newdata[, (glue::glue("{resp}_new")) := NA]
+        resp_levels <- categories[[resp]]
+        newdata[, (glue::glue("{resp}_{resp_levels}")) := NA_real_]
       }
     }
+    newdata[, (glue::glue("{resp}_new")) := newdata[[resp]]]
+    if (!identical(type, "response")) {
+      newdata[, (glue::glue("{resp}_new")) := NA]
+    }
+    newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
   }
   data.table::setkeyv(newdata, c(group_var, time_var))
 }
@@ -111,9 +112,10 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
     e$offset <- specials[[j]]$offset
     e$trials <- specials[[j]]$trials
     if (is_categorical(resp_family)) {
-      resp_levels <-  attr(class(object$stan$responses[,resp]), "levels")
+      resp_levels <- attr(object$stan$responses, "resp_class")[[resp]] |>
+        attr("levels")
       if (model_vars[[j]]$has_fixed_intercept) {
-        e$alpha <-samples[[alpha]][idx_par, , drop = FALSE]
+        e$alpha <- samples[[alpha]][idx_par, , drop = FALSE]
       } else if (model_vars[[j]]$has_varying_intercept) {
         e$alpha <- samples[[alpha]][idx_par, , , drop = FALSE]
       }
@@ -121,10 +123,11 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
       e$delta <- samples[[delta]][idx_par, , , , drop = FALSE]
       e$nu <- samples[[nu]][idx_par, , drop = FALSE]
       e$resp_levels <- resp_levels
-      e$S <- dim(samples[[beta]])[4] + 1
-      e$idx_resp <- which(newdata_names %in%
-                            c(glue::glue("{resp}_{resp_levels}")))
+      e$S <- length(resp_levels)
+      #e$idx_resp <- which(newdata_names %in%
+      #                      c(glue::glue("{resp}_{resp_levels}")))
     } else {
+      resp_levels <- NULL
       if (model_vars[[j]]$has_fixed_intercept) {
         e$alpha <- samples[[alpha]][idx_par, drop = FALSE]
       } else if (model_vars[[j]]$has_varying_intercept) {
@@ -134,7 +137,7 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
       e$delta <- samples[[delta]][idx_par, , , drop = FALSE]
       e$nu <- samples[[nu]][idx_par]
     }
-    e$call <- generate_sim_call(resp, resp_family, eval_type,
+    e$call <- generate_sim_call(resp, resp_levels, resp_family, eval_type,
                                 model_vars[[j]]$has_fixed,
                                 model_vars[[j]]$has_varying,
                                 model_vars[[j]]$has_fixed_intercept,
@@ -155,16 +158,21 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
 #  exp(x - log_sum_exp(x))
 #}
 
-generate_sim_call<- function(resp, family, type, has_fixed, has_varying,
+generate_sim_call<- function(resp, resp_levels, family, type,
+                             has_fixed, has_varying,
                              has_fixed_intercept, has_varying_intercept,
                              has_random_intercept, has_offset) {
   if (is_categorical(family)) {
-    glue::glue("{type}_categorical") |> str2lang()
+    glue::glue("{type}_categorical") |>
+      str2lang() |>
+      eval() |>
+      glue::glue() |>
+      str2lang()
   } else {
     glue::glue(
       "{{\n",
       paste0(
-        "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '  0', '')}",
+        "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '  xbeta <- 0', '')}",
         "{ifelse_(has_fixed_intercept, '  xbeta <- alpha', '')}",
         "{ifelse_(has_varying_intercept, '  xbeta <- alpha[, a_time]', '')}",
         "{ifelse_(has_random_intercept, ' + nu', '')}",
@@ -182,7 +190,7 @@ generate_sim_call<- function(resp, family, type, has_fixed, has_varying,
         ),
         ""
       ),
-      eval(str2lang(paste0(type, "_", family))),
+      eval(str2lang(glue::glue("{type}_{family}"))),
       "}}"
     ) |> str2lang()
   }
@@ -195,15 +203,6 @@ fitted_gaussian <- "
 "
 
 fitted_categorical <- "
-  xbeta <- alpha[idx_par, a_time, , drop = FALSE] {ifelse_(has_fixed || has_varying, '+', '')}
-    cbind(
-      {ifelse_(has_fixed,
-         rowSums(model_matrix[, J_fixed, drop = FALSE] * beta)', '')}
-      {ifelse_(has_fixed && has_varying), '+', ''}
-      {ifelse_(has_varying,
-         rowSums(model_matrix[, J_varying, drop = FALSE] * delta[, time, , , drop = FALSE])', '')}
-      {ifelse_(has_fixed || has_varying, ', 0', '0')}
-    )
   maxs <- apply(xbeta, 1, max)
   data.table::set(
     x = newdata,
@@ -249,35 +248,45 @@ predict_gaussian <- "
                   value = rnorm(k, xbeta, sigma))
 "
 
-predict_categorical <- "
-  xbeta <- alpha[idx_par, a_time, , drop = FALSE] {ifelse_(has_fixed || has_varying, '+', '')}
-    cbind(
-      {ifelse_(has_fixed,
-         rowSums(model_matrix[, J_fixed, drop = FALSE] * beta)', '')}
-      {ifelse_(has_fixed && has_varying), '+', ''}
-      {ifelse_(has_varying,
-         rowSums(model_matrix[, J_varying, drop = FALSE] * delta[, time, , , drop = FALSE])', '')}
-      {ifelse_(has_fixed || has_varying, ', 0', '0')}
-    )
-  maxs <- apply(xbeta, 1, max)
-  if (type == 'link') {{
-    data.table::set(
-      x = newdata,
-      i = idx_pred,
-      j = '{resp}_{resp_levels}',
-      value = xbeta)
-  }}
-  if (type == 'mean') {{
-    data.table::set(
-      x = newdata,
-      i = idx_pred,
-      j = '{resp}_{resp_levels}',
-      value = exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
-    )
-  }}
-  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
-                  value = max.col(xbeta - log(-log(runif(S * k)))))
-"
+predict_categorical <- paste0(
+  "{{\n",
+    "  xbeta <- cbind(0, ",
+      "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '0', '')}",
+      "{ifelse_(has_fixed_intercept, 'alpha', '')}",
+      "{ifelse_(has_varying_intercept, 'alpha[, a_time, , drop = FALSE]', '')}",
+      "{ifelse_(has_fixed,",
+        "' + apply(beta, 3, function(b) .rowSums(model_matrix[, J_fixed, drop = FALSE] * b, m = k, n = K_fixed))', '')}",
+        "{ifelse_(has_varying,",
+        "' + apply(delta[, time, , , drop = FALSE], 3, function(d) .rowSums(model_matrix[, J_varying, drop = FALSE] * d. m = k, n = K_fixed))', '')}",
+    ")",
+    "
+    resp_cols <- c({paste0('\"', resp, '_', resp_levels, '\"', collapse = ', ')})
+    if (type == 'link') {{
+      for (s in 1:S) {{
+        data.table::set(
+          x = newdata,
+          i = idx_pred,
+          j = resp_cols[s],
+          value = xbeta[, s]
+        )
+      }}
+    }}
+    if (type == 'mean') {{
+      maxs <- apply(xbeta, 1, max)
+      mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+      for (s in 1:S) {{
+        data.table::set(
+          x = newdata,
+          i = idx_pred,
+          j = resp_cols[s],
+          value = mval[, s]
+        )
+      }}
+    }}
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}',
+                    value = max.col(xbeta - log(-log(runif(S * k)))))\n",
+  "}}"
+)
 
 predict_binomial <- "
   if (type == 'mean') {{
