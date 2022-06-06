@@ -34,8 +34,9 @@ data_lines_default <- quote({
 
 data_lines_categorical <- quote({
   dtext_def <- eval(data_lines_default)
+  # allow zero as a placeholder for NAs
   dtext <- paste_rows(
-    "int<lower=1> {y}[T, N];",
+    "int<lower=0> {y}[T, N];",
     .indent = idt(1)
   )
   paste_rows(dtext_def, dtext, .parse = FALSE)
