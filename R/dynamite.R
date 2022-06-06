@@ -185,12 +185,12 @@ parse_lags <- function(data, dformula, group_var, time_var) {
       for (j in seq_along(channels_stoch)) {
         y <- resp_stoch[j]
         idx <- idx + 1
-        lags_lhs[idx] <- paste0(y, "_lag_", i)
+        lags_lhs[idx] <- paste0(y, "_lag", i)
         if (i == 1) {
           lags_rhs <- y
           lags_stoch[idx] <- TRUE
         } else {
-          lags_rhs <- paste0(y, "_lag_", i - 1)
+          lags_rhs <- paste0(y, "_lag", i - 1)
         }
         lags_rank[idx] <- i
         lags_increment[idx] <- i %in% lag_k
