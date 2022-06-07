@@ -50,14 +50,13 @@ fitted.dynamitefit <- function(object, newdata = NULL,
   model_matrix <- full_model.matrix_fast(formulas_stoch, newdata,
                                          object$stan$u_names)
   model_matrix <- model_matrix[rep(seq_len(n_new), n_draws), ]
-  #data.table::setDT(newdata)
   newdata <- data.table::as.data.table(newdata)
   newdata <- newdata[rep(seq_len(n_new), n_draws), ]
   newdata[, ("draw") := rep(1:n_draws, each = n_new)]
   data.table::setkeyv(newdata, c("draw", group_var, time_var))
   idx <- seq.int(fixed, newdata[,.N], by = n_time)
-  eval_envs <- prepare_eval_envs(object, newdata,
-                                 eval_type = "fitted", predict_type = "response",
+  eval_envs <- prepare_eval_envs(object, newdata, eval_type = "fitted",
+                                 predict_type = "response",
                                  resp_stoch, n_id, n_draws)
   for (i in seq.int(fixed + 1L, n_time)) {
     idx <- idx + 1L
@@ -65,9 +64,9 @@ fitted.dynamitefit <- function(object, newdata = NULL,
     for (j in seq_along(resp_stoch)) {
       e <- eval_envs[[j]]
       e$idx <- idx
-      e$time <- i - 1
+      e$time <- i
       e$model_matrix <- model_matrix_sub
-      e$a_time <- ifelse_(NCOL(e$alpha) == 1, 1, i - 1)
+      e$a_time <- ifelse_(NCOL(e$alpha) == 1, 1, i)
       eval(e$call, envir = e)
     }
   }

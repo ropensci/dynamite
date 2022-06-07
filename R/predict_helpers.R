@@ -32,20 +32,21 @@ check_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
   for (i in seq_along(resp_stoch)) {
     resp <- resp_stoch[i]
     if (is_categorical(families_stoch[[i]])) {
-      if (type %in% c("mean", "link")) {
+      if (type %in% c("mean", "link", "fitted")) {
         resp_levels <- categories[[resp]]
         newdata[, (glue::glue("{resp}_{type}_{resp_levels}")) := NA_real_]
       }
     } else {
-      if (type %in% c("mean", "link")) {
-        newdata[, (glue::glue("{resp}_{type}")) := newdata[[resp]]]
-        newdata[, (glue::glue("{resp}_{type}")) := NA]
+      if (type %in% c("mean", "link", "fitted")) {
+        newdata[, (glue::glue("{resp}_{type}")) := NA_real_]
       }
     }
     if (identical(type, "response")) {
       newdata[, (glue::glue("{resp}_new")) := newdata[[resp]]]
     }
-    newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
+    if (!identical(type, "fitted")) {
+      newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
+    }
   }
   data.table::setkeyv(newdata, c(group_var, time_var))
 }
@@ -158,11 +159,31 @@ generate_sim_call<- function(resp, resp_levels, family, type,
                              has_fixed_intercept, has_varying_intercept,
                              has_random_intercept, has_offset) {
   if (is_categorical(family)) {
-    glue::glue("{type}_categorical") |>
-      str2lang() |>
-      eval() |>
-      glue::glue() |>
-      str2lang()
+    glue::glue(
+      "{{\n",
+      paste0(
+        "  xbeta <- cbind(0, ",
+        "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '0', '')}",
+        "{ifelse_(has_fixed_intercept, 'alpha', '')}",
+        "{ifelse_(has_varying_intercept,
+                  'alpha[, a_time, , drop = FALSE]',
+                  '')}",
+        "{ifelse_(has_fixed,",
+        "' + apply(beta, 3, function(b) {{
+               .rowSums(model_matrix[, J_fixed, drop = FALSE] * b,
+                        m = k, n = K_fixed)
+             }})', '')}",
+        "{ifelse_(has_varying,",
+        "' + apply(delta[, time, , , drop = FALSE], 3, function(d) {{
+               .rowSums(model_matrix[, J_varying, drop = FALSE] *
+                          d.
+                        m = k, n = K_fixed)
+             }})', '')}",
+        ")\n"
+      ),
+      eval(str2lang(glue::glue("{type}_categorical"))),
+      "}}"
+    ) |> str2lang()
   } else {
     glue::glue(
       "{{\n",
@@ -176,7 +197,8 @@ generate_sim_call<- function(resp, resp_levels, family, type,
           "' + .rowSums(x = model_matrix[, J_fixed, drop = FALSE] * beta,
                         m = k, n = K_fixed)', '')}",
           "{ifelse_(has_varying,",
-          "' + .rowSums(x = model_matrix[, J_varying, drop = FALSE] * delta[, time, ],
+          "' + .rowSums(x = model_matrix[, J_varying, drop = FALSE] *
+                              delta[, time, ],
                         m = k, n = K_varying)', '')}\n"
       ),
       ifelse_(identical(type, "predict"),
@@ -197,43 +219,50 @@ generate_sim_call<- function(resp, resp_levels, family, type,
 # Fitted expressions ------------------------------------------------------
 
 fitted_gaussian <- "
-  data.table::set(x = newdata, i = idx, j = '{resp}', value = xbeta)
+  data.table::set(x = newdata, i = idx, j = '{resp}_fitted', value = xbeta)
 "
 
 fitted_categorical <- "
-  maxs <- apply(xbeta, 1, max)
-  data.table::set(
-    x = newdata,
-    i = idx_pred,
-    j = '{resp}_{resp_levels}',
-    value = exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
-  )
+    resp_cols <- c({paste0('\"', resp, '_fitted_', resp_levels, '\"',
+                    collapse = ', ')})
+    maxs <- apply(xbeta, 1, max)
+    mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+    for (s in 1:S) {{
+      data.table::set(
+        x = newdata,
+        i = idx,
+        j = resp_cols[s],
+        value = mval[, s]
+      )
+    }}
 "
 
 fitted_bernoulli <- "
-  data.table::set(x = newdata, i = idx, j = '{resp}', value = plogis(xbeta))
+  data.table::set(x = newdata, i = idx, j = '{resp}_fitted',
+                  value = plogis(xbeta))
 "
 
 fitted_binomial <- "
-  data.table::set(x = newdata, i = idx, j = '{resp}', value = plogis(xbeta))
+  data.table::set(x = newdata, i = idx, j = '{resp}_fitted',
+                  value = plogis(xbeta))
 "
 
 fitted_poisson <- "
   exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
-  data.table::set(x = newdata, i = idx, j = '{resp}', value = exp_xbeta)
+  data.table::set(x = newdata, i = idx, j = '{resp}_fitted', value = exp_xbeta)
 "
 
 fitted_negbin <- "
   exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
-  data.table::set(x = newdata, i = idx, j = '{resp}', value = exp_xbeta)
+  data.table::set(x = newdata, i = idx, j = '{resp}_fitted', value = exp_xbeta)
 "
 
 fitted_exponential <- "
-  data.table::set(x = newdata, i = idx, j = '{resp}', value = exp(xbeta))
+  data.table::set(x = newdata, i = idx, j = '{resp}_fitted', value = exp(xbeta))
 "
 
 fitted_gamma <- "
-  data.table::set(x = newdata, i = idx, j = '{resp}', value = exp(xbeta))
+  data.table::set(x = newdata, i = idx, j = '{resp}_fitted', value = exp(xbeta))
 "
 # Predict expressions -----------------------------------------------------
 
@@ -246,21 +275,10 @@ predict_gaussian <- "
                   value = rnorm(k, xbeta, sigma))
 "
 
-predict_categorical <- paste0(
-  "{{\n",
-    "  xbeta <- cbind(0, ",
-      "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '0', '')}",
-      "{ifelse_(has_fixed_intercept, 'alpha', '')}",
-      "{ifelse_(has_varying_intercept, 'alpha[, a_time, , drop = FALSE]', '')}",
-      "{ifelse_(has_fixed,",
-        "' + apply(beta, 3, function(b) .rowSums(model_matrix[, J_fixed, drop = FALSE] * b,
-                                                 m = k, n = K_fixed))', '')}",
-        "{ifelse_(has_varying,",
-        "' + apply(delta[, time, , , drop = FALSE], 3, function(d) .rowSums(model_matrix[, J_varying, drop = FALSE] * d. m = k, n = K_fixed))', '')}",
-    ")",
-    "
+predict_categorical <- "
     if (type == 'link') {{
-      resp_cols <- c({paste0('\"', resp, '_link_', resp_levels, '\"', collapse = ', ')})
+      resp_cols <- c({paste0('\"', resp, '_link_', resp_levels, '\"',
+                             collapse = ', ')})
       for (s in 1:S) {{
         data.table::set(
           x = newdata,
@@ -271,7 +289,8 @@ predict_categorical <- paste0(
       }}
     }}
     if (type == 'mean') {{
-      resp_cols <- c({paste0('\"', resp, '_mean_', resp_levels, '\"', collapse = ', ')})
+      resp_cols <- c({paste0('\"', resp, '_mean_', resp_levels, '\"',
+                             collapse = ', ')})
       maxs <- apply(xbeta, 1, max)
       mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
       for (s in 1:S) {{
@@ -284,9 +303,8 @@ predict_categorical <- paste0(
       }}
     }}
     data.table::set(x = newdata, i = idx_pred, j = '{resp}',
-                    value = max.col(xbeta - log(-log(runif(S * k)))))\n",
-  "}}"
-)
+                    value = max.col(xbeta - log(-log(runif(S * k)))))
+"
 
 predict_binomial <- "
   if (type == 'mean') {{
