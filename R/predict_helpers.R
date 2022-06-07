@@ -166,7 +166,7 @@ generate_sim_call<- function(resp, resp_levels, family, type,
         "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '0', '')}",
         "{ifelse_(has_fixed_intercept, 'alpha', '')}",
         "{ifelse_(has_varying_intercept,
-                  'alpha[, a_time, , drop = FALSE]',
+                  'matrix(alpha[, a_time, ], nrow(alpha))',
                   '')}",
         "{ifelse_(has_fixed,",
         "' + apply(beta, 3, function(b) {{
@@ -174,7 +174,7 @@ generate_sim_call<- function(resp, resp_levels, family, type,
                         m = k, n = K_fixed)
              }})', '')}",
         "{ifelse_(has_varying,",
-        "' + apply(delta[, time, , , drop = FALSE], 3, function(d) {{
+        "' + apply(array(delta[, time, , ], dim = dim(delta)[-2]), 3, function(d) {{
                .rowSums(model_matrix[, J_varying, drop = FALSE] * d,
                         m = k, n = K_varying)
              }})', '')}",
