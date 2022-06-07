@@ -176,7 +176,7 @@ generate_sim_call<- function(resp, resp_levels, family, type,
         "{ifelse_(has_varying,",
         "' + apply(delta[, time, , , drop = FALSE], 3, function(d) {{
                .rowSums(model_matrix[, J_varying, drop = FALSE] * d,
-                        m = k, n = K_fixed)
+                        m = k, n = K_varying)
              }})', '')}",
         ")\n"
       ),
