@@ -32,14 +32,18 @@ check_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
   for (i in seq_along(resp_stoch)) {
     resp <- resp_stoch[i]
     if (is_categorical(families_stoch[[i]])) {
-      if (!identical(type, "response")) {
+      if (type %in% c("mean", "link")) {
         resp_levels <- categories[[resp]]
-        newdata[, (glue::glue("{resp}_{resp_levels}")) := NA_real_]
+        newdata[, (glue::glue("{resp}_{type}_{resp_levels}")) := NA_real_]
+      }
+    } else {
+      if (type %in% c("mean", "link")) {
+        newdata[, (glue::glue("{resp}_{type}")) := newdata[[resp]]]
+        newdata[, (glue::glue("{resp}_{type}")) := NA]
       }
     }
-    newdata[, (glue::glue("{resp}_new")) := newdata[[resp]]]
-    if (!identical(type, "response")) {
-      newdata[, (glue::glue("{resp}_new")) := NA]
+    if (identical(type, "response")) {
+      newdata[, (glue::glue("{resp}_new")) := newdata[[resp]]]
     }
     newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
   }
@@ -149,15 +153,6 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
   eval_envs
 }
 
-#log_sum_exp <- function(x) {
-#  m <- max(x)
-#  m + log(sum(exp(x - m)))
-#}
-
-#softmax <- function(x) {
-#  exp(x - log_sum_exp(x))
-#}
-
 generate_sim_call<- function(resp, resp_levels, family, type,
                              has_fixed, has_varying,
                              has_fixed_intercept, has_varying_intercept,
@@ -172,19 +167,22 @@ generate_sim_call<- function(resp, resp_levels, family, type,
     glue::glue(
       "{{\n",
       paste0(
-        "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '  xbeta <- 0', '')}",
+        "{ifelse_(!has_fixed_intercept && !has_varying_intercept,
+                  '  xbeta <- 0', '')}",
         "{ifelse_(has_fixed_intercept, '  xbeta <- alpha', '')}",
         "{ifelse_(has_varying_intercept, '  xbeta <- alpha[, a_time]', '')}",
         "{ifelse_(has_random_intercept, ' + nu', '')}",
         "{ifelse_(has_fixed,",
-          "' + .rowSums(x = model_matrix[, J_fixed, drop = FALSE] * beta, m = k, n = K_fixed)', '')}",
+          "' + .rowSums(x = model_matrix[, J_fixed, drop = FALSE] * beta,
+                        m = k, n = K_fixed)', '')}",
           "{ifelse_(has_varying,",
-          "' + .rowSums(x = model_matrix[, J_varying, drop = FALSE] * delta[, time, ], m = k, n = K_varying)', '')}\n"
+          "' + .rowSums(x = model_matrix[, J_varying, drop = FALSE] * delta[, time, ],
+                        m = k, n = K_varying)', '')}\n"
       ),
       ifelse_(identical(type, "predict"),
         paste0(
           "  if (type == 'link') {{",
-          "    data.table::set(x = newdata, i = idx_pred, j = '{resp}_new',
+          "    data.table::set(x = newdata, i = idx_pred, j = '{resp}_link',
                                value = xbeta)",
           "  }}"
         ),
@@ -241,7 +239,7 @@ fitted_gamma <- "
 
 predict_gaussian <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_new',
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_mean',
                     value = xbeta)
   }}
   data.table::set(x = newdata, i = idx_pred, j = '{resp}',
@@ -255,13 +253,14 @@ predict_categorical <- paste0(
       "{ifelse_(has_fixed_intercept, 'alpha', '')}",
       "{ifelse_(has_varying_intercept, 'alpha[, a_time, , drop = FALSE]', '')}",
       "{ifelse_(has_fixed,",
-        "' + apply(beta, 3, function(b) .rowSums(model_matrix[, J_fixed, drop = FALSE] * b, m = k, n = K_fixed))', '')}",
+        "' + apply(beta, 3, function(b) .rowSums(model_matrix[, J_fixed, drop = FALSE] * b,
+                                                 m = k, n = K_fixed))', '')}",
         "{ifelse_(has_varying,",
         "' + apply(delta[, time, , , drop = FALSE], 3, function(d) .rowSums(model_matrix[, J_varying, drop = FALSE] * d. m = k, n = K_fixed))', '')}",
     ")",
     "
-    resp_cols <- c({paste0('\"', resp, '_', resp_levels, '\"', collapse = ', ')})
     if (type == 'link') {{
+      resp_cols <- c({paste0('\"', resp, '_link_', resp_levels, '\"', collapse = ', ')})
       for (s in 1:S) {{
         data.table::set(
           x = newdata,
@@ -272,6 +271,7 @@ predict_categorical <- paste0(
       }}
     }}
     if (type == 'mean') {{
+      resp_cols <- c({paste0('\"', resp, '_mean_', resp_levels, '\"', collapse = ', ')})
       maxs <- apply(xbeta, 1, max)
       mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
       for (s in 1:S) {{
@@ -290,7 +290,7 @@ predict_categorical <- paste0(
 
 predict_binomial <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_new',
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_mean',
                     value = plogis(xbeta))
   }}
   data.table::set(x = newdata, i = idx_pred, j = '{resp}',
@@ -299,7 +299,7 @@ predict_binomial <- "
 
 predict_bernoulli <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_new',
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_mean',
                     value = plogis(xbeta))
   }}
   data.table::set(x = newdata, i = idx_pred, j = '{resp}',
@@ -309,7 +309,7 @@ predict_bernoulli <- "
 predict_poisson <- "
   exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_new',
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_mean',
                     value = exp_xbeta)
   }}
   data.table::set(x = newdata, i = idx_pred, j = '{resp}',
@@ -319,7 +319,7 @@ predict_poisson <- "
 predict_negbin <- "
   exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_store',
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_mean',
                     value = exp_xbeta)
   }
   data.table::set(x = newdata, i = idx_pred, j = '{resp}',
@@ -328,7 +328,7 @@ predict_negbin <- "
 
 predict_exponential <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_new',
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_mean',
                     value = exp(xbeta))
   }
   data.table::set(x = newdata, i = idx_pred, j = '{resp}',
@@ -337,7 +337,7 @@ predict_exponential <- "
 
 predict_gamma <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_new',
+    data.table::set(x = newdata, i = idx_pred, j = '{resp}_mean',
                     value = exp(xbeta))
   }
   data.table::set(x = newdata, i = idx_pred, j = '{resp}',

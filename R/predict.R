@@ -108,10 +108,10 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
       e <- eval_envs[[j]]
       idx_na <- is.na(newdata[idx, .SD, .SDcols = resp_stoch[j]])
       e$idx <- idx
-      e$time <- i - 1
+      e$time <- i
       e$idx_pred <- idx[which(idx_na)]
       e$model_matrix <- model_matrix
-      e$a_time <- ifelse_(NCOL(e$alpha) == 1, 1, i - 1)
+      e$a_time <- ifelse_(NCOL(e$alpha) == 1, 1, i)
       if (any(idx_na)) {
         eval(e$call, envir = e)
       }
@@ -124,16 +124,14 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
     resp <- resp_stoch[i]
     store <- glue::glue("{resp}_store")
     if (identical(type, "response")) {
-      newdata[[glue::glue("{resp}_new")]] <- newdata[[resp]]
-    } else {
-      if (is_categorical(object$dformulas$stoch[[i]]$family)) {
-        newdata[[glue::glue("{resp}_new")]] <- NULL
-      }
+      newdata[, glue::glue("{resp}_new") := newdata[[resp]]]
     }
-    newdata[[resp]] <- newdata[[store]]
-    newdata[[store]] <- NULL
+    newdata[, c(resp) := newdata[[store]]]
+    newdata[, c(store) := NULL]
   }
-  newdata[,c(lhs_det, lhs_stoch) := NULL]
+  if (n_lag_det > 0 || n_lag_stoch > 0) {
+    newdata[, c(lhs_det, lhs_stoch) := NULL]
+  }
 
   # for consistency with other output types
   data.table::setDF(newdata)
