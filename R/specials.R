@@ -140,7 +140,7 @@ formula_response <- function(x) {
     list(type = "logical",
          resp = gsub("logical\\((.*)\\)", "\\1", x, perl = TRUE))
   } else {
-    warning_("No type specified for deterministic channel '", x, "' ",
+    warning_("No type specified for deterministic channel '", x, "', ",
              "assuming type is 'numeric'")
     list(type = "numeric", resp = x)
   }

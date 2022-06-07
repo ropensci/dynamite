@@ -26,4 +26,7 @@ fit <- dynamite(f,
 
 head(fit$data)
 
+head(predict(fit, type = "response"))
+head(predict(fit, type = "link"))
+head(predict(fit, type = "mean"))
 head(predict(fit))

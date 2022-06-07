@@ -20,3 +20,10 @@ test_that("deterministic varying warns", {
     "varying\\(\\) definitions of a determinstic channel 'numeric\\(y\\)' will be ignored"
   )
 })
+
+test_that("untyped deterministic warns", {
+  expect_warning(
+    aux(y ~ 1 + x),
+    "No type specified for deterministic channel 'y', assuming type is 'numeric'"
+  )
+})

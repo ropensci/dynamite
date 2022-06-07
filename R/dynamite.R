@@ -225,7 +225,13 @@ parse_lags <- function(data, dformula, group_var, time_var) {
   map_channel <- list()
   map_rank <- integer(0)
   map_stoch <- logical(0)
-  max_lag <- max(lags_max, lag_map$k)
+  map_stoch_k <- lag_map |>
+    dplyr::filter(.data$var %in% resp_stoch) |>
+    dplyr::pull(.data$k)
+  max_lag <- lags_max
+  if (length(map_stoch_k) > 0) {
+    max_lag <- max(lags_max, map_stoch_k)
+  }
   if (n_lag > 0) {
     if (any(lag_map$k <= 0)) {
       stop_("Only positive shift values are allowed in lag()")
@@ -357,7 +363,10 @@ evaluate_deterministic <- function(data, dformulas, group_var, time_var) {
     rhs_det <- get_predictors(dld)
     lhs_stoch <- get_responses(dls)
     rhs_stoch <- get_predictors(dls)
-    if (n_det) {
+    if (n_lag_stoch > 0) {
+      assign_lags(data, ro_stoch, idx, lhs_stoch, rhs_stoch)
+    }
+    if (n_det > 0) {
       res <- try(assign_deterministic(data, cl, idx), silent = TRUE)
       if ("try-error" %in% class(res)) {
         stop_("Unable to evaluate the definitions of deterministic channels.\n",
@@ -365,22 +374,16 @@ evaluate_deterministic <- function(data, dformulas, group_var, time_var) {
               res)
       }
     }
-    if (n_lag_stoch > 0) {
-      assign_lags(data, ro_stoch, idx, lhs_stoch, rhs_stoch)
-    }
-    if (n_det > 0) {
-      assign_deterministic(data, cl, idx)
-    }
     for (i in seq.int(fixed + 2L, n_time)) {
       idx <- idx + 1L
-      if (n_lag_stoch) {
+      if (n_lag_det > 0) {
+        assign_lags(data, ro_det, idx, lhs_det, rhs_det)
+      }
+      if (n_lag_stoch > 0) {
         assign_lags(data, ro_stoch, idx, lhs_stoch, rhs_stoch)
       }
-      if (n_det) {
+      if (n_det > 0) {
         assign_deterministic(data, cl, idx)
-      }
-      if (n_lag_det) {
-        assign_lags(data, ro_det, idx, lhs_det, rhs_det)
       }
     }
   }

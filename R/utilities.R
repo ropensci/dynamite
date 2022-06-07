@@ -11,11 +11,11 @@ utils::globalVariables(c(".", ".I", ".N", ".SD", "where"))
 #' @param ... Any number of `name = value` pairs
 #'
 #' @noRd
-named_list <- function(...) {
-  y <- list(...)
-  names(y) <- as.character(substitute(list(...)))[-1]
-  y
-}
+#named_list <- function(...) {
+#  y <- list(...)
+#  names(y) <- as.character(substitute(list(...)))[-1]
+#  y
+#}
 
 # Check which elements of x have a prefix in y
 # which_prefix <- function(x, y) {
@@ -277,14 +277,14 @@ onlyif <- function(test, yes) {
 # Startup message for the package
 .onAttach <- function(libname, pkgname) {
   # TODO
-  invisible(NULL)
+  #invisible(NULL)
 }
 
 # TODO is needed?
 # Code to execute when loading the package
 .onLoad <- function(libname, pkgname) {
   # TODO
-  invisible(NULL)
+  #invisible(NULL)
 }
 
 # TODO there is ndraws method in posterior package, should probably define ndraws.dynamitefit

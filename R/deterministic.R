@@ -22,18 +22,13 @@ assign_initial_values <- function(data, dd, dld, dls, idx) {
     for (i in seq_along(dld)) {
       if (init[i]) {
         as_fun <- paste0("as.", dld[[i]]$specials$resp_type)
-        offset <- dld[[i]]$specials$past_offset
-        if (is.null(offset)) {
-          idx_fixed <- idx
-        } else {
-          idx_fixed <- idx + offset
-        }
+        idx_fixed <- idx + dld[[i]]$specials$past_offset
         past <- do.call(as_fun, args = list(dld[[i]]$specials$past))
         data[idx_fixed, (lhs[i]) := past]
-      } else {
-        data[idx, (lhs[i]) := data[idx,][[rhs[i]]]]
-        data[idx, (lhs[i]) := NA]
-      }
+      }# else {
+      #  data[idx, (lhs[i]) := data[idx,][[rhs[i]]]]
+      #  data[idx, (lhs[i]) := NA]
+      #}
     }
   }
 }

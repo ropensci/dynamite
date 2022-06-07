@@ -92,7 +92,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   idx <- idx + fixed - 1L
   for (i in (fixed + 1):n_time) {
     idx <- idx + 1L
-    if (n_lag_det > 0 && idx > fixed + 1) {
+    if (n_lag_det > 0 && i > fixed + 1) {
       assign_lags(newdata, ro_det, idx, lhs_det, rhs_det)
     }
     if (n_lag_stoch > 0) {

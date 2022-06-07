@@ -110,6 +110,13 @@ test_that("categorical random intercept fails", {
   )
 })
 
+test_that("negative lb_tau fails", {
+  expect_error(
+    obs_test + splines(lb_tau = -1.0),
+    "Lower bound for 'tau' should be non-negative"
+  )
+})
+
 # Formula specials errors -------------------------------------------------
 
 test_that("Specification as both fixed and varying fails", {

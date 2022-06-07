@@ -129,15 +129,17 @@ create_model <- function(dformula, idt, vars) {
 #'   block of the Stan model code
 #' @noRd
 create_generated_quantities <- function(dformula, idt, vars) {
-  gen <- character(length(dformula))
-  for (i in seq_along(dformula)) {
-    family <- dformula[[i]]$family$name
-    line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
-    gen[i] <- lines_wrap("generated_quantities", family, line_args)
-  }
-  if (any(nzchar(gen))) {
-    paste_rows("generated quantities {", gen, "}", .parse = FALSE)
-  } else {
-    NULL
-  }
+  #gen <- character(length(dformula))
+  #for (i in seq_along(dformula)) {
+  #  family <- dformula[[i]]$family$name
+  #  line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
+  #  gen[i] <- lines_wrap("generated_quantities", family, line_args)
+  #}
+  #if (any(nzchar(gen))) {
+  #  paste_rows("generated quantities {", gen, "}", .parse = FALSE)
+  #} else {
+  #  NULL
+  #}
+  # TODO uncomment if needed
+  NULL
 }

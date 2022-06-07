@@ -3,10 +3,10 @@ individuals <- 5
 total_obs <- timepoints * individuals
 
 test_data <- data.frame(
-  offset = sample(50:100, size = total_obs, replace = TRUE),
-  trials = sample(50:100, size = total_obs, replace = TRUE),
+  time = 1:timepoints,
   group = gl(individuals, timepoints),
-  time = 1:timepoints
+  offset = sample(50:100, size = total_obs, replace = TRUE),
+  trials = sample(50:100, size = total_obs, replace = TRUE)
 ) |>
   dplyr::mutate(
     y1 = as.factor(sample(5, size = total_obs, replace = TRUE)),
@@ -145,7 +145,6 @@ test_that("lags are parsed", {
   )
 })
 
-
 test_that("lags() and lag() give equal results", {
   f1 <- expect_error(
     obs(y1 ~ x1, family = categorical()) +
@@ -181,9 +180,41 @@ test_that("deterministic simultaneity is supported", {
   )
 })
 
+test_that("deterministic types are supported", {
+  expect_error(
+    aux(factor(a) ~ factor(c(1,2,3), levels = c(1,2,3))) +
+    aux(numeric(b) ~ log(1.0)) +
+    aux(integer(c) ~ 1L) +
+    aux(logical(d) ~ TRUE),
+    NA
+  )
+})
+
 test_that("manual fixed() terms work", {
   expect_error(
     obs_fixed <- obs(y1 ~ fixed(~x1 + lag(y2, 1)), family = categorical()),
     NA
   )
+})
+
+test_that("deterministic lags with zero observed lags is evaluated", {
+  obs_zerolag <-
+    obs(y2 ~ x1, family = gaussian()) +
+    aux(numeric(d) ~ abs(y2) + lag(d) + past(0.5))
+  expect_error(
+    dynamite(obs_zerolag, test_data, "group", "time", debug = debug), NA
+  )
+})
+
+test_that("data expansion to full time scale works", {
+  set.seed(1)
+  mis_rows <- sample(1:nrow(test_data), 10)
+  test_data_mis <- test_data[-mis_rows,]
+  fit <- dynamite(obs(y2 ~ x2, family = gaussian()),
+                  test_data_mis, "group", "time", debug = debug)
+  expected_data <- test_data
+  expected_data[mis_rows,3:ncol(test_data)] <- NA
+  expected_data$x1 <- factor(expected_data$x1)
+  data.table::setDT(expected_data, key = c("group", "time"))
+  expect_equal(fit$data, expected_data, ignore_attr = TRUE)
 })
