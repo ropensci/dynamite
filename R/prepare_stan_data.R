@@ -78,7 +78,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
   )
   sd_x <- apply(X, 3, sd, na.rm = TRUE)
   # needed for default priors, 0.5 is pretty arbitrary
-  sd_x <- setNames(pmax(0.5, sd_x),
+  sd_x <- setNames(pmax(0.5, sd_x, na.rm = TRUE),
                    colnames(model_matrix))
   x_means <- apply(X[1, , , drop = FALSE], 3, mean, na.rm = TRUE)
   # For missing lagged covariates etc
