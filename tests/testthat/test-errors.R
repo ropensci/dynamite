@@ -284,3 +284,53 @@ test_that("negative values for binomial, negbin and poisson fails", {
     "Response variable 'y' is invalid: negative binomial family supports only non-negative integers"
   )
 })
+
+# Predict errors ----------------------------------------------------------
+
+gaussian_example_small <- gaussian_example |> dplyr::filter(.data$time < 6)
+
+test_that("newdata without group variable fails when there are groups", {
+  gaussian_example_nogroup <- gaussian_example_small |> dplyr::select(!.data$id)
+  expect_error(
+    predict(gaussian_example_fit, newdata = gaussian_example_nogroup),
+    "Grouping variable 'id' not found in 'newdata'"
+  )
+})
+
+test_that("newdata with new groups fails when there are groups", {
+  gaussian_example_newgroup <- rbind(
+    gaussian_example_small,
+    data.frame(y = 1, x = 1, z = 0, id = 101, time = 1)
+  )
+  expect_error(
+    predict(gaussian_example_fit, newdata = gaussian_example_newgroup),
+    "Grouping variable 'id' contains new levels not found in the original data"
+  )
+})
+
+test_that("newdata without time variable fails", {
+  gaussian_example_notime <- gaussian_example_small |> dplyr::select(!.data$time)
+  expect_error(
+    predict(gaussian_example_fit, newdata = gaussian_example_notime),
+    "Time index variable 'time' not found in 'newdata'"
+  )
+})
+
+test_that("newdata with new time points fails", {
+  gaussian_example_newtime <- rbind(
+    gaussian_example_small,
+    data.frame(y = 1, x = 1, z = 0, id = 1, time = 31)
+  )
+  expect_error(
+    predict(gaussian_example_fit, newdata = gaussian_example_newtime),
+    "Time index variable 'time' contains time points not found in the original data"
+  )
+})
+
+test_that("newdata with missing response fails", {
+  gaussian_example_misresp <- gaussian_example_small |> dplyr::select(!.data$y)
+  expect_error(
+    predict(gaussian_example_fit, newdata = gaussian_example_misresp),
+    "Response variable 'y' not found in 'newdata'"
+  )
+})

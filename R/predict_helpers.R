@@ -1,26 +1,28 @@
 # TODO documentation
 check_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
                           categories, group_var, time_var) {
-  if (!(group_var %in% names(newdata))) {
-    stop_("Grouping variable '", group_var, "' not found in 'newdata'")
-  }
-  group <- newdata[[group_var]]
-  if (is.factor(group)) {
-    # TODO is this necessary? only length of unique values matters
-    group <- droplevels(group)
-  }
-  group <- unique(group)
-  # TODO doesn't really matter at least at the moment
-  if (!all(group %in% data[[group_var]])) {
-    stop_("Grouping variable '", group_var, "' ",
-          "contains new levels not found in the original data")
+  if (!is.null(group_var)) {
+    if (!(group_var %in% names(newdata))) {
+      stop_("Grouping variable '", group_var, "' not found in 'newdata'")
+    }
+    group <- newdata[[group_var]]
+    if (is.factor(group)) {
+      # TODO is this necessary? only length of unique values matters
+      group <- droplevels(group)
+    }
+    group <- unique(group)
+    # TODO doesn't really matter at least at the moment
+    if (!all(group %in% data[[group_var]])) {
+      stop_("Grouping variable '", group_var, "' ",
+            "contains new levels not found in the original data")
+    }
   }
   if (!(time_var %in% names(newdata))) {
     stop_("Time index variable '", time_var, "' not found in 'newdata'")
   }
   time <- unique(newdata[[time_var]])
   if (!all(time %in% data[[time_var]])) {
-    stop_("Timing variable '", time_var, "' ",
+    stop_("Time index variable '", time_var, "' ",
           "contains time points not found in the original data")
   }
   for (resp in resp_stoch) {
@@ -52,29 +54,32 @@ check_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
 }
 
 clear_nonfixed <- function(newdata, newdata_null, resp_stoch,
-                           group_var, clear_names, n_fixed, n_id, n_time) {
-  non_na <- newdata |>
-    dplyr::group_by(.data[[group_var]]) |>
-    dplyr::summarise(
-      obs = stats::complete.cases(
-        dplyr::across(
-          dplyr::all_of(resp_stoch)
-        )
-      ), .groups = "keep")
-  fixed_obs <- non_na |>
-    dplyr::summarise(
-      first_obs = which(.data$obs)[1],
-      horizon = all(.data$obs[.data$first_obs:(.data$first_obs + n_fixed - 1)])
-    )
-  lacking_obs <- is.na(fixed_obs$horizon) | (fixed_obs$horizon < n_fixed)
-  if (any(lacking_obs)) {
-    groups_lacking <- unique(fixed_obs[lacking_obs, group_var])
-    stop_("Insufficient non-NA observations in groups: ", cs(groups_lacking))
-  }
+                           group_var, clear_names, fixed, n_id, n_time) {
+  # TODO maybe not needed
+  # non_na <- newdata |>
+  #   dplyr::group_by(.data[[group_var]]) |>
+  #   dplyr::summarise(
+  #     obs = stats::complete.cases(
+  #       dplyr::across(
+  #         dplyr::all_of(resp_stoch)
+  #       )
+  #     ), .groups = "keep")
+  # fixed_obs <- non_na |>
+  #   dplyr::summarise(
+  #     first_obs = which(.data$obs)[1],
+  #     horizon = all(.data$obs[.data$first_obs:(.data$first_obs + n_fixed - 1)])
+  #   )
+  # lacking_obs <- is.na(fixed_obs$horizon) | (fixed_obs$horizon < n_fixed)
+  # if (any(lacking_obs)) {
+  #   groups_lacking <- unique(fixed_obs[lacking_obs, group_var])
+  #   stop_("Insufficient non-NA observations in groups: ", cs(groups_lacking))
+  # }
   if (newdata_null) {
-    predict_idx <- unlist(lapply(seq_len(n_id), function(i) {
-      (fixed_obs$first_obs[i] + n_fixed):n_time + (i - 1) * n_time
-    }))
+    # predict_idx <- unlist(lapply(seq_len(n_id), function(i) {
+    #   (fixed_obs$first_obs[i] + n_fixed):n_time + (i - 1) * n_time
+    # }))
+    predict_idx <- rep(seq.int(fixed + 1L, n_time), n_id) +
+      rep(seq.int(0L, n_id - 1L) * n_time, each = n_time - fixed)
     newdata[predict_idx, c(resp_stoch) := NA]
     newdata_names <- names(newdata)
     for (name in newdata_names) {
