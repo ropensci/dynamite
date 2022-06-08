@@ -50,7 +50,6 @@ fitted.dynamitefit <- function(object, newdata = NULL,
   n_time <- length(time)
   n_new <- nrow(newdata)
   n_time <- length(time)
-  n_id <- length(group)
   model_matrix <- full_model.matrix_fast(formulas_stoch, newdata,
                                          object$stan$u_names)
   model_matrix <- model_matrix[rep(seq_len(n_new), n_draws), ]

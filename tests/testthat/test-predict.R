@@ -20,7 +20,6 @@ test_that("fitted works", {
   expect_error(fitted(gaussian_example_fit, n_draws = 2), NA)
 })
 
-# TODO fix fitted for no groups case
-# test_that("no groups fitted works", {
-#   expect_error(fitted(gaussian_example_single_fit, n_draws = 2), NA)
-# })
+test_that("no groups fitted works", {
+  expect_error(fitted(gaussian_example_single_fit, n_draws = 2), NA)
+})
