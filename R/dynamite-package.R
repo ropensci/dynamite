@@ -55,3 +55,7 @@ NULL
 #' \url{https://github.com/santikka/dynamite/blob/main/data-raw/gaussian_example_fit.R}
 #' @format A `dynamitefit` object.
 "gaussian_example_fit"
+#' Model Fit for the Simulated Data of Gaussian Responses for a Single Individual
+#'
+#' @rdname gaussian_example_fit
+"gaussian_example_single_fit"

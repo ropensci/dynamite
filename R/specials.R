@@ -197,6 +197,13 @@ evaluate_specials <- function(formula, data) {
   })
 }
 
+#' Retrieves the corresponding term of a special variable in a formula
+#'
+#' @param special a vector of special variable indices
+#' @param vars "variables" attribute of a terms object
+#' @param term_labels "term.labels" attribute of a terms object
+#'
+#' @noRd
 get_special_term_indices <- function(special, vars, term_labels) {
   out <- integer(length(special))
   for (i in seq_along(special)) {
