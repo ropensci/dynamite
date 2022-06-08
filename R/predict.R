@@ -13,7 +13,7 @@
 predict.dynamitefit <- function(object, newdata = NULL,
                                 mode = c("counterfactual", "forecast"),
                                 type = c("response", "mean", "link"),
-                                n_draws = NULL) {
+                                n_draws = NULL, ...) {
   mode <- match.arg(mode)
   type <- match.arg(type)
   # TODO check args

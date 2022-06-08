@@ -9,7 +9,8 @@
   newdata = NULL,
   mode = c("counterfactual", "forecast"),
   type = c("response", "mean", "link"),
-  n_draws = NULL
+  n_draws = NULL,
+  ...
 )
 }
 \arguments{
