@@ -92,7 +92,7 @@ data_lines_negbin <- quote({
 data_lines_exponential <- quote({
   dtext_def <- eval(data_lines_default)
   dtext <- paste_rows(
-    "matrix[N, T] {y};",
+    "matrix<lower=0>[N, T] {y};",
     .indent = idt(1)
   )
   paste_rows(dtext_def, dtext, .parse = FALSE)
@@ -101,7 +101,7 @@ data_lines_exponential <- quote({
 data_lines_gamma <- quote({
   dtext_def <- eval(data_lines_default)
   dtext <- paste_rows(
-    "matrix[N, T] {y};",
+    "matrix<lower=0>[N, T] {y};",
     .indent = idt(1)
   )
   paste_rows(dtext_def, dtext, .parse = FALSE)
@@ -230,7 +230,7 @@ parameters_lines_default <- quote({
 
   re <- paste_rows(
     "real<lower=0> sigma_nu_{y};",
-    "vector[N] nu_{y};",
+    "vector[N] nu_raw_{y};",
     .parse = FALSE
   )
 
@@ -255,7 +255,7 @@ parameters_lines_categorical <- quote({
 
   re <- paste_rows(
     "real<lower=0> sigma_nu_{y};",
-    "vector[N] nu_{y}[{S - 1}];"
+    "vector[N] nu_raw_{y}[{S - 1}];"
   )
 
   intercept <- ""
@@ -399,8 +399,11 @@ transformed_parameters_lines_default <- quote({
       .parse = FALSE
     )
   }
+
   paste_rows(mtext_varying_noncentered, mtext_varying, mtext_intercept,
-    .indent = idt(c(1, 0, 0))
+             onlyif(has_random_intercept,
+                    "vector[N] nu_{y} = sigma_nu_{y} * nu_raw_{y};"),
+    .indent = idt(c(1, 0, 0, 0))
   )
 })
 
@@ -542,7 +545,7 @@ model_lines_default <- quote({
   if (has_random_intercept) {
     mtext_u <- paste_rows(
       "sigma_nu_{y} ~ {sigma_nu_prior_distr};",
-      "nu_{y} ~ normal(0, sigma_nu_{y});",
+      "nu_raw_{y} ~ std_normal();",
       .indent = idt(c(0, 1)),
       .parse = FALSE
     )
@@ -643,7 +646,7 @@ model_lines_categorical <- quote({
   if (has_random_intercept) {
     mtext_u <- paste_rows(
       "sigma_nu_{y} ~ {sigma_nu_prior_distr};",
-      "to_vector(nu_{y}) ~ normal(0, sigma_nu_{y});",
+      "to_vector(nu_raw_{y}) ~ std_normal();",
       .indent = idt(c(0, 1)),
       .parse = FALSE
     )
