@@ -34,10 +34,13 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
   # A list for getting current prior definitions
   prior_list <- empty_list
 
-  group <- data[[group_var]]
   time <- sort(unique(data[[time_var]]))
   T_full <- length(time)
-  groups <- !is.null(group)
+  group <- NULL
+  groups <- !is.null(group_var)
+  if (groups) {
+    group <- data[[group_var]]
+  }
 
   spline_defs <- attr(dformula, "splines")
   has_splines <- !is.null(spline_defs)
@@ -65,7 +68,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
     sampling_vars$D <- D
     sampling_vars$Bs <- Bs
   }
-  N <- T_full
+  N <- 1L
   if (groups) {
     N <- length(unique(group))
   }
