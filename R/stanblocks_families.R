@@ -828,8 +828,8 @@ model_lines_gaussian <- quote({
 
 model_lines_binomial <- quote({
   mtext_def <- eval(model_lines_default)
-  fixed_term <- onlyif(has_fixed, glue::glue("X[t][{obs}, {{{cs(J_fixed)}}}] * beta_{y}"))
-  varying_term <- onlyif(has_varying, glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"))
+  fixed_term <- ifelse_(has_fixed, glue::glue("X[t][{obs}, {{{cs(J_fixed)}}}] * beta_{y}"), "")
+  varying_term <- ifelse_(has_varying, glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"), "")
   intercept_alpha <- intercept_nu <- ""
   if (has_fixed_intercept) {
     intercept_alpha <- glue::glue("alpha_{y}")
@@ -978,8 +978,8 @@ model_lines_negbin <- quote({
 
 model_lines_exponential <- quote({
   mtext_def <- eval(model_lines_default)
-  fixed_term <- onlyif(has_fixed, glue::glue("X[t][{obs}, {{{cs(J_fixed)}}}] * beta_{y}"))
-  varying_term <- onlyif(has_varying, glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"))
+  fixed_term <- ifelse_(has_fixed, glue::glue("X[t][{obs}, {{{cs(J_fixed)}}}] * beta_{y}"), "")
+  varying_term <- ifelse_(has_varying, glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"), "")
   intercept_alpha <- intercept_nu <- ""
   if (has_fixed_intercept) {
     intercept_alpha <- glue::glue("alpha_{y}")
@@ -1010,8 +1010,8 @@ model_lines_gamma <- quote({
   mtext_def <- eval(model_lines_default)
   d <- phi_prior_distr
   phi_term <- "phi_{y} ~ {d};"
-  fixed_term <- onlyif(has_fixed, glue::glue("X[t][{obs}, {{{cs(J_fixed)}}}] * beta_{y}"))
-  varying_term <- onlyif(has_varying, glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"))
+  fixed_term <- ifelse_(has_fixed, glue::glue("X[t][{obs}, {{{cs(J_fixed)}}}] * beta_{y}"), "")
+  varying_term <- ifelse_(has_varying, glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"), "")
   intercept_alpha <- intercept_nu <- ""
   if (has_fixed_intercept) {
     intercept_alpha <- glue::glue("alpha_{y}")
