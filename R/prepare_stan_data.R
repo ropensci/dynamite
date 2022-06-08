@@ -174,7 +174,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
       }
     }
     family <- dformula[[i]]$family
-    if (is_gaussian(family)) {
+    if (family %in% c("gaussian", "gamma", "exponential") ) {
       sampling_vars[[resp]] <- t(Y_out)
     } else {
       sampling_vars[[resp]] <- Y_out
