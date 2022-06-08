@@ -70,10 +70,10 @@ dynamiteformula_ <- function(formula, family, random_intercept = FALSE) {
     out$response <- deparse1(formula_lhs(formula))
   }
   out$family <- family
-  out$has_random_intercept <- random_intercept
   if (random_intercept && is_categorical(family)) {
     stop_("Random intercepts are not yet supported for the categorical family")
   }
+  out$has_random_intercept <- random_intercept
   out
 }
 

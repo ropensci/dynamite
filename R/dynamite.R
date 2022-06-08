@@ -207,9 +207,12 @@ parse_lags <- function(data, dformula, group_var, time_var) {
           formula = dformula[[j]]$formula,
           x = lags_lhs[lags_increment],
           type = lag_type,
-          varying_idx = dformula[[j]]$varying
+          varying_idx = dformula[[j]]$varying,
+          varying_icpt = dformula[[j]]$has_varying_intercept,
+          fixed_icpt = dformula[[j]]$has_fixed_intercept
         ),
-        family = dformula[[j]]$family
+        family = dformula[[j]]$family,
+        random_intercept = dformula[[j]]$has_random_intercept
       )
     }
     lag_map <- lag_map |>

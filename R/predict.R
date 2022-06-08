@@ -8,34 +8,25 @@
 #' @param type Type of prediction, `"response"` (default), `"mean"`
 #'   or `"link"`.
 #' @param n_draws Number of posterior samples to use, default is all.
-#' @param n_fixed Number of observations per individual that should be assumed
-#'  fixed and will not be predicted (counting from the first non-NA observation)
 #' @param ... Ignored.
 #' @export
 predict.dynamitefit <- function(object, newdata = NULL,
                                 mode = c("counterfactual", "forecast"),
                                 type = c("response", "mean", "link"),
-                                n_draws = NULL, n_fixed = NULL, ...) {
+                                n_draws = NULL, ...) {
   mode <- match.arg(mode)
   type <- match.arg(type)
   # TODO check args
   do.call(paste0("predict.dynamitefit_", mode),
           list(object = object, newdata = newdata,
-               type = type, n_draws = n_draws, n_fixed = n_fixed))
+               type = type, n_draws = n_draws))
 }
 
-predict.dynamitefit_counterfactual <- function(object, newdata, type,
-                                               n_draws, n_fixed) {
+predict.dynamitefit_counterfactual <- function(object, newdata, type, n_draws) {
   if (is.null(n_draws)) {
     n_draws <- ndraws(object)
   }
   fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
-  if (is.null(n_fixed)) {
-    n_fixed <- fixed
-  } else if (n_fixed < fixed) {
-    stop_("The model implies at least ", fixed, " fixed time points, ",
-          "but only ", n_fixed, " were specified")
-  }
   newdata_null <- is.null(newdata)
   if (newdata_null) {
     newdata <- data.table::copy(object$data)
@@ -78,7 +69,7 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type,
   }
   clear_nonfixed(newdata, newdata_null, resp_stoch, group_var,
                  clear_names = c(resp_det, lhs_det, lhs_stoch),
-                 n_fixed, n_id, n_time)
+                 fixed, n_id, n_time)
   newdata <- newdata[rep(seq_len(n_new), n_draws), ]
   newdata[, ("draw") := rep(1:n_draws, each = n_new)]
   n <- newdata[,.N]

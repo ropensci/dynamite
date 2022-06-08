@@ -6,17 +6,6 @@ utils::globalVariables(c(".", ".I", ".N", ".SD", "where"))
 # Data table awareness
 .datatable.aware = TRUE
 
-#' Create a list with names defined by the arguments
-#'
-#' @param ... Any number of `name = value` pairs
-#'
-#' @noRd
-#named_list <- function(...) {
-#  y <- list(...)
-#  names(y) <- as.character(substitute(list(...)))[-1]
-#  y
-#}
-
 # Check which elements of x have a prefix in y
 # which_prefix <- function(x, y) {
 #     ys <- paste0("^(", paste0(y, collapse = "|"), ").*$")
@@ -77,34 +66,48 @@ gsub_formula <- function(pattern, replacement, formula, ...) {
 #' @param x A character vector of terms to add
 #' @param type Either 'fixed' or 'varying' indicating type of terms to add
 #' @param varying_idx indices of left-hand side terms that have
+#' @param varying_icpt does the formula have a varying intercept
 #'   time-varying coefficients
 #'
 #' @noRd
-increment_formula <- function(formula, x, type, varying_idx) {
-  varying_icpt <- 0 %in% varying_idx
-  v_icpt <- ifelse_(varying_icpt, "1 + ", "-1 + ")
-  varying_idx <- varying_idx[varying_idx > 0]
+increment_formula <- function(formula, x, type = c("fixed", "varying"),
+                              varying_idx, varying_icpt, fixed_icpt) {
+  type <- match.arg(type)
+  v_icpt <- ifelse_(varying_icpt, "1", "-1")
   n_varying <- length(varying_idx)
   x_plus <- paste0(x, collapse = " + ")
   ft <- terms(formula)
   tr <- attr(ft, "term.labels")
   v <- paste0(tr[varying_idx], collapse = " + ")
-  if (n_varying > 0 && n_varying < length(tr)) {
-    formula <- drop.terms(ft, dropx = varying_idx, keep.response = TRUE)
+  formula_str <- ""
+  if (n_varying > 0) {
+    if (n_varying < length(tr)) {
+      formula <- drop.terms(ft, dropx = varying_idx, keep.response = TRUE)
+      ft <- terms(formula)
+      tr <- attr(ft, "term.labels")
+    } else {
+      tr <- character(0)
+    }
+  }
+  if (length(tr) > 0) {
+    formula <- reformulate(tr,
+                           response = formula_lhs(formula),
+                           intercept = fixed_icpt)
     formula_str <- deparse1(formula)
   } else {
-    rhs_orig <- deparse1(formula_rhs(formula))
     formula_str <- paste0(
       deparse1(formula_lhs(formula)),
-      " ~ ", ifelse_(varying_icpt, "-1", "1"),
-      ifelse_(nzchar(rhs_orig), " + ", ""),
-      rhs_orig
+      " ~ ",
+      ifelse_(fixed_icpt, "1", "-1")
     )
   }
   if (identical(type, "varying")) {
-    v <- paste(v, x_plus, sep = " + ")
+    v <- paste0(" + ", v, ifelse_(nzchar(v), " + ", ""), x_plus)
     out_str <- glue::glue("{formula_str} + varying(~{v_icpt}{v})")
   } else {
+    if (nzchar(v)) {
+      v <- paste0(" + ", v)
+    }
     if (n_varying > 0 || varying_icpt) {
       out_str <- glue::glue("{formula_str} + {x_plus} + varying(~{v_icpt}{v})")
     } else {
