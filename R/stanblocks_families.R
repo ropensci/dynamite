@@ -92,7 +92,7 @@ data_lines_negbin <- quote({
 data_lines_exponential <- quote({
   dtext_def <- eval(data_lines_default)
   dtext <- paste_rows(
-    "matrix[N, T] {y};",
+    "matrix<lower=0>[N, T] {y};",
     .indent = idt(1)
   )
   paste_rows(dtext_def, dtext, .parse = FALSE)
@@ -101,7 +101,7 @@ data_lines_exponential <- quote({
 data_lines_gamma <- quote({
   dtext_def <- eval(data_lines_default)
   dtext <- paste_rows(
-    "matrix[N, T] {y};",
+    "matrix<lower=0>[N, T] {y};",
     .indent = idt(1)
   )
   paste_rows(dtext_def, dtext, .parse = FALSE)
