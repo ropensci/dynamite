@@ -22,23 +22,14 @@ library(dynamite)
 
 # Introduction
 
-Longitudinal (panel) data consisting of multiple individuals measured over multiple time points is common in various fields such as sociology and econometrics. For example, analysing individual-level life-course data is valuable for assessing how policy reforms and interventions could come to affect the lives of individuals and the stability of their families. 
+The `dynamite` package provides easy-to-use interface for Bayesian inference of complex panel data. The main features distinguishing the package and the underlying methodology from many other approaches are 
 
-Several approaches, e.g., [@arellano1991; @allison2017] have been developed to analyse panel data where the past values of the response variable are used as predictors in the current time point. Classic dynamic panel models consider a single univariate response variable, using the other individuals' measurements as fixed predictors, while cross-lagged panel models allow simultaneous modelling of multiple responses [@allison2017]. The estimation methods for these models are often based on instrumental variables with maximum likelihood or generalized method of moments. Many of these popular models can be estimated with the R [@R] packages plm [@croissant2008] and [@rosseel2012]. 
-
-In traditional dynamic panel data models, the effects of predictors are typically assumed to be time-invariant, although some extensions to time-varying effects have emerged [@hayakawa2019]. On the other hand, there are various methods to model time-varying effects in (generalized) regression models based on state space models [@harvey1982; @durbin2012], with various R implementations [@helske2022; @knaus2021; @brodersen2014]. The state space modelling approaches are highly flexible but often computationally demanding due to assumed latent processes for the regression coefficients and an analytically intractable marginal likelihood. Methods based on the varying coefficients models [@hastie1993; @eubank2004] can be computationally more convenient, especially when the varying coefficients are based on splines. Some of the R implementations of time-varying coefficient models include [@ng2021; @casas2019; @dziak2021].
-
-Despite extensive literature and available software to model various types of dynamic panel data, many of the aforementioned methods/software lack some of the following important features:
-
-
+* Support for both time-varying and time-invariant effects
 * Joint modelling of multiple measurements per individual (multiple channels)
-* Non-gaussian data
-* Realistic predictions/simulations due to the lagged dependent variables
-* Quantification of parameter and predictive uncertainty (bayes)
-* User-friendly and efficient interface
-* Simultaneous time-varying and time-invariant effects
-
-The dynamite package aims to accommodate all of the aforementioned features
+* Support for non-gaussian observations
+* Realistic counterfactual predictions which take account the dynamic structure of the model
+* Clear quantification of parameter and predictive uncertainty due to Bayesian approach
+* User-friendly and efficient R interface with state-of-the-art estimation via [@rstan]
 
 # Model
 
