@@ -61,15 +61,6 @@ extract_nonlags <- function(x) {
   x[!has_lag]
 }
 
-#' Removes lagged terms from a character vector
-#'
-#' @param x \[`character(1)`]\cr A character vector
-#'
-#' @noRd
-remove_lags <- function(x) {
-  gsub("lag\\([^\\)]+\\)", "", x, perl = TRUE)
-}
-
 #' Extract lag definitions
 #'
 #' Extract variables and shifts of lagged terms of the form lag(var, k)

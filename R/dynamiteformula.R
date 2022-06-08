@@ -180,10 +180,14 @@ get_predictors <- function(x) {
 #'
 #' @noRd
 get_terms <- function(x) {
-  sapply(x, function(y) attr(terms(y$formula), "term.labels"))
+  lapply(x, function(y) {
+    if (is_deterministic(y$family)) {
+      character(0)
+    } else {
+      attr(terms(y$formula), "term.labels")
+    }
+  })
 }
-
-#' Get the individual
 
 #' Get all formulas of a dynamiteformula object
 #'
@@ -293,8 +297,8 @@ join_dynamiteformulas <- function(e1, e2) {
     stop_("Both dynamiteformulas contain a splines definition")
   }
   rhs_list <- list(
-    remove_lags(get_predictors(e1)),
-    remove_lags(get_predictors(e2))
+    lapply(get_terms(e1), extract_nonlags),
+    lapply(get_terms(e2), extract_nonlags)
   )
   stoch_list <- list(
     which_stochastic(e1),
@@ -305,16 +309,15 @@ join_dynamiteformulas <- function(e1, e2) {
     resp_b <- resp_list[[3-i]][stoch_list[[3-i]]]
     rhs <- rhs_list[[3-i]][stoch_list[[3-i]]]
     if (length(rhs) > 0) {
-      simul_resp <- lapply(resp_a, grepl, x = rhs, fixed = TRUE)
-      simul_idx <- lapply(simul_resp, which)
-      simul <- lengths(simul_idx) > 0
-      if (any(simul)) {
-        resp_idx <- which(simul)[1]
-        simul_lhs <- resp_a[resp_idx]
-        simul_rhs <- resp_b[simul_idx[[resp_idx]][1]]
-        stop_("Simultaneous regression is not supported, response variable '",
-              simul_lhs, "' appears in the formula of '",
-              simul_rhs, "'")
+      for (j in seq_along(resp_a)) {
+        simul_lhs <- resp_a[j]
+        simul <- sapply(rhs, function(x) simul_lhs %in% x)
+        if (any(simul)) {
+          simul_rhs <- resp_b[which(simul)[1]]
+          stop_("Simultaneous regression is not supported, response variable '",
+                simul_lhs, "' appears in the formula of '",
+                simul_rhs, "'")
+        }
       }
     }
   }
