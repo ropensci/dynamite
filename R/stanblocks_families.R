@@ -229,7 +229,7 @@ transformed_data_lines_gamma <- quote({
 parameters_lines_default <- quote({
 
   re <- paste_rows(
-    "real sigma_nu_{y};",
+    "real<lower=0> sigma_nu_{y};",
     "vector[N] nu_{y};",
     .parse = FALSE
   )
@@ -254,7 +254,7 @@ parameters_lines_default <- quote({
 parameters_lines_categorical <- quote({
 
   re <- paste_rows(
-    "real sigma_nu_{y};",
+    "real<lower=0> sigma_nu_{y};",
     "vector[N] nu_{y}[{S - 1}];"
   )
 
