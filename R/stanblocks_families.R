@@ -910,6 +910,9 @@ model_lines_poisson <- quote({
   } else {
     plus2 <- ""
   }
+  if (!has_offset && nchar(intercept) == 0) {
+    intercept <- "0"
+  }
   likelihood_term <- "{y}[t, {obs}] ~ poisson_log_glm(X[t][{obs}, {{{cs(J)}}}], {intercept}{plus2}{offset_term}, gamma_{y});"
   mtext <- paste_rows(
     "{{",
@@ -950,6 +953,9 @@ model_lines_negbin <- quote({
     plus2 <- "+"
   } else {
     plus2 <- ""
+  }
+  if (!has_offset && nchar(intercept) == 0) {
+    intercept <- "0"
   }
   likelihood_term <- "{y}[t, {obs}] ~ neg_binomial_2_log_glm(X[t][{obs}, {{{cs(J)}}}], {intercept}{plus2}{offset_term}, gamma_{y}, phi_{y});"
   mtext <- paste_rows(
