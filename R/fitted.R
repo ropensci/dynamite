@@ -40,10 +40,14 @@ fitted.dynamitefit <- function(object, newdata = NULL,
   check_newdata(newdata, object$data, type = "response",
                 families_stoch, resp_stoch, categories,
                 group_var, time_var)
-  group <- unique(newdata[[group_var]])
+  group <- NULL
+  n_id <- 1L
+  if (!is.null(group_var)) {
+    group <- unique(newdata[[group_var]])
+    n_id <- length(group)
+  }
   time <- unique(newdata[[time_var]])
   n_time <- length(time)
-  n_id <- length(group)
   n_new <- nrow(newdata)
   n_time <- length(time)
   n_id <- length(group)

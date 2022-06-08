@@ -52,11 +52,15 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type, n_draws) {
   rhs_stoch <- get_predictors(object$dformulas$lag_stoch)
   check_newdata(newdata, object$data, type, families_stoch,
                 resp_stoch, categories, group_var, time_var)
-  group <- unique(newdata[[group_var]])
+  group <- NULL
+  n_id <- 1L
+  if (!is.null(group_var)) {
+    group <- unique(newdata[[group_var]])
+    n_id <- length(group)
+  }
   time <- unique(newdata[[time_var]])
   cl <- get_quoted(object$dformulas$det)
   n_time <- length(time)
-  n_id <- length(group)
   n_new <- nrow(newdata)
   n_det <- length(resp_det)
   n_lag_det <- length(lhs_det)

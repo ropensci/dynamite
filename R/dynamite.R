@@ -119,17 +119,29 @@ parse_data <- function(data, group_var, time_var) {
     stop_("Observations must occur at regular time intervals")
   } else {
     full_time <- seq(time[1], time[length(time)], by = time_scale)
-    time_groups <- data |>
-      dplyr::group_by(.data[[group_var]]) |>
-      dplyr::summarise(has_missing = !identical(.data[[time_var]], full_time))
-    if (any(time_groups$has_missing)) {
-      full_data_template <- expand.grid(
-        time = time,
-        group = unique(data[[group_var]])
-      )
-      names(full_data_template) <- c(time_var, group_var)
-      data <- full_data_template |>
-        dplyr::left_join(data, by = c(group_var, time_var))
+    groups <- !is.null(group_var)
+    if (groups) {
+      time_groups <- data |>
+        dplyr::group_by(.data[[group_var]]) |>
+        dplyr::summarise(has_missing = !identical(.data[[time_var]], full_time))
+      if (any(time_groups$has_missing)) {
+        full_data_template <- expand.grid(
+          time = time,
+          group = unique(data[[group_var]])
+        )
+        names(full_data_template) <- c(time_var, group_var)
+        data <- full_data_template |>
+          dplyr::left_join(data, by = c(group_var, time_var))
+      }
+    } else {
+      if (!identical(data[[time_var]], full_time)) {
+        full_data_template <- expand.grid(
+          time = time
+        )
+        names(full_data_template) <- time_var
+        data <- full_data_template |>
+          dplyr::left_join(data, by = time_var)
+      }
     }
   }
   data <- data.table::as.data.table(data)
@@ -310,8 +322,12 @@ parse_lags <- function(data, dformula, group_var, time_var) {
           if (lag_map$present[j]) {
             lag_k <- lag_map$k[j]
             lag_var <- paste0(data_names[data_idx], "_lag", lag_k)
-            data[, (lag_var) := lapply(.SD, lag_, k = lag_k),
-                 .SDcols = y, by = group_var]
+            if (is.null(group_var)) {
+              data[, (lag_var) := lapply(.SD, lag_, k = lag_k), .SDcols = y]
+            } else {
+              data[, (lag_var) := lapply(.SD, lag_, k = lag_k),
+                   .SDcols = y, by = group_var]
+            }
             for (k in seq_len(n_channels)) {
               dformula[[k]]$formula <- gsub_formula(
                 pattern = lag_map$src[j],
@@ -347,7 +363,10 @@ parse_lags <- function(data, dformula, group_var, time_var) {
 
 evaluate_deterministic <- function(data, dformulas, group_var, time_var) {
   n_time <- length(unique(data[[time_var]]))
-  n_id <- length(unique(data[[group_var]]))
+  n_id <- 1L
+  if (!is.null(group_var)) {
+    n_id <- length(unique(data[[group_var]]))
+  }
   fixed <- as.integer(attr(dformulas$all, "max_lag"))
   idx <- seq.int(1L, n_time * n_id, by = n_time)
   dd <- dformulas$det

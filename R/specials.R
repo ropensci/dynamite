@@ -8,18 +8,32 @@ formula_specials <- function(x) {
   xt <- terms(x, specials = formula_special_funs)
   xt_specials <- attr(xt, "specials")[formula_special_funs]
   xt_variables <- attr(xt, "variables")
-  special_vars <- unlist(xt_specials)
+  xt_terms <- attr(xt, "term.labels")
   for (y in formula_special_funs) {
     if (!is.null(xt_specials[[y]])) {
       out$specials[[y]] <- xt_variables[[xt_specials[[y]] + 1]][[2]]
     }
   }
+  special_vars <- unlist(xt_specials)
+  if (!is.null(xt_specials$offset)) {
+    # offset needs to be considered separately because it never becomes a term
+    special_vars <- special_vars[!names(special_vars) %in% "offset"]
+  }
   if (length(special_vars) > 0) {
-    x <- formula(drop.terms(xt, special_vars - 1, keep.response = TRUE))
+    x <- formula(
+      drop.terms(
+        xt,
+        dropx = get_special_term_indices(special_vars,
+                                         xt_variables,
+                                         xt_terms),
+        keep.response = TRUE
+      )
+    )
   }
   xt <- terms(x, specials = c("fixed", "varying"))
   xt_specials <- attr(xt, "specials")[c("fixed", "varying")]
   xt_variables <- attr(xt, "variables")
+  xt_terms <- attr(xt, "term.labels")
   fixed_icpt <- 0
   special_vars <- unlist(xt_specials)
   fixed_terms <- character(0)
@@ -38,18 +52,31 @@ formula_specials <- function(x) {
     varying_icpt <- attr(terms(varying_form), "intercept")
   }
   if (!is.null(special_vars)) {
-    form_terms <- formula_terms(x)[-(special_vars - 1)]
+    if (length(xt_terms) > length(special_vars)) {
+      x <- formula(
+        drop.terms(
+          xt,
+          dropx = get_special_term_indices(special_vars,
+                                           xt_variables,
+                                           xt_terms),
+          keep.response = TRUE
+        )
+      )
+      form_terms <- formula_terms(x)
+    } else {
+      form_terms <- character(0)
+    }
   } else {
     form_terms <- formula_terms(x)
   }
   fixed_terms <- union(form_terms, fixed_terms)
   fixed_icpt <- attr(xt, "intercept") || fixed_icpt
-  common_terms <- intersect(fixed_terms, varying_terms)
-  if (length(common_terms) > 0) {
-    stop_("Variables '", cs(common_terms), "' ",
-          "specified as both time-constant and time-varying.")
-  }
-  full_terms <- c(fixed_terms, varying_terms)
+  #common_terms <- intersect(fixed_terms, varying_terms)
+  # if (length(common_terms) > 0) {
+  #   stop_("Variables '", cs(common_terms), "' ",
+  #         "specified as both time-constant and time-varying.")
+  # }
+  full_terms <- union(fixed_terms, varying_terms)
   any_icpt <- fixed_icpt || varying_icpt
   if (fixed_icpt && varying_icpt) {
     warning_("Both time-independent and time-varying intercept specified. ",
@@ -168,6 +195,15 @@ evaluate_specials <- function(formula, data) {
       NULL
     }
   })
+}
+
+get_special_term_indices <- function(special, vars, term_labels) {
+  out <- integer(length(special))
+  for (i in seq_along(special)) {
+    v <- deparse1(vars[[special[i] + 1]])
+    out[i] <- which(term_labels == v)
+  }
+  out
 }
 
 formula_special_funs <- c(

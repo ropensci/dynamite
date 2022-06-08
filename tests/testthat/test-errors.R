@@ -119,14 +119,7 @@ test_that("negative lb_tau fails", {
 
 # Formula specials errors -------------------------------------------------
 
-test_that("Specification as both fixed and varying fails", {
-  expect_error(
-    obs(y ~ x + varying(~ x), family = gaussian()),
-    "Variables 'x' specified as both time-constant and time-varying"
-  )
-})
-
-test_that("No intercept or predictors fails", {
+test_that("no intercept or predictors fails", {
   expect_error(
     obs(y ~ -1, family = gaussian()),
     "Invalid formula for response variable 'y', there are no predictors nor an intercept"

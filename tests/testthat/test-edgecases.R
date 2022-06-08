@@ -218,3 +218,21 @@ test_that("data expansion to full time scale works", {
   data.table::setDT(expected_data, key = c("group", "time"))
   expect_equal(fit$data, expected_data, ignore_attr = TRUE)
 })
+
+test_that("no groups data preparation works", {
+  test_data_single <- test_data |>
+    dplyr::filter(.data$group == 1) |>
+    dplyr::select(!.data$group)
+  obs_all <- obs(y1 ~ x1, family = categorical()) +
+    obs(y2 ~ x2, family = gaussian()) +
+    obs(y3 ~ x3 + trials(trials), family = binomial()) +
+    obs(y4 ~ x1, family = bernoulli()) +
+    obs(y5 ~ x2, family = negbin()) +
+    obs(y6 ~ x3 + offset(offset), family = poisson()) +
+    obs(y7 ~ x3, family = exponential()) +
+    obs(y8 ~ x1, family = gamma())
+  expect_error(
+    dynamite(obs_all, test_data_single, time = "time", debug = debug),
+    NA
+  )
+})
