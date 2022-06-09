@@ -6,9 +6,10 @@
 #' @name dynamite-package
 #' @import methods
 #' @import data.table
+#' @importFrom cli cli_abort cli_warn cli_inform
 #' @importFrom rstan sampling
 #' @importFrom posterior as_draws as_draws_df
-#' @importFrom rlang .data
+#' @importFrom rlang .data caller_env
 #' @importFrom stats drop.terms formula model.matrix model.matrix.lm na.exclude
 #' @importFrom stats quantile coef setNames as.formula fitted na.pass terms
 #' @importFrom stats plogis rbinom reformulate rnbinom rnorm rpois runif sd

@@ -78,8 +78,10 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     responses <- unique(x$priors$response)
   } else {
     z <- !(responses %in% unique(x$priors$response))
-    if(any(z)) {
-      stop("Model does not contain response variable(s) ", responses[z], ".")
+    if (any(z)) {
+      stop_(
+        "Model does not contain response variable{?s} {.var {responses[z]}}"
+      )
     }
   }
 
@@ -103,8 +105,9 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       x$stanfit, pars = paste0(type, "_", response), permuted = FALSE)
     n_draws <- prod(dim(draws)[1:2])
     category <- attr(x$stan$responses[[response]], "levels")[-1]
-    if(is.null(category)) category <- NA
-
+    if (is.null(category)) {
+      category <- NA
+    }
     if (type == "nu") {
       n_group <- dim(draws)[3]
       d <- data.frame(
@@ -201,7 +204,9 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         mean = mean(.data$value),
         sd = sd(.data$value),
         # use quantile2 from posterior for simpler (more R-friendly) names
-        dplyr::as_tibble(as.list(posterior::quantile2(.data$value, probs = probs)))) |>
+        dplyr::as_tibble(
+          as.list(posterior::quantile2(.data$value, probs = probs)))
+        ) |>
       dplyr::ungroup()
   }
   out

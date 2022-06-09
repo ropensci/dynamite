@@ -79,8 +79,10 @@ formula_specials <- function(x) {
   full_terms <- union(fixed_terms, varying_terms)
   any_icpt <- fixed_icpt || varying_icpt
   if (fixed_icpt && varying_icpt) {
-    warning_("Both time-independent and time-varying intercept specified. ",
-             "Defaulting to time-varying intercept.")
+    warning_(c(
+      "Both time-independent and time-varying intercept specified:",
+      `i` = "Defaulting to time-varying intercept."
+    ))
     fixed_icpt <- FALSE
   }
   if (length(full_terms) > 0) {
@@ -92,8 +94,10 @@ formula_specials <- function(x) {
   } else {
     y <- as.character(xt_variables[[2]])
     if (!any_icpt) {
-      stop_("Invalid formula for response variable '", y, "', ",
-            "there are no predictors nor an intercept")
+      stop_(c(
+        "Invalid formula for response variable {.var {y}}:",
+        `x` = "There are no predictors nor an intercept term."
+      ))
     }
     x <- as.formula(paste0(y, "~ 1"))
   }
@@ -123,17 +127,21 @@ formula_past <- function(formula) {
   form_resp <- substr(formula_str, start[1], end[1])
   form_def <- substr(formula_str, start[2], end[2])
   if (grepl("past\\(", form_def, perl = TRUE)) {
-    stop_("Past values term must be the last term of the formula")
+    stop_("Past values term must be the last term of the formula.")
   }
   form_past <- substr(formula_str, start[3], end[3])
   form_both <- c(form_def, form_past)
   if (any(grepl("fixed\\(.+\\)", form_both, perl = TRUE))) {
-    warning_("fixed() definitions of a determinstic channel '",
-             deparse1(formula_lhs(formula)), "' will be ignored")
+    warning_(
+      "fixed() definitions of a determinstic channel
+       {.var {deparse1(formula_lhs(formula))}} will be ignored."
+    )
   }
   if (any(grepl("varying\\(.+\\)", form_both, perl = TRUE))) {
-    warning_("varying() definitions of a determinstic channel '",
-             deparse1(formula_lhs(formula)), "' will be ignored")
+    warning_(
+      "varying() definitions of a determinstic channel
+       {.var {deparse1(formula_lhs(formula))}} will be ignored."
+    )
   }
   past_str <- strsplit(form_past, ",")[[1]]
   na_str <- grepl("NA", past_str)
@@ -168,8 +176,10 @@ formula_response <- function(x) {
     list(type = "logical",
          resp = gsub("logical\\((.*)\\)", "\\1", x, perl = TRUE))
   } else {
-    warning_("No type specified for deterministic channel '", x, "', ",
-             "assuming type is 'numeric'")
+    warning_(c(
+      "No type specified for deterministic channel {.var {x}}:",
+      `i` = "Assuming type is {.cls numeric}."
+    ))
     list(type = "numeric", resp = x)
   }
 }

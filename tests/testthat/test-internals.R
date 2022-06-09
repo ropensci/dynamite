@@ -65,7 +65,7 @@ test_that("formula incrementation is correct", {
 
 test_that("internally unsupported families fail", {
   expect_error(
-    dynamitefamily("new family"), "'new family' is not a supported family"
+    dynamitefamily("new family"), '"new family" is not a supported family\\.'
   )
 })
 

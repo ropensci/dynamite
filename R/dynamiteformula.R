@@ -12,25 +12,25 @@
 #' @export
 dynamiteformula <- function(formula, family, random_intercept = FALSE) {
   if (!is.formula(formula)) {
-    stop_("Argument 'formula' is not a formula object")
+    stop_("Argument {.var formula} is not a {.cls formula} object.")
   }
   family <- substitute(family)
   if (is.character(family)) {
     if (is_supported(family[1])) {
       family <- do.call(paste0(family, "_"), args = list())
     } else {
-      stop_("Family '", family[1], "' is not supported")
+      stop_("Family {.val {family[1]}} is not supported.")
     }
   } else {
     family_call <- is_valid_family_call(family)
     if (!family_call$supported) {
-      stop_("Unsupported family call '", family_call$call_str, "()'")
+      stop_("Unsupported family call {.fun {family_call$call_str}}.")
     } else {
       family <- eval(family_call$call)
     }
   }
   if (has_as_is(deparse1(formula))) {
-    stop_("The use of I(.) is not supported by dynamiteformula")
+    stop_("The use of {.code I(.)} is not supported by {.fun dynamiteformula}.")
   }
   x <- dynamiteformula_(formula, family, random_intercept)
   structure(
@@ -72,7 +72,7 @@ dynamiteformula_ <- function(formula, family, random_intercept = FALSE) {
   }
   out$family <- family
   if (random_intercept && is_categorical(family)) {
-    stop_("Random intercepts are not yet supported for the categorical family")
+    stop_("Random intercepts are not yet supported for the categorical family.")
   }
   out$has_random_intercept <- random_intercept
   out
@@ -141,8 +141,8 @@ aux <- function(formula) {
   if (is.dynamiteformula(e1)) {
     out <- add_dynamiteformula(e1, e2)
   } else {
-    stop_("Method '+.dynamiteformula' is not supported for '",
-          class(e1), "' objects")
+    stop_("Method {.fun +.dynamiteformula} is not supported for
+          {.cls {class(e1)}} objects.")
   }
   out
 }
@@ -266,8 +266,8 @@ add_dynamiteformula <- function(e1, e2) {
     out <- set_splines(e1, e2)
   } else {
     stop_(
-      "Unable to add an object of class '", class(e2),
-      "' to an object of class 'dynamiteformula'"
+      "Unable to add an object of class {.cls {class(e2)}}
+      to an object of class {.cls dynamiteformula}."
     )
   }
   out
@@ -288,14 +288,14 @@ join_dynamiteformulas <- function(e1, e2) {
   resp_all <- unlist(resp_list)
   resp_duped <- duplicated(resp_all)
   if (any(resp_duped)) {
-    stop_("Multiple definitions for response variable(s): ",
-          cs(resp_all[resp_duped]))
+    stop_("Multiple definitions for response variable{?s}
+          {.var {resp_all[resp_duped]}}.")
   }
   if (!is.null(attr(e1, "lags")) && !is.null(attr(e2, "lags"))) {
-    stop_("Both dynamiteformulas contain a lags definition")
+    stop_("Both dynamiteformulas contain a lags definition.")
   }
   if (!is.null(attr(e1, "splines")) && !is.null(attr(e2, "splines"))) {
-    stop_("Both dynamiteformulas contain a splines definition")
+    stop_("Both dynamiteformulas contain a splines definition.")
   }
   rhs_list <- list(
     lapply(get_terms(e1), extract_nonlags),
@@ -315,9 +315,11 @@ join_dynamiteformulas <- function(e1, e2) {
         simul <- sapply(rhs, function(x) simul_lhs %in% x)
         if (any(simul)) {
           simul_rhs <- resp_b[which(simul)[1]]
-          stop_("Simultaneous regression is not supported, response variable '",
-                simul_lhs, "' appears in the formula of '",
-                simul_rhs, "'")
+          stop_(c(
+            "Simultaneous regression is not supported:",
+            `x` = "Response variable {.var {simul_lhs}} appears in
+                  the formula of {.var {simul_rhs}}."
+          ))
         }
       }
     }
@@ -335,7 +337,7 @@ join_dynamiteformulas <- function(e1, e2) {
 #' @noRd
 set_lags <- function(e1, e2) {
   if (!is.null(attr(e1, "lags"))) {
-    stop_("Multiple definitions for lags")
+    stop_("Multiple definitions for lags.")
   }
   attr(e1, "lags") <- e2
   e1
@@ -349,7 +351,7 @@ set_lags <- function(e1, e2) {
 #' @noRd
 set_splines <- function(e1, e2) {
   if (!is.null(attr(e1, "splines")) && !attr(e2, "override")) {
-    stop_("Multiple definitions for splines")
+    stop_("Multiple definitions for splines.")
   }
   attr(e1, "splines") <- e2
   e1

@@ -36,22 +36,26 @@ dynamite <- function(dformula, data, group, time,
                      priors = NULL, debug = NULL, ...) {
   # stored for return object
   if (!is.data.frame(data)) {
-    stop_("Argument 'data' is not a data.frame object")
+    stop_("Argument {.var data} is not a {.cls data.frame} object.")
   }
   if (missing(group) || is.null(group)) {
     group <- group_var <- NULL
   } else {
     group_var <- try_(group = group, type = "character")
     if (is.null(data[[group_var]])) {
-      stop_("Grouping variable '", group_var, "' is not present in the data")
+      stop_(
+        "Can't find grouping variable {.var {group_var}} in {.var data}."
+      )
     }
   }
   if (missing(time)) {
-    stop_("Argument 'time' is missing.")
+    stop_("Argument {.var time} is missing.")
   }
   time_var <- try_(time = time, type = "character")
   if (is.null(data[[time_var]])) {
-    stop_("Time index variable '", time_var, "' is not present in the data")
+    stop_(
+      "Can't find time index variable {.var {time_var}} in {.var data}."
+    )
   }
   original_dformula <- dformula
   data <- parse_data(data, group_var, time_var)
@@ -67,7 +71,7 @@ dynamite <- function(dformula, data, group, time,
   model <- if (!is.null(debug) && isTRUE(debug$no_compile)) {
     NULL
   } else {
-    message("Compiling Stan model")
+    rlang::inform("Compiling Stan model.")
     rstan::stan_model(model_code = model_code)
   }
   stanfit <- if (isTRUE(debug$no_compile) || isTRUE(debug$no_sampling)) {
@@ -109,14 +113,14 @@ parse_data <- function(data, group_var, time_var) {
     dplyr::mutate(dplyr::across(where(is.character), as.factor))
   time <- sort(unique(data[[time_var]]))
   if (length(time) == 1) {
-    stop_("There must be at least two time points in the data")
+    stop_("There must be at least two time points in the data.")
   }
   full_time <- NULL
   # TODO convert Dates etc. to integers before this
   time_ivals <- diff(time)
   time_scale <- min(diff(time))
   if (any(time_ivals[!is.na(time_ivals)] %% time_scale > 0)) {
-    stop_("Observations must occur at regular time intervals")
+    stop_("Observations must occur at regular time intervals.")
   } else {
     full_time <- seq(time[1], time[length(time)], by = time_scale)
     groups <- !is.null(group_var)
@@ -171,8 +175,9 @@ parse_lags <- function(data, dformula, group_var, time_var) {
   non_lags <- extract_nonlags(terms_stoch)
   mis_vars <- which(!non_lags %in% c(resp_all, data_names))
   if (length(mis_vars) > 0) {
-    stop_("Variables '", cs(non_lags[mis_vars]), "' used in the formula ",
-          "are not present in the data")
+    stop_(
+      "Can't find variable{?s} {.var {non_lags[mis_vars]}} in {.var data}."
+    )
   }
   lag_map <- extract_lags(predictors)
   lag_ext <- attr(dformula, "lags")
@@ -213,7 +218,7 @@ parse_lags <- function(data, dformula, group_var, time_var) {
         )
       }
     }
-    for (j in seq_len(n_channels)) {
+    for (j in channels_stoch) {
       dformula[[j]] <- dynamiteformula_(
         formula = increment_formula(
           formula = dformula[[j]]$formula,
@@ -232,9 +237,10 @@ parse_lags <- function(data, dformula, group_var, time_var) {
   }
   mis_vars <- which(!lag_map$var %in% c(resp_all, data_names))
   if (length(mis_vars) > 0) {
-    stop_("Unable to construct lagged values of '",
-          cs(lag_map$var[mis_vars]), "', ",
-          "no such variables are present in the data")
+    stop_(c(
+      "Unable to construct lagged values of {.var {cs(lag_map$var[mis_vars])}}:",
+      `x` = "Can't find such variables in {.var data}."
+    ))
   }
   n_lag <- lag_map |> dplyr::filter(.data$var %in% resp_all) |> nrow()
   map_channel <- list()
@@ -249,7 +255,7 @@ parse_lags <- function(data, dformula, group_var, time_var) {
   }
   if (n_lag > 0) {
     if (any(lag_map$k <= 0)) {
-      stop_("Only positive shift values are allowed in lag()")
+      stop_("Shift values must be positive in {.fun lag}.")
     }
     map_channel <- vector(mode = "list", length = n_lag)
     map_stoch <- logical(n_lag)
@@ -271,9 +277,11 @@ parse_lags <- function(data, dformula, group_var, time_var) {
           y_past_len <- length(y_past)
           y_self_lags <- max(lag_map$k[lag_idx])
           if (y_past_len < y_self_lags) {
-            stop_("Deterministic channel '", y, "' requires ", y_self_lags, " ",
-                  "initial values, but only ", y_past_len, " values ",
-                  "have been specified")
+            stop_(c(
+              "Deterministic channel {.var {y}} requires {y_self_lags} initial
+               value{?s}:",
+              `x` = "You've supplied {cli::no(y_past_len)} initial values."
+            ))
           }
           y_stoch <- FALSE
           y_past_idx <- 0
@@ -391,9 +399,10 @@ evaluate_deterministic <- function(data, dformulas, group_var, time_var) {
     if (n_det > 0) {
       res <- try(assign_deterministic(data, cl, idx), silent = TRUE)
       if ("try-error" %in% class(res)) {
-        stop_("Unable to evaluate the definitions of deterministic channels.\n",
-              "Defintions possibly contain incorrect or missing variables:\n",
-              res)
+        stop_(c(
+          "Unable to evaluate definitions of deterministic channels:",
+          `i` = "Some variables are possibly missing or incorrect."
+        ))
       }
     }
     for (i in seq.int(fixed + 2L, n_time)) {

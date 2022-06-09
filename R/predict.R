@@ -133,5 +133,5 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type, n_draws) {
 }
 
 predict.dynamitefit_forecast <- function(object, newdata, type, n_draws) {
-  stop_("Forecasting is not yet supported")
+  stop_("Forecasting is not yet supported.")
 }

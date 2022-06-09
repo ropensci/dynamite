@@ -207,20 +207,33 @@ has_as_is <- function(x) {
 
 #' Stop function execution without displaying the call
 #'
-#' @param ... See [stop()]
+#' @param message See [cli::cli_abort()]
+#' @param ... See [cli::cli_abort()]
+#' @param call See See [cli::cli_abort()]
 #'
 #' @noRd
-stop_ <- function(...) {
-  stop(..., call. = FALSE)
+stop_ <- function(message, ..., call = rlang::caller_env()) {
+  cli::cli_abort(message, ..., .envir = parent.frame(), call = call)
 }
 
-#' Generate a warning message without displaying the call
+#' Generate a warning message
 #'
-#' @param ... See [warning()]
+#' @param message See [cli::cli_abort()]
+#' @param ... See [cli::cli_abort()]
 #'
 #' @noRd
-warning_ <- function(...) {
-  warning(..., call. = FALSE)
+warning_ <- function(message, ...) {
+  cli::cli_warn(message, ..., .envir = parent.frame())
+}
+
+#' Generate an informative message
+#'
+#' @param message See [cli::cli_abort()]
+#' @param ... See [cli::cli_abort()]
+#'
+#' @noRd
+message_ <- function(message, ...) {
+  cli::cli_inform(message, ..., .envir = parent.frame())
 }
 
 #' Try to coerce one argument to specific type
@@ -231,7 +244,7 @@ warning_ <- function(...) {
 #' @noRd
 try_ <- function(..., type) {
   if (missing(type)) {
-    stop_("Argument 'type' must be given")
+    stop_("Argument {.var type} must be given.")
   }
   dots <- list(...)
   arg_val <- dots[[1]]
@@ -242,7 +255,7 @@ try_ <- function(..., type) {
   as_type <- get(paste0("as.", type))
   out <- try(as_type(arg_val), silent = TRUE)
   if (identical(class(out), "try-error")) {
-    stop_("Unable to coerce argument ", arg_name, " to '", type, "'")
+    stop_("Unable to coerce argument {.var {arg_name}} to {.cls {type}}.")
   }
   out
 }

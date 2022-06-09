@@ -3,27 +3,27 @@
 test_that("multiple intercept warns", {
   expect_warning(
     obs(y ~ 1 + varying(~1), family = gaussian()),
-    "Both time-independent and time-varying intercept specified\\. Defaulting to time-varying intercept\\."
+    "Both time-independent and time-varying intercept specified:\ni Defaulting to time-varying intercept\\."
   )
 })
 
 test_that("deterministic fixed warns", {
   expect_warning(
     aux(numeric(y) ~ fixed(~ x)),
-    "fixed\\(\\) definitions of a determinstic channel 'numeric\\(y\\)' will be ignored"
+    "fixed\\(\\) definitions of a determinstic channel `numeric\\(y\\)` will be ignored\\."
   )
 })
 
 test_that("deterministic varying warns", {
   expect_warning(
     aux(numeric(y) ~ varying(~ x)),
-    "varying\\(\\) definitions of a determinstic channel 'numeric\\(y\\)' will be ignored"
+    "varying\\(\\) definitions of a determinstic channel `numeric\\(y\\)` will be ignored\\."
   )
 })
 
 test_that("untyped deterministic warns", {
   expect_warning(
     aux(y ~ 1 + x),
-    "No type specified for deterministic channel 'y', assuming type is 'numeric'"
+    "No type specified for deterministic channel `y`:\ni Assuming type is <numeric>\\."
   )
 })

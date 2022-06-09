@@ -8,7 +8,7 @@
 dynamitefamily <- function(name) {
   name <- tolower(as.character(name)[1])
   if (!is_supported(name)) {
-    stop_("'", name, "' is not a supported family")
+    stop_("{.val {name}} is not a supported family.")
   }
   # do something
   structure(
