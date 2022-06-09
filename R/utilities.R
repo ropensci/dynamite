@@ -44,7 +44,7 @@ formula_rhs <- function(x) {
 #'
 #' @noRd
 formula_terms <- function(x) {
-  attr(terms(x), "term.labels")
+  attr(terms(x, keep.order = TRUE), "term.labels")
 }
 
 #' Replace terms in a formula based on a regular expression

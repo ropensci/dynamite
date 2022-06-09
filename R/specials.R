@@ -5,7 +5,7 @@
 #' @noRd
 formula_specials <- function(x) {
   out <- list(formula = NULL, specials = NULL, coefs = NULL)
-  xt <- terms(x, specials = formula_special_funs)
+  xt <- terms(x, specials = formula_special_funs, keep.order = TRUE)
   xt_specials <- attr(xt, "specials")[formula_special_funs]
   xt_variables <- attr(xt, "variables")
   xt_terms <- attr(xt, "term.labels")
@@ -30,7 +30,7 @@ formula_specials <- function(x) {
       )
     )
   }
-  xt <- terms(x, specials = c("fixed", "varying"))
+  xt <- terms(x, specials = c("fixed", "varying"), keep.order = TRUE)
   xt_specials <- attr(xt, "specials")[c("fixed", "varying")]
   xt_variables <- attr(xt, "variables")
   xt_terms <- attr(xt, "term.labels")
