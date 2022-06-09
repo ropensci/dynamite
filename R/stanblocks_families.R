@@ -802,7 +802,8 @@ model_lines_gaussian <- quote({
     intercept_alpha <- glue::glue("alpha_{y}[t]")
   }
   if (has_random_intercept) {
-    intercept_nu <- glue::glue("nu_{y}[{obs}]")
+    intercept_nu <- ifelse(nzchar(obs), glue::glue("nu_{y}[{obs}]"),
+                           glue::glue("nu_{y}"))
   }
   plus <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
   if (nzchar(intercept_alpha) || has_random_intercept) {
@@ -838,7 +839,8 @@ model_lines_binomial <- quote({
     intercept_alpha <- glue::glue("alpha_{y}[t]")
   }
   if (has_random_intercept) {
-    intercept_nu <- glue::glue("nu_{y}[{obs}]")
+    intercept_nu <- ifelse(nzchar(obs), glue::glue("nu_{y}[{obs}]"),
+                           glue::glue("nu_{y}"))
   }
   plus_i <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
   plus_c <- ifelse_(has_fixed && has_varying, " + ", "")
@@ -866,7 +868,8 @@ model_lines_bernoulli <- quote({
     intercept_alpha <- glue::glue("alpha_{y}[t]")
   }
   if (has_random_intercept) {
-    intercept_nu <- glue::glue("nu_{y}[{obs}]")
+    intercept_nu <- ifelse(nzchar(obs), glue::glue("nu_{y}[{obs}]"),
+                           glue::glue("nu_{y}"))
   }
   plus <- ifelse(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
   if (nzchar(intercept_alpha) || has_random_intercept) {
@@ -900,7 +903,8 @@ model_lines_poisson <- quote({
     intercept_alpha <- glue::glue("alpha_{y}[t]")
   }
   if (has_random_intercept) {
-    intercept_nu <- glue::glue("nu_{y}[{obs}]")
+    intercept_nu <- ifelse(nzchar(obs), glue::glue("nu_{y}[{obs}]"),
+                           glue::glue("nu_{y}"))
   }
   plus1 <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
   if (nzchar(intercept_alpha) || has_random_intercept) {
@@ -944,7 +948,8 @@ model_lines_negbin <- quote({
     intercept_alpha <- glue::glue("alpha_{y}[t]")
   }
   if (has_random_intercept) {
-    intercept_nu <- glue::glue("nu_{y}[{obs}]")
+    intercept_nu <- ifelse(nzchar(obs), glue::glue("nu_{y}[{obs}]"),
+                           glue::glue("nu_{y}"))
   }
   plus1 <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
   if (nzchar(intercept_alpha) || has_random_intercept) {
@@ -988,7 +993,8 @@ model_lines_exponential <- quote({
     intercept_alpha <- glue::glue("alpha_{y}[t]")
   }
   if (has_random_intercept) {
-    intercept_nu <- glue::glue("nu_{y}[{obs}]")
+    intercept_nu <- ifelse(nzchar(obs), glue::glue("nu_{y}[{obs}]"),
+                           glue::glue("nu_{y}"))
   }
   plus_i <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
   plus_c <- ifelse_(has_fixed && has_varying, " + ", "")
@@ -1020,7 +1026,8 @@ model_lines_gamma <- quote({
     intercept_alpha <- glue::glue("alpha_{y}[t]")
   }
   if (has_random_intercept) {
-    intercept_nu <- glue::glue("nu_{y}[{obs}]")
+    intercept_nu <- ifelse(nzchar(obs), glue::glue("nu_{y}[{obs}]"),
+                           glue::glue("nu_{y}"))
   }
   plus_i <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
   plus_c <- ifelse_(has_fixed && has_varying, " + ", "")
