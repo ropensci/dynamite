@@ -3,7 +3,7 @@ check_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
                           categories, group_var, time_var) {
   if (!is.null(group_var)) {
     if (!(group_var %in% names(newdata))) {
-      stop_("Grouping variable '", group_var, "' not found in 'newdata'")
+      stop_("Can't find grouping variable {.var {group_var}} in {.var newdata}.")
     }
     group <- newdata[[group_var]]
     if (is.factor(group)) {
@@ -13,21 +13,29 @@ check_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
     group <- unique(group)
     # TODO doesn't really matter at least at the moment
     if (!all(group %in% data[[group_var]])) {
-      stop_("Grouping variable '", group_var, "' ",
-            "contains new levels not found in the original data")
+      new_levels <- unique(group[!group %in% data[[group_var]]])
+      stop_(c(
+        "Grouping variable {.var {group_var}} contains unknown levels:",
+        `x` = "Level{?s} {.val {as.character(new_levels)}}
+               {?is/are} not present in the original data."
+      ))
     }
   }
   if (!(time_var %in% names(newdata))) {
-    stop_("Time index variable '", time_var, "' not found in 'newdata'")
+    stop_("Can't find time index variable {.var {time_var}} in {.var newdata}.")
   }
   time <- unique(newdata[[time_var]])
   if (!all(time %in% data[[time_var]])) {
-    stop_("Time index variable '", time_var, "' ",
-          "contains time points not found in the original data")
+    new_times <- unique(time[!time %in% data[[time_var]]])
+    stop_(c(
+      "Time index variable {.var {time_var}} contains unknown time points:",
+      `x` = "Time point{?s} {.val {as.character(new_times)}}
+             {?is/are} not present in the original data."
+    ))
   }
   for (resp in resp_stoch) {
     if (is.null(newdata[[resp]])) {
-      stop_("Response variable '", resp, "' not found in 'newdata'")
+      stop_("Can't find response variable {.var {resp}} in {.var newdata}.")
     }
   }
   # create separate column for each level of categorical variables

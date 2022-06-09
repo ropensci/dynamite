@@ -1,3 +1,5 @@
+# Formula tests -----------------------------------------------------------
+
 test_that("formula parts are correct", {
   f1 <- y ~ x + z * h
   f2 <- ~ x + z * h
@@ -57,4 +59,19 @@ test_that("formula incrementation is correct", {
     expect_equal(form_list[[1]], out_list[[i]][[1]], ignore_attr = TRUE)
     expect_equal(form_list[[2]], out_list[[i]][[2]], ignore_attr = TRUE)
   }
+})
+
+# Family tests ------------------------------------------------------------
+
+test_that("internally unsupported families fail", {
+  expect_error(
+    dynamitefamily("new family"), '"new family" is not a supported family\\.'
+  )
+})
+
+test_that("is.dynamitefamily works", {
+  a <- dynamitefamily("gaussian")
+  b <- stats::gaussian()
+  expect_identical(is.dynamitefamily(a), TRUE)
+  expect_identical(is.dynamitefamily(b), FALSE)
 })

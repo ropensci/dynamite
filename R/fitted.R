@@ -7,20 +7,13 @@
 #' @param object An object of class \code{dynamitefit}.
 #' @param newdata TODO
 #' @param n_draws TODO
-#' @param n_fixed TODO
 #' @param ... Ignored.
 fitted.dynamitefit <- function(object, newdata = NULL,
-                               n_draws = NULL, n_fixed = NULL, ...) {
+                               n_draws = NULL,  ...) {
   if (is.null(n_draws)) {
     n_draws <- ndraws(object)
   }
   fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
-  if (is.null(n_fixed)) {
-    n_fixed <- fixed
-  } else if (n_fixed < fixed) {
-    stop_("The model implies at least ", fixed, " fixed time points, ",
-          "but only ", n_fixed, " were specified")
-  }
   if (is.null(newdata)) {
     newdata <- data.table::copy(object$data)
   } else {

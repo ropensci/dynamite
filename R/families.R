@@ -1,26 +1,14 @@
-# TODO implement families
-
+#' Construct a dynamitefamily object
+#'
 #' Family Functions for \pkg{dynamite} Models
 #'
 #' @param name \[`character(1)`]\cr Name of the family.
 #'
-#' @export
-dynamitefamily <- function(name) {
-  # A wrapper to allow both:
-  #    gaussian(...) and dynamitefamily("gaussian", ...)
-  dynamitefamily_(name)
-}
-
-#' Construct a dynamitefamily object
-#'
-#' Checks that a given family is supported by the package
-#'
-#' @param name \[`character(1)`]\cr Name of the family.
 #' @noRd
-dynamitefamily_ <- function(name) {
+dynamitefamily <- function(name) {
   name <- tolower(as.character(name)[1])
   if (!is_supported(name)) {
-    stop_(name, " is not a supported family")
+    stop_("{.val {name}} is not a supported family.")
   }
   # do something
   structure(
@@ -93,7 +81,7 @@ for (family in supported_families) {
   assign(paste0(family, "_"), (function(y) {
     force(y)
     function() {
-      dynamitefamily_(y)
+      dynamitefamily(y)
     }
   })(family))
 }

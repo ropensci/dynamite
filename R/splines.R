@@ -43,7 +43,7 @@ splines <- function(shrinkage = FALSE, override = FALSE,
   lb_tau <- try_(lb_tau, type = "numeric")[1]
   # TODO: better error message
   if (lb_tau < 0) {
-    stop_("Lower bound for 'tau' should be non-negative")
+    stop_("Lower bound for `tau` should be non-negative.")
   }
   structure(
     list(

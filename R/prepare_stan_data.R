@@ -61,8 +61,9 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
       noncentered <- rep(noncentered, length = n_channels)
     } else {
       warning_(
-        "Length of the 'noncentered' argument of 'splines' function ",
-        "is not equal to 1 or the number of the channels. Recycling."
+        "Length of the {.var noncentered'} argument of {.fun splines} function
+        is not equal to 1 or the number of the channels.",
+        `i` = "Recycling."
       )
     }
     sampling_vars$D <- D
@@ -147,15 +148,15 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
     channel$shrinkage <- shrinkage
     if (channel$has_varying || channel$has_varying_intercept) {
       if (!has_splines) {
-        stop_("Model for response variable ", resp, " ",
-              "contains time-varying definitions ",
-              "but splines have not been defined.")
+        stop_("Model for response variable {.var {resp}}
+              contains time-varying definitions
+              but splines have not been defined.")
         # TODO switch back to warning after defining default splines?
         #warn_nosplines <- TRUE
       }
       if (warn_nosplines) {
-        channel$has_varying <- FALSE
-        channel$noncentered <- FALSE
+        # channel$has_varying <- FALSE
+        # channel$noncentered <- FALSE
       } else {
         channel$noncentered <- noncentered[i]
       }
@@ -343,13 +344,14 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
 #' @noRd
 prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
                                         priors) {
-
+  if (!("factor" %in% resp_class)) {
+    stop_(c(
+      "Response variable {.var {y}} is invalid:",
+      `x` = "Categorical family supports only <factor> variables."
+    ))
+  }
   S_y <- length(unique(na.exclude(as.vector(Y))))
   channel$S <- S_y
-  if (!("factor" %in% resp_class)) {
-    stop_("Response variable ", y, " is invalid: ",
-          "categorical family supports only factors")
-  }
   if (is.null(priors)) {
     # remove the first level which acts as reference
     resp_levels <- attr(resp_class, "levels")[-1]
@@ -457,8 +459,7 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
 #' @noRd
 prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
-    stop_("Response variable '", y, "' is invalid: ",
-          "gaussian family is not supported for factors")
+    abort_factor(y, "Gaussian", call = rlang::caller_env())
   }
   if (ncol(Y) > 1) {
     sd_y <- mean(apply(Y, 1, sd, na.rm = TRUE))
@@ -505,13 +506,11 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
 #' @noRd
 prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
-    stop_("Response variable '", y, "' is invalid: ",
-          "binomial family is not supported for factors")
+    abort_factor(y, "Binomial", call = rlang::caller_env())
   }
   Y_obs <- Y[!is.na(Y)]
   if (any(Y_obs < 0) || any(Y_obs != as.integer(Y_obs))) {
-    stop_("Response variable '", y, "' is invalid: ",
-          "binomial family supports only non-negative integers")
+    abort_negative(y, "Binomial", type = "integers", call = rlang::caller_env())
   }
   # TODO could be adjusted
   sd_y <- 0.5
@@ -527,15 +526,15 @@ prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
 prepare_channel_bernoulli <- function(y, Y, channel, sd_x, resp_class,
                                       priors) {
   if ("factor" %in% resp_class) {
-    stop_("Response variable '", y, "' is invalid: ",
-          "bernoulli family is not supported for factors")
+    abort_factor(y, "Bernoulli", call = rlang::caller_env())
   }
   Y_obs <- Y[!is.na(Y)]
   if (!all(Y_obs %in% 0:1)) {
-    stop_("Response variable '", y, "' is invalid: ",
-          "bernoulli family supports only 0/1 integers")
+    stop_(c(
+      "Response variable {.var {y}} is invalid:",
+      `x` = "Bernoulli family supports only 0/1 integers."
+    ))
   }
-
   prepare_channel_binomial(y, Y, channel, sd_x, resp_class, priors)
 }
 
@@ -543,13 +542,11 @@ prepare_channel_bernoulli <- function(y, Y, channel, sd_x, resp_class,
 #' @noRd
 prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
-    stop_("Response variable '", y, "' is invalid: ",
-          "Poisson family is not supported for factors")
+    abort_factor(y, "Poisson", call = rlang::caller_env())
   }
   Y_obs <- Y[!is.na(Y)]
   if (any(Y_obs < 0) || any(Y_obs != as.integer(Y_obs))) {
-    stop_("Response variable '", y, "' is invalid: ",
-          "Poisson family supports only non-negative integers")
+    abort_negative(y, "Poisson", type = "integers", call = rlang::caller_env())
   }
   # TODO could be adjusted
   sd_y <- 1
@@ -571,13 +568,12 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
 #' @noRd
 prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
-    stop_("Response variable '", y, "' is invalid: ",
-          "negative binomial family is not supported for factors")
+    abort_factor(y, "Negative binomial", call = rlang::caller_env())
   }
   Y_obs <- Y[!is.na(Y)]
   if (any(Y_obs < 0) || any(Y_obs != as.integer(Y_obs))) {
-    stop_("Response variable '", y, "' is invalid: ",
-          "negative binomial family supports only non-negative integers")
+    abort_negative(y, "Negative binomial", type = "integers",
+                   call = rlang::caller_env())
   }
   # TODO could be adjusted
   sd_y <- 1
@@ -618,14 +614,13 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
 #' @noRd
 prepare_channel_exponential <- function(y, Y, channel, sd_x, resp_class,
                                         priors) {
+  if ("factor" %in% resp_class) {
+    abort_factor(y, "Exponential", call = rlang::caller_env())
+  }
   Y_obs <- Y[!is.na(Y)]
   if (any(Y_obs <= 0)) {
-    stop_("Response variable ", y, " is invalid: ",
-          "exponential family supports only positive values.")
-  }
-  if ("factor" %in% resp_class) {
-    stop_("Response variable ", y, " is invalid: ",
-          "exponential family is not supported for factors.")
+    abort_negative(y, "Exponential", type = "values",
+                   call = rlang::caller_env())
   }
   # TODO could be adjusted
   sd_y <- 1
@@ -647,14 +642,12 @@ prepare_channel_exponential <- function(y, Y, channel, sd_x, resp_class,
 #' @describeIn prepare_channel_default Prepare a gamma channel
 #' @noRd
 prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
+  if ("factor" %in% resp_class) {
+    abort_factor(y, "Gamma", call = rlang::caller_env())
+  }
   Y_obs <- Y[!is.na(Y)]
   if (any(Y_obs <= 0)) {
-    stop_("Response variable ", y, " is invalid: ",
-          "gamma family supports only positive values.")
-  }
-  if ("factor" %in% resp_class) {
-    stop_("Response variable ", y, " is invalid: ",
-          "gamma family is not supported for factors.")
+    abort_negative(y, "Gamma", type = "values", call = rlang::caller_env())
   }
   # TODO could be adjusted
   sd_y <- 1
@@ -697,9 +690,39 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
 #'
 #' @noRd
 warn_nonfinite <- function(y) {
-  warning_(
-    "Found nonfinite prior standard deviation when using default priors ",
-    "for regression coeffients for response '", y, "' ",
-    "indicating constant covariate: Switching to N(0, 0.01) prior."
-  )
+  warning_(c(
+    "Found nonfinite prior standard deviation when using default priors
+    for regression coeffients for response {.var {y}}
+    indicating constant covariate:",
+    `i` = "Switching to N(0, 0.01) prior."
+  ))
+}
+
+#' Raise error if factor type is not supported by a family
+#'
+#' @param y Response variable the error ir related to
+#' @param family Family as character vector
+#' @param call call to be passed to [stop_()]
+#'
+#' @noRd
+abort_factor <- function(y, family, call) {
+  stop_(c(
+    "Response variable {.var {y}} is invalid:",
+    `x` = "{family} family is not supported for {.cls factor} variables."
+  ), call = call)
+}
+
+#' Raise error if negative values are not supported by a family
+#'
+#' @param y Response variable the error ir related to
+#' @param family Family as character vector
+#' @param type Value type of the family
+#' @param call call to be passed to [stop_()]
+#'
+#' @noRd
+abort_negative <- function(y, family, type, call) {
+  stop_(c(
+    "Response variable {.var {y}} is invalid:",
+    `x` = "{family} family supports only non-negative {type}."
+  ), call = call)
 }
