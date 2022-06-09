@@ -1,6 +1,7 @@
 #' Model formula for \pkg{dynamite}
 #'
 #' TODO description and details of all features
+#' TODO document families here as well
 #'
 #' @param formula \[`formula`]\cr An R formula describing the model.
 #' @param family \[`call`, `character(1)`]\cr
