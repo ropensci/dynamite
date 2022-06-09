@@ -145,7 +145,9 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
       }
       e$beta <- samples[[beta]][idx_par, , drop = FALSE]
       e$delta <- samples[[delta]][idx_par, , , drop = FALSE]
-      e$nu <- samples[[nu]][idx_par]
+      if (model_vars[[j]]$has_random_intercept) {
+        e$nu <- c(t(samples[[nu]][1L:n_draws, ]))
+      }
     }
     e$call <- generate_sim_call(resp, resp_levels, resp_family, eval_type,
                                 model_vars[[j]]$has_fixed,
