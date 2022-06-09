@@ -97,10 +97,11 @@ formula_specials <- function(x) {
     }
     x <- as.formula(paste0(y, "~ 1"))
   }
+  xt <- formula_terms(x)
   out$formula <- x
-  out$fixed <- which(full_terms %in% fixed_terms)
+  out$fixed <- which(xt %in% fixed_terms)
   out$has_fixed_intercept <- as.logical(fixed_icpt)
-  out$varying <- which(full_terms %in% varying_terms)
+  out$varying <- which(xt %in% varying_terms)
   out$has_varying_intercept <- as.logical(varying_icpt)
   out
 }
