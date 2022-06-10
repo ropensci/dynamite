@@ -242,7 +242,8 @@ parse_lags <- function(data, dformula, group_var, time_var) {
       `x` = "Can't find such variables in {.var data}."
     ))
   }
-  n_lag <- lag_map |> dplyr::filter(.data$var %in% resp_all) |> nrow()
+  n_lag_map <- lag_map |> dplyr::filter(.data$var %in% resp_all) |> nrow()
+  n_lag <- lag_map |> nrow()
   map_channel <- list()
   map_rank <- integer(0)
   map_stoch <- logical(0)
@@ -257,9 +258,9 @@ parse_lags <- function(data, dformula, group_var, time_var) {
     if (any(lag_map$k <= 0)) {
       stop_("Shift values must be positive in {.fun lag}.")
     }
-    map_channel <- vector(mode = "list", length = n_lag)
-    map_stoch <- logical(n_lag)
-    map_rank <- integer(n_lag)
+    map_channel <- vector(mode = "list", length = n_lag_map)
+    map_stoch <- logical(n_lag_map)
+    map_rank <- integer(n_lag_map)
     lag_resp <- unique(lag_map$var)
     idx <- 0
     for (y in lag_resp) {
