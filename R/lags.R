@@ -66,7 +66,7 @@ extract_nonlags <- function(x) {
 #' Extract variables and shifts of lagged terms of the form lag(var, k)
 #' and return them as a data frame for post processing.
 #'
-#' @param x \[`character(1)`]\cr A character vector of length one.
+#' @param x \[`character()`]\cr a character vector
 #'
 #' @noRd
 extract_lags <- function(x) {
@@ -103,5 +103,27 @@ extract_lags <- function(x) {
       k = integer(0),
       present = logical(0)
     )
+  }
+}
+
+#' Extract lag shift values of a specific variable from a character string
+#'
+#' @param x \[`character(1)`]\cr a character vector of length one
+#' @param self \[`character(1)`]\cr variable whose lags to look for
+#'
+#' @noRd
+extract_self_lags <- function(x, self) {
+  lag_regex <-  gregexec(
+    pattern = paste0(
+      "lag\\(", self, ",\\s*(?<k>[0-9]+)\\s*\\)"
+    ),
+    text = x,
+    perl = TRUE
+  )
+  lag_matches <- regmatches(x, lag_regex)[[1]]
+  if (length(lag_matches) > 0) {
+    as.integer(lag_matches["k", ])
+  } else {
+    0
   }
 }
