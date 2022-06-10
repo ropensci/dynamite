@@ -242,10 +242,11 @@ parse_lags <- function(data, dformula, group_var, time_var) {
       `x` = "Can't find such variables in {.var data}."
     ))
   }
-  n_lag_map <- lag_map |> dplyr::filter(.data$var %in% resp_all) |> nrow()
   n_lag <- lag_map |> nrow()
   map_channel <- list()
+  map_resp <- character(0)
   map_rank <- integer(0)
+  map_pred <- logical(0)
   map_stoch <- logical(0)
   map_stoch_k <- lag_map |>
     dplyr::filter(.data$var %in% resp_stoch) |>
@@ -258,105 +259,107 @@ parse_lags <- function(data, dformula, group_var, time_var) {
     if (any(lag_map$k <= 0)) {
       stop_("Shift values must be positive in {.fun lag}.")
     }
-    map_channel <- vector(mode = "list", length = n_lag_map)
-    map_stoch <- logical(n_lag_map)
-    map_rank <- integer(n_lag_map)
+    map_channel <- vector(mode = "list", length = n_lag)
+    map_resp <- character(n_lag)
+    map_pred <- logical(n_lag)
+    map_stoch <- logical(n_lag)
+    map_rank <- integer(n_lag)
     lag_resp <- unique(lag_map$var)
     idx <- 0
     for (y in lag_resp) {
       lag_idx <- which(lag_map$var == y)
       y_idx <- which(resp_all == y)
-      if (length(y_idx) == 1) {
+      y_resp <- length(y_idx) > 0
+      y_deterministic <- TRUE
+      if (y_resp) {
         y_past <- NULL
         y_past_idx <- NULL
+        y_past_offset <- NULL
         y_obs_lags <- NULL
         y_stoch <- TRUE
         y_deterministic <- is_deterministic(dformula[[y_idx]]$family)
         y_type <- dformula[[y_idx]]$specials$resp_type
         if (y_deterministic) {
+          y_form <- deparse1(dformula[[y_idx]]$formula)
           y_past <- dformula[[y_idx]]$specials$past
           y_past_len <- length(y_past)
-          y_self_lags <- max(lag_map$k[lag_idx])
-          if (y_past_len < y_self_lags) {
+          y_self <- max(extract_self_lags(y_form, y))
+          y_max <- max(lag_map$k[lag_idx])
+          y_obs <- extract_lags(y_form) |>
+            dplyr::filter(.data$var %in% c(resp_stoch, data_names)) |>
+            dplyr::pull(.data$k)
+          if (length(y_obs_lags) > 0) {
+            y_obs <- max(y_obs_lags)
+          } else {
+            y_obs <- 0
+          }
+          # TODO better variable names
+          y_req_past <- min(y_max - max_lag + max(y_self, y_obs), y_max)
+          y_past_offset <- y_max - y_req_past
+          if (y_past_len < y_req_past) {
             stop_(c(
-              "Deterministic channel {.var {y}} requires {y_self_lags} initial
+              "Deterministic channel {.var {y}} requires {y_req_past} initial
                value{?s}:",
-              `x` = "You've supplied {cli::no(y_past_len)} initial values."
+              `x` = "You've supplied {cli::no(y_past_len)} initial value{?s//s}."
             ))
           }
           y_stoch <- FALSE
           y_past_idx <- 0
           dformula[[y_idx]]$specials$past <- NULL
         }
-        for (i in seq_along(lag_idx)) {
-          j <- lag_idx[i]
-          y_past_idx <- y_past_idx + 1
-          if (i == 1) {
-            map_rhs <- y
-          } else {
-            map_rhs <- paste0(y, "_lag", i - 1)
-          }
-          map_lhs <- paste0(y, "_lag", i)
-          idx <- idx + 1
-          map_rank[idx] <- i
-          map_stoch[idx] <- !y_deterministic
+      }
+      for (i in seq_along(lag_idx)) {
+        idx <- idx + 1
+        j <- lag_idx[i]
+        if (i == 1) {
+          map_rhs <- y
+        } else {
+          map_rhs <- paste0(y, "_lag", i - 1)
+        }
+        map_lhs <- paste0(y, "_lag", i)
+        map_rank[idx] <- i
+        map_stoch[idx] <- !y_deterministic
+        map_pred[idx] <- !y_resp
+        map_resp[idx] <- y
+        spec <- NULL
+        if (y_resp) {
           if (!is.null(y_past)) {
-            spec <- list(past = y_past[y_past_idx],
-                         past_offset = max_lag,
-                         resp_type = y_type)
-          } else {
-            spec <- NULL
-          }
-          map_channel[[idx]] <- dynamitechannel(
-            formula = as.formula(paste0(map_lhs, " ~ ", map_rhs)),
-            family = deterministic_(),
-            response = map_lhs,
-            specials = spec
-          )
-          if (lag_map$present[j]) {
-            for (k in seq_len(n_channels)) {
-              dformula[[k]]$formula <- gsub_formula(
-                pattern = lag_map$src[j],
-                replacement = map_lhs,
-                formula = dformula[[k]]$formula,
-                fixed = TRUE
-              )
-            }
+            if (i > y_past_offset)
+              y_past_idx <- y_past_idx + 1
+              spec <- list(past = y_past[y_past_idx],
+                           past_offset = max_lag,
+                           resp_type = y_type)
           }
         }
-      } else {
-        data_idx <- which(data_names == y)
-        for (i in seq_along(lag_idx)) {
-          j <- lag_idx[i]
-          if (lag_map$present[j]) {
-            lag_k <- lag_map$k[j]
-            lag_var <- paste0(data_names[data_idx], "_lag", lag_k)
-            if (is.null(group_var)) {
-              data[, (lag_var) := lapply(.SD, lag_, k = lag_k), .SDcols = y]
-            } else {
-              data[, (lag_var) := lapply(.SD, lag_, k = lag_k),
-                   .SDcols = y, by = group_var]
-            }
-            for (k in seq_len(n_channels)) {
-              dformula[[k]]$formula <- gsub_formula(
-                pattern = lag_map$src[j],
-                replacement = lag_var,
-                formula = dformula[[k]]$formula,
-                fixed = TRUE
-              )
-            }
+        map_channel[[idx]] <- dynamitechannel(
+          formula = as.formula(paste0(map_lhs, " ~ ", map_rhs)),
+          family = deterministic_(),
+          response = map_lhs,
+          specials = spec
+        )
+        if (lag_map$present[j]) {
+          for (k in seq_len(n_channels)) {
+            dformula[[k]]$formula <- gsub_formula(
+              pattern = lag_map$src[j],
+              replacement = map_lhs,
+              formula = dformula[[k]]$formula,
+              fixed = TRUE
+            )
           }
         }
       }
     }
   }
   dformula_det <- dformula[channels_det]
+  dformula_lag_pred <- map_channel[map_pred]
   dformula_lag_stoch <- c(lags_channel[lags_stoch],
-                          map_channel[map_stoch])
+                          map_channel[map_stoch & !map_pred])
   dformula_lag_det <- c(lags_channel[!lags_stoch],
-                        map_channel[!map_stoch])
+                        map_channel[!map_stoch & !map_pred])
+  attr(dformula_lag_pred, "rank_order") <- order(map_rank[map_pred])
   attr(dformula_lag_det, "rank_order") <-
-    order(c(lags_rank[!lags_stoch], map_rank[!map_stoch]))
+    order(c(lags_rank[!lags_stoch], map_rank[!map_stoch & !map_pred]))
+  attr(dformula_lag_pred, "original_response") <- map_resp[map_pred]
   attr(dformula, "max_lag") <- max_lag
   list(
     all = dformula,
@@ -365,47 +368,38 @@ parse_lags <- function(data, dformula, group_var, time_var) {
       dformula[channels_stoch],
       splines = attr(dformula, "splines")
     ),
+    lag_pred = dformula_lag_pred,
     lag_det = dformula_lag_det,
     lag_stoch = dformula_lag_stoch
   )
 }
 
 evaluate_deterministic <- function(data, dformulas, group_var, time_var) {
+  fixed <- as.integer(attr(dformulas$all, "max_lag"))
   n_time <- length(unique(data[[time_var]]))
   n_id <- 1L
   if (!is.null(group_var)) {
     n_id <- length(unique(data[[group_var]]))
   }
-  fixed <- as.integer(attr(dformulas$all, "max_lag"))
-  idx <- seq.int(1L, n_time * n_id, by = n_time)
   dd <- dformulas$det
+  dlp <- dformulas$lag_pred
   dld <- dformulas$lag_det
   dls <- dformulas$lag_stoch
-  assign_initial_values(data, dd, dld, dls, idx)
   n_det <- length(dd)
   n_lag_det <- length(dld)
   n_lag_stoch <- length(dls)
-  if (n_time > fixed && (n_det > 0 || n_lag_det > 0 || n_lag_stoch > 0)) {
-    cl <- get_quoted(dd)
+  cl <- get_quoted(dd)
+  initialize_deterministic(data, dd, dlp, dld, dls)
+  idx <- seq.int(1L, n_time * n_id, by = n_time) - 1L
+  assign_initial_values(data, dd, dlp, dld, dls, idx, fixed, group_var)
+  if (n_time > fixed + 1L) {
     ro_stoch <- 1:n_lag_stoch
     ro_det <- attr(dld, "rank_order")
-    idx <- idx + fixed
     lhs_det <- get_responses(dld)
     rhs_det <- get_predictors(dld)
     lhs_stoch <- get_responses(dls)
     rhs_stoch <- get_predictors(dls)
-    if (n_lag_stoch > 0) {
-      assign_lags(data, ro_stoch, idx, lhs_stoch, rhs_stoch)
-    }
-    if (n_det > 0) {
-      res <- try(assign_deterministic(data, cl, idx), silent = TRUE)
-      if ("try-error" %in% class(res)) {
-        stop_(c(
-          "Unable to evaluate definitions of deterministic channels:",
-          `i` = "Some variables are possibly missing or incorrect."
-        ))
-      }
-    }
+    idx <- idx + fixed + 1L
     for (i in seq.int(fixed + 2L, n_time)) {
       idx <- idx + 1L
       if (n_lag_det > 0) {

@@ -40,16 +40,21 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type, n_draws) {
   # TODO impute predictor values
   group_var <- object$group_var
   time_var <- object$time_var
-  formulas_stoch <- get_formulas(object$dformulas$stoch)
-  families_stoch <- get_families(object$dformulas$stoch)
+  dd <- object$dformulas$det
+  ds <- object$dformulas$stoch
+  dlp <- object$dformulas$lag_pred
+  dld <- object$dformulas$lag_det
+  dls <- object$dformulas$lag_stoch
+  formulas_stoch <- get_formulas(ds)
+  families_stoch <- get_families(ds)
   categories <- lapply(attr(object$stan$responses, "resp_class"),
                        "attr", "levels")
-  resp_stoch <- get_responses(object$dformulas$stoch)
-  resp_det <- get_responses(object$dformulas$det)
-  lhs_det <- get_responses(object$dformulas$lag_det)
-  rhs_det <- get_predictors(object$dformulas$lag_det)
-  lhs_stoch <- get_responses(object$dformulas$lag_stoch)
-  rhs_stoch <- get_predictors(object$dformulas$lag_stoch)
+  resp_stoch <- get_responses(ds)
+  resp_det <- get_responses(dd)
+  lhs_det <- get_responses(dld)
+  rhs_det <- get_predictors(dld)
+  lhs_stoch <- get_responses(dls)
+  rhs_stoch <- get_predictors(dls)
   check_newdata(newdata, object$data, type, families_stoch,
                 resp_stoch, categories, group_var, time_var)
   group <- NULL
@@ -74,23 +79,22 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type, n_draws) {
   clear_nonfixed(newdata, newdata_null, resp_stoch, group_var,
                  clear_names = c(resp_det, lhs_det, lhs_stoch),
                  fixed, n_id, n_time)
+  initialize_deterministic(newdata, dd, dlp, dld, dls)
+  idx <- seq.int(1L, n_time * n_id, by = n_time) - 1L
+  assign_initial_values(newdata, dd, dlp, dld, dls, idx, fixed, group_var)
   newdata <- newdata[rep(seq_len(n_new), n_draws), ]
   newdata[, ("draw") := rep(1:n_draws, each = n_new)]
   n <- newdata[,.N]
-  idx <- seq.int(1L, n, by = n_time)
-  assign_initial_values(newdata, object$dformulas$det,
-                        object$dformulas$lag_det, object$dformulas$lag_stoch,
-                        idx)
   eval_envs <- prepare_eval_envs(object, newdata,
                                  eval_type = "predict", predict_type = type,
                                  resp_stoch, n_id, n_draws)
-  idx <- idx + fixed - 1L
-  for (i in (fixed + 1):n_time) {
+  idx <- seq.int(1L, n, by = n_time) + fixed - 1L
+  for (i in (fixed + 1L):n_time) {
     idx <- idx + 1L
-    if (n_lag_det > 0 && i > fixed + 1) {
+    if (n_lag_det > 0 && i > fixed + 1L) {
       assign_lags(newdata, ro_det, idx, lhs_det, rhs_det)
     }
-    if (n_lag_stoch > 0) {
+    if (n_lag_stoch > 0 && i > fixed + 1L) {
       assign_lags(newdata, ro_stoch, idx, lhs_stoch, rhs_stoch)
     }
     model_matrix <- full_model.matrix_predict(
