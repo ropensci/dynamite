@@ -780,13 +780,13 @@ model_lines_categorical <- quote({
     mtext_intercept, mtext_fixed, mtext_varying, mtext_tau,
     "{{",
       "matrix[{K}, {S-1}] gamma_{y};",
+      onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
       "for (t in 1:T) {{",
-        onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
         onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
         likelihood_term,
       "}}",
     "}}",
-    .indent = idt(c(1, 1, 1, 1, 1, 2, 2, 3, 3, 3, 2, 1))
+    .indent = idt(c(1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 2, 1))
   )
 })
 
@@ -816,13 +816,13 @@ model_lines_gaussian <- quote({
     sigma_term,
     "{{",
       "vector[{K}] gamma_{y};",
+      onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
       "for (t in 1:T) {{",
-        onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
         onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
         likelihood_term,
       "}}",
     "}}",
-    .indent = idt(c(1, 1, 2, 2, 3, 3, 3, 2, 1))
+    .indent = idt(c(1, 1, 2, 2, 2, 3, 3, 2, 1))
   )
   paste_rows(mtext_def, mtext, .parse = FALSE)
 })
@@ -881,13 +881,13 @@ model_lines_bernoulli <- quote({
   mtext <- paste_rows(
     "{{",
     "vector[{K}] gamma_{y};",
-    "for (t in 1:T) {{",
     onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+    "for (t in 1:T) {{",
     onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
     likelihood_term,
     "}}",
     "}}",
-    .indent = idt(c(1, 2, 2, 3, 3, 3, 2, 1))
+    .indent = idt(c(1, 2, 2, 2, 3, 3, 2, 1))
   )
   paste_rows(mtext_def, mtext, .parse = FALSE)
 })
@@ -924,13 +924,13 @@ model_lines_poisson <- quote({
   mtext <- paste_rows(
     "{{",
     "vector[{K}] gamma_{y};",
-    "for (t in 1:T) {{",
     onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+    "for (t in 1:T) {{",
     onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
     likelihood_term,
     "}}",
     "}}",
-    .indent = idt(c(1, 2, 2, 3, 3, 3, 2, 1))
+    .indent = idt(c(1, 2, 2, 2, 3, 3, 2, 1))
   )
   paste_rows(mtext_def, mtext, .parse = FALSE)
 })
@@ -970,13 +970,13 @@ model_lines_negbin <- quote({
     phi_term,
     "{{",
     "vector[{K}] gamma_{y};",
-    "for (t in 1:T) {{",
     onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+    "for (t in 1:T) {{",
     onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
     likelihood_term,
     "}}",
     "}}",
-    .indent = idt(c(1, 1, 2, 2, 3, 3, 3, 2, 1))
+    .indent = idt(c(1, 1, 2, 2, 2, 3, 3, 2, 1))
   )
   paste_rows(mtext_def, mtext, .parse = FALSE)
 })
