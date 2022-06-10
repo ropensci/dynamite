@@ -71,10 +71,10 @@ assign_initial_values <- function(data, dd, dlp, dld, dls,
   }
   for (i in seq_len(fixed + 1L)) {
     idx <- idx + 1L
-    if (n_lag_det > 0 && idx > 1) {
+    if (n_lag_det > 0 && i > 1) {
       assign_lags(data, ro_det, idx, lhs_det, rhs_det)
     }
-    if (n_lag_stoch > 0 && idx > 1) {
+    if (n_lag_stoch > 0 && i > 1) {
       assign_lags(data, ro_stoch, idx, lhs_stoch, rhs_stoch)
     }
     if (n_det > 0) {
