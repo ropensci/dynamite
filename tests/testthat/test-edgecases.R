@@ -1,3 +1,9 @@
+#' @srrstats {G5.8} **Edge condition tests** *to test that these conditions produce expected behaviour such as clear warnings or errors when confronted with data with extreme properties including but not limited to:*
+#' @srrstats {G5.8a} *Zero-length data*
+#' @srrstats {G5.8b} *Data of unsupported types (e.g., character or complex numbers in for functions designed only for numeric data)*
+#' @srrstats {G5.8c} *Data with all-`NA` fields or columns or all identical fields or columns*
+#' @srrstats {G5.8d} *Data outside the scope of the algorithm (for example, data with more fields (columns) than observations (rows) for some regression algorithms)*
+
 timepoints <- 10
 individuals <- 5
 total_obs <- timepoints * individuals

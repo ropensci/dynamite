@@ -14,6 +14,29 @@ knitr::opts_chunk$set(
 ```
 
 ```{r srr-tags, eval = FALSE, echo = FALSE}
+# TODO all
+#' @srrstats {G1.1} *Statistical Software should document whether the algorithm(s) it implements are:* - *The first implementation of a novel algorithm*; or - *The first implementation within **R** of an algorithm which has previously been implemented in other languages or contexts*; or - *An improvement on other implementations of similar algorithms in **R***.
+#' @srrstats {G1.2} *Statistical Software should include a* Life Cycle Statement *describing current and anticipated future states of development.* 
+#' @srrstats {G1.3} *All statistical terminology should be clarified and unambiguously defined.*
+#' @srrstats {G1.4} *Software should use [`roxygen2`](https://roxygen2.r-lib.org/) to document all functions.*
+#' @srrstats {G1.4a} *All internal (non-exported) functions should also be documented in standard [`roxygen2`](https://roxygen2.r-lib.org/) format, along with a final `@noRd` tag to suppress automatic generation of `.Rd` files.*
+
+
+#' @srrstats {G2.0} *Implement assertions on lengths of inputs, particularly through asserting that inputs expected to be single- or multi-valued are indeed so.*
+#' @srrstats {G2.0a} *Provide explicit secondary documentation of any expectations on lengths of inputs*
+#' @srrstats {G2.1} *Implement assertions on types of inputs (see the initial point on nomenclature above).*
+#' @srrstats {G2.1a} *Provide explicit secondary documentation of expectations on data types of all vector inputs.*
+#' @srrstats {G2.2} *Appropriately prohibit or restrict submission of multivariate input to parameters expected to be univariate.*
+#' @srrstats {G2.3} *For univariate character input:*
+#' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
+#' @srrstats {G2.3b} *Either: use `tolower()` or equivalent to ensure input of character parameters is not case dependent; or explicitly document that parameters are strictly case-sensitive.*
+#' @srrstats {G2.6} *Software which accepts one-dimensional input should ensure values are appropriately pre-processed regardless of class structures.*
+#' @srrstats {G2.7} *Software should accept as input as many of the above standard tabular forms as possible, including extension to domain-specific forms.*
+#' @srrstats {G3.0} *Statistical software should never compare floating point numbers for equality. All numeric equality comparisons should either ensure that they are made between integers, or use appropriate tolerances for approximate equality.*
+#' @srrstats {G5.0} *Where applicable or practicable, tests should use standard data sets with known properties (for example, the [NIST Standard Reference Datasets](https://www.itl.nist.gov/div898/strd/), or data sets provided by other widely-used R packages).* Grunfeld data example?
+#' @srrstats {BS1.2a} *The main package `README`, either as textual description or example code*
+#' @srrstats {BS1.2c} *Function-level documentation, preferably with code included in examples*
+# TODO comparing strings?
 # Placeholder for the potential ropensci software review tags
 ```
 
@@ -29,7 +52,7 @@ The `dynamite` package provides easy-to-use interface for Bayesian inference of 
 
 * Support for both time-varying and time-invariant effects
 * Joint modelling of multiple measurements per individual (multiple channels)
-* Support for non-gaussian observations
+* Support for non-gaussian observations.
 * Realistic counterfactual predictions which take account the dynamic structure of the model
 * Clear quantification of parameter and predictive uncertainty due to Bayesian approach
 * User-friendly and efficient R interface with state-of-the-art estimation via Stan.

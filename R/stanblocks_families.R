@@ -534,7 +534,8 @@ transformed_parameters_lines_gamma <- quote({
 })
 
 # Model block -------------------------------------------------------------
-
+# TODO obs vs no obs
+# TODO start from fixed + 1
 model_lines_default <- quote({
   mtext_intercept <- ""
   mtext_fixed <- ""

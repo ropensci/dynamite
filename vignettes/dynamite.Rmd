@@ -15,6 +15,9 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
+```{r srr, eval = FALSE, echo = FALSE}
+#' @srrstats {BS1.2b} *At least one package vignette, both as general and applied textual descriptions, and example code*
+```
 
 ```{r setup}
 library(dynamite)

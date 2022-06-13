@@ -9,7 +9,23 @@
 #' @param group_var \[`character(1)`]\cr The grouping variable name
 #' @param time_var \[`character(1)`]\cr The time index variable name
 #' @param priors TODO
-#'
+#' @srrstats {RE2.3} *Where applicable, Regression Software should enable data to be centred (for example, through converting to zero-mean equivalent values; or to z-scores) or offset (for example, to zero-intercept equivalent values) via additional parameters, with the effects of any such parameters clearly documented and tested.*
+#' @srrstats {G2.4} *Provide appropriate mechanisms to convert between different data types, potentially including:*
+#' @srrstats {G2.4a} *explicit conversion to `integer` via `as.integer()`*
+#' @srrstats {G2.4b} *explicit conversion to continuous via `as.numeric()`*
+#' @srrstats {G2.4c} *explicit conversion to character via `as.character()` (and not `paste` or `paste0`)*
+#' @srrstats {G2.4d} *explicit conversion to factor via `as.factor()`*
+#' @srrstats {G2.4e} *explicit conversion from factor via `as...()` functions*
+#' @srrstats {G2.16} *All functions should also provide options to handle undefined values (e.g., `NaN`, `Inf` and `-Inf`), including potentially ignoring or removing such values.*
+#' @srrstats {BS2.1} *Bayesian Software should implement pre-processing routines to ensure all input data is dimensionally commensurate, for example by ensuring commensurate lengths of vectors or numbers of rows of tabular inputs.*
+#' @srrstats {BS2.1a} *The effects of such routines should be tested.*
+#' @srrstats {BS2.2} *Ensure that all appropriate validation and pre-processing of distributional parameters are implemented as distinct pre-processing steps prior to submitting to analytic routines, and especially prior to submitting to multiple parallel computational chains.*
+#' @srrstats {BS2.3} *Ensure that lengths of vectors of distributional parameters are checked, with no excess values silently discarded (unless such output is explicitly suppressed, as detailed below).*
+#' @srrstats {BS2.4} *Ensure that lengths of vectors of distributional parameters are commensurate with expected model input (see example immediately below)*
+#' @srrstats {BS2.5} *Where possible, implement pre-processing checks to validate appropriateness of numeric values submitted for distributional parameters; for example, by ensuring that distributional parameters defining second-order moments such as distributional variance or shape parameters, or any parameters which are logarithmically transformed, are non-negative.*
+# TODO prior validation, conversion warnings?
+# TODO missing values in prior computations mean_x, sd etc
+# TODO X and y starting from fixed + 1, modify T_full
 #' @noRd
 prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL) {
 
@@ -44,7 +60,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
 
   spline_defs <- attr(dformula, "splines")
   has_splines <- !is.null(spline_defs)
-  lb <- ""
+  lb <- numeric(n_channels)
   shrinkage <- FALSE
   if (has_splines) {
     lb <- spline_defs$lb_tau
@@ -84,6 +100,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
   # needed for default priors, 0.5 is pretty arbitrary
   sd_x <- setNames(pmax(0.5, sd_x, na.rm = TRUE),
                    colnames(model_matrix))
+  # TODO use fixed + 1
   x_means <- apply(X[1, , , drop = FALSE], 3, mean, na.rm = TRUE)
   # For missing lagged covariates etc
   x_means[is.na(x_means)] <- 0
@@ -144,7 +161,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
     channel$has_random_intercept <- dformula[[i]]$has_random_intercept
     channel$has_fixed <- channel$K_fixed > 0
     channel$has_varying <- channel$K_varying > 0
-    channel$lb <- lb
+    channel$lb <- lb[i]
     channel$shrinkage <- shrinkage
     if (channel$has_varying || channel$has_varying_intercept) {
       if (!has_splines) {

@@ -4,6 +4,12 @@
 #' @param data A `data.frame` containing the variables in the model
 #'
 #' @srrstats {RE1.3} *Regression Software which passes or otherwise transforms aspects of input data onto output structures should ensure that those output structures retain all relevant aspects of input data, notably including row and column names, and potentially information from other `attributes()`.*
+#' @srrstats {BS3.1} *Implement pre-processing routines to diagnose perfect collinearity, and provide appropriate diagnostic messages or warnings*
+#' @srrstats {BS3.2} *Provide distinct routines for processing perfectly collinear data, potentially bypassing sampling algorithms*
+#' @srrstats {RE2.4} *Regression Software should implement pre-processing routines to identify whether aspects of input data are perfectly collinear, notably including:*
+#' @srrstats {RE2.4a} *Perfect collinearity among predictor variables*
+#' @srrstats {RE2.4b} *Perfect collinearity between independent and dependent variables*
+#' TODO test multicollinearity
 #' @noRd
 full_model.matrix <- function(dformula, data) {
   model_matrices <- lapply(get_formulas(dformula), model.matrix.lm,

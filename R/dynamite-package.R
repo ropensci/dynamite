@@ -19,6 +19,7 @@
 #' Stan Development Team (2020). RStan: the R interface to Stan.
 #' R package version 2.21.2. https://mc-stan.org
 #'
+#' @srrstatsTODO {G5.1} *Data sets created within, and used to test, a package should be exported (or otherwise made generally available) so that users can confirm tests and run examples.*
 NULL
 #' Simulated Data of Gaussian Responses
 #'

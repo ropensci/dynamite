@@ -8,6 +8,7 @@
 #' @param newdata TODO
 #' @param n_draws TODO
 #' @param ... Ignored.
+#' @srrstats {RE4.9} *Modelled values of response variables.*
 fitted.dynamitefit <- function(object, newdata = NULL,
                                n_draws = NULL,  ...) {
   if (is.null(n_draws)) {

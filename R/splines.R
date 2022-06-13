@@ -29,21 +29,26 @@
 #' @param degree \[`integer(1)`]\cr See [splines::bs()].
 #' @param Boundary.knots \[`numeric()`]\cr See [splines::bs()].
 #' @export
-#' @srrstats {RE2.3} *Where applicable, Regression Software should enable data to be centred (for example, through converting to zero-mean equivalent values; or to z-scores) or offset (for example, to zero-intercept equivalent values) via additional parameters, with the effects of any such parameters clearly documented and tested.*
+#' @srrstats {G2.4} *Provide appropriate mechanisms to convert between different data types, potentially including:*
+#' @srrstats {G2.4a} *explicit conversion to `integer` via `as.integer()`*
+#' @srrstats {G2.4b} *explicit conversion to continuous via `as.numeric()`*
+#'
+# TODO start knots from fixed + 1
+# TODO remove boundary.knots  and knots, and rename df -> k_knots
 splines <- function(shrinkage = FALSE, override = FALSE,
                     df = NULL, knots = NULL, degree = 3,
                     Boundary.knots = NULL, lb_tau = 0, noncentered = FALSE) {
-  shrinkage <- try_(shrinkage, type = "logical")[1]
-  override <- try_(override, type = "logical")[1]
+  shrinkage <- try_(shrinkage, type = "logical")[1] # TODO check the length
+  override <- try_(override, type = "logical")[1] # TODO
   df <- try_(df, type = "integer")[1]
   knots <- try_(knots, type = "numeric")
   degree <- try_(degree, type = "integer")
   # length of these this argument can be > 1 for channel-wise definitions,
   # check the length later
   noncentered <- try_(noncentered, type = "logical")
-  lb_tau <- try_(lb_tau, type = "numeric")[1]
+  lb_tau <- try_(lb_tau, type = "numeric")
   # TODO: better error message
-  if (lb_tau < 0) {
+  if (any(lb_tau < 0)) {
     stop_("Lower bound for `tau` should be non-negative.")
   }
   structure(

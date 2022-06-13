@@ -14,6 +14,8 @@
 #' @srrstats {G2.3b} *Either: use `tolower()` or equivalent to ensure input of character parameters is not case dependent; or explicitly document that parameters are strictly case-sensitive.*
 #' @srrstats {RE1.0} *Regression Software should enable models to be specified via a formula interface, unless reasons for not doing so are explicitly documented.*
 #' @srrstats {RE1.1} *Regression Software should document how formula interfaces are converted to matrix representations of input data.*
+#' @srrstats {RE1.4} *Regression Software should document any assumptions made with regard to input data; for example distributional assumptions, or assumptions that predictor data have mean values of zero. Implications of violations of these assumptions should be both documented and tested.*
+
 dynamiteformula <- function(formula, family, random_intercept = FALSE) {
   if (!is.formula(formula)) {
     stop_("Argument {.var formula} is not a {.cls formula} object.")

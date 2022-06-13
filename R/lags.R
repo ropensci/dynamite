@@ -7,6 +7,8 @@
 #'   `"fixed"` or `"varying"` which indicates whether the coefficients of the
 #'   lag terms should vary in time or not.
 #' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
+#' @srrstats {G2.4} *Provide appropriate mechanisms to convert between different data types, potentially including:*
+#' @srrstats {G2.4a} *explicit conversion to `integer` via `as.integer()`*
 #' @export
 lags <- function(k = 1L, type = c("fixed", "varying")) {
   type <- match.arg(type)

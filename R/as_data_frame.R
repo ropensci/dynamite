@@ -69,6 +69,7 @@
 #'   posterior::as_draws() |>
 #'   posterior::summarise_draws()
 #'
+# TODO NA for t <= fixed
 as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
                                       responses = NULL, types = NULL,
                                       summary = TRUE, probs = c(0.05, 0.95),

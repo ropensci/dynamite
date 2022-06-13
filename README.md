@@ -20,7 +20,7 @@ package and the underlying methodology from many other approaches are
 -   Support for both time-varying and time-invariant effects
 -   Joint modelling of multiple measurements per individual (multiple
     channels)
--   Support for non-gaussian observations
+-   Support for non-gaussian observations.
 -   Realistic counterfactual predictions which take account the dynamic
     structure of the model
 -   Clear quantification of parameter and predictive uncertainty due to
