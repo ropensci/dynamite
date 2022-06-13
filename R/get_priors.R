@@ -35,6 +35,7 @@
 #' get_priors(obs(y ~ x, family = gaussian()),
 #'   data = d, time = "time", group = "id")
 #'
+#'#' @srrstats {BS5.2} *Bayesian Software should either return the input function or prior distributional specification in the return object; or enable direct access to such via additional functions which accept the return object as single argument.*
 get_priors <- function(x, data, group, time, ...) {
   UseMethod("get_priors", x)
 }

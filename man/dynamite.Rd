@@ -10,7 +10,8 @@ dynamite(dformula, data, group, time, priors = NULL, debug = NULL, ...)
 \item{dformula}{[\code{dynamiteformula}]\cr The model formula. See 'Details'.}
 
 \item{data}{[\code{data.frame}]\cr The data frame containing the variables in
-the model.}
+the model.
+TODO document here allowed data types etc.}
 
 \item{group}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 unique groups.}

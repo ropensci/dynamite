@@ -229,6 +229,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
 #' @param resp_class \[`character()`]\cr Class(es) of the response `Y`.
 #' @param priors TODO
 #'
+#' @srrstats {RE1.2} *Regression Software should document expected format (types or classes) for inputting predictor variables, including descriptions of types or classes which are not accepted.*
 #' @noRd
 prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
                                     mean_y, sd_y, resp_class, priors) {

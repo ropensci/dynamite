@@ -6,6 +6,7 @@
 #' @param type \[`integer(1)`: \sQuote{"fixed"}]\cr Either
 #'   `"fixed"` or `"varying"` which indicates whether the coefficients of the
 #'   lag terms should vary in time or not.
+#' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
 #' @export
 lags <- function(k = 1L, type = c("fixed", "varying")) {
   type <- match.arg(type)

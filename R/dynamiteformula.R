@@ -2,6 +2,7 @@
 #'
 #' TODO description and details of all features
 #' TODO document families here as well
+#' TODO document lag-conversion to data
 #'
 #' @param formula \[`formula`]\cr An R formula describing the model.
 #' @param family \[`call`, `character(1)`]\cr
@@ -10,12 +11,22 @@
 #' @param random_intercept \[`logical(1)`]\cr If `TRUE`, adds
 #'   individual-level intercepts to the channel.
 #' @export
+#' @srrstats {G2.3b} *Either: use `tolower()` or equivalent to ensure input of character parameters is not case dependent; or explicitly document that parameters are strictly case-sensitive.*
+#' @srrstats {RE1.0} *Regression Software should enable models to be specified via a formula interface, unless reasons for not doing so are explicitly documented.*
+#' @srrstats {RE1.1} *Regression Software should document how formula interfaces are converted to matrix representations of input data.*
 dynamiteformula <- function(formula, family, random_intercept = FALSE) {
   if (!is.formula(formula)) {
     stop_("Argument {.var formula} is not a {.cls formula} object.")
   }
   family <- substitute(family)
   if (is.character(family)) {
+    family <- tolower(family)
+    if (length(family) > 1) {
+      warning_(c(
+        "Multiple values passed to argument {.var family}:",
+        `i` = "Only the first one will be used."
+      ))
+    }
     if (is_supported(family[1])) {
       family <- do.call(paste0(family, "_"), args = list())
     } else {

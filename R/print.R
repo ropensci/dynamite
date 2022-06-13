@@ -9,6 +9,7 @@
 #' @param ... Ignored.
 #' @method print dynamitefit
 #' @export
+#' @srrstats {BS6.0} *Software should implement a default `print` method for return objects*
 print.dynamitefit <- function(x, hmc_diagnostics = TRUE,...) {
   if (!is.null(x$stanfit)) {
     if (hmc_diagnostics && x$stanfit@stan_args[[1]]$algorithm == "NUTS") {

@@ -69,6 +69,7 @@ gsub_formula <- function(pattern, replacement, formula, ...) {
 #' @param varying_icpt does the formula have a varying intercept
 #'   time-varying coefficients
 #'
+#' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
 #' @noRd
 increment_formula <- function(formula, x, type = c("fixed", "varying"),
                               varying_idx, varying_icpt, fixed_icpt) {

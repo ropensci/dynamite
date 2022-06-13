@@ -15,6 +15,7 @@
 #' betas <- coef(gaussian_example_fit, type = "beta")
 #' deltas <- coef(gaussian_example_fit, type = "delta")
 #'
+#'@srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
 coef.dynamitefit <- function(object, type = c("beta", "delta"),
                              summary = TRUE, probs = c(0.05, 0.95),
                              include_alpha = TRUE, ...) {
@@ -53,9 +54,13 @@ coef.dynamitefit <- function(object, type = c("beta", "delta"),
 #' @examples
 #' plot_deltas(gaussian_example_fit, scales = "free") +
 #'   ggplot2::theme_minimal()
-plot_deltas <- function(model, level = 0.05, alpha = 0.5, scales = "fixed",
+#'
+#' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
+plot_deltas <- function(model, level = 0.05, alpha = 0.5,
+                        scales = c("fixed", "free"),
                         include_alpha = TRUE){
 
+  scales <- match.arg(scales)
   title <- paste0("Posterior mean and ", 100 * (1 - 2 * level),
                   "% intervals of the time-varying coefficients")
   coef(model, "delta", probs = c(level, 1 - level),
