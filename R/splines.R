@@ -29,6 +29,7 @@
 #' @param degree \[`integer(1)`]\cr See [splines::bs()].
 #' @param Boundary.knots \[`numeric()`]\cr See [splines::bs()].
 #' @export
+#' @srrstats {RE2.3} *Where applicable, Regression Software should enable data to be centred (for example, through converting to zero-mean equivalent values; or to z-scores) or offset (for example, to zero-intercept equivalent values) via additional parameters, with the effects of any such parameters clearly documented and tested.*
 splines <- function(shrinkage = FALSE, override = FALSE,
                     df = NULL, knots = NULL, degree = 3,
                     Boundary.knots = NULL, lb_tau = 0, noncentered = FALSE) {

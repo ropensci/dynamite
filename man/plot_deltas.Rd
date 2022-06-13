@@ -8,7 +8,7 @@ plot_deltas(
   model,
   level = 0.05,
   alpha = 0.5,
-  scales = "fixed",
+  scales = c("fixed", "free"),
   include_alpha = TRUE
 )
 }
@@ -37,4 +37,5 @@ Visualize Time-varying Regression Coefficients of the Dynamite Model
 \examples{
 plot_deltas(gaussian_example_fit, scales = "free") +
   ggplot2::theme_minimal()
+
 }

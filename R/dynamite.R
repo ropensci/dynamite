@@ -3,6 +3,7 @@
 #' @param dformula \[`dynamiteformula`]\cr The model formula. See 'Details'.
 #' @param data \[`data.frame`]\cr The data frame containing the variables in
 #'   the model.
+#' TODO document here allowed data types etc.
 #' @param group \[`character(1)`]\cr A column name of `data` that denotes the
 #'   unique groups.
 #' @param time \[`character(1)`]\cr A column name of `data` that denotes the
@@ -32,6 +33,8 @@
 #'     geom_line() +
 #'     facet_wrap(~ variable, scales = "free_y")
 #' }
+#' @srrstats {RE1.2} *Regression Software should document expected format (types or classes) for inputting predictor variables, including descriptions of types or classes which are not accepted.*
+#' @srrstats {BS5.2} *Bayesian Software should either return the input function or prior distributional specification in the return object; or enable direct access to such via additional functions which accept the return object as single argument.*
 dynamite <- function(dformula, data, group, time,
                      priors = NULL, debug = NULL, ...) {
   # stored for return object
@@ -107,6 +110,15 @@ dynamite <- function(dformula, data, group, time,
   out
 }
 
+#' Parse data for model fitting
+#'
+#' @param data \[`data.frame`]\cr The data frame containing the variables in
+#'   the model.
+#' @param group_var \[`character(1)`,`NULL`]\cr Group variable name or `NULL`
+#'   if there is only one group
+#' @param time_var \[`character(1)`]\cr Time index variable name
+#'
+#' @srrstats {G2.4d} *explicit conversion to factor via `as.factor()`*
 parse_data <- function(data, group_var, time_var) {
   data <- droplevels(data) # TODO document this in return value
   data <- data |>

@@ -10,6 +10,8 @@
 #' @param n_draws Number of posterior samples to use, default is all.
 #' @param ... Ignored.
 #' @export
+#' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
+#' @srrstats {RE2.2} *Regression Software should provide different options for processing missing values in predictor and response data. For example, it should be possible to fit a model with no missing predictor data in order to generate values for all associated response points, even where submitted response values may be missing.*
 predict.dynamitefit <- function(object, newdata = NULL,
                                 mode = c("counterfactual", "forecast"),
                                 type = c("response", "mean", "link"),

@@ -25,6 +25,7 @@ individual-level intercepts to the channel.}
 \description{
 TODO description and details of all features
 TODO document families here as well
+TODO document lag-conversion to data
 }
 \section{Functions}{
 \itemize{
