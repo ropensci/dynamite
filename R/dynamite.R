@@ -77,6 +77,8 @@
 #' @srrstats {RE4.0} *Regression Software should return some form of "model" object, generally through using or modifying existing class structures for model objects (such as `lm`, `glm`, or model objects from other packages), or creating a new class of model objects.*
 #' @srrstats {RE4.1} *Regression Software may enable an ability to generate a model object without actually fitting values. This may be useful for controlling batch processing of computationally intensive fitting algorithms.*
 #' @srrstats {RE4.4} *The specification of the model, generally as a formula (via `formula()`)*
+#' @srrstats {RE4.8} *Response variables, and associated "metadata" where applicable.*
+#' @srrstats {RE4.13} *Predictor variables, and associated "metadata" where applicable.*
 # TODO extract original dynamite formula from dynamitefit
 # TODO document priors
 # TODO document what missingness means
