@@ -6,7 +6,7 @@
 \usage{
 \method{coef}{dynamitefit}(
   object,
-  type = c("beta", "delta"),
+  type = c("beta", "delta", "nu"),
   summary = TRUE,
   probs = c(0.05, 0.95),
   include_alpha = TRUE,
@@ -17,7 +17,8 @@
 \item{object}{An object of class \code{dynamitefit}.}
 
 \item{type}{[\code{character(1)}]\cr Either \code{beta} (the default) for
-time-invariant coefficients,  or \code{delta} for time-varying coefficients.}
+time-invariant coefficients,  \code{delta} for time-varying coefficients, or
+\code{nu} for random intercepts.}
 
 \item{summary}{[\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
 mean, standard deviation, and posterior quantiles (as defined by the

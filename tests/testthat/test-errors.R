@@ -230,6 +230,29 @@ test_that("deterministic insufficient initial values fails", {
 
 # Data type errors --------------------------------------------------------
 
+#' @srrstats {G2.11} *Software should ensure that `data.frame`-like tabular objects which have columns which do not themselves have standard class attributes (typically, `vector`) are appropriately processed, and do not error without reason. This behaviour should be tested. Again, columns created by the [`units` package](https://github.com/r-quantities/units/) provide a good test case.*
+#' @srrstats {G2.12} *Software should ensure that `data.frame`-like tabular objects which have list columns should ensure that those columns are appropriately pre-processed either through being removed, converted to equivalent vector columns where appropriate, or some other appropriate treatment such as an informative error. This behaviour should be tested.*
+test_that("invalid column types fail", {
+  test_data <- data.frame(y = c(1i, 2i), x = c(1, 1), z = c(1, 2))
+  test_data$w <- c(list(a = 1), list(b = 2))
+  test_data$d <- as.raw(c(40, 20))
+  expect_error(
+    dynamite(dformula = obs(y ~ x, family = gaussian()),
+             data = test_data, group = "x", time = "z"),
+    "Columns `y`, `w`, and `d` of `data` are invalid:\nx Column types <complex/list/raw> are not supported\\."
+  )
+})
+
+test_that("non-finite values in data fail", {
+  test_data <- data.frame(y = c(1, Inf), x = c(1, 1),
+                          z = c(1, 2), w = c(-Inf, 2), u = c(1, Inf))
+  expect_error(
+    dynamite(dformula = obs(y ~ x, family = gaussian()),
+             data = test_data, group = "x", time = "z"),
+    "Non-finite values in variables `y`, `w`, and `u` of `data`\\."
+  )
+})
+
 test_that("factor types for non-categorical families fails", {
   test_data <- data.frame(y = factor(c(0, 1)), x = c(1, 1), z = c(1, 2))
   expect_error(

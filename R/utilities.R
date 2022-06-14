@@ -1,16 +1,8 @@
-# Some stuff that might be useful
-
 # This is needed to use tidyselect's where which is not exported.
 utils::globalVariables(c(".", ".I", ".N", ".SD", "where"))
 
 # Data table awareness
 .datatable.aware = TRUE
-
-# Check which elements of x have a prefix in y
-# which_prefix <- function(x, y) {
-#     ys <- paste0("^(", paste0(y, collapse = "|"), ").*$")
-#     grep(pattern = ys, x, perl = TRUE)
-# }
 
 #' Get the left-hand side of a formula
 #'
@@ -63,11 +55,11 @@ gsub_formula <- function(pattern, replacement, formula, ...) {
 #' Add fixed or varying terms to a formula
 #'
 #' @param formula A `formula` object
-#' @param x A character vector of terms to add
-#' @param type Either 'fixed' or 'varying' indicating type of terms to add
-#' @param varying_idx indices of left-hand side terms that have
-#' @param varying_icpt does the formula have a varying intercept
+#' @param x A `character` vector of terms to add
+#' @param type Either `"fixed"` or `"varying"` indicating type of terms to add
+#' @param varying_idx Indices of left-hand side terms that have
 #'   time-varying coefficients
+#' @param varying_icpt Does the formula have a varying intercept?
 #'
 #' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
 #' @noRd
@@ -120,7 +112,7 @@ increment_formula <- function(formula, x, type = c("fixed", "varying"),
 
 #' Create a comma-separated character string to represent a Stan integer array
 #'
-#' @param x A character vector
+#' @param x A `character` vector
 #'
 #' @noRd
 cs <- function(x) {
@@ -129,9 +121,9 @@ cs <- function(x) {
 
 #' Paste and optionally parse character strings containing glue syntax
 #'
-#' @param ... Any number of character vectors of arbitrary length
-#' @param .indent A character string to prefix each row with
-#' @param .parse A logical value indicating whether glue syntax should be
+#' @param ... Any number of `character` vectors of arbitrary length
+#' @param .indent A `character` string to prefix each row with
+#' @param .parse A `logical` value indicating whether glue syntax should be
 #'   parsed by [glue::glue()].
 #'
 #' @noRd
