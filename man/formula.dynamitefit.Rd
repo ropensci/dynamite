@@ -8,6 +8,8 @@
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object}
+
+\item{...}{Not used}
 }
 \description{
 Return a list containing the formulas defining each channel of the model.

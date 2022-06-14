@@ -33,7 +33,6 @@
 #'     geom_line() +
 #'     facet_wrap(~ variable, scales = "free_y")
 #' }
-#' TODO all
 #' @srrstats {RE1.2} *Regression Software should document expected format (types or classes) for inputting predictor variables, including descriptions of types or classes which are not accepted.*
 #' @srrstats {BS5.2} *Bayesian Software should either return the input function or prior distributional specification in the return object; or enable direct access to such via additional functions which accept the return object as single argument.*
 #' @srrstats {G2.8} *Software should provide appropriate conversion or dispatch routines as part of initial pre-processing to ensure that all other sub-functions of a package receive inputs of a single defined class or type.*
@@ -74,6 +73,7 @@
 #' @srrstats {RE4.4} *The specification of the model, generally as a formula (via `formula()`)*
 #' @srrstats {RE4.8} *Response variables, and associated "metadata" where applicable.*
 #' @srrstats {RE4.13} *Predictor variables, and associated "metadata" where applicable.*
+# TODO all
 # TODO document priors
 # TODO document what missingness means
 # TODO warn ordered factor as response
@@ -155,6 +155,7 @@ dynamite <- function(dformula, data, group, time,
 #' Return a list containing the formulas defining each channel of the model.
 #'
 #' @param x \[`dynamitefit`\]\cr The model fit object
+#' @param ... Not used
 #'
 #' @export
 formula.dynamitefit <- function(x, ...) {
@@ -192,7 +193,7 @@ parse_data <- function(data, dformula, group_var, time_var) {
       `x` = "Column type{?s} {.cls {invalid_types}} {?is/are} not supported."
     ))
   }
-  coerce_cols <- valid_cols && !factor_cols
+  coerce_cols <- valid_cols & !factor_cols
   if (any(coerce_cols)) {
     for (i in seq_along(which(coerce_cols))) {
       data[,i] <- do.call(paste0("as.", typeof(data[,i])),
