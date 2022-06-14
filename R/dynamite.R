@@ -195,7 +195,7 @@ parse_data <- function(data, dformula, group_var, time_var) {
   }
   coerce_cols <- valid_cols & !factor_cols
   if (any(coerce_cols)) {
-    for (i in seq_along(which(coerce_cols))) {
+    for (i in which(coerce_cols)) {
       data[,i] <- do.call(paste0("as.", typeof(data[,i])),
                           args = list(data[,i]))
     }
