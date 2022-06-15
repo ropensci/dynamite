@@ -68,7 +68,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
     lb <- spline_defs$lb_tau
     shrinkage <- spline_defs$shrinkage
     bs_opts <- spline_defs$bs_opts
-    bs_opts$x <- time # TODO change this
+    bs_opts$x <- (fixed + 1):T_full
     if (is.null(bs_opts$Boundary.knots)) {
       bs_opts$Boundary.knots <- range(bs_opts$x)
     }
