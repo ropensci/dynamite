@@ -8,9 +8,7 @@ splines(
   shrinkage = FALSE,
   override = FALSE,
   df = NULL,
-  knots = NULL,
   degree = 3,
-  Boundary.knots = NULL,
   lb_tau = 0,
   noncentered = FALSE
 )
@@ -26,18 +24,18 @@ TODO: Needs more testing whether this is useful.}
 definition for the splines will not be overridden by another call to
 \code{splines()}. If \code{TRUE}, any existing definitions will be replaced.}
 
-\item{df}{[\code{integer(1)}]\cr See \code{\link[splines:bs]{splines::bs()}}.}
-
-\item{knots}{[\code{numeric()}]\cr See \code{\link[splines:bs]{splines::bs()}}.}
+\item{df}{[\code{numeric()}]\cr Degree of freedom, i.e. the total number of
+spline coefficients. See \code{\link[splines:bs]{splines::bs()}}. Note that the knots are always
+defined as equidistant sequence on the interval starting from the first
+non-fixed time point to the last time point in the data.}
 
 \item{degree}{[\code{integer(1)}]\cr See \code{\link[splines:bs]{splines::bs()}}.}
 
-\item{Boundary.knots}{[\code{numeric()}]\cr See \code{\link[splines:bs]{splines::bs()}}.}
-
-\item{lb_tau}{[\code{numeric(1)}]\cr Hard constraint on the lower bound of the
+\item{lb_tau}{[\code{numeric()}]\cr Hard constraint(s) on the lower bound of the
 standard deviation parameters \eqn{\tau} of the random walk priors. Can be
 useful in avoiding divergences in some cases. See also \code{noncentered}
-argument.}
+argument. Can be a single positive value, or vector defining the
+lower bound separately for each channel.}
 
 \item{noncentered}{[\code{logical()}]\cr If \code{TRUE}, use noncentered
 parameterization for the spline coefficients. Default is \code{FALSE}. Try
