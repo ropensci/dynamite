@@ -113,7 +113,6 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
   newdata_names <- names(newdata)
   n_resp <- length(resp_stoch)
-  idx_par <- rep(1L:n_draws, each = n_id)
   eval_envs <- vector(mode = "list", length = n_resp)
   for (j in seq_len(n_resp)) {
     resp <- resp_stoch[j]
@@ -141,26 +140,24 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
       resp_levels <- attr(object$stan$responses, "resp_class")[[resp]] |>
         attr("levels")
       if (model_vars[[j]]$has_fixed_intercept) {
-        e$alpha <- samples[[alpha]][idx_par, , drop = FALSE]
+        e$alpha <- samples[[alpha]]
       } else if (model_vars[[j]]$has_varying_intercept) {
-        e$alpha <- samples[[alpha]][idx_par, , , drop = FALSE]
+        e$alpha <- samples[[alpha]]
       }
-      e$beta <- samples[[beta]][idx_par, , , drop = FALSE]
-      e$delta <- samples[[delta]][idx_par, , , , drop = FALSE]
-      e$nu <- samples[[nu]][idx_par, , drop = FALSE]
+      e$beta <- samples[[beta]]
+      e$delta <- samples[[delta]]
+      e$nu <- samples[[nu]]
       e$resp_levels <- resp_levels
       e$S <- length(resp_levels)
-      #e$idx_resp <- which(newdata_names %in%
-      #                      c(glue::glue("{resp}_{resp_levels}")))
     } else {
       resp_levels <- NULL
       if (model_vars[[j]]$has_fixed_intercept) {
-        e$alpha <- samples[[alpha]][idx_par, drop = FALSE]
+        e$alpha <- samples[[alpha]]
       } else if (model_vars[[j]]$has_varying_intercept) {
-        e$alpha <- samples[[alpha]][idx_par, , drop = FALSE]
+        e$alpha <- samples[[alpha]]
       }
-      e$beta <- samples[[beta]][idx_par, , drop = FALSE]
-      e$delta <- samples[[delta]][idx_par, , , drop = FALSE]
+      e$beta <- samples[[beta]]
+      e$delta <- samples[[delta]]
       if (model_vars[[j]]$has_random_intercept) {
         e$nu <- c(t(samples[[nu]][1L:n_draws, ]))
       }

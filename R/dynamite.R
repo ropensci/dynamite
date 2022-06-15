@@ -107,7 +107,7 @@ dynamite <- function(dformula, data, group, time,
   evaluate_deterministic(data, dformulas, group_var, time_var)
   # TODO check for NAs
   stan <- prepare_stan_data(data, dformulas$stoch, group_var, time_var, priors,
-                            fixed = attr(dformulas, "max_lag"))
+                            fixed = attr(dformulas$all, "max_lag"))
   model_code <- create_blocks(dformula = dformulas$stoch, indent = 2L,
                               vars = stan$model_vars)
   # TODO needs to be NULL?
@@ -388,7 +388,8 @@ parse_lags <- function(data, dformula, group_var, time_var) {
         y_past <- NULL
         y_past_idx <- NULL
         y_past_offset <- NULL
-        y_obs_lags <- NULL
+        y_obs <- NULL
+        y_self <- NULL
         y_stoch <- TRUE
         y_deterministic <- is_deterministic(dformula[[y_idx]]$family)
         y_type <- dformula[[y_idx]]$specials$resp_type
@@ -401,8 +402,8 @@ parse_lags <- function(data, dformula, group_var, time_var) {
           y_obs <- extract_lags(y_form) |>
             dplyr::filter(.data$var %in% c(resp_stoch, data_names)) |>
             dplyr::pull(.data$k)
-          if (length(y_obs_lags) > 0) {
-            y_obs <- max(y_obs_lags)
+          if (length(y_obs) > 0) {
+            y_obs <- max(y_obs)
           } else {
             y_obs <- 0
           }
@@ -437,11 +438,12 @@ parse_lags <- function(data, dformula, group_var, time_var) {
         spec <- NULL
         if (y_resp) {
           if (!is.null(y_past)) {
-            if (i > y_past_offset)
-              y_past_idx <- y_past_idx + 1
+            if (i > y_past_offset) {
+              y_past_idx <- y_past_idx + 1L
               spec <- list(past = y_past[y_past_idx],
                            past_offset = max_lag,
                            resp_type = y_type)
+            }
           }
         }
         map_channel[[idx]] <- dynamitechannel(

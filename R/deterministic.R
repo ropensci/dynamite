@@ -91,6 +91,9 @@ assign_initial_values <- function(data, dd, dlp, dld, dls,
       }
     }
   }
+  if (n_det > 0) {
+    assign_deterministic(data, cl, idx)
+  }
 }
 
 assign_deterministic <- function(data, cl, idx) {

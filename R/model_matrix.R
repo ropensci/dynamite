@@ -17,25 +17,28 @@ full_model.matrix <- function(dformula, data) {
     y <- dformula[[i]]$resp
     mm <- model.matrix.lm(formulas[[i]], data = data, na.action = na.pass) |>
       remove_intercept()
-    #if (kappa(cor(mm, use = "complete.obs")) > 30.0) {
-    #  warning_(c(
-    #    "Severe collinearity found between predictor variables:",
-    #    `i` = "Condition number of the model matrix of channel {.var {y}}
-    #           is greater than 30."
-    #  ))
-    #}
-    #mm_names <- colnames(mm)
-    #for (j in seq_len(ncol(mm))) {
-    #  pred_resp <- cbind(as.numeric(mm[,j]), as.numeric(data[[y]]))
-    #  if (kappa(cor(pred_resp, use = "complete.obs")) > 30.0) {
-    #    x <- mm_names[j]
-    #    warning_(c(
-    #      "Severe collinearity found between response and predictor variable:",
-    #      `i` = "Response {.var {y}} is almost
-    #             perfectly collinear with {.var {x}}."
-    #    ))
-    #  }
-    #}
+    nc <- ncol(mm)
+    mm_obs <- stats::complete.cases(mm)
+    if (any(mm_obs) && !identical(qr(mm[mm_obs, ])$rank, nc)) {
+      warning_(
+        "Perfect collinearity found between predictor variables of
+         channel {.var {y}}."
+      )
+    }
+    mm_names <- colnames(mm)
+    for (j in seq_len(ncol(mm))) {
+      pred_resp <- cbind(as.numeric(mm[,j]), as.numeric(data[[y]]))
+      pred_resp_obs <- stats::complete.cases(pred_resp)
+      if (any(pred_resp_obs) &&
+          !identical(qr(pred_resp[pred_resp_obs, ])$rank, 2L)) {
+        x <- mm_names[j]
+        warning_(c(
+          "Perfect collinearity found between response and predictor variable:",
+          `i` = "Response variable {.var {y}} is perfectly
+                 collinear with predictor variable {.var {x}}."
+        ))
+      }
+    }
     model_matrices[[i]] <- mm
   }
   model_matrix <- do.call(cbind, model_matrices)
