@@ -1,7 +1,7 @@
 ## code to create `gaussian_example_fit` object
 
 set.seed(1)
-
+library(dynamite)
 gaussian_example_fit <- dynamite(
   obs(y ~ -1 + z + varying(~ x + lag(y)), family = gaussian()) +
   splines(df = 20),

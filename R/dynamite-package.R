@@ -61,3 +61,83 @@ NULL
 #'
 #' @rdname gaussian_example_fit
 "gaussian_example_single_fit"
+#' Simulated Multivariate Panel Data
+#'
+#' A simulated data containing multiple individuals with multiple response
+#' variables.
+#'
+#' @source The data was generated according to a script in
+#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/categorical_example.R}
+#' @format A data frame with 3000 rows and 5 variables:
+#' \describe{
+#'   \item{y}{The response variable}
+#'   \item{x}{Single continuous covariate}
+#'   \item{z}{Single binary covariate}
+#'   \item{id}{Variable defining individuals (1 to 100)}
+#'    \item{time}{Variable defining the time point of the measurement (1 to 30)}
+#' }
+"multichannel_example"
+#' Model Fit for the multichannel_example Data
+#'
+#' TODO do we want to use the term "channel"??
+#'
+#' A `dynamitefit` object obtained by running a `dynamite` on the
+#' `multichannel_example` dataset as
+#' \preformatted{
+#' set.seed(1)
+#' library(dynamite)
+#' f <- obs(g ~ -1 + lag(g) + lag(logp) + varying(~x), family = gaussian()) +
+#'   obs(p ~ x + lag(g) + lag(logp) + lag(b), family = poisson()) +
+#'   obs(b ~ lag(b) * lag(logp) + lag(b) * x + lag(b) * lag(g),
+#'       family = bernoulli()) +
+#'   aux(numeric(logp) ~ log(p + 1)) + splines(df = D)
+#'
+#'
+#' multichannel_example_fit <- dynamite(f, multichannel_example, "id", "time",
+#'  chains = 2, cores = 2, init = 0, refresh = 0)
+#' }
+#'
+#' @source The data was generated according to a script in
+#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/multichannel_example_fit.R}
+#' @format A `dynamitefit` object.
+"multichannel_example_fit"
+#' Simulated Multivariate Panel Data
+#'
+#' A simulated data containing multiple individuals with two categorical
+#' response variables.
+#'
+#' @source The data was generated according to a script in
+#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/categorical_example.R}
+#' @format A data frame with 3000 rows and 5 variables: TODO
+#' \describe{
+#'   \item{y}{The response variable}
+#'   \item{x}{Single continuous covariate}
+#'   \item{z}{Single binary covariate}
+#'   \item{id}{Variable defining individuals (1 to 100)}
+#'    \item{time}{Variable defining the time point of the measurement (1 to 30)}
+#' }
+"categorical_example"
+#' Model Fit for the categorical_example Data
+#'
+#' TODO do we want to use the term "channel"??
+#'
+#' A `dynamitefit` object obtained by running a `dynamite` on the
+#' `categorical_example` dataset as
+#' \preformatted{
+#' set.seed(1)
+#' library(dynamite)
+#' f <- obs(g ~ -1 + lag(g) + lag(logp) + varying(~x), family = gaussian()) +
+#'   obs(p ~ x + lag(g) + lag(logp) + lag(b), family = poisson()) +
+#'   obs(b ~ lag(b) * lag(logp) + lag(b) * x + lag(b) * lag(g),
+#'       family = bernoulli()) +
+#'   aux(numeric(logp) ~ log(p + 1)) + splines(df = D)
+#'
+#'
+#' categorical_example_fit <- dynamite(f, categorical_example, "id", "time",
+#'  chains = 2, cores = 2, init = 0, refresh = 0)
+#' }
+#'
+#' @source The data was generated according to a script in
+#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/categorical_example_fit.R}
+#' @format A `dynamitefit` object.
+"categorical_example_fit"

@@ -49,4 +49,5 @@ cf \%>\%
     geom_line() +
     facet_wrap(~ variable, scales = "free_y")
 }
+TODO all
 }
