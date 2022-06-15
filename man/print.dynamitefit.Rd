@@ -4,16 +4,12 @@
 \alias{print.dynamitefit}
 \title{Print Summary of Dynamite Object}
 \usage{
-\method{print}{dynamitefit}(x, hmc_diagnostics = TRUE, ...)
+\method{print}{dynamitefit}(x, ...)
 }
 \arguments{
 \item{x}{An output from \code{\link{dynamite}}.}
 
-\item{hmc_diagnostics}{[\code{logical(1)}]\cr if \code{TRUE} (default), prints the
-summary of Stan's HMC sampler diagnostics. See \code{\link[rstan:check_hmc_diagnostics]{rstan::check_hmc_diagnostics()}}
-for details.}
-
-\item{...}{Ignored.}
+\item{...}{Further parameters to the print method for tibbles. See \link[tibble:formatting]{tibble::formatting}.}
 }
 \description{
 Prints the summary information of the estimated dynamite model.
