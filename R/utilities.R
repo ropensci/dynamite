@@ -132,15 +132,15 @@ paste_rows <- function(..., .indent = "", .parse = TRUE) {
   ndots <- length(dots)
   if (ndots) {
     idt_vec <- character(ndots)
-    idt_vec[1:ndots] <- .indent
+    idt_vec[1L:ndots] <- .indent
   }
   pasted <- rep("", ndots)
   for (i in seq_len(ndots)) {
     x <- dots[[i]]
     xlen <- length(x)
-    if (xlen == 0) {
+    if (identical(xlen, 0L)) {
       pasted[i] <- ""
-    } else if (xlen == 1) {
+    } else if (identical(xlen, 1L)) {
       if (nzchar(x)) {
         if (.parse) {
           xglue <- glue::glue(x, .envir = parent.frame(), .trim = FALSE)
@@ -151,7 +151,7 @@ paste_rows <- function(..., .indent = "", .parse = TRUE) {
       }
     } else {
       x <- x[nzchar(x)]
-      if (length(x) > 0) {
+      if (length(x) > 0L) {
         if (.parse) {
           xglue <- sapply(x, function(y) {
             paste0(glue::glue(y, .envir = parent.frame(), .trim = FALSE),
@@ -165,7 +165,7 @@ paste_rows <- function(..., .indent = "", .parse = TRUE) {
     }
   }
   pasted <- pasted[nzchar(pasted)]
-  if (length(pasted) > 0) {
+  if (length(pasted) > 0L) {
     paste0(pasted, collapse = "\n")
   } else {
     ""
@@ -175,17 +175,17 @@ paste_rows <- function(..., .indent = "", .parse = TRUE) {
 #' Create an indenter
 #'
 #' @param m An integer denoting how many spaces does one unit of indentation
-#'   correspond to (default = 2)
+#'   correspond to (default = 2L)
 #'
 #' @noRd
-indenter_ <- function(m = 2) {
+indenter_ <- function(m = 2L) {
   x <- rep(" ", m)
-  idts <- sapply(0:10, function(y) {
+  idts <- sapply(0L:10L, function(y) {
     paste0(rep(x, y), collapse = "")
   })
   force(idts)
   function(v) {
-    unlist(idts[v + 1])
+    unlist(idts[v + 1L])
   }
 }
 
@@ -196,6 +196,17 @@ indenter_ <- function(m = 2) {
 #' @noRd
 has_as_is <- function(x) {
   grepl("I\\(.+\\)", x, perl = TRUE)
+}
+
+#' Fill gaps (NAs) in a vector with the last non-NA observation
+#'
+#' @param x A vector possibly containing NA values
+#'
+#' @noRd
+locf <- function(x) {
+  non_na <- ifelse_(is.na(x[1L]), c(1L, which(!is.na(x))), which(!is.na(x)))
+  fill <- diff(c(non_na, length(x) + 1L))
+  rep(x[non_na], fill)
 }
 
 #' Stop function execution without displaying the call

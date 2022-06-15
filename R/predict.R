@@ -1,13 +1,17 @@
 #' Predict method for a Bayesian Time-Varying Coefficients Model
 #'
-#' @param object Object of class `dynamitefit`.
-#' @param newdata Data frame used in predictions. If `NULL` (default), the
-#'   data used in model estimation is used for predictions as well.
-#' @param mode TODO: Think about the names, if we predict missing observations
-#'   does the term counterfactual make sense?
-#' @param type Type of prediction, `"response"` (default), `"mean"`
-#'   or `"link"`.
-#' @param n_draws Number of posterior samples to use, default is all.
+#' @param object \[`dynamitefit`]\cr The model fit object.
+#' @param newdata \[`data.frame`]\cr Data used in predictions.
+#'   If `NULL` (default), the data used in model estimation is used for
+#'   predictions as well.
+#' @param type \[`character(1)`]\cr Type of prediction,
+#'   `"response"` (default), `"mean"`  or `"link"`.
+#' @param impute \[`character(1)`]\cr Which imputation scheme to use for
+#'   missing predictor values. Currently supported options are
+#'   no imputation: `"none"` (default), and
+#'   last observation carried forward: `"locf"`.
+#' @param n_draws \[`integer(1)`]\cr Number of posterior samples to use,
+#'   default is `NULL` which uses all samples.
 #' @param ... Ignored.
 #' @export
 #' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
@@ -26,18 +30,11 @@
 #' TODO new id?
 #' TODO document what missingness means
 predict.dynamitefit <- function(object, newdata = NULL,
-                                mode = c("counterfactual", "forecast"),
                                 type = c("response", "mean", "link"),
+                                impute = c("none", "locf", "linear"),
                                 n_draws = NULL, ...) {
-  mode <- match.arg(mode)
   type <- match.arg(type)
-  # TODO check args
-  do.call(paste0("predict.dynamitefit_", mode),
-          list(object = object, newdata = newdata,
-               type = type, n_draws = n_draws))
-}
-
-predict.dynamitefit_counterfactual <- function(object, newdata, type, n_draws) {
+  impute <- match.arg(impute)
   if (is.null(n_draws)) {
     n_draws <- ndraws(object)
   }
@@ -72,6 +69,10 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type, n_draws) {
   rhs_stoch <- get_predictors(dls)
   check_newdata(newdata, object$data, type, families_stoch,
                 resp_stoch, categories, group_var, time_var)
+  if (!identical(impute, "none")) {
+    predictors <- setdiff(names(newdata), resp_stoch)
+    impute_newdata(newdata, impute, predictors, group_var)
+  }
   group <- NULL
   n_id <- 1L
   if (!is.null(group_var)) {
@@ -149,8 +150,4 @@ predict.dynamitefit_counterfactual <- function(object, newdata, type, n_draws) {
 
   # for consistency with other output types
   data.table::setDF(newdata)
-}
-
-predict.dynamitefit_forecast <- function(object, newdata, type, n_draws) {
-  stop_("Forecasting is not yet supported.")
 }

@@ -1,7 +1,7 @@
 #' Combine model.matrix objects of all formulas of a dynamiteformula into one
 #'
 #' @param dformula A `dynamiteformula` object
-#' @param data A `data.frame` containing the variables in the model
+#' @param data A `data.table` containing the variables in the model
 #'
 #' @srrstats {RE1.3} *Regression Software which passes or otherwise transforms aspects of input data onto output structures should ensure that those output structures retain all relevant aspects of input data, notably including row and column names, and potentially information from other `attributes()`.*
 #' @srrstats {BS3.1} *Implement pre-processing routines to diagnose perfect collinearity, and provide appropriate diagnostic messages or warnings*
@@ -9,12 +9,38 @@
 #' @srrstats {RE2.4} *Regression Software should implement pre-processing routines to identify whether aspects of input data are perfectly collinear, notably including:*
 #' @srrstats {RE2.4a} *Perfect collinearity among predictor variables*
 #' @srrstats {RE2.4b} *Perfect collinearity between independent and dependent variables*
-#' TODO test multicollinearity
 #' @noRd
 full_model.matrix <- function(dformula, data) {
-  model_matrices <- lapply(get_formulas(dformula), model.matrix.lm,
-                           data = data, na.action = na.pass)
-  model_matrices <- lapply(model_matrices, remove_intercept)
+  formulas <- get_formulas(dformula)
+  model_matrices <- vector(mode = "list", length = length(formulas))
+  for (i in seq_along(formula)) {
+    y <- dformula[[i]]$resp
+    mm <- model.matrix.lm(formulas[[i]], data = data, na.action = na.pass) |>
+      remove_intercept()
+    nc <- ncol(mm)
+    mm_obs <- stats::complete.cases(mm)
+    if (any(mm_obs) && !identical(qr(mm[mm_obs, ])$rank, nc)) {
+      warning_(
+        "Perfect collinearity found between predictor variables of
+         channel {.var {y}}."
+      )
+    }
+    mm_names <- colnames(mm)
+    for (j in seq_len(ncol(mm))) {
+      pred_resp <- cbind(as.numeric(mm[,j]), as.numeric(data[[y]]))
+      pred_resp_obs <- stats::complete.cases(pred_resp)
+      if (any(pred_resp_obs) &&
+          !identical(qr(pred_resp[pred_resp_obs, ])$rank, 2L)) {
+        x <- mm_names[j]
+        warning_(c(
+          "Perfect collinearity found between response and predictor variable:",
+          `i` = "Response variable {.var {y}} is perfectly
+                 collinear with predictor variable {.var {x}}."
+        ))
+      }
+    }
+    model_matrices[[i]] <- mm
+  }
   model_matrix <- do.call(cbind, model_matrices)
   u_names <- unique(colnames(model_matrix))
   model_matrix <- model_matrix[, u_names, drop = FALSE]
