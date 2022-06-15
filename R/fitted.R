@@ -61,9 +61,9 @@ fitted.dynamitefit <- function(object, newdata = NULL,
     for (j in seq_along(resp_stoch)) {
       e <- eval_envs[[j]]
       e$idx <- idx
-      e$time <- i
+      e$time <- i - fixed
       e$model_matrix <- model_matrix_sub
-      e$a_time <- ifelse_(NCOL(e$alpha) == 1, 1, i)
+      e$a_time <- ifelse_(NCOL(e$alpha) == 1, 1, i - fixed)
       eval(e$call, envir = e)
     }
   }

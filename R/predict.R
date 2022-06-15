@@ -123,10 +123,10 @@ predict.dynamitefit <- function(object, newdata = NULL,
       e <- eval_envs[[j]]
       idx_na <- is.na(newdata[idx, .SD, .SDcols = resp_stoch[j]])
       e$idx <- idx
-      e$time <- i
+      e$time <- i - fixed
       e$idx_pred <- idx[which(idx_na)]
       e$model_matrix <- model_matrix
-      e$a_time <- ifelse_(NCOL(e$alpha) == 1, 1, i)
+      e$a_time <- ifelse_(NCOL(e$alpha) == 1, 1, i - fixed)
       if (any(idx_na)) {
         eval(e$call, envir = e)
       }

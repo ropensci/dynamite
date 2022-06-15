@@ -125,25 +125,22 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
     nu <- paste0("nu_", resp)
     e <- new.env()
     e$type <- predict_type
-    e$newdata <- newdata # reference
+    e$n_draws <- n_draws
+    e$k <- n_draws * n_id
+    e$newdata <- newdata
     e$J_fixed <- model_vars[[j]]$J_fixed
     e$K_fixed <- model_vars[[j]]$K_fixed
     e$J_varying <- model_vars[[j]]$J_varying
     e$K_varying <- model_vars[[j]]$K_varying
-    e$k <- n_id * n_draws
     e$resp <- resp_stoch[j]
-    e$phi <- samples[[phi]][idx_par]
-    e$sigma <- samples[[sigma]][idx_par]
+    e$phi <- samples[[phi]]
+    e$sigma <- samples[[sigma]]
     e$offset <- specials[[j]]$offset
     e$trials <- specials[[j]]$trials
     if (is_categorical(resp_family)) {
       resp_levels <- attr(object$stan$responses, "resp_class")[[resp]] |>
         attr("levels")
-      if (model_vars[[j]]$has_fixed_intercept) {
-        e$alpha <- samples[[alpha]]
-      } else if (model_vars[[j]]$has_varying_intercept) {
-        e$alpha <- samples[[alpha]]
-      }
+      e$alpha <- samples[[alpha]]
       e$beta <- samples[[beta]]
       e$delta <- samples[[delta]]
       e$nu <- samples[[nu]]
@@ -151,11 +148,7 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
       e$S <- length(resp_levels)
     } else {
       resp_levels <- NULL
-      if (model_vars[[j]]$has_fixed_intercept) {
-        e$alpha <- samples[[alpha]]
-      } else if (model_vars[[j]]$has_varying_intercept) {
-        e$alpha <- samples[[alpha]]
-      }
+      e$alpha <- samples[[alpha]]
       e$beta <- samples[[beta]]
       e$delta <- samples[[delta]]
       if (model_vars[[j]]$has_random_intercept) {
@@ -174,31 +167,30 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
   eval_envs
 }
 
-generate_sim_call<- function(resp, resp_levels, family, type,
-                             has_fixed, has_varying,
-                             has_fixed_intercept, has_varying_intercept,
-                             has_random_intercept, has_offset) {
+generate_sim_call <- function(resp, resp_levels, family, type,
+                              has_fixed, has_varying,
+                              has_fixed_intercept, has_varying_intercept,
+                              has_random_intercept, has_offset) {
   if (is_categorical(family)) {
     glue::glue(
       "{{\n",
       paste0(
-        "  xbeta <- cbind(0, ",
+        "  xbeta <- matrix(0.0, k, S)\n",
+        "  for (j in seq_len(n_draws)) {{\n",
+        "{ifelse_(has_fixed,
+                  'X_f <- model_matrix[j, J_fixed, drop = FALSE]', '')}\n",
+        "{ifelse_(has_varying,
+                  'X_v <- model_matrix[j, J_varying, drop = FALSE]', '')}\n",
+        "    idx_draw <- seq.int((j - 1L) * n_id + 1L, j * n_id)\n",
+        "    for (s in seq_len(S - 1)) {{\n",
+        "      xbeta[idx_draw, s + 1] <- ",
         "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '0', '')}",
-        "{ifelse_(has_fixed_intercept, 'alpha', '')}",
-        "{ifelse_(has_varying_intercept,
-                  'matrix(alpha[, a_time, ], nrow(alpha))',
-                  '')}",
-        "{ifelse_(has_fixed,",
-        "' + apply(beta, 3, function(b) {{
-               .rowSums(model_matrix[, J_fixed, drop = FALSE] * b,
-                        m = k, n = K_fixed)
-             }})', '')}",
-        "{ifelse_(has_varying,",
-        "' + apply(array(delta[, time, , ], dim = dim(delta)[-2]), 3, function(d) {{
-               .rowSums(model_matrix[, J_varying, drop = FALSE] * d,
-                        m = k, n = K_varying)
-             }})', '')}",
-        ")\n"
+        "{ifelse_(has_fixed_intercept, 'alpha[j, s]', '')}",
+        "{ifelse_(has_varying_intercept, 'alpha[j, a_time, s]', '')}",
+        "{ifelse_(has_fixed, ' + X_f %*% beta[j, , s]', '')}",
+        "{ifelse_(has_varying, ' + X_v %*% delta[j, time, , s]', '')}",
+        "    }}",
+        "  }}\n"
       ),
       eval(str2lang(glue::glue("{type}_categorical"))),
       "}}"
@@ -207,18 +199,20 @@ generate_sim_call<- function(resp, resp_levels, family, type,
     glue::glue(
       "{{\n",
       paste0(
-        "{ifelse_(!has_fixed_intercept && !has_varying_intercept,
-                  '  xbeta <- 0', '')}",
-        "{ifelse_(has_fixed_intercept, '  xbeta <- alpha', '')}",
-        "{ifelse_(has_varying_intercept, '  xbeta <- alpha[, a_time]', '')}",
-        "{ifelse_(has_random_intercept, ' + nu', '')}",
-        "{ifelse_(has_fixed,",
-          "' + .rowSums(x = model_matrix[, J_fixed, drop = FALSE] * beta,
-                        m = k, n = K_fixed)', '')}",
-          "{ifelse_(has_varying,",
-          "' + .rowSums(x = model_matrix[, J_varying, drop = FALSE] *
-                              delta[, time, ],
-                        m = k, n = K_varying)', '')}\n"
+        "  xbeta <- numeric(k)\n",
+        "  for (j in seq_len(n_draws)) {{\n",
+        "{ifelse_(has_fixed,
+                  'X_f <- model_matrix[j, J_fixed, drop = FALSE]', '')}\n",
+        "{ifelse_(has_varying,
+                  'X_v <- model_matrix[j, J_varying, drop = FALSE]', '')}\n",
+        "    idx_draw <- seq.int((j - 1L) * n_id + 1L, j * n_id)\n",
+        "    xbeta[idx_draw] <- ",
+        "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '0', '')}",
+        "{ifelse_(has_fixed_intercept, 'alpha[j,]', '')}",
+        "{ifelse_(has_varying_intercept, 'alpha[j, a_time]', '')}",
+        "{ifelse_(has_fixed, ' + X_f %*% beta[j, ]', '')}",
+        "{ifelse_(has_varying, ' + X_v %*% delta[j, time, ]', '')}",
+        "  }}\n"
       ),
       ifelse_(identical(type, "predict"),
         paste0(

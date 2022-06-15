@@ -13,7 +13,7 @@
 full_model.matrix <- function(dformula, data) {
   formulas <- get_formulas(dformula)
   model_matrices <- vector(mode = "list", length = length(formulas))
-  for (i in seq_along(formula)) {
+  for (i in seq_along(formulas)) {
     y <- dformula[[i]]$resp
     mm <- model.matrix.lm(formulas[[i]], data = data, na.action = na.pass) |>
       remove_intercept()
