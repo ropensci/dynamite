@@ -41,7 +41,9 @@ full_model.matrix <- function(dformula, data) {
 #'
 #' @param formula_list A `list` of `formula` objects
 #' @param newdata A `data.frame` containing the variables in the model
-#' @param u_names TODO
+#' @param idx An `integer` vector of row indices to subset by
+#' @param u_names A `character` vector of unique column names of the resulting
+#'   matrix
 #'
 #' @noRd
 full_model.matrix_predict <- function(formula_list, newdata, idx, u_names) {
@@ -72,7 +74,7 @@ full_model.matrix_fast <- function(formula_list, newdata, u_names) {
 
 #' Remove Intercept from the Model Matrix
 #'
-#' @param x A model matrix from `model.matrix.lm`.
+#' @param x A model matrix from `model.matrix.lm`
 #' @noRd
 remove_intercept <- function(x) {
   idx <- which(attr(x, "assign") == 0)

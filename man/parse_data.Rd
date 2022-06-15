@@ -4,11 +4,13 @@
 \alias{parse_data}
 \title{Parse data for model fitting}
 \usage{
-parse_data(data, group_var, time_var)
+parse_data(data, dformula, group_var, time_var)
 }
 \arguments{
 \item{data}{[\code{data.frame}]\cr The data frame containing the variables in
 the model.}
+
+\item{dformula}{[\code{dynamiteformula}] The model formula}
 
 \item{group_var}{[\code{character(1)},\code{NULL}]\cr Group variable name or \code{NULL}
 if there is only one group}

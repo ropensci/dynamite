@@ -7,7 +7,7 @@
 #' @param formula \[`formula`]\cr An R formula describing the model.
 #' @param family \[`call`, `character(1)`]\cr
 #'   A call to a family function, e.g., `gaussian()` or the family
-#'   name as character, e.g., `"gaussian"`.
+#'   name as a character string, e.g., `"gaussian"`.
 #' @param random_intercept \[`logical(1)`]\cr If `TRUE`, adds
 #'   individual-level intercepts to the channel.
 #' @export
@@ -50,6 +50,7 @@ dynamiteformula <- function(formula, family, random_intercept = FALSE) {
     list(
       dynamitechannel(
         formula = x$formula,
+        original = formula,
         family = x$family,
         response = x$response,
         fixed = x$fixed,
@@ -94,11 +95,12 @@ dynamiteformula_ <- function(formula, family, random_intercept = FALSE) {
 #' Create a channel for a dynamiteformula directly
 #'
 #' @param formula See [`dynamiteformula()`]
+#' @param original See [`dynamiteformula()`]
 #' @param family See [`dynamiteformula()`]
 #' @param response \[`character(1)`] Name of the response
 #' @param fixed \[`integer()`] Time-invariant covariate indices
 #' @param varying \[`integer()`] Time-varying covariate indices
-#' @param specials See [`dynamiteformula()`]
+#' @param specials See \[`dynamiteformula()`]
 #' @param has_fixed_intercept \[`logical(1)`] Does the channel contain fixed
 #'   intercept?
 #' @param has_varying_intercept \[`logical(1)`] Does the channel contain
@@ -106,7 +108,7 @@ dynamiteformula_ <- function(formula, family, random_intercept = FALSE) {
 #' @param has_rand_intercept \[`logical(1)`] Does the channel contain random
 #'   individual-level intercept term?
 #'@noRd
-dynamitechannel <- function(formula, family, response,
+dynamitechannel <- function(formula, original = NULL, family, response,
                             fixed = integer(0), varying = integer(0),
                             specials = list(),
                             has_fixed_intercept = FALSE,
@@ -114,6 +116,7 @@ dynamitechannel <- function(formula, family, response,
                             has_random_intercept = FALSE) {
   list(
     formula = formula,
+    original = original,
     family = family,
     response = response,
     fixed = fixed,
@@ -210,6 +213,15 @@ get_terms <- function(x) {
 #' @noRd
 get_formulas <- function(x) {
   lapply(x, "[[", "formula")
+}
+
+#' Get all original formulas of a dynamiteformula object
+#'
+#' @param x A `dynamiteformula` object
+#'
+#' @noRd
+get_originals <- function(x) {
+  lapply(x, "[[", "original")
 }
 
 #' Get all family objects of a dynamiteformula object

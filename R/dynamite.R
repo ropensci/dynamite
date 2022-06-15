@@ -33,22 +33,17 @@
 #'     geom_line() +
 #'     facet_wrap(~ variable, scales = "free_y")
 #' }
-#' TODO all
 #' @srrstats {RE1.2} *Regression Software should document expected format (types or classes) for inputting predictor variables, including descriptions of types or classes which are not accepted.*
 #' @srrstats {BS5.2} *Bayesian Software should either return the input function or prior distributional specification in the return object; or enable direct access to such via additional functions which accept the return object as single argument.*
-#' @srrstats {G2.5} *Where inputs are expected to be of `factor` type, secondary documentation should explicitly state whether these should be `ordered` or not, and those inputs should provide appropriate error or other routines to ensure inputs follow these expectations.*
 #' @srrstats {G2.8} *Software should provide appropriate conversion or dispatch routines as part of initial pre-processing to ensure that all other sub-functions of a package receive inputs of a single defined class or type.*
 #' @srrstats {G2.9} *Software should issue diagnostic messages for type conversion in which information is lost (such as conversion of variables from factor to character; standardisation of variable names; or removal of meta-data such as those associated with [`sf`-format](https://r-spatial.github.io/sf/) data) or added (such as insertion of variable or column names where none were provided).*
 #' @srrstats {G2.10} *Software should ensure that extraction or filtering of single columns from tabular inputs should not presume any particular default behaviour, and should ensure all column-extraction operations behave consistently regardless of the class of tabular data used as input.*
-#' @srrstats {G2.11} *Software should ensure that `data.frame`-like tabular objects which have columns which do not themselves have standard class attributes (typically, `vector`) are appropriately processed, and do not error without reason. This behaviour should be tested. Again, columns created by the [`units` package](https://github.com/r-quantities/units/) provide a good test case.*
-#' @srrstats {G2.12} *Software should ensure that `data.frame`-like tabular objects which have list columns should ensure that those columns are appropriately pre-processed either through being removed, converted to equivalent vector columns where appropriate, or some other appropriate treatment such as an informative error. This behaviour should be tested.*
 #' @srrstats {G2.13} *Statistical Software should implement appropriate checks for missing data as part of initial pre-processing prior to passing data to analytic algorithms.*
 #' @srrstats {G2.14} *Where possible, all functions should provide options for users to specify how to handle missing (`NA`) data, with options minimally including:*
 #' @srrstats {G2.14a} *error on missing data*
 #' @srrstats {G2.14b} *ignore missing data with default warnings or messages issued*
 #' @srrstats {G2.14c} *replace missing data with appropriately imputed values*
 #' @srrstats {G2.15} *Functions should never assume non-missingness, and should never pass data with potential missing values to any base routines with default `na.rm = FALSE`-type parameters (such as [`mean()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/mean.html), [`sd()`](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/sd.html) or [`cor()`](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/cor.html)).*
-#' @srrstats {G2.16} *All functions should also provide options to handle undefined values (e.g., `NaN`, `Inf` and `-Inf`), including potentially ignoring or removing such values.*
 #' @srrstats {BS1.2} *Description of how to specify prior distributions, both in textual form describing the general principles of specifying prior distributions, along with more applied descriptions and examples, within:*
 #' @srrstats {BS1.1} *Descriptions of how to enter data, both in textual form and via code examples. Both of these should consider the simplest cases of single objects representing independent and dependent data, and potentially more complicated cases of multiple independent data inputs.*
 #' @srrstats {BS1.3} *Description of all parameters which control the computational process (typically those determining aspects such as numbers and lengths of sampling processes, seeds used to start them, thinning parameters determining post-hoc sampling from simulated values, and convergence criteria). In particular:*
@@ -63,7 +58,6 @@
 #' @srrstats {BS3.0} *Explicitly document assumptions made in regard to missing values; for example that data is assumed to contain no missing (`NA`, `Inf`) values, and that such values, or entire rows including any such values, will be automatically removed from input data.*
 #' @srrstats {BS4.0} *Packages should document sampling algorithms (generally via literary citation, or reference to other software)*
 #' @srrstats {BS4.5} *Ensure that appropriate mechanisms are provided for models which do not converge.*
-
 #' @srrstats {BS5.0} *Return values should include starting value(s) or seed(s), including values for each sequence where multiple sequences are included*
 #' @srrstats {BS5.1} *Return values should include appropriate metadata on types (or classes) and dimensions of input data*
 #' @srrstats {BS5.2} *Bayesian Software should either return the input function or prior distributional specification in the return object; or enable direct access to such via additional functions which accept the return object as single argument.*
@@ -79,10 +73,9 @@
 #' @srrstats {RE4.4} *The specification of the model, generally as a formula (via `formula()`)*
 #' @srrstats {RE4.8} *Response variables, and associated "metadata" where applicable.*
 #' @srrstats {RE4.13} *Predictor variables, and associated "metadata" where applicable.*
-# TODO extract original dynamite formula from dynamitefit
+# TODO all
 # TODO document priors
 # TODO document what missingness means
-# TODO check column types (list-columns, dates)
 # TODO warn ordered factor as response
 dynamite <- function(dformula, data, group, time,
                      priors = NULL, debug = NULL, ...) {
@@ -109,8 +102,7 @@ dynamite <- function(dformula, data, group, time,
       "Can't find time index variable {.var {time_var}} in {.var data}."
     )
   }
-  original_dformula <- dformula
-  data <- parse_data(data, group_var, time_var)
+  data <- parse_data(data, dformula, group_var, time_var)
   dformulas <- parse_lags(data, dformula, group_var, time_var)
   evaluate_deterministic(data, dformulas, group_var, time_var)
   # TODO check for NAs
@@ -134,9 +126,8 @@ dynamite <- function(dformula, data, group, time,
   # TODO return the function call for potential update method?
   out <- structure(
     list(
-      stanfit = stanfit,
       # TODO what else do we need to return?
-      dformula = original_dformula,
+      stanfit = stanfit,
       dformulas = dformulas,
       data = data,
       stan = stan,
@@ -159,19 +150,79 @@ dynamite <- function(dformula, data, group, time,
   out
 }
 
+#' Access model formula of a dynamite model fit
+#'
+#' Return a list containing the formulas defining each channel of the model.
+#'
+#' @param x \[`dynamitefit`\]\cr The model fit object
+#' @param ... Not used
+#'
+#' @export
+formula.dynamitefit <- function(x, ...) {
+  get_originals(x$dformulas$all)
+}
+
 #' Parse data for model fitting
 #'
 #' @param data \[`data.frame`]\cr The data frame containing the variables in
 #'   the model.
+#' @param dformula \[`dynamiteformula`] The model formula
 #' @param group_var \[`character(1)`,`NULL`]\cr Group variable name or `NULL`
 #'   if there is only one group
 #' @param time_var \[`character(1)`]\cr Time index variable name
 #'
 #' @srrstats {G2.4d} *explicit conversion to factor via `as.factor()`*
-parse_data <- function(data, group_var, time_var) {
+#' @srrstats {G2.5} *Where inputs are expected to be of `factor` type, secondary documentation should explicitly state whether these should be `ordered` or not, and those inputs should provide appropriate error or other routines to ensure inputs follow these expectations.*
+#' @srrstats {G2.11} *Software should ensure that `data.frame`-like tabular objects which have columns which do not themselves have standard class attributes (typically, `vector`) are appropriately processed, and do not error without reason. This behaviour should be tested. Again, columns created by the [`units` package](https://github.com/r-quantities/units/) provide a good test case.*
+#' @srrstats {G2.12} *Software should ensure that `data.frame`-like tabular objects which have list columns should ensure that those columns are appropriately pre-processed either through being removed, converted to equivalent vector columns where appropriate, or some other appropriate treatment such as an informative error. This behaviour should be tested.*
+#' @srrstats {G2.16} *All functions should also provide options to handle undefined values (e.g., `NaN`, `Inf` and `-Inf`), including potentially ignoring or removing such values.*
+parse_data <- function(data, dformula, group_var, time_var) {
   data <- droplevels(data) # TODO document this in return value
+  data_names <- names(data)
   data <- data |>
     dplyr::mutate(dplyr::across(where(is.character), as.factor))
+  valid_types <- c("integer", "logical", "double")
+  col_types <- sapply(data, typeof)
+  factor_cols <- sapply(data, is.factor)
+  valid_cols <- (col_types %in% valid_types) | factor_cols
+  if (any(!valid_cols)) {
+    invalid_cols <- data_names[!valid_cols]
+    invalid_types <- col_types[!valid_cols]
+    stop_(c(
+      "Column{?s} {.var {invalid_cols}} of {.var data} {?is/are} invalid:",
+      `x` = "Column type{?s} {.cls {invalid_types}} {?is/are} not supported."
+    ))
+  }
+  coerce_cols <- valid_cols & !factor_cols
+  if (any(coerce_cols)) {
+    for (i in which(coerce_cols)) {
+      data[,i] <- do.call(paste0("as.", typeof(data[,i])),
+                          args = list(data[,i]))
+    }
+  }
+  resp <- get_responses(dformula)
+  ordered_factor_resp <- sapply(seq_along(resp), function(i) {
+    is_categorical(dformula[[i]]$family) &&
+      all(c("ordered", "factor") %in% class(data[, resp[i]]))
+  })
+  if (any(ordered_factor_resp)) {
+    rof <- resp[ordered_factor_resp]
+    warning_(c(
+      "Response variable{?s} {.var {rof}} {?is/are} of class
+      {.cls ordered factor} whose channel{?s} {?is/are} categorical:",
+      `i` = "{.var {rof}} will be converted to {?an/} unordered factor{?s}."
+    ))
+    for (i in seq_along(rof)) {
+      class(data[, rof[i]]) <- "factor"
+    }
+  }
+  finite_cols <- sapply(data, function(x) all(is.finite(x)))
+  if (any(!finite_cols)) {
+    stop_(
+      "Non-finite values in variable{?s} {.var {data_names[!finite_cols]}} of
+      {.var data}."
+    )
+  }
   time <- sort(unique(data[[time_var]]))
   if (length(time) == 1) {
     stop_("There must be at least two time points in the data.")
