@@ -61,6 +61,14 @@ check_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
   data.table::setkeyv(newdata, c(group_var, time_var))
 }
 
+# TODO test imputation
+impute_newdata <- function(newdata, impute, predictors, group_var) {
+  if (identical(impute, "locf")) {
+    newdata[, (predictors) := lapply(.SD, locf),
+            .BY = group_var, .SDcols = predictors]
+  }
+}
+
 clear_nonfixed <- function(newdata, newdata_null, resp_stoch,
                            group_var, clear_names, fixed, n_id, n_time) {
   # TODO maybe not needed

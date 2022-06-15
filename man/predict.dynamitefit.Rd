@@ -7,25 +7,29 @@
 \method{predict}{dynamitefit}(
   object,
   newdata = NULL,
-  mode = c("counterfactual", "forecast"),
   type = c("response", "mean", "link"),
+  impute = c("none", "locf", "linear"),
   n_draws = NULL,
   ...
 )
 }
 \arguments{
-\item{object}{Object of class \code{dynamitefit}.}
+\item{object}{[\code{dynamitefit}]\cr The model fit object.}
 
-\item{newdata}{Data frame used in predictions. If \code{NULL} (default), the
-data used in model estimation is used for predictions as well.}
+\item{newdata}{[\code{data.frame}]\cr Data used in predictions.
+If \code{NULL} (default), the data used in model estimation is used for
+predictions as well.}
 
-\item{mode}{TODO: Think about the names, if we predict missing observations
-does the term counterfactual make sense?}
+\item{type}{[\code{character(1)}]\cr Type of prediction,
+\code{"response"} (default), \code{"mean"}  or \code{"link"}.}
 
-\item{type}{Type of prediction, \code{"response"} (default), \code{"mean"}
-or \code{"link"}.}
+\item{impute}{[\code{character(1)}]\cr Which imputation scheme to use for
+missing predictor values. Currently supported options are
+no imputation: \code{"none"} (default), and
+last observation carried forward: \code{"locf"}.}
 
-\item{n_draws}{Number of posterior samples to use, default is all.}
+\item{n_draws}{[\code{integer(1)}]\cr Number of posterior samples to use,
+default is \code{NULL} which uses all samples.}
 
 \item{...}{Ignored.}
 }

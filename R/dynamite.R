@@ -106,7 +106,8 @@ dynamite <- function(dformula, data, group, time,
   dformulas <- parse_lags(data, dformula, group_var, time_var)
   evaluate_deterministic(data, dformulas, group_var, time_var)
   # TODO check for NAs
-  stan <- prepare_stan_data(data, dformulas$stoch, group_var, time_var, priors)
+  stan <- prepare_stan_data(data, dformulas$stoch, group_var, time_var, priors,
+                            fixed = attr(dformulas, "max_lag"))
   model_code <- create_blocks(dformula = dformulas$stoch, indent = 2L,
                               vars = stan$model_vars)
   # TODO needs to be NULL?

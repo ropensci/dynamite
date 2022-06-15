@@ -9,6 +9,7 @@
 #' @param group_var \[`character(1)`]\cr The grouping variable name
 #' @param time_var \[`character(1)`]\cr The time index variable name
 #' @param priors TODO
+#' @param fixed \[`integer(1)`]\cr Number of fixed time points
 #' @srrstats {RE2.3} *Where applicable, Regression Software should enable data to be centred (for example, through converting to zero-mean equivalent values; or to z-scores) or offset (for example, to zero-intercept equivalent values) via additional parameters, with the effects of any such parameters clearly documented and tested.*
 #' @srrstats {G2.4} *Provide appropriate mechanisms to convert between different data types, potentially including:*
 #' @srrstats {G2.4a} *explicit conversion to `integer` via `as.integer()`*
@@ -27,7 +28,8 @@
 # TODO missing values in prior computations mean_x, sd etc
 # TODO X and y starting from fixed + 1, modify T_full
 #' @noRd
-prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL) {
+prepare_stan_data <- function(data, dformula, group_var, time_var,
+                              priors = NULL, fixed) {
 
   resp_names <- get_responses(dformula)
   responses <- as.data.frame(data[, .SD, .SDcols = resp_names])
@@ -77,7 +79,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var, priors = NULL
       noncentered <- rep(noncentered, length = n_channels)
     } else {
       warning_(
-        "Length of the {.var noncentered'} argument of {.fun splines} function
+        "Length of the {.var noncentered} argument of {.fun splines} function
         is not equal to 1 or the number of the channels.",
         `i` = "Recycling."
       )
