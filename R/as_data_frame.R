@@ -15,14 +15,18 @@
 #'  * `sigma_nu` Standard deviation of the random intercepts `nu`
 #'  * `sigma` Standard deviations of gaussian responses
 #'  * `phi` Dispersion parameters of  negative binomial distribution.
+#'  * `omega` Spline coefficients of the spline coefficients `delta`.
+#'  * `omega_alpha` Spline coefficients of time-varying `alpha`.
 #'
 #' @param x The estimated \code{dynamite} model.
 #' @param row.names Ignored.
 #' @param optional Ignored.
 #' @param responses  \[`character()`]\cr Response(s) for which the  samples
-#' should be extracted. Possible options are `unique(x$priors$response)`
+#'   should be extracted. Possible options are `unique(x$priors$response)`
 #' @param types \[`character()`]\cr Type(s) of the parameters for which the
-#' samples should be extracted. See details of possible values.
+#'   samples should be extracted. See details of possible values. Default is
+#'   all values listed in details except spline coefficients `omega` and
+#'   `omega_alpha`.
 #' @param summary \[`logical(1)`]\cr If `TRUE` (default), returns posterior
 #'   mean, standard deviation, and posterior quantiles (as defined by the
 #'   `probs` argument) for all parameters. If `FALSE`, returns the posterior
@@ -85,18 +89,14 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       )
     }
   }
+  all_types <- c("alpha", "beta", "delta", "tau", "tau_alpha",
+                 "sigma_nu", "sigma", "phi", "nu", "omega", "omega_alpha")
 
   if (is.null(types)) {
-    types <- c("alpha", "beta", "delta", "nu", "tau", "tau_alpha",
-               "sigma_nu", "sigma", "phi")
+    types <- all_types[1:9]
   } else {
-    types <- match.arg(types,
-                       c("alpha", "beta", "delta", "nu", "tau",
-                         "tau_alpha", "sigma_nu", "sigma", "phi"), TRUE)
+    types <- match.arg(types, all_types, TRUE)
   }
-  types <- types[unlist(lapply(types, function(y) {
-    any(grepl(paste0("^", y), x$stanfit@sim$pars_oi))
-    }))]
 
   time_points <- sort(unique(x$data[[x$time_var]]))
 
@@ -188,13 +188,39 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         .iteration = 1:nrow(draws),
         .chain = rep(1:ncol(draws), each = nrow(draws)))
     }
+    if (type == "omega") {
+      D <- x$stan$sampling_vars$D
+      var_names <- names(x$stan$model_vars[[response]]$J_varying)
+      k <- length(var_names)
+      d <- data.frame(
+        parameter = rep(
+          paste0("omega_", rep(1:D, each = k), "_", var_names), each = n_draws),
+        value = c(draws),
+        time = NA,
+        category = NA,
+        group = NA,
+        .iteration = 1:nrow(draws),
+        .chain = rep(1:ncol(draws), each = nrow(draws)))
+    }
+    if (type == "omega_alpha") {
+      D <- x$stan$sampling_vars$D
+      d <- data.frame(
+        parameter = rep(paste0("omega_alpha_", 1:D), each = n_draws),
+        value = c(draws),
+        time = NA,
+        category = NA,
+        group = NA,
+        .iteration = 1:nrow(draws),
+        .chain = rep(1:ncol(draws), each = nrow(draws)))
+    }
     d
   }
-  out <- x$priors |>
-    dplyr::select(.data$response, .data$type) |>
-    dplyr::filter(.data$response %in% responses & .data$type %in% types) |>
-    dplyr::distinct() |>
+  out <- tidyr::expand_grid(type = types, response = responses) |>
+    dplyr::mutate(parameter = glue::glue("{type}_{response}")) |>
     dplyr::rowwise() |>
+    dplyr::filter(any(grepl(paste0("^", .data$parameter),
+                            x$stanfit@sim$pars_oi))) |>
+    dplyr::select(.data$response, .data$type) |>
     dplyr::mutate(value = list(values(.data$type, .data$response))) |>
     tidyr::unnest(cols = .data$value)
   if (summary) {

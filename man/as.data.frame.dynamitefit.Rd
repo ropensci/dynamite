@@ -26,7 +26,9 @@
 should be extracted. Possible options are \code{unique(x$priors$response)}}
 
 \item{types}{[\code{character()}]\cr Type(s) of the parameters for which the
-samples should be extracted. See details of possible values.}
+samples should be extracted. See details of possible values. Default is
+all values listed in details except spline coefficients \code{omega} and
+\code{omega_alpha}.}
 
 \item{summary}{[\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
 mean, standard deviation, and posterior quantiles (as defined by the
@@ -61,6 +63,8 @@ time-varying \code{alpha}.
 \item \code{sigma_nu} Standard deviation of the random intercepts \code{nu}
 \item \code{sigma} Standard deviations of gaussian responses
 \item \code{phi} Dispersion parameters of  negative binomial distribution.
+\item \code{omega} Spline coefficients of the spline coefficients \code{delta}.
+\item \code{omega_alpha} Spline coefficients of time-varying \code{alpha}.
 }
 }
 \examples{

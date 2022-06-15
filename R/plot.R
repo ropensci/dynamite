@@ -34,16 +34,27 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5,
                         scales = c("fixed", "free"),
                         include_alpha = TRUE){
 
+  coefs <- coef(model, "delta", probs = c(level, 1 - level),
+                include_alpha = include_alpha)
+  if (nrow(coefs) == 0) {
+    stop_("The model does not contain varying coefficients delta.")
+  }
+
   scales <- match.arg(scales)
   title <- paste0("Posterior mean and ", 100 * (1 - 2 * level),
                   "% intervals of the time-varying coefficients")
-  coef(model, "delta", probs = c(level, 1 - level),
-       include_alpha = include_alpha) |>
-    ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean)) +
-    ggplot2::geom_ribbon(ggplot2::aes_string(
-      ymin = paste0("q", 100 * level),
-      ymax = paste0("q", 100 * (1 - level))),
-      alpha = alpha) +
+  if (any(!is.na(coefs$category))) {
+    p <- coefs |>
+      ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean,
+                                   colour = category, fill = category))
+  } else {
+    p <- coefs |>
+      ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean))
+  }
+  p + ggplot2::geom_ribbon(ggplot2::aes_string(
+    ymin = paste0("q", 100 * level),
+    ymax = paste0("q", 100 * (1 - level))),
+    alpha = alpha) +
     ggplot2::geom_line() +
     ggplot2::facet_wrap(~ parameter, scales = scales) +
     ggplot2::labs(title = title, x = "Time", y = "Value")
@@ -59,14 +70,53 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5,
 #' plot_betas(gaussian_example_fit)
 plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
 
+  coefs <- coef(model, "beta", probs = c(level, 1 - level),
+                include_alpha = include_alpha)
+  if (nrow(coefs) == 0) {
+    stop_("The model does not contain fixed coefficients beta.")
+  }
   title <- paste0("Posterior mean and ", 100 * (1 - 2 * level),
                   "% intervals of the time-invariant coefficients")
 
-  coef(model, "beta", probs = c(level, 1 - level),
-       include_alpha = include_alpha) |>
+  if (any(!is.na(coefs$category))) {
+    p <- coefs |>
+      ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter,
+                                   colour = category, group = category))
+  } else {
+    p <- coefs |>
+      ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter))
+  }
+  p + ggplot2::geom_pointrange(ggplot2::aes_string(
+    xmin = paste0("q", 100 * level),
+    xmax = paste0("q", 100 * (1 - level))),
+    position = ggplot2::position_dodge(0.5)) +
+    ggplot2::labs(title = title, x = "Value", y = "Parameter")
+}
+
+
+#' Visualize Random Intercepts of the Dynamite Model
+#'
+#' @inheritParams plot_deltas
+#' @return A `ggplot` object.
+#' @export
+#' @examples
+#' fit <- dynamite(obs(Reaction ~ lag(Reaction), family = gaussian(),
+#'   random_intercept = TRUE), lme4::sleepstudy, "Subject", "Days", chains = 1)
+#' nu <-
+plot_nus <- function(model, level = 0.05){
+
+  coefs <- coef(model, "nu", probs = c(level, 1 - level))
+  if (nrow(coefs) == 0) {
+    stop_("The model does not contain random intercepts nu.")
+  }
+  title <- paste0("Posterior mean and ", 100 * (1 - 2 * level),
+                  "% intervals of the random intercepts")
+
+  coefs |>
     ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter)) +
     ggplot2::geom_pointrange(ggplot2::aes_string(
       xmin = paste0("q", 100 * level),
       xmax = paste0("q", 100 * (1 - level)))) +
     ggplot2::labs(title = title, x = "Value", y = "Parameter")
 }
+

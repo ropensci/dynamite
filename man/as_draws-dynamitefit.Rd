@@ -18,7 +18,9 @@
 should be extracted. Possible options are \code{unique(x$priors$response)}}
 
 \item{types}{[\code{character()}]\cr Type(s) of the parameters for which the
-samples should be extracted. See details of possible values.}
+samples should be extracted. See details of possible values. Default is
+all values listed in details except spline coefficients \code{omega} and
+\code{omega_alpha}.}
 
 \item{...}{Ignored.}
 }
