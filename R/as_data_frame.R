@@ -99,7 +99,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
   }
 
   time_points <- sort(unique(x$data[[x$time_var]]))
-  fixed <- x$stan$model_vars$fixed
+  fixed <- x$stan$fixed
   time_points <- time_points[(fixed + 1):length(time_points)]
 
   values <- function(type, response) {

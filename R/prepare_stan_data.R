@@ -222,7 +222,6 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
   #  warning_("All channels will now default to time-constant ",
   #           "coefficients for all predictors.")
   #}
-  model_vars$fixed <- fixed
   sampling_vars$N <- N
   sampling_vars$K <- K
   sampling_vars$X <- X
@@ -233,7 +232,8 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
     sampling_vars = sampling_vars,
     priors = prior_list,
     responses = responses,
-    u_names = colnames(model_matrix)
+    u_names = colnames(model_matrix),
+    fixed = fixed
   )
 }
 
