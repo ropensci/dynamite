@@ -99,6 +99,8 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
   }
 
   time_points <- sort(unique(x$data[[x$time_var]]))
+  fixed <- x$stan$model_vars$fixed
+  time_points <- time_points[(fixed + 1):length(time_points)]
 
   values <- function(type, response) {
 
@@ -122,9 +124,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     }
 
     if (type == "alpha") {
-      resp <- get_responses(x$dformula)
-      varying <- x$dformula[[which(resp == response)]]$has_varying_intercept
-      if (varying) {
+      if (x$stan$model_vars[[response]]$has_varying_intercept) {
         n_time <- length(time_points)
       } else {
         n_time <- 1

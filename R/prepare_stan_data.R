@@ -26,7 +26,6 @@
 #' @srrstats {BS2.5} *Where possible, implement pre-processing checks to validate appropriateness of numeric values submitted for distributional parameters; for example, by ensuring that distributional parameters defining second-order moments such as distributional variance or shape parameters, or any parameters which are logarithmically transformed, are non-negative.*
 # TODO prior validation, conversion warnings?
 # TODO missing values in prior computations mean_x, sd etc
-# TODO X and y starting from fixed + 1, modify T_full
 #' @noRd
 prepare_stan_data <- function(data, dformula, group_var, time_var,
                               priors = NULL, fixed) {
@@ -97,14 +96,13 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
       dim = c(N, K, T_full)
     ),
     c(3, 1, 2)
-  )
+  )[(fixed + 1):T_full, , , drop = FALSE]
   sd_x <- apply(X, 3, sd, na.rm = TRUE)
   # needed for default priors, 0.5 is pretty arbitrary
   sd_x <- setNames(pmax(0.5, sd_x, na.rm = TRUE),
                    colnames(model_matrix))
-  # TODO use fixed + 1
   x_means <- apply(X[1, , , drop = FALSE], 3, mean, na.rm = TRUE)
-  # For missing lagged covariates etc
+  # For missing covariates etc
   x_means[is.na(x_means)] <- 0
   X_na <- is.na(X)
   # Placeholder for NAs in Stan
@@ -123,6 +121,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
       resp_split <- responses[, resp]
     }
     Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))
+    Y <- Y[(fixed + 1):T_full, , drop = FALSE]
     Y_na <- is.na(Y)
     # Separate copy of Y for Stan, so that added zeros do not influence channel
     # preparation nor influence other checks related to response variables.
@@ -139,9 +138,9 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
     channel$K <- length(assigned[[i]])
     channel$K_fixed <- length(fixed_pars[[i]])
     channel$K_varying <- length(varying_pars[[i]])
-    obs_idx <- array(0, dim = c(N, T_full))
-    obs_len <- integer(T_full)
-    for (j in seq_len(T_full)) {
+    obs_idx <- array(0, dim = c(N, T_full - fixed))
+    obs_len <- integer(T_full - fixed)
+    for (j in seq_len(T_full - fixed)) {
       x_na <- X_na[j, , channel$J, drop = FALSE]
       dim(x_na) <- c(N, channel$K)
       y_na <- Y_na[j, ]
@@ -189,8 +188,9 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
         } else {
           spec_split <- form_specials[[spec]]
         }
+        spec_array <- array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
         sampling_vars[[paste0(spec, "_", resp)]] <-
-          array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
+          spec_array[(fixed + 1):T_full, , drop = FALSE]
         channel[[paste0("has_", spec)]] <- TRUE
       } else {
         channel[[paste0("has_", spec)]] <- FALSE
@@ -222,10 +222,11 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
   #  warning_("All channels will now default to time-constant ",
   #           "coefficients for all predictors.")
   #}
+  model_vars$fixed <- fixed
   sampling_vars$N <- N
   sampling_vars$K <- K
   sampling_vars$X <- X
-  sampling_vars$T <- T_full
+  sampling_vars$T <- T_full - fixed
   sampling_vars$X_m <- as.array(x_means)
   list(
     model_vars = model_vars,
