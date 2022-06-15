@@ -46,7 +46,8 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5,
   if (any(!is.na(coefs$category))) {
     p <- coefs |>
       ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean,
-                                   colour = category, fill = category))
+                                   colour = .data$category,
+                                   fill = .data$category))
   } else {
     p <- coefs |>
       ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean))
@@ -81,7 +82,8 @@ plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
   if (any(!is.na(coefs$category))) {
     p <- coefs |>
       ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter,
-                                   colour = category, group = category))
+                                   colour = .data$category,
+                                   group = .data$category))
   } else {
     p <- coefs |>
       ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter))
