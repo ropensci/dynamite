@@ -33,6 +33,9 @@
 #'   samples instead.
 #' @param probs \[`numeric()`]\cr Quantiles of interest. Default is
 #'   `c(0.05, 0.95)`.
+#' @param include_fixed \[`logical(1)`]\cr If `TRUE` (default), time-varying
+#'   parameters for 1:fixed time points are included in the output as NAs. If
+#'   `FALSE`, those time points are omitted completely from the output.
 #' @param ... Ignored.
 #' @return A `tibble` containing either samples or summary statistics of the
 #'   model parameters in a long format. For wide format, see
@@ -73,11 +76,10 @@
 #'   posterior::as_draws() |>
 #'   posterior::summarise_draws()
 #'
-# TODO NA for t <= fixed
 as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
                                       responses = NULL, types = NULL,
                                       summary = TRUE, probs = c(0.05, 0.95),
-                                      ...) {
+                                      include_fixed = TRUE, ...) {
 
   if (is.null(responses)) {
     responses <- unique(x$priors$response)
@@ -98,9 +100,8 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     types <- match.arg(types, all_types, TRUE)
   }
 
-  time_points <- sort(unique(x$data[[x$time_var]]))
+  all_time_points <- sort(unique(x$data[[x$time_var]]))
   fixed <- x$stan$fixed
-  time_points <- time_points[(fixed + 1):length(time_points)]
 
   values <- function(type, response) {
 
@@ -125,6 +126,10 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
 
     if (type == "alpha") {
       if (x$stan$model_vars[[response]]$has_varying_intercept) {
+        time_points <- all_time_points
+        if (!include_fixed) {
+          time_points <- time_points[(fixed + 1):length(time_points)]
+        }
         n_time <- length(time_points)
       } else {
         n_time <- 1
@@ -132,7 +137,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       }
       d <- data.frame(
         parameter = paste0("alpha_", response),
-        value = c(draws),
+        value = c(rep(NA, include_fixed * fixed * n_draws), c(draws)),
         time = rep(time_points, each = n_draws),
         category = rep(category, each = n_time * n_draws),
         group = NA,
@@ -156,10 +161,14 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       var_names <- paste0("delta_", response, "_",
                           names(x$stan$model_vars[[response]]$J_varying))
       n_vars <- length(var_names)
+      time_points <- all_time_points
+      if (!include_fixed) {
+        time_points <- time_points[(fixed + 1):length(time_points)]
+      }
       n_time <- length(time_points)
       d <- data.frame(
         parameter = rep(var_names, each = n_time * n_draws),
-        value = c(draws),
+        value = c(rep(NA, include_fixed * fixed * n_vars * n_draws), c(draws)),
         time = rep(time_points, each = n_draws),
         category = rep(category, each = n_time * n_vars * n_draws),
         group = NA,

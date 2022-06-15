@@ -12,6 +12,7 @@
   types = NULL,
   summary = TRUE,
   probs = c(0.05, 0.95),
+  include_fixed = TRUE,
   ...
 )
 }
@@ -37,6 +38,10 @@ samples instead.}
 
 \item{probs}{[\code{numeric()}]\cr Quantiles of interest. Default is
 \code{c(0.05, 0.95)}.}
+
+\item{include_fixed}{[\code{logical(1)}]\cr If \code{TRUE} (default), time-varying
+parameters for 1:fixed time points are included in the output as NAs. If
+\code{FALSE}, those time points are omitted completely from the output.}
 
 \item{...}{Ignored.}
 }
