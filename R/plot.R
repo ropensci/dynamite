@@ -102,12 +102,16 @@ plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
 #' @return A `ggplot` object.
 #' @export
 #' @examples
-#' fit <- dynamite(obs(Reaction ~ lag(Reaction), family = gaussian(),
-#'   random_intercept = TRUE), lme4::sleepstudy, "Subject", "Days", chains = 1)
-#' nu <-
+#' # TODO switch to grunfeld?
+#' fit <- dynamite(obs(weight ~ lag(weight) + Diet,
+#'   family = gaussian(), random_intercept = TRUE),
+#'   nlme::BodyWeight, "Rat", "Time", chains = 1)
+#' plot_nus(fit)
 plot_nus <- function(model, level = 0.05){
 
-  coefs <- coef(model, "nu", probs = c(level, 1 - level))
+  coefs <- coef(model, "nu", probs = c(level, 1 - level)) |>
+    dplyr::mutate(parameter = glue::glue("{parameter}_{group}")) |>
+    dplyr::mutate(parameter = factor(parameter, levels = parameter))
   if (nrow(coefs) == 0) {
     stop_("The model does not contain random intercepts nu.")
   }

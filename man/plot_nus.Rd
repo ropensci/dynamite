@@ -19,7 +19,9 @@ A \code{ggplot} object.
 Visualize Random Intercepts of the Dynamite Model
 }
 \examples{
-fit <- dynamite(obs(Reaction ~ lag(Reaction), family = gaussian(),
-  random_intercept = TRUE), lme4::sleepstudy, "Subject", "Days", chains = 1)
-nu <-
+# TODO switch to grunfeld?
+fit <- dynamite(obs(weight ~ lag(weight) + Diet,
+  family = gaussian(), random_intercept = TRUE),
+  nlme::BodyWeight, "Rat", "Time", chains = 1)
+plot_nus(fit)
 }

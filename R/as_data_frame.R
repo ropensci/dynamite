@@ -131,13 +131,15 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
           time_points <- time_points[(fixed + 1):length(time_points)]
         }
         n_time <- length(time_points)
+        n_na <- include_fixed * fixed * n_draws
       } else {
         n_time <- 1
         time_points <- NA
+        n_na <- 0
       }
       d <- data.frame(
         parameter = paste0("alpha_", response),
-        value = c(rep(NA, include_fixed * fixed * n_draws), c(draws)),
+        value = c(rep(NA, n_na), c(draws)),
         time = rep(time_points, each = n_draws),
         category = rep(category, each = n_time * n_draws),
         group = NA,
@@ -165,10 +167,11 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       if (!include_fixed) {
         time_points <- time_points[(fixed + 1):length(time_points)]
       }
+      n_na <- include_fixed * fixed * n_vars * n_draws
       n_time <- length(time_points)
       d <- data.frame(
         parameter = rep(var_names, each = n_time * n_draws),
-        value = c(rep(NA, include_fixed * fixed * n_vars * n_draws), c(draws)),
+        value = c(rep(NA, n_na), c(draws)),
         time = rep(time_points, each = n_draws),
         category = rep(category, each = n_time * n_vars * n_draws),
         group = NA,
@@ -234,7 +237,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     tidyr::unnest(cols = .data$value)
   if (summary) {
     out <- out |>
-      dplyr::group_by(.data$parameter, .data$time, .data$category,
+      dplyr::group_by(.data$parameter, .data$time, .data$category, .data$group,
                       .data$response, .data$type) |>
       dplyr::summarise(
         mean = mean(.data$value),

@@ -22,7 +22,7 @@ coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
                              summary = TRUE, probs = c(0.05, 0.95),
                              include_alpha = TRUE, ...) {
   type <- match.arg(type)
-  if (include_alpha || type != "nu") {
+  if (include_alpha && type != "nu") {
     types <- c("alpha", type)
     out <- as.data.frame(object, types = types, summary = summary,
                          probs = probs)
