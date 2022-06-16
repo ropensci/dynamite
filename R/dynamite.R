@@ -217,7 +217,7 @@ parse_data <- function(data, dformula, group_var, time_var) {
       class(data[, rof[i]]) <- "factor"
     }
   }
-  finite_cols <- sapply(data, function(x) all(is.finite(x)))
+  finite_cols <- sapply(data, function(x) all(is.finite(x) | is.na(x)))
   if (any(!finite_cols)) {
     stop_(
       "Non-finite values in variable{?s} {.var {data_names[!finite_cols]}} of
