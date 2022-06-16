@@ -19,24 +19,24 @@ mcmc_diagnostics <- function(x, n = 1) {
 
     cat("\nSmallest bulk-ESS values: \n")
     sumr |>
-      dplyr::select(variable, ess_bulk) |>
-      dplyr::arrange(ess_bulk) |>
-      head(n_vars) |>
-      tidyr::pivot_wider(names_from = variable, values_from = ess_bulk) |>
+      dplyr::select(.data$variable, .data$ess_bulk) |>
+      dplyr::arrange(.data$ess_bulk) |>
+      head(n) |>
+      tidyr::pivot_wider(names_from = .data$variable, values_from = .data$ess_bulk) |>
       print()
     cat("\nSmallest tail-ESS values: \n")
     sumr |>
-      dplyr::select(variable, ess_tail) |>
-      dplyr::arrange(ess_tail) |>
-      head(n_vars) |>
-      tidyr::pivot_wider(names_from = variable, values_from = ess_tail) |>
+      dplyr::select(.data$variable, .data$ess_tail) |>
+      dplyr::arrange(.data$ess_tail) |>
+      head(n) |>
+      tidyr::pivot_wider(names_from = .data$variable, values_from = .data$ess_tail) |>
       print()
     cat("\nLargest Rhat values: \n")
     sumr |>
-      dplyr::select(variable, rhat) |>
-      dplyr::arrange(dplyr:::desc(rhat)) |>
-      head(n_vars) |>
-      tidyr::pivot_wider(names_from = variable, values_from = rhat) |>
+      dplyr::select(.data$variable, .data$rhat) |>
+      dplyr::arrange(dplyr::desc(rhat)) |>
+      head(n) |>
+      tidyr::pivot_wider(names_from = .data$variable, values_from = .data$rhat) |>
       print()
   } else {
     message("No Stan model fit is available.")
