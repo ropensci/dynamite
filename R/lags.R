@@ -1,11 +1,10 @@
 #' Add each lagged response as a predictor to each channel.
 #' @param k \[`integer()`: \sQuote{1}]\cr
-#'   If `k` is a single integer, then all lags up to an including `k` of all
-#'   channels will be included for each channel. If `k` is an integer vector,
-#'   then lags indicated by `k` will be included for each channel.
+#'   Lagged values indicated by `k`  of each observed response variable
+#'   will be added as a predictor for each channel.
 #' @param type \[`integer(1)`: \sQuote{"fixed"}]\cr Either
 #'   `"fixed"` or `"varying"` which indicates whether the coefficients of the
-#'   lag terms should vary in time or not.
+#'   added lag terms should vary in time or not.
 #' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
 #' @srrstats {G2.4} *Provide appropriate mechanisms to convert between different data types, potentially including:*
 #' @srrstats {G2.4a} *explicit conversion to `integer` via `as.integer()`*
@@ -13,9 +12,6 @@
 lags <- function(k = 1L, type = c("fixed", "varying")) {
   type <- match.arg(type)
   k <- try_(k = k, type = "integer")
-  if (length(k) == 1) {
-    k <- 1:k
-  }
   structure(
     list(k = k, type = type),
     class = "lags"
@@ -74,24 +70,54 @@ extract_nonlags <- function(x) {
 #' @noRd
 extract_lags <- function(x) {
   has_lag <- find_lags(x)
-  lag_terms <- x[has_lag]
-  # TODO allow vector k
+  if (any(has_lag)) {
+    lag_terms <- paste0(x[has_lag], " ")
+  } else {
+    lag_terms <- character(0)
+  }
   lag_regex <- gregexec(
     pattern = paste0(
-      "(?<src>lag\\(\\s*(?<var>[^\\+]+?)\\s*",
-      "(?:,\\s*(?<k>\\-{0,1}[0-9]+)){0,1}\\s*\\))"
+      "(?<src>lag\\(\\s*(?<var>[^\\+\\)\\,]+?)\\s*",
+      "(?:,\\s*(?<k>.+?)){0,1}\\))\\s"
     ),
     text = lag_terms,
     perl = TRUE
   )
-  lag_map <- list()
   lag_matches <- regmatches(lag_terms, lag_regex)
-  if (length(lag_matches) > 0) {
+  if (length(lag_matches) > 0L) {
     lag_map <- do.call("cbind", args = lag_matches)
     lag_map <- as.data.frame(t(lag_map)[, -1, drop = FALSE])
-    lag_map$k <- as.integer(lag_map$k)
-    lag_map$k[is.na(lag_map$k)] <- 1L
+    n_lag <- nrow(lag_map)
+    k_str <- lag_map$k
+    lag_map$k <- integer(n_lag)
     lag_map$present <- TRUE
+    lag_map$increment <- FALSE
+    for (j in seq_len(n_lag)) {
+      if (!is.na(k_str[j])) {
+        k_expr <- try(str2lang(k_str[j]), silent = TRUE)
+        if ("try-error" %in% class(k_expr)) {
+          stop_("Invalid shifted value experssion {.code {k_str[j]}}.")
+        }
+        k_coerce <- try_(k = try(eval(k_expr), silent = TRUE), type = "integer")
+        if ("try-error" %in% class(k_coerce)) {
+          stop_("Invalid lagged value definition {.code {lag_map$src[j]}}.")
+        } else {
+          lag_map$k[j] <- k_coerce[1L]
+          if (length(k_coerce) > 1L) {
+            new_lags <- data.frame(
+              src = lag_map$src[j],
+              var = lag_map$var[j],
+              k = k_coerce[-1L],
+              present = TRUE,
+              increment = TRUE
+            )
+            lag_map <- rbind(lag_map, new_lags)
+          }
+        }
+      } else {
+        lag_map$k[j] <- 1L
+      }
+    }
     lag_map |>
       dplyr::distinct() |>
       dplyr::group_by(.data$var) |>
@@ -118,7 +144,7 @@ extract_lags <- function(x) {
 extract_self_lags <- function(x, self) {
   lag_regex <-  gregexec(
     pattern = paste0(
-      "lag\\(", self, ",\\s*(?<k>[0-9]+)\\s*\\)"
+      "lag\\(", self, ",\\s*(?<k>.+?)\\s*\\)"
     ),
     text = x,
     perl = TRUE

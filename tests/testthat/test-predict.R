@@ -5,6 +5,12 @@ test_that("prediction works", {
                        type = "mean", n_draws = 2), NA)
   expect_error(predict(gaussian_example_fit,
                        type = "link", n_draws = 2), NA)
+  expect_error(predict(categorical_example_fit,
+                       type = "response", n_draws = 2), NA)
+  expect_error(predict(categorical_example_fit,
+                       type = "mean", n_draws = 2), NA)
+  expect_error(predict(categorical_example_fit,
+                       type = "link", n_draws = 2), NA)
 })
 
 test_that("no groups prediction works", {
@@ -18,6 +24,7 @@ test_that("no groups prediction works", {
 
 test_that("fitted works", {
   expect_error(fitted(gaussian_example_fit, n_draws = 2), NA)
+  expect_error(fitted(categorical_example_fit, n_draws = 2), NA)
 })
 
 test_that("no groups fitted works", {

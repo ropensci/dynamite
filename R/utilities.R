@@ -110,6 +110,10 @@ increment_formula <- function(formula, x, type = c("fixed", "varying"),
   as.formula(out_str)
 }
 
+incerement_formula_determnistic <- function(formula, x) {
+  as.formula(paste0(deparse1(formula), " + ", x))
+}
+
 #' Create a comma-separated character string to represent a Stan integer array
 #'
 #' @param x A `character` vector

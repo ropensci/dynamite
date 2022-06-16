@@ -171,7 +171,7 @@ test_that("lags() and lag() give equal results", {
 test_that("higher order lags() and lag() give equal results", {
   f1 <- obs(y1 ~ x1, family = categorical()) +
     obs(y2 ~ x2, family = gaussian()) +
-    lags(k = 2, type = "fixed")
+    lags(k = 1:2, type = "fixed")
   f2 <- obs(y1 ~ x1 + lag(y1, 1) + lag(y2, 1) +
               lag(y1, 2) + lag(y2, 2), family = categorical()) +
     obs(y2 ~ x2 + lag(y1, 1) + lag(y2, 1) +
@@ -179,6 +179,25 @@ test_that("higher order lags() and lag() give equal results", {
   expect_identical(
     get_priors(f1, test_data, "group", "time"),
     get_priors(f2, test_data, "group", "time")
+  )
+})
+
+test_that("vector of lags and lag of vector give equal resuls", {
+  f1 <- obs(y1 ~ x1 + lag(y1, 1:2), family = categorical())
+  f2 <- obs(y1 ~ x1 + lag(y1, c(1, 2)), family = categorical())
+  f3 <- obs(y1 ~ x1 + lag(y1, seq(1, 2)), family = categorical())
+  f4 <- obs(y1 ~ x1 + lag(y1, 1) + lag(y1, 2), family = categorical())
+  expect_identical(
+    get_priors(f1, test_data, "group", "time"),
+    get_priors(f2, test_data, "group", "time")
+  )
+  expect_identical(
+    get_priors(f1, test_data, "group", "time"),
+    get_priors(f3, test_data, "group", "time")
+  )
+  expect_identical(
+    get_priors(f1, test_data, "group", "time"),
+    get_priors(f4, test_data, "group", "time")
   )
 })
 
