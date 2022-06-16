@@ -377,6 +377,8 @@ parse_lags <- function(data, dformula, group_var, time_var) {
     map_pred <- logical(n_lag)
     map_stoch <- logical(n_lag)
     map_rank <- integer(n_lag)
+    map_type <- NULL
+    map_origin <- NULL
     lag_resp <- unique(lag_map$var)
     idx <- 0
     for (y in lag_resp) {
@@ -427,6 +429,8 @@ parse_lags <- function(data, dformula, group_var, time_var) {
         j <- lag_idx[i]
         if (i == 1) {
           map_rhs <- y
+          map_type <- integer(n_channels)
+          map_origin <- logical(n_channels)
         } else {
           map_rhs <- paste0(y, "_lag", i - 1)
         }
@@ -453,13 +457,57 @@ parse_lags <- function(data, dformula, group_var, time_var) {
           specials = spec
         )
         if (lag_map$present[j]) {
-          for (k in seq_len(n_channels)) {
-            dformula[[k]]$formula <- gsub_formula(
-              pattern = lag_map$src[j],
-              replacement = map_lhs,
-              formula = dformula[[k]]$formula,
-              fixed = TRUE
-            )
+          if (lag_map$increment[j]) {
+            for (k in seq_len(n_channels)) {
+              if (map_origin[k]) {
+                if (y_deterministic) {
+                  dformula[[k]]$formula <- increment_formula_deterministic(
+                    dformula[[k]]$formula, map_lhs
+                  )
+                } else {
+                  dformula[[k]] <- dynamiteformula_(
+                    formula = increment_formula(
+                      formula = dformula[[k]]$formula,
+                      x = map_lhs,
+                      type = map_type[k],
+                      varying_idx = dformula[[k]]$varying,
+                      varying_icpt = dformula[[k]]$has_varying_intercept,
+                      fixed_icpt = dformula[[k]]$has_fixed_intercept
+                    ),
+                    family = dformula[[k]]$family,
+                    random_intercept = dformula[[k]]$has_random_intercept
+                  )
+                }
+              }
+            }
+          } else {
+            for (k in seq_len(n_channels)) {
+              if (y_deterministic) {
+                if (grepl(lag_map$src[j],
+                          deparse1(dformula[[k]]$formula), fixed = TRUE)) {
+                  map_origin[k] <- TRUE
+                }
+              } else {
+                dform_terms <- get_terms(dformula[k])[[1]]
+                term_idx <- which(dform_terms == lag_map$src[j])
+                if (length(term_idx) > 0) {
+                  map_origin[k] <- TRUE
+                  map_type[k] <- ifelse_(
+                    term_idx %in% dformula[[k]]$fixed,
+                    "fixed",
+                    "varying"
+                  )
+                }
+              }
+              if (map_origin[k]) {
+                dformula[[k]]$formula <- gsub_formula(
+                  pattern = lag_map$src[j],
+                  replacement = map_lhs,
+                  formula = dformula[[k]]$formula,
+                  fixed = TRUE
+                )
+              }
+            }
           }
         }
       }
