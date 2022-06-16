@@ -368,7 +368,7 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
   if (!("factor" %in% resp_class)) {
     stop_(c(
       "Response variable {.var {y}} is invalid:",
-      `x` = "Categorical family supports only <factor> variables."
+      `x` = "Categorical family supports only {.cls factor} variables."
     ))
   }
   S_y <- length(unique(na.exclude(as.vector(Y))))
