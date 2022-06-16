@@ -167,16 +167,19 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       if (!include_fixed) {
         time_points <- time_points[(fixed + 1):length(time_points)]
       }
-      n_na <- include_fixed * fixed * n_vars * n_draws
+      n_na <- include_fixed * fixed * n_draws
       n_time <- length(time_points)
-      d <- data.frame(
-        parameter = rep(var_names, each = n_time * n_draws),
-        value = c(rep(NA, n_na), c(draws)),
-        time = rep(time_points, each = n_draws),
-        category = rep(category, each = n_time * n_vars * n_draws),
-        group = NA,
-        .iteration = 1:nrow(draws),
-        .chain = rep(1:ncol(draws), each = nrow(draws)))
+      n_time2 <- n_time - include_fixed * fixed
+      d <- do.call(dplyr::bind_rows, lapply(1:n_vars, function(i) {
+        data.frame(
+          parameter = var_names[i],
+          value = c(rep(NA, n_na), c(draws[, , (i - 1) * n_time2 + 1:n_time2])),
+          time = rep(time_points, each = n_draws),
+          category = rep(category, each = n_time * n_draws),
+          group = NA,
+          .iteration = 1:nrow(draws),
+          .chain = rep(1:ncol(draws), each = nrow(draws)))
+      }))
     }
     if (type == "tau") {
       var_names <- paste0("tau_", response, "_",
