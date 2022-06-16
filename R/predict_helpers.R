@@ -151,9 +151,12 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
       e$alpha <- samples[[alpha]]
       e$beta <- samples[[beta]]
       e$delta <- samples[[delta]]
-      if (model_vars[[j]]$has_random_intercept) {
-        e$nu <- c(t(samples[[nu]][1L:n_draws, ]))
-      }
+      # TODO old:
+      # if (model_vars[[j]]$has_random_intercept) {
+      #   e$nu <- c(t(samples[[nu]][1L:n_draws, ]))
+      # }
+      # TODO new:
+      e$nu <- samples[[nu]]
     }
     e$call <- generate_sim_call(resp, resp_levels, resp_family, eval_type,
                                 model_vars[[j]]$has_fixed,
@@ -177,11 +180,11 @@ generate_sim_call <- function(resp, resp_levels, family, type,
       paste0(
         "  xbeta <- matrix(0.0, k, S)\n",
         "  for (j in seq_len(n_draws)) {{\n",
-        "{ifelse_(has_fixed,
-                  'X_f <- model_matrix[j, J_fixed, drop = FALSE]', '')}\n",
-        "{ifelse_(has_varying,
-                  'X_v <- model_matrix[j, J_varying, drop = FALSE]', '')}\n",
         "    idx_draw <- seq.int((j - 1L) * n_id + 1L, j * n_id)\n",
+        "{ifelse_(has_fixed,
+          'X_f <- model_matrix[idx_draw, J_fixed, drop = FALSE]', '')}\n",
+        "{ifelse_(has_varying,
+          'X_v <- model_matrix[idx_draw, J_varying, drop = FALSE]', '')}\n",
         "    for (s in seq_len(S - 1)) {{\n",
         "      xbeta[idx_draw, s + 1] <- ",
         "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '0', '')}",
@@ -201,15 +204,18 @@ generate_sim_call <- function(resp, resp_levels, family, type,
       paste0(
         "  xbeta <- numeric(k)\n",
         "  for (j in seq_len(n_draws)) {{\n",
-        "{ifelse_(has_fixed,
-                  'X_f <- model_matrix[j, J_fixed, drop = FALSE]', '')}\n",
-        "{ifelse_(has_varying,
-                  'X_v <- model_matrix[j, J_varying, drop = FALSE]', '')}\n",
         "    idx_draw <- seq.int((j - 1L) * n_id + 1L, j * n_id)\n",
+        "{ifelse_(has_fixed,
+          'X_f <- model_matrix[idx_draw, J_fixed, drop = FALSE]', '')}\n",
+        "{ifelse_(has_varying,
+          'X_v <- model_matrix[idx_draw, J_varying, drop = FALSE]', '')}\n",
         "    xbeta[idx_draw] <- ",
         "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '0', '')}",
         "{ifelse_(has_fixed_intercept, 'alpha[j]', '')}",
         "{ifelse_(has_varying_intercept, 'alpha[j, a_time]', '')}",
+        # TODO need to check that ids match with original data
+        # also probably needs an option to ignore this term?
+        # "{ifelse_(has_random_intercept, '+ nu[j, ]', '')}",
         "{ifelse_(has_fixed, ' + X_f %*% beta[j, ]', '')}",
         "{ifelse_(has_varying, ' + X_v %*% delta[j, time, ]', '')}",
         "  }}\n"
