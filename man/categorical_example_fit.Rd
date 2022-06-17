@@ -15,10 +15,17 @@ Script in
 categorical_example_fit
 }
 \description{
-
+A \code{dynamitefit} object obtained by running a \code{dynamite} on the
+\code{categorical_example} dataset as
+\preformatted{
+set.seed(1)
+library(dynamite)
+f <- obs(x ~ z + lag(x) + lag(y), family = categorical()) +
+  obs(y ~ z + lag(x) + lag(y), family = categorical())
+categorical_example_fit <- dynamite(
+  f, categorical_example, "id", "time",
+  chains = 1, refresh = 0, thin = 5, save_warmup = FALSE)
 }
-\section{note the small number of samples due to size restrictions on CRAN}{
-
+Note the small number of samples due to size restrictions on CRAN.
 }
-
 \keyword{datasets}

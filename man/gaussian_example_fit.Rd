@@ -15,9 +15,19 @@ The data was generated according to a script in
 gaussian_example_fit
 }
 \description{
-
+A \code{dynamitefit} object obtained by running a \code{dynamite} on the
+\code{gaussian_example} dataset as
+\preformatted{
+set.seed(1)
+library(dynamite)
+gaussian_example_fit <- dynamite(
+  obs(y ~ -1 + z + varying(~ x + lag(y)), family = gaussian(),
+      random_intercept = TRUE) + splines(df = 20),
+  data = gaussian_example, time = "time", group = "id",
+  iter = 2000, warmup = 1000, thin = 5,
+  chains = 2, cores = 2, refresh = 0, save_warmup = FALSE
+)
 }
-\details{
-
+Note the small number of samples due to size restrictions on CRAN.
 }
 \keyword{datasets}

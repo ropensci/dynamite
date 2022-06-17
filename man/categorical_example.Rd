@@ -10,7 +10,7 @@ A data frame with 2000 rows and 5 variables:
 \item{id}{Variable defining individuals (1 to 100).}
 \item{time}{Variable defining the time point of the measurement (1 to 20).}
 \item{x}{Categorical variable with three levels, A, B, and C.}
-\item{x}{Categorical variable with three levels, a, b, and c.}
+\item{y}{Categorical variable with three levels, a, b, and c.}
 \item{z}{A continuous covariate.}
 }
 }

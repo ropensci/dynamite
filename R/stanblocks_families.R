@@ -629,7 +629,7 @@ model_lines_default <- quote({
       dpars_tau <- paste0("tau_prior_pars_", y, "[, ", 1:np, "]", collapse = ", ")
       mtext_tau <- "tau_{y} ~ {tau_prior_distr}({dpars_tau});"
     } else {
-      mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {d};"
+      mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {tau_prior_distr};"
     }
   }
   paste_rows(mtext_u, mtext_intercept, mtext_fixed, mtext_varying, mtext_tau,

@@ -1,5 +1,13 @@
 #' Estimate a Bayesian Dynamic Multivariate Panel Model
 #'
+#'
+#' Any univariate unbounded continuous distributions supported by Stan can be
+#' used as a prior for model parameters (the distribution is automatically
+#' truncated to positive side for constrained parameters). In addition, any
+#' univariate distribution bounded to positive real line can be used as a prior
+#' for parameters constrained to be positive. See Stan function reference at
+#' \url{https://mc-stan.org/users/documentation/} for details.
+#'
 #' @param dformula \[`dynamiteformula`]\cr The model formula. See 'Details'.
 #' @param data \[`data.frame`]\cr The data frame containing the variables in
 #'   the model.
@@ -8,7 +16,8 @@
 #'   unique groups.
 #' @param time \[`character(1)`]\cr A column name of `data` that denotes the
 #'   time axis.
-#' @param priors TODO
+#' @param priors \[`data.frame`]\cr An optional data frame with prior
+#' definitions. See details.
 #' @param debug TODO
 #' @param ... Additional arguments to [rstan::sampling()].
 #' @export
@@ -74,7 +83,6 @@
 #' @srrstats {RE4.8} *Response variables, and associated "metadata" where applicable.*
 #' @srrstats {RE4.13} *Predictor variables, and associated "metadata" where applicable.*
 # TODO all
-# TODO document priors
 # TODO document what missingness means
 # TODO warn ordered factor as response
 dynamite <- function(dformula, data, group, time,
@@ -110,9 +118,6 @@ dynamite <- function(dformula, data, group, time,
                             fixed = attr(dformulas$all, "max_lag"))
   model_code <- create_blocks(dformula = dformulas$stoch, indent = 2L,
                               vars = stan$model_vars)
-  # TODO needs to be NULL?
-  # model_vars[grep("_prior_distr_", names(model_vars))] <- NULL
-  # debug <- dots$debug
   model <- if (!is.null(debug) && isTRUE(debug$no_compile)) {
     NULL
   } else {

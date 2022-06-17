@@ -19,14 +19,20 @@ unique groups.}
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time axis.}
 
-\item{priors}{TODO}
+\item{priors}{[\code{data.frame}]\cr An optional data frame with prior
+definitions. See details.}
 
 \item{debug}{TODO}
 
 \item{...}{Additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}.}
 }
 \description{
-Estimate a Bayesian Dynamic Multivariate Panel Model
+Any univariate unbounded continuous distributions supported by Stan can be
+used as a prior for model parameters (the distribution is automatically
+truncated to positive side for constrained parameters). In addition, any
+univariate distribution bounded to positive real line can be used as a prior
+for parameters constrained to be positive. See Stan function reference at
+\url{https://mc-stan.org/users/documentation/} for details.
 }
 \examples{
 \dontrun{

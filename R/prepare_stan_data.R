@@ -93,7 +93,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
   K <- ncol(model_matrix)
   X <- aperm(
     array(as.numeric(unlist(split(model_matrix, gl(T_full, 1, N * T_full)))),
-      dim = c(N, K, T_full)
+          dim = c(N, K, T_full)
     ),
     c(3, 1, 2)
   )[(fixed + 1):T_full, , , drop = FALSE]
@@ -253,81 +253,12 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
 #' @noRd
 prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
                                     mean_y, sd_y, resp_class, priors) {
+
   if (is.null(priors)) {
-    priors <- list()
-    if (channel$has_random_intercept) {
-      channel$sigma_nu_prior_distr <-  paste0("normal(", 0, ", ", sd_y, ")")
-      priors$sigma_nu <- data.frame(
-        parameter = paste0("sigma_nu_", y),
-        response = y,
-        prior = channel$sigma_nu_prior_distr,
-        type = "sigma_nu",
-        category = ""
-      )
-    }
-    if (channel$has_fixed_intercept || channel$has_varying_intercept) {
-      channel$alpha_prior_distr <-  paste0("normal(", mean_y, ", ", 2 * sd_y, ")")
-      priors$alpha <- data.frame(
-        parameter = paste0("alpha_", y),
-        response = y,
-        prior = channel$alpha_prior_distr,
-        type = "alpha",
-        category = ""
-      )
-      if (channel$has_varying_intercept) {
-        channel$tau_alpha_prior_distr <- "normal(0, 1)"
-        priors$tau_alpha <- data.frame(
-          parameter = paste0("tau_alpha_", y),
-          response = y,
-          prior = "normal(0, 1)",
-          type = "tau_alpha",
-          category = ""
-        )
-      }
-    }
-    if (channel$has_fixed) {
-      m <- mean_gamma[channel$J_fixed]
-      s <- sd_gamma[channel$J_fixed]
-      channel$beta_prior_npars <- 2
-      channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
-      channel$beta_prior_distr <- "normal"
-      priors$beta <- data.frame(
-        parameter = paste0("beta_", y, "_", names(s)),
-        response = y,
-        prior = paste0("normal(", m, ", ", s, ")"),
-        type = "beta",
-        category = ""
-       )
-    }
-    if (channel$has_varying) {
-      m <- mean_gamma[channel$J_varying]
-      s <- sd_gamma[channel$J_varying]
-      channel$delta_prior_npars <- 2
-      channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
-      channel$delta_prior_distr <- "normal"
-      priors$delta <- data.frame(
-        parameter = paste0("delta_", y, "_", names(s)),
-        response = y,
-        prior = paste0("normal(", m, ", ", s, ")"),
-        type = "delta",
-        category = ""
-      )
-      channel$tau_prior_npars <- 2
-      channel$tau_prior_pars <- cbind(0, rep(1, channel$K_varying))
-      channel$tau_prior_distr <- "normal"
-      priors$tau <- data.frame(
-        parameter = paste0("tau_", y, "_", names(s)),
-        response = y,
-        prior = "normal(0, 1)",
-        type = "tau",
-        category = ""
-      )
-    }
-    priors <- dplyr::bind_rows(priors)
+    out <- default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)
+    channel <- out$channel
+    priors <- out$priors
   } else {
-    # TODO add a warning to documentation that the only the 'prior' column
-    # of the priors data.frame should be altered (i.e. there's no checks for names or reordering of rows)
-    # Or arrange...
     priors <- priors |> dplyr::filter(.data$response == y)
     for (ptype in c("alpha", "tau_alpha", "sigma_nu")) {
       pdef <- priors |> dplyr::filter(.data$type == ptype)
@@ -374,78 +305,10 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
   S_y <- length(attr(resp_class, "levels"))
   channel$S <- S_y
   if (is.null(priors)) {
-    # remove the first level which acts as reference
-    resp_levels <- attr(resp_class, "levels")[-1]
-    priors <- list()
-    sd_gamma <- 2 / sd_x
-
-    if (channel$has_fixed_intercept || channel$has_varying_intercept) {
-      m <- rep(0, S_y - 1)
-      s <- rep(2, S_y - 1)
-      channel$alpha_prior_npars <- 2
-      channel$alpha_prior_pars <- cbind(m, s, deparse.level = 0)
-      channel$alpha_prior_distr <- "normal"
-      priors$alpha <- data.frame(
-        parameter = paste0("alpha_", y),
-        response = y,
-        prior = paste0("normal(", m, ", ", s, ")"),
-        type = "alpha",
-        category = resp_levels
-      )
-      if (channel$has_varying_intercept) {
-        channel$tau_alpha_prior_distr <- "normal(0, 1);"
-        priors$tau_alpha <- data.frame(
-          parameter = paste0("tau_alpha_", y),
-          response = y,
-          prior = "normal(0, 1)",
-          type = "tau_alpha",
-          category = ""
-        )
-      }
-    }
-    if (channel$has_fixed) {
-      m <- rep(0, channel$K_fixed * (S_y - 1))
-      s <- rep(sd_gamma[channel$J_fixed], S_y - 1)
-      channel$beta_prior_npars <- 2
-      channel$beta_prior_distr <- "normal"
-      channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
-      priors$beta <- data.frame(
-        parameter = paste0("beta_", y, "_", names(s)),
-        response = y,
-        prior = paste0("normal(", m, ", ", s, ")"),
-        type = "beta",
-        category = rep(resp_levels, each = channel$K_fixed)
-      )
-    }
-    if (channel$has_varying) {
-      m <- rep(0, channel$K_varying * (S_y - 1))
-      s <- rep(sd_gamma[channel$J_varying], S_y - 1)
-      channel$delta_prior_npars <- 2
-      channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
-      channel$delta_prior_distr <- "normal"
-      priors$delta <- data.frame(
-        parameter = paste0("delta_", y, "_", names(s)),
-        response = y,
-        prior = paste0("normal(", m, ", ", s, ")"),
-        type = "delta",
-        category = rep(resp_levels, each = channel$K_varying)
-      )
-      channel$tau_prior_npars <- 2
-      channel$tau_prior_pars <- cbind(0, rep(1, channel$K_varying))
-      channel$tau_prior_distr <- "normal"
-      priors$tau <- data.frame(
-        parameter = paste0("tau_", y, "_", names(s)),
-        response = y,
-        prior = "normal(0, 1)",
-        type = "tau",
-        category = ""
-      )
-    }
-    priors <- dplyr::bind_rows(priors)
+    out <- default_priors_categorical(y, channel, sd_x, resp_class)
+    channel <- out$channel
+    priors <- out$priors
   } else {
-    # TODO add a warning to documentation that the only the 'prior' column
-    # of the priors data.frame should be altered (i.e. there's no checks for names or reordering of rows)
-    # Or arrange...
     priors <- priors |> dplyr::filter(.data$response == y)
     for (ptype in c("alpha", "tau_alpha", "beta", "delta", "tau")) {
       pdef <- priors |> dplyr::filter(.data$type == ptype)
@@ -463,6 +326,8 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
         }
       }
     }
+    priors <- check_priors(
+      priors, default_priors_categorical(y, channel, sd_x, resp_class)$priors)
   }
   channel$write_alpha <-
     (channel$has_fixed_intercept || channel$has_varying_intercept) &&
@@ -500,25 +365,26 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
 
   out <- prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma,
                                  mean_y, sd_y, resp_class, priors)
+  sigma_prior <- data.frame(
+    parameter = paste0("sigma_", y),
+    response = y,
+    prior = paste0("exponential(", 1 / sd_y, ")"),
+    type = "sigma",
+    category = ""
+  )
   if (is.null(priors)) {
-
-    out$channel$sigma_prior_distr <- paste0("exponential(", 1 / sd_y, ")")
-    out$priors <- dplyr::bind_rows(
-      out$priors,
-      data.frame(
-        parameter = paste0("sigma_", y),
-        response = y,
-        prior = out$channel$sigma_prior_distr,
-        type = "sigma",
-        category = ""
-      )
-    )
+    out$channel$sigma_prior_distr <- sigma_prior$prior
+    out$priors <- dplyr::bind_rows(out$priors, sigma_prior)
   } else {
     pdef <- priors |>
       dplyr::filter(.data$response == y & .data$type == "sigma")
     if (nrow(pdef) == 1) {
       out$channel$sigma_prior_distr <- pdef$prior
     }
+    defaults <- dplyr::bind_rows(
+      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
+      sigma_prior)
+    out$priors <- check_priors(priors, defaults)
   }
   out
 }
@@ -531,15 +397,22 @@ prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
   }
   Y_obs <- Y[!is.na(Y)]
   if (any(Y_obs < 0) || any(Y_obs != as.integer(Y_obs))) {
-    abort_negative(y, "Binomial", type = "integers", call = rlang::caller_env())
+    abort_negative(y, "Binomial", type = "integers",
+                   call = rlang::caller_env())
   }
-  # TODO could be adjusted
   sd_y <- 0.5
   mean_y <- 0
   sd_gamma <- 2 / sd_x
   mean_gamma <- rep(0, length(sd_gamma))
-  prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
-                          resp_class, priors)
+  out <- prepare_channel_default(
+    y, Y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
+    resp_class, priors)
+  if (is.null(priors)) {
+    out$priors <- check_priors(
+      out$priors,
+      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors)
+  }
+  out
 }
 
 #' @describeIn prepare_channel_default Prepare a bernoulli channel
@@ -581,8 +454,14 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
   }
   sd_gamma <- 2 / sd_x
   mean_gamma <- rep(0, length(sd_gamma))
-  prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma,  mean_y, sd_y,
-                          resp_class, priors)
+  out <- prepare_channel_default(
+    y, Y, channel, mean_gamma, sd_gamma, mean_y, sd_y, resp_class, priors)
+  if (is.null(priors)) {
+    out$priors <- check_priors(
+      out$priors,
+      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors)
+  }
+  out
 }
 
 #' @describeIn prepare_channel_default Prepare a negative binomial channel
@@ -610,23 +489,28 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
   mean_gamma <- rep(0, length(sd_gamma))
   out <- prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma,
                                  mean_y, sd_y, resp_class, priors)
+
+  phi_prior <- data.frame(
+    parameter = paste0("phi_", y),
+    response = y,
+    prior = "exponential(1)",
+    type = "phi",
+    category = ""
+  )
+
   if (is.null(priors)) {
-    out$channel$phi_prior_distr <- "exponential(1)"
-    out$priors <- dplyr::bind_rows(
-      out$priors,
-      data.frame(
-        parameter = paste0("phi_", y),
-        response = y,
-        prior = out$channel$phi_prior_distr,
-        type = "phi",
-        category = ""
-      )
-    )
+    out$channel$phi_prior_distr <- phi_prior$prior
+    out$priors <- dplyr::bind_rows(out$priors, phi_prior)
   } else {
-    pdef <- priors |> dplyr::filter(.data$response == y & .data$type == "phi")
+    pdef <- priors |>
+      dplyr::filter(.data$response == y & .data$type == "phi")
     if (nrow(pdef) == 1) {
       out$channel$phi_prior_distr <- pdef$prior
     }
+    defaults <- dplyr::bind_rows(
+      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
+      phi_prior)
+    out$priors <- check_priors(priors, defaults)
   }
   out
 }
@@ -655,8 +539,14 @@ prepare_channel_exponential <- function(y, Y, channel, sd_x, resp_class,
   }
   sd_gamma <- 2 / sd_x
   mean_gamma <- rep(0, length(sd_gamma))
-  prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma,
-                                 mean_y, sd_y, resp_class, priors)
+  out <- prepare_channel_default(
+    y, Y, channel, mean_gamma, sd_gamma, mean_y, sd_y, resp_class, priors)
+  if (is.null(priors)) {
+    out$priors <- check_priors(
+      out$priors,
+      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors)
+  }
+  out
 
 }
 
@@ -684,23 +574,28 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
   mean_gamma <- rep(0, length(sd_gamma))
   out <- prepare_channel_default(y, Y, channel, mean_gamma, sd_gamma,
                                  mean_y, sd_y, resp_class, priors)
+
+  phi_prior <- data.frame(
+    parameter = paste0("phi_", y),
+    response = y,
+    prior = "exponential(1)",
+    type = "phi",
+    category = ""
+  )
+
   if (is.null(priors)) {
-    out$channel$phi_prior_distr <- "exponential(1)"
-    out$priors <- dplyr::bind_rows(
-      out$priors,
-      data.frame(
-        parameter = paste0("phi_", y),
-        response = y,
-        prior = out$channel$phi_prior_distr,
-        type = "phi",
-        category = ""
-      )
-    )
+    out$channel$phi_prior_distr <- phi_prior$prior
+    out$priors <- dplyr::bind_rows(out$priors, phi_prior)
   } else {
-    pdef <- priors |> dplyr::filter(.data$response == y & .data$type == "phi")
+    pdef <- priors |>
+      dplyr::filter(.data$response == y & .data$type == "phi")
     if (nrow(pdef) == 1) {
       out$channel$phi_prior_distr <- pdef$prior
     }
+    defaults <- dplyr::bind_rows(
+      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
+      phi_prior)
+    out$priors <- check_priors(priors, defaults)
   }
   out
 }
