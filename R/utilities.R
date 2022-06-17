@@ -110,7 +110,7 @@ increment_formula <- function(formula, x, type = c("fixed", "varying"),
   as.formula(out_str)
 }
 
-incerement_formula_determnistic <- function(formula, x) {
+increment_formula_determnistic <- function(formula, x) {
   as.formula(paste0(deparse1(formula), " + ", x))
 }
 
