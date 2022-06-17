@@ -371,7 +371,7 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
       `x` = "Categorical family supports only <factor> variables."
     ))
   }
-  S_y <- length(unique(na.exclude(as.vector(Y))))
+  S_y <- length(attr(resp_class, "levels"))
   channel$S <- S_y
   if (is.null(priors)) {
     # remove the first level which acts as reference
