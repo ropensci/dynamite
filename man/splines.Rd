@@ -17,8 +17,8 @@ splines(
 \item{shrinkage}{[\code{logical(1)}]\cr If \code{TRUE}, a common global shrinkage
 parameter \eqn{\lambda} is used for the splines so that the standard
 deviation of the random walk prior is of the spline coefficients is
-\eqn{\lambda\tau}. Default is \code{FALSE}.
-TODO: Needs more testing whether this is useful.}
+\eqn{\lambda\tau}. Default is \code{FALSE}. This is an experimental feature and
+not tested comprehensively.}
 
 \item{override}{[\code{logical(1)}]\cr If \code{FALSE} (the default), an existing
 definition for the splines will not be overridden by another call to
@@ -46,9 +46,4 @@ parameterization separately for each channel.}
 \description{
 This function can be used as part of \code{dynamiteformula} to define the splines
 for the time-varying coeffients \eqn{\delta}.
-}
-\details{
-TODO: Think the naming of this option, we have a "local" shrinkage due to
-the random walk prior of the spline coefficients, and the this "global" shrinkage over
-splines. Need to avoid confusion with the traditional global-local shrinkage priories (e.g. horseshoe)
 }

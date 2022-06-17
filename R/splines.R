@@ -3,15 +3,11 @@
 #' This function can be used as part of `dynamiteformula` to define the splines
 #' for the time-varying coeffients \eqn{\delta}.
 #'
-#' TODO: Think the naming of this option, we have a "local" shrinkage due to
-#' the random walk prior of the spline coefficients, and the this "global" shrinkage over
-#' splines. Need to avoid confusion with the traditional global-local shrinkage priories (e.g. horseshoe)
-#'
 #' @param shrinkage \[`logical(1)`]\cr If `TRUE`, a common global shrinkage
 #'   parameter \eqn{\lambda} is used for the splines so that the standard
 #'   deviation of the random walk prior is of the spline coefficients is
-#'   \eqn{\lambda\tau}. Default is `FALSE`.
-#'   TODO: Needs more testing whether this is useful.
+#'   \eqn{\lambda\tau}. Default is `FALSE`. This is an experimental feature and
+#'   not tested comprehensively.
 #' @param override \[`logical(1)`]\cr If `FALSE` (the default), an existing
 #'    definition for the splines will not be overridden by another call to
 #'    `splines()`. If `TRUE`, any existing definitions will be replaced.

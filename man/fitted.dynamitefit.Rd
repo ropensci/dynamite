@@ -7,16 +7,21 @@
 \method{fitted}{dynamitefit}(object, newdata = NULL, n_draws = NULL, ...)
 }
 \arguments{
-\item{object}{An object of class \code{dynamitefit}.}
+\item{object}{[\code{dynamitefit}]\cr The model fit object.}
 
-\item{newdata}{TODO}
+\item{newdata}{[\code{data.frame}]\cr Data used in predictions.
+If \code{NULL} (default), the data used in model estimation is used for
+predictions as well.}
 
-\item{n_draws}{TODO}
+\item{n_draws}{[\code{integer(1)}]\cr Number of posterior samples to use,
+default is \code{NULL} which uses all samples.}
 
 \item{...}{Ignored.}
 }
 \description{
-TODO Note that these are conditional on the observed data i.e., we don't
-simulate new lagged values for covariates, so we underestimate the uncertainty.
-Better to use predict with type = "mean" TODO do it
+Note that these are conditional on the observed data i.e., we don't
+simulate new lagged values for covariates, so we underestimate the
+uncertainty. It is typically better to use predict with type = "mean".
+These fitted value are mostly useful only for studying one-step ahead
+estimates.
 }

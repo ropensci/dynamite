@@ -8,7 +8,8 @@
 #'   channels
 #' @param group_var \[`character(1)`]\cr The grouping variable name
 #' @param time_var \[`character(1)`]\cr The time index variable name
-#' @param priors TODO
+#' @param priors \[`data.frame`]\cr A data frame containing the prior
+#'   definitions, or `NULL`, in which case default priors are used.
 #' @param fixed \[`integer(1)`]\cr Number of fixed time points
 #' @srrstats {RE2.3} *Where applicable, Regression Software should enable data to be centred (for example, through converting to zero-mean equivalent values; or to z-scores) or offset (for example, to zero-intercept equivalent values) via additional parameters, with the effects of any such parameters clearly documented and tested.*
 #' @srrstats {G2.4} *Provide appropriate mechanisms to convert between different data types, potentially including:*
@@ -24,8 +25,8 @@
 #' @srrstats {BS2.3} *Ensure that lengths of vectors of distributional parameters are checked, with no excess values silently discarded (unless such output is explicitly suppressed, as detailed below).*
 #' @srrstats {BS2.4} *Ensure that lengths of vectors of distributional parameters are commensurate with expected model input (see example immediately below)*
 #' @srrstats {BS2.5} *Where possible, implement pre-processing checks to validate appropriateness of numeric values submitted for distributional parameters; for example, by ensuring that distributional parameters defining second-order moments such as distributional variance or shape parameters, or any parameters which are logarithmically transformed, are non-negative.*
-# TODO prior validation, conversion warnings?
-# TODO missing values in prior computations mean_x, sd etc
+# TODO conversion warnings?
+# TODO warn about missing values in prior computations mean_x, sd etc
 #' @noRd
 prepare_stan_data <- function(data, dformula, group_var, time_var,
                               priors = NULL, fixed) {
@@ -218,6 +219,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
     sampling_vars <- c(sampling_vars, prep$sampling_vars)
   }
   # TODO do we have default splines?
+  # TODO I don't think we need default splines.
   #if (warn_nosplines) {
   #  warning_("All channels will now default to time-constant ",
   #           "coefficients for all predictors.")
@@ -245,9 +247,13 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
 #' @param y \[`character(1)`]\cr Name of the response variable of the channel.
 #' @param Y \[`matrix()`]\cr A matrix of values of the response variable.
 #' @param channel \[`list()`]\cr Channel-specific helper variables.
-#' @param sd_gamma TODO
+#' @param mean_gamma Prior mean betas and deltas (at time fixed + 1).
+#' @param sd_gamma Prior SD betas and deltas (at time fixed + 1).
+#' @param mean_y Mean of the response variable at time fixed + 1.
+#' @param sd_y SD of the response variable at time fixed + 1.
 #' @param resp_class \[`character()`]\cr Class(es) of the response `Y`.
-#' @param priors TODO
+#' @param priors \[`data.frame`]\cr A data frame containing the prior
+#'   definitions, or `NULL`, in which case default priors are used.
 #'
 #' @srrstats {RE1.2} *Regression Software should document expected format (types or classes) for inputting predictor variables, including descriptions of types or classes which are not accepted.*
 #' @noRd
@@ -442,7 +448,6 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
   if (any(Y_obs < 0) || any(Y_obs != as.integer(Y_obs))) {
     abort_negative(y, "Poisson", type = "integers", call = rlang::caller_env())
   }
-  # TODO could be adjusted
   sd_y <- 1
   if (ncol(Y) > 1) {
     mean_y <- log(mean(Y[1, ], na.rm = TRUE))
@@ -475,7 +480,6 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
     abort_negative(y, "Negative binomial", type = "integers",
                    call = rlang::caller_env())
   }
-  # TODO could be adjusted
   sd_y <- 1
   if (ncol(Y) > 1) {
     mean_y <- log(mean(Y[1, ], na.rm = TRUE))
@@ -527,7 +531,6 @@ prepare_channel_exponential <- function(y, Y, channel, sd_x, resp_class,
     abort_negative(y, "Exponential", type = "values",
                    call = rlang::caller_env())
   }
-  # TODO could be adjusted
   sd_y <- 1
   if (ncol(Y) > 1) {
     mean_y <- log(mean(Y[1, ], na.rm = TRUE))
@@ -560,7 +563,6 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
   if (any(Y_obs <= 0)) {
     abort_negative(y, "Gamma", type = "values", call = rlang::caller_env())
   }
-  # TODO could be adjusted
   sd_y <- 1
   if (ncol(Y) > 1) {
     mean_y <- log(mean(Y[1, ], na.rm = TRUE))

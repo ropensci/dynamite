@@ -32,7 +32,10 @@ used as a prior for model parameters (the distribution is automatically
 truncated to positive side for constrained parameters). In addition, any
 univariate distribution bounded to positive real line can be used as a prior
 for parameters constrained to be positive. See Stan function reference at
-\url{https://mc-stan.org/users/documentation/} for details.
+\url{https://mc-stan.org/users/documentation/} for details. For custom
+priors, you should first get the default priors with \code{get_priors} function,
+and then modify the \code{priors} column of the obtained data frame before
+supplying it to the \code{dynamite}.
 }
 \examples{
 \dontrun{

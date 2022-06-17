@@ -6,10 +6,6 @@ check_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
       stop_("Can't find grouping variable {.var {group_var}} in {.var newdata}.")
     }
     group <- newdata[[group_var]]
-    if (is.factor(group)) {
-      # TODO is this necessary? only length of unique values matters
-      group <- droplevels(group)
-    }
     group <- unique(group)
     # TODO doesn't really matter at least at the moment
     if (!all(group %in% data[[group_var]])) {

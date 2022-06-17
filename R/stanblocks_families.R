@@ -478,7 +478,6 @@ transformed_parameters_lines_categorical <- quote({
       mtext_omega_alpha_1,
       mtext_omega_alpha,
       "for (t in 1:T) {{",
-        # TODO is this correct?
         "for (s in 1:{S - 1}) {{",
           "alpha_{y}[t, s] = omega_alpha_{y}[s] * Bs[, t];",
         "}}",
@@ -534,8 +533,6 @@ transformed_parameters_lines_gamma <- quote({
 })
 
 # Model block -------------------------------------------------------------
-# TODO obs vs no obs
-# TODO start from fixed + 1
 model_lines_default <- quote({
   mtext_intercept <- ""
   mtext_fixed <- ""
@@ -714,7 +711,7 @@ model_lines_categorical <- quote({
                                 collapse = ", ")
         # can't convert vector[] to vector
         # mtext_varying <- c(idt(1), "to_vector(to_matrix(a_raw_", i, "[, , 1])') ~ ", d, "(", paste0("delta_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
-        # TODO: this works but might give a false warning about missing jacobian which needs to be suppressed?
+        # this works but might give a false warning about missing jacobian which needs to be suppressed?
         mtext_varying <- "to_vector(delta_{y}[1]) ~ {delta_prior_distr}({dpars_varying});"
       } else {
         k <- rep(1:K_fixed, S - 1)
@@ -736,7 +733,7 @@ model_lines_categorical <- quote({
                                 collapse = ", ")
         # can't convert vector[] to vector
         # mtext_varying <- c(idt(1), "to_vector(to_matrix(omega_raw_", i, "[, , 1])') ~ ", d, "(", paste0("delta_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
-        # TODO: this works but might give a false warning about missing jacobian which needs to be suppressed?
+        # this works but might give a false warning about missing jacobian which needs to be suppressed?
         mtext_varying <- "to_vector(delta_{y}[1]) ~ {delta_prior_distr}({dpars_varying});"
       } else {
         k <- rep(1:K_fixed, S - 1)
@@ -772,7 +769,6 @@ model_lines_categorical <- quote({
   if (has_varying_intercept) intercept <- glue::glue("append_row(0, alpha_{y}[t])")
   # categorical_logit_glm does not support id-varying intercept
   if (has_random_intercept) {
-    # TODO?
     stop("Categorical family does not yet support random intercepts.")
   } else {
     likelihood_term <- "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], {intercept}, append_col(zeros_K_{y}, gamma_{y}));"

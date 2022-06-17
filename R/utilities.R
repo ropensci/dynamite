@@ -297,19 +297,19 @@ onlyif <- function(test, yes) {
   }
 }
 
-# TODO is needed?
+# Placeholder for future
 # Startup message for the package
-.onAttach <- function(libname, pkgname) {
-  # TODO
-  #invisible(NULL)
-}
+# .onAttach <- function(libname, pkgname) {
+#   # TODO
+#   #invisible(NULL)
+# }
 
-# TODO is needed?
+# Placeholder for future
 # Code to execute when loading the package
-.onLoad <- function(libname, pkgname) {
-  # TODO
-  #invisible(NULL)
-}
+# .onLoad <- function(libname, pkgname) {
+#   # TODO
+#   #invisible(NULL)
+# }
 
 # TODO there is ndraws method in posterior package, should probably define ndraws.dynamitefit
 ndraws <- function(x) {

@@ -10,7 +10,6 @@
 #' @srrstats {BS5.3} *Bayesian Software should return convergence statistics or equivalent*
 #' @srrstats {BS5.5} *Appropriate diagnostic statistics to indicate absence of convergence should either be returned or immediately able to be accessed.*
 #' @srrstats {RE4.17} *Model objects returned by Regression Software should implement or appropriately extend a default `print` method which provides an on-screen summary of model (input) parameters and (output) coefficients.*
-#' TODO check_diagnostics or similar.
 print.dynamitefit <- function(x, ...) {
   if (!is.null(x$stanfit)) {
     draws <- suppressWarnings(as_draws(x))

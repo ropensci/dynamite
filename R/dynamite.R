@@ -6,7 +6,10 @@
 #' truncated to positive side for constrained parameters). In addition, any
 #' univariate distribution bounded to positive real line can be used as a prior
 #' for parameters constrained to be positive. See Stan function reference at
-#' \url{https://mc-stan.org/users/documentation/} for details.
+#' \url{https://mc-stan.org/users/documentation/} for details. For custom
+#' priors, you should first get the default priors with `get_priors` function,
+#' and then modify the `priors` column of the obtained data frame before
+#' supplying it to the `dynamite`.
 #'
 #' @param dformula \[`dynamiteformula`]\cr The model formula. See 'Details'.
 #' @param data \[`data.frame`]\cr The data frame containing the variables in
@@ -82,9 +85,9 @@
 #' @srrstats {RE4.4} *The specification of the model, generally as a formula (via `formula()`)*
 #' @srrstats {RE4.8} *Response variables, and associated "metadata" where applicable.*
 #' @srrstats {RE4.13} *Predictor variables, and associated "metadata" where applicable.*
-# TODO all
-# TODO document what missingness means
-# TODO warn ordered factor as response
+#' TODO all
+#' TODO document what missingness means
+#' TODO warn ordered factor as response
 dynamite <- function(dformula, data, group, time,
                      priors = NULL, debug = NULL, ...) {
   # stored for return object
@@ -129,10 +132,8 @@ dynamite <- function(dformula, data, group, time,
   } else {
     rstan::sampling(model, data = stan$sampling_vars, ...)
   }
-  # TODO return the function call for potential update method?
   out <- structure(
     list(
-      # TODO what else do we need to return?
       stanfit = stanfit,
       dformulas = dformulas,
       data = data,
@@ -223,8 +224,10 @@ formula.dynamitefit <- function(x, ...) {
 #' @srrstats {G2.11} *Software should ensure that `data.frame`-like tabular objects which have columns which do not themselves have standard class attributes (typically, `vector`) are appropriately processed, and do not error without reason. This behaviour should be tested. Again, columns created by the [`units` package](https://github.com/r-quantities/units/) provide a good test case.*
 #' @srrstats {G2.12} *Software should ensure that `data.frame`-like tabular objects which have list columns should ensure that those columns are appropriately pre-processed either through being removed, converted to equivalent vector columns where appropriate, or some other appropriate treatment such as an informative error. This behaviour should be tested.*
 #' @srrstats {G2.16} *All functions should also provide options to handle undefined values (e.g., `NaN`, `Inf` and `-Inf`), including potentially ignoring or removing such values.*
+#' @noRd
 parse_data <- function(data, dformula, group_var, time_var) {
-  data <- droplevels(data) # TODO document this in return value
+  # TODO issue a warning if levels were dropped?
+  data <- droplevels(data)
   data_names <- names(data)
   data <- data |>
     dplyr::mutate(dplyr::across(where(is.character), as.factor))

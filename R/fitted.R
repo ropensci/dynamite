@@ -1,13 +1,12 @@
 #' Extract fitted values of dynamitefit
 #'
-#' TODO Note that these are conditional on the observed data i.e., we don't
-#' simulate new lagged values for covariates, so we underestimate the uncertainty.
-#' Better to use predict with type = "mean" TODO do it
+#' Note that these are conditional on the observed data i.e., we don't
+#' simulate new lagged values for covariates, so we underestimate the
+#' uncertainty. It is typically better to use predict with type = "mean".
+#' These fitted value are mostly useful only for studying one-step ahead
+#' estimates.
 #' @export
-#' @param object An object of class \code{dynamitefit}.
-#' @param newdata TODO
-#' @param n_draws TODO
-#' @param ... Ignored.
+#' @inheritParams predict.dynamitefit
 #' @srrstats {RE4.9} *Modelled values of response variables.*
 fitted.dynamitefit <- function(object, newdata = NULL,
                                n_draws = NULL,  ...) {
