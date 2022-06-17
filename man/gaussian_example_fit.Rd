@@ -3,12 +3,9 @@
 \docType{data}
 \name{gaussian_example_fit}
 \alias{gaussian_example_fit}
-\alias{gaussian_example_single_fit}
 \title{Model Fit for the Simulated Data of Gaussian Responses}
 \format{
 A \code{dynamitefit} object.
-
-An object of class \code{dynamitefit} of length 8.
 }
 \source{
 The data was generated according to a script in
@@ -16,19 +13,11 @@ The data was generated according to a script in
 }
 \usage{
 gaussian_example_fit
-
-gaussian_example_single_fit
 }
 \description{
-A \code{dynamitefit} object obtained by running a \code{dynamite} on the
-\code{gaussian_example} dataset as
-\preformatted{
-set.seed(1)
-gaussian_example_fit <- dynamite(
-  obs(y ~ -1 + z + varying(~ x + lag(y)), family = gaussian()) +
-    splines(df = 20),
-  data = gaussian_example, time = time, group = id,
-  iter = 2000, chains = 2, cores = 2, refresh = 0)
+
 }
+\details{
+
 }
 \keyword{datasets}

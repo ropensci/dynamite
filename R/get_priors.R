@@ -109,7 +109,6 @@ get_code.dynamitefit <- function(x, ...) {
 #' @rdname get_data
 #' @export
 #' @examples
-#'
 #' d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
 #' str(get_data(obs(y ~ x, family = gaussian()),
 #'   data = d, time = "time", group = "id"))
@@ -130,22 +129,10 @@ get_data.dynamiteformula <- function(x, data, group, time, ...) {
       ...
     )
   )
-  out$sampling_vars
+  out$stan$sampling_vars
 }
 #' @rdname get_data
 #' @export
 get_data.dynamitefit <- function(x, ...) {
-
-  out <- do.call(
-    "dynamite",
-    list(
-      dformula = x$formula,
-      data = x$data,
-      group = x$group_var,
-      time = x$time_var,
-      priors = x$priors,
-      debug = list(no_compile = TRUE, sampling_vars = TRUE)
-    )
-  )
-  out$sampling_vars
+  out$stan$sampling_vars
 }

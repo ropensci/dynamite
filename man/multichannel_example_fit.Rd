@@ -8,30 +8,17 @@
 A \code{dynamitefit} object.
 }
 \source{
-The data was generated according to a script in
+Script in
 \url{https://github.com/santikka/dynamite/blob/main/data-raw/multichannel_example_fit.R}
 }
 \usage{
 multichannel_example_fit
 }
 \description{
-TODO do we want to use the term "channel"??
-}
-\details{
-A \code{dynamitefit} object obtained by running a \code{dynamite} on the
-\code{multichannel_example} dataset as
-\preformatted{
-set.seed(1)
-library(dynamite)
-f <- obs(g ~ -1 + lag(g) + lag(logp) + varying(~x), family = gaussian()) +
-  obs(p ~ x + lag(g) + lag(logp) + lag(b), family = poisson()) +
-  obs(b ~ lag(b) * lag(logp) + lag(b) * x + lag(b) * lag(g),
-      family = bernoulli()) +
-  aux(numeric(logp) ~ log(p + 1)) + splines(df = D)
 
+}
+\section{note the small number of samples due to size restrictions on CRAN}{
 
-multichannel_example_fit <- dynamite(f, multichannel_example, "id", "time",
- chains = 2, cores = 2, init = 0, refresh = 0)
 }
-}
+
 \keyword{datasets}

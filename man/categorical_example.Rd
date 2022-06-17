@@ -5,13 +5,13 @@
 \alias{categorical_example}
 \title{Simulated Multivariate Panel Data}
 \format{
-A data frame with 3000 rows and 5 variables: TODO
+A data frame with 2000 rows and 5 variables:
 \describe{
-\item{y}{The response variable}
-\item{x}{Single continuous covariate}
-\item{z}{Single binary covariate}
-\item{id}{Variable defining individuals (1 to 100)}
-\item{time}{Variable defining the time point of the measurement (1 to 30)}
+\item{id}{Variable defining individuals (1 to 100).}
+\item{time}{Variable defining the time point of the measurement (1 to 20).}
+\item{x}{Categorical variable with three levels, A, B, and C.}
+\item{x}{Categorical variable with three levels, a, b, and c.}
+\item{z}{A continuous covariate.}
 }
 }
 \source{

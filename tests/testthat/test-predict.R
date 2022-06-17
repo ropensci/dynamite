@@ -13,6 +13,9 @@ test_that("prediction works", {
                        type = "link", n_draws = 2), NA)
 })
 
+gaussian_example_single_fit <- get0("gaussian_example_single_fit",
+                                    envir = asNamespace("dynamite"))
+
 test_that("no groups prediction works", {
   expect_error(predict(gaussian_example_single_fit,
                        type = "response", n_draws = 2), NA)

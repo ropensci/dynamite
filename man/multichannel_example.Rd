@@ -7,22 +7,22 @@
 \format{
 A data frame with 3000 rows and 5 variables:
 \describe{
-\item{y}{The response variable}
-\item{x}{Single continuous covariate}
-\item{z}{Single binary covariate}
-\item{id}{Variable defining individuals (1 to 100)}
-\item{time}{Variable defining the time point of the measurement (1 to 30)}
+\item{id}{Variable defining individuals (1 to 50).}
+\item{time}{Variable defining the time point of the measurement (1 to 20).}
+\item{g}{Response variable following gaussian distribution.}
+\item{p}{Response variable following Poisson distribution.}
+\item{z}{Response variable following bernoulli distribution.}
 }
 }
 \source{
 The data was generated according to a script in
-\url{https://github.com/santikka/dynamite/blob/main/data-raw/categorical_example.R}
+\url{https://github.com/santikka/dynamite/blob/main/data-raw/multichannel_example.R}
 }
 \usage{
 multichannel_example
 }
 \description{
-A simulated data containing multiple individuals with multiple response
-variables.
+A simulated multichannel data containing multiple individuals with multiple
+response variables of different distributions.
 }
 \keyword{datasets}
