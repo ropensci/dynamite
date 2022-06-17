@@ -55,7 +55,6 @@ is_supported <- function(name) {
   name %in% supported_families
 }
 
-# TODO add gamma
 supported_families <- c(
   "binomial",
   "bernoulli", # separate as Stan has more efficient pmf for it
