@@ -151,6 +151,7 @@ dynamite <- function(dformula, data, group, time,
   out
 }
 
+# TODO test formula.dynamitefit
 #' Access model formula of a dynamite model fit
 #'
 #' Return a list containing the formulas defining each channel of the model.
@@ -160,7 +161,47 @@ dynamite <- function(dformula, data, group, time,
 #'
 #' @export
 formula.dynamitefit <- function(x, ...) {
-  get_originals(x$dformulas$all)
+  formula_str <- sapply(get_originals(x$dformulas$all), deparse1)
+  channels_stoch <- which_stochastic(x$dformulas$all)
+  channels_det <- which_deterministic(x$dformulas$all)
+  family_str <- sapply(get_families(x$dformulas$all), function(y) y$name)
+  lag_defs <- attr(x$dformulas$all, "lags")
+  spline_defs <- attr(x$dformulas$stoch, "splines")
+  obs_str <- ""
+  aux_str <- ""
+  lags_str <- ""
+  spline_str <- ""
+  if (length(channels_stoch) > 0) {
+    obs_str <- paste0(
+      glue::glue(
+        "obs({formula_str[channels_stoch]}, family = {family_str}())"
+      ),
+      collapse = "\n"
+    )
+  }
+  if (length(channels_det) > 0) {
+    aux_str <- paste0(
+      glue::glue(
+        "aux({formula_str[channels_det]})"
+      ),
+      collapse = TRUE
+    )
+  }
+  if (!is.null(lag_defs)) {
+    lags_str <- glue::glue("lags(k = {lag_defs$k}, type = {lag_defs$type})")
+  }
+  if (!is.null(spline_defs)) {
+    spline_str <- paste0("splines(",
+       "shrinkage = ", spline_defs$shrinkage, ", ",
+       "override = FALSE, ",
+       "df = ", spline_defs$bs_opts$df, ", ",
+       "degree = ", spline_defs$bs_opts$degree, ", ",
+       "lb_tau = ", spline_defs$lb_tau, ", ",
+       "noncentered = ",  spline_defs$noncentered, ")"
+    )
+  }
+  str2lang(paste_rows("{", obs_str, aux_str, lags_str, spline_str, "}",
+                      .parse = FALSE))
 }
 
 #' Parse data for model fitting
