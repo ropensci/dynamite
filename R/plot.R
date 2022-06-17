@@ -28,8 +28,6 @@
 #' @srrstats {RE6.1} *Where the default `plot` method is **NOT** a generic `plot` method dispatched on the class of return objects (that is, through an S3-type `plot.<myclass>` function or equivalent), that method dispatch (or equivalent) should nevertheless exist in order to explicitly direct users to the appropriate function.*
 #' @srrstats {RE6.2} *The default `plot` method should produce a plot of the `fitted` values of the model, with optional visualisation of confidence intervals or equivalent.*
 #' @srrstats {RE6.3} *Where a model object is used to generate a forecast (for example, through a `predict()` method), the default `plot` method should provide clear visual distinction between modelled (interpolated) and forecast (extrapolated) values.*
-#' TODO plot_nus
-#'
 plot_deltas <- function(model, level = 0.05, alpha = 0.5,
                         scales = c("fixed", "free"),
                         include_alpha = TRUE){
@@ -57,7 +55,7 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5,
     ymax = paste0("q", 100 * (1 - level))),
     alpha = alpha) +
     ggplot2::geom_line() +
-    ggplot2::facet_wrap(~ parameter, scales = scales) +
+    ggplot2::facet_wrap(~ .data$parameter, scales = scales) +
     ggplot2::labs(title = title, x = "Time", y = "Value")
 
 }
@@ -111,7 +109,8 @@ plot_nus <- function(model, level = 0.05){
 
   coefs <- coef(model, "nu", probs = c(level, 1 - level)) |>
     dplyr::mutate(parameter = glue::glue("{parameter}_{group}")) |>
-    dplyr::mutate(parameter = factor(parameter, levels = parameter))
+    dplyr::mutate(parameter = factor(.data$parameter,
+                                     levels = .data$parameter))
   if (nrow(coefs) == 0) {
     stop_("The model does not contain random intercepts nu.")
   }
