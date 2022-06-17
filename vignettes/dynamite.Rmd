@@ -63,4 +63,8 @@ where $K$ is the number of covariates, $B_t$ is a vector of B-spline values at t
 \]
 with user defined prior $p(\omega^c_{k,1})$ on the first coefficient, which due to the structure of $B_1$ corresponds to the prior on the $\delta^c_{k,1}$. Here, the parameter $\tau^c_k$ controls the smoothness of the spline curves.
 
+# Example
+
+use grunfeld data and or employment for a few examples, see predlife/dynamitepaper/examples on gitlab.
+
 # References

@@ -100,11 +100,7 @@ plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
 #' @return A `ggplot` object.
 #' @export
 #' @examples
-#' # TODO switch to grunfeld?
-#' fit <- dynamite(obs(weight ~ lag(weight) + Diet,
-#'   family = gaussian(), random_intercept = TRUE),
-#'   nlme::BodyWeight, "Rat", "Time", chains = 1)
-#' plot_nus(fit)
+#' plot_nus(gaussian_example_fit)
 plot_nus <- function(model, level = 0.05){
 
   coefs <- coef(model, "nu", probs = c(level, 1 - level)) |>
