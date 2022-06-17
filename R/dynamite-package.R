@@ -42,8 +42,6 @@ NULL
 #' \preformatted{
 #' set.seed(1)
 #' library(dynamite)
-#'
-#' #' # note the small number of samples due to size restrictions on CRAN
 #' gaussian_example_fit <- dynamite(
 #'   obs(y ~ -1 + z + varying(~ x + lag(y)), family = gaussian(),
 #'       random_intercept = TRUE) + splines(df = 20),
@@ -52,7 +50,7 @@ NULL
 #'   chains = 2, cores = 2, refresh = 0, save_warmup = FALSE
 #' )
 #' }
-#'
+#' Note the small number of samples due to size restrictions on CRAN.
 #' @source The data was generated according to a script in
 #' \url{https://github.com/santikka/dynamite/blob/main/data-raw/gaussian_example_fit.R}
 #' @format A `dynamitefit` object.
@@ -70,12 +68,10 @@ NULL
 #'   \item{time}{Variable defining the time point of the measurement (1 to 20).}
 #'   \item{g}{Response variable following gaussian distribution.}
 #'   \item{p}{Response variable following Poisson distribution.}
-#'   \item{z}{Response variable following bernoulli distribution.}
-
+#'   \item{b}{Response variable following bernoulli distribution.}
 #' }
 "multichannel_example"
 #' Model Fit for the multichannel_example Data
-#'
 #'
 #' A `dynamitefit` object obtained by running a `dynamite` on the
 #' `multichannel_example` dataset as
@@ -86,14 +82,12 @@ NULL
 #'   obs(p ~ lag(g) + lag(logp) + lag(b), family = poisson()) +
 #'   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = bernoulli()) +
 #'   aux(numeric(logp) ~ log(p + 1))
-#'
-#' # note the small number of samples due to size restrictions on CRAN
 #' multichannel_example_fit <- dynamite(
 #'   f, multichannel_example, "id", "time",
 #'   chains = 1, cores = 1, iter = 2000, warmup = 1000, init = 0, refresh = 0,
 #'   thin = 5, save_warmup = FALSE)
 #' }
-#'
+#' Note the small number of samples due to size restrictions on CRAN.
 #' @source Script in
 #' \url{https://github.com/santikka/dynamite/blob/main/data-raw/multichannel_example_fit.R}
 #' @format A `dynamitefit` object.
@@ -110,9 +104,8 @@ NULL
 #'   \item{id}{Variable defining individuals (1 to 100).}
 #'   \item{time}{Variable defining the time point of the measurement (1 to 20).}
 #'   \item{x}{Categorical variable with three levels, A, B, and C.}
-#'   \item{x}{Categorical variable with three levels, a, b, and c.}
+#'   \item{y}{Categorical variable with three levels, a, b, and c.}
 #'   \item{z}{A continuous covariate.}
-
 #' }
 "categorical_example"
 #' Model Fit for the categorical_example Data
@@ -124,13 +117,11 @@ NULL
 #' library(dynamite)
 #' f <- obs(x ~ z + lag(x) + lag(y), family = categorical()) +
 #'   obs(y ~ z + lag(x) + lag(y), family = categorical())
-#'
-#' # note the small number of samples due to size restrictions on CRAN
 #' categorical_example_fit <- dynamite(
 #'   f, categorical_example, "id", "time",
 #'   chains = 1, refresh = 0, thin = 5, save_warmup = FALSE)
 #' }
-#'
+#' Note the small number of samples due to size restrictions on CRAN.
 #' @source Script in
 #' \url{https://github.com/santikka/dynamite/blob/main/data-raw/categorical_example_fit.R}
 #' @format A `dynamitefit` object.
