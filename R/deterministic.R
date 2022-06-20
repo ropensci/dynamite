@@ -102,8 +102,8 @@ assign_deterministic <- function(data, cl, idx) {
   invisible(NULL)
 }
 
-assign_lags <- function(data, ro, idx, lhs, rhs) {
+assign_lags <- function(data, ro, idx, lhs, rhs, offset = 1L) {
   for (k in ro) {
-    set(data, i = idx, j = lhs[k], value = data[idx - 1][[rhs[k]]])
+    set(data, i = idx, j = lhs[k], value = data[[rhs[k]]][idx - offset])
   }
 }

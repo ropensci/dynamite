@@ -103,13 +103,19 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch,
 }
 
 prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
-                              resp_stoch, n_id, n_draws) {
+                              resp_stoch, n_id, n_draws, group_var) {
   samples <- rstan::extract(object$stanfit)
   model_vars <- object$stan$model_vars
-  specials <- evaluate_specials(object$dformulas$stoch, newdata)
   newdata_names <- names(newdata)
   n_resp <- length(resp_stoch)
   eval_envs <- vector(mode = "list", length = n_resp)
+  orig_ids <- NULL
+  newdata_ids <- NULL
+  if (!is.null(group_var)) {
+    orig_ids <- unique(object$data[[group_var]])
+    newdata_ids <- unique(newdata[[group_var]])
+  }
+  idx_draws <- seq_len(n_draws)
   for (j in seq_len(n_resp)) {
     resp <- resp_stoch[j]
     resp_family <- object$dformulas$stoch[[j]]$family
@@ -121,6 +127,7 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
     nu <- paste0("nu_", resp)
     e <- new.env()
     e$type <- predict_type
+    e$n_id <- n_id
     e$n_draws <- n_draws
     e$k <- n_draws * n_id
     e$newdata <- newdata
@@ -129,30 +136,38 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
     e$J_varying <- model_vars[[j]]$J_varying
     e$K_varying <- model_vars[[j]]$K_varying
     e$resp <- resp_stoch[j]
-    e$phi <- samples[[phi]]
-    e$sigma <- samples[[sigma]]
-    e$offset <- specials[[j]]$offset
-    e$trials <- specials[[j]]$trials
+    e$phi <- samples[[phi]][idx_draws, drop = FALSE]
+    e$sigma <- samples[[sigma]][idx_draws, drop = FALSE]
+    if (is.null(group_var)) {
+      e$nu <- samples[[nu]]
+    } else {
+      e$nu <- samples[[nu]][idx_draws, orig_ids %in% newdata_ids, drop = FALSE]
+    }
     if (is_categorical(resp_family)) {
       resp_levels <- attr(object$stan$responses, "resp_class")[[resp]] |>
         attr("levels")
-      e$alpha <- samples[[alpha]]
-      e$beta <- samples[[beta]]
-      e$delta <- samples[[delta]]
-      e$nu <- samples[[nu]]
       e$resp_levels <- resp_levels
       e$S <- length(resp_levels)
+      if (model_vars[[j]]$has_fixed_intercept) {
+        e$alpha <- samples[[alpha]][idx_draws, , drop = FALSE]
+      }
+      if (model_vars[[j]]$has_varying_intercept) {
+        e$alpha <- samples[[alpha]][idx_draws, , , drop = FALSE]
+      }
+      e$beta <- samples[[beta]][idx_draws, , , drop = FALSE]
+      e$delta <- samples[[delta]][idx_draws, , , , drop = FALSE]
+      e$xbeta <- matrix(0.0, e$k, e$S)
     } else {
       resp_levels <- NULL
-      e$alpha <- samples[[alpha]]
-      e$beta <- samples[[beta]]
-      e$delta <- samples[[delta]]
-      # TODO old:
-      # if (model_vars[[j]]$has_random_intercept) {
-      #   e$nu <- c(t(samples[[nu]][1L:n_draws, ]))
-      # }
-      # TODO new:
-      e$nu <- samples[[nu]]
+      if (model_vars[[j]]$has_fixed_intercept) {
+        e$alpha <- samples[[alpha]][idx_draws, drop = FALSE]
+      }
+      if (model_vars[[j]]$has_varying_intercept) {
+        e$alpha <- samples[[alpha]][idx_draws, , drop = FALSE]
+      }
+      e$beta <- samples[[beta]][idx_draws, , drop = FALSE]
+      e$delta <- samples[[delta]][idx_draws, , , drop = FALSE]
+      e$xbeta <- numeric(e$k)
     }
     e$call <- generate_sim_call(resp, resp_levels, resp_family, eval_type,
                                 model_vars[[j]]$has_fixed,
@@ -174,22 +189,17 @@ generate_sim_call <- function(resp, resp_levels, family, type,
     glue::glue(
       "{{\n",
       paste0(
-        "  xbeta <- matrix(0.0, k, S)\n",
-        "  for (j in seq_len(n_draws)) {{\n",
-        "    idx_draw <- seq.int((j - 1L) * n_id + 1L, j * n_id)\n",
-        "{ifelse_(has_fixed,
-          'X_f <- model_matrix[idx_draw, J_fixed, drop = FALSE]', '')}\n",
-        "{ifelse_(has_varying,
-          'X_v <- model_matrix[idx_draw, J_varying, drop = FALSE]', '')}\n",
-        "    for (s in seq_len(S - 1)) {{\n",
-        "      xbeta[idx_draw, s + 1] <- ",
+        "for (j in seq_len(n_id)) {{\n",
+        "  idx_draw <- seq.int((j - 1L) * n_draws + 1L, j * n_draws)\n",
+        "  for (s in seq_len(S - 1)) {{\n",
+        "    xbeta[idx_draw, s + 1] <- ",
         "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '0', '')}",
-        "{ifelse_(has_fixed_intercept, 'alpha[j, s]', '')}",
-        "{ifelse_(has_varying_intercept, 'alpha[j, a_time, s]', '')}",
-        "{ifelse_(has_fixed, ' + X_f %*% beta[j, , s]', '')}",
-        "{ifelse_(has_varying, ' + X_v %*% delta[j, time, , s]', '')}",
-        "    }}",
-        "  }}\n"
+        "{ifelse_(has_fixed_intercept, 'alpha[, s]', '')}",
+        "{ifelse_(has_varying_intercept, 'alpha[, a_time, s]', '')}",
+        "{ifelse_(has_fixed, ' + tcrossprod(beta[, , s], model_matrix[j, J_fixed, drop = FALSE])', '')}",
+        "{ifelse_(has_varying, ' + tcrossprod(delta[, time, , s], model_matrix[j, J_varying, drop = FALSE]', '')}",
+        "  }}",
+        "}}\n"
       ),
       eval(str2lang(glue::glue("{type}_categorical"))),
       "}}"
@@ -198,30 +208,23 @@ generate_sim_call <- function(resp, resp_levels, family, type,
     glue::glue(
       "{{\n",
       paste0(
-        "  xbeta <- numeric(k)\n",
-        "  for (j in seq_len(n_draws)) {{\n",
-        "    idx_draw <- seq.int((j - 1L) * n_id + 1L, j * n_id)\n",
-        "{ifelse_(has_fixed,
-          'X_f <- model_matrix[idx_draw, J_fixed, drop = FALSE]', '')}\n",
-        "{ifelse_(has_varying,
-          'X_v <- model_matrix[idx_draw, J_varying, drop = FALSE]', '')}\n",
-        "    xbeta[idx_draw] <- ",
+        "for (j in seq_len(n_id)) {{\n",
+        "  idx_draw <- seq.int((j - 1L) * n_draws + 1L, j * n_draws)\n",
+        "  xbeta[idx_draw] <- ",
         "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '0', '')}",
-        "{ifelse_(has_fixed_intercept, 'alpha[j]', '')}",
-        "{ifelse_(has_varying_intercept, 'alpha[j, a_time]', '')}",
-        # TODO need to check that ids match with original data
-        # also probably needs an option to ignore this term?
-        # "{ifelse_(has_random_intercept, '+ nu[j, ]', '')}",
-        "{ifelse_(has_fixed, ' + X_f %*% beta[j, ]', '')}",
-        "{ifelse_(has_varying, ' + X_v %*% delta[j, time, ]', '')}",
-        "  }}\n"
+        "{ifelse_(has_fixed_intercept, 'alpha', '')}",
+        "{ifelse_(has_varying_intercept, 'alpha[, a_time]', '')}",
+        "{ifelse_(has_random_intercept, '+ nu[, j]', '')}",
+        "{ifelse_(has_fixed, ' + tcrossprod(beta, model_matrix[j, J_fixed, drop = FALSE])', '')}",
+        "{ifelse_(has_varying, ' + tcrossprod(delta[, time, ], model_matrix[j, J_varying, drop = FALSE])', '')}",
+        "}}\n"
       ),
       ifelse_(identical(type, "predict"),
         paste0(
-          "  if (type == 'link') {{",
-          "    data.table::set(x = newdata, i = idx_pred, j = '{resp}_link',
-                               value = xbeta)",
-          "  }}"
+          "if (type == 'link') {{",
+          "  data.table::set(x = newdata, i = idx_data, j = '{resp}_link',
+                             value = xbeta[idx_pred])",
+          "}}"
         ),
         ""
       ),
@@ -283,11 +286,11 @@ fitted_gamma <- "
 
 predict_gaussian <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_mean',
-                    value = xbeta)
+    data.table::set(x = newdata, i = idx_data, j = '{resp}_mean',
+                    value = xbeta[idx_pred])
   }}
-  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
-                  value = rnorm(k, xbeta, sigma))
+  data.table::set(x = newdata, i = idx_data, j = '{resp}',
+                  value = rnorm(k, xbeta, sigma)[idx_pred])
 "
 
 predict_categorical <- "
@@ -297,9 +300,9 @@ predict_categorical <- "
       for (s in 1:S) {{
         data.table::set(
           x = newdata,
-          i = idx_pred,
+          i = idx_data,
           j = resp_cols[s],
-          value = xbeta[, s]
+          value = xbeta[idx_pred, s]
         )
       }}
     }}
@@ -311,68 +314,71 @@ predict_categorical <- "
       for (s in 1:S) {{
         data.table::set(
           x = newdata,
-          i = idx_pred,
+          i = idx_data,
           j = resp_cols[s],
-          value = mval[, s]
+          value = mval[idx_pred, s]
         )
       }}
     }}
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}',
-                    value = max.col(xbeta - log(-log(runif(S * k)))))
+    data.table::set(x = newdata, i = idx_data, j = '{resp}',
+                    value = max.col(xbeta - log(-log(runif(S * k))))[idx_pred])
 "
 
 predict_binomial <- "
+  prob <- plogis(xbeta)
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_mean',
-                    value = plogis(xbeta))
+    data.table::set(x = newdata, i = idx_data, j = '{resp}_mean',
+                    value = prob[idx_pred])
   }}
-  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
-                  value = rbinom(k, trials, plogis(xbeta)))
+  data.table::set(x = newdata, i = idx_data, j = '{resp}',
+                  value = rbinom(k, trials, prob)[idx_pred])
 "
 
 predict_bernoulli <- "
+  prob <- plogis(xbeta)
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_mean',
-                    value = plogis(xbeta))
+    data.table::set(x = newdata, i = idx_data, j = '{resp}_mean',
+                    value = prob[idx_pred])
   }}
-  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
-                  value = rbinom(k, 1, plogis(xbeta)))
+  data.table::set(x = newdata, i = idx_data, j = '{resp}',
+                  value = rbinom(k, 1, prob)[idx_pred])
 "
 
 predict_poisson <- "
   exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_mean',
-                    value = exp_xbeta)
+    data.table::set(x = newdata, i = idx_data, j = '{resp}_mean',
+                    value = exp_xbeta[idx_pred])
   }}
-  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
-                  value = rpois(k, exp_xbeta))
+  data.table::set(x = newdata, i = idx_data, j = '{resp}',
+                  value = rpois(k, exp_xbeta)[idx_pred])
 "
 
 predict_negbin <- "
   exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_mean',
-                    value = exp_xbeta)
+    data.table::set(x = newdata, i = idx_data, j = '{resp}_mean',
+                    value = exp_xbeta[idx_pred])
   }
-  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
-                  value = rnbinom(k, size = phi, mu = exp_xbeta))
+  data.table::set(x = newdata, i = idx_data, j = '{resp}',
+                  value = rnbinom(k, size = phi, mu = exp_xbeta)[idx_pred])
 "
 
 predict_exponential <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_mean',
-                    value = exp(xbeta))
+    data.table::set(x = newdata, i = idx_data, j = '{resp}_mean',
+                    value = exp(xbeta[idx_pred]))
   }
-  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
-                  value = rexp(k, rate = exp(-xbeta)))
+  data.table::set(x = newdata, i = idx_data, j = '{resp}',
+                  value = rexp(k, rate = exp(-xbeta))[idx_pred])
 "
 
 predict_gamma <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_pred, j = '{resp}_mean',
-                    value = exp(xbeta))
+    data.table::set(x = newdata, i = idx_data, j = '{resp}_mean',
+                    value = exp(xbeta[idx_pred]))
   }
-  data.table::set(x = newdata, i = idx_pred, j = '{resp}',
-                  value = rgamma(k, shape = phi, rate = phi * exp(-xbeta)))
+  data.table::set(x = newdata, i = idx_data, j = '{resp}',
+                  value = rgamma(k, shape = phi,
+                                 rate = phi * exp(-xbeta))[idx_pred])
 "

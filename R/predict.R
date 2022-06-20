@@ -38,6 +38,10 @@ predict.dynamitefit <- function(object, newdata = NULL,
   if (is.null(n_draws)) {
     n_draws <- ndraws(object)
   }
+  n_draws <- try(as.integer(n_draws), silent = TRUE)
+  if ("try-error" %in% class(n_draws)) {
+    stop_("Unable to coerce {.var n_draws} to {.cls integer}.")
+  }
   fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
   newdata_null <- is.null(newdata)
   if (newdata_null) {
@@ -96,22 +100,23 @@ predict.dynamitefit <- function(object, newdata = NULL,
                  clear_names = c(resp_det, lhs_det, lhs_stoch),
                  fixed, n_id, n_time)
   initialize_deterministic(newdata, dd, dlp, dld, dls)
-  idx <- seq.int(1L, n_time * n_id, by = n_time) - 1L
+  idx <- seq.int(1L, n_new, by = n_time) - 1L
   assign_initial_values(newdata, dd, dlp, dld, dls, idx, fixed, group_var)
-  newdata <- newdata[rep(seq_len(n_new), n_draws), ]
-  newdata[, ("draw") := rep(1:n_draws, each = n_new)]
-  n <- newdata[,.N]
+  newdata <- newdata[rep(seq_len(n_new), each = n_draws), ]
+  newdata[, ("draw") := rep(1:n_draws, n_new)]
+  n <- newdata[, .N]
   eval_envs <- prepare_eval_envs(object, newdata,
                                  eval_type = "predict", predict_type = type,
-                                 resp_stoch, n_id, n_draws)
-  idx <- seq.int(1L, n, by = n_time) + fixed - 1L
+                                 resp_stoch, n_id, n_draws, group_var)
+  specials <- evaluate_specials(object$dformulas$stoch, newdata)
+  idx <- as.integer(newdata[ ,.I[newdata[[time_var]] == fixed]])
   for (i in (fixed + 1L):n_time) {
-    idx <- idx + 1L
+    idx <- idx + n_draws
     if (n_lag_det > 0 && i > fixed + 1L) {
-      assign_lags(newdata, ro_det, idx, lhs_det, rhs_det)
+      assign_lags(newdata, ro_det, idx, lhs_det, rhs_det, n_draws)
     }
     if (n_lag_stoch > 0 && i > fixed + 1L) {
-      assign_lags(newdata, ro_stoch, idx, lhs_stoch, rhs_stoch)
+      assign_lags(newdata, ro_stoch, idx, lhs_stoch, rhs_stoch, n_draws)
     }
     model_matrix <- full_model.matrix_predict(
       formulas_stoch,
@@ -124,8 +129,11 @@ predict.dynamitefit <- function(object, newdata = NULL,
       idx_na <- is.na(newdata[idx, .SD, .SDcols = resp_stoch[j]])
       e$idx <- idx
       e$time <- i - fixed
-      e$idx_pred <- idx[which(idx_na)]
+      e$idx_pred <- which(idx_na)
+      e$idx_data <- idx[e$idx_pred]
       e$model_matrix <- model_matrix
+      e$offset <- specials[[j]]$offset[idx]
+      e$trials <- specials[[j]]$trials[idx]
       e$a_time <- ifelse_(NCOL(e$alpha) == 1, 1, i - fixed)
       if (any(idx_na)) {
         eval(e$call, envir = e)
@@ -147,7 +155,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
   if (n_lag_det > 0 || n_lag_stoch > 0) {
     newdata[, c(lhs_det, lhs_stoch) := NULL]
   }
-
+  data.table::setkeyv(newdata, cols = c("draw", group_var, time_var))
   # for consistency with other output types
   data.table::setDF(newdata)
 }

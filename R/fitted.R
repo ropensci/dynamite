@@ -13,6 +13,10 @@ fitted.dynamitefit <- function(object, newdata = NULL,
   if (is.null(n_draws)) {
     n_draws <- ndraws(object)
   }
+  n_draws <- try(as.integer(n_draws), silent = TRUE)
+  if ("try-error" %in% class(n_draws)) {
+    stop_("Unable to coerce {.var n_draws} to {.cls integer}.")
+  }
   fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
   if (is.null(newdata)) {
     newdata <- data.table::copy(object$data)
@@ -47,24 +51,27 @@ fitted.dynamitefit <- function(object, newdata = NULL,
                                          object$stan$u_names)
   model_matrix <- model_matrix[rep(seq_len(n_new), n_draws), ]
   newdata <- data.table::as.data.table(newdata)
-  newdata <- newdata[rep(seq_len(n_new), n_draws), ]
-  newdata[, ("draw") := rep(1:n_draws, each = n_new)]
-  data.table::setkeyv(newdata, c("draw", group_var, time_var))
-  idx <- seq.int(fixed, newdata[,.N], by = n_time)
+  newdata <- newdata[rep(seq_len(n_new), each = n_draws), ]
+  newdata[, ("draw") := rep(1:n_draws, n_new)]
   eval_envs <- prepare_eval_envs(object, newdata, eval_type = "fitted",
                                  predict_type = "response",
-                                 resp_stoch, n_id, n_draws)
+                                 resp_stoch, n_id, n_draws, group_var)
+  specials <- evaluate_specials(object$dformulas$stoch, newdata)
+  idx <- as.integer(newdata[ ,.I[newdata[[time_var]] == fixed]])
   for (i in seq.int(fixed + 1L, n_time)) {
-    idx <- idx + 1L
+    idx <- idx + n_draws
     model_matrix_sub <- model_matrix[idx, ]
     for (j in seq_along(resp_stoch)) {
       e <- eval_envs[[j]]
       e$idx <- idx
       e$time <- i - fixed
       e$model_matrix <- model_matrix_sub
+      e$offset <- specials[[j]]$offset[idx]
+      e$trials <- specials[[j]]$trials[idx]
       e$a_time <- ifelse_(NCOL(e$alpha) == 1, 1, i - fixed)
       eval(e$call, envir = e)
     }
   }
-  newdata
+  data.table::setkeyv(newdata, cols = c("draw", group_var, time_var))
+  data.table::setDF(newdata)
 }
