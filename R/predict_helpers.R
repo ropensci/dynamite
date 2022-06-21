@@ -260,13 +260,14 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
 #' @param has_varying \[logical(1)]\cr
 #'   Does the channel have time-varying predictors?
 #' @param has_fixed_intercept \[logical(1)]\cr
-# '  Does the channel have a time-invariant intercept?
+#'   Does the channel have a time-invariant intercept?
 #' @param has_varying_intercept \[logical(1)]\cr
-# '  Does the channel have a time-varying intercept?
+#'   Does the channel have a time-varying intercept?
 #' @param has_random_intercept \[logical(1)]\cr
-# '  Does the channel have a random intercept?
+#'   Does the channel have a random intercept?
 #' @param has_offset \[logical(1)]\cr
-# '  Does the channel have an offset?
+#'   Does the channel have an offset?
+#' @noRd
 generate_sim_call <- function(resp, resp_levels, family, type,
                               has_fixed, has_varying,
                               has_fixed_intercept, has_varying_intercept,

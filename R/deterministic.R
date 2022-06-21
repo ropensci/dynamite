@@ -115,6 +115,7 @@ assign_initial_values <- function(data, dd, dlp, dld, dls,
 #' @param data \[`data.table`]\cr Data to assign the values into.
 #' @param cl \[`language`]\cr A quoted expression defining the channels.
 #' @param idx \[`integer()`]\cr A vector of indices.
+#' @noRd
 assign_deterministic <- function(data, cl, idx) {
   # This should work in the next version of data.table
   data[idx, cl, env = list(cl = cl)]

@@ -110,7 +110,8 @@ increment_formula <- function(formula, x, type = c("fixed", "varying"),
 #'
 #' @param formula A `formula` object.
 #' @param x A `character` vector of terms to add.
-increment_formula_determnistic <- function(formula, x) {
+#' @noRd
+increment_formula_deterministic <- function(formula, x) {
   as.formula(paste0(deparse1(formula), " + ", x))
 }
 
