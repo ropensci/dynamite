@@ -15,7 +15,6 @@
 #' @srrstats {RE1.0} *Regression Software should enable models to be specified via a formula interface, unless reasons for not doing so are explicitly documented.*
 #' @srrstats {RE1.1} *Regression Software should document how formula interfaces are converted to matrix representations of input data.*
 #' @srrstats {RE1.4} *Regression Software should document any assumptions made with regard to input data; for example distributional assumptions, or assumptions that predictor data have mean values of zero. Implications of violations of these assumptions should be both documented and tested.*
-
 dynamiteformula <- function(formula, family, random_intercept = FALSE) {
   if (!is.formula(formula)) {
     stop_("Argument {.var formula} is not a {.cls formula} object.")
@@ -45,6 +44,7 @@ dynamiteformula <- function(formula, family, random_intercept = FALSE) {
   if (has_as_is(deparse1(formula))) {
     stop_("The use of {.code I(.)} is not supported by {.fun dynamiteformula}.")
   }
+  random_intercept <- try_type(random_intercept, "logical")[1]
   x <- dynamiteformula_(formula, family, random_intercept)
   structure(
     list(
@@ -65,8 +65,7 @@ dynamiteformula <- function(formula, family, random_intercept = FALSE) {
   )
 }
 
-#' @describeIn dynamiteformula Internal version of dynamiteformula
-#'
+#' @describeIn dynamiteformula Internal Version of `dynamiteformula`
 #' @noRd
 dynamiteformula_ <- function(formula, family, random_intercept = FALSE) {
   if (is_deterministic(family)) {
@@ -92,20 +91,17 @@ dynamiteformula_ <- function(formula, family, random_intercept = FALSE) {
   out
 }
 
-#' Create a channel for a dynamiteformula directly
+#' Create a Channel for a `dynamiteformula` Directly
 #'
-#' @param formula See [`dynamiteformula()`]
-#' @param original See [`dynamiteformula()`]
-#' @param family See [`dynamiteformula()`]
-#' @param response \[`character(1)`] Name of the response
-#' @param fixed \[`integer()`] Time-invariant covariate indices
-#' @param varying \[`integer()`] Time-varying covariate indices
-#' @param specials See \[`dynamiteformula()`]
-#' @param has_fixed_intercept \[`logical(1)`] Does the channel contain fixed
+#' @inheritParams dynamiteformula
+#' @param response \[`character(1)`]\cr Name of the response.
+#' @param fixed \[`integer()`]\cr Time-invariant covariate indices.
+#' @param varying \[`integer()`]\cr Time-varying covariate indices.
+#' @param has_fixed_intercept \[`logical(1)`]\cr Does the channel contain fixed
 #'   intercept?
-#' @param has_varying_intercept \[`logical(1)`] Does the channel contain
+#' @param has_varying_intercept \[`logical(1)`]\cr Does the channel contain
 #'   varying intercept?
-#' @param has_rand_intercept \[`logical(1)`] Does the channel contain random
+#' @param has_rand_intercept \[`logical(1)`]\cr Does the channel contain random
 #'   individual-level intercept term?
 #'@noRd
 dynamitechannel <- function(formula, original = NULL, family, response,
@@ -132,25 +128,24 @@ dynamitechannel <- function(formula, original = NULL, family, response,
 #' @export
 obs <- dynamiteformula
 
-#' Checks if argument is a `dynamiteformula` object
+#' Is the Argument a `dynamiteformula` Object
 #'
-#' @param x An \R object
-#'
+#' @param x An \R object.
 #' @export
 is.dynamiteformula <- function(x) {
   inherits(x, "dynamiteformula")
 }
 
-#' @describeIn dynamiteformula Prepare a deterministic auxiliary channel
+#' @describeIn dynamiteformula Prepare a Deterministic Auxiliary Channel
 #' @export
 aux <- function(formula) {
   dynamiteformula(formula, family = "deterministic")
 }
 
-#' Join two dynamiteformulas
+#' Join Two `dynamiteformula` Objects
 #'
-#' @param e1 An \R object
-#' @param e2 An \R object
+#' @param e1 An \R object.
+#' @param e2 An \R object.
 #'
 #' @export
 `+.dynamiteformula` <- function(e1, e2) {
@@ -163,38 +158,34 @@ aux <- function(formula) {
   out
 }
 
-#' Checks if argument is a formula
+#' Is the Argument a `formula` Object.
 #'
 #' @param x An \R object
-#'
 #' @noRd
 is.formula <- function(x) {
   inherits(x, "formula")
 }
 
-#' Get all response variables of a dynamiteformula object
+#' Get All Response Variables of a `dynamiteformula` Object
 #'
-#' @param x A `dynamiteformula` object
-#'
+#' @param x A `dynamiteformula` object.
 #' @noRd
 get_responses <- function(x) {
   unlist(sapply(x, "[[", "response"))
 }
 
-#' Get the RHS of all formulas of a dynamiteformula object as a character vector
+#' Get The RHS of All Formulas of a `dynamiteformula` Object
 #'
-#' @param x A `dynamiteformula` object
-#'
+#' @param x A `dynamiteformula` object.
 #' @noRd
 get_predictors <- function(x) {
   sapply(x, function(y) deparse1(formula_rhs(y$formula)))
 
 }
 
-#' Get terms of all formulas of a dynamiteformula
+#' Get Terms of All Formulas of a `dynamiteformula` Object
 #'
-#' @param x A `dynamiteformula` object
-#'
+#' @param x A `dynamiteformula` object.
 #' @noRd
 get_terms <- function(x) {
   lapply(x, function(y) {
@@ -206,37 +197,33 @@ get_terms <- function(x) {
   })
 }
 
-#' Get all formulas of a dynamiteformula object
+#' Get All Formulas of a `dynamiteformula` Object
 #'
-#' @param x A `dynamiteformula` object
-#'
+#' @param x A `dynamiteformula` object.
 #' @noRd
 get_formulas <- function(x) {
   lapply(x, "[[", "formula")
 }
 
-#' Get all original formulas of a dynamiteformula object
+#' Get All Original Formulas of a `dynamiteformula` Object
 #'
-#' @param x A `dynamiteformula` object
-#'
+#' @param x A `dynamiteformula` object.
 #' @noRd
 get_originals <- function(x) {
   lapply(x, "[[", "original")
 }
 
-#' Get all family objects of a dynamiteformula object
+#' Get All Family Objects of a `dynamiteformula` Object
 #'
-#' @param x A `dynamiteformula` object
-#'
+#' @param x A `dynamiteformula` object.
 #' @noRd
 get_families <- function(x) {
   lapply(x, "[[", "family")
 }
 
-#' Get a quoted expression of deterministic channel definitions
+#' Get a Quoted Expression of Deterministic Channel Definitions
 #'
-#' @param x A `dynamiteformula` object
-#'
+#' @param x A `dynamiteformula` object.
 #' @noRd
 get_quoted <- function(x) {
   resp <- get_responses(x)
@@ -249,38 +236,34 @@ get_quoted <- function(x) {
   }
 }
 
-#' Get indices of deterministic channels in dynamiteformula
+#' Get Indices of Deterministic Channels in a `dynamiteformula` Object
 #'
-#' @param x A `dynamiteformula` object
-#'
+#' @param x A `dynamiteformula` object.
 #' @noRd
 which_deterministic <- function(x) {
   which(sapply(x, function(y) is_deterministic(y$family)))
 }
 
-#' Get indices of stochastic channels in dynamiteformula
+#' Get Indices of Stochastic Channels in a `dynamiteformula` Object
 #'
 #' @param x A `dynamiteformula` object
-#'
 #' @noRd
 which_stochastic <- function(x) {
   which(sapply(x, function(y) !is_deterministic(y$family)))
 }
 
-#' Get channels with past value definitions
+#' Get Channels with Past Value Definitions of a `dynamiteformula` Object
 #'
 #' @param x A `dynamiteformula` object
-#'
 #' @noRd
 has_past <- function(x) {
   sapply(x, function(y) length(y$specials$past) > 0)
 }
 
-#' Internal +.dynamiteformula for model constructions
+#' Internal `+.dynamiteformula` For Model Construction
 #'
-#' @param e1 An \R object
-#' @param e2 An \R object
-#'
+#' @param e1 An \R object.
+#' @param e2 An \R object.
 #' @noRd
 add_dynamiteformula <- function(e1, e2) {
   if (is.dynamiteformula(e2)) {
@@ -298,11 +281,10 @@ add_dynamiteformula <- function(e1, e2) {
   out
 }
 
-#' Join two model definitions and verify compatibility
+#' Join Two Model Definitions and Verify Compatibility
 #'
-#' @param e1 A `dynamiteformula` object
-#' @param e2 A `dynamiteformula` object
-#'
+#' @param e1 A `dynamiteformula` object.
+#' @param e2 A `dynamiteformula` object.
 #' @noRd
 join_dynamiteformulas <- function(e1, e2) {
   out <- c(e1, e2)
@@ -354,11 +336,10 @@ join_dynamiteformulas <- function(e1, e2) {
   out
 }
 
-#' Set lag definitions for all channels
+#' Set Lags Definitions for All Channels in a `dynamiteformula` Object
 #'
-#' @param e1 A `dynamiteformula` object
-#' @param e2 A `lags` object
-#'
+#' @param e1 A `dynamiteformula` object,
+#' @param e2 A `lags` object,
 #' @noRd
 set_lags <- function(e1, e2) {
   if (!is.null(attr(e1, "lags"))) {
@@ -368,11 +349,10 @@ set_lags <- function(e1, e2) {
   e1
 }
 
-#' Set the regression coefficient splines of the model
+#' Set the Regression Coefficient Splines of the Model
 #'
-#' @param e1 A `dynamiteformula` object
-#' @param e2 A `splines` object
-#'
+#' @param e1 A `dynamiteformula` object.
+#' @param e2 A `splines` object.
 #' @noRd
 set_splines <- function(e1, e2) {
   if (!is.null(attr(e1, "splines")) && !attr(e2, "override")) {

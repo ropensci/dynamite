@@ -2,15 +2,15 @@
 % Please edit documentation in R/dynamiteformula.R
 \name{+.dynamiteformula}
 \alias{+.dynamiteformula}
-\title{Join two dynamiteformulas}
+\title{Join Two \code{dynamiteformula} Objects}
 \usage{
 \method{+}{dynamiteformula}(e1, e2)
 }
 \arguments{
-\item{e1}{An \R object}
+\item{e1}{An \R object.}
 
-\item{e2}{An \R object}
+\item{e2}{An \R object.}
 }
 \description{
-Join two dynamiteformulas
+Join Two \code{dynamiteformula} Objects
 }

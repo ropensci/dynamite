@@ -2,7 +2,7 @@
 % Please edit documentation in R/lags.R
 \name{lags}
 \alias{lags}
-\title{Add each lagged response as a predictor to each channel.}
+\title{Add Each Lagged Response as a Predictor to Each Channel.}
 \usage{
 lags(k = 1L, type = c("fixed", "varying"))
 }
@@ -16,5 +16,5 @@ will be added as a predictor for each channel.}
 added lag terms should vary in time or not.}
 }
 \description{
-Add each lagged response as a predictor to each channel.
+Add Each Lagged Response as a Predictor to Each Channel.
 }

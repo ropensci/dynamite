@@ -12,9 +12,9 @@
 \method{as_draws}{dynamitefit}(x, responses = NULL, types = NULL, ...)
 }
 \arguments{
-\item{x}{An object of class \code{dynamitefit}.}
+\item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
-\item{responses}{[\code{character()}]\cr Response(s) for which the  samples
+\item{responses}{[\code{character()}]\cr Response(s) for which the samples
 should be extracted. Possible options are \code{unique(x$priors$response)}}
 
 \item{types}{[\code{character()}]\cr Type(s) of the parameters for which the
@@ -28,7 +28,7 @@ all values listed in details except spline coefficients \code{omega} and
 A \code{draws_df} object.
 }
 \description{
-Converts the output from \code{dynamite} call to a
+Converts the output from \code{\link[=dynamite]{dynamite()}} call to a
 \code{draws_df} format of the \code{posterior} package, enabling the use
 of diagnostics and plotting methods of \code{posterior} and \code{bayesplot}
 packages. Note that this function returns all variables in a wide format,

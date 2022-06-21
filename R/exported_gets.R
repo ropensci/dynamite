@@ -1,4 +1,4 @@
-#' Get Prior Definitions for a Dynamite Model
+#' Get Prior Definitions of a Dynamite Model
 #'
 #' Extracts the priors used in the dynamite model as a data frame. You
 #' can then alter the priors by changing the contents of the `prior` column and
@@ -18,7 +18,7 @@
 #' deleted and the ordering of the rows is not changed (i.e. only `prior`
 #' column is altered).
 #'
-#' @param x \[`dynamiteformula` or `dynamitefit`]\cr The model formula or
+#' @param x \[`dynamiteformula` or `dynamitefit`]\cr The model formula or an
 #'   existing `dynamitefit` object. See [dynamiteformula()] and [dynamite()].
 #' @param data \[`data.frame`]\cr The data frame containing the variables in
 #'   the model.
@@ -56,6 +56,7 @@ get_priors.dynamiteformula <- function(x, data, group, time, ...) {
   )
   out$priors
 }
+
 #' @method get_priors dynamitefit
 #' @rdname get_priors
 #' @export
@@ -66,7 +67,7 @@ get_priors.dynamitefit <- function(x, ...) {
 #' Extract the Stan Code of the Dynamite Model
 #'
 #' Returns the Stan code of the model. Mostly useful for debugging or for
-#' building customized version of the model.
+#' building a customized version of the model.
 #'
 #' @inheritParams get_priors
 #' @rdname get_code
@@ -79,6 +80,7 @@ get_priors.dynamitefit <- function(x, ...) {
 get_code <- function(x, data, group, time, ...) {
   UseMethod("get_code", x)
 }
+
 #' @rdname get_code
 #' @export
 get_code.dynamiteformula <- function(x, data, group, time, ...) {
@@ -95,6 +97,7 @@ get_code.dynamiteformula <- function(x, data, group, time, ...) {
   )
   out$model_code
 }
+
 #' @rdname get_code
 #' @export
 get_code.dynamitefit <- function(x, ...) {
@@ -103,7 +106,7 @@ get_code.dynamitefit <- function(x, ...) {
 
 #' Extract the Model Data of the Dynamite Model
 #'
-#' Returns the input data to Stan model. Mostly useful for debugging.
+#' Returns the input data to the Stan model. Mostly useful for debugging.
 #'
 #' @inheritParams get_priors
 #' @rdname get_data
@@ -115,6 +118,7 @@ get_code.dynamitefit <- function(x, ...) {
 get_data <- function(x, data, group, time, ...) {
   UseMethod("get_data", x)
 }
+
 #' @rdname get_data
 #' @export
 get_data.dynamiteformula <- function(x, data, group, time, ...) {
@@ -131,6 +135,7 @@ get_data.dynamiteformula <- function(x, data, group, time, ...) {
   )
   out$stan$sampling_vars
 }
+
 #' @rdname get_data
 #' @export
 get_data.dynamitefit <- function(x, ...) {

@@ -9,9 +9,11 @@ dynamite(dformula, data, group, time, priors = NULL, debug = NULL, ...)
 \arguments{
 \item{dformula}{[\code{dynamiteformula}]\cr The model formula. See 'Details'.}
 
-\item{data}{[\code{data.frame}]\cr The data frame containing the variables in
-the model.
-TODO document here allowed data types etc.}
+\item{data}{[\code{data.frame}]\cr A \code{data.frame} containing the variables in
+the model. Supported column types are \code{integer}, \code{logical}, \code{double},
+\code{factor}. \code{character} columns will be converted to factors.
+Unused factor levels will be dropped. The \code{data} can contain missing
+values which will simply be ignored in the estimation.}
 
 \item{group}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 unique groups.}

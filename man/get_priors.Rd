@@ -4,7 +4,7 @@
 \alias{get_priors}
 \alias{get_priors.dynamiteformula}
 \alias{get_priors.dynamitefit}
-\title{Get Prior Definitions for a Dynamite Model}
+\title{Get Prior Definitions of a Dynamite Model}
 \usage{
 get_priors(x, data, group, time, ...)
 
@@ -13,7 +13,7 @@ get_priors(x, data, group, time, ...)
 \method{get_priors}{dynamitefit}(x, ...)
 }
 \arguments{
-\item{x}{[\code{dynamiteformula} or \code{dynamitefit}]\cr The model formula or
+\item{x}{[\code{dynamiteformula} or \code{dynamitefit}]\cr The model formula or an
 existing \code{dynamitefit} object. See \code{\link[=dynamiteformula]{dynamiteformula()}} and \code{\link[=dynamite]{dynamite()}}.}
 
 \item{data}{[\code{data.frame}]\cr The data frame containing the variables in

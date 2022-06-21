@@ -2,13 +2,13 @@
 % Please edit documentation in R/dynamiteformula.R
 \name{is.dynamiteformula}
 \alias{is.dynamiteformula}
-\title{Checks if argument is a \code{dynamiteformula} object}
+\title{Is the Argument a \code{dynamiteformula} Object}
 \usage{
 is.dynamiteformula(x)
 }
 \arguments{
-\item{x}{An \R object}
+\item{x}{An \R object.}
 }
 \description{
-Checks if argument is a \code{dynamiteformula} object
+Is the Argument a \code{dynamiteformula} Object
 }

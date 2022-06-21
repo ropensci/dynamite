@@ -13,7 +13,7 @@ get_code(x, data, group, time, ...)
 \method{get_code}{dynamitefit}(x, ...)
 }
 \arguments{
-\item{x}{[\code{dynamiteformula} or \code{dynamitefit}]\cr The model formula or
+\item{x}{[\code{dynamiteformula} or \code{dynamitefit}]\cr The model formula or an
 existing \code{dynamitefit} object. See \code{\link[=dynamiteformula]{dynamiteformula()}} and \code{\link[=dynamite]{dynamite()}}.}
 
 \item{data}{[\code{data.frame}]\cr The data frame containing the variables in
@@ -29,7 +29,7 @@ time axis.}
 }
 \description{
 Returns the Stan code of the model. Mostly useful for debugging or for
-building customized version of the model.
+building a customized version of the model.
 }
 \examples{
 

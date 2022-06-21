@@ -13,7 +13,7 @@ plot_deltas(
 )
 }
 \arguments{
-\item{model}{An object of class \code{dynamitefit}.}
+\item{model}{[\code{dynamitefit}]\cr The model fit object}
 
 \item{level}{[\code{numeric(1)}]\cr Level for posterior intervals.
 Default is 0.05, leading to 90\% intervals.}

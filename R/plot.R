@@ -1,7 +1,6 @@
-
 #' Visualize Time-varying Regression Coefficients of the Dynamite Model
 #'
-#' @param model An object of class `dynamitefit`.
+#' @param model \[`dynamitefit`]\cr The model fit object
 #' @param level \[`numeric(1)`]\cr Level for posterior intervals.
 #'   Default is 0.05, leading to 90% intervals.
 #' @param alpha \[`numeric(1)`]\cr Opacity level for `geom_ribbon`.
@@ -31,10 +30,15 @@
 plot_deltas <- function(model, level = 0.05, alpha = 0.5,
                         scales = c("fixed", "free"),
                         include_alpha = TRUE){
-
+  if (!is.dynamitefit(model)) {
+    stop_("Argument {.var model} must be a {.cls dynamitefit} object.")
+  }
+  level <- try_type(level, "numeric")[1]
+  alpha <- try_type(alpha, "numeric")[1]
+  include_alpha <- try_type(include_alpha, "logical")[1]
   coefs <- coef(model, "delta", probs = c(level, 1 - level),
                 include_alpha = include_alpha)
-  if (nrow(coefs) == 0) {
+  if (NROW(coefs) == 0L) {
     stop_("The model does not contain varying coefficients delta.")
   }
 
@@ -57,7 +61,6 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5,
     ggplot2::geom_line() +
     ggplot2::facet_wrap(~ .data$parameter, scales = scales) +
     ggplot2::labs(title = title, x = "Time", y = "Value")
-
 }
 
 #' Visualize Time-invariant Regression Coefficients of the Dynamite Model
@@ -68,7 +71,11 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5,
 #' @examples
 #' plot_betas(gaussian_example_fit)
 plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
-
+  if (!is.dynamitefit(model)) {
+    stop_("Argument {.var model} must be a {.cls dynamitefit} object.")
+  }
+  level <- try_type(level, "numeric")[1]
+  include_alpha <- try_type(include_alpha, "logical")[1]
   coefs <- coef(model, "beta", probs = c(level, 1 - level),
                 include_alpha = include_alpha)
   if (nrow(coefs) == 0) {
@@ -102,7 +109,10 @@ plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
 #' @examples
 #' plot_nus(gaussian_example_fit)
 plot_nus <- function(model, level = 0.05){
-
+  if (!is.dynamitefit(model)) {
+    stop_("Argument {.var model} must be a {.cls dynamitefit} object.")
+  }
+  level <- try_type(level, "numeric")[1]
   coefs <- coef(model, "nu", probs = c(level, 1 - level)) |>
     dplyr::mutate(parameter = glue::glue("{parameter}_{group}")) |>
     dplyr::mutate(parameter = factor(.data$parameter,

@@ -2,14 +2,15 @@
 % Please edit documentation in R/print.R
 \name{print.dynamitefit}
 \alias{print.dynamitefit}
-\title{Print Summary of Dynamite Object}
+\title{Print a Summary of a Dynamite Object}
 \usage{
 \method{print}{dynamitefit}(x, ...)
 }
 \arguments{
-\item{x}{An output from \code{\link{dynamite}}.}
+\item{x}{[\code{dynamitefit}] The model fit object.}
 
-\item{...}{Further parameters to the print method for tibbles. See \link[tibble:formatting]{tibble::formatting}.}
+\item{...}{Further parameters to the print method for tibbles.
+See \link[tibble:formatting]{tibble::formatting}.}
 }
 \description{
 Prints the summary information of the estimated dynamite model.

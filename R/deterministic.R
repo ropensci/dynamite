@@ -1,4 +1,11 @@
-# TODO documentation
+#' Initialize Deterministic Channels
+#'
+#' @param data \[`data.table`]\cr Data to assign initial values into.
+#' @param dd  \[`dynamiteformula`]\cr Formula of deterministic channels.
+#' @param dlp \[`dynamiteformula`]\cr Formula of lagged predictors.
+#' @param dld \[`dynamiteformula`]\cr Formula of lagged deterministic channels.
+#' @param dls \[`dynamiteformula`]\cr Formula of lagged stochastic channels.
+#' @noRd
 initialize_deterministic <- function(data, dd, dlp, dld, dls) {
   resp_pred <- attr(dlp, "original_response")
   for (i in seq_along(dlp)) {
@@ -45,6 +52,13 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
   }
 }
 
+#' Assign Initial Values of Deterministic Channels
+#'
+#' @inheritParams initialize_deterministic
+#' @param idx \[`integer()`] Vector of indices.
+#' @param fixed \[`integer(1)`] Number of fixed time points.
+#' @param group_var \[`character(1)`] Grouping variable name.
+#' @noRd
 assign_initial_values <- function(data, dd, dlp, dld, dls,
                                   idx, fixed, group_var) {
   n_det <- length(dd)
@@ -96,12 +110,27 @@ assign_initial_values <- function(data, dd, dlp, dld, dls,
   }
 }
 
+#' Evaluate Definitions and Assign Values of Deterministic Channels
+#'
+#' @param data \[`data.table`]\cr Data to assign the values into.
+#' @param cl \[`language`]\cr A quoted expression defining the channels.
+#' @param idx \[`integer()`]\cr A vector of indices.
 assign_deterministic <- function(data, cl, idx) {
   # This should work in the next version of data.table
   data[idx, cl, env = list(cl = cl)]
   invisible(NULL)
 }
 
+#' Assign Values of Lagged Channels
+#'
+#' @param data \[`data.table`]\cr Data to assign the values into.
+#' @param ro \[`integer`]\cr Rank order of the channels (the evaluation order).
+#' @param idx \[`integer()`]\cr A vector of indices.
+#' @param lhs \[`character()`]\cr The lagged outcome variable names.
+#' @param rhs \[`character()`]\cr The names of the variables being lagged.
+#' @param offset \[`integer(1)`:\sQuote(1L)] The distance between consequent
+#'   observations in `data`.
+#' @noRd
 assign_lags <- function(data, ro, idx, lhs, rhs, offset = 1L) {
   for (k in ro) {
     set(data, i = idx, j = lhs[k], value = data[[rhs[k]]][idx - offset])

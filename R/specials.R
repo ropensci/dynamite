@@ -1,7 +1,6 @@
-#' Get and separate all specials of a formula
+#' Get and Separate All Specials of a Formula Object
 #'
-#' @param x A `formula` object
-#'
+#' @param x A `formula` object.
 #' @noRd
 formula_specials <- function(x) {
   out <- list(formula = NULL, specials = NULL, coefs = NULL)
@@ -71,11 +70,6 @@ formula_specials <- function(x) {
   }
   fixed_terms <- union(form_terms, fixed_terms)
   fixed_icpt <- attr(xt, "intercept") || fixed_icpt
-  #common_terms <- intersect(fixed_terms, varying_terms)
-  # if (length(common_terms) > 0) {
-  #   stop_("Variables '", cs(common_terms), "' ",
-  #         "specified as both time-constant and time-varying.")
-  # }
   full_terms <- union(fixed_terms, varying_terms)
   any_icpt <- fixed_icpt || varying_icpt
   if (fixed_icpt && varying_icpt) {
@@ -110,10 +104,9 @@ formula_specials <- function(x) {
   out
 }
 
-#' Process formulas for deterministic channels and get past value definitions
+#' Process Formulas for Deterministic Channels and Get Past Value Definitions
 #'
-#' @param x A `formula` object
-#'
+#' @param x A `formula` object.
 #' @noRd
 formula_past <- function(formula) {
   formula_str <- deparse1(formula)
@@ -157,10 +150,9 @@ formula_past <- function(formula) {
   )
 }
 
-#' Process response variables for deterministic channels
+#' Process Response Variables for Deterministic Channels
 #'
-#' @param x a character vector of length 1
-#'
+#' @param x a `character` vector of length 1.
 #' @noRd
 formula_response <- function(x) {
   if (grepl("factor\\(.*\\)", x, perl = TRUE)) {
@@ -184,12 +176,11 @@ formula_response <- function(x) {
   }
 }
 
-#' Computes all specials defined in a formula in the context of the data
+#' Computes All Specials Defined in a Formula in the Context of the Data
 #'
-#' @param formula A `dynamiteformula` object
+#' @param formula A `dynamiteformula` object.
 #' @param data A `data.table` containing the variables present in the special
-#'   definitions in the formula
-#'
+#'   definitions in the formula.
 #' @noRd
 evaluate_specials <- function(formula, data) {
   lapply(seq_along(formula), function(i) {
@@ -208,11 +199,11 @@ evaluate_specials <- function(formula, data) {
   })
 }
 
-#' Retrieves the corresponding term of a special variable in a formula
+#' Retrieve the Corresponding Term of a Special Variable in a Formula
 #'
-#' @param special a vector of special variable indices
-#' @param vars "variables" attribute of a terms object
-#' @param term_labels "term.labels" attribute of a terms object
+#' @param special An `integer` vector of special variable indices.
+#' @param vars `"variables"` attribute of a `terms` object.
+#' @param term_labels `"term.labels"` attribute of a `terms` object.
 #'
 #' @noRd
 get_special_term_indices <- function(special, vars, term_labels) {
@@ -224,6 +215,7 @@ get_special_term_indices <- function(special, vars, term_labels) {
   out
 }
 
+# Supported specials
 formula_special_funs <- c(
   "offset",
   "trials"

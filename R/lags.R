@@ -1,4 +1,5 @@
-#' Add each lagged response as a predictor to each channel.
+#' Add Each Lagged Response as a Predictor to Each Channel.
+#'
 #' @param k \[`integer()`: \sQuote{1}]\cr
 #'   Lagged values indicated by `k`  of each observed response variable
 #'   will be added as a predictor for each channel.
@@ -11,29 +12,27 @@
 #' @export
 lags <- function(k = 1L, type = c("fixed", "varying")) {
   type <- match.arg(type)
-  k <- try_(k = k, type = "integer")
+  k <- try_type(k, "integer")
   structure(
     list(k = k, type = type),
     class = "lags"
   )
 }
 
-#' Check if the argument represents a lags definition
+#' Is the Argument a `lags` Definition
 #'
 #' @param x An R object
-#'
 #' @noRd
 is.lags <- function(x) {
   inherits(x, "lags")
 }
 
-#' Create a lagged version of a vector
+#' Create a Lagged Version of a Vector
 #'
 #' @param x \[`vector()`]\cr A vector of values.
 #' @param k \[`integer(1)`: \sQuote{1}]\cr Number of positions to lag by.
-#'
 #' @noRd
-lag_ <- function(x, k) {
+lag_ <- function(x, k = 1) {
   lag_idx <- seq_len(length(x) - k)
   out <- x
   out[1:k] <- NA
@@ -41,32 +40,29 @@ lag_ <- function(x, k) {
   out
 }
 
-#' Find lag terms in a character vector
+#' Find Lag Terms in a Character Vector
 #'
-#' @param x \[`character()`]\cr A character vector
-#'
+#' @param x \[`character()`]\cr A character vector.
 #' @noRd
 find_lags <- function(x) {
   grepl("lag\\([^\\)]+\\)", x, perl = TRUE)
 }
 
-#' Extract non-lag variables
+#' Extract Non-lag Variables
 #'
-#' @param x \[`character(1)`]\cr A character vector
-#'
+#' @param x \[`character(1)`]\cr A character vector.
 #' @noRd
 extract_nonlags <- function(x) {
   has_lag <- find_lags(x)
   x[!has_lag]
 }
 
-#' Extract lag definitions
+#' Extract Lag Definitions
 #'
-#' Extract variables and shifts of lagged terms of the form lag(var, k)
+#' Extract variables and shifts of lagged terms of the form `lag(var, k)`
 #' and return them as a data frame for post processing.
 #'
-#' @param x \[`character()`]\cr a character vector
-#'
+#' @param x \[`character()`]\cr a character vector.
 #' @noRd
 extract_lags <- function(x) {
   has_lag <- find_lags(x)
@@ -98,21 +94,25 @@ extract_lags <- function(x) {
         if ("try-error" %in% class(k_expr)) {
           stop_("Invalid shifted value experssion {.code {k_str[j]}}.")
         }
-        k_coerce <- try_(k = try(eval(k_expr), silent = TRUE), type = "integer")
+        k_coerce <- try(eval(k_expr), silent = TRUE)
         if ("try-error" %in% class(k_coerce)) {
           stop_("Invalid lagged value definition {.code {lag_map$src[j]}}.")
-        } else {
-          lag_map$k[j] <- k_coerce[1L]
-          if (length(k_coerce) > 1L) {
-            new_lags <- data.frame(
-              src = lag_map$src[j],
-              var = lag_map$var[j],
-              k = k_coerce[-1L],
-              present = TRUE,
-              increment = TRUE
-            )
-            lag_map <- rbind(lag_map, new_lags)
-          }
+        }
+        k_coerce <- try(as.integer(k_coerce), silent = TRUE)
+        if ("try_error" %in% class(k_coerce)) {
+          stop_("Unable to coerce lag shift value to integer in
+                 {.code {lag_map$src[j]}}.")
+        }
+        lag_map$k[j] <- k_coerce[1L]
+        if (length(k_coerce) > 1L) {
+          new_lags <- data.frame(
+            src = lag_map$src[j],
+            var = lag_map$var[j],
+            k = k_coerce[-1L],
+            present = TRUE,
+            increment = TRUE
+          )
+          lag_map <- rbind(lag_map, new_lags)
         }
       } else {
         lag_map$k[j] <- 1L
@@ -135,11 +135,10 @@ extract_lags <- function(x) {
   }
 }
 
-#' Extract lag shift values of a specific variable from a character string
+#' Extract Lag Shift Values of a Specific Variable from a Character String
 #'
-#' @param x \[`character(1)`]\cr a character vector of length one
-#' @param self \[`character(1)`]\cr variable whose lags to look for
-#'
+#' @param x \[`character(1)`]\cr a character vector of length one.
+#' @param self \[`character(1)`]\cr variable whose lags to look for.
 #' @noRd
 extract_self_lags <- function(x, self) {
   lag_regex <-  gregexec(

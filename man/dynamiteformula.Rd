@@ -29,6 +29,6 @@ TODO document lag-conversion to data
 }
 \section{Functions}{
 \itemize{
-\item \code{aux}: Prepare a deterministic auxiliary channel
+\item \code{aux}: Prepare a Deterministic Auxiliary Channel
 }}
 

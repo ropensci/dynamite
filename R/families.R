@@ -1,40 +1,34 @@
-#' Construct a dynamitefamily object
+#' Construct a `dynamitefamily` Object
 #'
 #' Family Functions for \pkg{dynamite} Models
 #'
 #' @param name \[`character(1)`]\cr Name of the family.
-#'
 #' @noRd
 dynamitefamily <- function(name) {
   name <- tolower(as.character(name)[1])
   if (!is_supported(name)) {
     stop_("{.val {name}} is not a supported family.")
   }
-  # do something
   structure(
     list(name = name),
     class = "dynamitefamily"
   )
 }
 
-#' Is an object a dynamitefamily object?
-#'
-#' Checks if argument is a dynamitefamily object
+#' Is an Object a `dynamitefamily` Object?
 #'
 #' @param x An R object.
-#'
 #' @noRd
 is.dynamitefamily <- function(x) {
   inherits(x, "dynamitefamily")
 }
 
-#' Validate calls to family functions
+#' Validate Calls to Family Functions
 #'
-#' Checks if a function call is of the form family(...),
-#' where 'family' is supported by the package.
+#' Checks if a function call is of the form `family(...)`,
+#' where `"family"` is supported by the package.
 #'
-#' @param x A language object
-#'
+#' @param x A language object.
 #' @noRd
 is_valid_family_call <- function(x) {
   family <- as.character(x[[1]])[1]
@@ -46,10 +40,9 @@ is_valid_family_call <- function(x) {
   )
 }
 
-#' Check if a family is supported
+#' Check if a Family is Supported
 #'
-#' @param \[`character(1)`]\cr Name of the family
-#'
+#' @param \[`character(1)`]\cr Name of the family.
 #' @noRd
 is_supported <- function(name) {
   name %in% supported_families
@@ -67,7 +60,7 @@ supported_families <- c(
   "exponential"
 )
 
-# Generate 'family_' and 'is_family' convenience functions
+# Generate `family_` and `is_family` convenience functions
 # for all supported families
 for (family in supported_families) {
   force(family)

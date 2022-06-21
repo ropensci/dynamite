@@ -14,10 +14,10 @@
 )
 }
 \arguments{
-\item{object}{An object of class \code{dynamitefit}.}
+\item{object}{[\code{dynamitefit}]\cr The model fit object.}
 
 \item{type}{[\code{character(1)}]\cr Either \code{beta} (the default) for
-time-invariant coefficients,  \code{delta} for time-varying coefficients, or
+time-invariant coefficients, \code{delta} for time-varying coefficients, or
 \code{nu} for random intercepts.}
 
 \item{summary}{[\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior

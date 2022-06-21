@@ -6,8 +6,7 @@ utils::globalVariables(c(".", ".I", ".N", ".SD", "where"))
 
 #' Get the left-hand side of a formula
 #'
-#' @param x A `formula` object
-#'
+#' @param x A `formula` object.
 #' @noRd
 formula_lhs <- function(x) {
   if (length(x) == 3) {
@@ -19,8 +18,7 @@ formula_lhs <- function(x) {
 
 #' Get the right-hand side of formula
 #'
-#' @param x A `formula` object
-#'
+#' @param x A `formula` object.
 #' @noRd
 formula_rhs <- function(x) {
   if (length(x) == 3) {
@@ -32,8 +30,7 @@ formula_rhs <- function(x) {
 
 #' Get the right-hand side terms of a formula
 #'
-#' @param x A `formula` object
-#'
+#' @param x A `formula` object.
 #' @noRd
 formula_terms <- function(x) {
   attr(terms(x), "term.labels")
@@ -41,11 +38,10 @@ formula_terms <- function(x) {
 
 #' Replace terms in a formula based on a regular expression
 #'
-#' @param pattern See [gsub()]
-#' @param replacement See [gsub()]
+#' @param pattern See [base::gsub()].
+#' @param replacement See [base::gsub()].
 #' @param formula A `formula` object
-#' @param ... See [gsub()]
-#'
+#' @param ... Additional arguments passed to [base::gsub()]
 #' @noRd
 gsub_formula <- function(pattern, replacement, formula, ...) {
   formula_str <- deparse1(formula)
@@ -54,13 +50,13 @@ gsub_formula <- function(pattern, replacement, formula, ...) {
 
 #' Add fixed or varying terms to a formula
 #'
-#' @param formula A `formula` object
-#' @param x A `character` vector of terms to add
-#' @param type Either `"fixed"` or `"varying"` indicating type of terms to add
+#' @param formula A `formula` object.
+#' @param x A `character` vector of terms to add.
+#' @param type Either `"fixed"` or `"varying"` indicating type of terms to add.
 #' @param varying_idx Indices of left-hand side terms that have
 #'   time-varying coefficients
 #' @param varying_icpt Does the formula have a varying intercept?
-#'
+#' @param fixed_icpt Does the formula have a fixed intercept?
 #' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
 #' @noRd
 increment_formula <- function(formula, x, type = c("fixed", "varying"),
@@ -110,14 +106,17 @@ increment_formula <- function(formula, x, type = c("fixed", "varying"),
   as.formula(out_str)
 }
 
+#' Add terms to a formula of a deterministic channel
+#'
+#' @param formula A `formula` object.
+#' @param x A `character` vector of terms to add.
 increment_formula_determnistic <- function(formula, x) {
   as.formula(paste0(deparse1(formula), " + ", x))
 }
 
 #' Create a comma-separated character string to represent a Stan integer array
 #'
-#' @param x A `character` vector
-#'
+#' @param x A `character` vector.
 #' @noRd
 cs <- function(x) {
   paste0(x, collapse = ", ")
@@ -129,7 +128,6 @@ cs <- function(x) {
 #' @param .indent A `character` string to prefix each row with
 #' @param .parse A `logical` value indicating whether glue syntax should be
 #'   parsed by [glue::glue()].
-#'
 #' @noRd
 paste_rows <- function(..., .indent = "", .parse = TRUE) {
   dots <- list(...)
@@ -180,7 +178,6 @@ paste_rows <- function(..., .indent = "", .parse = TRUE) {
 #'
 #' @param m An integer denoting how many spaces does one unit of indentation
 #'   correspond to (default = 2L)
-#'
 #' @noRd
 indenter_ <- function(m = 2L) {
   x <- rep(" ", m)
@@ -195,8 +192,7 @@ indenter_ <- function(m = 2L) {
 
 #' Check if x contains a string of the form I(.)
 #'
-#' @param x A character string
-#'
+#' @param x A `character` vector.
 #' @noRd
 has_as_is <- function(x) {
   grepl("I\\(.+\\)", x, perl = TRUE)
@@ -205,7 +201,6 @@ has_as_is <- function(x) {
 #' Fill gaps (NAs) in a vector with the last non-NA observation
 #'
 #' @param x A vector possibly containing NA values
-#'
 #' @noRd
 locf <- function(x) {
   non_na <- ifelse_(is.na(x[1L]), c(1L, which(!is.na(x))), which(!is.na(x)))
@@ -218,7 +213,6 @@ locf <- function(x) {
 #' @param message See [cli::cli_abort()]
 #' @param ... See [cli::cli_abort()]
 #' @param call See See [cli::cli_abort()]
-#'
 #' @noRd
 stop_ <- function(message, ..., call = rlang::caller_env()) {
   cli::cli_abort(message, ..., .envir = parent.frame(), call = call)
@@ -228,7 +222,6 @@ stop_ <- function(message, ..., call = rlang::caller_env()) {
 #'
 #' @param message See [cli::cli_abort()]
 #' @param ... See [cli::cli_abort()]
-#'
 #' @noRd
 warning_ <- function(message, ...) {
   cli::cli_warn(message, ..., .envir = parent.frame())
@@ -238,7 +231,6 @@ warning_ <- function(message, ...) {
 #'
 #' @param message See [cli::cli_abort()]
 #' @param ... See [cli::cli_abort()]
-#'
 #' @noRd
 message_ <- function(message, ...) {
   cli::cli_inform(message, ..., .envir = parent.frame())
@@ -246,34 +238,30 @@ message_ <- function(message, ...) {
 
 #' Try to coerce one argument to specific type
 #'
-#' @param ... A `name = value` pair,
-#'   only the first one is used if multiple pairs are supplied.
-#'
+#' @param x The argument to coerce.
+#' @param type \[character(1)] The type to coerce `x` into.
 #' @noRd
-try_ <- function(..., type) {
+try_type <- function(x, type) {
   if (missing(type)) {
     stop_("Argument {.var type} must be given.")
   }
-  dots <- list(...)
-  arg_val <- dots[[1]]
-  if (is.null(arg_val)) {
+  pars <- as.list(match.call()[-1])
+  arg <- as.character(pars[[1]])
+  if (is.null(x)) {
     return(NULL)
   }
-  arg_name <- names(dots)[1]
-  as_type <- get(paste0("as.", type))
-  out <- try(as_type(arg_val), silent = TRUE)
-  if (identical(class(out), "try-error")) {
-    stop_("Unable to coerce argument {.var {arg_name}} to {.cls {type}}.")
+  out <- try(do.call(paste0("as.", type[1]), args = list(x)), silent = TRUE)
+  if ("try-error" %in% class(out)) {
+    stop_("Unable to coerce argument {.var {arg}} to {.cls {type}}.")
   }
   out
 }
 
-#' Shorthand for if (test) yes else no
+#' Shorthand for `if (test) yes else no`
 #'
-#' @param test An object which can be coerced into logical mode
-#' @param yes An \R object to return when `test` evaluates to `TRUE`
-#' @param no An \R object to return when `test` evaluates to `FALSE`
-#'
+#' @param test An object which can be coerced into `logical`.
+#' @param yes An \R object to return when `test` evaluates to `TRUE`.
+#' @param no An \R object to return when `test` evaluates to `FALSE`.
 #' @noRd
 ifelse_ <- function(test, yes, no) {
   if (test) {
@@ -285,9 +273,8 @@ ifelse_ <- function(test, yes, no) {
 
 #' Return yes if test is TRUE, otherwise an empty vector of the same type
 #'
-#' @param tes An object which can be coerced into logical mode
-#' @param yes An \R object to return when `test` evaluates to `TRUE`
-#'
+#' @param tes An object which can be coerced into `logical`.
+#' @param yes An \R object to return when `test` evaluates to `TRUE`.
 #' @noRd
 onlyif <- function(test, yes) {
   if (test) {
@@ -295,6 +282,46 @@ onlyif <- function(test, yes) {
   } else {
     do.call(paste0(typeof(yes)), args = list(length = 0))
   }
+}
+
+#' Adds NA gaps to fill in missing time points in a data frame
+#'
+#' @inheritParams dynamite
+#' @param time \[numeric()]\cr A vector of the time index values in the data.
+#' @noRd
+fill_time <- function(data, time, group_var, time_var) {
+  time_ivals <- diff(time)
+  time_scale <- min(diff(time))
+  if (any(time_ivals[!is.na(time_ivals)] %% time_scale > 0)) {
+    stop_("Observations must occur at regular time intervals.")
+  } else {
+    full_time <- seq(time[1], time[length(time)], by = time_scale)
+    groups <- !is.null(group_var)
+    if (groups) {
+      time_groups <- data |>
+        dplyr::group_by(.data[[group_var]]) |>
+        dplyr::summarise(has_missing = !identical(.data[[time_var]], full_time))
+      if (any(time_groups$has_missing)) {
+        full_data_template <- expand.grid(
+          time = time,
+          group = unique(data[[group_var]])
+        )
+        names(full_data_template) <- c(time_var, group_var)
+        data <- full_data_template |>
+          dplyr::left_join(data, by = c(group_var, time_var))
+      }
+    } else {
+      if (!identical(data[[time_var]], full_time)) {
+        full_data_template <- expand.grid(
+          time = time
+        )
+        names(full_data_template) <- time_var
+        data <- full_data_template |>
+          dplyr::left_join(data, by = time_var)
+      }
+    }
+  }
+  data
 }
 
 # Placeholder for future

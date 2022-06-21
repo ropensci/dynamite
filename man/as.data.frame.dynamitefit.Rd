@@ -2,7 +2,7 @@
 % Please edit documentation in R/as_data_frame.R
 \name{as.data.frame.dynamitefit}
 \alias{as.data.frame.dynamitefit}
-\title{Extract Samples From the dynamitefit Object as a Data Frame.}
+\title{Extract Samples From the \code{dynamitefit} Object as a Data Frame.}
 \usage{
 \method{as.data.frame}{dynamitefit}(
   x,
@@ -17,13 +17,13 @@
 )
 }
 \arguments{
-\item{x}{The estimated \code{dynamite} model.}
+\item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
 \item{row.names}{Ignored.}
 
 \item{optional}{Ignored.}
 
-\item{responses}{[\code{character()}]\cr Response(s) for which the  samples
+\item{responses}{[\code{character()}]\cr Response(s) for which the samples
 should be extracted. Possible options are \code{unique(x$priors$response)}}
 
 \item{types}{[\code{character()}]\cr Type(s) of the parameters for which the
@@ -40,8 +40,8 @@ samples instead.}
 \code{c(0.05, 0.95)}.}
 
 \item{include_fixed}{[\code{logical(1)}]\cr If \code{TRUE} (default), time-varying
-parameters for 1:fixed time points are included in the output as NAs. If
-\code{FALSE}, those time points are omitted completely from the output.}
+parameters for \code{1:fixed} time points are included in the output as NAs. If
+\code{FALSE}, fixed time points are omitted completely from the output.}
 
 \item{...}{Ignored.}
 }
@@ -52,7 +52,7 @@ model parameters in a long format. For wide format, see
 }
 \description{
 You can use the arguments \code{responses} and \code{types} to extract only a subset
-of the model parameters (i.e. only certain types of parameters related to a
+of the model parameters (i.e., only certain types of parameters related to a
 certain response variable).
 }
 \details{
@@ -65,10 +65,10 @@ Potential values for the types argument are
 \item \code{tau} Standard deviations of the spline coefficients of \code{delta}.
 \item \code{tau_alpha} Standard deviations of the spline coefficients of
 time-varying \code{alpha}.
-\item \code{sigma_nu} Standard deviation of the random intercepts \code{nu}
-\item \code{sigma} Standard deviations of gaussian responses
-\item \code{phi} Dispersion parameters of  negative binomial distribution.
-\item \code{omega} Spline coefficients of the spline coefficients \code{delta}.
+\item \code{sigma_nu} Standard deviation of the random intercepts \code{nu}.
+\item \code{sigma} Standard deviations of gaussian responses.
+\item \code{phi} Dispersion parameters of negative binomial responses.
+\item \code{omega} Spline coefficients of the regression coefficients \code{delta}.
 \item \code{omega_alpha} Spline coefficients of time-varying \code{alpha}.
 }
 }

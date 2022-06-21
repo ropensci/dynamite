@@ -1,14 +1,20 @@
-#' Create code blocks for the Stan model
+#' Create Code Blocks for the Stan Model
 #'
 #' @param dformula A `dynamiteformula` defining the model
-#' @param ... TODO
-#'
-#' @export
+#' @param ... Additional arguments for block generation methods.
+#' @noRd
 create_blocks <- function(dformula, ...) {
   UseMethod("create_blocks")
 }
 
-#' @export
+#' Default Stan Blocks
+#'
+#' @inheritParams create_blocks
+#' @param indent \[`integer(1)`] How many units of indentation to use for the
+#'   code generation. One unit is equal to one space.
+#' @param vars The `model_vars` component of [prepare_stan_data()] output.
+#' @param ... Not used.
+#' @noRd
 create_blocks.default <- function(dformula, indent = 2L, vars, ...) {
   idt <- indenter_(indent)
   functions <- create_functions(dformula, idt, vars)
@@ -29,14 +35,13 @@ create_blocks.default <- function(dformula, indent = 2L, vars, ...) {
 #'
 #' @param dformula A `dynamiteformula` defining the model
 #' @param idt An indeter function created by [indenter_()]
-#' @param vars `model_vars` component of [convert_data()] output
-#'
+#' @param vars The `model_vars` component of [prepare_stan_data()] output.
 #' @noRd
 create_functions <- function(dformula, idt, vars) {
   NULL
 }
 
-#' @describeIn create_function Create the 'Data' block of the Stan model code
+#' @describeIn create_function Create The 'Data' Block of the Stan Model Code
 #' @noRd
 create_data <- function(dformula, idt, vars) {
   has_splines <- any(unlist(lapply(vars, "[[", "has_varying"))) ||
@@ -64,7 +69,7 @@ create_data <- function(dformula, idt, vars) {
 }
 
 #' @describeIn create_function Create the 'Transformed Data'
-#'   block of the Stan model code
+#'   Block of the Stan Model Code
 #' @noRd
 create_transformed_data <- function(dformula, idt, vars) {
   tr_data <- character(length(dformula))
@@ -77,7 +82,7 @@ create_transformed_data <- function(dformula, idt, vars) {
 }
 
 #' @describeIn create_function Create the 'Parameters'
-#'   block of the Stan model code
+#'   Block of the Stan Model Code
 #' @noRd
 create_parameters <- function(dformula, idt, vars) {
   splinetext <- ""
@@ -100,7 +105,7 @@ create_parameters <- function(dformula, idt, vars) {
 }
 
 #' @describeIn create_function Create the 'Transformed Parameters'
-#'   block of the Stan model code
+#'   Block of the Stan Model Code
 #' @noRd
 create_transformed_parameters <- function(dformula, idt, vars) {
   spline_defs <- attr(dformula, "splines")
@@ -113,7 +118,7 @@ create_transformed_parameters <- function(dformula, idt, vars) {
   paste_rows("transformed parameters {", tr_pars, "}", .parse = FALSE)
 }
 
-#' @describeIn create_function Create the 'Model' block of the Stan model code
+#' @describeIn create_function Create the 'Model' Block of the Stan Model Code
 #' @noRd
 create_model <- function(dformula, idt, vars) {
   mod <- character(length(dformula))
@@ -126,7 +131,7 @@ create_model <- function(dformula, idt, vars) {
 }
 
 #' @describeIn create_function Create the 'Generated Quantities'
-#'   block of the Stan model code
+#'   Block of the Stan Model Code
 #' @noRd
 create_generated_quantities <- function(dformula, idt, vars) {
   #gen <- character(length(dformula))

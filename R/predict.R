@@ -3,13 +3,34 @@
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param newdata \[`data.frame`]\cr Data used in predictions.
 #'   If `NULL` (default), the data used in model estimation is used for
-#'   predictions as well.
+#'   predictions as well. Predictions are computed for missing values in the
+#'   response variable columns, and non-missing values are assumed fixed. If
+#'   `newdata` is `NULL`, all values in the response variable columns
+#'   after the first `fixed` time points will be converted to `NA` values.
+#'   Missing values in predictor columns can be imputed (argument `impute`).
+#'   There should be no new time points that were not present in the data that
+#'   were used to fit the model. New group levels can be included, but if the
+#'   model contains random intercepts, an options for the random
+#'   effects for the new levels must be chosen (argument `new_levels`).
 #' @param type \[`character(1)`]\cr Type of prediction,
-#'   `"response"` (default), `"mean"`  or `"link"`.
+#'   `"response"` (default), `"mean"`, or `"link"`.
 #' @param impute \[`character(1)`]\cr Which imputation scheme to use for
 #'   missing predictor values. Currently supported options are
 #'   no imputation: `"none"` (default), and
 #'   last observation carried forward: `"locf"`.
+#' @param new_levels \[`character(1)`: \sQuote(NULL)]\cr
+#'   Defines if and how to sample the random intercepts for observations whose
+#'   group level was not present in the original data. The options are
+#'     * `"none"` (the default) which will signal an error if new levels
+#'       are encountered.
+#'     * `"bootstrap"` which will randomly draw from the posterior samples of
+#'       the random intercepts across all original levels.
+#'     * `"gaussian"` which will randomly draw from a gaussian
+#'       distribution using the posterior samples of the random intercept
+#'       standard deviation.
+#'     * `"original"` which will randomly one of the original levels to the new
+#'       levels. The posterior samples of the random intercept of the assigned
+#'       levels will then be used.
 #' @param n_draws \[`integer(1)`]\cr Number of posterior samples to use,
 #'   default is `NULL` which uses all samples.
 #' @param ... Ignored.
@@ -27,33 +48,23 @@
 #' @srrstats {BS3.0} *Explicitly document assumptions made in regard to missing values; for example that data is assumed to contain no missing (`NA`, `Inf`) values, and that such values, or entire rows including any such values, will be automatically removed from input data.*
 #' @srrstats {RE4.14} *Where possible, values should also be provided for extrapolation or forecast *errors*.*
 #' @srrstats {RE4.16} *Regression Software which models distinct responses for different categorical groups should include the ability to submit new groups to `predict()` methods.*
-#' TODO new id?
-#' TODO document what missingness means
 predict.dynamitefit <- function(object, newdata = NULL,
                                 type = c("response", "mean", "link"),
                                 impute = c("none", "locf", "linear"),
+                                new_levels = c("none", "bootstrap", "gaussian",
+                                               "original"),
                                 n_draws = NULL, ...) {
   type <- match.arg(type)
   impute <- match.arg(impute)
-  if (is.null(n_draws)) {
-    n_draws <- ndraws(object)
-  }
-  n_draws <- try(as.integer(n_draws), silent = TRUE)
-  if ("try-error" %in% class(n_draws)) {
-    stop_("Unable to coerce {.var n_draws} to {.cls integer}.")
+  new_levels <- match.arg(new_levels)
+  n_draws <- check_ndraws(n_draws, ndraws(object))
+  newdata_null <- is.null(newdata)
+  if (newdata_null || data.table::is.data.table(newdata)) {
+    newdata <- data.table::setDF(data.table::copy(object$data))
+  } else if (!is.data.frame(newdata)) {
+    stop_("Argument {.var newdata} is not a {.cls data.frame} object.")
   }
   fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
-  newdata_null <- is.null(newdata)
-  if (newdata_null) {
-    newdata <- data.table::copy(object$data)
-  } else {
-    if (data.table::is.data.table(newdata)) {
-      newdata <- data.table::copy(newdata)
-    } else {
-      newdata <- data.table::as.data.table(newdata)
-    }
-  }
-  # TODO impute predictor values
   group_var <- object$group_var
   time_var <- object$time_var
   dd <- object$dformulas$det
@@ -71,8 +82,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
   rhs_det <- get_predictors(dld)
   lhs_stoch <- get_responses(dls)
   rhs_stoch <- get_predictors(dls)
-  check_newdata(newdata, object$data, type, families_stoch,
-                resp_stoch, categories, group_var, time_var)
+  newdata <- parse_newdata(newdata, object$data, type, families_stoch,
+                           resp_stoch, categories, group_var, time_var)
   if (!identical(impute, "none")) {
     predictors <- setdiff(names(newdata), resp_stoch)
     impute_newdata(newdata, impute, predictors, group_var)

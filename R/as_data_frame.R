@@ -1,7 +1,7 @@
-#' Extract Samples From the dynamitefit Object as a Data Frame.
+#' Extract Samples From the `dynamitefit` Object as a Data Frame.
 #'
 #' You can use the arguments `responses` and `types` to extract only a subset
-#' of the model parameters (i.e. only certain types of parameters related to a
+#' of the model parameters (i.e., only certain types of parameters related to a
 #' certain response variable).
 #'
 #' Potential values for the types argument are
@@ -12,16 +12,16 @@
 #'  * `tau` Standard deviations of the spline coefficients of `delta`.
 #'  * `tau_alpha` Standard deviations of the spline coefficients of
 #'    time-varying `alpha`.
-#'  * `sigma_nu` Standard deviation of the random intercepts `nu`
-#'  * `sigma` Standard deviations of gaussian responses
-#'  * `phi` Dispersion parameters of  negative binomial distribution.
-#'  * `omega` Spline coefficients of the spline coefficients `delta`.
+#'  * `sigma_nu` Standard deviation of the random intercepts `nu`.
+#'  * `sigma` Standard deviations of gaussian responses.
+#'  * `phi` Dispersion parameters of negative binomial responses.
+#'  * `omega` Spline coefficients of the regression coefficients `delta`.
 #'  * `omega_alpha` Spline coefficients of time-varying `alpha`.
 #'
-#' @param x The estimated \code{dynamite} model.
+#' @param x  \[`dynamitefit`]\cr The model fit object.
 #' @param row.names Ignored.
 #' @param optional Ignored.
-#' @param responses  \[`character()`]\cr Response(s) for which the  samples
+#' @param responses  \[`character()`]\cr Response(s) for which the samples
 #'   should be extracted. Possible options are `unique(x$priors$response)`
 #' @param types \[`character()`]\cr Type(s) of the parameters for which the
 #'   samples should be extracted. See details of possible values. Default is
@@ -34,8 +34,8 @@
 #' @param probs \[`numeric()`]\cr Quantiles of interest. Default is
 #'   `c(0.05, 0.95)`.
 #' @param include_fixed \[`logical(1)`]\cr If `TRUE` (default), time-varying
-#'   parameters for 1:fixed time points are included in the output as NAs. If
-#'   `FALSE`, those time points are omitted completely from the output.
+#'   parameters for `1:fixed` time points are included in the output as NAs. If
+#'   `FALSE`, fixed time points are omitted completely from the output.
 #' @param ... Ignored.
 #' @return A `tibble` containing either samples or summary statistics of the
 #'   model parameters in a long format. For wide format, see
@@ -80,7 +80,12 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
                                       responses = NULL, types = NULL,
                                       summary = TRUE, probs = c(0.05, 0.95),
                                       include_fixed = TRUE, ...) {
-
+  if (!is.dynamitefit(x)) {
+    stop_("Argument {.var x} must be a {.cls dynamitefit} object.")
+  }
+  summary <- try_type(summary, "logical")[1]
+  include_fixed <- try_type(include_fixed, "logical")[1]
+  probs <- try_type(probs, "numeric")[1]
   if (is.null(responses)) {
     responses <- unique(x$priors$response)
   } else {

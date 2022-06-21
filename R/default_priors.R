@@ -2,14 +2,12 @@
 #'
 #' @param y \[`character(1)`]\cr Name of the response variable of the channel.
 #' @param channel \[`list()`]\cr Channel-specific helper variables.
-#' @param mean_gamma Prior mean betas and deltas (at time fixed + 1).
-#' @param sd_gamma Prior SD betas and deltas (at time fixed + 1).
-#' @param mean_y Mean of the response variable at time fixed + 1.
-#' @param sd_y SD of the response variable at time fixed + 1.
+#' @param mean_gamma Prior mean betas and deltas (at time `fixed + 1`).
+#' @param sd_gamma Prior SD betas and deltas (at time `fixed + 1`).
+#' @param mean_y Mean of the response variable at time `fixed + 1`.
+#' @param sd_y Standard deviation of the response variable at time `fixed + 1`.
 #' @noRd
-default_priors <- function(y, channel, mean_gamma, sd_gamma,
-                           mean_y, sd_y) {
-
+default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
   priors <- list()
   if (channel$has_random_intercept) {
     channel$sigma_nu_prior_distr <-  paste0("normal(", 0, ", ", sd_y, ")")
@@ -81,13 +79,14 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma,
   }
   list(channel = channel, priors = dplyr::bind_rows(priors))
 }
+
 #' Create Default Priors for Categorical Data
 #'
 #' @param y \[`character(1)`]\cr Name of the response variable of the channel.
 #' @param channel \[`list()`]\cr Channel-specific helper variables.
 #' @param sd_x Standard deviation of the explanatory variables at time
-#'   fixed + 1.
-#' @param resp_class Class of the response variable.
+#'   `fixed + 1`.
+#' @param resp_class \[`character(1)`]\cr Class of the response variable.
 #' @noRd
 default_priors_categorical <- function(y, channel, sd_x, resp_class) {
   S_y <- length(attr(resp_class, "levels"))
@@ -160,6 +159,7 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
   }
   list(channel = channel, priors = dplyr::bind_rows(priors))
 }
+
 #' Check and Correct the User-defined Priors
 #'
 #' This function makes a crude check that the user-supplied prior distributions
@@ -175,14 +175,14 @@ check_priors <- function(priors, defaults) {
     defaults$parameter[which(!(defaults$parameter %in% priors$parameter))]
   if (length(not_found) > 0) {
     stop_(c(
-      "Argument `priors` should contain all relevant parameters.",
+      "Argument {.var priors} should contain all relevant parameters.",
       `x` ="Prior{?s} for parameter{?s} {not_found} {?is/are} not defined."))
   }
   extras <-
     priors$parameter[which(!(priors$parameter %in% defaults$parameter))]
   if (length(extras) > 0) {
     stop_(c(
-      "Argument `priors` should contain only relevant parameters.",
+      "Argument {.var priors} should contain only relevant parameters.",
       `x` = "Found {?a/} prior{?s} for parameter{?s} {.var {extras}}, but
         the model does not contain such {?a/} parameter{?s}."))
   }
@@ -202,7 +202,7 @@ check_priors <- function(priors, defaults) {
   dists <- sub("\\(.*", "", priors$prior)
   unsupported <- unique(dists[which(!(dists %in% all_dists))])
   if (length(unsupported) > 0) {
-    stop_(c("Found unsupported prior distributions in `priors:",
+    stop_(c("Found unsupported prior distributions in {.var priors}:",
             `x` = "Distribution{?s} {.var {unsupported}}, are not available."))
   }
   unsupported <- which(
@@ -217,6 +217,5 @@ check_priors <- function(priors, defaults) {
       `x` = "Found unconstrained distribution {.var {dists}} for parameter{?s}
       {.var {pars}}."))
   }
-
   priors
 }

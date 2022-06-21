@@ -2,16 +2,12 @@
 % Please edit documentation in R/fitted.R
 \name{fitted.dynamitefit}
 \alias{fitted.dynamitefit}
-\title{Extract fitted values of dynamitefit}
+\title{Extract Fitted Values of a \code{dynamitefit} Object}
 \usage{
-\method{fitted}{dynamitefit}(object, newdata = NULL, n_draws = NULL, ...)
+\method{fitted}{dynamitefit}(object, n_draws = NULL, ...)
 }
 \arguments{
 \item{object}{[\code{dynamitefit}]\cr The model fit object.}
-
-\item{newdata}{[\code{data.frame}]\cr Data used in predictions.
-If \code{NULL} (default), the data used in model estimation is used for
-predictions as well.}
 
 \item{n_draws}{[\code{integer(1)}]\cr Number of posterior samples to use,
 default is \code{NULL} which uses all samples.}
@@ -21,7 +17,7 @@ default is \code{NULL} which uses all samples.}
 \description{
 Note that these are conditional on the observed data i.e., we don't
 simulate new lagged values for covariates, so we underestimate the
-uncertainty. It is typically better to use predict with type = "mean".
+uncertainty. It is typically better to use predict with \code{type = "mean"}.
 These fitted value are mostly useful only for studying one-step ahead
 estimates.
 }

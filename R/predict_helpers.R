@@ -1,5 +1,46 @@
-# TODO documentation
-check_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
+#' Check Validity of `n_draws`
+#'
+#' @param n_draws \[`integer(1)`]\cr
+#'   Number of draws to use for `fitted` or `predict`.
+#' @param full_draws \[`integer(1)`]\cr
+#'   Number of draws avaiable in the `dynamitefit` object.
+#' @noRd
+check_ndraws <- function(n_draws, full_draws) {
+  if (is.null(n_draws)) {
+    n_draws <- full_draws
+  }
+  n_draws <- try_type(n_draws, "integer")
+  if ("try-error" %in% class(n_draws)) {
+    stop_("Unable to coerce {.var n_draws} to {.cls integer}.")
+  }
+  if (n_draws < 1L) {
+    stop_("Argument {.var ndraws} must be a positive {.cls integer}.")
+  }
+  if (n_draws > full_draws) {
+    warning_(c(
+      "You've supplied {.ndraws = {ndraws}} but there are only
+      {full_draws} samples available.",
+      `i` = "The available samples will be used for prediction."
+    ))
+    n_draws <- full_draws
+  }
+  n_draws
+}
+
+#' Parse and Prepare New Data for Prediction
+#'
+#' @param newdata \[`data.frame`]\cr The data to be used for prediction.
+#' @param data \[`data.frame`]\cr The original data used to fit the model.
+#' @param type \[`character`]\cr Either `"response"`, `"mean"` or `"link"`.
+#' @param families_stoch \[`list`]\cr of `dynamitefamily` object.
+#' @param resp_stoch \[`character`]\cr A vector of response variables
+#' @param categories \[`list`]\cr Response variable categories
+#'   for categorical families.
+#' @param group_var \[`character(1)`,`NULL`]\cr Group variable name or `NULL`
+#'   if there is only one group.
+#' @param time_var \[`character(1)`]\cr Time index variable name.
+#' @noRd
+parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
                           categories, group_var, time_var) {
   if (!is.null(group_var)) {
     if (!(group_var %in% names(newdata))) {
@@ -34,6 +75,7 @@ check_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
       stop_("Can't find response variable {.var {resp}} in {.var newdata}.")
     }
   }
+  data.table::setDT(newdata, key = c(group_var, time_var))
   # create separate column for each level of categorical variables
   for (i in seq_along(resp_stoch)) {
     resp <- resp_stoch[i]
@@ -54,10 +96,16 @@ check_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
       newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
     }
   }
-  data.table::setkeyv(newdata, c(group_var, time_var))
+  newdata
 }
 
 # TODO test imputation
+#' Impute Predictor values in New Data
+#'
+#' @inheritParams predict
+#' @param predictors \[`character()`] A vector of predictor column names
+#' @param group_var \[`character(1)`] Grouping variable name.
+#' @noRd
 impute_newdata <- function(newdata, impute, predictors, group_var) {
   if (identical(impute, "locf")) {
     newdata[, (predictors) := lapply(.SD, locf),
@@ -65,6 +113,18 @@ impute_newdata <- function(newdata, impute, predictors, group_var) {
   }
 }
 
+#' Assign NAs to Time Indices Beyond Fixed Time Points
+#'
+#' @inheritParams parse_newdata
+#' @param newdata_null \[logical(1)]\cr
+#'   Was `newdata` `NULL` when `predict` was called?
+#' @param resp_stoch \[character()]\cr Vector of response variable names.
+#' @param clear_names \[character()]\cr
+#'   Vector of column names to remove from `newdata`.
+#' @param fixed \[integer(1)]\cr The number of fixed time points.
+#' @param n_id \[integer(1)]\cr Number of unique groups.
+#' @param n_time \[integer(1)]\cr Number of unique time points.
+#' @noRd
 clear_nonfixed <- function(newdata, newdata_null, resp_stoch,
                            group_var, clear_names, fixed, n_id, n_time) {
   # TODO maybe not needed
@@ -102,6 +162,14 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch,
   }
 }
 
+#' Prepare Environments to Evaluate Predictions or Fitted Values
+#'
+#' @inheritParams predict
+#' @inheritParams clear_nonfixed
+#' @param eval_type \[`character(1)`]\cr Either `"predict"` or `"fitted"`
+#' @param predict_type \[`character()`]\cr
+#'   Either `"response"`, `"mean"`, or `"link"`.
+#' @noRd
 prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
                               resp_stoch, n_id, n_draws, group_var) {
   samples <- rstan::extract(object$stanfit)
@@ -181,6 +249,24 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
   eval_envs
 }
 
+#' Generate a Quoted Expression to Evaluate Predictions or Fitted Values
+#'
+#' @param resp \[`character(1)`]\cr Name of the response.
+#' @param resp_levels \[`character()`]\cr Levels of a categorical response.
+#' @param family \[`dynamitefamily`]\cr Family of the response.
+#' @param type  \[`character(1)`]\cr Either `"predict"` or `"fitted"`.
+#' @param has_fixed \[logical(1)]\cr
+#'   Does the channel have time-invariant predictors?
+#' @param has_varying \[logical(1)]\cr
+#'   Does the channel have time-varying predictors?
+#' @param has_fixed_intercept \[logical(1)]\cr
+# '  Does the channel have a time-invariant intercept?
+#' @param has_varying_intercept \[logical(1)]\cr
+# '  Does the channel have a time-varying intercept?
+#' @param has_random_intercept \[logical(1)]\cr
+# '  Does the channel have a random intercept?
+#' @param has_offset \[logical(1)]\cr
+# '  Does the channel have an offset?
 generate_sim_call <- function(resp, resp_levels, family, type,
                               has_fixed, has_varying,
                               has_fixed_intercept, has_varying_intercept,

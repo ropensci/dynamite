@@ -1,7 +1,7 @@
 #' Define the B-splines Used for the Time-varying Coefficients of the Model.
 #'
 #' This function can be used as part of `dynamiteformula` to define the splines
-#' for the time-varying coeffients \eqn{\delta}.
+#' for the time-varying coefficients \eqn{\delta}.
 #'
 #' @param shrinkage \[`logical(1)`]\cr If `TRUE`, a common global shrinkage
 #'   parameter \eqn{\lambda} is used for the splines so that the standard
@@ -21,7 +21,7 @@
 #'   changing this if you encounter divergences or other problems in sampling.
 #'   Can be a single logical value, or vector of logical values, defining the
 #'   parameterization separately for each channel.
-#' @param df \[`numeric()`]\cr Degree of freedom, i.e. the total number of
+#' @param df \[`integer()`]\cr Degree of freedom, i.e., the total number of
 #'   spline coefficients. See [splines::bs()]. Note that the knots are always
 #'   defined as equidistant sequence on the interval starting from the first
 #'   non-fixed time point to the last time point in the data.
@@ -35,17 +35,16 @@
 #' somewhere else)?
 splines <- function(shrinkage = FALSE, override = FALSE,
                     df = NULL, degree = 3, lb_tau = 0, noncentered = FALSE) {
-  shrinkage <- try_(shrinkage, type = "logical")[1] # TODO check the length
-  override <- try_(override, type = "logical")[1] # TODO
-  df <- try_(df, type = "integer")[1]
-  degree <- try_(degree, type = "integer")
+  shrinkage <- try_type(shrinkage, "logical")[1]
+  override <- try_type(override, "logical")[1]
+  df <- try_type(df, "integer")[1]
+  degree <- try_type(degree, "integer")
   # length of these this argument can be > 1 for channel-wise definitions,
   # check the length later
-  noncentered <- try_(noncentered, type = "logical")
-  lb_tau <- try_(lb_tau, type = "numeric")
-  # TODO: better error message
+  noncentered <- try_type(noncentered, "logical")
+  lb_tau <- try_type(lb_tau, "numeric")
   if (any(lb_tau < 0)) {
-    stop_("Lower bound for `tau` should be non-negative.")
+    stop_("Lower bound for {.var tau} must be non-negative.")
   }
   structure(
     list(
@@ -63,10 +62,9 @@ splines <- function(shrinkage = FALSE, override = FALSE,
   )
 }
 
-#' Checks if the argument represents a splines definition
+#' Is The Argument a Splines Definition
 #'
 #' @param x An \R object
-#'
 #' @noRd
 is.splines <- function(x) {
   inherits(x, "splines")

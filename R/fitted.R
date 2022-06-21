@@ -1,32 +1,16 @@
-#' Extract fitted values of dynamitefit
+#' Extract Fitted Values of a `dynamitefit` Object
 #'
 #' Note that these are conditional on the observed data i.e., we don't
 #' simulate new lagged values for covariates, so we underestimate the
-#' uncertainty. It is typically better to use predict with type = "mean".
+#' uncertainty. It is typically better to use predict with `type = "mean"`.
 #' These fitted value are mostly useful only for studying one-step ahead
 #' estimates.
 #' @export
 #' @inheritParams predict.dynamitefit
 #' @srrstats {RE4.9} *Modelled values of response variables.*
-fitted.dynamitefit <- function(object, newdata = NULL,
-                               n_draws = NULL,  ...) {
-  if (is.null(n_draws)) {
-    n_draws <- ndraws(object)
-  }
-  n_draws <- try(as.integer(n_draws), silent = TRUE)
-  if ("try-error" %in% class(n_draws)) {
-    stop_("Unable to coerce {.var n_draws} to {.cls integer}.")
-  }
+fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
+  n_draws <- check_ndraws(n_draws, ndraws(object))
   fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
-  if (is.null(newdata)) {
-    newdata <- data.table::copy(object$data)
-  } else {
-    if (data.table::is.data.table(newdata)) {
-      newdata <- data.table::copy(newdata)
-    } else {
-      newdata <- data.table::as.data.table(newdata)
-    }
-  }
   group_var <- object$group_var
   time_var <- object$time_var
   formulas_stoch <- get_formulas(object$dformulas$stoch)
@@ -34,9 +18,10 @@ fitted.dynamitefit <- function(object, newdata = NULL,
   categories <- lapply(attr(object$stan$responses, "resp_class"),
                        "attr", "levels")
   resp_stoch <- get_responses(object$dformulas$stoch)
-  check_newdata(newdata, object$data, type = "response",
-                families_stoch, resp_stoch, categories,
-                group_var, time_var)
+  newdata <- data.table::setDF(data.table::copy(object$data))
+  newdata <- parse_newdata(newdata, object$data, type = "response",
+                           families_stoch, resp_stoch, categories,
+                           group_var, time_var)
   group <- NULL
   n_id <- 1L
   if (!is.null(group_var)) {

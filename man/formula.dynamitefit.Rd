@@ -2,15 +2,15 @@
 % Please edit documentation in R/dynamite.R
 \name{formula.dynamitefit}
 \alias{formula.dynamitefit}
-\title{Access model formula of a dynamite model fit}
+\title{Access The Model Formula of a \code{dynamitefit} Object}
 \usage{
 \method{formula}{dynamitefit}(x, ...)
 }
 \arguments{
-\item{x}{[\code{dynamitefit}]\cr The model fit object}
+\item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
-\item{...}{Not used}
+\item{...}{Not used.}
 }
 \description{
-Return a list containing the formulas defining each channel of the model.
+Returns the model definition as a quoted expression.
 }

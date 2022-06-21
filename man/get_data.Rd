@@ -13,7 +13,7 @@ get_data(x, data, group, time, ...)
 \method{get_data}{dynamitefit}(x, ...)
 }
 \arguments{
-\item{x}{[\code{dynamiteformula} or \code{dynamitefit}]\cr The model formula or
+\item{x}{[\code{dynamiteformula} or \code{dynamitefit}]\cr The model formula or an
 existing \code{dynamitefit} object. See \code{\link[=dynamiteformula]{dynamiteformula()}} and \code{\link[=dynamite]{dynamite()}}.}
 
 \item{data}{[\code{data.frame}]\cr The data frame containing the variables in
@@ -28,7 +28,7 @@ time axis.}
 \item{...}{Ignored.}
 }
 \description{
-Returns the input data to Stan model. Mostly useful for debugging.
+Returns the input data to the Stan model. Mostly useful for debugging.
 }
 \examples{
 d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)

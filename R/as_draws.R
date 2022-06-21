@@ -1,14 +1,14 @@
-#' Convert \code{dynamite} Output to \code{draws_df} Format
+#' Convert `dynamite` Output to `draws_df` Format
 #'
-#' Converts the output from \code{dynamite} call to a
-#' \code{draws_df} format of the \code{posterior} package, enabling the use
-#' of diagnostics and plotting methods of \code{posterior} and \code{bayesplot}
+#' Converts the output from [dynamite::dynamite()] call to a
+#' `draws_df` format of the `posterior` package, enabling the use
+#' of diagnostics and plotting methods of `posterior` and `bayesplot`
 #' packages. Note that this function returns all variables in a wide format,
 #' whereas [dynamite::as.data.frame()] uses the long format.
 #'
-#' @param x An object of class \code{dynamitefit}.
+#' @param x \[`dynamitefit`]\cr The model fit object.
 #' @inheritParams as.data.frame.dynamitefit
-#' @return A \code{draws_df} object.
+#' @return A `draws_df` object.
 #' @aliases as_draws as_draws_df
 #' @export
 #' @export as_draws_df
@@ -18,6 +18,9 @@
 #' as_draws(gaussian_example_fit, types = c("sigma", "beta"))
 #'
 as_draws_df.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
+  if (!is.dynamitefit(x)) {
+    stop_("Argument {.var x} must be a {.cls dynamitefit} object.")
+  }
   d <- as.data.frame(x, responses, types, summary = FALSE,
                      include_fixed = FALSE) |>
     dplyr::select(.data$parameter, .data$value, .data$time, .data$category,
@@ -35,6 +38,7 @@ as_draws_df.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
   colnames(d) <- gsub("_idNA", "", colnames(d))
   d |> posterior::as_draws()
 }
+
 #' @export
 #' @export as_draws
 #' @rdname as_draws-dynamitefit

@@ -1,6 +1,5 @@
 #' Estimate a Bayesian Dynamic Multivariate Panel Model
 #'
-#'
 #' Any univariate unbounded continuous distributions supported by Stan can be
 #' used as a prior for model parameters (the distribution is automatically
 #' truncated to positive side for constrained parameters). In addition, any
@@ -12,9 +11,11 @@
 #' supplying it to the `dynamite`.
 #'
 #' @param dformula \[`dynamiteformula`]\cr The model formula. See 'Details'.
-#' @param data \[`data.frame`]\cr The data frame containing the variables in
-#'   the model.
-#' TODO document here allowed data types etc.
+#' @param data \[`data.frame`]\cr A `data.frame` containing the variables in
+#'   the model. Supported column types are `integer`, `logical`, `double`,
+#'   `factor`. `character` columns will be converted to factors.
+#'   Unused factor levels will be dropped. The `data` can contain missing
+#'   values which will simply be ignored in the estimation.
 #' @param group \[`character(1)`]\cr A column name of `data` that denotes the
 #'   unique groups.
 #' @param time \[`character(1)`]\cr A column name of `data` that denotes the
@@ -86,8 +87,6 @@
 #' @srrstats {RE4.8} *Response variables, and associated "metadata" where applicable.*
 #' @srrstats {RE4.13} *Predictor variables, and associated "metadata" where applicable.*
 #' TODO all
-#' TODO document what missingness means
-#' TODO warn ordered factor as response
 dynamite <- function(dformula, data, group, time,
                      priors = NULL, debug = NULL, ...) {
   # stored for return object
@@ -97,7 +96,7 @@ dynamite <- function(dformula, data, group, time,
   if (missing(group) || is.null(group)) {
     group <- group_var <- NULL
   } else {
-    group_var <- try_(group = group, type = "character")
+    group_var <- try_type(group, "character")
     if (is.null(data[[group_var]])) {
       stop_(
         "Can't find grouping variable {.var {group_var}} in {.var data}."
@@ -107,7 +106,7 @@ dynamite <- function(dformula, data, group, time,
   if (missing(time)) {
     stop_("Argument {.var time} is missing.")
   }
-  time_var <- try_(time = time, type = "character")
+  time_var <- try_type(time, "character")
   if (is.null(data[[time_var]])) {
     stop_(
       "Can't find time index variable {.var {time_var}} in {.var data}."
@@ -116,7 +115,6 @@ dynamite <- function(dformula, data, group, time,
   data <- parse_data(data, dformula, group_var, time_var)
   dformulas <- parse_lags(data, dformula, group_var, time_var)
   evaluate_deterministic(data, dformulas, group_var, time_var)
-  # TODO check for NAs
   stan <- prepare_stan_data(data, dformulas$stoch, group_var, time_var, priors,
                             fixed = attr(dformulas$all, "max_lag"))
   model_code <- create_blocks(dformula = dformulas$stoch, indent = 2L,
@@ -158,13 +156,12 @@ dynamite <- function(dformula, data, group, time,
 }
 
 # TODO test formula.dynamitefit
-#' Access model formula of a dynamite model fit
+#' Access The Model Formula of a `dynamitefit` Object
 #'
-#' Return a list containing the formulas defining each channel of the model.
+#' Returns the model definition as a quoted expression.
 #'
-#' @param x \[`dynamitefit`\]\cr The model fit object
-#' @param ... Not used
-#'
+#' @param x \[`dynamitefit`\]\cr The model fit object.
+#' @param ... Not used.
 #' @export
 formula.dynamitefit <- function(x, ...) {
   formula_str <- sapply(get_originals(x$dformulas$all), deparse1)
@@ -210,15 +207,19 @@ formula.dynamitefit <- function(x, ...) {
                       .parse = FALSE))
 }
 
-#' Parse data for model fitting
+#' Is The Argument a `dynamitefit` Object
 #'
-#' @param data \[`data.frame`]\cr The data frame containing the variables in
-#'   the model.
-#' @param dformula \[`dynamiteformula`] The model formula
-#' @param group_var \[`character(1)`,`NULL`]\cr Group variable name or `NULL`
-#'   if there is only one group
-#' @param time_var \[`character(1)`]\cr Time index variable name
+#' @param x An \R object.
+#' @noRd
+is.dynamitefit <- function(x) {
+  inherits(x, "dynamitefit")
+}
+
+#' Parse Data for Model Fitting
 #'
+#' @inheritParams dynamite
+#' @param group_var \[`character(1)`] Grouping variable name.
+#' @param time_var \[`character(1)`] Time index variable name.
 #' @srrstats {G2.4d} *explicit conversion to factor via `as.factor()`*
 #' @srrstats {G2.5} *Where inputs are expected to be of `factor` type, secondary documentation should explicitly state whether these should be `ordered` or not, and those inputs should provide appropriate error or other routines to ensure inputs follow these expectations.*
 #' @srrstats {G2.11} *Software should ensure that `data.frame`-like tabular objects which have columns which do not themselves have standard class attributes (typically, `vector`) are appropriately processed, and do not error without reason. This behaviour should be tested. Again, columns created by the [`units` package](https://github.com/r-quantities/units/) provide a good test case.*
@@ -226,11 +227,9 @@ formula.dynamitefit <- function(x, ...) {
 #' @srrstats {G2.16} *All functions should also provide options to handle undefined values (e.g., `NaN`, `Inf` and `-Inf`), including potentially ignoring or removing such values.*
 #' @noRd
 parse_data <- function(data, dformula, group_var, time_var) {
-  # TODO issue a warning if levels were dropped?
   data <- droplevels(data)
   data_names <- names(data)
-  data <- data |>
-    dplyr::mutate(dplyr::across(where(is.character), as.factor))
+  data <- data |> dplyr::mutate(dplyr::across(where(is.character), as.factor))
   valid_types <- c("integer", "logical", "double")
   col_types <- sapply(data, typeof)
   factor_cols <- sapply(data, is.factor)
@@ -259,7 +258,7 @@ parse_data <- function(data, dformula, group_var, time_var) {
     rof <- resp[ordered_factor_resp]
     warning_(c(
       "Response variable{?s} {.var {rof}} {?is/are} of class
-      {.cls ordered factor} whose channel{?s} {?is/are} categorical:",
+       {.cls ordered factor} whose channel{?s} {?is/are} categorical:",
       `i` = "{.var {rof}} will be converted to {?an/} unordered factor{?s}."
     ))
     for (i in seq_along(rof)) {
@@ -270,51 +269,23 @@ parse_data <- function(data, dformula, group_var, time_var) {
   if (any(!finite_cols)) {
     stop_(
       "Non-finite values in variable{?s} {.var {data_names[!finite_cols]}} of
-      {.var data}."
+       {.var data}."
     )
   }
   time <- sort(unique(data[[time_var]]))
   if (length(time) == 1) {
     stop_("There must be at least two time points in the data.")
   }
-  full_time <- NULL
-  # TODO convert Dates etc. to integers before this
-  time_ivals <- diff(time)
-  time_scale <- min(diff(time))
-  if (any(time_ivals[!is.na(time_ivals)] %% time_scale > 0)) {
-    stop_("Observations must occur at regular time intervals.")
-  } else {
-    full_time <- seq(time[1], time[length(time)], by = time_scale)
-    groups <- !is.null(group_var)
-    if (groups) {
-      time_groups <- data |>
-        dplyr::group_by(.data[[group_var]]) |>
-        dplyr::summarise(has_missing = !identical(.data[[time_var]], full_time))
-      if (any(time_groups$has_missing)) {
-        full_data_template <- expand.grid(
-          time = time,
-          group = unique(data[[group_var]])
-        )
-        names(full_data_template) <- c(time_var, group_var)
-        data <- full_data_template |>
-          dplyr::left_join(data, by = c(group_var, time_var))
-      }
-    } else {
-      if (!identical(data[[time_var]], full_time)) {
-        full_data_template <- expand.grid(
-          time = time
-        )
-        names(full_data_template) <- time_var
-        data <- full_data_template |>
-          dplyr::left_join(data, by = time_var)
-      }
-    }
-  }
+  data <- fill_time(data, time, group_var, time_var)
   data <- data.table::as.data.table(data)
   data.table::setkeyv(data, c(group_var, time_var))
   data
 }
 
+#' Parse Lag and Lags Definitions of a `dynamiteformula` Object
+#'
+#' @inheritParams parse_data
+#' @noRd
 parse_lags <- function(data, dformula, group_var, time_var) {
   channels_det <- which_deterministic(dformula)
   channels_stoch <- which_stochastic(dformula)
@@ -400,7 +371,8 @@ parse_lags <- function(data, dformula, group_var, time_var) {
   mis_vars <- which(!lag_map$var %in% c(resp_all, data_names))
   if (length(mis_vars) > 0) {
     stop_(c(
-      "Unable to construct lagged values of {.var {cs(lag_map$var[mis_vars])}}:",
+      "Unable to construct lagged values of
+       {.var {cs(lag_map$var[mis_vars])}}:",
       `x` = "Can't find such variables in {.var data}."
     ))
   }
@@ -465,7 +437,8 @@ parse_lags <- function(data, dformula, group_var, time_var) {
             stop_(c(
               "Deterministic channel {.var {y}} requires {y_req_past} initial
                value{?s}:",
-              `x` = "You've supplied {cli::no(y_past_len)} initial value{?s//s}."
+              `x` = "You've supplied {cli::no(y_past_len)}
+                     initial value{?s//s}."
             ))
           }
           y_stoch <- FALSE
@@ -586,6 +559,11 @@ parse_lags <- function(data, dformula, group_var, time_var) {
   )
 }
 
+#' Evaluate Definitions of Deterministic Channels
+#'
+#' @inheritParams parse_data
+#' @param dformulas The return object of [dynamite::parse_lags()].
+#' @noRd
 evaluate_deterministic <- function(data, dformulas, group_var, time_var) {
   fixed <- as.integer(attr(dformulas$all, "max_lag"))
   n_time <- length(unique(data[[time_var]]))

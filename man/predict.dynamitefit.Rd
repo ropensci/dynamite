@@ -9,6 +9,7 @@
   newdata = NULL,
   type = c("response", "mean", "link"),
   impute = c("none", "locf", "linear"),
+  new_levels = c("none", "bootstrap", "gaussian", "original"),
   n_draws = NULL,
   ...
 )
@@ -18,15 +19,37 @@
 
 \item{newdata}{[\code{data.frame}]\cr Data used in predictions.
 If \code{NULL} (default), the data used in model estimation is used for
-predictions as well.}
+predictions as well. Predictions are computed for missing values in the
+response variable columns, and non-missing values are assumed fixed. If
+\code{newdata} is \code{NULL}, all values in the response variable columns
+after the first \code{fixed} time points will be converted to \code{NA} values.
+Missing values in predictor columns can be imputed (argument \code{impute}).
+There should be no new time points that were not present in the data that
+were used to fit the model. New group levels can be included, but if the
+model contains random intercepts, an options for the random
+effects for the new levels must be chosen (argument \code{new_levels}).}
 
 \item{type}{[\code{character(1)}]\cr Type of prediction,
-\code{"response"} (default), \code{"mean"}  or \code{"link"}.}
+\code{"response"} (default), \code{"mean"}, or \code{"link"}.}
 
 \item{impute}{[\code{character(1)}]\cr Which imputation scheme to use for
 missing predictor values. Currently supported options are
 no imputation: \code{"none"} (default), and
 last observation carried forward: \code{"locf"}.}
+
+\item{new_levels}{[\code{character(1)}: \sQuote(NULL)]\cr
+Defines if and how to sample the random intercepts for observations whose
+group level was not present in the original data. The options are
+* \code{"none"} (the default) which will signal an error if new levels
+are encountered.
+* \code{"bootstrap"} which will randomly draw from the posterior samples of
+the random intercepts across all original levels.
+* \code{"gaussian"} which will randomly draw from a gaussian
+distribution using the posterior samples of the random intercept
+standard deviation.
+* \code{"original"} which will randomly one of the original levels to the new
+levels. The posterior samples of the random intercept of the assigned
+levels will then be used.}
 
 \item{n_draws}{[\code{integer(1)}]\cr Number of posterior samples to use,
 default is \code{NULL} which uses all samples.}

@@ -1,10 +1,9 @@
-#' Wrapper to parse Stan model blocks based on the family of the response
+#' Wrapper to Parse Stan Model Blocks Based on the Family of the Response
 #'
-#' @param prefix A character string indicating the Stan model block name
-#' @param family A supported family name
+#' @param prefix \[`character(1)`]\cr Stan model block name, e.g., "model".
+#' @param family \[`character(1)`]\cr Supported family name
 #' @param args Channel specific component of `model_vars`
 #'   (see [create_blocks()])
-#'
 #' @noRd
 lines_wrap <- function(prefix, family, args) {
   lines_expr <- paste0(prefix, "_lines_", family)
@@ -12,10 +11,9 @@ lines_wrap <- function(prefix, family, args) {
   eval(eval(str2lang(lines_expr)), envir = lines_env)
 }
 
-#' Checks if a prior definition is vectorizable
+#' Is a Prior Definition Vectorizable
 #'
-#' @param x A character string
-#'
+#' @param x A `character` vector of length one.
 #' @noRd
 vectorizable_prior <- function(x) {
   length(x) == 1 && !grepl("\\(", x)

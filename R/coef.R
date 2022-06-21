@@ -3,9 +3,9 @@
 #' Extracts either time-varying or time-invariant parameters of the model.
 #'
 #' @export
-#' @param object An object of class \code{dynamitefit}.
+#' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param type  \[`character(1)`]\cr Either `beta` (the default) for
-#'   time-invariant coefficients,  `delta` for time-varying coefficients, or
+#'   time-invariant coefficients, `delta` for time-varying coefficients, or
 #'   `nu` for random intercepts.
 #' @param include_alpha \[`logical(1)`]\cr If `TRUE` (default), extracts also
 #'   time-invariant intercept term alpha if time-invariant parameters beta are
@@ -22,19 +22,19 @@ coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
                              summary = TRUE, probs = c(0.05, 0.95),
                              include_alpha = TRUE, ...) {
   type <- match.arg(type)
-  if (include_alpha && type != "nu") {
+  include_alpha <- try_type(include_alpha, "logical")[1]
+  if (include_alpha && !identical(type, "nu")) {
     types <- c("alpha", type)
     out <- as.data.frame(object, types = types, summary = summary,
                          probs = probs)
     # remove extra alphas
-    if (type == "delta") {
+    if (identical(type, "delta")) {
       out <- out |> dplyr::filter(!is.na(.data$time))
     } else {
       out <- out |> dplyr::filter(is.na(.data$time))
     }
   } else {
-    out <- as.data.frame(object, types = type, summary = summary,
-                         probs = probs)
+    out <- as.data.frame(object, types = type, summary = summary, probs = probs)
   }
   out
 }

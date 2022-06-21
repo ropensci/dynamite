@@ -2,14 +2,14 @@
 % Please edit documentation in R/mcmc_diagnostics.R
 \name{mcmc_diagnostics}
 \alias{mcmc_diagnostics}
-\title{Diagnostic Values of Dynamite Model}
+\title{Diagnostic Values of a Dynamite Model}
 \usage{
-mcmc_diagnostics(x, n = 1)
+mcmc_diagnostics(x, n = 1L)
 }
 \arguments{
-\item{x}{A \code{dynamitefit}object.}
+\item{x}{[\code{dynamitefir}]\cr The model fit object.}
 
-\item{n}{[\code{integer(1)}]\cr How many rows to print in
+\item{n}{[\code{integer(1)}: \sQuote{1L}]\cr How many rows to print in
 parameter-specific convergence measures. Default is 1.}
 }
 \description{

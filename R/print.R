@@ -1,9 +1,10 @@
-#' Print Summary of Dynamite Object
+#' Print a Summary of a Dynamite Object
 #'
 #' Prints the summary information of the estimated dynamite model.
 #'
-#' @param x An output from \code{\link{dynamite}}.
-#' @param ... Further parameters to the print method for tibbles. See [tibble::formatting].
+#' @param x \[`dynamitefit`] The model fit object.
+#' @param ... Further parameters to the print method for tibbles.
+#'   See [tibble::formatting].
 #' @method print dynamitefit
 #' @export
 #' @srrstats {BS6.0} *Software should implement a default `print` method for return objects*
@@ -11,6 +12,9 @@
 #' @srrstats {BS5.5} *Appropriate diagnostic statistics to indicate absence of convergence should either be returned or immediately able to be accessed.*
 #' @srrstats {RE4.17} *Model objects returned by Regression Software should implement or appropriately extend a default `print` method which provides an on-screen summary of model (input) parameters and (output) coefficients.*
 print.dynamitefit <- function(x, ...) {
+  if (!is.dynamitefit(x)) {
+    stop_("Argument {.var x} must be a {.cls dynamitefit} object.")
+  }
   if (!is.null(x$stanfit)) {
     draws <- suppressWarnings(as_draws(x))
     sumr <- posterior::summarise_draws(draws,
