@@ -37,7 +37,7 @@ missing predictor values. Currently supported options are
 no imputation: \code{"none"} (default), and
 last observation carried forward: \code{"locf"}.}
 
-\item{new_levels}{[\code{character(1)}: \sQuote(NULL)]\cr
+\item{new_levels}{[\code{character(1)}: \sQuote{NULL}]\cr
 Defines if and how to sample the random intercepts for observations whose
 group level was not present in the original data. The options are
 * \code{"none"} (the default) which will signal an error if new levels

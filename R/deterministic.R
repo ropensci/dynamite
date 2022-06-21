@@ -129,7 +129,7 @@ assign_deterministic <- function(data, cl, idx) {
 #' @param idx \[`integer()`]\cr A vector of indices.
 #' @param lhs \[`character()`]\cr The lagged outcome variable names.
 #' @param rhs \[`character()`]\cr The names of the variables being lagged.
-#' @param offset \[`integer(1)`:\sQuote(1L)] The distance between consequent
+#' @param offset \[`integer(1)`: \sQuote{1L}] The distance between consequent
 #'   observations in `data`.
 #' @noRd
 assign_lags <- function(data, ro, idx, lhs, rhs, offset = 1L) {

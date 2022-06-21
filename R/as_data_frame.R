@@ -85,7 +85,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
   }
   summary <- try_type(summary, "logical")[1]
   include_fixed <- try_type(include_fixed, "logical")[1]
-  probs <- try_type(probs, "numeric")[1]
+  probs <- try_type(probs, "numeric")
   if (is.null(responses)) {
     responses <- unique(x$priors$response)
   } else {

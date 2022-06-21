@@ -139,5 +139,5 @@ get_data.dynamiteformula <- function(x, data, group, time, ...) {
 #' @rdname get_data
 #' @export
 get_data.dynamitefit <- function(x, ...) {
-  out$stan$sampling_vars
+  x$stan$sampling_vars
 }

@@ -41,3 +41,9 @@ test_that("deltas can be plotted", {
   )
 })
 
+test_that("nus can be plotted", {
+  expect_error(
+    plot_nus(gaussian_example_fit),
+    NA
+  )
+})
