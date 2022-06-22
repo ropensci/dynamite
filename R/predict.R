@@ -28,9 +28,9 @@
 #'     * `"gaussian"` which will randomly draw from a gaussian
 #'       distribution using the posterior samples of the random intercept
 #'       standard deviation.
-#'     * `"original"` which will randomly one of the original levels to the new
-#'       levels. The posterior samples of the random intercept of the assigned
-#'       levels will then be used.
+#'     * `"original"` which will randomly match each new level to one of
+#'       the original levels. The posterior samples of the random intercept of
+#'       the matched levels will then be used for the new levels.
 #' @param n_draws \[`integer(1)`]\cr Number of posterior samples to use,
 #'   default is `NULL` which uses all samples.
 #' @param ... Ignored.
@@ -59,8 +59,10 @@ predict.dynamitefit <- function(object, newdata = NULL,
   new_levels <- match.arg(new_levels)
   n_draws <- check_ndraws(n_draws, ndraws(object))
   newdata_null <- is.null(newdata)
-  if (newdata_null || data.table::is.data.table(newdata)) {
+  if (newdata_null) {
     newdata <- data.table::setDF(data.table::copy(object$data))
+  } else if (data.table::is.data.table(newdata)) {
+    newdata <- data.table::setDF(data.table::copy(newdata))
   } else if (!is.data.frame(newdata)) {
     stop_("Argument {.var newdata} is not a {.cls data.frame} object.")
   }
@@ -83,7 +85,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
   lhs_stoch <- get_responses(dls)
   rhs_stoch <- get_predictors(dls)
   newdata <- parse_newdata(newdata, object$data, type, families_stoch,
-                           resp_stoch, categories, group_var, time_var)
+                           resp_stoch, categories, new_levels,
+                           group_var, time_var)
   if (!identical(impute, "none")) {
     predictors <- setdiff(names(newdata), resp_stoch)
     impute_newdata(newdata, impute, predictors, group_var)
@@ -118,7 +121,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
   n <- newdata[, .N]
   eval_envs <- prepare_eval_envs(object, newdata,
                                  eval_type = "predict", predict_type = type,
-                                 resp_stoch, n_id, n_draws, group_var)
+                                 resp_stoch, n_id, n_draws,
+                                 new_levels, group_var)
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
   idx <- as.integer(newdata[ ,.I[newdata[[time_var]] == fixed]])
   for (i in (fixed + 1L):n_time) {

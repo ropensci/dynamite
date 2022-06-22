@@ -36,12 +36,14 @@ check_ndraws <- function(n_draws, full_draws) {
 #' @param resp_stoch \[`character`]\cr A vector of response variables
 #' @param categories \[`list`]\cr Response variable categories
 #'   for categorical families.
+#' @param new_levels \[`character(1)`]\cr Either `"none"`, `"bootstrap"`,
+#'  `"gaussian"`, or `"original"`.
 #' @param group_var \[`character(1)`,`NULL`]\cr Group variable name or `NULL`
 #'   if there is only one group.
 #' @param time_var \[`character(1)`]\cr Time index variable name.
 #' @noRd
 parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
-                          categories, group_var, time_var) {
+                          categories, new_levels, group_var, time_var) {
   if (!is.null(group_var)) {
     if (!(group_var %in% names(newdata))) {
       stop_("Can't find grouping variable {.var {group_var}} in {.var newdata}.")
@@ -49,12 +51,14 @@ parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
     group <- newdata[[group_var]]
     group <- unique(group)
     # TODO doesn't really matter at least at the moment
-    if (!all(group %in% data[[group_var]])) {
+    if (identical(new_levels, "none") && !all(group %in% data[[group_var]])) {
       new_levels <- unique(group[!group %in% data[[group_var]]])
       stop_(c(
         "Grouping variable {.var {group_var}} contains unknown levels:",
         `x` = "Level{?s} {.val {as.character(new_levels)}}
-               {?is/are} not present in the original data."
+               {?is/are} not present in the original data.",
+        `i` = "{.strong Note:} argument {.var new_levels} is {.val none}
+               which disallows new levels."
       ))
     }
   }
@@ -166,22 +170,24 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch,
 #'
 #' @inheritParams predict
 #' @inheritParams clear_nonfixed
-#' @param eval_type \[`character(1)`]\cr Either `"predict"` or `"fitted"`
+#' @param eval_type \[`character(1)`]\cr
+#'   Either `"predict"` or `"fitted"`
 #' @param predict_type \[`character()`]\cr
 #'   Either `"response"`, `"mean"`, or `"link"`.
 #' @noRd
 prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
-                              resp_stoch, n_id, n_draws, group_var) {
+                              resp_stoch, n_id, n_draws,
+                              new_levels, group_var) {
   samples <- rstan::extract(object$stanfit)
   model_vars <- object$stan$model_vars
   newdata_names <- names(newdata)
   n_resp <- length(resp_stoch)
   eval_envs <- vector(mode = "list", length = n_resp)
   orig_ids <- NULL
-  newdata_ids <- NULL
+  new_ids <- NULL
   if (!is.null(group_var)) {
     orig_ids <- unique(object$data[[group_var]])
-    newdata_ids <- unique(newdata[[group_var]])
+    new_ids <- unique(newdata[[group_var]])
   }
   idx_draws <- seq_len(n_draws)
   for (j in seq_len(n_resp)) {
@@ -193,6 +199,7 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
     phi <- paste0("phi_", resp)
     sigma <- paste0("sigma_", resp)
     nu <- paste0("nu_", resp)
+    sigma_nu <- paste0("sigma_nu_", resp)
     e <- new.env()
     e$type <- predict_type
     e$n_id <- n_id
@@ -204,12 +211,33 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
     e$J_varying <- model_vars[[j]]$J_varying
     e$K_varying <- model_vars[[j]]$K_varying
     e$resp <- resp_stoch[j]
-    e$phi <- samples[[phi]][idx_draws, drop = FALSE]
-    e$sigma <- samples[[sigma]][idx_draws, drop = FALSE]
+    e$phi <- samples[[phi]][idx_draws]
+    e$sigma <- samples[[sigma]][idx_draws]
     if (is.null(group_var)) {
       e$nu <- samples[[nu]]
     } else {
-      e$nu <- samples[[nu]][idx_draws, orig_ids %in% newdata_ids, drop = FALSE]
+      is_orig <- orig_ids %in% new_ids
+      is_new <- !new_ids %in% orig_ids
+      if (identical(new_levels, "none")) {
+        e$nu <- samples[[nu]][idx_draws, is_orig, drop = FALSE]
+      } else {
+        e$nu <- matrix(0.0, n_draws, n_id)
+        e$nu[, !is_new] <- samples[[nu]][idx_draws, is_orig, drop = FALSE]
+        if (any(is_new)) {
+          if (identical(new_levels, "bootstrap")) {
+            e$nu[, is_new] <- sample(c(samples[[nu]][idx_draws, ]),
+                                     size = n_draws * sum(is_new),
+                                     replace = TRUE)
+          } else if (identical(new_levels, "gaussian")) {
+            e$nu[, is_new] <- rnorm(n_draws * sum(is_new),
+                                    mean = 0,
+                                    sd = samples[[sigma_nu]][idx_draws])
+          } else if (identical(new_levels, "original")) {
+            match_ids <- sample(orig_ids, size = sum(is_new), replace = TRUE)
+            e$nu[, is_new] <- samples[[nu]][idx_draws, match_ids, drop = FALSE]
+          }
+        }
+      }
     }
     if (is_categorical(resp_family)) {
       resp_levels <- attr(object$stan$responses, "resp_class")[[resp]] |>

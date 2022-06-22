@@ -47,9 +47,9 @@ the random intercepts across all original levels.
 * \code{"gaussian"} which will randomly draw from a gaussian
 distribution using the posterior samples of the random intercept
 standard deviation.
-* \code{"original"} which will randomly one of the original levels to the new
-levels. The posterior samples of the random intercept of the assigned
-levels will then be used.}
+* \code{"original"} which will randomly match each new level to one of
+the original levels. The posterior samples of the random intercept of
+the matched levels will then be used for the new levels.}
 
 \item{n_draws}{[\code{integer(1)}]\cr Number of posterior samples to use,
 default is \code{NULL} which uses all samples.}

@@ -34,3 +34,35 @@ test_that("no groups fitted works", {
   expect_error(fitted(gaussian_example_single_fit, n_draws = 2), NA)
 })
 
+test_that("new group levels can be included in newdata", {
+  gaussian_example_new_levels <- rbind(
+    gaussian_example,
+    data.frame(y = c(0.5, rep(NA, 29L)), x = rnorm(30), z = rbinom(30, 1, 0.7),
+               id = 226L, time = seq.int(1, 30))
+  )
+  #gaussian_example_new_levels[gaussian_example_new_levels$time > 1, "y"] <- NA
+  expect_error(
+    predict(gaussian_example_fit,
+            newdata = gaussian_example_new_levels,
+            type = "response", n_draws = 2, new_levels = "none"),
+    "Grouping variable `id` contains unknown levels:\nx Level \"226\" is not present in the original data\\.\ni Note: argument `new_levels` is \"none\" which disallows new levels\\."
+  )
+  expect_error(
+    predict(gaussian_example_fit,
+            newdata = gaussian_example_new_levels,
+            type = "response", n_draws = 2, new_levels = "bootstrap"),
+    NA
+  )
+  expect_error(
+    predict(gaussian_example_fit,
+            newdata = gaussian_example_new_levels,
+            type = "response", n_draws = 2, new_levels = "gaussian"),
+    NA
+  )
+  expect_error(
+    predict(gaussian_example_fit,
+            newdata = gaussian_example_new_levels,
+            type = "response", n_draws = 2, new_levels = "original"),
+    NA
+  )
+})

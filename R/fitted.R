@@ -21,7 +21,7 @@ fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
   newdata <- data.table::setDF(data.table::copy(object$data))
   newdata <- parse_newdata(newdata, object$data, type = "response",
                            families_stoch, resp_stoch, categories,
-                           group_var, time_var)
+                           new_levels = "none", group_var, time_var)
   group <- NULL
   n_id <- 1L
   if (!is.null(group_var)) {
@@ -40,7 +40,8 @@ fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
   newdata[, ("draw") := rep(1:n_draws, n_new)]
   eval_envs <- prepare_eval_envs(object, newdata, eval_type = "fitted",
                                  predict_type = "response",
-                                 resp_stoch, n_id, n_draws, group_var)
+                                 resp_stoch, n_id, n_draws,
+                                 new_levels = "none", group_var)
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
   idx <- as.integer(newdata[ ,.I[newdata[[time_var]] == fixed]])
   for (i in seq.int(fixed + 1L, n_time)) {
