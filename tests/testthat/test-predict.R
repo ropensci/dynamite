@@ -66,3 +66,17 @@ test_that("new group levels can be included in newdata", {
     NA
   )
 })
+
+test_that("imputation works", {
+  set.seed(0)
+  mis_x <- sample(1:nrow(gaussian_example), 150, replace = FALSE)
+  mis_z <- sample(1:nrow(gaussian_example), 150, replace = FALSE)
+  gaussian_example_impute <- gaussian_example
+  gaussian_example_impute[mis_x, "x"] <- NA
+  gaussian_example_impute[mis_z, "z"] <- NA
+  expect_error(
+    predict(gaussian_example_fit, newdata = gaussian_example_impute,
+            type = "response", n_draws = 2, impute = "locf"),
+    NA
+  )
+})

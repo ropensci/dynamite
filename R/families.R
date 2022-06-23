@@ -23,23 +23,6 @@ is.dynamitefamily <- function(x) {
   inherits(x, "dynamitefamily")
 }
 
-#' Validate Calls to Family Functions
-#'
-#' Checks if a function call is of the form `family(...)`,
-#' where `"family"` is supported by the package.
-#'
-#' @param x A language object.
-#' @noRd
-is_valid_family_call <- function(x) {
-  family <- as.character(x[[1]])[1]
-  x[[1]] <- as.symbol(paste0(family, "_"))
-  list(
-    supported = is_supported(family),
-    call = x,
-    call_str = family
-  )
-}
-
 #' Check if a Family is Supported
 #'
 #' @param \[`character(1)`]\cr Name of the family.

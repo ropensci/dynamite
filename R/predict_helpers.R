@@ -10,16 +10,13 @@ check_ndraws <- function(n_draws, full_draws) {
     n_draws <- full_draws
   }
   n_draws <- try_type(n_draws, "integer")
-  if ("try-error" %in% class(n_draws)) {
-    stop_("Unable to coerce {.var n_draws} to {.cls integer}.")
-  }
   if (n_draws < 1L) {
-    stop_("Argument {.var ndraws} must be a positive {.cls integer}.")
+    stop_("Argument {.var n_draws} must be a positive {.cls integer}.")
   }
   if (n_draws > full_draws) {
     warning_(c(
-      "You've supplied {.ndraws = {ndraws}} but there are only
-      {full_draws} samples available.",
+      "You've supplied {.arg n_draws} = {n_draws} but there are only
+      {full_draws} samples available:",
       `i` = "The available samples will be used for prediction."
     ))
     n_draws <- full_draws
@@ -103,7 +100,6 @@ parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
   newdata
 }
 
-# TODO test imputation
 #' Impute Predictor values in New Data
 #'
 #' @inheritParams predict
@@ -112,8 +108,12 @@ parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
 #' @noRd
 impute_newdata <- function(newdata, impute, predictors, group_var) {
   if (identical(impute, "locf")) {
-    newdata[, (predictors) := lapply(.SD, locf),
-            .BY = group_var, .SDcols = predictors]
+    if (is.null(group_var)) {
+      newdata[, (predictors) := lapply(.SD, locf), .SDcols = predictors]
+    } else {
+      newdata[, (predictors) := lapply(.SD, locf), .SDcols = predictors,
+              by = group_var]
+    }
   }
 }
 

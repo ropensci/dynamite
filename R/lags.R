@@ -89,19 +89,34 @@ extract_lags <- function(x) {
     lag_map$present <- TRUE
     lag_map$increment <- FALSE
     for (j in seq_len(n_lag)) {
-      if (!is.na(k_str[j])) {
+      if (nzchar(k_str[j])) {
         k_expr <- try(str2lang(k_str[j]), silent = TRUE)
         if ("try-error" %in% class(k_expr)) {
-          stop_("Invalid shifted value experssion {.code {k_str[j]}}.")
+          stop_("Invalid shifted value expression {.code {k_str[j]}}.")
         }
         k_coerce <- try(eval(k_expr), silent = TRUE)
         if ("try-error" %in% class(k_coerce)) {
           stop_("Invalid lagged value definition {.code {lag_map$src[j]}}.")
         }
-        k_coerce <- try(as.integer(k_coerce), silent = TRUE)
-        if ("try_error" %in% class(k_coerce)) {
-          stop_("Unable to coerce lag shift value to integer in
-                 {.code {lag_map$src[j]}}.")
+        failed <- FALSE
+        k_coerce <- tryCatch(
+          expr = as.integer(k_coerce),
+          error = function(e) NULL,
+          warning = function(w) NULL
+        )
+        if (is.null(k_coerce) ||
+            identical(length(k_coerce), 0L) ||
+            any(is.na(k_coerce))) {
+          stop_("Unable to coerce lag shift value to {.cls integer} in
+                 {.code {lag_map$src[j]}}."
+          )
+        }
+        if (any(k_coerce <= 0L)) {
+          stop_(c(
+            "Shift values must be positive in {.fun lag}:",
+            `x` = "Nonpositive shift value was found in
+                   {.code {lag_map$src[j]}}."
+          ))
         }
         lag_map$k[j] <- k_coerce[1L]
         if (length(k_coerce) > 1L) {
@@ -121,7 +136,7 @@ extract_lags <- function(x) {
     lag_map |>
       dplyr::distinct() |>
       dplyr::group_by(.data$var) |>
-      tidyr::complete(k = tidyr::full_seq(c(1, .data$k), 1),
+      tidyr::complete(k = tidyr::full_seq(c(1L, .data$k), 1L),
                       fill = list(src = "", present = FALSE)) |>
       dplyr::arrange(.data$var, .data$k) |>
       dplyr::ungroup()

@@ -6,7 +6,7 @@ set.seed(1)
 library(dynamite)
 
 gaussian_example_fit <- dynamite(
-  obs(y ~ -1 + z + varying(~ x + lag(y)), family = gaussian(),
+  obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian",
       random_intercept = TRUE) + splines(df = 20),
   data = gaussian_example, time = "time", group = "id",
   iter = 2000, warmup = 1000, thin = 5,
@@ -19,7 +19,7 @@ usethis::use_data(gaussian_example_fit, overwrite = TRUE, compress = "xz")
 d <- gaussian_example |> dplyr::filter(id == 1)
 # convergence issues with the current setup but doesn't matter for tests
 gaussian_example_single_fit <- dynamite(
-  obs(y ~ -1 + z + varying(~ x + lag(y)), family = gaussian()) +
+  obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
     splines(df = 20),
   data = d, time = "time", init = 0,
   iter = 1100, warmup = 1000, chains = 1, refresh = 0, save_warmup = FALSE

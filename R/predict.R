@@ -64,7 +64,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
   } else if (data.table::is.data.table(newdata)) {
     newdata <- data.table::setDF(data.table::copy(newdata))
   } else if (!is.data.frame(newdata)) {
-    stop_("Argument {.var newdata} is not a {.cls data.frame} object.")
+    stop_("Argument {.arg newdata} must be a {.cls data.frame} object.")
   }
   fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
   group_var <- object$group_var

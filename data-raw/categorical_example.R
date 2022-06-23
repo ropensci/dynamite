@@ -10,8 +10,8 @@ d <- dplyr::right_join(d, data.frame(
   id = 1:n_id))
 
 d$z <- rnorm(nrow(d))
-f <- obs(x ~ z + lag(x) + lag(y), family = categorical()) +
-  obs(y ~ z + lag(x) + lag(y), family = categorical())
+f <- obs(x ~ z + lag(x) + lag(y), family = "categorical") +
+  obs(y ~ z + lag(x) + lag(y), family = "categorical")
 
 init <- list(beta_x =
                matrix(c(c(2, 0.8, 0.2, 0, 0,

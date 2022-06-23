@@ -5,9 +5,9 @@
 set.seed(1)
 library(dynamite)
 
-f <- obs(g ~ lag(g) + lag(logp), family = gaussian()) +
-  obs(p ~ lag(g) + lag(logp) + lag(b), family = poisson()) +
-  obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = bernoulli()) +
+f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
+  obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
+  obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
   aux(numeric(logp) ~ log(p + 1))
 
 multichannel_example_fit <- dynamite(f, multichannel_example, "id", "time",

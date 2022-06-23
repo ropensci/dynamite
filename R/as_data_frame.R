@@ -81,7 +81,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
                                       summary = TRUE, probs = c(0.05, 0.95),
                                       include_fixed = TRUE, ...) {
   if (!is.dynamitefit(x)) {
-    stop_("Argument {.var x} must be a {.cls dynamitefit} object.")
+    stop_("Argument {.arg x} must be a {.cls dynamitefit} object.")
   }
   summary <- try_type(summary, "logical")[1]
   include_fixed <- try_type(include_fixed, "logical")[1]
@@ -92,7 +92,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     z <- !(responses %in% unique(x$priors$response))
     if (any(z)) {
       stop_(
-        "Model does not contain response variable{?s} {.var {responses[z]}}"
+        "Model does not contain response variable{?s} {.var {responses[z]}}."
       )
     }
   }

@@ -13,7 +13,7 @@
 #' @srrstats {RE4.17} *Model objects returned by Regression Software should implement or appropriately extend a default `print` method which provides an on-screen summary of model (input) parameters and (output) coefficients.*
 print.dynamitefit <- function(x, ...) {
   if (!is.dynamitefit(x)) {
-    stop_("Argument {.var x} must be a {.cls dynamitefit} object.")
+    stop_("Argument {.arg x} must be a {.cls dynamitefit} object.")
   }
   if (!is.null(x$stanfit)) {
     draws <- suppressWarnings(as_draws(x))
@@ -36,7 +36,7 @@ print.dynamitefit <- function(x, ...) {
       posterior::summarise_draws(), ...)
 
   } else {
-    message("No Stan model fit is available.")
+    message_("No Stan model fit is available.")
   }
   invisible(x)
 }

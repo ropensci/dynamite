@@ -17,9 +17,9 @@ d <- dplyr::right_join(d, data.frame(
   id = 1:n_id))
 
 # formula for dynamite
-f <- obs(g ~ lag(g) + lag(logp), family = gaussian()) +
-  obs(p ~ lag(g) + lag(logp) + lag(b), family = poisson()) +
-  obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = bernoulli()) +
+f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
+  obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
+  obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
   aux(numeric(logp) ~ log(p + 1))
 
 # true values used for generating the data

@@ -7,7 +7,7 @@
 mcmc_diagnostics(x, n = 1L)
 }
 \arguments{
-\item{x}{[\code{dynamitefir}]\cr The model fit object.}
+\item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
 \item{n}{[\code{integer(1)}: \sQuote{1L}]\cr How many rows to print in
 parameter-specific convergence measures. Default is 1.}

@@ -31,14 +31,14 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5,
                         scales = c("fixed", "free"),
                         include_alpha = TRUE){
   if (!is.dynamitefit(model)) {
-    stop_("Argument {.var model} must be a {.cls dynamitefit} object.")
+    stop_("Argument {.arg model} must be a {.cls dynamitefit} object.")
   }
   level <- try_type(level, "numeric")[1]
   alpha <- try_type(alpha, "numeric")[1]
   include_alpha <- try_type(include_alpha, "logical")[1]
   coefs <- coef(model, "delta", probs = c(level, 1 - level),
                 include_alpha = include_alpha)
-  if (NROW(coefs) == 0L) {
+  if (nrow(coefs) == 0L) {
     stop_("The model does not contain varying coefficients delta.")
   }
 
@@ -72,7 +72,7 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5,
 #' plot_betas(gaussian_example_fit)
 plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
   if (!is.dynamitefit(model)) {
-    stop_("Argument {.var model} must be a {.cls dynamitefit} object.")
+    stop_("Argument {.arg model} must be a {.cls dynamitefit} object.")
   }
   level <- try_type(level, "numeric")[1]
   include_alpha <- try_type(include_alpha, "logical")[1]
@@ -110,7 +110,7 @@ plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
 #' plot_nus(gaussian_example_fit)
 plot_nus <- function(model, level = 0.05){
   if (!is.dynamitefit(model)) {
-    stop_("Argument {.var model} must be a {.cls dynamitefit} object.")
+    stop_("Argument {.arg model} must be a {.cls dynamitefit} object.")
   }
   level <- try_type(level, "numeric")[1]
   coefs <- coef(model, "nu", probs = c(level, 1 - level)) |>

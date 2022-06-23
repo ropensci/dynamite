@@ -4,13 +4,13 @@
 #' sizes and largest Rhat values. See [rstan::check_hmc_diagnostics()] and
 #' [posterior::default_convergence_measures()] for details.
 #'
-#' @param x \[`dynamitefir`]\cr The model fit object.
+#' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param n \[`integer(1)`: \sQuote{1L}]\cr How many rows to print in
 #'   parameter-specific convergence measures. Default is 1.
 #' @export
 mcmc_diagnostics <- function(x, n = 1L) {
   if (!is.dynamitefit(x)) {
-    stop_("Argument {.var x} must be a {.cls dynamitefit} object.")
+    stop_("Argument {.arg x} must be a {.cls dynamitefit} object.")
   }
   n <- try_type(n, "integer")[1]
   if (!is.null(x$stanfit)) {
@@ -43,7 +43,7 @@ mcmc_diagnostics <- function(x, n = 1L) {
       tidyr::pivot_wider(names_from = .data$variable, values_from = .data$rhat) |>
       print()
   } else {
-    message("No Stan model fit is available.")
+    message_("No Stan model fit is available.")
   }
 
 }

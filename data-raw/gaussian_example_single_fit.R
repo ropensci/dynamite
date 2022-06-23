@@ -3,7 +3,7 @@
 set.seed(1)
 
 gaussian_example_single_fit <- dynamite(
-  obs(y ~ -1 + z + varying(~ x + lag(y)), family = gaussian()) +
+  obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
     splines(df = 20),
   data = gaussian_example |>
     dplyr::filter(.data$id == 1) |>

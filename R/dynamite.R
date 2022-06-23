@@ -21,7 +21,7 @@
 #' @param time \[`character(1)`]\cr A column name of `data` that denotes the
 #'   time axis.
 #' @param priors \[`data.frame`]\cr An optional data frame with prior
-#' definitions. See details.
+#'   definitions. See details.
 #' @param debug TODO
 #' @param ... Additional arguments to [rstan::sampling()].
 #' @export
@@ -91,7 +91,7 @@ dynamite <- function(dformula, data, group, time,
                      priors = NULL, debug = NULL, ...) {
   # stored for return object
   if (!is.data.frame(data)) {
-    stop_("Argument {.var data} is not a {.cls data.frame} object.")
+    stop_("Argument {.arg data} is not a {.cls data.frame} object.")
   }
   if (missing(group) || is.null(group)) {
     group <- group_var <- NULL
@@ -99,7 +99,7 @@ dynamite <- function(dformula, data, group, time,
     group_var <- try_type(group, "character")
     if (is.null(data[[group_var]])) {
       stop_(
-        "Can't find grouping variable {.var {group_var}} in {.var data}."
+        "Can't find grouping variable {.var {group_var}} in {.arg data}."
       )
     }
   }
@@ -109,7 +109,7 @@ dynamite <- function(dformula, data, group, time,
   time_var <- try_type(time, "character")
   if (is.null(data[[time_var]])) {
     stop_(
-      "Can't find time index variable {.var {time_var}} in {.var data}."
+      "Can't find time index variable {.var {time_var}} in {.arg data}."
     )
   }
   data <- parse_data(data, dformula, group_var, time_var)
@@ -122,7 +122,7 @@ dynamite <- function(dformula, data, group, time,
   model <- if (!is.null(debug) && isTRUE(debug$no_compile)) {
     NULL
   } else {
-    rlang::inform("Compiling Stan model.")
+    message_("Compiling Stan model.")
     rstan::stan_model(model_code = model_code)
   }
   stanfit <- if (isTRUE(debug$no_compile) || isTRUE(debug$no_sampling)) {
@@ -165,8 +165,8 @@ dynamite <- function(dformula, data, group, time,
 #' @export
 formula.dynamitefit <- function(x, ...) {
   formula_str <- sapply(get_originals(x$dformulas$all), deparse1)
-  channels_stoch <- which_stochastic(x$dformulas$all)
-  channels_det <- which_deterministic(x$dformulas$all)
+  ch_stoch <- which_stochastic(x$dformulas$all)
+  ch_det <- which_deterministic(x$dformulas$all)
   family_str <- sapply(get_families(x$dformulas$all), function(y) y$name)
   lag_defs <- attr(x$dformulas$all, "lags")
   spline_defs <- attr(x$dformulas$stoch, "splines")
@@ -174,20 +174,20 @@ formula.dynamitefit <- function(x, ...) {
   aux_str <- ""
   lags_str <- ""
   spline_str <- ""
-  if (length(channels_stoch) > 0) {
+  n_stoch <- length(ch_stoch)
+  if (n_stoch > 0L) {
     obs_str <- paste0(
       glue::glue(
-        "obs({formula_str[channels_stoch]}, family = {family_str}())"
+        "obs({formula_str[ch_stoch]}, family = {family_str[ch_stoch]}())"
       ),
-      collapse = "\n"
+      collapse = " +\n"
     )
   }
-  if (length(channels_det) > 0) {
+  n_det <- length(ch_det)
+  if (n_det > 0L) {
     aux_str <- paste0(
-      glue::glue(
-        "aux({formula_str[channels_det]})"
-      ),
-      collapse = TRUE
+      glue::glue("aux({formula_str[ch_det]})"),
+      collapse = " +\n"
     )
   }
   if (!is.null(lag_defs)) {
@@ -203,8 +203,13 @@ formula.dynamitefit <- function(x, ...) {
        "noncentered = ",  spline_defs$noncentered, ")"
     )
   }
-  str2lang(paste_rows("{", obs_str, aux_str, lags_str, spline_str, "}",
-                      .parse = FALSE))
+  str2lang(
+    paste0(
+      "{\n",
+      paste(obs_str, aux_str, lags_str, spline_str, sep = " +\n"),
+      "\n}"
+    )
+  )
 }
 
 #' Is The Argument a `dynamitefit` Object
@@ -238,7 +243,7 @@ parse_data <- function(data, dformula, group_var, time_var) {
     invalid_cols <- data_names[!valid_cols]
     invalid_types <- col_types[!valid_cols]
     stop_(c(
-      "Column{?s} {.var {invalid_cols}} of {.var data} {?is/are} invalid:",
+      "Column{?s} {.var {invalid_cols}} of {.arg data} {?is/are} invalid:",
       `x` = "Column type{?s} {.cls {invalid_types}} {?is/are} not supported."
     ))
   }
@@ -269,7 +274,7 @@ parse_data <- function(data, dformula, group_var, time_var) {
   if (any(!finite_cols)) {
     stop_(
       "Non-finite values in variable{?s} {.var {data_names[!finite_cols]}} of
-       {.var data}."
+       {.arg data}."
     )
   }
   time <- sort(unique(data[[time_var]]))
@@ -309,7 +314,7 @@ parse_lags <- function(data, dformula, group_var, time_var) {
   mis_vars <- which(!non_lags %in% c(resp_all, data_names))
   if (length(mis_vars) > 0) {
     stop_(
-      "Can't find variable{?s} {.var {non_lags[mis_vars]}} in {.var data}."
+      "Can't find variable{?s} {.var {non_lags[mis_vars]}} in {.arg data}."
     )
   }
   lag_map <- extract_lags(predictors)
@@ -361,6 +366,7 @@ parse_lags <- function(data, dformula, group_var, time_var) {
           varying_icpt = dformula[[j]]$has_varying_intercept,
           fixed_icpt = dformula[[j]]$has_fixed_intercept
         ),
+        original = dformula[[j]]$original,
         family = dformula[[j]]$family,
         random_intercept = dformula[[j]]$has_random_intercept
       )
@@ -390,9 +396,6 @@ parse_lags <- function(data, dformula, group_var, time_var) {
     max_lag <- max(lags_max, map_stoch_k)
   }
   if (n_lag > 0) {
-    if (any(lag_map$k <= 0)) {
-      stop_("Shift values must be positive in {.fun lag}.")
-    }
     map_channel <- vector(mode = "list", length = n_lag)
     map_resp <- character(n_lag)
     map_pred <- logical(n_lag)
@@ -496,6 +499,7 @@ parse_lags <- function(data, dformula, group_var, time_var) {
                       varying_icpt = dformula[[k]]$has_varying_intercept,
                       fixed_icpt = dformula[[k]]$has_fixed_intercept
                     ),
+                    original = dformula[[k]]$original,
                     family = dformula[[k]]$family,
                     random_intercept = dformula[[k]]$has_random_intercept
                   )

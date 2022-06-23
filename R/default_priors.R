@@ -84,8 +84,8 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
 #'
 #' @param y \[`character(1)`]\cr Name of the response variable of the channel.
 #' @param channel \[`list()`]\cr Channel-specific helper variables.
-#' @param sd_x Standard deviation of the explanatory variables at time
-#'   `fixed + 1`.
+#' @param sd_x \[`numeric(1)`]\cr
+#'   Standard deviation of the explanatory variables at time `fixed + 1`.
 #' @param resp_class \[`character(1)`]\cr Class of the response variable.
 #' @noRd
 default_priors_categorical <- function(y, channel, sd_x, resp_class) {
@@ -96,9 +96,9 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
   priors <- list()
 
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {
-    m <- rep(0, S_y - 1)
-    s <- rep(2, S_y - 1)
-    channel$alpha_prior_npars <- 2
+    m <- rep(0.0, S_y - 1L)
+    s <- rep(2.0, S_y - 1L)
+    channel$alpha_prior_npars <- 2L
     channel$alpha_prior_pars <- cbind(m, s, deparse.level = 0)
     channel$alpha_prior_distr <- "normal"
     priors$alpha <- data.frame(
@@ -120,8 +120,8 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
     }
   }
   if (channel$has_fixed) {
-    m <- rep(0, channel$K_fixed * (S_y - 1))
-    s <- rep(sd_gamma[channel$J_fixed], S_y - 1)
+    m <- rep(0.0, channel$K_fixed * (S_y - 1L))
+    s <- rep(sd_gamma[channel$J_fixed], S_y - 1L)
     channel$beta_prior_npars <- 2
     channel$beta_prior_distr <- "normal"
     channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
@@ -134,8 +134,8 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
     )
   }
   if (channel$has_varying) {
-    m <- rep(0, channel$K_varying * (S_y - 1))
-    s <- rep(sd_gamma[channel$J_varying], S_y - 1)
+    m <- rep(0.0, channel$K_varying * (S_y - 1L))
+    s <- rep(sd_gamma[channel$J_varying], S_y - 1L)
     channel$delta_prior_npars <- 2
     channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
     channel$delta_prior_distr <- "normal"
@@ -146,8 +146,8 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
       type = "delta",
       category = rep(resp_levels, each = channel$K_varying)
     )
-    channel$tau_prior_npars <- 2
-    channel$tau_prior_pars <- cbind(0, rep(1, channel$K_varying))
+    channel$tau_prior_npars <- 2L
+    channel$tau_prior_pars <- cbind(0.0, rep(1.0, channel$K_varying))
     channel$tau_prior_distr <- "normal"
     priors$tau <- data.frame(
       parameter = paste0("tau_", y, "_", names(s)),
@@ -173,18 +173,24 @@ check_priors <- function(priors, defaults) {
 
   not_found <-
     defaults$parameter[which(!(defaults$parameter %in% priors$parameter))]
-  if (length(not_found) > 0) {
+  not_found_len <- length(not_found)
+  if (not_found_len > 0L) {
     stop_(c(
-      "Argument {.var priors} should contain all relevant parameters.",
-      `x` ="Prior{?s} for parameter{?s} {not_found} {?is/are} not defined."))
+      "Argument {.var priors} must contain all relevant parameters:",
+      `x` = "{cli::qty(not_found_len)} Prior{?s} for parameter{?s}
+             {.var {not_found}} {?is/are} not defined."
+    ))
   }
   extras <-
     priors$parameter[which(!(priors$parameter %in% defaults$parameter))]
-  if (length(extras) > 0) {
+  extras_len <- length(extras)
+  if (extras_len > 0L) {
     stop_(c(
-      "Argument {.var priors} should contain only relevant parameters.",
-      `x` = "Found {?a/} prior{?s} for parameter{?s} {.var {extras}}, but
-        the model does not contain such {?a/} parameter{?s}."))
+      "Argument {.var priors} must contain only relevant parameters:",
+      `x` = "{cli::qty(extras)} Found {?a/} prior{?s} for parameter{?s}
+             {.var {extras}} but the model does not contain such
+             {?a/} parameter{?s}."
+    ))
   }
   # order to match the code generation
   priors <- priors |>
@@ -201,21 +207,28 @@ check_priors <- function(priors, defaults) {
   all_dists <- c(unconstrained_dists, positive_dists)
   dists <- sub("\\(.*", "", priors$prior)
   unsupported <- unique(dists[which(!(dists %in% all_dists))])
-  if (length(unsupported) > 0) {
-    stop_(c("Found unsupported prior distributions in {.var priors}:",
-            `x` = "Distribution{?s} {.var {unsupported}}, are not available."))
+  unsupported_len <- length(unsupported)
+  if (unsupported_len > 0L) {
+    stop_(c(
+      "{cli::qty(unsupported_len)} Found {?an/} unsupported prior
+       distribution{?s} in {.var priors}:",
+      `x` = "Distribution{?s} {.var {unsupported}} {?is/are} not available."
+    ))
   }
   unsupported <- which(
     priors$type %in% c("alpha", "beta", "delta") &
-      !(dists %in% unconstrained_dists))
-  if (length(unsupported) > 0) {
+      !(dists %in% unconstrained_dists)
+  )
+  unsupported_len <- length(unsupported)
+  if (unsupported_len > 0L) {
     pars <- priors$parameter[unsupported]
     dists <- dists[unsupported]
     stop_(c(
       "Priors for parameters alpha, beta, and delta should have unconstrained
-      support.",
-      `x` = "Found unconstrained distribution {.var {dists}} for parameter{?s}
-      {.var {pars}}."))
+      support:",
+      `x` = "{cli::qty(unsupported_len)} Found {?an/} unconstrained
+             distribution{?s} {.var {dists}} for parameter{?s} {.var {pars}}."
+    ))
   }
   priors
 }

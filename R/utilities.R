@@ -241,19 +241,21 @@ message_ <- function(message, ...) {
 #'
 #' @param x The argument to coerce.
 #' @param type \[character(1)] The type to coerce `x` into.
+#' @param msg \[character()] Custom error message to show.
 #' @noRd
 try_type <- function(x, type) {
-  if (missing(type)) {
-    stop_("Argument {.var type} must be given.")
-  }
   pars <- as.list(match.call()[-1])
   arg <- as.character(pars[[1]])
   if (is.null(x)) {
     return(NULL)
   }
-  out <- try(do.call(paste0("as.", type[1]), args = list(x)), silent = TRUE)
-  if ("try-error" %in% class(out)) {
-    stop_("Unable to coerce argument {.var {arg}} to {.cls {type}}.")
+  out <- tryCatch(
+    expr = do.call(paste0("as.", type[1]), args = list(x)),
+    error = function(e) NULL,
+    warning = function(w) NULL
+  )
+  if (is.null(out) || identical(length(out), 0L) || any(is.na(out))) {
+    stop_("Unable to coerce argument {.arg {arg}} to {.cls {type}}.")
   }
   out
 }
@@ -296,7 +298,7 @@ fill_time <- function(data, time, group_var, time_var) {
   if (any(time_ivals[!is.na(time_ivals)] %% time_scale > 0)) {
     stop_("Observations must occur at regular time intervals.")
   } else {
-    full_time <- seq(time[1], time[length(time)], by = time_scale)
+    full_time <- seq(time[1L], time[length(time)], by = time_scale)
     groups <- !is.null(group_var)
     if (groups) {
       time_groups <- data |>
@@ -304,7 +306,7 @@ fill_time <- function(data, time, group_var, time_var) {
         dplyr::summarise(has_missing = !identical(.data[[time_var]], full_time))
       if (any(time_groups$has_missing)) {
         full_data_template <- expand.grid(
-          time = time,
+          time = full_time,
           group = unique(data[[group_var]])
         )
         names(full_data_template) <- c(time_var, group_var)
@@ -313,9 +315,7 @@ fill_time <- function(data, time, group_var, time_var) {
       }
     } else {
       if (!identical(data[[time_var]], full_time)) {
-        full_data_template <- expand.grid(
-          time = time
-        )
+        full_data_template <- data.frame(time = full_time)
         names(full_data_template) <- time_var
         data <- full_data_template |>
           dplyr::left_join(data, by = time_var)
@@ -341,5 +341,7 @@ fill_time <- function(data, time, group_var, time_var) {
 
 # TODO there is ndraws method in posterior package, should probably define ndraws.dynamitefit
 ndraws <- function(x) {
-  (x$stanfit@sim$n_save[1] - x$stanfit@sim$warmup2[1]) * x$stanfit@sim$chains
+  as.integer(
+    (x$stanfit@sim$n_save[1] - x$stanfit@sim$warmup2[1]) * x$stanfit@sim$chains
+  )
 }

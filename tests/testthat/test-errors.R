@@ -1,4 +1,4 @@
-obs_test <- obs(y ~ x + w, family = gaussian())
+obs_test <- obs(y ~ x + w, family = "gaussian")
 
 # Formula errors ----------------------------------------------------------
 
@@ -9,6 +9,13 @@ test_that("nonformula to dynamiteformula fails", {
   )
 })
 
+test_that("noncharacter family fails", {
+  expect_error(
+    obs(y ~ x, family = data.frame()),
+    "Unable to coerce argument `family` to <character>\\."
+  )
+})
+
 test_that("unsupported family fails", {
   expect_error(
     obs(y ~ x, family = "unknown_distr"),
@@ -16,17 +23,9 @@ test_that("unsupported family fails", {
   )
 })
 
-test_that("unrecognized family call fails", {
-  myfamily <- function() invisible(NULL)
-  expect_error(
-    obs(y ~ x, family = myfamily()),
-    "Unsupported family call `myfamily\\(\\)`\\."
-  )
-})
-
 test_that("as-is use fails", {
   expect_error(
-    obs(y ~ I(x), family = gaussian()),
+    obs(y ~ I(x), family = "gaussian"),
     "The use of `I\\(\\.\\)` is not supported by `dynamiteformula\\(\\)`\\."
   )
 })
@@ -54,7 +53,7 @@ test_that("duplicate algs definition fails", {
 
 test_that("attempting to add dynamiteformulas with lag definitions fails", {
   obs_lhs <- obs_test + lags(k = 1)
-  obs_rhs <- obs(z ~ x, family = gaussian()) + lags(k = 2)
+  obs_rhs <- obs(z ~ x, family = "gaussian") + lags(k = 2)
   expect_error(
     obs_lhs + obs_rhs,
     "Both dynamiteformulas contain a lags definition\\."
@@ -63,7 +62,7 @@ test_that("attempting to add dynamiteformulas with lag definitions fails", {
 
 test_that("attempting to add dynamiteformulas with splines definitions fails", {
   obs_lhs <- obs_test + splines()
-  obs_rhs <- obs(z ~ x, family = gaussian()) + splines()
+  obs_rhs <- obs(z ~ x, family = "gaussian") + splines()
   expect_error(
     obs_lhs + obs_rhs,
     "Both dynamiteformulas contain a splines definition\\."
@@ -72,19 +71,19 @@ test_that("attempting to add dynamiteformulas with splines definitions fails", {
 
 test_that("simultaneity fails", {
   obs_lhs <-
-    obs(q ~ w + e + r + lag(i), family = gaussian()) +
-    obs(t ~ y + u, family = gaussian()) +
-    obs(i ~ o + p + a + lag(f), family = gaussian())
+    obs(q ~ w + e + r + lag(i), family = "gaussian") +
+    obs(t ~ y + u, family = "gaussian") +
+    obs(i ~ o + p + a + lag(f), family = "gaussian")
   obs_rhs <-
-    obs(f ~ h + l + lag(x), family = gaussian()) +
-    obs(x ~ q + z, family = gaussian())
+    obs(f ~ h + l + lag(x), family = "gaussian") +
+    obs(x ~ q + z, family = "gaussian")
   expect_error(
     obs_rhs + obs_lhs,
     "Simultaneous regression is not supported:\nx Response variable `q` appears in the formula of `x`\\."
   )
   # should fail for deterministic as well
   expect_error(
-    obs(y ~ x, family = gaussian()) + aux(integer(x) ~ y),
+    obs(y ~ x, family = "gaussian") + aux(integer(x) ~ y),
     "Simultaneous regression is not supported:\nx Response variable `x` appears in the formula of `y`\\."
   )
 })
@@ -105,7 +104,7 @@ test_that("plus method fails for nondynamiteformula", {
 
 test_that("categorical random intercept fails", {
   expect_error(
-    obs(y ~ x, family = categorical(), random_intercept = TRUE),
+    obs(y ~ x, family = "categorical", random_intercept = TRUE),
     "Random intercepts are not yet supported for the categorical family\\."
   )
 })
@@ -117,11 +116,20 @@ test_that("negative lb_tau fails", {
   )
 })
 
+test_that("time-varying definitions without splines fails", {
+  obs_varying <- obs(y ~ 1 + varying(~-1 + x), family = "gaussian")
+  test_data <- data.frame(y = c(1, 2, 3), x = c(0.5, -1, 0.25), z = c(1, 2, 3))
+  expect_error(
+    dynamite(obs_varying, test_data, time = "z"),
+    "Model for response variable `y` contains time-varying definitions but splines have not been defined\\."
+  )
+})
+
 # Formula specials errors -------------------------------------------------
 
 test_that("no intercept or predictors fails", {
   expect_error(
-    obs(y ~ -1, family = gaussian()),
+    obs(y ~ -1, family = "gaussian"),
     "Invalid formula for response variable `y`:\nx There are no predictors nor an intercept term\\."
   )
 })
@@ -170,18 +178,9 @@ test_that("single time point fails", {
   )
 })
 
-test_that("negative lag fails", {
-  expect_error(
-    dynamite(dformula = obs(y ~ lag(y, -1), family = gaussian()),
-             data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
-             group = "x", time = "z"),
-    "Shift values must be positive in `lag\\(\\)`\\."
-  )
-})
-
 test_that("missing lag variable fails", {
   expect_error(
-    dynamite(dformula = obs(y ~ lag(d, 1), family = gaussian()),
+    dynamite(dformula = obs(y ~ lag(d, 1), family = "gaussian"),
              data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
              group = "x", time = "z"),
     "Unable to construct lagged values of `d`:\nx Can't find such variables in `data`\\."
@@ -190,7 +189,7 @@ test_that("missing lag variable fails", {
 
 test_that("missing predictor fails", {
   expect_error(
-    dynamite(dformula = obs(y ~ w, family = gaussian()),
+    dynamite(dformula = obs(y ~ w, family = "gaussian"),
              data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
              group = "x", time = "z"),
     "Can't find variable `w` in `data`\\."
@@ -237,7 +236,7 @@ test_that("invalid column types fail", {
   test_data$w <- c(list(a = 1), list(b = 2))
   test_data$d <- as.raw(c(40, 20))
   expect_error(
-    dynamite(dformula = obs(y ~ x, family = gaussian()),
+    dynamite(dformula = obs(y ~ x, family = "gaussian"),
              data = test_data, group = "x", time = "z"),
     "Columns `y`, `w`, and `d` of `data` are invalid:\nx Column types <complex/list/raw> are not supported\\."
   )
@@ -247,57 +246,125 @@ test_that("non-finite values in data fail", {
   test_data <- data.frame(y = c(1, Inf), x = c(1, 1),
                           z = c(1, 2), w = c(-Inf, 2), u = c(1, Inf))
   expect_error(
-    dynamite(dformula = obs(y ~ x, family = gaussian()),
+    dynamite(dformula = obs(y ~ x, family = "gaussian"),
              data = test_data, group = "x", time = "z"),
     "Non-finite values in variables `y`, `w`, and `u` of `data`\\."
   )
 })
 
-test_that("factor types for non-categorical families fails", {
-  test_data <- data.frame(y = factor(c(0, 1)), x = c(1, 1), z = c(1, 2))
+test_that("non-factor categorical response fails", {
+  test_data <- data.frame(y = c(0, 1), x = c(1, 1), z = c(1, 2))
   expect_error(
-    dynamite(dformula = obs(y ~ 1, family = gaussian()),
+    dynamite(dformula = obs(y ~ 1, family = "categorical"),
              data = test_data, group = "x", time = "z"),
-    "Response variable `y` is invalid:\nx .+ family is not supported for <factor> variables\\."
-  )
-  expect_error(
-    dynamite(dformula = obs(y ~ 1, family = bernoulli()),
-             data = test_data, group = "x", time = "z"),
-    "Response variable `y` is invalid:\nx .+ family is not supported for <factor> variables\\."
-  )
-  expect_error(
-    dynamite(dformula = obs(y ~ 1, family = binomial()),
-             data = test_data, group = "x", time = "z"),
-    "Response variable `y` is invalid:\nx .+ family is not supported for <factor> variables\\."
-  )
-  expect_error(
-    dynamite(dformula = obs(y ~ 1, family = poisson()),
-             data = test_data, group = "x", time = "z"),
-    "Response variable `y` is invalid:\nx .+ family is not supported for <factor> variables\\."
-  )
-  expect_error(
-    dynamite(dformula = obs(y ~ 1, family = negbin()),
-             data = test_data, group = "x", time = "z"),
-    "Response variable `y` is invalid:\nx .+ family is not supported for <factor> variables\\."
+    "Response variable `y` is invalid:\nx Categorical family supports only <factor> variables\\."
   )
 })
 
-test_that("negative values for binomial, negbin and poisson fails", {
+test_that("factor types for non-categorical families fails", {
+  test_data <- data.frame(y = factor(c(0, 1)), x = c(1, 1), z = c(1, 2))
+  families <- c("gaussian", "exponential", "gamma", "bernoulli", "binomial", "poisson", "negbin")
+  for (f in families) {
+    expect_error(
+      dynamite(dformula = obs(y ~ 1, family = f),
+               data = test_data, group = "x", time = "z"),
+      "Response variable `y` is invalid:\nx .+ family is not supported for <factor> variables\\."
+    )
+  }
+})
+
+test_that("negative values for distributions with positive support fails", {
   test_data <- data.frame(y = c(-1, -2), x = c(1, 1), z = c(1, 2))
+  families <- c("exponential", "gamma", "binomial", "negbin", "poisson")
+  for (f in families) {
+    expect_error(
+      dynamite(dformula = obs(y ~ 1, family = f),
+               data = test_data, group = "x", time = "z"),
+      "Response variable `y` is invalid:\nx .+ family supports only non-negative .+\\."
+    )
+  }
+})
+
+test_that("bernoulli without 0/1 values fails", {
+  test_data <- data.frame(y = c(2, 3), x = c(1, 1), z = c(1, 2))
   expect_error(
-    dynamite(dformula = obs(y ~ 1, family = binomial()),
+    dynamite(dformula = obs(y ~ 1, family = "bernoulli"),
              data = test_data, group = "x", time = "z"),
-    "Response variable `y` is invalid:\nx .+ family supports only non-negative integers\\."
+    "Response variable `y` is invalid:\nx Bernoulli family supports only 0/1 integers\\."
+  )
+})
+
+
+# Lag errors --------------------------------------------------------------
+
+test_that("invalid shift value expression fails", {
+  expect_error(
+    extract_lags("lag(y, a % b)"),
+    "Invalid shifted value expression `a % b`\\."
+  )
+})
+
+test_that("invalid lagged value definition fails", {
+  expect_error(
+    extract_lags("lag(y, a:b)"),
+    "Invalid lagged value definition `lag\\(y, a:b\\)`\\."
+  )
+})
+
+test_that("non coerceable shift value fails", {
+  expect_error(
+    extract_lags("lag(y, 'a')"),
+    "Unable to coerce lag shift value to <integer> in `lag\\(y, 'a'\\)`\\."
+  )
+})
+
+test_that("negative lag shift value fails", {
+  expect_error(
+    extract_lags("lag(y, -1)"),
+    "Shift values must be positive in `lag\\(\\)`:\nx Nonpositive shift value was found in `lag\\(y, -1\\)`\\."
+  )
+})
+
+# Output errors -----------------------------------------------------------
+
+test_that("output for non dynamitefit objects fails", {
+  expect_error(
+    as.data.frame.dynamitefit(x = 1L),
+    "Argument `x` must be a <dynamitefit> object\\."
   )
   expect_error(
-    dynamite(dformula = obs(y ~ 1, family = poisson()),
-             data = test_data, group = "x", time = "z"),
-    "Response variable `y` is invalid:\nx .+ family supports only non-negative integers\\."
+    as_draws_df.dynamitefit(x = 1L),
+    "Argument `x` must be a <dynamitefit> object\\."
   )
   expect_error(
-    dynamite(dformula = obs(y ~ 1, family = negbin()),
-             data = test_data, group = "x", time = "z"),
-    "Response variable `y` is invalid:\nx .+ family supports only non-negative integers\\."
+    plot_deltas(model = 1L),
+    "Argument `model` must be a <dynamitefit> object\\."
+  )
+  expect_error(
+    plot_betas(model = 1L),
+    "Argument `model` must be a <dynamitefit> object\\."
+  )
+  expect_error(
+    plot_nus(model = 1L),
+    "Argument `model` must be a <dynamitefit> object\\."
+  )
+  expect_error(
+    print.dynamitefit(x = 1L),
+    "Argument `x` must be a <dynamitefit> object\\."
+  )
+  expect_error(
+    mcmc_diagnostics(x = 1L),
+    "Argument `x` must be a <dynamitefit> object\\."
+  )
+})
+
+test_that("Invalid responses fail", {
+  expect_error(
+    as.data.frame.dynamitefit(
+      gaussian_example_fit,
+      responses = "resp"
+    ),
+    "Model does not contain response variable `resp`\\."
   )
 })
 
@@ -350,3 +417,71 @@ test_that("newdata with missing response fails", {
     "Can't find response variable `y` in `newdata`."
   )
 })
+
+test_that("newdata that is not a data.frame fails", {
+  expect_error(
+    predict(gaussian_example_fit, newdata = 1L),
+    "Argument `newdata` must be a <data.frame> object\\."
+  )
+})
+
+test_that("non-integer n_draws fails", {
+  expect_error(
+    predict(gaussian_example_fit, n_draws = data.frame()),
+    "Unable to coerce argument `n_draws` to <integer>\\."
+  )
+})
+
+test_that("negative n_draws fails", {
+  expect_error(
+    predict(gaussian_example_fit, n_draws = -1L),
+    "Argument `n_draws` must be a positive <integer>\\."
+  )
+})
+
+# Prior errors ------------------------------------------------------------
+
+p <- get_priors(gaussian_example_fit)
+f <- obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian",
+         random_intercept = TRUE) + splines(df = 20)
+
+test_that("incomplete priors fails", {
+  p2 <- p[-1,]
+  expect_error(
+  dynamite(f, data = gaussian_example, time = "time", group = "id",
+           priors = p2, debug = list(no_compile = TRUE)),
+  "Argument `priors` must contain all relevant parameters:\nx Prior for parameter `sigma_nu_y` is not defined\\."
+  )
+})
+
+test_that("irrevelant parameters fails", {
+  p2 <- rbind(p, data.frame(parameter = "extra",
+                            response = "y",
+                            prior = "normal(0, 1.0)",
+                            type = "alpha",
+                            category = ""))
+  expect_error(
+    dynamite(f, data = gaussian_example, time = "time", group = "id",
+             priors = p2, debug = list(no_compile = TRUE)),
+    "Argument `priors` must contain only relevant parameters:\nx Found a prior for parameter `extra` but the model does not contain such a parameter\\."
+  )
+})
+
+test_that("unsupported prior distribution fails", {
+  p$prior[5] <- "aaa"
+  expect_error(
+  dynamite(f, data = gaussian_example, time = "time", group = "id",
+           priors = p, debug = list(no_compile = TRUE)),
+  "Found an unsupported prior distribution in `priors`:\nx Distribution `aaa` is not available\\."
+  )
+})
+
+test_that("constrained prior for unconstrained parameter fails", {
+  p$prior[5] <- "gamma(2, 1)"
+  expect_error(
+    dynamite(f, data = gaussian_example, time = "time", group = "id",
+             priors = p, debug = list(no_compile = TRUE)),
+    "Priors for parameters alpha, beta, and delta should have unconstrained support:\nx Found an unconstrained distribution `gamma` for parameter `delta_y_x`\\."
+  )
+})
+

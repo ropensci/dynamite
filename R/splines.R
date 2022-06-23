@@ -44,7 +44,7 @@ splines <- function(shrinkage = FALSE, override = FALSE,
   noncentered <- try_type(noncentered, "logical")
   lb_tau <- try_type(lb_tau, "numeric")
   if (any(lb_tau < 0)) {
-    stop_("Lower bound for {.var tau} must be non-negative.")
+    stop_("Lower bound for {.arg tau} must be non-negative.")
   }
   structure(
     list(

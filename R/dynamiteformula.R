@@ -5,9 +5,7 @@
 #' TODO document lag-conversion to data
 #'
 #' @param formula \[`formula`]\cr An R formula describing the model.
-#' @param family \[`call`, `character(1)`]\cr
-#'   A call to a family function, e.g., `gaussian()` or the family
-#'   name as a character string, e.g., `"gaussian"`.
+#' @param family \[`character(1)`]\cr The family name.
 #' @param random_intercept \[`logical(1)`]\cr If `TRUE`, adds
 #'   individual-level intercepts to the channel.
 #' @export
@@ -17,35 +15,20 @@
 #' @srrstats {RE1.4} *Regression Software should document any assumptions made with regard to input data; for example distributional assumptions, or assumptions that predictor data have mean values of zero. Implications of violations of these assumptions should be both documented and tested.*
 dynamiteformula <- function(formula, family, random_intercept = FALSE) {
   if (!is.formula(formula)) {
-    stop_("Argument {.var formula} is not a {.cls formula} object.")
+    stop_("Argument {.arg formula} is not a {.cls formula} object.")
   }
-  family <- substitute(family)
-  if (is.character(family)) {
-    family <- tolower(family)
-    if (length(family) > 1) {
-      warning_(c(
-        "Multiple values passed to argument {.var family}:",
-        `i` = "Only the first one will be used."
-      ))
-    }
-    if (is_supported(family[1])) {
+  family <- try_type(family, "character")[1L]
+  family <- tolower(family)
+  if (is_supported(family[1L])) {
       family <- do.call(paste0(family, "_"), args = list())
-    } else {
-      stop_("Family {.val {family[1]}} is not supported.")
-    }
   } else {
-    family_call <- is_valid_family_call(family)
-    if (!family_call$supported) {
-      stop_("Unsupported family call {.fun {family_call$call_str}}.")
-    } else {
-      family <- eval(family_call$call)
-    }
+    stop_("Family {.val {family}} is not supported.")
   }
   if (has_as_is(deparse1(formula))) {
     stop_("The use of {.code I(.)} is not supported by {.fun dynamiteformula}.")
   }
-  random_intercept <- try_type(random_intercept, "logical")[1]
-  x <- dynamiteformula_(formula, family, random_intercept)
+  random_intercept <- try_type(random_intercept, "logical")[1L]
+  x <- dynamiteformula_(formula, formula, family, random_intercept)
   structure(
     list(
       dynamitechannel(
@@ -67,7 +50,8 @@ dynamiteformula <- function(formula, family, random_intercept = FALSE) {
 
 #' @describeIn dynamiteformula Internal Version of `dynamiteformula`
 #' @noRd
-dynamiteformula_ <- function(formula, family, random_intercept = FALSE) {
+dynamiteformula_ <- function(formula, original, family,
+                             random_intercept = FALSE) {
   if (is_deterministic(family)) {
     out <- formula_past(formula)
     resp_parsed <- formula_response(deparse1(formula_lhs(formula)))
@@ -87,6 +71,7 @@ dynamiteformula_ <- function(formula, family, random_intercept = FALSE) {
   if (random_intercept && is_categorical(family)) {
     stop_("Random intercepts are not yet supported for the categorical family.")
   }
+  out$original <- original
   out$has_random_intercept <- random_intercept
   out
 }
