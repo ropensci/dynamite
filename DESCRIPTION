@@ -20,7 +20,6 @@ Imports:
     dplyr,
     glue,
     ggplot2,
-    methods,
     posterior,
     rlang,
     rstan (>= 2.26.11),

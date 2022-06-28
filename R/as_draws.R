@@ -18,18 +18,25 @@
 #' as_draws(gaussian_example_fit, types = c("sigma", "beta"))
 #'
 as_draws_df.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
-  if (!is.dynamitefit(x)) {
-    stop_("Argument {.var x} must be a {.cls dynamitefit} object.")
-  }
-  d <- as.data.frame(x, responses, types, summary = FALSE,
-                     include_fixed = FALSE) |>
+  stopifnot_(
+    is.dynamitefit(x),
+    "Argument {.var x} must be a {.cls dynamitefit} object."
+  )
+  d <- as.data.frame(
+    x,
+    responses,
+    types,
+    summary = FALSE,
+    include_fixed = FALSE
+  ) |>
     dplyr::select(.data$parameter, .data$value, .data$time, .data$category,
                   .data$group, .data$.iteration, .data$.chain) |>
-     tidyr::pivot_wider(
-       values_from = .data$value,
-       names_from = c(.data$parameter, .data$time, .data$category,
-                      .data$group),
-       names_glue = "{parameter}[{time}]_{category}_id{group}")
+    tidyr::pivot_wider(
+      values_from = .data$value,
+      names_from = c(.data$parameter, .data$time, .data$category,
+                     .data$group),
+      names_glue = "{parameter}[{time}]_{category}_id{group}"
+    )
   # remove NAs from time-invariant parameter names
   colnames(d) <- gsub("\\[NA\\]", "", colnames(d))
   # remove NAs from parameters which are not category specific

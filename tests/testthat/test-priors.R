@@ -28,7 +28,7 @@ test_that("extracted priors match initial priors", {
 })
 
 test_that("prior order does not matter", {
-  p2 <- p[nrow(p):1,]
+  p2 <- p[seq.int(nrow(p), 1L),]
   fit2 <- dynamite(f, data = gaussian_example, time = "time", group = "id",
                    priors = p2, debug = list(no_compile = TRUE))
   expect_identical(get_priors(fit2), p)

@@ -29,22 +29,30 @@
 #' @srrstats {RE6.3} *Where a model object is used to generate a forecast (for example, through a `predict()` method), the default `plot` method should provide clear visual distinction between modelled (interpolated) and forecast (extrapolated) values.*
 plot_deltas <- function(model, level = 0.05, alpha = 0.5,
                         scales = c("fixed", "free"),
-                        include_alpha = TRUE){
-  if (!is.dynamitefit(model)) {
-    stop_("Argument {.arg model} must be a {.cls dynamitefit} object.")
-  }
+                        include_alpha = TRUE) {
+  stopifnot_(
+    is.dynamitefit(model),
+    "Argument {.var model} must be a {.cls dynamitefit} object."
+  )
   level <- try_type(level, "numeric")[1]
   alpha <- try_type(alpha, "numeric")[1]
   include_alpha <- try_type(include_alpha, "logical")[1]
-  coefs <- coef(model, "delta", probs = c(level, 1 - level),
-                include_alpha = include_alpha)
-  if (nrow(coefs) == 0L) {
-    stop_("The model does not contain varying coefficients delta.")
-  }
-
+  coefs <- coef(
+    model,
+    "delta",
+    probs = c(level, 1 - level),
+    include_alpha = include_alpha
+  )
+  stopifnot_(
+    nrow(coefs) > 0L,
+    "The model does not contain varying coefficients delta."
+  )
   scales <- match.arg(scales)
-  title <- paste0("Posterior mean and ", 100 * (1 - 2 * level),
-                  "% intervals of the time-varying coefficients")
+  title <- paste0(
+    "Posterior mean and ",
+    100 * (1 - 2 * level),
+    "% intervals of the time-varying coefficients"
+  )
   if (any(!is.na(coefs$category))) {
     p <- coefs |>
       ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean,
@@ -71,19 +79,27 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5,
 #' @examples
 #' plot_betas(gaussian_example_fit)
 plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
-  if (!is.dynamitefit(model)) {
-    stop_("Argument {.arg model} must be a {.cls dynamitefit} object.")
-  }
+  stopifnot_(
+    is.dynamitefit(model),
+    "Argument {.var model} must be a {.cls dynamitefit} object."
+  )
   level <- try_type(level, "numeric")[1]
   include_alpha <- try_type(include_alpha, "logical")[1]
-  coefs <- coef(model, "beta", probs = c(level, 1 - level),
-                include_alpha = include_alpha)
-  if (nrow(coefs) == 0) {
-    stop_("The model does not contain fixed coefficients beta.")
-  }
-  title <- paste0("Posterior mean and ", 100 * (1 - 2 * level),
-                  "% intervals of the time-invariant coefficients")
-
+  coefs <- coef(
+    model,
+    "beta",
+    probs = c(level, 1 - level),
+    include_alpha = include_alpha
+  )
+  stopifnot_(
+    nrow(coefs) > 0L,
+    "The model does not contain fixed coefficients beta."
+  )
+  title <- paste0(
+    "Posterior mean and ",
+    100 * (1 - 2 * level),
+    "% intervals of the time-invariant coefficients"
+  )
   if (any(!is.na(coefs$category))) {
     p <- coefs |>
       ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter,
@@ -109,20 +125,28 @@ plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
 #' @examples
 #' plot_nus(gaussian_example_fit)
 plot_nus <- function(model, level = 0.05){
-  if (!is.dynamitefit(model)) {
-    stop_("Argument {.arg model} must be a {.cls dynamitefit} object.")
-  }
+  stopifnot_(
+    is.dynamitefit(model),
+    "Argument {.var model} must be a {.cls dynamitefit} object."
+  )
   level <- try_type(level, "numeric")[1]
-  coefs <- coef(model, "nu", probs = c(level, 1 - level)) |>
+  coefs <- coef(
+    model,
+    "nu",
+    probs = c(level, 1 - level)
+  ) |>
     dplyr::mutate(parameter = glue::glue("{parameter}_{group}")) |>
     dplyr::mutate(parameter = factor(.data$parameter,
                                      levels = .data$parameter))
-  if (nrow(coefs) == 0) {
-    stop_("The model does not contain random intercepts nu.")
-  }
-  title <- paste0("Posterior mean and ", 100 * (1 - 2 * level),
-                  "% intervals of the random intercepts")
-
+  stopifnot_(
+    nrow(coefs) > 0L,
+    "The model does not contain random intercepts nu."
+  )
+  title <- paste0(
+    "Posterior mean and ",
+    100 * (1 - 2 * level),
+    "% intervals of the random intercepts"
+  )
   coefs |>
     ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter)) +
     ggplot2::geom_pointrange(ggplot2::aes_string(

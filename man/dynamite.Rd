@@ -42,7 +42,7 @@ supplying it to the \code{dynamite}.
 \examples{
 \dontrun{
 fit <- dynamite(obs(y ~ -1 + varying(~x), family = gaussian()) +
-  lags("varying") + splines(df = 20), gaussian_example, id, time,
+  lags(type = "varying") + splines(df = 20), gaussian_example, id, time,
   chains = 1, refresh = 0)
 
 library(dplyr)
@@ -60,4 +60,5 @@ cf \%>\%
     geom_line() +
     facet_wrap(~ variable, scales = "free_y")
 }
+
 }

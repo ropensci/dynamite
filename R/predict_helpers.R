@@ -10,9 +10,10 @@ check_ndraws <- function(n_draws, full_draws) {
     n_draws <- full_draws
   }
   n_draws <- try_type(n_draws, "integer")
-  if (n_draws < 1L) {
-    stop_("Argument {.var n_draws} must be a positive {.cls integer}.")
-  }
+  stopifnot_(
+    n_draws > 0L,
+    "Argument {.var n_draws} must be a positive {.cls integer}."
+  )
   if (n_draws > full_draws) {
     warning_(c(
       "You've supplied {.arg n_draws} = {n_draws} but there are only
@@ -28,7 +29,8 @@ check_ndraws <- function(n_draws, full_draws) {
 #'
 #' @param newdata \[`data.frame`]\cr The data to be used for prediction.
 #' @param data \[`data.frame`]\cr The original data used to fit the model.
-#' @param type \[`character`]\cr Either `"response"`, `"mean"` or `"link"`.
+#' @param type \[`character`]\cr Either `"response"`, `"mean"`, `"link"` or
+#'   `"fitted"`.
 #' @param families_stoch \[`list`]\cr of `dynamitefamily` object.
 #' @param resp_stoch \[`character`]\cr A vector of response variables
 #' @param categories \[`list`]\cr Response variable categories
@@ -42,39 +44,44 @@ check_ndraws <- function(n_draws, full_draws) {
 parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
                           categories, new_levels, group_var, time_var) {
   if (!is.null(group_var)) {
-    if (!(group_var %in% names(newdata))) {
-      stop_("Can't find grouping variable {.var {group_var}} in {.var newdata}.")
-    }
+    stopifnot_(
+      group_var %in% names(newdata),
+      "Can't find grouping variable {.var {group_var}} in {.var newdata}."
+    )
     group <- newdata[[group_var]]
     group <- unique(group)
     # TODO doesn't really matter at least at the moment
-    if (identical(new_levels, "none") && !all(group %in% data[[group_var]])) {
-      new_levels <- unique(group[!group %in% data[[group_var]]])
-      stop_(c(
+    extra_levels <- unique(group[!group %in% data[[group_var]]])
+    stopifnot_(
+      all(group %in% data[[group_var]]) || !identical(new_levels, "none"),
+      c(
         "Grouping variable {.var {group_var}} contains unknown levels:",
-        `x` = "Level{?s} {.val {as.character(new_levels)}}
+        `x` = "Level{?s} {.val {as.character(extra_levels)}}
                {?is/are} not present in the original data.",
         `i` = "{.strong Note:} argument {.var new_levels} is {.val none}
                which disallows new levels."
-      ))
-    }
+      )
+    )
   }
-  if (!(time_var %in% names(newdata))) {
-    stop_("Can't find time index variable {.var {time_var}} in {.var newdata}.")
-  }
+  stopifnot_(
+    time_var %in% names(newdata),
+    "Can't find time index variable {.var {time_var}} in {.var newdata}."
+  )
   time <- unique(newdata[[time_var]])
-  if (!all(time %in% data[[time_var]])) {
-    new_times <- unique(time[!time %in% data[[time_var]]])
-    stop_(c(
+  extra_times <- unique(time[!time %in% data[[time_var]]])
+  stopifnot_(
+    all(time %in% data[[time_var]]),
+    c(
       "Time index variable {.var {time_var}} contains unknown time points:",
-      `x` = "Time point{?s} {.val {as.character(new_times)}}
+      `x` = "Time point{?s} {.val {as.character(extra_times)}}
              {?is/are} not present in the original data."
-    ))
-  }
+    )
+  )
   for (resp in resp_stoch) {
-    if (is.null(newdata[[resp]])) {
-      stop_("Can't find response variable {.var {resp}} in {.var newdata}.")
-    }
+    stopifnot_(
+      !is.null(newdata[[resp]]),
+      "Can't find response variable {.var {resp}} in {.var newdata}."
+    )
   }
   data.table::setDT(newdata, key = c(group_var, time_var))
   # create separate column for each level of categorical variables
@@ -89,9 +96,6 @@ parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
       if (type %in% c("mean", "link", "fitted")) {
         newdata[, (glue::glue("{resp}_{type}")) := NA_real_]
       }
-    }
-    if (identical(type, "response")) {
-      newdata[, (glue::glue("{resp}_new")) := newdata[[resp]]]
     }
     if (!identical(type, "fitted")) {
       newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
@@ -166,6 +170,39 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch,
   }
 }
 
+#' Generate Random Intercepts for New Group Levels
+#'
+#' @inheritParams predict
+#' @param nu Posterior draws of the random intercept parameters.
+#' @param sigma_nu Posterior draws of the SD of the random intercept parameters.
+#' @param orig_ids Group levels of the original data.
+#' @param new_ids  Group levels of `newdata` in
+#'   [dynamite::predict.dynamitefit()].
+#' @noRd
+generate_random_intercept <- function(nu, sigma_nu, n_draws, n_id,
+                                      orig_ids, new_ids, new_levels) {
+  is_orig <- orig_ids %in% new_ids
+  is_new <- !new_ids %in% orig_ids
+  out <- NULL
+  if (identical(new_levels, "none")) {
+    out <- nu[, is_orig, drop = FALSE]
+  } else {
+    out <- matrix(0.0, n_draws, n_id)
+    out[, !is_new] <- nu[, is_orig, drop = FALSE]
+    if (any(is_new)) {
+      out[ ,is_new] <- switch(new_levels,
+        `bootstrap` = sample(c(nu), n_draws * sum(is_new), TRUE),
+        `gaussian` = rnorm(n_draws * sum(is_new), 0, sigma_nu),
+        `original` = {
+          match_ids <- sample(orig_ids, sum(is_new), replace = TRUE)
+          nu[, match_ids, drop = FALSE]
+        }
+      )
+    }
+  }
+  out
+}
+
 #' Prepare Environments to Evaluate Predictions or Fitted Values
 #'
 #' @inheritParams predict
@@ -183,12 +220,6 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
   newdata_names <- names(newdata)
   n_resp <- length(resp_stoch)
   eval_envs <- vector(mode = "list", length = n_resp)
-  orig_ids <- NULL
-  new_ids <- NULL
-  if (!is.null(group_var)) {
-    orig_ids <- unique(object$data[[group_var]])
-    new_ids <- unique(newdata[[group_var]])
-  }
   idx_draws <- seq_len(n_draws)
   for (j in seq_len(n_resp)) {
     resp <- resp_stoch[j]
@@ -213,31 +244,18 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
     e$resp <- resp_stoch[j]
     e$phi <- samples[[phi]][idx_draws]
     e$sigma <- samples[[sigma]][idx_draws]
-    if (is.null(group_var)) {
-      e$nu <- samples[[nu]]
-    } else {
-      is_orig <- orig_ids %in% new_ids
-      is_new <- !new_ids %in% orig_ids
-      if (identical(new_levels, "none")) {
-        e$nu <- samples[[nu]][idx_draws, is_orig, drop = FALSE]
-      } else {
-        e$nu <- matrix(0.0, n_draws, n_id)
-        e$nu[, !is_new] <- samples[[nu]][idx_draws, is_orig, drop = FALSE]
-        if (any(is_new)) {
-          if (identical(new_levels, "bootstrap")) {
-            e$nu[, is_new] <- sample(c(samples[[nu]][idx_draws, ]),
-                                     size = n_draws * sum(is_new),
-                                     replace = TRUE)
-          } else if (identical(new_levels, "gaussian")) {
-            e$nu[, is_new] <- rnorm(n_draws * sum(is_new),
-                                    mean = 0,
-                                    sd = samples[[sigma_nu]][idx_draws])
-          } else if (identical(new_levels, "original")) {
-            match_ids <- sample(orig_ids, size = sum(is_new), replace = TRUE)
-            e$nu[, is_new] <- samples[[nu]][idx_draws, match_ids, drop = FALSE]
-          }
-        }
-      }
+    if (!is.null(group_var)) {
+      orig_ids <- unique(object$data[[group_var]])
+      new_ids <-  unique(newdata[[group_var]])
+      e$nu <- generate_random_intercept(
+        nu = samples[[nu]][idx_draws, , drop = FALSE],
+        sigma_nu = samples[[sigma_nu]][idx_draws],
+        n_draws = n_draws,
+        n_id = n_id,
+        orig_ids = orig_ids,
+        new_ids = new_ids,
+        new_levels = new_levels
+      )
     }
     if (is_categorical(resp_family)) {
       resp_levels <- attr(object$stan$responses, "resp_class")[[resp]] |>
@@ -265,13 +283,18 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
       e$delta <- samples[[delta]][idx_draws, , , drop = FALSE]
       e$xbeta <- numeric(e$k)
     }
-    e$call <- generate_sim_call(resp, resp_levels, resp_family, eval_type,
-                                model_vars[[j]]$has_fixed,
-                                model_vars[[j]]$has_varying,
-                                model_vars[[j]]$has_fixed_intercept,
-                                model_vars[[j]]$has_varying_intercept,
-                                model_vars[[j]]$has_random_intercept,
-                                model_vars[[j]]$has_offset)
+    e$call <- generate_sim_call(
+      resp,
+      resp_levels,
+      resp_family,
+      eval_type,
+      model_vars[[j]]$has_fixed,
+      model_vars[[j]]$has_varying,
+      model_vars[[j]]$has_fixed_intercept,
+      model_vars[[j]]$has_varying_intercept,
+      model_vars[[j]]$has_random_intercept,
+      model_vars[[j]]$has_offset
+    )
     eval_envs[[j]] <- e
   }
   eval_envs
@@ -311,8 +334,10 @@ generate_sim_call <- function(resp, resp_levels, family, type,
         "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '0', '')}",
         "{ifelse_(has_fixed_intercept, 'alpha[, s]', '')}",
         "{ifelse_(has_varying_intercept, 'alpha[, a_time, s]', '')}",
-        "{ifelse_(has_fixed, ' + tcrossprod(beta[, , s], model_matrix[j, J_fixed, drop = FALSE])', '')}",
-        "{ifelse_(has_varying, ' + tcrossprod(delta[, time, , s], model_matrix[j, J_varying, drop = FALSE]', '')}",
+        "{ifelse_(has_fixed, ' + tcrossprod(beta[, , s], ",
+          "model_matrix[j, J_fixed, drop = FALSE])', '')}",
+        "{ifelse_(has_varying, ' + tcrossprod(delta[, time, , s], ",
+          "model_matrix[j, J_varying, drop = FALSE]', '')}",
         "  }}",
         "}}\n"
       ),
@@ -330,8 +355,10 @@ generate_sim_call <- function(resp, resp_levels, family, type,
         "{ifelse_(has_fixed_intercept, 'alpha', '')}",
         "{ifelse_(has_varying_intercept, 'alpha[, a_time]', '')}",
         "{ifelse_(has_random_intercept, '+ nu[, j]', '')}",
-        "{ifelse_(has_fixed, ' + tcrossprod(beta, model_matrix[j, J_fixed, drop = FALSE])', '')}",
-        "{ifelse_(has_varying, ' + tcrossprod(delta[, time, ], model_matrix[j, J_varying, drop = FALSE])', '')}",
+        "{ifelse_(has_fixed, ' + tcrossprod(beta, ",
+          "model_matrix[j, J_fixed, drop = FALSE])', '')}",
+        "{ifelse_(has_varying, ' + tcrossprod(delta[, time, ], ",
+          "model_matrix[j, J_varying, drop = FALSE])', '')}",
         "}}\n"
       ),
       ifelse_(identical(type, "predict"),
@@ -371,13 +398,21 @@ fitted_categorical <- "
 "
 
 fitted_bernoulli <- "
-  data.table::set(x = newdata, i = idx, j = '{resp}_fitted',
-                  value = plogis(xbeta))
+  data.table::set(
+    x = newdata,
+    i = idx,
+    j = '{resp}_fitted',
+    value = plogis(xbeta)
+  )
 "
 
 fitted_binomial <- "
-  data.table::set(x = newdata, i = idx, j = '{resp}_fitted',
-                  value = plogis(xbeta))
+  data.table::set(
+    x = newdata,
+    i = idx,
+    j = '{resp}_fitted',
+    value = plogis(xbeta)
+  )
 "
 
 fitted_poisson <- "
@@ -401,99 +436,158 @@ fitted_gamma <- "
 
 predict_gaussian <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_data, j = '{resp}_mean',
-                    value = xbeta[idx_pred])
+    data.table::set(
+      x = newdata,
+      i = idx_data,
+      j = '{resp}_mean',
+      value = xbeta[idx_pred]
+    )
   }}
-  data.table::set(x = newdata, i = idx_data, j = '{resp}',
-                  value = rnorm(k, xbeta, sigma)[idx_pred])
+  data.table::set(
+    x = newdata,
+    i = idx_data,
+    j = '{resp}',
+    value = rnorm(k, xbeta, sigma)[idx_pred]
+  )
 "
 
 predict_categorical <- "
-    if (type == 'link') {{
-      resp_cols <- c({paste0('\"', resp, '_link_', resp_levels, '\"',
-                             collapse = ', ')})
-      for (s in 1:S) {{
-        data.table::set(
-          x = newdata,
-          i = idx_data,
-          j = resp_cols[s],
-          value = xbeta[idx_pred, s]
-        )
-      }}
+  if (type == 'link') {{
+    resp_cols <- c({paste0('\"', resp, '_link_', resp_levels, '\"',
+                           collapse = ', ')})
+    for (s in 1:S) {{
+      data.table::set(
+        x = newdata,
+        i = idx_data,
+        j = resp_cols[s],
+        value = xbeta[idx_pred, s]
+      )
     }}
-    if (type == 'mean') {{
-      resp_cols <- c({paste0('\"', resp, '_mean_', resp_levels, '\"',
-                             collapse = ', ')})
-      maxs <- apply(xbeta, 1, max)
-      mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
-      for (s in 1:S) {{
-        data.table::set(
-          x = newdata,
-          i = idx_data,
-          j = resp_cols[s],
-          value = mval[idx_pred, s]
-        )
-      }}
+  }}
+  if (type == 'mean') {{
+    resp_cols <- c({paste0('\"', resp, '_mean_', resp_levels, '\"',
+                           collapse = ', ')})
+    maxs <- apply(xbeta, 1, max)
+    mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+    for (s in 1:S) {{
+      data.table::set(
+        x = newdata,
+        i = idx_data,
+        j = resp_cols[s],
+        value = mval[idx_pred, s]
+      )
     }}
-    data.table::set(x = newdata, i = idx_data, j = '{resp}',
-                    value = max.col(xbeta - log(-log(runif(S * k))))[idx_pred])
+  }}
+  data.table::set(
+    x = newdata,
+    i = idx_data,
+    j = '{resp}',
+    value = max.col(xbeta - log(-log(runif(S * k))))[idx_pred]
+  )
 "
 
 predict_binomial <- "
   prob <- plogis(xbeta)
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_data, j = '{resp}_mean',
-                    value = prob[idx_pred])
+    data.table::set(
+      x = newdata,
+      i = idx_data,
+      j = '{resp}_mean',
+      value = prob[idx_pred]
+    )
   }}
-  data.table::set(x = newdata, i = idx_data, j = '{resp}',
-                  value = rbinom(k, trials, prob)[idx_pred])
+  data.table::set(
+    x = newdata,
+    i = idx_data,
+    j = '{resp}',
+    value = rbinom(k, trials, prob)[idx_pred]
+  )
 "
 
 predict_bernoulli <- "
   prob <- plogis(xbeta)
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_data, j = '{resp}_mean',
-                    value = prob[idx_pred])
+    data.table::set(
+      x = newdata,
+      i = idx_data,
+      j = '{resp}_mean',
+      value = prob[idx_pred]
+    )
   }}
-  data.table::set(x = newdata, i = idx_data, j = '{resp}',
-                  value = rbinom(k, 1, prob)[idx_pred])
+  data.table::set(
+    x = newdata,
+    i = idx_data,
+    j = '{resp}',
+    value = rbinom(k, 1, prob)[idx_pred]
+  )
 "
 
 predict_poisson <- "
   exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_data, j = '{resp}_mean',
-                    value = exp_xbeta[idx_pred])
+    data.table::set(
+      x = newdata,
+      i = idx_data,
+      j = '{resp}_mean',
+      value = exp_xbeta[idx_pred]
+    )
   }}
-  data.table::set(x = newdata, i = idx_data, j = '{resp}',
-                  value = rpois(k, exp_xbeta)[idx_pred])
+  data.table::set(
+    x = newdata,
+    i = idx_data,
+    j = '{resp}',
+    value = rpois(k, exp_xbeta)[idx_pred]
+  )
 "
 
 predict_negbin <- "
   exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_data, j = '{resp}_mean',
-                    value = exp_xbeta[idx_pred])
+    data.table::set(
+      x = newdata,
+      i = idx_data,
+      j = '{resp}_mean',
+      value = exp_xbeta[idx_pred]
+    )
   }
-  data.table::set(x = newdata, i = idx_data, j = '{resp}',
-                  value = rnbinom(k, size = phi, mu = exp_xbeta)[idx_pred])
+  data.table::set(
+    x = newdata,
+    i = idx_data,
+    j = '{resp}',
+    value = rnbinom(k, size = phi, mu = exp_xbeta)[idx_pred]
+  )
 "
 
 predict_exponential <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_data, j = '{resp}_mean',
-                    value = exp(xbeta[idx_pred]))
+    data.table::set(
+      x = newdata,
+      i = idx_data,
+      j = '{resp}_mean',
+      value = exp(xbeta[idx_pred])
+    )
   }
-  data.table::set(x = newdata, i = idx_data, j = '{resp}',
-                  value = rexp(k, rate = exp(-xbeta))[idx_pred])
+  data.table::set(
+    x = newdata,
+    i = idx_data,
+    j = '{resp}',
+    value = rexp(k, rate = exp(-xbeta))[idx_pred]
+  )
 "
 
 predict_gamma <- "
   if (type == 'mean') {{
-    data.table::set(x = newdata, i = idx_data, j = '{resp}_mean',
-                    value = exp(xbeta[idx_pred]))
+    data.table::set(
+      x = newdata,
+      i = idx_data,
+      j = '{resp}_mean',
+      value = exp(xbeta[idx_pred])
+    )
   }
-  data.table::set(x = newdata, i = idx_data, j = '{resp}',
-                  value = rgamma(k, shape = phi,
-                                 rate = phi * exp(-xbeta))[idx_pred])
+  data.table::set(
+    x = newdata,
+    i = idx_data,
+    j = '{resp}',
+    value = rgamma(k, shape = phi, rate = phi * exp(-xbeta))[idx_pred]
+  )
 "

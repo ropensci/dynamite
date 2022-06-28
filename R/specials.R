@@ -9,26 +9,32 @@ formula_specials <- function(x) {
   xt_variables <- attr(xt, "variables")
   xt_terms <- attr(xt, "term.labels")
   for (y in formula_special_funs) {
-    if (!is.null(xt_specials[[y]])) {
-      out$specials[[y]] <- xt_variables[[xt_specials[[y]] + 1]][[2]]
-    }
-  }
-  special_vars <- unlist(xt_specials)
-  if (!is.null(xt_specials$offset)) {
-    # offset needs to be considered separately because it never becomes a term
-    special_vars <- special_vars[!names(special_vars) %in% "offset"]
-  }
-  if (length(special_vars) > 0) {
-    x <- formula(
-      drop.terms(
-        xt,
-        dropx = get_special_term_indices(special_vars,
-                                         xt_variables,
-                                         xt_terms),
-        keep.response = TRUE
-      )
+    out$specials[[y]] <- onlyif(
+      !is.null(xt_specials[[y]]),
+      xt_variables[[xt_specials[[y]] + 1]][[2]]
     )
   }
+  special_vars <- unlist(xt_specials)
+  special_vars <- ifelse_(
+    !is.null(xt_specials$offset),
+    special_vars[!names(special_vars) %in% "offset"],
+    special_vars
+  )
+  x <- ifelse_(
+    length(special_vars) > 0,
+    formula(
+      drop.terms(
+        xt,
+        dropx = get_special_term_indices(
+          special_vars,
+          xt_variables,
+          xt_terms
+        ),
+        keep.response = TRUE
+      )
+    ),
+    x
+  )
   xt <- terms(x, specials = c("fixed", "varying"))
   xt_specials <- attr(xt, "specials")[c("fixed", "varying")]
   xt_variables <- attr(xt, "variables")
@@ -55,9 +61,11 @@ formula_specials <- function(x) {
       x <- formula(
         drop.terms(
           xt,
-          dropx = get_special_term_indices(special_vars,
-                                           xt_variables,
-                                           xt_terms),
+          dropx = get_special_term_indices(
+            special_vars,
+            xt_variables,
+            xt_terms
+          ),
           keep.response = TRUE
         )
       )
@@ -87,12 +95,13 @@ formula_specials <- function(x) {
     )
   } else {
     y <- as.character(xt_variables[[2]])
-    if (!any_icpt) {
-      stop_(c(
+    stopifnot_(
+      any_icpt,
+      c(
         "Invalid formula for response variable {.var {y}}:",
         `x` = "There are no predictors nor an intercept term."
-      ))
-    }
+      )
+    )
     x <- as.formula(paste0(y, "~ 1"))
   }
   xt <- formula_terms(x)

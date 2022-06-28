@@ -15,3 +15,6 @@ See \link[tibble:formatting]{tibble::formatting}.}
 \description{
 Prints the summary information of the estimated dynamite model.
 }
+\examples{
+print(gaussian_example_fit)
+}

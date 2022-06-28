@@ -1,5 +1,9 @@
 #' Initialize Deterministic Channels
 #'
+#' Creates new columns in the data for each deterministic channel and ensures
+#' that the column types are correct (e.g., a lagged value has the same type
+#' as its "parent").
+#'
 #' @param data \[`data.table`]\cr Data to assign initial values into.
 #' @param dd  \[`dynamiteformula`]\cr Formula of deterministic channels.
 #' @param dlp \[`dynamiteformula`]\cr Formula of lagged predictors.
@@ -17,14 +21,11 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
     data[ ,(dls[[i]]$response) := data[[rhs_stoch[i]]]]
     data[ ,(dls[[i]]$response) := NA]
   }
-  n_det <- length(dd)
-  if (n_det > 0) {
-    for (i in seq_len(n_det)) {
-      as_fun <- paste0("as.", dd[[i]]$specials$resp_type)
-      past <- do.call(as_fun, args = list(0))
-      data[, dd[[i]]$response := past]
-      data[, dd[[i]]$response := NA]
-    }
+  for (i in seq_along(dd)) {
+    as_fun <- paste0("as.", dd[[i]]$specials$resp_type)
+    past <- do.call(as_fun, args = list(0))
+    data[, dd[[i]]$response := past]
+    data[, dd[[i]]$response := NA]
   }
   rhs_det <- get_predictors(dld)
   ro_det <- attr(dld, "rank_order")
@@ -40,7 +41,7 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
       data[ ,(dld[[k]]$response) := NA]
     }
   }
-  if (n_det > 0) {
+  if (length(dd) > 0L) {
     cl <- get_quoted(dd)
     res <- try(assign_deterministic(data, cl, 1L), silent = TRUE)
     if ("try-error" %in% class(res)) {
@@ -65,9 +66,17 @@ assign_initial_values <- function(data, dd, dlp, dld, dls,
   n_lag_pred <- length(dlp)
   n_lag_det <- length(dld)
   n_lag_stoch <- length(dls)
-  ro_pred <- attr(dlp, "rank_order")
-  ro_det <- attr(dld, "rank_order")
-  ro_stoch <- 1L:n_lag_stoch
+  ro_pred <- ifelse_(
+    is.null(attr(dlp, "rank_order")),
+    integer(0L),
+    attr(dlp, "rank_order")
+  )
+  ro_det <- ifelse_(
+    is.null(attr(dld, "rank_order")),
+    integer(0L),
+    attr(dld, "rank_order")
+  )
+  ro_stoch <- seq_len(n_lag_stoch)
   resp_pred <- attr(dlp, "original_response")
   lhs_det <- get_responses(dld)
   rhs_det <- get_predictors(dld)
@@ -75,51 +84,37 @@ assign_initial_values <- function(data, dd, dlp, dld, dls,
   rhs_stoch <- get_predictors(dls)
   cl <- get_quoted(dd)
   for (k in ro_pred) {
-    if (is.null(group_var)) {
-      data[, (dlp[[k]]$response) := lapply(.SD, lag_, k = 1L),
-           .SDcols = resp_pred[k]]
-    } else {
-      data[, (dlp[[k]]$response) := lapply(.SD, lag_, k = 1L),
-           .SDcols = resp_pred[k], by = group_var]
-    }
+    data[, (dlp[[k]]$response) := lapply(.SD, lag_, k = 1L),
+         .SDcols = resp_pred[k], by = group_var]
   }
+  skip <- TRUE # skip lags at first index to avoid overriding initial values
   for (i in seq_len(fixed + 1L)) {
     idx <- idx + 1L
-    if (n_lag_det > 0 && i > 1) {
-      assign_lags(data, ro_det, idx, lhs_det, rhs_det)
-    }
-    if (n_lag_stoch > 0 && i > 1) {
-      assign_lags(data, ro_stoch, idx, lhs_stoch, rhs_stoch)
-    }
-    if (n_det > 0) {
-      assign_deterministic(data, cl, idx)
-    }
-  }
-  if (length(dld) > 0) {
-    init <- has_past(dld)
-    for (i in seq_along(dld)) {
-      if (init[i]) {
-        as_fun <- paste0("as.", dld[[i]]$specials$resp_type)
-        past <- do.call(as_fun, args = list(dld[[i]]$specials$past))
-        data[idx, (lhs_det[i]) := past]
-      }
-    }
-  }
-  if (n_det > 0) {
+    assign_lags(data, ro_det, idx, lhs_det, rhs_det, skip)
+    assign_lags(data, ro_stoch, idx, lhs_stoch, rhs_stoch, skip)
     assign_deterministic(data, cl, idx)
+    skip <- FALSE
   }
+  init <- has_past(dld)
+  for (i in seq_along(dld)) {
+    if (init[i]) {
+      as_fun <- paste0("as.", dld[[i]]$specials$resp_type)
+      past <- do.call(as_fun, args = list(dld[[i]]$specials$past))
+      data[idx, (lhs_det[i]) := past]
+    }
+  }
+  assign_deterministic(data, cl, idx)
 }
 
 #' Evaluate Definitions and Assign Values of Deterministic Channels
 #'
-#' @param data \[`data.table`]\cr Data to assign the values into.
+#' @param data \[`data.table`]\cr Data table to assign the values into.
 #' @param cl \[`language`]\cr A quoted expression defining the channels.
-#' @param idx \[`integer()`]\cr A vector of indices.
+#' @param idx \[`integer()`]\cr A vector of indices to assign values into.
 #' @noRd
 assign_deterministic <- function(data, cl, idx) {
-  # This should work in the next version of data.table
+  # This should work in the development version of data.table
   data[idx, cl, env = list(cl = cl)]
-  invisible(NULL)
 }
 
 #' Assign Values of Lagged Channels
@@ -129,11 +124,14 @@ assign_deterministic <- function(data, cl, idx) {
 #' @param idx \[`integer()`]\cr A vector of indices.
 #' @param lhs \[`character()`]\cr The lagged outcome variable names.
 #' @param rhs \[`character()`]\cr The names of the variables being lagged.
+#' @param skip \[`logical(1)`]\cr Skip evaluation on this iteration.
 #' @param offset \[`integer(1)`: \sQuote{1L}] The distance between consequent
 #'   observations in `data`.
 #' @noRd
-assign_lags <- function(data, ro, idx, lhs, rhs, offset = 1L) {
-  for (k in ro) {
-    set(data, i = idx, j = lhs[k], value = data[[rhs[k]]][idx - offset])
+assign_lags <- function(data, ro, idx, lhs, rhs, skip = FALSE, offset = 1L) {
+  if (!skip) {
+    for (k in ro) {
+      set(data, i = idx, j = lhs[k], value = data[[rhs[k]]][idx - offset])
+    }
   }
 }

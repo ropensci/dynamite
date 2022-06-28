@@ -2,7 +2,7 @@
 % Please edit documentation in R/dynamite.R
 \name{formula.dynamitefit}
 \alias{formula.dynamitefit}
-\title{Access The Model Formula of a \code{dynamitefit} Object}
+\title{Access The Model Formula of a Dynamite Model}
 \usage{
 \method{formula}{dynamitefit}(x, ...)
 }
@@ -13,4 +13,7 @@
 }
 \description{
 Returns the model definition as a quoted expression.
+}
+\examples{
+formula(gaussian_example_fit)
 }

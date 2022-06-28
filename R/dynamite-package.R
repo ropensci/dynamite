@@ -4,8 +4,8 @@
 #'
 #' @docType package
 #' @name dynamite-package
-#' @import methods
-#' @import data.table
+#' @importFrom data.table data.table as.data.table is.data.table
+#' @importFrom data.table set setDT setDF setkey setkeyv :=
 #' @importFrom cli cli_abort cli_warn cli_inform
 #' @importFrom rstan sampling
 #' @importFrom posterior as_draws as_draws_df
@@ -13,8 +13,10 @@
 #' @importFrom stats drop.terms formula model.matrix model.matrix.lm na.exclude
 #' @importFrom stats quantile coef setNames as.formula fitted na.pass terms
 #' @importFrom stats plogis rbinom reformulate rnbinom rnorm rpois runif sd
+#' @importFrom stats nobs
 #'
 #' @srrstats {G5.1} *Data sets created within, and used to test, a package should be exported (or otherwise made generally available) so that users can confirm tests and run examples.*
+#' @srrstats {BS1.2b} *At least one package vignette, both as general and applied textual descriptions, and example code*
 NULL
 #' Simulated Data of Gaussian Responses
 #'

@@ -14,3 +14,6 @@
 \description{
 Join Two \code{dynamiteformula} Objects
 }
+\examples{
+obs(y ~ x, family = "gaussian") + obs(z ~ w, family = "exponential")
+}

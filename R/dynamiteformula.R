@@ -3,20 +3,26 @@
 #' TODO description and details of all features
 #' TODO document families here as well
 #' TODO document lag-conversion to data
+#' TODO explain fixed time points
 #'
 #' @param formula \[`formula`]\cr An R formula describing the model.
 #' @param family \[`character(1)`]\cr The family name.
 #' @param random_intercept \[`logical(1)`]\cr If `TRUE`, adds
 #'   individual-level intercepts to the channel.
 #' @export
+#' @examples
+#' obs(y ~ -1 + varying(~x), family = gaussian()) +
+#'   lags(type = "varying") + splines(df = 20)
+#'
 #' @srrstats {G2.3b} *Either: use `tolower()` or equivalent to ensure input of character parameters is not case dependent; or explicitly document that parameters are strictly case-sensitive.*
 #' @srrstats {RE1.0} *Regression Software should enable models to be specified via a formula interface, unless reasons for not doing so are explicitly documented.*
 #' @srrstats {RE1.1} *Regression Software should document how formula interfaces are converted to matrix representations of input data.*
 #' @srrstats {RE1.4} *Regression Software should document any assumptions made with regard to input data; for example distributional assumptions, or assumptions that predictor data have mean values of zero. Implications of violations of these assumptions should be both documented and tested.*
 dynamiteformula <- function(formula, family, random_intercept = FALSE) {
-  if (!is.formula(formula)) {
-    stop_("Argument {.arg formula} is not a {.cls formula} object.")
-  }
+  stopifnot_(
+    is.formula(formula),
+    "Argument {.arg formula} is not a {.cls formula} object."
+  )
   family <- try_type(family, "character")[1L]
   family <- tolower(family)
   if (is_supported(family[1L])) {
@@ -24,9 +30,10 @@ dynamiteformula <- function(formula, family, random_intercept = FALSE) {
   } else {
     stop_("Family {.val {family}} is not supported.")
   }
-  if (has_as_is(deparse1(formula))) {
-    stop_("The use of {.code I(.)} is not supported by {.fun dynamiteformula}.")
-  }
+  stopifnot_(
+    !has_as_is(deparse1(formula)),
+    "{.code I(.)} is not supported by {.fun dynamiteformula}."
+  )
   random_intercept <- try_type(random_intercept, "logical")[1L]
   x <- dynamiteformula_(formula, formula, family, random_intercept)
   structure(
@@ -68,9 +75,10 @@ dynamiteformula_ <- function(formula, original, family,
     out$response <- deparse1(formula_lhs(formula))
   }
   out$family <- family
-  if (random_intercept && is_categorical(family)) {
-    stop_("Random intercepts are not yet supported for the categorical family.")
-  }
+  stopifnot_(
+    !(random_intercept && is_categorical(family)),
+    "Random intercepts are not yet supported for the categorical family."
+  )
   out$original <- original
   out$has_random_intercept <- random_intercept
   out
@@ -90,7 +98,7 @@ dynamiteformula_ <- function(formula, original, family,
 #'   individual-level intercept term?
 #'@noRd
 dynamitechannel <- function(formula, original = NULL, family, response,
-                            fixed = integer(0), varying = integer(0),
+                            fixed = integer(0L), varying = integer(0L),
                             specials = list(),
                             has_fixed_intercept = FALSE,
                             has_varying_intercept = FALSE,
@@ -116,7 +124,7 @@ obs <- dynamiteformula
 #' Is the Argument a `dynamiteformula` Object
 #'
 #' @param x An \R object.
-#' @export
+#' @noRd
 is.dynamiteformula <- function(x) {
   inherits(x, "dynamiteformula")
 }
@@ -131,8 +139,9 @@ aux <- function(formula) {
 #'
 #' @param e1 An \R object.
 #' @param e2 An \R object.
-#'
 #' @export
+#' @examples
+#' obs(y ~ x, family = "gaussian") + obs(z ~ w, family = "exponential")
 `+.dynamiteformula` <- function(e1, e2) {
   if (is.dynamiteformula(e1)) {
     out <- add_dynamiteformula(e1, e2)
@@ -156,7 +165,7 @@ is.formula <- function(x) {
 #' @param x A `dynamiteformula` object.
 #' @noRd
 get_responses <- function(x) {
-  unlist(sapply(x, "[[", "response"))
+  vapply(x, function(y) y$response, character(1L))
 }
 
 #' Get The RHS of All Formulas of a `dynamiteformula` Object
@@ -164,7 +173,7 @@ get_responses <- function(x) {
 #' @param x A `dynamiteformula` object.
 #' @noRd
 get_predictors <- function(x) {
-  sapply(x, function(y) deparse1(formula_rhs(y$formula)))
+  vapply(x, function(y) deparse1(formula_rhs(y$formula)), character(1L))
 
 }
 
@@ -175,7 +184,7 @@ get_predictors <- function(x) {
 get_terms <- function(x) {
   lapply(x, function(y) {
     if (is_deterministic(y$family)) {
-      character(0)
+      character(0L)
     } else {
       attr(terms(y$formula), "term.labels")
     }
@@ -212,9 +221,13 @@ get_families <- function(x) {
 #' @noRd
 get_quoted <- function(x) {
   resp <- get_responses(x)
-  if (length(resp) > 0) {
+  if (length(resp) > 0L) {
     expr <- lapply(x, function(x) deparse1(formula_rhs(x$formula)))
-    quote_str <- paste0("`:=`(", paste0(resp, " = ", expr, collapse = ","), ")")
+    quote_str <- paste0(
+      "`:=`(",
+      paste0(resp, " = ", expr, collapse = ","),
+      ")"
+    )
     str2lang(quote_str)
   } else {
     NULL
@@ -226,7 +239,7 @@ get_quoted <- function(x) {
 #' @param x A `dynamiteformula` object.
 #' @noRd
 which_deterministic <- function(x) {
-  which(sapply(x, function(y) is_deterministic(y$family)))
+  which(vapply(x, function(y) is_deterministic(y$family), logical(1L)))
 }
 
 #' Get Indices of Stochastic Channels in a `dynamiteformula` Object
@@ -234,7 +247,7 @@ which_deterministic <- function(x) {
 #' @param x A `dynamiteformula` object
 #' @noRd
 which_stochastic <- function(x) {
-  which(sapply(x, function(y) !is_deterministic(y$family)))
+  which(vapply(x, function(y) !is_deterministic(y$family), logical(1L)))
 }
 
 #' Get Channels with Past Value Definitions of a `dynamiteformula` Object
@@ -242,7 +255,7 @@ which_stochastic <- function(x) {
 #' @param x A `dynamiteformula` object
 #' @noRd
 has_past <- function(x) {
-  sapply(x, function(y) length(y$specials$past) > 0)
+  vapply(x, function(y) length(y$specials$past) > 0L, logical(1L))
 }
 
 #' Internal `+.dynamiteformula` For Model Construction
@@ -279,16 +292,19 @@ join_dynamiteformulas <- function(e1, e2) {
   )
   resp_all <- unlist(resp_list)
   resp_duped <- duplicated(resp_all)
-  if (any(resp_duped)) {
-    stop_("Multiple definitions for response variable{?s}
-          {.var {resp_all[resp_duped]}}.")
-  }
-  if (!is.null(attr(e1, "lags")) && !is.null(attr(e2, "lags"))) {
-    stop_("Both dynamiteformulas contain a lags definition.")
-  }
-  if (!is.null(attr(e1, "splines")) && !is.null(attr(e2, "splines"))) {
-    stop_("Both dynamiteformulas contain a splines definition.")
-  }
+  stopifnot_(
+    !any(resp_duped),
+    "Multiple definitions for response variable{?s}
+     {.var {resp_all[resp_duped]}}."
+  )
+  stopifnot_(
+    is.null(attr(e1, "lags")) || is.null(attr(e2, "lags")),
+    "Both dynamiteformulas contain a lags definition."
+  )
+  stopifnot_(
+    is.null(attr(e1, "splines")) || is.null(attr(e2, "splines")),
+    "Both dynamiteformulas contain a splines definition."
+  )
   rhs_list <- list(
     lapply(get_terms(e1), extract_nonlags),
     lapply(get_terms(e2), extract_nonlags)
@@ -297,22 +313,22 @@ join_dynamiteformulas <- function(e1, e2) {
     which_stochastic(e1),
     which_stochastic(e2)
   )
-  for (i in 1:2) {
+  for (i in 1L:2L) {
     resp_a <- resp_list[[i]]
-    resp_b <- resp_list[[3-i]][stoch_list[[3-i]]]
-    rhs <- rhs_list[[3-i]][stoch_list[[3-i]]]
-    if (length(rhs) > 0) {
+    resp_b <- resp_list[[3L-i]][stoch_list[[3L-i]]]
+    rhs <- rhs_list[[3L-i]][stoch_list[[3L-i]]]
+    if (length(rhs) > 0L) {
       for (j in seq_along(resp_a)) {
         simul_lhs <- resp_a[j]
-        simul <- sapply(rhs, function(x) simul_lhs %in% x)
-        if (any(simul)) {
-          simul_rhs <- resp_b[which(simul)[1]]
-          stop_(c(
+        simul <- vapply(rhs, function(x) simul_lhs %in% x, logical(1L))
+        stopifnot_(
+          !any(simul),
+          c(
             "Simultaneous regression is not supported:",
             `x` = "Response variable {.var {simul_lhs}} appears in
-                  the formula of {.var {simul_rhs}}."
-          ))
-        }
+                  the formula of {.var {resp_b[which(simul)[1L]]}}."
+          )
+        )
       }
     }
   }
@@ -327,9 +343,10 @@ join_dynamiteformulas <- function(e1, e2) {
 #' @param e2 A `lags` object,
 #' @noRd
 set_lags <- function(e1, e2) {
-  if (!is.null(attr(e1, "lags"))) {
-    stop_("Multiple definitions for lags.")
-  }
+  stopifnot_(
+    is.null(attr(e1, "lags")),
+    "Multiple definitions for lags."
+  )
   attr(e1, "lags") <- e2
   e1
 }
@@ -340,9 +357,10 @@ set_lags <- function(e1, e2) {
 #' @param e2 A `splines` object.
 #' @noRd
 set_splines <- function(e1, e2) {
-  if (!is.null(attr(e1, "splines")) && !attr(e2, "override")) {
-    stop_("Multiple definitions for splines.")
-  }
+  stopifnot_(
+    is.null(attr(e1, "splines")) || attr(e2, "override"),
+    "Multiple definitions for splines."
+  )
   attr(e1, "splines") <- e2
   e1
 }

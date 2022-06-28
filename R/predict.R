@@ -48,6 +48,8 @@
 #' @srrstats {BS3.0} *Explicitly document assumptions made in regard to missing values; for example that data is assumed to contain no missing (`NA`, `Inf`) values, and that such values, or entire rows including any such values, will be automatically removed from input data.*
 #' @srrstats {RE4.14} *Where possible, values should also be provided for extrapolation or forecast *errors*.*
 #' @srrstats {RE4.16} *Regression Software which models distinct responses for different categorical groups should include the ability to submit new groups to `predict()` methods.*
+#' @examples
+#' predict(gaussian_example_fit, type = "response", n_draws = 2L)
 predict.dynamitefit <- function(object, newdata = NULL,
                                 type = c("response", "mean", "link"),
                                 impute = c("none", "locf", "linear"),
@@ -76,27 +78,32 @@ predict.dynamitefit <- function(object, newdata = NULL,
   dls <- object$dformulas$lag_stoch
   formulas_stoch <- get_formulas(ds)
   families_stoch <- get_families(ds)
-  categories <- lapply(attr(object$stan$responses, "resp_class"),
-                       "attr", "levels")
+  categories <- lapply(
+    attr(object$stan$responses, "resp_class"),
+    "attr", "levels"
+  )
   resp_stoch <- get_responses(ds)
   resp_det <- get_responses(dd)
   lhs_det <- get_responses(dld)
   rhs_det <- get_predictors(dld)
   lhs_stoch <- get_responses(dls)
   rhs_stoch <- get_predictors(dls)
-  newdata <- parse_newdata(newdata, object$data, type, families_stoch,
-                           resp_stoch, categories, new_levels,
-                           group_var, time_var)
-  if (!identical(impute, "none")) {
-    predictors <- setdiff(names(newdata), resp_stoch)
-    impute_newdata(newdata, impute, predictors, group_var)
-  }
-  group <- NULL
-  n_id <- 1L
-  if (!is.null(group_var)) {
-    group <- unique(newdata[[group_var]])
-    n_id <- length(group)
-  }
+  newdata <- parse_newdata(
+    newdata,
+    object$data,
+    type,
+    families_stoch,
+    resp_stoch,
+    categories,
+    new_levels,
+    group_var,
+    time_var
+  )
+  predictors <- setdiff(names(newdata), resp_stoch)
+  impute_newdata(newdata, impute, predictors, group_var)
+  groups <- !is.null(group_var)
+  group <- onlyif(groups, unique(newdata[[group_var]]))
+  n_id <- ifelse_(groups, length(group), 1L)
   time <- unique(newdata[[time_var]])
   cl <- get_quoted(object$dformulas$det)
   n_time <- length(time)
@@ -104,35 +111,45 @@ predict.dynamitefit <- function(object, newdata = NULL,
   n_det <- length(resp_det)
   n_lag_det <- length(lhs_det)
   n_lag_stoch <- length(lhs_stoch)
-  if (n_lag_det > 0) {
-    ro_det <- attr(object$dformulas$lag_det, "rank_order")
-  }
-  if (n_lag_stoch > 0) {
-    ro_stoch <- 1:n_lag_stoch
-  }
-  clear_nonfixed(newdata, newdata_null, resp_stoch, group_var,
-                 clear_names = c(resp_det, lhs_det, lhs_stoch),
-                 fixed, n_id, n_time)
+  ro_det <- onlyif(
+    n_lag_det > 0L,
+    attr(object$dformulas$lag_det, "rank_order")
+  )
+  ro_stoch <- seq_len(n_lag_stoch)
+  clear_nonfixed(
+    newdata,
+    newdata_null,
+    resp_stoch,
+    group_var,
+    clear_names = c(resp_det, lhs_det, lhs_stoch),
+    fixed,
+    n_id,
+    n_time
+  )
   initialize_deterministic(newdata, dd, dlp, dld, dls)
   idx <- seq.int(1L, n_new, by = n_time) - 1L
   assign_initial_values(newdata, dd, dlp, dld, dls, idx, fixed, group_var)
   newdata <- newdata[rep(seq_len(n_new), each = n_draws), ]
-  newdata[, ("draw") := rep(1:n_draws, n_new)]
+  newdata[, ("draw") := rep(seq.int(1L, n_draws), n_new)]
   n <- newdata[, .N]
-  eval_envs <- prepare_eval_envs(object, newdata,
-                                 eval_type = "predict", predict_type = type,
-                                 resp_stoch, n_id, n_draws,
-                                 new_levels, group_var)
+  eval_envs <- prepare_eval_envs(
+    object,
+    newdata,
+    eval_type = "predict",
+    predict_type = type,
+    resp_stoch,
+    n_id,
+    n_draws,
+    new_levels,
+    group_var
+  )
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
   idx <- as.integer(newdata[ ,.I[newdata[[time_var]] == fixed]])
-  for (i in (fixed + 1L):n_time) {
+  skip <- TRUE
+  for (i in seq.int(fixed + 1L, n_time)) {
     idx <- idx + n_draws
-    if (n_lag_det > 0 && i > fixed + 1L) {
-      assign_lags(newdata, ro_det, idx, lhs_det, rhs_det, n_draws)
-    }
-    if (n_lag_stoch > 0 && i > fixed + 1L) {
-      assign_lags(newdata, ro_stoch, idx, lhs_stoch, rhs_stoch, n_draws)
-    }
+    assign_lags(newdata, ro_det, idx, lhs_det, rhs_det, skip, n_draws)
+    assign_lags(newdata, ro_stoch, idx, lhs_stoch, rhs_stoch, skip, n_draws)
     model_matrix <- full_model.matrix_predict(
       formulas_stoch,
       newdata,
@@ -149,14 +166,13 @@ predict.dynamitefit <- function(object, newdata = NULL,
       e$model_matrix <- model_matrix
       e$offset <- specials[[j]]$offset[idx]
       e$trials <- specials[[j]]$trials[idx]
-      e$a_time <- ifelse_(NCOL(e$alpha) == 1, 1, i - fixed)
+      e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, i - fixed)
       if (any(idx_na)) {
         eval(e$call, envir = e)
       }
     }
-    if (n_det > 0) {
-      assign_deterministic(newdata, cl, idx)
-    }
+    assign_deterministic(newdata, cl, idx)
+    skip <- FALSE
   }
   for (i in seq_along(resp_stoch)) {
     resp <- resp_stoch[i]
@@ -167,10 +183,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
     newdata[, c(resp) := newdata[[store]]]
     newdata[, c(store) := NULL]
   }
-  if (n_lag_det > 0 || n_lag_stoch > 0) {
-    newdata[, c(lhs_det, lhs_stoch) := NULL]
-  }
+  newdata[, c(lhs_det, lhs_stoch) := NULL]
   data.table::setkeyv(newdata, cols = c("draw", group_var, time_var))
-  # for consistency with other output types
-  data.table::setDF(newdata)
+  data.table::setDF(newdata) # for consistency with other output types
 }

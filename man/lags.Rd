@@ -2,13 +2,13 @@
 % Please edit documentation in R/lags.R
 \name{lags}
 \alias{lags}
-\title{Add Each Lagged Response as a Predictor to Each Channel.}
+\title{Add Lagged Responses as Predictors to Each Channel of a Dynamite Model}
 \usage{
 lags(k = 1L, type = c("fixed", "varying"))
 }
 \arguments{
 \item{k}{[\code{integer()}: \sQuote{1}]\cr
-Lagged values indicated by \code{k}  of each observed response variable
+Values lagged by \code{k} units of time of each observed response variable
 will be added as a predictor for each channel.}
 
 \item{type}{[\code{integer(1)}: \sQuote{"fixed"}]\cr Either
@@ -16,5 +16,10 @@ will be added as a predictor for each channel.}
 added lag terms should vary in time or not.}
 }
 \description{
-Add Each Lagged Response as a Predictor to Each Channel.
+Add Lagged Responses as Predictors to Each Channel of a Dynamite Model
+}
+\examples{
+obs(y ~ -1 + varying(~x), family = gaussian()) +
+  lags(type = "varying") + splines(df = 20)
+
 }

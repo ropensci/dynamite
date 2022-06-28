@@ -25,8 +25,14 @@ create_blocks.default <- function(dformula, indent = 2L, vars, ...) {
   model <- create_model(dformula, idt, vars)
   generated_quantities <- create_generated_quantities(dformula, idt, vars)
   # combine above text blocks
-  paste_rows(functions, data, transformed_data, parameters,
-    transformed_parameters, model, generated_quantities,
+  paste_rows(
+    functions,
+    data,
+    transformed_data,
+    parameters,
+    transformed_parameters,
+    model,
+    generated_quantities,
     .parse = FALSE
   )
 }
@@ -89,8 +95,10 @@ create_parameters <- function(dformula, idt, vars) {
   if (!is.null(spline_defs <- attr(dformula, "splines"))) {
     splinetext <- paste_rows(
       "// Spline parameters",
-      onlyif(spline_defs$shrinkage,
-             "vector<lower=0>[D - 1] lambda; // shrinkage parameter"),
+      onlyif(
+        spline_defs$shrinkage,
+        "vector<lower=0>[D - 1] lambda; // shrinkage parameter"
+      ),
       .indent = idt(c(1, 1))
     )
     # TODO handle centered case where spline is not defined but user inserts varying(.) terms

@@ -120,7 +120,8 @@ test_that("lags are parsed", {
     NA
   )
   expect_error(
-    obs_b <- obs(y1 ~ -1 + x1 + varying(~ lag(y2, 1)), family = "categorical") +
+    obs_b <- obs(y1 ~ -1 + x1 + varying(~ lag(y2, 1)),
+                 family = "categorical") +
       obs(y2 ~ -1 + x2 + varying(~lag(y1, 1)), family = "gaussian") +
       splines(),
     NA
@@ -208,7 +209,8 @@ test_that("vector of lags and lag of vector give equal resuls", {
 
 test_that("deterministic channels are parsed", {
   expect_error(
-    obs_det <- obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1), family = "negbin") +
+    obs_det <- obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1),
+                   family = "negbin") +
       aux(numeric(d) ~ lag(d, 1) + lag(f, 2) + x2 + past(0)) +
       aux(numeric(f) ~ lag(y5, 1) + x2 * 3 + 1 + past(0, 1)),
     NA

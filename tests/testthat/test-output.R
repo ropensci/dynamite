@@ -132,3 +132,21 @@ test_that("gets can be got", {
     NA
   )
 })
+
+test_that("credible intervals can be computed", {
+  expect_error(
+    confint(gaussian_example_fit),
+    NA
+  )
+})
+
+test_that("number of observations can be extracted", {
+  expect_error(
+    nobs(gaussian_example_fit),
+    NA
+  )
+  expect_error(
+    nobs(gaussian_example_single_fit),
+    NA
+  )
+})

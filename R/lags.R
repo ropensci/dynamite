@@ -1,15 +1,19 @@
-#' Add Each Lagged Response as a Predictor to Each Channel.
+#' Add Lagged Responses as Predictors to Each Channel of a Dynamite Model
 #'
 #' @param k \[`integer()`: \sQuote{1}]\cr
-#'   Lagged values indicated by `k`  of each observed response variable
+#'   Values lagged by `k` units of time of each observed response variable
 #'   will be added as a predictor for each channel.
 #' @param type \[`integer(1)`: \sQuote{"fixed"}]\cr Either
 #'   `"fixed"` or `"varying"` which indicates whether the coefficients of the
 #'   added lag terms should vary in time or not.
+#' @export
+#' @examples
+#' obs(y ~ -1 + varying(~x), family = gaussian()) +
+#'   lags(type = "varying") + splines(df = 20)
+#'
 #' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
 #' @srrstats {G2.4} *Provide appropriate mechanisms to convert between different data types, potentially including:*
 #' @srrstats {G2.4a} *explicit conversion to `integer` via `as.integer()`*
-#' @export
 lags <- function(k = 1L, type = c("fixed", "varying")) {
   type <- match.arg(type)
   k <- try_type(k, "integer")
@@ -35,7 +39,7 @@ is.lags <- function(x) {
 lag_ <- function(x, k = 1) {
   lag_idx <- seq_len(length(x) - k)
   out <- x
-  out[1:k] <- NA
+  out[seq_len(k)] <- NA
   out[k + lag_idx] <- x[lag_idx]
   out
 }
@@ -53,8 +57,7 @@ find_lags <- function(x) {
 #' @param x \[`character(1)`]\cr A character vector.
 #' @noRd
 extract_nonlags <- function(x) {
-  has_lag <- find_lags(x)
-  x[!has_lag]
+  x[!find_lags(x)]
 }
 
 #' Extract Lag Definitions
@@ -82,7 +85,7 @@ extract_lags <- function(x) {
   lag_matches <- regmatches(lag_terms, lag_regex)
   if (length(lag_matches) > 0L) {
     lag_map <- do.call("cbind", args = lag_matches)
-    lag_map <- as.data.frame(t(lag_map)[, -1, drop = FALSE])
+    lag_map <- as.data.frame(t(lag_map)[, -1L, drop = FALSE])
     n_lag <- nrow(lag_map)
     k_str <- lag_map$k
     lag_map$k <- integer(n_lag)
@@ -90,40 +93,13 @@ extract_lags <- function(x) {
     lag_map$increment <- FALSE
     for (j in seq_len(n_lag)) {
       if (nzchar(k_str[j])) {
-        k_expr <- try(str2lang(k_str[j]), silent = TRUE)
-        if ("try-error" %in% class(k_expr)) {
-          stop_("Invalid shifted value expression {.code {k_str[j]}}.")
-        }
-        k_coerce <- try(eval(k_expr), silent = TRUE)
-        if ("try-error" %in% class(k_coerce)) {
-          stop_("Invalid lagged value definition {.code {lag_map$src[j]}}.")
-        }
-        failed <- FALSE
-        k_coerce <- tryCatch(
-          expr = as.integer(k_coerce),
-          error = function(e) NULL,
-          warning = function(w) NULL
-        )
-        if (is.null(k_coerce) ||
-            identical(length(k_coerce), 0L) ||
-            any(is.na(k_coerce))) {
-          stop_("Unable to coerce lag shift value to {.cls integer} in
-                 {.code {lag_map$src[j]}}."
-          )
-        }
-        if (any(k_coerce <= 0L)) {
-          stop_(c(
-            "Shift values must be positive in {.fun lag}:",
-            `x` = "Nonpositive shift value was found in
-                   {.code {lag_map$src[j]}}."
-          ))
-        }
-        lag_map$k[j] <- k_coerce[1L]
-        if (length(k_coerce) > 1L) {
+        k_ver <- verify_lag(k_str[j], lag_map$src[j])
+        lag_map$k[j] <- k_ver[1L]
+        if (length(k_ver) > 1L) {
           new_lags <- data.frame(
             src = lag_map$src[j],
             var = lag_map$var[j],
-            k = k_coerce[-1L],
+            k = k_ver[-1L],
             present = TRUE,
             increment = TRUE
           )
@@ -142,18 +118,53 @@ extract_lags <- function(x) {
       dplyr::ungroup()
   } else {
     data.frame(
-      src = character(0),
-      var = character(0),
-      k = integer(0),
-      present = logical(0)
+      src = character(0L),
+      var = character(0L),
+      k = integer(0L),
+      present = logical(0L)
     )
   }
 }
 
+#' Verify that `k` in `lag(y, k)` represents a valid shift value expression
+#'
+#' @param k_str The shift value definition as a `character` string.
+#' @param k_src The full lag term definitions as a `character` string.
+#' @noRd
+verify_lag <- function(k_str, k_src) {
+  k_expr <- try(str2lang(k_str), silent = TRUE)
+  if ("try-error" %in% class(k_expr)) {
+    stop_("Invalid shifted value expression {.code {k_str}}.")
+  }
+  k_coerce <- try(eval(k_expr), silent = TRUE)
+  if ("try-error" %in% class(k_coerce)) {
+    stop_("Invalid lagged value definition {.code {k_src}}.")
+  }
+  k_coerce <- tryCatch(
+    expr = as.integer(k_coerce),
+    error = function(e) NULL,
+    warning = function(w) NULL
+  )
+  if (is.null(k_coerce) ||
+      identical(length(k_coerce), 0L) ||
+      any(is.na(k_coerce))) {
+    stop_(
+      "Unable to coerce lag shift value to {.cls integer} in {.code {k_src}}."
+    )
+  }
+  if (any(k_coerce <= 0L)) {
+    stop_(c(
+      "Shift values must be positive in {.fun lag}:",
+      `x` = "Nonpositive shift value was found in {.code {k_src}}."
+    ))
+  }
+  k_coerce
+}
+
 #' Extract Lag Shift Values of a Specific Variable from a Character String
 #'
-#' @param x \[`character(1)`]\cr a character vector of length one.
-#' @param self \[`character(1)`]\cr variable whose lags to look for.
+#' @param x \[`character(1)`]\cr String to search for lag definitions.
+#' @param self \[`character(1)`]\cr Variable whose lags to look for.
 #' @noRd
 extract_self_lags <- function(x, self) {
   lag_regex <-  gregexec(
@@ -164,9 +175,9 @@ extract_self_lags <- function(x, self) {
     perl = TRUE
   )
   lag_matches <- regmatches(x, lag_regex)[[1]]
-  if (length(lag_matches) > 0) {
+  if (length(lag_matches) > 0L) {
     as.integer(lag_matches["k", ])
   } else {
-    0
+    0L
   }
 }

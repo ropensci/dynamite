@@ -25,8 +25,12 @@ coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
   include_alpha <- try_type(include_alpha, "logical")[1]
   if (include_alpha && !identical(type, "nu")) {
     types <- c("alpha", type)
-    out <- as.data.frame(object, types = types, summary = summary,
-                         probs = probs)
+    out <- as.data.frame(
+      object,
+      types = types,
+      summary = summary,
+      probs = probs
+    )
     # remove extra alphas
     if (identical(type, "delta")) {
       out <- out |> dplyr::filter(!is.na(.data$time))
@@ -34,7 +38,12 @@ coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
       out <- out |> dplyr::filter(is.na(.data$time))
     }
   } else {
-    out <- as.data.frame(object, types = type, summary = summary, probs = probs)
+    out <- as.data.frame(
+      object,
+      types = type,
+      summary = summary,
+      probs = probs
+    )
   }
   out
 }

@@ -40,14 +40,15 @@ samples instead.}
 \code{c(0.05, 0.95)}.}
 
 \item{include_fixed}{[\code{logical(1)}]\cr If \code{TRUE} (default), time-varying
-parameters for \code{1:fixed} time points are included in the output as NAs. If
-\code{FALSE}, fixed time points are omitted completely from the output.}
+parameters for \code{1:fixed} time points are included in the output as \code{NA}
+values. If \code{FALSE}, fixed time points are omitted completely
+from the output.}
 
 \item{...}{Ignored.}
 }
 \value{
 A \code{tibble} containing either samples or summary statistics of the
-model parameters in a long format. For wide format, see
+model parameters in a long format. For a wide format, see
 \code{\link[=as_draws]{as_draws()}}.
 }
 \description{

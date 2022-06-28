@@ -2,7 +2,7 @@
 utils::globalVariables(c(".", ".I", ".N", ".SD", "where"))
 
 # Data table awareness
-.datatable.aware = TRUE
+.datatable.aware <- TRUE
 
 #' Get the left-hand side of a formula
 #'
@@ -135,44 +135,46 @@ paste_rows <- function(..., .indent = "", .parse = TRUE) {
   ndots <- length(dots)
   if (ndots) {
     idt_vec <- character(ndots)
-    idt_vec[1L:ndots] <- .indent
+    idt_vec[seq.int(1L, ndots)] <- .indent
   }
   pasted <- rep("", ndots)
   for (i in seq_len(ndots)) {
     x <- dots[[i]]
+    x <- x[nzchar(x)]
     xlen <- length(x)
     if (identical(xlen, 0L)) {
       pasted[i] <- ""
     } else if (identical(xlen, 1L)) {
-      if (nzchar(x)) {
-        if (.parse) {
-          xglue <- glue::glue(x, .envir = parent.frame(), .trim = FALSE)
-          pasted[i] <- paste0(idt_vec[i], xglue, collapse = "\n")
-        } else {
-          pasted[i] <- paste0(idt_vec[i], x)
-        }
+      if (.parse) {
+        xglue <- glue::glue(x, .envir = parent.frame(), .trim = FALSE)
+        pasted[i] <- paste0(idt_vec[i], xglue, collapse = "\n")
+      } else {
+        pasted[i] <- paste0(idt_vec[i], x)
       }
     } else {
-      x <- x[nzchar(x)]
-      if (length(x) > 0L) {
-        if (.parse) {
-          xglue <- sapply(x, function(y) {
-            paste0(glue::glue(y, .envir = parent.frame(), .trim = FALSE),
-                   collapse = "\n")
-          })
-          pasted[i] <- paste0(idt_vec[i], xglue, collapse = "\n")
-        } else {
-          pasted[i] <- paste0(idt_vec[i], x, collapse = "\n")
-        }
+      if (.parse) {
+        xglue <- vapply(
+          x,
+          function(y) {
+            paste0(
+              glue::glue(y, .envir = parent.frame(), .trim = FALSE),
+              collapse = "\n"
+            )
+          },
+          character(1L)
+        )
+        pasted[i] <- paste0(idt_vec[i], xglue, collapse = "\n")
+      } else {
+        pasted[i] <- paste0(idt_vec[i], x, collapse = "\n")
       }
     }
   }
   pasted <- pasted[nzchar(pasted)]
-  if (length(pasted) > 0L) {
-    paste0(pasted, collapse = "\n")
-  } else {
+  ifelse_(
+    length(pasted) > 0L,
+    paste0(pasted, collapse = "\n"),
     ""
-  }
+  )
 }
 
 #' Create an indenter
@@ -182,9 +184,9 @@ paste_rows <- function(..., .indent = "", .parse = TRUE) {
 #' @noRd
 indenter_ <- function(m = 2L) {
   x <- rep(" ", m)
-  idts <- sapply(0L:10L, function(y) {
+  idts <- vapply(0L:10L, function(y) {
     paste0(rep(x, y), collapse = "")
-  })
+  }, character(1L))
   force(idts)
   function(v) {
     unlist(idts[v + 1L])
@@ -217,6 +219,12 @@ locf <- function(x) {
 #' @noRd
 stop_ <- function(message, ..., call = rlang::caller_env()) {
   cli::cli_abort(message, ..., .envir = parent.frame(), call = call)
+}
+
+stopifnot_ <- function(cond, message, ..., call = rlang::caller_env()) {
+  if (!cond) {
+    cli::cli_abort(message, ..., .envir = parent.frame(), call = call)
+  }
 }
 
 #' Generate a warning message
@@ -274,7 +282,7 @@ ifelse_ <- function(test, yes, no) {
   }
 }
 
-#' Return yes if test is TRUE, otherwise an empty vector of the same type
+#' Return yes if test is TRUE, otherwise return NULL
 #'
 #' @param tes An object which can be coerced into `logical`.
 #' @param yes An \R object to return when `test` evaluates to `TRUE`.
@@ -283,7 +291,7 @@ onlyif <- function(test, yes) {
   if (test) {
     yes
   } else {
-    do.call(paste0(typeof(yes)), args = list(length = 0))
+    NULL
   }
 }
 

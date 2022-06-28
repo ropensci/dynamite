@@ -17,3 +17,6 @@ Prints HMC diagnostics, and lists parameters with smallest effective sample
 sizes and largest Rhat values. See \code{\link[rstan:check_hmc_diagnostics]{rstan::check_hmc_diagnostics()}} and
 \code{\link[posterior:draws_summary]{posterior::default_convergence_measures()}} for details.
 }
+\examples{
+mcmc_diagnostics(gaussian_example_fit)
+}

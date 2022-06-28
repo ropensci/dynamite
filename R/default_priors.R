@@ -20,7 +20,7 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
     )
   }
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {
-    channel$alpha_prior_distr <-  paste0("normal(", mean_y, ", ", 2 * sd_y, ")")
+    channel$alpha_prior_distr <- paste0("normal(", mean_y, ", ", 2 * sd_y, ")")
     priors$alpha <- data.frame(
       parameter = paste0("alpha_", y),
       response = y,
@@ -94,7 +94,6 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
   resp_levels <- attr(resp_class, "levels")[-1]
   sd_gamma <- 2 / sd_x
   priors <- list()
-
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {
     m <- rep(0.0, S_y - 1L)
     s <- rep(2.0, S_y - 1L)
@@ -168,34 +167,36 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
 #' so that the users don't supply constrained priors for coefficients, and for
 #' ordering the corresponding data frame coherently.
 #'
+#' @param priors A data frame of prior definitions.
+#' @param defaults A data frame of default prior definitions.
 #' @noRd
 check_priors <- function(priors, defaults) {
-
   not_found <-
     defaults$parameter[which(!(defaults$parameter %in% priors$parameter))]
   not_found_len <- length(not_found)
-  if (not_found_len > 0L) {
-    stop_(c(
+  stopifnot_(
+    identical(not_found_len, 0L),
+    c(
       "Argument {.var priors} must contain all relevant parameters:",
       `x` = "{cli::qty(not_found_len)} Prior{?s} for parameter{?s}
              {.var {not_found}} {?is/are} not defined."
-    ))
-  }
+    )
+  )
   extras <-
     priors$parameter[which(!(priors$parameter %in% defaults$parameter))]
   extras_len <- length(extras)
-  if (extras_len > 0L) {
-    stop_(c(
+  stopifnot_(
+    identical(extras_len, 0L),
+    c(
       "Argument {.var priors} must contain only relevant parameters:",
       `x` = "{cli::qty(extras)} Found {?a/} prior{?s} for parameter{?s}
              {.var {extras}} but the model does not contain such
              {?a/} parameter{?s}."
-    ))
-  }
+    )
+  )
   # order to match the code generation
   priors <- priors |>
     dplyr::arrange(match(.data$parameter, defaults$parameter))
-
   unconstrained_dists <- c(
     "normal", "student_t", "double_exponential", "cauchy", "exp_mod_normal",
     "skew_normal", "logistic","gumbel", "skew_double_exponential"
@@ -208,27 +209,29 @@ check_priors <- function(priors, defaults) {
   dists <- sub("\\(.*", "", priors$prior)
   unsupported <- unique(dists[which(!(dists %in% all_dists))])
   unsupported_len <- length(unsupported)
-  if (unsupported_len > 0L) {
-    stop_(c(
+  stopifnot_(
+    identical(unsupported_len, 0L),
+    c(
       "{cli::qty(unsupported_len)} Found {?an/} unsupported prior
        distribution{?s} in {.var priors}:",
       `x` = "Distribution{?s} {.var {unsupported}} {?is/are} not available."
-    ))
-  }
+    )
+  )
   unsupported <- which(
     priors$type %in% c("alpha", "beta", "delta") &
       !(dists %in% unconstrained_dists)
   )
   unsupported_len <- length(unsupported)
-  if (unsupported_len > 0L) {
-    pars <- priors$parameter[unsupported]
-    dists <- dists[unsupported]
-    stop_(c(
+  pars <- priors$parameter[unsupported]
+  dists <- dists[unsupported]
+  stopifnot_(
+    identical(unsupported_len, 0L),
+    c(
       "Priors for parameters alpha, beta, and delta should have unconstrained
       support:",
       `x` = "{cli::qty(unsupported_len)} Found {?an/} unconstrained
              distribution{?s} {.var {dists}} for parameter{?s} {.var {pars}}."
-    ))
-  }
+    )
+  )
   priors
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fitted.R
 \name{fitted.dynamitefit}
 \alias{fitted.dynamitefit}
-\title{Extract Fitted Values of a \code{dynamitefit} Object}
+\title{Extract Fitted Values of a Dynamite Model}
 \usage{
 \method{fitted}{dynamitefit}(object, n_draws = NULL, ...)
 }
@@ -20,4 +20,8 @@ simulate new lagged values for covariates, so we underestimate the
 uncertainty. It is typically better to use predict with \code{type = "mean"}.
 These fitted value are mostly useful only for studying one-step ahead
 estimates.
+}
+\examples{
+fitted(gaussian_example_fit, n_draws = 2L)
+
 }

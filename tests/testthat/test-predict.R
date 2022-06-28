@@ -37,15 +37,22 @@ test_that("no groups fitted works", {
 test_that("new group levels can be included in newdata", {
   gaussian_example_new_levels <- rbind(
     gaussian_example,
-    data.frame(y = c(0.5, rep(NA, 29L)), x = rnorm(30), z = rbinom(30, 1, 0.7),
+    data.frame(y = c(0.5, rep(NA, 29L)),
+               x = rnorm(30),
+               z = rbinom(30, 1, 0.7),
                id = 226L, time = seq.int(1, 30))
   )
-  #gaussian_example_new_levels[gaussian_example_new_levels$time > 1, "y"] <- NA
   expect_error(
-    predict(gaussian_example_fit,
-            newdata = gaussian_example_new_levels,
-            type = "response", n_draws = 2, new_levels = "none"),
-    "Grouping variable `id` contains unknown levels:\nx Level \"226\" is not present in the original data\\.\ni Note: argument `new_levels` is \"none\" which disallows new levels\\."
+    predict(
+      gaussian_example_fit,
+      newdata = gaussian_example_new_levels,
+      type = "response", n_draws = 2, new_levels = "none"
+    ),
+    paste(
+      "Grouping variable `id` contains unknown levels:\nx Level \"226\"",
+      "is not present in the original data\\.\ni Note: argument `new_levels`",
+      "is \"none\" which disallows new levels\\."
+    )
   )
   expect_error(
     predict(gaussian_example_fit,
@@ -69,8 +76,8 @@ test_that("new group levels can be included in newdata", {
 
 test_that("imputation works", {
   set.seed(0)
-  mis_x <- sample(1:nrow(gaussian_example), 150, replace = FALSE)
-  mis_z <- sample(1:nrow(gaussian_example), 150, replace = FALSE)
+  mis_x <- sample(seq_len(nrow(gaussian_example)), 150, replace = FALSE)
+  mis_z <- sample(seq_len(nrow(gaussian_example)), 150, replace = FALSE)
   gaussian_example_impute <- gaussian_example
   gaussian_example_impute[mis_x, "x"] <- NA
   gaussian_example_impute[mis_z, "z"] <- NA

@@ -27,7 +27,8 @@ definition for the splines will not be overridden by another call to
 \item{df}{[\code{integer()}]\cr Degree of freedom, i.e., the total number of
 spline coefficients. See \code{\link[splines:bs]{splines::bs()}}. Note that the knots are always
 defined as equidistant sequence on the interval starting from the first
-non-fixed time point to the last time point in the data.}
+non-fixed time point to the last time point in the data. See
+\code{\link[=dynamiteformula]{dynamiteformula()}} for more information on fixed time points.}
 
 \item{degree}{[\code{integer(1)}]\cr See \code{\link[splines:bs]{splines::bs()}}.}
 
@@ -46,4 +47,8 @@ parameterization separately for each channel.}
 \description{
 This function can be used as part of \code{dynamiteformula} to define the splines
 for the time-varying coefficients \eqn{\delta}.
+}
+\examples{
+obs(y ~ -1 + varying(~x), family = gaussian()) +
+  lags(type = "varying") + splines(df = 20)
 }

@@ -24,15 +24,16 @@
 #' @param df \[`integer()`]\cr Degree of freedom, i.e., the total number of
 #'   spline coefficients. See [splines::bs()]. Note that the knots are always
 #'   defined as equidistant sequence on the interval starting from the first
-#'   non-fixed time point to the last time point in the data.
+#'   non-fixed time point to the last time point in the data. See
+#'   [dynamite::dynamiteformula()] for more information on fixed time points.
 #' @param degree \[`integer(1)`]\cr See [splines::bs()].
 #' @export
 #' @srrstats {G2.4} *Provide appropriate mechanisms to convert between different data types, potentially including:*
 #' @srrstats {G2.4a} *explicit conversion to `integer` via `as.integer()`*
 #' @srrstats {G2.4b} *explicit conversion to continuous via `as.numeric()`*
-#'
-#' TODO explain the fixed time points above in more detail (here or
-#' somewhere else)?
+#' @examples
+#' obs(y ~ -1 + varying(~x), family = gaussian()) +
+#'   lags(type = "varying") + splines(df = 20)
 splines <- function(shrinkage = FALSE, override = FALSE,
                     df = NULL, degree = 3, lb_tau = 0, noncentered = FALSE) {
   shrinkage <- try_type(shrinkage, "logical")[1]
@@ -43,9 +44,10 @@ splines <- function(shrinkage = FALSE, override = FALSE,
   # check the length later
   noncentered <- try_type(noncentered, "logical")
   lb_tau <- try_type(lb_tau, "numeric")
-  if (any(lb_tau < 0)) {
-    stop_("Lower bound for {.arg tau} must be non-negative.")
-  }
+  stopifnot_(
+    all(lb_tau >= 0),
+    "Lower bound for {.arg tau} must be non-negative."
+  )
   structure(
     list(
       shrinkage = shrinkage,

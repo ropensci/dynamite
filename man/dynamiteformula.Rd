@@ -24,9 +24,15 @@ individual-level intercepts to the channel.}
 TODO description and details of all features
 TODO document families here as well
 TODO document lag-conversion to data
+TODO explain fixed time points
 }
 \section{Functions}{
 \itemize{
 \item \code{aux}: Prepare a Deterministic Auxiliary Channel
 }}
 
+\examples{
+obs(y ~ -1 + varying(~x), family = gaussian()) +
+  lags(type = "varying") + splines(df = 20)
+
+}

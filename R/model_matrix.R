@@ -4,19 +4,50 @@
 #' @param data A `data.table` containing the variables in the model
 #'
 #' @srrstats {RE1.3} *Regression Software which passes or otherwise transforms aspects of input data onto output structures should ensure that those output structures retain all relevant aspects of input data, notably including row and column names, and potentially information from other `attributes()`.*
+#' @noRd
+full_model.matrix <- function(dformula, data) {
+  model_matrices <- test_collinearity(dformula, data)
+  model_matrix <- do.call(cbind, model_matrices)
+  u_names <- unique(colnames(model_matrix))
+  model_matrix <- model_matrix[, u_names, drop = FALSE]
+  n_models <- length(model_matrices)
+  y_names <- get_responses(dformula)
+  empty_list <- setNames(vector(mode = "list", length = n_models), y_names)
+  attr(model_matrix, "assign") <- empty_list
+  attr(model_matrix, "fixed") <- empty_list
+  attr(model_matrix, "varying") <- empty_list
+  for (i in seq_along(model_matrices)) {
+    cols <- colnames(model_matrices[[i]])
+    assign <- match(cols, u_names)
+    assign_i <- attr(model_matrices[[i]], "assign")
+    attr(model_matrix, "assign")[[i]] <- sort(assign)
+    fixed <- assign[assign_i %in% dformula[[i]]$fixed]
+    attr(model_matrix, "fixed")[[i]] <- setNames(fixed, u_names[fixed])
+    varying <- assign[assign_i %in% dformula[[i]]$varying]
+    attr(model_matrix, "varying")[[i]] <- setNames(varying, u_names[varying])
+  }
+  model_matrix
+}
+
+#' Test collinearity within each channel
+#'
+#' @inheritParams full_model.matrix
 #' @srrstats {BS3.1} *Implement pre-processing routines to diagnose perfect collinearity, and provide appropriate diagnostic messages or warnings*
 #' @srrstats {BS3.2} *Provide distinct routines for processing perfectly collinear data, potentially bypassing sampling algorithms*
 #' @srrstats {RE2.4} *Regression Software should implement pre-processing routines to identify whether aspects of input data are perfectly collinear, notably including:*
 #' @srrstats {RE2.4a} *Perfect collinearity among predictor variables*
 #' @srrstats {RE2.4b} *Perfect collinearity between independent and dependent variables*
 #' @noRd
-full_model.matrix <- function(dformula, data) {
+test_collinearity <- function(dformula, data) {
   formulas <- get_formulas(dformula)
   model_matrices <- vector(mode = "list", length = length(formulas))
   for (i in seq_along(formulas)) {
     y <- dformula[[i]]$resp
-    mm <- model.matrix.lm(formulas[[i]], data = data, na.action = na.pass) |>
-      remove_intercept()
+    mm <- remove_intercept(model.matrix.lm(
+      formulas[[i]],
+      data = data,
+      na.action = na.pass
+    ))
     nc <- ncol(mm)
     mm_obs <- stats::complete.cases(mm)
     if (any(mm_obs) && !identical(qr(mm[mm_obs, ])$rank, nc)) {
@@ -41,36 +72,16 @@ full_model.matrix <- function(dformula, data) {
     }
     model_matrices[[i]] <- mm
   }
-  model_matrix <- do.call(cbind, model_matrices)
-  u_names <- unique(colnames(model_matrix))
-  model_matrix <- model_matrix[, u_names, drop = FALSE]
-  n_models <- length(model_matrices)
-  y_names <- get_responses(dformula)
-  empty_list <- setNames(vector(mode = "list", length = n_models), y_names)
-  attr(model_matrix, "assign") <- empty_list
-  attr(model_matrix, "fixed") <- empty_list
-  attr(model_matrix, "varying") <- empty_list
-  for (i in seq_along(model_matrices)) {
-    cols <- colnames(model_matrices[[i]])
-    assign <- match(cols, u_names)
-    assign_i <- attr(model_matrices[[i]], "assign")
-    attr(model_matrix, "assign")[[i]] <- sort(assign)
-    fixed <- assign[assign_i %in% dformula[[i]]$fixed]
-    attr(model_matrix, "fixed")[[i]] <- setNames(fixed, u_names[fixed])
-    varying <- assign[assign_i %in% dformula[[i]]$varying]
-    attr(model_matrix, "varying")[[i]] <- setNames(varying, u_names[varying])
-  }
-  model_matrix
+  model_matrices
 }
 
-#' A version of full_model.matrix for prediction
+#' A streamlined version of full_model.matrix for prediction
 #'
 #' @param formula_list A `list` of `formula` objects
 #' @param newdata A `data.frame` containing the variables in the model
 #' @param idx An `integer` vector of row indices to subset by
 #' @param u_names A `character` vector of unique column names of the resulting
 #'   matrix
-#'
 #' @noRd
 full_model.matrix_predict <- function(formula_list, newdata, idx, u_names) {
   newdata_sub <- newdata[idx, ]
@@ -103,8 +114,8 @@ full_model.matrix_fast <- function(formula_list, newdata, u_names) {
 #' @param x A model matrix from `model.matrix.lm`
 #' @noRd
 remove_intercept <- function(x) {
-  idx <- which(attr(x, "assign") == 0)
-  if (length(idx) > 0) {
+  idx <- which(attr(x, "assign") == 0L)
+  if (length(idx) > 0L) {
     a <- attr(x, "assign")[-idx]
     x <- x[, -idx,  drop = FALSE]
     attr(x, "assign") <- a

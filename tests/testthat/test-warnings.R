@@ -8,7 +8,11 @@ test_that("ordered factor conversion to factor warns", {
     dynamite(dformula = obs(y ~ x, family = "categorical"),
              data = test_data, group = "x", time = "z",
              debug = list(no_compile = TRUE)),
-    "Response variable `y` is of class <ordered factor> whose channel is categorical:\ni `y` will be converted to an unordered factor\\."
+    paste0(
+      "Response variable `y` is of class <ordered factor> ",
+      "whose channel is categorical:\n",
+      "i `y` will be converted to an unordered factor\\."
+    )
   )
 })
 
@@ -22,7 +26,11 @@ test_that("perfect collinearity warns", {
   )
   expect_warning(
     full_model.matrix(f, test_data2),
-    "Perfect collinearity found between response and predictor variable:\ni Response variable `y` is perfectly collinear with predictor variable `x`\\."
+    paste0(
+      "Perfect collinearity found between response and predictor variable:\n",
+      "i Response variable `y` is perfectly collinear ",
+      "with predictor variable `x`\\."
+    )
   )
 })
 
@@ -31,37 +39,53 @@ test_that("perfect collinearity warns", {
 test_that("multiple intercept warns", {
   expect_warning(
     obs(y ~ 1 + varying(~1), family = "gaussian"),
-    "Both time-independent and time-varying intercept specified:\ni Defaulting to time-varying intercept\\."
+    paste0(
+      "Both time-independent and time-varying intercept specified:\n",
+      "i Defaulting to time-varying intercept\\."
+    )
   )
 })
 
 test_that("deterministic fixed warns", {
   expect_warning(
     aux(numeric(y) ~ fixed(~ x)),
-    "fixed\\(\\) definitions of a determinstic channel `numeric\\(y\\)` will be ignored\\."
+    paste(
+      "fixed\\(\\) definitions of a determinstic channel",
+      "`numeric\\(y\\)` will be ignored\\."
+    )
   )
 })
 
 test_that("deterministic varying warns", {
   expect_warning(
     aux(numeric(y) ~ varying(~ x)),
-    "varying\\(\\) definitions of a determinstic channel `numeric\\(y\\)` will be ignored\\."
+    paste(
+      "varying\\(\\) definitions of a determinstic channel",
+      "`numeric\\(y\\)` will be ignored\\."
+    )
   )
 })
 
 test_that("untyped deterministic warns", {
   expect_warning(
     aux(y ~ 1 + x),
-    "No type specified for deterministic channel `y`:\ni Assuming type is <numeric>\\."
+    paste0(
+      "No type specified for deterministic channel `y`:\n",
+      "i Assuming type is <numeric>\\."
+    )
   )
 })
 
 
 # Predict warnings --------------------------------------------------------
 
-test_that("Too many n_draws warns", {
+test_that("Too large n_draws warns", {
   expect_warning(
     predict(gaussian_example_fit, n_draws = 1e6),
-    "You've supplied `n_draws` = 1000000 but there are only 400 samples available:\ni The available samples will be used for prediction\\."
+    paste0(
+      "You've supplied `n_draws` = 1000000 but ",
+      "there are only 400 samples available:\n",
+      "i The available samples will be used for prediction\\."
+    )
   )
 })

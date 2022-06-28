@@ -59,3 +59,6 @@ default is \code{NULL} which uses all samples.}
 \description{
 Predict method for a Bayesian Time-Varying Coefficients Model
 }
+\examples{
+predict(gaussian_example_fit, type = "response", n_draws = 2L)
+}
