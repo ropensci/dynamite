@@ -36,8 +36,7 @@
 #' get_priors(obs(y ~ x, family = "gaussian"),
 #'   data = d, time = "time", group = "id")
 #'
-#' @srrstats {RE2.3} *Where applicable, Regression Software should enable data to be centred (for example, through converting to zero-mean equivalent values; or to z-scores) or offset (for example, to zero-intercept equivalent values) via additional parameters, with the effects of any such parameters clearly documented and tested.*
-#' @srrstats {BS5.2} *Bayesian Software should either return the input function or prior distributional specification in the return object; or enable direct access to such via additional functions which accept the return object as single argument.*
+#' @srrstats {BS5.2} Provides access to the prior definitions of the model.
 get_priors <- function(x, ...) {
   UseMethod("get_priors", x)
 }

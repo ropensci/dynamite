@@ -9,9 +9,11 @@
 #'
 #' @docType package
 #' @name dynamite-package
+#' @importFrom checkmate test_int test_integer test_string test_numeric
+#' @importFrom checkmate test_number test_flag test_logical test_character
+#' @importFrom cli cli_abort cli_warn cli_inform
 #' @importFrom data.table data.table as.data.table is.data.table
 #' @importFrom data.table set setDT setDF setkey setkeyv :=
-#' @importFrom cli cli_abort cli_warn cli_inform
 #' @importFrom rstan sampling
 #' @importFrom posterior as_draws as_draws_df
 #' @importFrom rlang .data caller_env
@@ -20,8 +22,11 @@
 #' @importFrom stats plogis rbinom reformulate rnbinom rnorm rpois runif sd
 #' @importFrom stats nobs
 #'
-#' @srrstats {G5.1} *Data sets created within, and used to test, a package should be exported (or otherwise made generally available) so that users can confirm tests and run examples.*
-#' @srrstats {BS1.2b} *At least one package vignette, both as general and applied textual descriptions, and example code*
+#' @srrstats {G5.1} Package data is exported
+#' @srrstats {BS1.2b} Package has a vignette.
+#' @srrstats {G2.8} Input types are well defined.
+#' @srrstats {G2.10} Extraction of single columns is systematic and robust.
+#' @srrstats {RE1.2} Documented across the package.
 NULL
 #' Simulated Data of Gaussian Responses
 #'

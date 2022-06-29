@@ -18,37 +18,32 @@ NULL
 #' to `@srrstatsNA`, and placed together in this block, along with explanations
 #' for why each of these standards have been deemed not applicable.
 #' (These comments may also be deleted at any time.)
-#' @srrstatsNA {G1.0} *Statistical Software should list at least one primary reference from published academic literature.*. To be published TODO
-#' @srrstatsNA {G1.5} *Software should include all code necessary to reproduce results which form the basis of performance claims made in associated publications.*
-#' @srrstatsNA {G1.6} *Software should include code necessary to compare performance claims with alternative implementations in other R packages.*
-#' @srrstatsNA {G3.1} *Statistical software which relies on covariance calculations should enable users to choose between different algorithms for calculating covariances, and should not rely solely on covariances from the `stats::cov` function.*
-#' @srrstatsNA {G3.1a} *The ability to use arbitrarily specified covariance methods should be documented (typically in examples or vignettes).*
-#' @srrstatsNA {G4.0} *Statistical Software which enables outputs to be written to local files should parse parameters specifying file names to ensure appropriate file suffices are automatically generated where not provided.*
-#' @srrstatsNA {G5.11a} *When any downloads of additional data necessary for extended tests fail, the tests themselves should not fail, rather be skipped and implicitly succeed with an appropriate diagnostic message.*
-#' @srrstatsNA {BS1.0} *Bayesian software which uses the term "hyperparameter" should explicitly clarify the meaning of that term in the context of that software.*
-#' @srrstatsNA {BS1.3a} *Bayesian Software should document, both in text and examples, how to use the output of previous simulations as starting points of subsequent simulations.*
-#' @srrstatsNA {BS1.4} *For Bayesian Software which implements or otherwise enables convergence checkers, documentation should explicitly describe and provide examples of use with and without convergence checkers.*
-#' @srrstatsNA {BS1.5} *For Bayesian Software which implements or otherwise enables multiple convergence checkers, differences between these should be explicitly tested.*
-#' @srrstatsNA {BS2.8} *Enable results of previous runs to be used as starting points for subsequent runs.*
-#' @srrstatsNA {BS2.10} *Issue diagnostic messages when identical seeds are passed to distinct computational chains.*
-#' @srrstatsNA {BS2.11} *Software which accepts starting values as a vector should provide the parameter with a plural name: for example, "starting_values" and not "starting_value".*
-#' @srrstatsNA {BS4.1} *Packages should provide explicit comparisons with external samplers which demonstrate intended advantage of implementation (generally via tests, vignettes, or both).*
-#' @srrstatsNA {BS4.3} *Implement or otherwise offer at least one type of convergence checker, and provide a documented reference for that implementation.*
-#' @srrstatsNA {BS4.4} *Enable computations to be stopped on convergence (although not necessarily by default).*
-#' @srrstatsNA {BS4.6} *Implement tests to confirm that results with convergence checker are statistically equivalent to results from equivalent fixed number of samples without convergence checking.*
-#' @srrstatsNA {BS4.7} *Where convergence checkers are themselves parametrised, the effects of such parameters should also be tested. For threshold parameters, for example, lower values should result in longer sequence lengths.*
-#' @srrstatsNA {BS5.4} *Where multiple checkers are enabled, Bayesian Software should return details of convergence checker used*
-#' @srrstatsNA {RE3.2} *Ensure that convergence thresholds have sensible default values, demonstrated through explicit documentation.*
-#' @srrstatsNA {RE3.3} *Allow explicit setting of convergence thresholds, unless reasons against doing so are explicitly documented.*
-#' @srrstatsNA {RE4.6} *The variance-covariance matrix of the model parameters (via `vcov()`)*
-#' @srrstatsNA {RE4.7} *Where appropriate, convergence statistics*
-#' @srrstatsNA {RE4.10} *Model Residuals, including sufficient documentation to enable interpretation of residuals, and to enable users to submit residuals to their own tests.*
-#' @srrstatsNA {RE4.11} *Goodness-of-fit and other statistics associated such as effect sizes with model coefficients.*
-#' @srrstatsNA {RE4.12} *Where appropriate, functions used to transform input data, and associated inverse transform functions.*
-#' @srrstatsNA {RE4.15} *Sufficient documentation and/or testing should be provided to demonstrate that forecast errors, confidence intervals, or equivalent values increase with forecast horizons.*
-#' @srrstatsNA {RE7.0} *Tests with noiseless, exact relationships between predictor (independent) data.*
-#' @srrstatsNA {RE7.0a} In particular, these tests should confirm ability to reject perfectly noiseless input data.
-#' @srrstatsNA {RE7.1} *Tests with noiseless, exact relationships between predictor (independent) and response (dependent) data.*
-#' @srrstatsNA {RE7.1a} *In particular, these tests should confirm that model fitting is at least as fast or (preferably) faster than testing with equivalent noisy data (see RE2.4b).*
+#' @srrstatsNA {G1.0} Related academic paper to be published.
+#' @srrstatsNA {G1.5, G1.6} No performance claims are made.
+#' @srrstatsNA {G3.1} No covariance calculations are done.
+#' @srrstatsNA {G3.1a} There are no covariance methods.
+#' @srrstatsNA {G4.0} Output to local files is not supported.
+#' @srrstatsNA {G5.11a} Data for tests is not downloaded.
+#' @srrstatsNA {BS1.0} The term "Hyperparameter" is not used.
+#' @srrstatsNA {BS1.3a, BS2.8} This is not supported by the package.
+#' @srrstatsNA {BS2.10, BS2.11} Setting of seeds and starting values
+#'   is handled by Stan.
+#' @srrstatsNA {BS2.15} Errors can be caught using base R functionalities.
+#' @srrstatsNA {BS4.1} There are no sampler comparisons.
+#' @srrstatsNA {BS1.4, BS1.5, BS4.3, BS4.4, BS4.5, BS4.6, BS4.7, BS5.4}
+#'   Sampling is done in Stan, which has no convergence checkers.
+#' @srrstatsNA {RE2.3} No automatic data transformations are carried out in
+#'   this sense, naturally the user can choose to center their data beforehand.
+#' @srrstatsNA {RE3.2, RE3.3}
+#'   Sampling is done in Stan, which has no convergence checkers.
+#' @srrstatsNA {RE4.6} Not applicable to a Bayesian model.
+#' @srrstatsNA {RE4.7, RE4.10, RE4.11, RE4.12} Not applicable.
+#' @srrstatsNA {RE4.15, RE6.3, RE4.14, RE7.4} Forecasting is not supported
+#' @srrstatsNA {RE7.0, RE7.0a, RE7.1, RE7.1a} Not relevant to the package.
+#' @srrstatsNA {RE6.2} We feel that such a plot as a default could be
+#'   misleasing because there are multiple channels and various parameter types
+#'   that can potentially be plotted.
+#' @srrstatsNA {BS6.2, BS6.3, BS6.5} These can be accomplished with
+#'   ggplot and bayesplot, for example.
 #' @noRd
 NULL

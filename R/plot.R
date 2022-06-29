@@ -1,6 +1,6 @@
-#' Visualize Time-varying Regression Coefficients of the Dynamite Model
+#' Plot Regression Coefficients of a Dynamite Model
 #'
-#' @param model \[`dynamitefit`]\cr The model fit object
+#' @param x \[`dynamitefit`]\cr The model fit object
 #' @param level \[`numeric(1)`]\cr Level for posterior intervals.
 #'   Default is 0.05, leading to 90% intervals.
 #' @param alpha \[`numeric(1)`]\cr Opacity level for `geom_ribbon`.
@@ -13,20 +13,23 @@
 #' @return A `ggplot` object.
 #' @export
 #' @examples
+#' plot(gaussian_example_fit)
 #' plot_deltas(gaussian_example_fit, scales = "free") +
 #'   ggplot2::theme_minimal()
+#' plot_betas(gaussian_example_fit)
+#' plot_nus(gaussian_example_fit)
 #'
-#' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
-#'
-#' @srrstats {BS6.1} *Software should implement a default `plot` method for return objects*
-#' @srrstats {BS6.2} *Software should provide and document straightforward abilities to plot sequences of posterior samples, with burn-in periods clearly distinguished*
-#' @srrstats {BS6.3} *Software should provide and document straightforward abilities to plot posterior distributional estimates*
-#'
-#' @srrstats {BS6.5} *Software may provide abilities to plot both sequences of posterior samples and distributional estimates together in single graphic*
-#' @srrstats {RE6.0} *Model objects returned by Regression Software (see* **RE4***) should have default `plot` methods, either through explicit implementation, extension of methods for existing model objects, or through ensuring default methods work appropriately.*
-#' @srrstats {RE6.1} *Where the default `plot` method is **NOT** a generic `plot` method dispatched on the class of return objects (that is, through an S3-type `plot.<myclass>` function or equivalent), that method dispatch (or equivalent) should nevertheless exist in order to explicitly direct users to the appropriate function.*
-#' @srrstats {RE6.2} *The default `plot` method should produce a plot of the `fitted` values of the model, with optional visualisation of confidence intervals or equivalent.*
-#' @srrstats {RE6.3} *Where a model object is used to generate a forecast (for example, through a `predict()` method), the default `plot` method should provide clear visual distinction between modelled (interpolated) and forecast (extrapolated) values.*
+#' @srrstats {G2.3a} Uses match.arg in plot_* functions
+#' @srrstats {BS6.1, RE6.0, RE6.1} Implements the `plot` method,
+#'   without a default plot
+plot.dynamitefit <- function(x) {
+  message_("Please use {.fun plot_deltas}, {.fun plot_betas}, or
+           {.fun plot_nus} to produce plots of a {.cls dynamitefit} object.")
+}
+
+#' @describeIn plot.dynamitefit
+#'   Visualize Time-varying Regression Coefficients of a Dynamite Model
+#' @export
 plot_deltas <- function(model, level = 0.05, alpha = 0.5,
                         scales = c("fixed", "free"),
                         include_alpha = TRUE) {
@@ -93,13 +96,9 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5,
     ggplot2::labs(title = title, x = "Time", y = "Value")
 }
 
-#' Visualize Time-invariant Regression Coefficients of the Dynamite Model
-#'
-#' @inheritParams plot_deltas
-#' @return A `ggplot` object.
+#' @describeIn plot.dynamitefit
+#'   Time-invariant Regression Coefficients of a Dynamite Model
 #' @export
-#' @examples
-#' plot_betas(gaussian_example_fit)
 plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
   stopifnot_(
     is.dynamitefit(model),
@@ -146,14 +145,9 @@ plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
     ggplot2::labs(title = title, x = "Value", y = "Parameter")
 }
 
-
-#' Visualize Random Intercepts of the Dynamite Model
-#'
-#' @inheritParams plot_deltas
-#' @return A `ggplot` object.
+#' @describeIn plot.dynamitefit
+#'   Visualize Random Intercepts of a Dynamite Model
 #' @export
-#' @examples
-#' plot_nus(gaussian_example_fit)
 plot_nus <- function(model, level = 0.05){
   stopifnot_(
     is.dynamitefit(model),

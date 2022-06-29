@@ -16,8 +16,7 @@
 #' betas <- coef(gaussian_example_fit, type = "beta")
 #' deltas <- coef(gaussian_example_fit, type = "delta")
 #'
-#' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
-#' @srrstats {RE4.2} *Model coefficients (via `coeff()` / `coefficients()`)*
+#' @srrstats {G2.3a, RE4.2} Provides model coefficients.
 coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
                              summary = TRUE, probs = c(0.05, 0.95),
                              include_alpha = TRUE, ...) {

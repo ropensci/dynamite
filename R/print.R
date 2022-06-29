@@ -7,12 +7,9 @@
 #' @param x \[`dynamitefit`] The model fit object.
 #' @param ... Further arguments to the print method for tibbles.
 #'   See [tibble::formatting].
-#' @method print dynamitefit
 #' @export
-#' @srrstats {BS6.0} *Software should implement a default `print` method for return objects*
-#' @srrstats {BS5.3} *Bayesian Software should return convergence statistics or equivalent*
-#' @srrstats {BS5.5} *Appropriate diagnostic statistics to indicate absence of convergence should either be returned or immediately able to be accessed.*
-#' @srrstats {RE4.17} *Model objects returned by Regression Software should implement or appropriately extend a default `print` method which provides an on-screen summary of model (input) parameters and (output) coefficients.*
+#' @srrstats {BS6.0, RE4.17} Implements the `print` method.
+#' @srrstats {BS5.3, BS5.5} Contains convergence statistics in the output.
 #' @examples
 #' print(gaussian_example_fit)
 print.dynamitefit <- function(x, ...) {

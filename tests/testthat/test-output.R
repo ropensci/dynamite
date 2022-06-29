@@ -150,3 +150,10 @@ test_that("number of observations can be extracted", {
     NA
   )
 })
+
+test_that("summary can be extracted", {
+  expect_error(
+    summary(gaussian_example_fit),
+    NA
+  )
+})

@@ -15,7 +15,7 @@
 Total number of observations as integer.
 Missing values are not accounted for as the
 number of complete cases may vary across
-channels, time points and groups
+channels, time points and groups.
 }
 \description{
 Extract the Number of Observations used to fit a Dynamite Model

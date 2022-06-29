@@ -4,10 +4,21 @@
 \alias{dynamite}
 \title{Estimate a Bayesian Dynamic Multivariate Panel Model}
 \usage{
-dynamite(dformula, data, group = NULL, time, priors = NULL, debug = NULL, ...)
+dynamite(
+  dformula,
+  data,
+  group = NULL,
+  time,
+  priors = NULL,
+  debug = NULL,
+  verbose = TRUE,
+  ...
+)
 }
 \arguments{
-\item{dformula}{[\code{dynamiteformula}]\cr The model formula. See 'Details'.}
+\item{dformula}{[\code{dynamiteformula}]\cr The model formula. See 'Details'.
+Input \code{data} is converted to channel specific matrix representations
+via \link[stats:model.matrix]{stats::model.matrix.lm}.}
 
 \item{data}{[\code{data.frame}, \code{tibble::tibble}, or \code{data.table::data.table}]\cr
 The data frame, tibble or a data.table containing the variables in the
@@ -18,13 +29,13 @@ values which will simply be ignored in the estimation in a case-wise
 fashion (per time-point and per channel).}
 
 \item{group}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
-unique groups.}
+unique groups, or \code{NULL} corresponding to a scenario without grouping.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time axis.}
 
 \item{priors}{[\code{data.frame}]\cr An optional data frame with prior
-definitions. See details.}
+definitions. See 'Details'.}
 
 \item{debug}{TODO}
 

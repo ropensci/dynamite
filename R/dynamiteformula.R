@@ -1,12 +1,10 @@
 #' Model formula for \pkg{dynamite}
 #'
-#' TODO description and details of all features
-#' TODO document families here as well
-#' TODO document lag-conversion to data
-#' TODO explain fixed time points
+#' Defines a new observational or a new auxiliary channel for the model.
+#' See 'Details' or the package vigentte for more information.
 #'
-#' Currently the `dynamite` package supports the following distributions for
-#' the observations:
+#' @details Currently the `dynamite` package supports the following
+#' distributions for the observations:
 #'
 #' * Categorical: `categorical` (with a softmax link using the first category
 #'   as reference). See the documentation of the `categorical_logit_glm` in the
@@ -22,8 +20,58 @@
 #' * Exponential: `exponential` (log-link).
 #' * Gamma: `gamma` (log-link, using mean and shape parameterisation).
 #'
-#' @param formula \[`formula`]\cr An R formula describing the model.
-#' @param family \[`character(1)`]\cr The family name. See details for the
+#' The models in the \pkg{dynamite} package are defined by combining the
+#' channel-specific formulas defined via  \R formula syntax.
+#' Each channel is defined via the `obs` function, and the channels are
+#' combined with `+`. For example a formula
+#' `obs(y ~ lag(x), family = "gaussian") + obs(x ~ z, family = "poisson")`
+#' defines a model with two channels;
+#' first we declare that `y` is a gaussian variable depending on a previous
+#' value of `x` (`lag(x)`), and then we add a second channel declaring `x` as
+#' Poisson distributed depending on some exogenous variable `z`
+#' (for which we do not define any distribution).
+#'
+#' In addition to declaring response variables via `obs`, we can also use
+#' the function `aux` to define auxiliary channels which are deterministic
+#' functions of other variables. The values of auxiliary variables are computed
+#' dynamically during prediction, making the use of lagged values and other
+#' transformations possible. Note that the auxiliary channel can also depend
+#' on other variables without lags. The function `aux` also does not use the
+#' `family` argument, which is automatically set to `deterministic` and is a
+#' special channel type of `obs`.
+#'
+#' The formula within `obs` can also contain an additional special
+#' function `varying`, which defines the time-varying part of the model
+#' equation, in which case we could write for example
+#' `obs(x ~ z + varying(~ -1 + w), family = "poisson")`, which defines a model
+#' equation with a constant intercept and time-invariant effect of `z`, and a
+#' time-varying effect of `w`. We also remove the duplicate intercept with `-1`
+#' in order to avoid identifiability issues in the model estimation
+#' (we could also define a time varying intercept, in which case we would write
+#' `obs(x ~ -1 + z + varying(~ w), family = "poisson)`). The part of the formula
+#' not wrapped with `varying` is assumed to correspond to the fixed part of the
+#' model, so `obs(x ~ z + varying(~ -1 + w), family = "poisson")` is actually
+#' identical to
+#' `obs(x ~ -1 + fixed(~ z) + varying(~ -1 + w), family = "poisson")` and
+#' `obs(x ~ fixed(~ z) + varying(~ -1 + w), family = "poisson")`.
+#'
+#' When defining varying effects, we also need to define how the these
+#' time-varying regression coefficient behave. For this, a `splines` component
+#' should be added to the model, e.g.,
+#' `obs(x ~ varying(~ -1 + w), family = "poisson) + splines(df = 10)` defines a
+#' cubic B-spline with 10 degrees of freedom for the time-varying coefficient
+#' corresponding to the `w`. If the model contains multiple time-varying
+#' coefficients, same spline basis is used for all coefficients, with unique
+#' spline coefficients and their standard deviation.
+#'
+#' It is also possible to define a random intercept term for each group by
+#' using `random_intercept = TRUE` inside the `obs` function. This leads to a
+#' model where the in addition to the common intercept each individual/group
+#' has their own intercept with zero-mean normal prior and unknown standard
+#' deviation, analogously with the typical mixed models.
+#'
+#' @param formula \[`formula`]\cr An \R formula describing the model.
+#' @param family \[`character(1)`]\cr The family name. See 'Details' for the
 #' supported families.
 #' @param random_intercept \[`logical(1)`]\cr If `TRUE`, adds
 #'   individual-level intercepts to the channel.
@@ -33,10 +81,8 @@
 #' obs(y ~ -1 + varying(~x), family = "gaussian") +
 #'   lags(type = "varying") + splines(df = 20)
 #'
-#' @srrstats {G2.3b} *Either: use `tolower()` or equivalent to ensure input of character parameters is not case dependent; or explicitly document that parameters are strictly case-sensitive.*
-#' @srrstats {RE1.0} *Regression Software should enable models to be specified via a formula interface, unless reasons for not doing so are explicitly documented.*
-#' @srrstats {RE1.1} *Regression Software should document how formula interfaces are converted to matrix representations of input data.*
-#' @srrstats {RE1.4} *Regression Software should document any assumptions made with regard to input data; for example distributional assumptions, or assumptions that predictor data have mean values of zero. Implications of violations of these assumptions should be both documented and tested.*
+#' @srrstats {G2.3b} Uses tolower.
+#' @srrstats {RE1.0} Used a formula interface.
 dynamiteformula <- function(formula, family, random_intercept = FALSE) {
   stopifnot_(
     is.formula(formula),

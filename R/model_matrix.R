@@ -3,7 +3,7 @@
 #' @param dformula A `dynamiteformula` object
 #' @param data A `data.table` containing the variables in the model
 #'
-#' @srrstats {RE1.3} *Regression Software which passes or otherwise transforms aspects of input data onto output structures should ensure that those output structures retain all relevant aspects of input data, notably including row and column names, and potentially information from other `attributes()`.*
+#' @srrstats {RE1.3, RE1.3a} `full_model.matrix` preserves relevant attributes.
 #' @noRd
 full_model.matrix <- function(dformula, data) {
   model_matrices <- test_collinearity(dformula, data)

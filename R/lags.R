@@ -13,7 +13,7 @@
 #' obs(y ~ -1 + varying(~x), family = "gaussian") +
 #'   lags(type = "varying") + splines(df = 20)
 #'
-#' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
+#' @srrstats {G2.3a} Uses match.arg
 lags <- function(k = 1L, type = c("fixed", "varying")) {
   type <- onlyif(is.character(type), tolower(type))
   type <- try(match.arg(type, c("fixed", "varying")), silent = TRUE)

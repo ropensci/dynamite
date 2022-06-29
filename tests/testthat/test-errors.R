@@ -260,8 +260,7 @@ test_that("deterministic insufficient initial values fails", {
 
 # Data type errors --------------------------------------------------------
 
-#' @srrstats {G2.11} *Software should ensure that `data.frame`-like tabular objects which have columns which do not themselves have standard class attributes (typically, `vector`) are appropriately processed, and do not error without reason. This behaviour should be tested. Again, columns created by the [`units` package](https://github.com/r-quantities/units/) provide a good test case.*
-#' @srrstats {G2.12} *Software should ensure that `data.frame`-like tabular objects which have list columns should ensure that those columns are appropriately pre-processed either through being removed, converted to equivalent vector columns where appropriate, or some other appropriate treatment such as an informative error. This behaviour should be tested.*
+#' @srrstats {G2.11, G2.12} Tests for unsupported column types.
 test_that("invalid column types fail", {
   test_data <- data.frame(y = c(1i, 2i), x = c(1, 1), z = c(1, 2))
   test_data$w <- c(list(a = 1), list(b = 2))

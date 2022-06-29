@@ -13,9 +13,9 @@ obs(formula, family, random_intercept = FALSE)
 aux(formula)
 }
 \arguments{
-\item{formula}{[\code{formula}]\cr An R formula describing the model.}
+\item{formula}{[\code{formula}]\cr An \R formula describing the model.}
 
-\item{family}{[\code{character(1)}]\cr The family name. See details for the
+\item{family}{[\code{character(1)}]\cr The family name. See 'Details' for the
 supported families.}
 
 \item{random_intercept}{[\code{logical(1)}]\cr If \code{TRUE}, adds
@@ -25,14 +25,12 @@ individual-level intercepts to the channel.}
 An object of class \code{dynamiteformula}.
 }
 \description{
-TODO description and details of all features
-TODO document families here as well
-TODO document lag-conversion to data
-TODO explain fixed time points
+Defines a new observational or a new auxiliary channel for the model.
+See 'Details' or the package vigentte for more information.
 }
 \details{
-Currently the \code{dynamite} package supports the following distributions for
-the observations:
+Currently the \code{dynamite} package supports the following
+distributions for the observations:
 \itemize{
 \item Categorical: \code{categorical} (with a softmax link using the first category
 as reference). See the documentation of the \code{categorical_logit_glm} in the
@@ -48,6 +46,56 @@ documentation on \code{NegBinomial2} in the Stan function reference manual.
 \item Exponential: \code{exponential} (log-link).
 \item Gamma: \code{gamma} (log-link, using mean and shape parameterisation).
 }
+
+The models in the \pkg{dynamite} package are defined by combining the
+channel-specific formulas defined via  \R formula syntax.
+Each channel is defined via the \code{obs} function, and the channels are
+combined with \code{+}. For example a formula
+\code{obs(y ~ lag(x), family = "gaussian") + obs(x ~ z, family = "poisson")}
+defines a model with two channels;
+first we declare that \code{y} is a gaussian variable depending on a previous
+value of \code{x} (\code{lag(x)}), and then we add a second channel declaring \code{x} as
+Poisson distributed depending on some exogenous variable \code{z}
+(for which we do not define any distribution).
+
+In addition to declaring response variables via \code{obs}, we can also use
+the function \code{aux} to define auxiliary channels which are deterministic
+functions of other variables. The values of auxiliary variables are computed
+dynamically during prediction, making the use of lagged values and other
+transformations possible. Note that the auxiliary channel can also depend
+on other variables without lags. The function \code{aux} also does not use the
+\code{family} argument, which is automatically set to \code{deterministic} and is a
+special channel type of \code{obs}.
+
+The formula within \code{obs} can also contain an additional special
+function \code{varying}, which defines the time-varying part of the model
+equation, in which case we could write for example
+\code{obs(x ~ z + varying(~ -1 + w), family = "poisson")}, which defines a model
+equation with a constant intercept and time-invariant effect of \code{z}, and a
+time-varying effect of \code{w}. We also remove the duplicate intercept with \code{-1}
+in order to avoid identifiability issues in the model estimation
+(we could also define a time varying intercept, in which case we would write
+\verb{obs(x ~ -1 + z + varying(~ w), family = "poisson)}). The part of the formula
+not wrapped with \code{varying} is assumed to correspond to the fixed part of the
+model, so \code{obs(x ~ z + varying(~ -1 + w), family = "poisson")} is actually
+identical to
+\code{obs(x ~ -1 + fixed(~ z) + varying(~ -1 + w), family = "poisson")} and
+\code{obs(x ~ fixed(~ z) + varying(~ -1 + w), family = "poisson")}.
+
+When defining varying effects, we also need to define how the these
+time-varying regression coefficient behave. For this, a \code{splines} component
+should be added to the model, e.g.,
+\verb{obs(x ~ varying(~ -1 + w), family = "poisson) + splines(df = 10)} defines a
+cubic B-spline with 10 degrees of freedom for the time-varying coefficient
+corresponding to the \code{w}. If the model contains multiple time-varying
+coefficients, same spline basis is used for all coefficients, with unique
+spline coefficients and their standard deviation.
+
+It is also possible to define a random intercept term for each group by
+using \code{random_intercept = TRUE} inside the \code{obs} function. This leads to a
+model where the in addition to the common intercept each individual/group
+has their own intercept with zero-mean normal prior and unknown standard
+deviation, analogously with the typical mixed models.
 }
 \section{Functions}{
 \itemize{

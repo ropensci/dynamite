@@ -31,7 +31,6 @@
 #'   (unrestricted) positive integer.
 #' @return An object of class `splines`.
 #' @export
-#' @srrstats {G2.4} *Provide appropriate mechanisms to convert between different data types, potentially including:*
 #' @examples
 #' # two channel model with varying effects, with explicit lower bounds for the
 #' # random walk prior standard deviations, with noncentered parameterisation

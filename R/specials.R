@@ -120,7 +120,10 @@ formula_specials <- function(x) {
 formula_past <- function(formula) {
   formula_str <- deparse1(formula)
   form_comp <- regexpr(
-    pattern = "^(?<resp>[^~]+) ~ (?<def>.+?)(?: \\+ past\\((?<past>.+)\\)){0,1}$",
+    pattern = paste0(
+      "^(?<resp>[^~]+) ~ (?<def>.+?)",
+      "(?: \\+ past\\((?<past>.+)\\)){0,1}$"
+    ),
     text = formula_str,
     perl = TRUE
   )

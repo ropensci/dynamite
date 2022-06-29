@@ -17,7 +17,7 @@
 #' @examples
 #' confint(gaussian_example_fit, level = 0.9)
 #'
-#' @srrstats {RE4.3} *Confidence intervals on those coefficients (via `confint()`)*
+#' @srrstats {RE4.3} Provides credible intervals.
 confint.dynamitefit <- function(object, parm, level = 0.95, ...) {
   stopifnot_(
     is.dynamitefit(object),

@@ -11,24 +11,19 @@
 #' @param priors \[`data.frame`]\cr A data frame containing the prior
 #'   definitions, or `NULL`, in which case default priors are used.
 #' @param fixed \[`integer(1)`]\cr Number of fixed time points
-#' @srrstats {RE2.3} *Where applicable, Regression Software should enable data to be centred (for example, through converting to zero-mean equivalent values; or to z-scores) or offset (for example, to zero-intercept equivalent values) via additional parameters, with the effects of any such parameters clearly documented and tested.*
-#' @srrstats {G2.4} *Provide appropriate mechanisms to convert between different data types, potentially including:*
-#' @srrstats {G2.4a} *explicit conversion to `integer` via `as.integer()`*
-#' @srrstats {G2.4b} *explicit conversion to continuous via `as.numeric()`*
-#' @srrstats {G2.4c} *explicit conversion to character via `as.character()` (and not `paste` or `paste0`)*
-#' @srrstats {G2.4d} *explicit conversion to factor via `as.factor()`*
-#' @srrstats {G2.4e} *explicit conversion from factor via `as...()` functions*
-#' @srrstats {G2.16} *All functions should also provide options to handle undefined values (e.g., `NaN`, `Inf` and `-Inf`), including potentially ignoring or removing such values.*
-#' @srrstats {BS2.1} *Bayesian Software should implement pre-processing routines to ensure all input data is dimensionally commensurate, for example by ensuring commensurate lengths of vectors or numbers of rows of tabular inputs.*
-#' @srrstats {BS2.1a} *The effects of such routines should be tested.*
-#' @srrstats {BS2.2} *Ensure that all appropriate validation and pre-processing of distributional parameters are implemented as distinct pre-processing steps prior to submitting to analytic routines, and especially prior to submitting to multiple parallel computational chains.*
-#' @srrstats {BS2.3} *Ensure that lengths of vectors of distributional parameters are checked, with no excess values silently discarded (unless such output is explicitly suppressed, as detailed below).*
-#' @srrstats {BS2.4} *Ensure that lengths of vectors of distributional parameters are commensurate with expected model input (see example immediately below)*
-#' @srrstats {BS2.5} *Where possible, implement pre-processing checks to validate appropriateness of numeric values submitted for distributional parameters; for example, by ensuring that distributional parameters defining second-order moments such as distributional variance or shape parameters, or any parameters which are logarithmically transformed, are non-negative.*
-# TODO conversion warnings?
+#' @param verbose \[`logical(1)`]\cr If `TRUE` outputs warnings.
+#'
+#' @srrstats {G2.13, G2.14, G2.14a, G2.14b, G2.14c, G2.15}
+#'   Missing data is appropriately considered.
+#' @srrstats {G2.4. G2.4a, G2.4b, G2.4c, G2.4d, G2.4e}
+#'   Data is appropriately converted for Stan.
+#' @srrstats {G2.16} Non-finite values are not supported.
+#' @srrstats {BS2.1, BS2.1a} Proper dimensionality is ensured for Stan.
+#' @srrstats {BS2.2, BS2.3, BS2.4, BS2.5}
+#'   Distributional parameters are checked.
 #' @noRd
 prepare_stan_data <- function(data, dformula, group_var, time_var,
-                              priors = NULL, fixed) {
+                              priors = NULL, fixed, verbose) {
 
   resp_names <- get_responses(dformula)
   responses <- as.data.frame(data[, .SD, .SDcols = resp_names])
@@ -196,7 +191,14 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
   )
 }
 
-prepare_splines <- function(spline_defs, n_channels, T_idx) {
+#' Prepare B-spline Parameters for Stan
+#'
+#' @param spline_defs A `splines` object.
+#' @param n_channels Number of channels
+#' @param T_idx An `integer` vector of time indices
+#' @param verbose If `TRUE`, outputs warnings
+#' @noRd
+prepare_splines <- function(spline_defs, n_channels, T_idx, verbose) {
   out <- list()
   if (!is.null(spline_defs)) {
     out$lb <- spline_defs$lb_tau
@@ -212,11 +214,13 @@ prepare_splines <- function(spline_defs, n_channels, T_idx) {
     if (length(out$noncentered) %in% c(1L, n_channels)) {
       out$noncentered <- rep(out$noncentered, length = n_channels)
     } else {
-      warning_(
-        "Length of the {.arg noncentered} argument of {.fun splines} function
-        is not equal to 1 or the number of the channels.",
-        `i` = "Recycling."
-      )
+      if (verbose) {
+        warning_(
+          "Length of the {.arg noncentered} argument of {.fun splines} function
+          is not equal to 1 or the number of the channels.",
+          `i` = "Recycling."
+        )
+      }
     }
   } else {
     out <- list(
@@ -228,6 +232,12 @@ prepare_splines <- function(spline_defs, n_channels, T_idx) {
   out
 }
 
+#' Construct a Prior Definition for a Time-varying Parameter
+#'
+#' @param ptype Type of the parameter
+#' @param priors A `data.frame` defining the priors
+#' @param channel A `list` of channel-specific variables for Stan sampling
+#' @noRd
 prepare_varying_prior <- function(ptype, priors, channel) {
   pdef <- priors |> dplyr::filter(.data$type == ptype)
   channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
@@ -258,7 +268,8 @@ prepare_varying_prior <- function(ptype, priors, channel) {
 #' @param priors \[`data.frame`]\cr A data frame containing the prior
 #'   definitions, or `NULL`, in which case default priors are used.
 #'
-#' @srrstats {RE1.2} *Regression Software should document expected format (types or classes) for inputting predictor variables, including descriptions of types or classes which are not accepted.*
+#' @srrstats {RE1.2} Checks for expected types and classes along with other
+#'   `prepare_channel_*` functions.
 #' @noRd
 prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
                                     mean_y, sd_y, resp_class, priors) {
