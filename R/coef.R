@@ -21,8 +21,15 @@
 coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
                              summary = TRUE, probs = c(0.05, 0.95),
                              include_alpha = TRUE, ...) {
-  type <- match.arg(type)
-  include_alpha <- try_type(include_alpha, "logical")[1]
+  type <- try(match.arg(type), silent = TRUE)
+  stopifnot_(
+    !"try-error" %in% class(type),
+    "Argument {.arg type} must be either \"beta\", \"delta\", or \"nu\"."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = include_alpha),
+    "Argument {.arg include_alpha} must be single {.cls logical} value."
+  )
   if (include_alpha && !identical(type, "nu")) {
     types <- c("alpha", type)
     out <- as.data.frame(

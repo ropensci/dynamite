@@ -19,11 +19,21 @@
 #'
 #' @srrstats {RE4.3} *Confidence intervals on those coefficients (via `confint()`)*
 confint.dynamitefit <- function(object, parm, level = 0.95, ...) {
-  level <- try_type(level, "numeric")[1]
   stopifnot_(
-    level > 0.0 && level < 1.0,
-    "Argument {.arg level} must be between 0 and 1."
+    is.dynamitefit(object),
+    "Argument {.arg object} must be a {.cls dynamitefit} object."
   )
+  stopifnot_(
+    checkmate::test_number(
+      x = level,
+      lower = 0.0,
+      upper = 1.0,
+      na.ok = FALSE,
+    ),
+    "Argument {.arg level} must be a single
+    {.cls numeric} value between 0 and 1."
+  )
+
   a <- (1.0 - level)/2.0
   d <- as.data.frame.dynamitefit(object, probs = c(a, 1 - a))
   row_names <- paste0(

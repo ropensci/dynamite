@@ -245,29 +245,6 @@ message_ <- function(message, ...) {
   cli::cli_inform(message, ..., .envir = parent.frame())
 }
 
-#' Try to coerce one argument to specific type
-#'
-#' @param x The argument to coerce.
-#' @param type \[character(1)] The type to coerce `x` into.
-#' @param msg \[character()] Custom error message to show.
-#' @noRd
-try_type <- function(x, type) {
-  pars <- as.list(match.call()[-1])
-  arg <- as.character(pars[[1]])
-  if (is.null(x)) {
-    return(NULL)
-  }
-  out <- tryCatch(
-    expr = do.call(paste0("as.", type[1]), args = list(x)),
-    error = function(e) NULL,
-    warning = function(w) NULL
-  )
-  if (is.null(out) || identical(length(out), 0L) || any(is.na(out))) {
-    stop_("Unable to coerce argument {.arg {arg}} to {.cls {type}}.")
-  }
-  out
-}
-
 #' Shorthand for `if (test) yes else no`
 #'
 #' @param test An object which can be coerced into `logical`.

@@ -14,13 +14,24 @@
 #'   lags(type = "varying") + splines(df = 20)
 #'
 #' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
-#' @srrstats {G2.4} *Provide appropriate mechanisms to convert between different data types, potentially including:*
-#' @srrstats {G2.4a} *explicit conversion to `integer` via `as.integer()`*
 lags <- function(k = 1L, type = c("fixed", "varying")) {
-  type <- match.arg(type)
-  k <- try_type(k, "integer")
+  type <- try(match.arg(type), silent = TRUE)
+  stopifnot_(
+    !"try-error" %in% class(type),
+    "Argument {.arg type} must be \"fixed\" or \"varying\"."
+  )
+  stopifnot_(
+    checkmate::test_integerish(
+      x = k,
+      lower = 1L,
+      any.missing = FALSE,
+      min.len = 1L,
+      unique = TRUE,
+    ),
+    "Argument {.arg k} must be an {.cls integer} vector with positive values."
+  )
   structure(
-    list(k = k, type = type),
+    list(k = as.integer(k), type = type),
     class = "lags"
   )
 }

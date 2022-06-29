@@ -5,14 +5,14 @@ obs_test <- obs(y ~ x + w, family = "gaussian")
 test_that("nonformula to dynamiteformula fails", {
   expect_error(
     obs(formula = numeric()),
-    "Argument `formula` is not a <formula> object\\."
+    "Argument `formula` must be a <formula> object\\."
   )
 })
 
 test_that("noncharacter family fails", {
   expect_error(
     obs(y ~ x, family = data.frame()),
-    "Unable to coerce argument `family` to <character>\\."
+    "Argument `family` must be a single <character> string\\."
   )
 })
 
@@ -124,7 +124,7 @@ test_that("categorical random intercept fails", {
 test_that("negative lb_tau fails", {
   expect_error(
     obs_test + splines(lb_tau = -1.0),
-    "Lower bound for `tau` must be non-negative\\."
+    "Argument `lb_tau` must be a <numeric> vector of non-negative values\\."
   )
 })
 
@@ -166,7 +166,7 @@ test_that("past in the middle of formula fails", {
 test_that("data is not data.frame fails", {
   expect_error(
     dynamite(dformula = obs_test, data = list()),
-    "Argument `data` is not a <data.frame> object\\.")
+    "Argument `data` must be a <data.frame> object\\.")
 })
 
 test_that("group variable not in data fails", {
@@ -425,7 +425,7 @@ test_that("Invalid responses fail", {
 test_that("Invalid confint level fails", {
   expect_error(
     confint.dynamitefit(gaussian_example_fit, level = -0.1),
-    "Argument `level` must be between 0 and 1\\."
+    "Argument `level` must be a single <numeric> value between 0 and 1\\."
   )
 })
 
@@ -497,7 +497,7 @@ test_that("newdata that is not a data.frame fails", {
 test_that("non-integer n_draws fails", {
   expect_error(
     predict(gaussian_example_fit, n_draws = data.frame()),
-    "Unable to coerce argument `n_draws` to <integer>\\."
+    "Argument `n_draws` must be a positive <integer>\\."
   )
 })
 

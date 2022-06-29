@@ -17,7 +17,13 @@ mcmc_diagnostics <- function(x, n = 1L) {
     is.dynamitefit(x),
     "Argument {.arg x} must be a {.cls dynamitefit} object."
   )
-  n <- try_type(n, "integer")[1L]
+  stopifnot_(
+    checkmate::test_int(
+      x = n,
+      lower = 1L
+    ),
+    "Argument {.arg n} must be a single {.cls integer}."
+  )
   if (!is.null(x$stanfit)) {
     if (x$stanfit@stan_args[[1L]]$algorithm == "NUTS") {
       rstan::check_hmc_diagnostics(x$stanfit)

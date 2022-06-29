@@ -34,9 +34,26 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5,
     is.dynamitefit(model),
     "Argument {.var model} must be a {.cls dynamitefit} object."
   )
-  level <- try_type(level, "numeric")[1]
-  alpha <- try_type(alpha, "numeric")[1]
-  include_alpha <- try_type(include_alpha, "logical")[1]
+  stopifnot_(
+    checkmate::test_number(
+      x = level,
+      lower = 0.0,
+      upper = 1.0,
+      na.ok = FALSE,
+    ),
+    "Argument {.arg level} must be a single
+     {.cls numeric} value between 0 and 1."
+  )
+  stopifnot_(
+    checkmate::test_number(
+      x = alpha,
+      lower = 0.0,
+      upper = 1.0,
+      na.ok = FALSE,
+    ),
+    "Argument {.arg alpha} must be a single
+     {.cls numeric} value between 0 and 1."
+  )
   coefs <- coef(
     model,
     "delta",
@@ -47,7 +64,11 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5,
     nrow(coefs) > 0L,
     "The model does not contain varying coefficients delta."
   )
-  scales <- match.arg(scales)
+  scales <- try(match.arg(scales), silent = TRUE)
+  stopifnot_(
+    !"try-error" %in% class(scales),
+    "Argument {.arg scales} must be either \"fixed\" or \"free\"."
+  )
   title <- paste0(
     "Posterior mean and ",
     100 * (1 - 2 * level),
@@ -83,8 +104,16 @@ plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
     is.dynamitefit(model),
     "Argument {.var model} must be a {.cls dynamitefit} object."
   )
-  level <- try_type(level, "numeric")[1]
-  include_alpha <- try_type(include_alpha, "logical")[1]
+  stopifnot_(
+    checkmate::test_number(
+      x = level,
+      lower = 0.0,
+      upper = 1.0,
+      na.ok = FALSE,
+    ),
+    "Argument {.arg level} must be a single
+     {.cls numeric} value between 0 and 1."
+  )
   coefs <- coef(
     model,
     "beta",
@@ -129,7 +158,16 @@ plot_nus <- function(model, level = 0.05){
     is.dynamitefit(model),
     "Argument {.var model} must be a {.cls dynamitefit} object."
   )
-  level <- try_type(level, "numeric")[1]
+  stopifnot_(
+    checkmate::test_number(
+      x = level,
+      lower = 0.0,
+      upper = 1.0,
+      na.ok = FALSE,
+    ),
+    "Argument {.arg level} must be a single
+     {.cls numeric} value between 0 and 1."
+  )
   coefs <- coef(
     model,
     "nu",

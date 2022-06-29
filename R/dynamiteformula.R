@@ -40,12 +40,19 @@
 dynamiteformula <- function(formula, family, random_intercept = FALSE) {
   stopifnot_(
     is.formula(formula),
-    "Argument {.arg formula} is not a {.cls formula} object."
+    "Argument {.arg formula} must be a {.cls formula} object."
   )
-  family <- try_type(family, "character")[1L]
+  stopifnot_(
+    checkmate::test_string(x = family, na.ok = FALSE),
+    "Argument {.arg family} must be a single {.cls character} string."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = random_intercept),
+    "Argument {.arg random_intercept} must be a single {.cls logical} value."
+  )
   family <- tolower(family)
-  if (is_supported(family[1L])) {
-      family <- do.call(paste0(family, "_"), args = list())
+  if (is_supported(family)) {
+    family <- do.call(paste0(family, "_"), args = list())
   } else {
     stop_("Family {.val {family}} is not supported.")
   }
@@ -53,7 +60,6 @@ dynamiteformula <- function(formula, family, random_intercept = FALSE) {
     !has_as_is(deparse1(formula)),
     "{.code I(.)} is not supported by {.fun dynamiteformula}."
   )
-  random_intercept <- try_type(random_intercept, "logical")[1L]
   x <- dynamiteformula_(formula, formula, family, random_intercept)
   structure(
     list(
