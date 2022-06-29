@@ -9,11 +9,13 @@ dynamite(dformula, data, group, time, priors = NULL, debug = NULL, ...)
 \arguments{
 \item{dformula}{[\code{dynamiteformula}]\cr The model formula. See 'Details'.}
 
-\item{data}{[\code{data.frame}]\cr A \code{data.frame} containing the variables in
-the model. Supported column types are \code{integer}, \code{logical}, \code{double},
+\item{data}{[\code{data.frame}, \code{tibble::tibble}, or \code{data.table::data.table}]\cr
+The data frame, tibble or a data.table containing the variables in the
+model. Supported column types are \code{integer}, \code{logical}, \code{double},
 \code{factor}. \code{character} columns will be converted to factors.
 Unused factor levels will be dropped. The \code{data} can contain missing
-values which will simply be ignored in the estimation.}
+values which will simply be ignored in the estimation in a case-wise
+fashion (per time-point and per channel).}
 
 \item{group}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 unique groups.}
@@ -38,6 +40,9 @@ for parameters constrained to be positive. See Stan function reference at
 priors, you should first get the default priors with \code{get_priors} function,
 and then modify the \code{priors} column of the obtained data frame before
 supplying it to the \code{dynamite}.
+}
+\details{
+See more details in the package vignette on how to define a dynamite model.
 }
 \examples{
 \dontrun{

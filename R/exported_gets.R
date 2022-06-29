@@ -18,13 +18,16 @@
 #'
 #' @param x \[`dynamiteformula` or `dynamitefit`]\cr The model formula or an
 #'   existing `dynamitefit` object. See [dynamiteformula()] and [dynamite()].
-#' @param data \[`data.frame`]\cr The data frame containing the variables in
-#'   the model.
+#' @param data
+#'   \[`data.frame`, `tibble::tibble`, or `data.table::data.table`]\cr
+#'   A data frame, a tibble or a data.table containing the variables in the
+#'   model.
 #' @param group \[`character(1)`]\cr A column name of `data` that denotes the
 #'   unique groups.
 #' @param time \[`character(1)`]\cr A column name of `data` that denotes the
 #'   time axis.
 #' @param ... Ignored.
+#' @return A `data.frame` containing the prior definitions.
 #' @rdname get_priors
 #' @export
 #' @examples
@@ -70,6 +73,7 @@ get_priors.dynamitefit <- function(x, ...) {
 #' building a customized version of the model.
 #'
 #' @inheritParams get_priors.dynamiteformula
+#' @return A Stan model code as an object of type `character`.
 #' @rdname get_code
 #' @export
 #' @examples
@@ -109,6 +113,7 @@ get_code.dynamitefit <- function(x, ...) {
 #' Returns the input data to the Stan model. Mostly useful for debugging.
 #'
 #' @inheritParams get_priors.dynamiteformula
+#' @return A `list` containing the input data to Stan.
 #' @rdname get_data
 #' @export
 #' @examples

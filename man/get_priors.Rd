@@ -18,14 +18,18 @@ existing \code{dynamitefit} object. See \code{\link[=dynamiteformula]{dynamitefo
 
 \item{...}{Ignored.}
 
-\item{data}{[\code{data.frame}]\cr The data frame containing the variables in
-the model.}
+\item{data}{[\code{data.frame}, \code{tibble::tibble}, or \code{data.table::data.table}]\cr
+A data frame, a tibble or a data.table containing the variables in the
+model.}
 
 \item{group}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 unique groups.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time axis.}
+}
+\value{
+A \code{data.frame} containing the prior definitions.
 }
 \description{
 Extracts the priors used in the dynamite model as a data frame. You
