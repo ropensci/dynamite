@@ -8,7 +8,7 @@
   object,
   newdata = NULL,
   type = c("response", "mean", "link"),
-  impute = c("none", "locf", "linear"),
+  impute = c("none", "locf"),
   new_levels = c("none", "bootstrap", "gaussian", "original"),
   n_draws = NULL,
   ...
