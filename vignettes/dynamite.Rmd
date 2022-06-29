@@ -86,40 +86,42 @@ The formula within `obs` can also contain additional special function `varying`,
 
 When defining varying effects, we also need to define how the these time-varying regression coefficient behave. For this, a `splines` component should be added to the model, e.g. `obs(x ~ varying(~ -1 + w), family = "poisson) + splines(df = 10)` defines a cubic B-spline with 10 degrees of freedom for the time-varying coefficient corresponding to the `w`. If the model contains multiple time-varying coefficients, same spline basis is used for all coefficients, with unique spline coefficients and their standard deviation, as defined the previous Section.
 
+It is also possible to define a random intercept term for each group by using `random_intercept = TRUE` inside the `obs` function. This leads to a model where the in addition to the common intercept each individual/group has their own intercept with zero-mean normal prior and unknown standard deviation, analogously with the typical mixed models. 
+
 Finally, the declared model is wrapped with a `dynamite`, for which we supply the data, optional user-defined priors for the model parameters, and additional arguments to the `rstan::sampling` which handles the model estimation. For example, `dynamite(obs(x ~ varying(~ -1 + w), family = "poisson) + splines(df = 10), data = d, time = "year", group = "id", chains = 2, cores = 2)` estimates the model using the data in the dataframe `d`, which contains variables `year` and `id` (defining the time-index and group-indx variables of the data). Arguments `chains` and `cores` are passed to `rstan::sampling`
 which then uses to parallel Markov chains in the the Markov chain Monte Carlo (MCMC) sampling of the model parameters.
 
 # Example
 
-As an example, we consider the famous Grunfeld dataset, available in the package `plm` [@plm]:
-```{r, eval = FALSE}
+As an example, consider a following simulated multichannel data:
+
+```{r}
 library(dynamite)
-library(ggplot2)
-library(dplyr)
-data(Grunfeld, package = "plm")
-d <- Grunfeld |> mutate(invest = inv) |> select(-inv)
-head(d)
+head(multichannel_example)
 ```
 
+The data is in a long format (as required by the `dynamite`), containing the variables
+`id` (50 unique firms), the `time` (20 time points), a continuous variable `g`, a varible with non-negative integer values `p`, and a binary varible `b`. We define a following model (which actually matches the data generating process used in simulating the data):
 
-The data is in a long format (as required by the `dynamite`), containing the 
-firm id (`firm`, 10 firms), the `year` (20 years), value of the firm (`value`) , the firms’ gross investment (`invest`) and stock of plant and equipment (`capital`). 
+```{r}
+set.seed(1)
+f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
+  obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
+  obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
+  aux(numeric(logp) ~ log(p + 1))
+```
 
-Let's first fit the basic model without time-invariant effects of value and capital on the investment, but with a firm-specific random intercept (using the `random_intercept = TRUE` inside of `obs`:
+We can the fit the model using the `dynamite` function (note the small number of iterations and additional thinning in order to satisfy the CRAN requirements):
 ```{r, eval = FALSE}
-fit_basic <- dynamite(obs(invest ~ value + capital,
-                          family = gaussian(), random_intercept = TRUE),
-                d, "firm", "year",
-                chains = 2, cores = 2, iter = 2000)
-fit_basic
+multichannel_example_fit <- dynamite(
+  f, multichannel_example, "id", "time",
+  chains = 1, cores = 1, iter = 2000, warmup = 1000, init = 0, refresh = 0,
+  thin = 5, save_warmup = FALSE)
 ```
-The results are close to the ones obtained with the `plm` package:
 
-```{r, eval = FALSE}
-plm(inv ~ value + capital, data = Grunfeld, 
-                    index = c("firm", "year"), 
-                    effect = "individual", model = "within")
-```
+
+
+
 
 
 
