@@ -27,6 +27,7 @@
 #'   non-fixed time point to the last time point in the data. See
 #'   [dynamite::dynamiteformula()] for more information on fixed time points.
 #' @param degree \[`integer(1)`]\cr See [splines::bs()].
+#' @return An object of class `splines`.
 #' @export
 #' @srrstats {G2.4} *Provide appropriate mechanisms to convert between different data types, potentially including:*
 #' @srrstats {G2.4a} *explicit conversion to `integer` via `as.integer()`*

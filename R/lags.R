@@ -2,10 +2,12 @@
 #'
 #' @param k \[`integer()`: \sQuote{1}]\cr
 #'   Values lagged by `k` units of time of each observed response variable
-#'   will be added as a predictor for each channel.
+#'   will be added as a predictor for each channel. Should be a positive
+#'   (unrestricted) integer.
 #' @param type \[`integer(1)`: \sQuote{"fixed"}]\cr Either
 #'   `"fixed"` or `"varying"` which indicates whether the coefficients of the
 #'   added lag terms should vary in time or not.
+#' @return A object of class `lags`.
 #' @export
 #' @examples
 #' obs(y ~ -1 + varying(~x), family = "gaussian") +

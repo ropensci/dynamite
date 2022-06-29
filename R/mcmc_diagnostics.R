@@ -6,7 +6,9 @@
 #'
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param n \[`integer(1)`: \sQuote{1L}]\cr How many rows to print in
-#'   parameter-specific convergence measures. Default is 1.
+#'   parameter-specific convergence measures. Default is 1. Should be a
+#'   positive (unrestricted) integer.
+#' @return The original `dynamitefit` object.
 #' @export
 #' @examples
 #' mcmc_diagnostics(gaussian_example_fit)
@@ -51,4 +53,5 @@ mcmc_diagnostics <- function(x, n = 1L) {
   } else {
     message_("No Stan model fit is available.")
   }
+  invisible(x)
 }
