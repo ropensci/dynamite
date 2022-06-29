@@ -322,7 +322,6 @@ fill_time <- function(data, time, group_var, time_var) {
 #   #invisible(NULL)
 # }
 
-# TODO there is ndraws method in posterior package, should probably define ndraws.dynamitefit
 ndraws <- function(x) {
   as.integer(
     (x$stanfit@sim$n_save[1] - x$stanfit@sim$warmup2[1]) * x$stanfit@sim$chains

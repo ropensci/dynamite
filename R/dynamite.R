@@ -32,8 +32,8 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' fit <- dynamite(obs(y ~ -1 + varying(~x), family = "gaussian" +
-#'   lags(type = "varying") + splines(df = 20), gaussian_example, id, time,
+#' fit <- dynamite(obs(y ~ -1 + varying(~x), family = "gaussian") +
+#'   lags(type = "varying") + splines(df = 20), gaussian_example, "id", "time",
 #'   chains = 1, refresh = 0)
 #'
 #' library(dplyr)

@@ -1,6 +1,11 @@
 #' The 'dynamite' package.
 #'
-#' @description A DESCRIPTION OF THE PACKAGE TODO
+#' @description Easy-to-use and efficient interface for Bayesian inference of
+#' complex panel data consisting of multiple indivuals with multiple
+#' measurements over time. Supports several observational distributions,
+#' time-varying effects and realistic counterfactual predictions which take into
+#' account the dynamic structure of the model. See the package vignette for
+#' details.
 #'
 #' @docType package
 #' @name dynamite-package

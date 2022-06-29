@@ -8,7 +8,11 @@ Authors@R: c(
     person("Jouni", "Helske", , "jouni.helske@iki.fi", role = "aut",
            comment = c(ORCID = "0000-0001-7130-793X"))
   )
-Description: What the package does (one paragraph).
+Description: Easy-to-use and efficient interface for Bayesian inference of 
+  complex panel data consisting of multiple indivuals with multiple 
+  measurements over time. Supports several observational distributions, 
+  time-varying effects and realistic counterfactual predictions which take into
+  account the dynamic structure of the model.
 License: GPL (>= 3)
 URL: https://github.com/santikka/dynamite
 BugReports: https://github.com/santikka/dynamite/issues
