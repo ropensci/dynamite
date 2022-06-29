@@ -311,14 +311,12 @@ fill_time <- function(data, time, group_var, time_var) {
 # Placeholder for future
 # Startup message for the package
 # .onAttach <- function(libname, pkgname) {
-#   # TODO
 #   #invisible(NULL)
 # }
 
 # Placeholder for future
 # Code to execute when loading the package
 # .onLoad <- function(libname, pkgname) {
-#   # TODO
 #   #invisible(NULL)
 # }
 
