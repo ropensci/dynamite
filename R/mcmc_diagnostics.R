@@ -26,7 +26,11 @@ mcmc_diagnostics <- function(x, n = 1L) {
   )
   if (!is.null(x$stanfit)) {
     if (x$stanfit@stan_args[[1L]]$algorithm == "NUTS") {
-      rstan::check_hmc_diagnostics(x$stanfit)
+      cat("NUTS sampler diagnostics: ")
+      invisible(utils::capture.output(msg <-
+        utils::capture.output(rstan::check_hmc_diagnostics(x$stanfit),
+                              type = "message")))
+      cat(msg, sep = "\n")
     }
     #TODO ok to suppress warnings?
     sumr <- posterior::summarise_draws(suppressWarnings(as_draws(x)),
