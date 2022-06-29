@@ -50,6 +50,7 @@ as_draws_df.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
 #' @export as_draws
 #' @rdname as_draws-dynamitefit
 #' @method as_draws dynamitefit
+#' @inheritParams as_draws_df.dynamitefit
 as_draws.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
   as_draws_df.dynamitefit(x, responses, types, ...)
 }

@@ -6,7 +6,7 @@
 \alias{get_priors.dynamitefit}
 \title{Get Prior Definitions of a Dynamite Model}
 \usage{
-get_priors(x, data, group, time, ...)
+get_priors(x, ...)
 
 \method{get_priors}{dynamiteformula}(x, data, group, time, ...)
 
@@ -16,16 +16,20 @@ get_priors(x, data, group, time, ...)
 \item{x}{[\code{dynamiteformula} or \code{dynamitefit}]\cr The model formula or an
 existing \code{dynamitefit} object. See \code{\link[=dynamiteformula]{dynamiteformula()}} and \code{\link[=dynamite]{dynamite()}}.}
 
-\item{data}{[\code{data.frame}]\cr The data frame containing the variables in
-the model.}
+\item{...}{Ignored.}
+
+\item{data}{[\code{data.frame}, \code{tibble::tibble}, or \code{data.table::data.table}]\cr
+A data frame, a tibble or a data.table containing the variables in the
+model.}
 
 \item{group}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 unique groups.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time axis.}
-
-\item{...}{Ignored.}
+}
+\value{
+A \code{data.frame} containing the prior definitions.
 }
 \description{
 Extracts the priors used in the dynamite model as a data frame. You
@@ -43,15 +47,13 @@ intercept from the formula and add a dummy covariate consisting of ones to
 the model.
 }
 \note{
-Warning! Currently the structure of the \code{prior} argument is not
-checked in the \code{dynamite} function, and it is assumed that no rows are
-deleted and the ordering of the rows is not changed (i.e. only \code{prior}
-column is altered).
+Only the \code{prior} column of the output should be altered when defining
+the user-defined priors for the \code{dynamite}.
 }
 \examples{
 
 d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
-get_priors(obs(y ~ x, family = gaussian()),
+get_priors(obs(y ~ x, family = "gaussian"),
   data = d, time = "time", group = "id")
 
 }

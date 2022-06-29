@@ -45,7 +45,7 @@ NULL
 #' set.seed(1)
 #' library(dynamite)
 #' gaussian_example_fit <- dynamite(
-#'   obs(y ~ -1 + z + varying(~ x + lag(y)), family = gaussian(),
+#'   obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian",
 #'       random_intercept = TRUE) + splines(df = 20),
 #'   data = gaussian_example, time = "time", group = "id",
 #'   iter = 2000, warmup = 1000, thin = 5,
@@ -80,9 +80,9 @@ NULL
 #' \preformatted{
 #' set.seed(1)
 #' library(dynamite)
-#' f <- obs(g ~ lag(g) + lag(logp), family = gaussian()) +
-#'   obs(p ~ lag(g) + lag(logp) + lag(b), family = poisson()) +
-#'   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = bernoulli()) +
+#' f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
+#'   obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
+#'   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
 #'   aux(numeric(logp) ~ log(p + 1))
 #' multichannel_example_fit <- dynamite(
 #'   f, multichannel_example, "id", "time",
@@ -117,8 +117,8 @@ NULL
 #' \preformatted{
 #' set.seed(1)
 #' library(dynamite)
-#' f <- obs(x ~ z + lag(x) + lag(y), family = categorical()) +
-#'   obs(y ~ z + lag(x) + lag(y), family = categorical())
+#' f <- obs(x ~ z + lag(x) + lag(y), family = "categorical") +
+#'   obs(y ~ z + lag(x) + lag(y), family = "categorical")
 #' categorical_example_fit <- dynamite(
 #'   f, categorical_example, "id", "time",
 #'   chains = 1, refresh = 0, thin = 5, save_warmup = FALSE)

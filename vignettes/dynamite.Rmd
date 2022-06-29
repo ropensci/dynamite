@@ -27,12 +27,12 @@ library(dynamite)
 
 The `dynamite` package provides easy-to-use interface for Bayesian inference of complex panel data. The main features distinguishing the package and the underlying methodology from many other approaches are 
 
-* Support for both time-varying and time-invariant effects
+* Support for both time-varying and time-invariant effects 
 * Joint modelling of multiple measurements per individual (multiple channels)
 * Support for non-gaussian observations
 * Realistic counterfactual predictions which take account the dynamic structure of the model
 * Clear quantification of parameter and predictive uncertainty due to Bayesian approach
-* User-friendly and efficient R interface with state-of-the-art estimation via [@rstan]
+* User-friendly and efficient R interface with state-of-the-art estimation via [@rstan] 
 
 # Model
 
@@ -63,8 +63,65 @@ where $K$ is the number of covariates, $B_t$ is a vector of B-spline values at t
 \]
 with user defined prior $p(\omega^c_{k,1})$ on the first coefficient, which due to the structure of $B_1$ corresponds to the prior on the $\delta^c_{k,1}$. Here, the parameter $\tau^c_k$ controls the smoothness of the spline curves.
 
+# Defining the model
+
+Currently the `dynamite` package supports the following distributions for the observations:
+
+* Categorical: `categorical` (with a softmax link using the first category as reference). See the documentation of the `categorical_logit_glm` in the Stan function reference manual (https://mc-stan.org/users/documentation/).
+* Gaussian: `gaussian` (identity link, parameterized using mean and standard deviation).
+* Poisson: `poisson` (log-link, with an optional known offset variable).
+* Negative-binomial: `negbin` (log-link, using mean and dispersion parameterization, with an optional known offset variable). See the documentation on `NegBinomial2` in the Stan function reference manual.
+* Bernoulli: `bernoulli` (logit-link).
+* Binomial: `binomial` (logit-link).
+* Exponential: `exponential` (log-link).
+* Gamma: `gamma` (log-link, using mean and shape parameterisation).
+
+The models in the `dynamite` package are defined by combining the channel-specific formulas defined via the R's formula syntax. Each channel is defined within a special `obs` function, and these are combined with `+`. For example a formula `obs(y ~ lag(x), family = "gaussian") + obs(x ~ z, family = "poisson")` defines a model with two channels; first we declare that `y` is a gaussian variable depending on a previous value of `x` (`lag(x)`), and then we add a second channel declaring `x` as Poisson distributed depending on some exogenous variable `z` (for which we do not define any distribution). 
+
+The `dynamite` models do not support contemporaneous dependencies in order to avoid complex cyclic dependencies which would make handling missing data, subsequent predictions, and causal inference channelling or impossible. This is why we used `lag(x)` in the previous example, a shorthand for `lag(x, k = 1)`, which defines a one-step lag of the variable `x`. Longer lags can also be defined by adjusting the argument `k`.
+
+In addition to declaring response variables via `obs`, we can also use function `aux` to define auxiliary channels which are deterministic functions of other variables. Defining these auxiliary variables explicitly instead of defining these directly on the right-hand side of the formulas makes the subsequent prediction steps more clear and allows easier checks on the model validity. An example of a formula using an auxiliary channel could be `obs(y ~ lag(log1x), family = "gaussian") + obs(x ~ z, family = "poisson") + aux(log1x = log(1 + x))`. Note that the auxiliary channel can also depend on other variables without lags. The function `aux` also does not use the `family` argument, which is automatically set to `deterministic`.
+
+The formula within `obs` can also contain additional special function `varying`, which defines the time-varying part of the model equation, in which case we could write for example `obs(x ~ z + varying(~ -1 + w), family = "poisson")`, which defines a model equation with a constant intercept and time-invariant effect of z, and a time-varying effect of `w`. We also remove the duplicate intercept with `-1` in order to avoid identifiability issues in the model estimation (We could also define time varying intercept, in which case we would write `obs(x ~ -1 + z + varying(~ w), family = "poisson)`). The part of the formula not wrapped with `varying` is assumed to correspond to the fixed part, so `obs(x ~ z + varying(~ -1 + w), family = "poisson")` is actually identical to `obs(x ~ -1 + fixed(~ z) + varying(~ -1 + w), family = "poisson")` and `obs(x ~ fixed(~ z) + varying(~ -1 + w), family = "poisson")`.
+
+When defining varying effects, we also need to define how the these time-varying regression coefficient behave. For this, a `splines` component should be added to the model, e.g. `obs(x ~ varying(~ -1 + w), family = "poisson) + splines(df = 10)` defines a cubic B-spline with 10 degrees of freedom for the time-varying coefficient corresponding to the `w`. If the model contains multiple time-varying coefficients, same spline basis is used for all coefficients, with unique spline coefficients and their standard deviation, as defined the previous Section.
+
+Finally, the declared model is wrapped with a `dynamite`, for which we supply the data, optional user-defined priors for the model parameters, and additional arguments to the `rstan::sampling` which handles the model estimation. For example, `dynamite(obs(x ~ varying(~ -1 + w), family = "poisson) + splines(df = 10), data = d, time = "year", group = "id", chains = 2, cores = 2)` estimates the model using the data in the dataframe `d`, which contains variables `year` and `id` (defining the time-index and group-indx variables of the data). Arguments `chains` and `cores` are passed to `rstan::sampling`
+which then uses to parallel Markov chains in the the Markov chain Monte Carlo (MCMC) sampling of the model parameters.
+
 # Example
 
-use grunfeld data and or employment for a few examples, see predlife/dynamitepaper/examples on gitlab.
+As an example, we consider the famous Grunfeld dataset, available in the package `plm` [@plm]:
+```{r, eval = FALSE}
+library(dynamite)
+library(ggplot2)
+library(dplyr)
+data(Grunfeld, package = "plm")
+d <- Grunfeld |> mutate(invest = inv) |> select(-inv)
+head(d)
+```
+
+
+The data is in a long format (as required by the `dynamite`), containing the 
+firm id (`firm`, 10 firms), the `year` (20 years), value of the firm (`value`) , the firms’ gross investment (`invest`) and stock of plant and equipment (`capital`). 
+
+Let's first fit the basic model without time-invariant effects of value and capital on the investment, but with a firm-specific random intercept (using the `random_intercept = TRUE` inside of `obs`:
+```{r, eval = FALSE}
+fit_basic <- dynamite(obs(invest ~ value + capital,
+                          family = gaussian(), random_intercept = TRUE),
+                d, "firm", "year",
+                chains = 2, cores = 2, iter = 2000)
+fit_basic
+```
+The results are close to the ones obtained with the `plm` package:
+
+```{r, eval = FALSE}
+plm(inv ~ value + capital, data = Grunfeld, 
+                    index = c("firm", "year"), 
+                    effect = "individual", model = "within")
+```
+
+
+
 
 # References

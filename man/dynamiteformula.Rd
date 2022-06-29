@@ -15,16 +15,39 @@ aux(formula)
 \arguments{
 \item{formula}{[\code{formula}]\cr An R formula describing the model.}
 
-\item{family}{[\code{character(1)}]\cr The family name.}
+\item{family}{[\code{character(1)}]\cr The family name. See details for the
+supported families.}
 
 \item{random_intercept}{[\code{logical(1)}]\cr If \code{TRUE}, adds
 individual-level intercepts to the channel.}
+}
+\value{
+An object of class \code{dynamiteformula}.
 }
 \description{
 TODO description and details of all features
 TODO document families here as well
 TODO document lag-conversion to data
 TODO explain fixed time points
+}
+\details{
+Currently the \code{dynamite} package supports the following distributions for
+the observations:
+\itemize{
+\item Categorical: \code{categorical} (with a softmax link using the first category
+as reference). See the documentation of the \code{categorical_logit_glm} in the
+Stan function reference manual (https://mc-stan.org/users/documentation/).
+\item Gaussian: \code{gaussian} (identity link, parameterized using mean and standard
+deviation).
+\item Poisson: \code{poisson} (log-link, with an optional known offset variable).
+\item Negative-binomial: \code{negbin} (log-link, using mean and dispersion
+parameterization, with an optional known offset variable). See the
+documentation on \code{NegBinomial2} in the Stan function reference manual.
+\item Bernoulli: \code{bernoulli} (logit-link).
+\item Binomial: \code{binomial} (logit-link).
+\item Exponential: \code{exponential} (log-link).
+\item Gamma: \code{gamma} (log-link, using mean and shape parameterisation).
+}
 }
 \section{Functions}{
 \itemize{

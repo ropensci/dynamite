@@ -10,12 +10,17 @@
 #' and then modify the `priors` column of the obtained data frame before
 #' supplying it to the `dynamite`.
 #'
+#' See more details in the package vignette on how to define a dynamite model.
+#'
 #' @param dformula \[`dynamiteformula`]\cr The model formula. See 'Details'.
-#' @param data \[`data.frame`]\cr A `data.frame` containing the variables in
-#'   the model. Supported column types are `integer`, `logical`, `double`,
+#' @param data
+#'   \[`data.frame`, `tibble::tibble`, or `data.table::data.table`]\cr
+#'   The data frame, tibble or a data.table containing the variables in the
+#'   model. Supported column types are `integer`, `logical`, `double`,
 #'   `factor`. `character` columns will be converted to factors.
 #'   Unused factor levels will be dropped. The `data` can contain missing
-#'   values which will simply be ignored in the estimation.
+#'   values which will simply be ignored in the estimation in a case-wise
+#'   fashion (per time-point and per channel).
 #' @param group \[`character(1)`]\cr A column name of `data` that denotes the
 #'   unique groups.
 #' @param time \[`character(1)`]\cr A column name of `data` that denotes the
@@ -27,7 +32,7 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' fit <- dynamite(obs(y ~ -1 + varying(~x), family = gaussian()) +
+#' fit <- dynamite(obs(y ~ -1 + varying(~x), family = "gaussian" +
 #'   lags(type = "varying") + splines(df = 20), gaussian_example, id, time,
 #'   chains = 1, refresh = 0)
 #'
@@ -275,8 +280,8 @@ parse_data <- function(data, dformula, group_var, time_var) {
   if (any(coerce_cols)) {
     for (i in which(coerce_cols)) {
       data[,i] <- do.call(
-        paste0("as.", typeof(data[,i])),
-        args = list(data[,i])
+        paste0("as.", typeof(data[[i]])),
+        args = list(data[[i]])
       )
     }
   }
