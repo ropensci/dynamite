@@ -21,7 +21,7 @@
 #'   changing this if you encounter divergences or other problems in sampling.
 #'   Can be a single logical value, or vector of logical values, defining the
 #'   parameterization separately for each channel.
-#' @param df \[`integer()`]\cr Degree of freedom, i.e., the total number of
+#' @param df \[`integer(1)`]\cr Degree of freedom, i.e., the total number of
 #'   spline coefficients. See [splines::bs()]. Note that the knots are always
 #'   defined as equidistant sequence on the interval starting from the first
 #'   non-fixed time point to the last time point in the data. See
@@ -35,8 +35,13 @@
 #' @srrstats {G2.4a} *explicit conversion to `integer` via `as.integer()`*
 #' @srrstats {G2.4b} *explicit conversion to continuous via `as.numeric()`*
 #' @examples
-#' obs(y ~ -1 + varying(~x), family = "gaussian") +
-#'   lags(type = "varying") + splines(df = 20, lb_tau = 0.0)
+#' # two channel model with varying effects, with explicit lower bounds for the
+#' # random walk prior standard deviations, with noncentered parameterisation
+#' # for the first channel and centered for the second channel.
+#' obs(y ~ 1, family = "gaussian") + obs(x ~ 1, family = "gaussian") +
+#'   lags(type = "varying") +
+#'   splines(df = 20, degree = 3, lb_tau = c(0, 0.1),
+#'     noncentered = c(TRUE, FALSE))
 splines <- function(shrinkage = FALSE, override = FALSE,
                     df = NULL, degree = 3L, lb_tau = 0, noncentered = FALSE) {
   stopifnot_(
@@ -85,8 +90,8 @@ splines <- function(shrinkage = FALSE, override = FALSE,
       lb_tau = lb_tau,
       noncentered = noncentered,
       bs_opts = list(
-        df = df,
-        degree = degree,
+        df = as.integer(df),
+        degree = as.integer(degree),
         intercept = TRUE
       )
     ),

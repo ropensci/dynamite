@@ -24,7 +24,7 @@ not tested comprehensively.}
 definition for the splines will not be overridden by another call to
 \code{splines()}. If \code{TRUE}, any existing definitions will be replaced.}
 
-\item{df}{[\code{integer()}]\cr Degree of freedom, i.e., the total number of
+\item{df}{[\code{integer(1)}]\cr Degree of freedom, i.e., the total number of
 spline coefficients. See \code{\link[splines:bs]{splines::bs()}}. Note that the knots are always
 defined as equidistant sequence on the interval starting from the first
 non-fixed time point to the last time point in the data. See
@@ -54,6 +54,11 @@ This function can be used as part of \code{dynamiteformula} to define the spline
 for the time-varying coefficients \eqn{\delta}.
 }
 \examples{
-obs(y ~ -1 + varying(~x), family = "gaussian") +
-  lags(type = "varying") + splines(df = 20, lb_tau = 0.0)
+# two channel model with varying effects, with explicit lower bounds for the
+# random walk prior standard deviations, with noncentered parameterisation
+# for the first channel and centered for the second channel.
+obs(y ~ 1, family = "gaussian") + obs(x ~ 1, family = "gaussian") +
+  lags(type = "varying") +
+  splines(df = 20, degree = 3, lb_tau = c(0, 0.1),
+    noncentered = c(TRUE, FALSE))
 }
