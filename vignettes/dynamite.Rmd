@@ -101,12 +101,8 @@ library(dynamite)
 head(multichannel_example)
 ```
 
-<<<<<<< HEAD
-The data is in a long format (as required by the `dynamite`), containing the 
-firm id (`firm`, 10 firms), the `year` (20 years), value of the firm (`value`) , the firms’ gross investment (`invest`) and stock of plant and equipment (`capital`). 
-=======
 The data is in a long format (as required by the `dynamite`), containing the variables
-`id` (50 unique firms), the `time` (20 time points), a continuous variable `g`, a varible with non-negative integer values `p`, and a binary varible `b`. We define a following model (which actually matches the data generating process used in simulating the data):
+`id` (50 unique firms), the `time` (20 time points), a continuous variable `g`, a variable with non-negative integer values `p`, and a binary variable `b`. We define a following model (which actually matches the data generating process used in simulating the data):
 
 ```{r}
 set.seed(1)
@@ -115,7 +111,7 @@ f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
   aux(numeric(logp) ~ log(p + 1))
 ```
->>>>>>> 12368358ddadd7f7e4c3974baa37ab642ae13127
+
 
 We can the fit the model using the `dynamite` function (note the small number of iterations and additional thinning in order to satisfy the CRAN requirements):
 ```{r, eval = FALSE}
@@ -124,12 +120,6 @@ multichannel_example_fit <- dynamite(
   chains = 1, cores = 1, iter = 2000, warmup = 1000, init = 0, refresh = 0,
   thin = 5, save_warmup = FALSE)
 ```
-
-
-
-
-
-
 
 
 # References

@@ -138,6 +138,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
   if (is.null(types)) {
     types <- all_types[1L:9L]
   } else {
+    types <- onlyif(is.character(types), tolower(types))
     types <- try(match.arg(types, all_types, TRUE), silent = TRUE)
     stopifnot_(
       !"try-error" %in% class(types),

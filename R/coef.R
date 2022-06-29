@@ -21,7 +21,8 @@
 coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
                              summary = TRUE, probs = c(0.05, 0.95),
                              include_alpha = TRUE, ...) {
-  type <- try(match.arg(type), silent = TRUE)
+  type <- onlyif(is.character(type), tolower(type))
+  type <- try(match.arg(type, c("beta", "delta", "nu")), silent = TRUE)
   stopifnot_(
     !"try-error" %in% class(type),
     "Argument {.arg type} must be either \"beta\", \"delta\", or \"nu\"."
