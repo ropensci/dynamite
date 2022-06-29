@@ -340,8 +340,8 @@ join_dynamiteformulas <- function(e1, e2) {
   )
   for (i in 1L:2L) {
     resp_a <- resp_list[[i]]
-    resp_b <- resp_list[[3L-i]][stoch_list[[3L-i]]]
-    rhs <- rhs_list[[3L-i]][stoch_list[[3L-i]]]
+    resp_b <- resp_list[[3L - i]][stoch_list[[3L - i]]]
+    rhs <- rhs_list[[3L - i]][stoch_list[[3L - i]]]
     if (length(rhs) > 0L) {
       for (j in seq_along(resp_a)) {
         simul_lhs <- resp_a[j]
