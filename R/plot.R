@@ -64,7 +64,8 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5,
     nrow(coefs) > 0L,
     "The model does not contain varying coefficients delta."
   )
-  scales <- try(match.arg(scales), silent = TRUE)
+  scales <- onlyif(is.character(scales), tolower(scales))
+  scales <- try(match.arg(scales, c("fixed", "free")), silent = TRUE)
   stopifnot_(
     !"try-error" %in% class(scales),
     "Argument {.arg scales} must be either \"fixed\" or \"free\"."

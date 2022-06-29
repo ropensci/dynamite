@@ -32,8 +32,6 @@
 #' @return An object of class `splines`.
 #' @export
 #' @srrstats {G2.4} *Provide appropriate mechanisms to convert between different data types, potentially including:*
-#' @srrstats {G2.4a} *explicit conversion to `integer` via `as.integer()`*
-#' @srrstats {G2.4b} *explicit conversion to continuous via `as.numeric()`*
 #' @examples
 #' # two channel model with varying effects, with explicit lower bounds for the
 #' # random walk prior standard deviations, with noncentered parameterisation
@@ -62,7 +60,7 @@ splines <- function(shrinkage = FALSE, override = FALSE,
   )
   stopifnot_(
     checkmate::test_numeric(x = lb_tau, lower = 0L),
-    "Argument {.arg lb_tau} must be an {.cls numeric} vector
+    "Argument {.arg lb_tau} must be a {.cls numeric} vector
      of non-negative values."
   )
   stopifnot_(

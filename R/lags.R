@@ -15,7 +15,8 @@
 #'
 #' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
 lags <- function(k = 1L, type = c("fixed", "varying")) {
-  type <- try(match.arg(type), silent = TRUE)
+  type <- onlyif(is.character(type), tolower(type))
+  type <- try(match.arg(type, c("fixed", "varying")), silent = TRUE)
   stopifnot_(
     !"try-error" %in% class(type),
     "Argument {.arg type} must be \"fixed\" or \"varying\"."

@@ -52,13 +52,37 @@
 #' predict(gaussian_example_fit, type = "response", n_draws = 2L)
 predict.dynamitefit <- function(object, newdata = NULL,
                                 type = c("response", "mean", "link"),
-                                impute = c("none", "locf", "linear"),
-                                new_levels = c("none", "bootstrap", "gaussian",
-                                               "original"),
+                                impute = c("none", "locf"),
+                                new_levels = c(
+                                  "none", "bootstrap", "gaussian", "original"
+                                ),
                                 n_draws = NULL, ...) {
-  type <- match.arg(type)
-  impute <- match.arg(impute)
-  new_levels <- match.arg(new_levels)
+
+  type <- onlyif(is.character(type), tolower(type))
+  type <- try(match.arg(type, c("response", "mean", "link")), silent = TRUE)
+  stopifnot_(
+    !"try-error" %in% class(type),
+    "Argument {.arg type} must be either \"response\", \"mean\", or \"link\"."
+  )
+  impute <- onlyif(is.character(impute), tolower(impute))
+  impute <- try(match.arg(impute, c("none", "locf")), silent = TRUE)
+  stopifnot_(
+    !"try-error" %in% class(impute),
+    "Argument {.arg type} must be either \"none\", or \"locf\"."
+  )
+  new_levels <- onlyif(is.character(new_levels), tolower(new_levels))
+  new_levels <- try(
+    match.arg(
+      new_levels,
+      c("none", "bootstrap", "gaussian", "original")
+    ),
+    silent = TRUE
+  )
+  stopifnot_(
+    !"try-error" %in% class(new_levels),
+    "Argument {.arg type} must be either \"none\", \"bootstrap\",
+     \"gaussian\" or \"original\"."
+  )
   n_draws <- check_ndraws(n_draws, ndraws(object))
   newdata_null <- is.null(newdata)
   if (newdata_null) {
