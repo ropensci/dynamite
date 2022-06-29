@@ -43,4 +43,43 @@ devtools::install_github("santikka/dynamite")
 
 ## Example
 
-TODO
+A single-channel model with time-invariant effect of z, time-varying
+effect of `x`, lagged value of the response variable `y` and a
+group-specific random intercepts:
+
+``` r
+set.seed(1)
+library(dynamite)
+gaussian_example_fit <- dynamite(
+  obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian",
+      random_intercept = TRUE) + splines(df = 20),
+  data = gaussian_example, time = "time", group = "id",
+  iter = 2000, warmup = 1000, thin = 5,
+  chains = 2, cores = 2, refresh = 0, save_warmup = FALSE
+)
+```
+
+Posterior estimates of the fixed effects:
+
+``` r
+plot_betas(gaussian_example_fit)
+```
+
+<img src="man/figures/README-unnamed-chunk-4-1.png" width="100%" />
+
+Posterior estimates of time-varying effects
+
+``` r
+plot_deltas(gaussian_example_fit, scales = "free")
+#> Warning: Removed 1 row(s) containing missing values (geom_path).
+```
+
+<img src="man/figures/README-unnamed-chunk-5-1.png" width="100%" />
+
+And group-specific intercepts:
+
+``` r
+plot_nus(gaussian_example_fit)
+```
+
+<img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" />
