@@ -65,7 +65,7 @@ Posterior estimates of the fixed effects:
 plot_betas(gaussian_example_fit)
 ```
 
-<img src="man/figures/README-unnamed-chunk-4-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-4-1.png" width="50%" />
 
 Posterior estimates of time-varying effects
 
@@ -74,7 +74,7 @@ plot_deltas(gaussian_example_fit, scales = "free")
 #> Warning: Removed 1 row(s) containing missing values (geom_path).
 ```
 
-<img src="man/figures/README-unnamed-chunk-5-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-5-1.png" width="50%" />
 
 And group-specific intercepts:
 
@@ -82,4 +82,4 @@ And group-specific intercepts:
 plot_nus(gaussian_example_fit)
 ```
 
-<img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-6-1.png" width="50%" />

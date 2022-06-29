@@ -10,6 +10,11 @@
 #' and then modify the `priors` column of the obtained data frame before
 #' supplying it to the `dynamite`.
 #'
+#' The default priors for regression coeffiicents are based on the standard
+#' deviation of the covariates at the first non-fixed time point. In case this
+#' is 0 or NA, it is transformed to (arbitrary) 0.5. The final prior is then
+#' normal distribution with zero mean and two times this standard deviation.
+#'
 #' See more details in the package vignette on how to define a dynamite model.
 #'
 #' @param dformula \[`dynamiteformula`]\cr The model formula. See 'Details'.

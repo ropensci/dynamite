@@ -71,27 +71,11 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
     ),
     c(3L, 1L, 2L)
   )[T_idx, , , drop = FALSE]
-  sd_x <- apply(X[1L, , , drop = FALSE], 3L, sd)
-  if (any(is.na(sd_x)) && is.null(priors)) {
-    warning("Encountered NA values when computing standard deviation of ",
-      "covariates for the default priors at the first non-fixed time point. ",
-      "Ignoring these NA values.")
-    sd_x <- apply(X[1L, , , drop = FALSE], 3L, sd, na.rm = TRUE)
-  }
-  if (any(sd_x < 0.25) && is.null(priors)) {
-    warning("Standard deviation of some of the covariates less than 0.25, ",
-            "at the first non-fixed time point. ",
-            "Using 0.25 in construction of default priors.")
-  }
-  # needed for default priors, 0.25 is pretty arbitrary
-  sd_x <- setNames(pmax(0.25, sd_x, na.rm = TRUE), colnames(model_matrix))
-  x_means <- apply(X[1L, , , drop = FALSE], 3L, mean)
-  if (any(is.na(x_means)) && is.null(priors)) {
-    warning("Encountered NA values when computing means of ",
-      "covariates for the default priors at the first non-fixed time point. ",
-      "Ignoring these NA values.")
-    x_means <- apply(X[1L, , , drop = FALSE], 3L, mean, na.rm = TRUE)
-  }
+  sd_x <- apply(X[1L, , , drop = FALSE], 3L, sd, na.rm = TRUE)
+
+  # needed for default priors, 0.5 is pretty arbitrary
+  sd_x <- setNames(pmax(0.5, sd_x, na.rm = TRUE), colnames(model_matrix))
+  x_means <- apply(X[1L, , , drop = FALSE], 3L, mean, na.rm = TRUE)
   # For totally missing covariates
   x_means[is.na(x_means)] <- 0.0
   X_na <- is.na(X)
