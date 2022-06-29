@@ -11,11 +11,11 @@
 #' @param priors \[`data.frame`]\cr A data frame containing the prior
 #'   definitions, or `NULL`, in which case default priors are used.
 #' @param fixed \[`integer(1)`]\cr Number of fixed time points
-#' @param verbose \[`logical(1)`]\cr If `TRUE` outputs warnings.
+#' @param verbose \[`logical(1)`]\cr If `TRUE`, outputs warnings.
 #'
 #' @srrstats {G2.13, G2.14, G2.14a, G2.14b, G2.14c, G2.15}
 #'   Missing data is appropriately considered.
-#' @srrstats {G2.4. G2.4a, G2.4b, G2.4c, G2.4d, G2.4e}
+#' @srrstats {G2.4, G2.4a, G2.4b, G2.4c, G2.4d, G2.4e}
 #'   Data is appropriately converted for Stan.
 #' @srrstats {G2.16} Non-finite values are not supported.
 #' @srrstats {BS2.1, BS2.1a} Proper dimensionality is ensured for Stan.

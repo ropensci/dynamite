@@ -39,6 +39,7 @@
 #'   lags(type = "varying") +
 #'   splines(df = 20, degree = 3, lb_tau = c(0, 0.1),
 #'     noncentered = c(TRUE, FALSE))
+#'
 splines <- function(shrinkage = FALSE, override = FALSE,
                     df = NULL, degree = 3L, lb_tau = 0, noncentered = FALSE) {
   stopifnot_(

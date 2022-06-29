@@ -34,6 +34,8 @@
 #'   time axis.
 #' @param priors \[`data.frame`]\cr An optional data frame with prior
 #'   definitions. See 'Details'.
+#' @param verbose \[`logical(1)`]\cr All warnings are suppressed if set to
+#'   `FALSE`. Defaults to `TRUE`.
 #' @param debug TODO
 #' @param ... Additional arguments to [rstan::sampling()].
 #' @export
@@ -88,7 +90,7 @@
 #' @srrstats {BS5.0, BS5.1, BS5.2, BS5.3, BS5.5}
 #'   Available from the resulting `dynamitefit` object
 dynamite <- function(dformula, data, group = NULL, time,
-                     priors = NULL, debug = NULL, verbose = TRUE, ...) {
+                     priors = NULL, verbose = TRUE, debug = NULL, ...) {
   stopifnot_(
     is.dynamiteformula(dformula),
     "Argument {.arg dformula} must be a {.cls dynamiteformula} object."
@@ -122,6 +124,10 @@ dynamite <- function(dformula, data, group = NULL, time,
     !is.null(data[[time]]),
     "Can't find time index variable {.var {time}} in {.arg data}."
   )
+  stopifnot_(
+    checkmate::test_flag(x = verbose),
+    "Argument {.arg verbose} must be a single {.cls logical} value."
+  )
   data <- parse_data(data, dformula, group, time, verbose)
   dformulas <- parse_lags(data, dformula, group, time)
   evaluate_deterministic(data, dformulas, group, time)
@@ -154,7 +160,8 @@ dynamite <- function(dformula, data, group = NULL, time,
       stan = stan,
       group_var = group,
       time_var = time,
-      priors = dplyr::bind_rows(stan$priors)
+      priors = dplyr::bind_rows(stan$priors),
+      verbose
     ),
     class = "dynamitefit"
   )

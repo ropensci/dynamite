@@ -10,8 +10,8 @@ dynamite(
   group = NULL,
   time,
   priors = NULL,
-  debug = NULL,
   verbose = TRUE,
+  debug = NULL,
   ...
 )
 }
@@ -36,6 +36,9 @@ time axis.}
 
 \item{priors}{[\code{data.frame}]\cr An optional data frame with prior
 definitions. See 'Details'.}
+
+\item{verbose}{[\code{logical(1)}]\cr All warnings are suppressed if set to
+\code{FALSE}. Defaults to \code{TRUE}.}
 
 \item{debug}{TODO}
 

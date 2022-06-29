@@ -1,6 +1,7 @@
 #' Plot Regression Coefficients of a Dynamite Model
 #'
 #' @param x \[`dynamitefit`]\cr The model fit object
+#' @param ... Ignored.
 #' @param level \[`numeric(1)`]\cr Level for posterior intervals.
 #'   Default is 0.05, leading to 90% intervals.
 #' @param alpha \[`numeric(1)`]\cr Opacity level for `geom_ribbon`.
@@ -22,7 +23,11 @@
 #' @srrstats {G2.3a} Uses match.arg in plot_* functions
 #' @srrstats {BS6.1, RE6.0, RE6.1} Implements the `plot` method,
 #'   without a default plot
-plot.dynamitefit <- function(x) {
+plot.dynamitefit <- function(x, ...) {
+  stopifnot_(
+    is.dynamitefit(x),
+    "Argument {.arg x} must be a {.cls dynamitefit} object."
+  )
   message_("Please use {.fun plot_deltas}, {.fun plot_betas}, or
            {.fun plot_nus} to produce plots of a {.cls dynamitefit} object.")
 }
@@ -30,12 +35,12 @@ plot.dynamitefit <- function(x) {
 #' @describeIn plot.dynamitefit
 #'   Visualize Time-varying Regression Coefficients of a Dynamite Model
 #' @export
-plot_deltas <- function(model, level = 0.05, alpha = 0.5,
+plot_deltas <- function(x, level = 0.05, alpha = 0.5,
                         scales = c("fixed", "free"),
                         include_alpha = TRUE) {
   stopifnot_(
-    is.dynamitefit(model),
-    "Argument {.var model} must be a {.cls dynamitefit} object."
+    is.dynamitefit(x),
+    "Argument {.var x} must be a {.cls dynamitefit} object."
   )
   stopifnot_(
     checkmate::test_number(
@@ -58,7 +63,7 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5,
      {.cls numeric} value between 0 and 1."
   )
   coefs <- coef(
-    model,
+    x,
     "delta",
     probs = c(level, 1 - level),
     include_alpha = include_alpha
@@ -99,10 +104,10 @@ plot_deltas <- function(model, level = 0.05, alpha = 0.5,
 #' @describeIn plot.dynamitefit
 #'   Time-invariant Regression Coefficients of a Dynamite Model
 #' @export
-plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
+plot_betas <- function(x, level = 0.05, include_alpha = TRUE){
   stopifnot_(
-    is.dynamitefit(model),
-    "Argument {.var model} must be a {.cls dynamitefit} object."
+    is.dynamitefit(x),
+    "Argument {.var x} must be a {.cls dynamitefit} object."
   )
   stopifnot_(
     checkmate::test_number(
@@ -115,7 +120,7 @@ plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
      {.cls numeric} value between 0 and 1."
   )
   coefs <- coef(
-    model,
+    x,
     "beta",
     probs = c(level, 1 - level),
     include_alpha = include_alpha
@@ -148,10 +153,10 @@ plot_betas <- function(model, level = 0.05, include_alpha = TRUE){
 #' @describeIn plot.dynamitefit
 #'   Visualize Random Intercepts of a Dynamite Model
 #' @export
-plot_nus <- function(model, level = 0.05){
+plot_nus <- function(x, level = 0.05){
   stopifnot_(
-    is.dynamitefit(model),
-    "Argument {.var model} must be a {.cls dynamitefit} object."
+    is.dynamitefit(x),
+    "Argument {.var x} must be a {.cls dynamitefit} object."
   )
   stopifnot_(
     checkmate::test_number(
@@ -164,7 +169,7 @@ plot_nus <- function(model, level = 0.05){
      {.cls numeric} value between 0 and 1."
   )
   coefs <- coef(
-    model,
+    x,
     "nu",
     probs = c(level, 1 - level)
   ) |>

@@ -61,4 +61,5 @@ obs(y ~ 1, family = "gaussian") + obs(x ~ 1, family = "gaussian") +
   lags(type = "varying") +
   splines(df = 20, degree = 3, lb_tau = c(0, 0.1),
     noncentered = c(TRUE, FALSE))
+
 }

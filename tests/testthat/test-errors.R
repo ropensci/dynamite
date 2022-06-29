@@ -386,16 +386,20 @@ test_that("output for non dynamitefit objects fails", {
     "Argument `x` must be a <dynamitefit> object\\."
   )
   expect_error(
-    plot_deltas(model = 1L),
-    "Argument `model` must be a <dynamitefit> object\\."
+    plot.dynamitefit(x = 1L),
+    "Argument `x` must be a <dynamitefit> object\\."
   )
   expect_error(
-    plot_betas(model = 1L),
-    "Argument `model` must be a <dynamitefit> object\\."
+    plot_deltas(x = 1L),
+    "Argument `x` must be a <dynamitefit> object\\."
   )
   expect_error(
-    plot_nus(model = 1L),
-    "Argument `model` must be a <dynamitefit> object\\."
+    plot_betas(x = 1L),
+    "Argument `x` must be a <dynamitefit> object\\."
+  )
+  expect_error(
+    plot_nus(x = 1L),
+    "Argument `x` must be a <dynamitefit> object\\."
   )
   expect_error(
     print.dynamitefit(x = 1L),

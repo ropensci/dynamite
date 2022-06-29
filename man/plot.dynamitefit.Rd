@@ -7,22 +7,24 @@
 \alias{plot_nus}
 \title{Plot Regression Coefficients of a Dynamite Model}
 \usage{
-\method{plot}{dynamitefit}(x)
+\method{plot}{dynamitefit}(x, ...)
 
 plot_deltas(
-  model,
+  x,
   level = 0.05,
   alpha = 0.5,
   scales = c("fixed", "free"),
   include_alpha = TRUE
 )
 
-plot_betas(model, level = 0.05, include_alpha = TRUE)
+plot_betas(x, level = 0.05, include_alpha = TRUE)
 
-plot_nus(model, level = 0.05)
+plot_nus(x, level = 0.05)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object}
+
+\item{...}{Ignored.}
 
 \item{level}{[\code{numeric(1)}]\cr Level for posterior intervals.
 Default is 0.05, leading to 90\% intervals.}
