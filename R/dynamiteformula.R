@@ -30,7 +30,7 @@
 #' @return An object of class `dynamiteformula`.
 #' @export
 #' @examples
-#' obs(y ~ -1 + varying(~x), family = gaussian()) +
+#' obs(y ~ -1 + varying(~x), family = "gaussian") +
 #'   lags(type = "varying") + splines(df = 20)
 #'
 #' @srrstats {G2.3b} *Either: use `tolower()` or equivalent to ensure input of character parameters is not case dependent; or explicitly document that parameters are strictly case-sensitive.*

@@ -55,7 +55,7 @@ documentation on \code{NegBinomial2} in the Stan function reference manual.
 }}
 
 \examples{
-obs(y ~ -1 + varying(~x), family = gaussian()) +
+obs(y ~ -1 + varying(~x), family = "gaussian") +
   lags(type = "varying") + splines(df = 20)
 
 }
