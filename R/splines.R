@@ -88,7 +88,7 @@ splines <- function(shrinkage = FALSE, override = FALSE,
       lb_tau = lb_tau,
       noncentered = noncentered,
       bs_opts = list(
-        df = as.integer(df),
+        df = onlyif(!is.null(df), as.integer(df)),
         degree = as.integer(degree),
         intercept = TRUE
       )
