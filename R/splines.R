@@ -32,7 +32,7 @@
 #' @srrstats {G2.4a} *explicit conversion to `integer` via `as.integer()`*
 #' @srrstats {G2.4b} *explicit conversion to continuous via `as.numeric()`*
 #' @examples
-#' obs(y ~ -1 + varying(~x), family = gaussian()) +
+#' obs(y ~ -1 + varying(~x), family = "gaussian") +
 #'   lags(type = "varying") + splines(df = 20)
 splines <- function(shrinkage = FALSE, override = FALSE,
                     df = NULL, degree = 3, lb_tau = 0, noncentered = FALSE) {

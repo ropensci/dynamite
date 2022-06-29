@@ -20,8 +20,8 @@ A \code{dynamitefit} object obtained by running a \code{dynamite} on the
 \preformatted{
 set.seed(1)
 library(dynamite)
-f <- obs(x ~ z + lag(x) + lag(y), family = categorical()) +
-  obs(y ~ z + lag(x) + lag(y), family = categorical())
+f <- obs(x ~ z + lag(x) + lag(y), family = "categorical") +
+  obs(y ~ z + lag(x) + lag(y), family = "categorical")
 categorical_example_fit <- dynamite(
   f, categorical_example, "id", "time",
   chains = 1, refresh = 0, thin = 5, save_warmup = FALSE)

@@ -49,6 +49,6 @@ This function can be used as part of \code{dynamiteformula} to define the spline
 for the time-varying coefficients \eqn{\delta}.
 }
 \examples{
-obs(y ~ -1 + varying(~x), family = gaussian()) +
+obs(y ~ -1 + varying(~x), family = "gaussian") +
   lags(type = "varying") + splines(df = 20)
 }

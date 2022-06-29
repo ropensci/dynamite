@@ -5,10 +5,29 @@
 #' TODO document lag-conversion to data
 #' TODO explain fixed time points
 #'
+#' Currently the `dynamite` package supports the following distributions for
+#' the observations:
+#'
+#' * Categorical: `categorical` (with a softmax link using the first category
+#'   as reference). See the documentation of the `categorical_logit_glm` in the
+#'   Stan function reference manual (https://mc-stan.org/users/documentation/).
+#' * Gaussian: `gaussian` (identity link, parameterized using mean and standard
+#'   deviation).
+#' * Poisson: `poisson` (log-link, with an optional known offset variable).
+#' * Negative-binomial: `negbin` (log-link, using mean and dispersion
+#'   parameterization, with an optional known offset variable). See the
+#'   documentation on `NegBinomial2` in the Stan function reference manual.
+#' * Bernoulli: `bernoulli` (logit-link).
+#' * Binomial: `binomial` (logit-link).
+#' * Exponential: `exponential` (log-link).
+#' * Gamma: `gamma` (log-link, using mean and shape parameterisation).
+#'
 #' @param formula \[`formula`]\cr An R formula describing the model.
-#' @param family \[`character(1)`]\cr The family name.
+#' @param family \[`character(1)`]\cr The family name. See details for the
+#' supported families.
 #' @param random_intercept \[`logical(1)`]\cr If `TRUE`, adds
 #'   individual-level intercepts to the channel.
+#' @return An object of class `dynamiteformula`.
 #' @export
 #' @examples
 #' obs(y ~ -1 + varying(~x), family = gaussian()) +

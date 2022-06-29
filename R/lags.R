@@ -8,7 +8,7 @@
 #'   added lag terms should vary in time or not.
 #' @export
 #' @examples
-#' obs(y ~ -1 + varying(~x), family = gaussian()) +
+#' obs(y ~ -1 + varying(~x), family = "gaussian") +
 #'   lags(type = "varying") + splines(df = 20)
 #'
 #' @srrstats {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*

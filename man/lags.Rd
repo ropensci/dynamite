@@ -19,7 +19,7 @@ added lag terms should vary in time or not.}
 Add Lagged Responses as Predictors to Each Channel of a Dynamite Model
 }
 \examples{
-obs(y ~ -1 + varying(~x), family = gaussian()) +
+obs(y ~ -1 + varying(~x), family = "gaussian") +
   lags(type = "varying") + splines(df = 20)
 
 }

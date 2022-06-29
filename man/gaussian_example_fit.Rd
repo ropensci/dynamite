@@ -21,7 +21,7 @@ A \code{dynamitefit} object obtained by running a \code{dynamite} on the
 set.seed(1)
 library(dynamite)
 gaussian_example_fit <- dynamite(
-  obs(y ~ -1 + z + varying(~ x + lag(y)), family = gaussian(),
+  obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian",
       random_intercept = TRUE) + splines(df = 20),
   data = gaussian_example, time = "time", group = "id",
   iter = 2000, warmup = 1000, thin = 5,

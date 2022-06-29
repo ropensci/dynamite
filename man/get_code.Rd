@@ -6,7 +6,7 @@
 \alias{get_code.dynamitefit}
 \title{Extract the Stan Code of the Dynamite Model}
 \usage{
-get_code(x, data, group, time, ...)
+get_code(x, ...)
 
 \method{get_code}{dynamiteformula}(x, data, group, time, ...)
 
@@ -16,6 +16,8 @@ get_code(x, data, group, time, ...)
 \item{x}{[\code{dynamiteformula} or \code{dynamitefit}]\cr The model formula or an
 existing \code{dynamitefit} object. See \code{\link[=dynamiteformula]{dynamiteformula()}} and \code{\link[=dynamite]{dynamite()}}.}
 
+\item{...}{Ignored.}
+
 \item{data}{[\code{data.frame}]\cr The data frame containing the variables in
 the model.}
 
@@ -24,8 +26,6 @@ unique groups.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time axis.}
-
-\item{...}{Ignored.}
 }
 \description{
 Returns the Stan code of the model. Mostly useful for debugging or for
@@ -34,6 +34,6 @@ building a customized version of the model.
 \examples{
 
 d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
-cat(get_code(obs(y ~ x, family = gaussian()),
+cat(get_code(obs(y ~ x, family = "gaussian"),
   data = d, time = "time", group = "id"))
 }
