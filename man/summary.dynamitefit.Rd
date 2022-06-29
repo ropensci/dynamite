@@ -9,12 +9,13 @@
 \arguments{
 \item{object}{[\code{dynamitefit}]\cr The model fit object.}
 
-\item{...}{TODO}
+\item{...}{Further arguments to the \code{as.data.frame.dynamitefit}.}
 }
 \description{
-Summary for a Dynamite Model Fit
+Returns the summary statistics of the posterior samples of the model; this
+is an alias of \code{as.data.frame(object)}.
 }
 \examples{
-summary(gaussian_example_fit)
+summary(gaussian_example_fit, types = "beta")
 
 }

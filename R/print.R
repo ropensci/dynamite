@@ -1,9 +1,11 @@
 #' Print a Summary of a Dynamite Object
 #'
-#' Prints the summary information of the estimated dynamite model.
+#' Prints the summary information of the estimated dynamite model: The smallest
+#' effective sample sizes, largest Rhat and summary statistics of the
+#' time-invariant model parameters.
 #'
 #' @param x \[`dynamitefit`] The model fit object.
-#' @param ... Further parameters to the print method for tibbles.
+#' @param ... Further arguments to the print method for tibbles.
 #'   See [tibble::formatting].
 #' @method print dynamitefit
 #' @export
@@ -43,4 +45,3 @@ print.dynamitefit <- function(x, ...) {
   }
   invisible(x)
 }
-

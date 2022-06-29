@@ -744,9 +744,6 @@ model_lines_categorical <- quote({
           "delta_prior_pars_", y, "[, ", 1:np, "]",
           collapse = ", "
         )
-        # can't convert vector[] to vector
-        # mtext_varying <- c(idt(1), "to_vector(to_matrix(a_raw_", i, "[, , 1])') ~ ", d, "(", paste0("delta_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
-        # this works but might give a false warning about missing jacobian which needs to be suppressed?
         mtext_varying <-
           "to_vector(delta_{y}[1]) ~ {delta_prior_distr}({dpars_varying});"
       } else {
@@ -769,9 +766,6 @@ model_lines_categorical <- quote({
           "delta_prior_pars_", y, "[, ", 1:np, "]",
           collapse = ", "
         )
-        # can't convert vector[] to vector
-        # mtext_varying <- c(idt(1), "to_vector(to_matrix(omega_raw_", i, "[, , 1])') ~ ", d, "(", paste0("delta_prior_pars_", i, "[, ", 1:np, "]", collapse = ", "), ");")
-        # this works but might give a false warning about missing jacobian which needs to be suppressed?
         mtext_varying <-
           "to_vector(delta_{y}[1]) ~ {delta_prior_distr}({dpars_varying});"
       } else {

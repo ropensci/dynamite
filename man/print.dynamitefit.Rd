@@ -9,11 +9,13 @@
 \arguments{
 \item{x}{[\code{dynamitefit}] The model fit object.}
 
-\item{...}{Further parameters to the print method for tibbles.
+\item{...}{Further arguments to the print method for tibbles.
 See \link[tibble:formatting]{tibble::formatting}.}
 }
 \description{
-Prints the summary information of the estimated dynamite model.
+Prints the summary information of the estimated dynamite model: The smallest
+effective sample sizes, largest Rhat and summary statistics of the
+time-invariant model parameters.
 }
 \examples{
 print(gaussian_example_fit)
