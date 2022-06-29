@@ -26,7 +26,7 @@ mcmc_diagnostics <- function(x, n = 1L) {
   )
   if (!is.null(x$stanfit)) {
     if (x$stanfit@stan_args[[1L]]$algorithm == "NUTS") {
-      cat("NUTS sampler diagnostics: ")
+      cat("NUTS sampler diagnostics:\n")
       invisible(utils::capture.output(msg <-
         utils::capture.output(rstan::check_hmc_diagnostics(x$stanfit),
                               type = "message")))

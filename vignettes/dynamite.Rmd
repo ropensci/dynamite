@@ -121,5 +121,13 @@ multichannel_example_fit <- dynamite(
   thin = 5, save_warmup = FALSE)
 ```
 
+We can obtain posterior samples or summary statistics of the model usign the `as.data.frame`, `coef`, and `summary` functions, but here we opt for visualizing the results using the `plot_betas` function:
+
+```{r}
+plot_betas(multichannel_example_fit)
+```
+
+Note the naming of the model parameters; for example `beta_b_g_lag1` corresponds to a fixed coefficient `beta` of lagged variabe `g` of the the channel `b`.
+
 
 # References
