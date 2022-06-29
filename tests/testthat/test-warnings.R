@@ -81,9 +81,9 @@ test_that("untyped deterministic warns", {
 
 test_that("Too large n_draws warns", {
   expect_warning(
-    predict(gaussian_example_fit, n_draws = 1e6),
+    predict(gaussian_example_fit, n_draws = 500),
     paste0(
-      "You've supplied `n_draws` = 1000000 but ",
+      "You've supplied `n_draws` = 500 but ",
       "there are only 400 samples available:\n",
       "i The available samples will be used for prediction\\."
     )

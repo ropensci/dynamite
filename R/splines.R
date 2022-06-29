@@ -35,18 +35,42 @@
 #' obs(y ~ -1 + varying(~x), family = gaussian()) +
 #'   lags(type = "varying") + splines(df = 20)
 splines <- function(shrinkage = FALSE, override = FALSE,
-                    df = NULL, degree = 3, lb_tau = 0, noncentered = FALSE) {
-  shrinkage <- try_type(shrinkage, "logical")[1]
-  override <- try_type(override, "logical")[1]
-  df <- try_type(df, "integer")[1]
-  degree <- try_type(degree, "integer")
-  # length of these this argument can be > 1 for channel-wise definitions,
-  # check the length later
-  noncentered <- try_type(noncentered, "logical")
-  lb_tau <- try_type(lb_tau, "numeric")
+                    df = NULL, degree = 3L, lb_tau = 0, noncentered = FALSE) {
   stopifnot_(
-    all(lb_tau >= 0),
-    "Lower bound for {.arg tau} must be non-negative."
+    checkmate::test_flag(x = shrinkage),
+    "Argument {.arg shrinkage} must be a single {.cls logical} value."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = override),
+    "Argument {.arg override} must be a single {.cls logical} value."
+  )
+  stopifnot_(
+    checkmate::test_int(x = df, lower = 1L, null.ok = TRUE),
+    "Argument {.arg df} must be a single positive {.cls integer}."
+  )
+  stopifnot_(
+    checkmate::test_integer(x = degree, lower = 1L),
+    "Argument {.arg degree} must be an {.cls integer} vector
+     of positive values."
+  )
+  stopifnot_(
+    checkmate::test_logical(
+      x = noncentered,
+      any.missing = FALSE,
+      min.len = 1L
+    ),
+    "Argument {.arg noncentered} must be a {.cls logical} vector."
+  )
+  stopifnot_(
+    checkmate::test_numeric(
+      x = lb_tau,
+      lower = 0.0,
+      min.len = 1L,
+      finite = TRUE,
+      any.missing = FALSE
+    ),
+    "Argument {.arg lb_tau} must be a
+     {.cls numeric} vector of non-negative values."
   )
   structure(
     list(

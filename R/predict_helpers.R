@@ -9,9 +9,11 @@ check_ndraws <- function(n_draws, full_draws) {
   if (is.null(n_draws)) {
     n_draws <- full_draws
   }
-  n_draws <- try_type(n_draws, "integer")
   stopifnot_(
-    n_draws > 0L,
+    checkmate::test_int(
+      x = n_draws,
+      lower = 1L
+    ),
     "Argument {.var n_draws} must be a positive {.cls integer}."
   )
   if (n_draws > full_draws) {
@@ -22,7 +24,7 @@ check_ndraws <- function(n_draws, full_draws) {
     ))
     n_draws <- full_draws
   }
-  n_draws
+  as.integer(n_draws)
 }
 
 #' Parse and Prepare New Data for Prediction

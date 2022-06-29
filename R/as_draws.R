@@ -20,9 +20,9 @@
 as_draws_df.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
   stopifnot_(
     is.dynamitefit(x),
-    "Argument {.var x} must be a {.cls dynamitefit} object."
+    "Argument {.arg x} must be a {.cls dynamitefit} object."
   )
-  d <- as.data.frame(
+  d <- as.data.frame.dynamitefit(
     x,
     responses,
     types,

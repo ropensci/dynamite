@@ -85,9 +85,43 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     is.dynamitefit(x),
     "Argument {.arg x} must be a {.cls dynamitefit} object."
   )
-  summary <- try_type(summary, "logical")[1]
-  include_fixed <- try_type(include_fixed, "logical")[1]
-  probs <- try_type(probs, "numeric")
+  stopifnot_(
+    checkmate::test_character(
+      x = responses,
+      any.missing = FALSE,
+      min.len = 1L,
+      null.ok = TRUE
+    ),
+    "Argument {.arg responses} must be a {.cls character} vector."
+  )
+  stopifnot_(
+    checkmate::test_character(
+      x = types,
+      any.missing = FALSE,
+      min.len = 1L,
+      null.ok = TRUE
+    ),
+    "Argument {.arg types} must be a {.cls character} vector."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = summary),
+    "Argument {.arg summary} must be a single {.cls logical} value."
+  )
+  stopifnot_(
+    checkmate::test_numeric(
+      x = probs,
+      lower = 0.0,
+      upper = 1.0,
+      any.missing = FALSE,
+      min.len = 1L
+    ),
+    "Argument {.arg probs} must be a {.cls numeric} vector with values between
+     0 and 1."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = include_fixed),
+    "Argument {.arg include_fixed} must be a single {.cls logical} value."
+  )
   if (is.null(responses)) {
     responses <- unique(x$priors$response)
   } else {
@@ -101,11 +135,15 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     "alpha", "beta", "delta", "tau", "tau_alpha",
     "sigma_nu", "sigma", "phi", "nu", "omega", "omega_alpha"
   )
-  types <- ifelse_(
-    is.null(types),
-    all_types[1L:9L],
-    match.arg(types, all_types, TRUE)
-  )
+  if (is.null(types)) {
+    types <- all_types[1L:9L]
+  } else {
+    types <- try(match.arg(types, all_types, TRUE), silent = TRUE)
+    stopifnot_(
+      !"try-error" %in% class(types),
+      "Argument {.arg type} contains unknown types."
+    )
+  }
   all_time_points <- sort(unique(x$data[[x$time_var]]))
   fixed <- x$stan$fixed
   values <- function(type, response) {

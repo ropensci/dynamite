@@ -87,36 +87,49 @@
 #' @srrstats {RE4.4} *The specification of the model, generally as a formula (via `formula()`)*
 #' @srrstats {RE4.8} *Response variables, and associated "metadata" where applicable.*
 #' @srrstats {RE4.13} *Predictor variables, and associated "metadata" where applicable.*
-dynamite <- function(dformula, data, group, time,
+dynamite <- function(dformula, data, group = NULL, time,
                      priors = NULL, debug = NULL, ...) {
   stopifnot_(
-    is.data.frame(data),
-    "Argument {.arg data} is not a {.cls data.frame} object."
+    is.dynamiteformula(dformula),
+    "Argument {.arg dformula} must be a {.cls dynamiteformula} object."
   )
-  if (missing(group) || is.null(group)) {
-    group <- NULL
-    group_var <- NULL
-  } else {
-    group_var <- try_type(group, "character")
+  stopifnot_(
+    is.data.frame(data),
+    "Argument {.arg data} must be a {.cls data.frame} object."
+  )
+  stopifnot_(
+    checkmate::test_string(
+      x = group,
+      null.ok = TRUE
+    ),
+    "Argument {.arg group} must be a single character string or {.code NULL}."
+  )
+  if (!is.null(group)) {
     stopifnot_(
-      !is.null(data[[group_var]]),
-      "Can't find grouping variable {.var {group_var}} in {.arg data}."
+      !is.null(data[[group]]),
+      "Can't find grouping variable {.var {group}} in {.arg data}."
     )
   }
-  stopifnot_(!missing(time), "Argument {.var time} is missing.")
-  time_var <- try_type(time, "character")
   stopifnot_(
-    !is.null(data[[time_var]]),
-    "Can't find time index variable {.var {time_var}} in {.arg data}."
+    !missing(time),
+    "Argument {.var time} is missing."
   )
-  data <- parse_data(data, dformula, group_var, time_var)
-  dformulas <- parse_lags(data, dformula, group_var, time_var)
-  evaluate_deterministic(data, dformulas, group_var, time_var)
+  stopifnot_(
+    checkmate::test_string(x = time),
+    "Argument {.arg time} must be a single character string."
+  )
+  stopifnot_(
+    !is.null(data[[time]]),
+    "Can't find time index variable {.var {time}} in {.arg data}."
+  )
+  data <- parse_data(data, dformula, group, time)
+  dformulas <- parse_lags(data, dformula, group, time)
+  evaluate_deterministic(data, dformulas, group, time)
   stan <- prepare_stan_data(
     data,
     dformulas$stoch,
-    group_var,
-    time_var,
+    group,
+    time,
     priors,
     fixed = attr(dformulas$all, "max_lag")
   )
@@ -139,8 +152,8 @@ dynamite <- function(dformula, data, group, time,
       dformulas = dformulas,
       data = data,
       stan = stan,
-      group_var = group_var,
-      time_var = time_var,
+      group_var = group,
+      time_var = time,
       priors = dplyr::bind_rows(stan$priors)
     ),
     class = "dynamitefit"
