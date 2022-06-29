@@ -8,7 +8,7 @@ splines(
   shrinkage = FALSE,
   override = FALSE,
   df = NULL,
-  degree = 3,
+  degree = 3L,
   lb_tau = 0,
   noncentered = FALSE
 )
@@ -28,9 +28,11 @@ definition for the splines will not be overridden by another call to
 spline coefficients. See \code{\link[splines:bs]{splines::bs()}}. Note that the knots are always
 defined as equidistant sequence on the interval starting from the first
 non-fixed time point to the last time point in the data. See
-\code{\link[=dynamiteformula]{dynamiteformula()}} for more information on fixed time points.}
+\code{\link[=dynamiteformula]{dynamiteformula()}} for more information on fixed time points.
+Should be an (unrestricted) positive integer.}
 
-\item{degree}{[\code{integer(1)}]\cr See \code{\link[splines:bs]{splines::bs()}}.}
+\item{degree}{[\code{integer(1)}]\cr See \code{\link[splines:bs]{splines::bs()}}. Should be an
+(unrestricted) positive integer.}
 
 \item{lb_tau}{[\code{numeric()}]\cr Hard constraint(s) on the lower bound of the
 standard deviation parameters \eqn{\tau} of the random walk priors. Can be
@@ -44,11 +46,14 @@ changing this if you encounter divergences or other problems in sampling.
 Can be a single logical value, or vector of logical values, defining the
 parameterization separately for each channel.}
 }
+\value{
+An object of class \code{splines}.
+}
 \description{
 This function can be used as part of \code{dynamiteformula} to define the splines
 for the time-varying coefficients \eqn{\delta}.
 }
 \examples{
 obs(y ~ -1 + varying(~x), family = "gaussian") +
-  lags(type = "varying") + splines(df = 20)
+  lags(type = "varying") + splines(df = 20, lb_tau = 0.0)
 }

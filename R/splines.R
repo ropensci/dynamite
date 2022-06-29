@@ -26,7 +26,9 @@
 #'   defined as equidistant sequence on the interval starting from the first
 #'   non-fixed time point to the last time point in the data. See
 #'   [dynamite::dynamiteformula()] for more information on fixed time points.
-#' @param degree \[`integer(1)`]\cr See [splines::bs()].
+#'   Should be an (unrestricted) positive integer.
+#' @param degree \[`integer(1)`]\cr See [splines::bs()]. Should be an
+#'   (unrestricted) positive integer.
 #' @return An object of class `splines`.
 #' @export
 #' @srrstats {G2.4} *Provide appropriate mechanisms to convert between different data types, potentially including:*
@@ -34,7 +36,7 @@
 #' @srrstats {G2.4b} *explicit conversion to continuous via `as.numeric()`*
 #' @examples
 #' obs(y ~ -1 + varying(~x), family = "gaussian") +
-#'   lags(type = "varying") + splines(df = 20)
+#'   lags(type = "varying") + splines(df = 20, lb_tau = 0.0)
 splines <- function(shrinkage = FALSE, override = FALSE,
                     df = NULL, degree = 3L, lb_tau = 0, noncentered = FALSE) {
   stopifnot_(
@@ -50,9 +52,13 @@ splines <- function(shrinkage = FALSE, override = FALSE,
     "Argument {.arg df} must be a single positive {.cls integer}."
   )
   stopifnot_(
-    checkmate::test_integer(x = degree, lower = 1L),
-    "Argument {.arg degree} must be an {.cls integer} vector
-     of positive values."
+    checkmate::test_int(x = degree, lower = 1L),
+    "Argument {.arg degree} must be a single positive {.cls integer}."
+  )
+  stopifnot_(
+    checkmate::test_numeric(x = lb_tau, lower = 0L),
+    "Argument {.arg lb_tau} must be an {.cls numeric} vector
+     of non-negative values."
   )
   stopifnot_(
     checkmate::test_logical(

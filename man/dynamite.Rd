@@ -4,7 +4,7 @@
 \alias{dynamite}
 \title{Estimate a Bayesian Dynamic Multivariate Panel Model}
 \usage{
-dynamite(dformula, data, group, time, priors = NULL, debug = NULL, ...)
+dynamite(dformula, data, group = NULL, time, priors = NULL, debug = NULL, ...)
 }
 \arguments{
 \item{dformula}{[\code{dynamiteformula}]\cr The model formula. See 'Details'.}
