@@ -32,7 +32,6 @@ mcmc_diagnostics <- function(x, n = 1L) {
                               type = "message")))
       cat(msg, sep = "\n")
     }
-    #TODO ok to suppress warnings?
     sumr <- posterior::summarise_draws(suppressWarnings(as_draws(x)),
       posterior::default_convergence_measures())
 

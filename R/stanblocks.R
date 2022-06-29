@@ -153,6 +153,6 @@ create_generated_quantities <- function(dformula, idt, vars) {
   #} else {
   #  NULL
   #}
-  # TODO uncomment if needed
+  # uncomment if needed in the future
   NULL
 }

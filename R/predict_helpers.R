@@ -52,7 +52,6 @@ parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
     )
     group <- newdata[[group_var]]
     group <- unique(group)
-    # TODO doesn't really matter at least at the moment
     extra_levels <- unique(group[!group %in% data[[group_var]]])
     stopifnot_(
       all(group %in% data[[group_var]]) || !identical(new_levels, "none"),
