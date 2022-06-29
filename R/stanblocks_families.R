@@ -333,7 +333,10 @@ transformed_parameters_lines_default <- quote({
         "matrix[{K_varying}, D] omega_{y};",
         "omega_{y}[, 1] = omega_raw_{y}[, 1];",
         "for (i in 2:D) {{",
-          "omega_{y}[, i] = omega_{y}[, i - 1] + omega_raw_{y}[, i] .* tau_{y}{lambda_term}",
+          paste0(
+            "omega_{y}[, i] = omega_{y}[, i - 1] + ",
+            "omega_raw_{y}[, i] .* tau_{y}{lambda_term}"
+          ),
         "}}",
         .indent = idt(c(1, 1, 1, 2, 1)),
         .parse = FALSE
@@ -367,7 +370,10 @@ transformed_parameters_lines_default <- quote({
         "row_vector[D] omega_alpha_{y};",
         "omega_alpha_{y}[1] = omega_alpha_1_{y};",
         "for (i in 2:D) {{",
-          "omega_alpha_{y}[i] = omega_alpha_{y}[i - 1] + omega_raw_alpha_{y}[i - 1] * tau_alpha_{y}{lambda_term}",
+          paste0(
+            "omega_alpha_{y}[i] = omega_alpha_{y}[i - 1] + ",
+            "omega_raw_alpha_{y}[i - 1] * tau_alpha_{y}{lambda_term}"
+          ),
         "}}",
         .indent = idt(c(1, 1, 1, 2, 1)),
         .parse = FALSE
@@ -428,7 +434,10 @@ transformed_parameters_lines_categorical <- quote({
         "for (s in 1:{S - 1}) {{",
           "omega_{y}[s, , 1] = omega_raw_{y}[s, , 1];",
           "for (i in 2:D) {{",
-            "omega_{y}[s, , i] = omega_{y}[s, , i - 1] + omega_raw_{y}[s, , i] .* tau_{y}{lambda_term}",
+            paste0(
+              "omega_{y}[s, , i] = omega_{y}[s, , i - 1] + ",
+              "omega_raw_{y}[s, , i] .* tau_{y}{lambda_term}"
+            ),
           "}}",
         "}}",
         .indent = idt(c(1, 1, 2, 2, 3, 2, 1)),
@@ -452,8 +461,14 @@ transformed_parameters_lines_categorical <- quote({
       "real omega_alpha_1_{y}[{S - 1}];",
       "for (s in 1:{S - 1}) {{",
         "vector[{K}] gamma_{y};",
-        onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y}[, s];"),
-        onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1, , s];"),
+        onlyif(
+          has_fixed,
+          "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y}[, s];"
+        ),
+        onlyif(
+          has_varying,
+          "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1, , s];"
+        ),
         "omega_alpha_1_{y}[s] = a_{y}[s] - X_m[{{{cs(J)}}}] * gamma_{y};",
       "}}",
       .indent = idt(c(1, 1, 1, 2, 2, 2, 2, 1)),
@@ -466,7 +481,10 @@ transformed_parameters_lines_categorical <- quote({
         "for (s in 1:{S - 1}) {{",
           "omega_alpha_{y}[s, 1] = omega_alpha_1_{y}[s];",
           "for (i in 2:D) {{",
-            "omega_alpha_{y}[s, i] = omega_alpha_{y}[s, i - 1] + omega_raw_alpha_{y}[s, i - 1] * tau_alpha_{y}{lambda_term}",
+            paste0(
+              "omega_alpha_{y}[s, i] = omega_alpha_{y}[s, i - 1] + ",
+              "omega_raw_alpha_{y}[s, i - 1] * tau_alpha_{y}{lambda_term}"
+            ),
           "}}",
         "}}",
         .indent = idt(c(1, 1, 2, 2, 3, 2, 1)),
@@ -500,8 +518,14 @@ transformed_parameters_lines_categorical <- quote({
       "vector[{S - 1}] alpha_{y};",
       "for (s in 1:{S - 1}) {{",
         "vector[{K}] gamma_{y};",
-        onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y}[, s];"),
-        onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1, , s];"),
+        onlyif(
+          has_fixed,
+          "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y}[, s];"
+        ),
+        onlyif(
+          has_varying,
+          "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1, , s];"
+        ),
         "alpha_{y}[s] = a_{y}[s] - X_m[{{{cs(J)}}}] * gamma_{y};",
       "}}",
       .indent = idt(c(1, 1, 2, 2, 2, 2, 1)),
@@ -565,9 +589,15 @@ model_lines_default <- quote({
       } else {
         lambda_term <- ifelse_(shrinkage, " * lambda[i - 1]", "")
         mtext_omega <- paste_rows(
-          "omega_raw_alpha_{y}[1] ~ normal(omega_alpha_1_{y}, tau_alpha_{y}{lambda_term});",
+          paste0(
+            "omega_raw_alpha_{y}[1] ~ normal(omega_alpha_1_{y}, ",
+            "tau_alpha_{y}{lambda_term});"
+          ),
           "for (i in 2:(D - 1)) {{",
-            "omega_raw_alpha_{y}[i] ~ normal(omega_raw_alpha_{y}[i - 1], tau_alpha_{y}{lambda_term});",
+            paste0(
+              "omega_raw_alpha_{y}[i] ~ normal(omega_raw_alpha_{y}[i - 1], ",
+              "tau_alpha_{y}{lambda_term});"
+            ),
           "}}",
           .indent = idt(c(1, 1, 2, 1)),
           .parse = FALSE
@@ -632,8 +662,11 @@ model_lines_default <- quote({
         "for (i in 2:D) {{",
         ifelse_(
           shrinkage,
-          "omega_{y}[, i] ~ normal(omega_{y}[, i - 1], lambda[i - 1] * tau_{y});",
-          "omega_{y}[, i] ~ normal(omega_{y}[, i - 1], tau_{y});"
+          paste0(
+            "omega_{y}[, i] ~ normal(omega_{y}[, i- 1], ",
+            "lambda[i - 1] * tau_{y});"
+          ),
+          "omega_{y}[, i] ~ normal(omega_{y}[, i- 1], tau_{y});"
         ),
         "}}",
         .indent = idt(c(0, 1, 2, 1)),
@@ -703,9 +736,16 @@ model_lines_categorical <- quote({
         lambda_term <- ifelse_(shrinkage, " * lambda[i - 1]", "")
         mtext_omega <- paste_rows(
           "for (s in 1:{S - 1}) {{",
-            "omega_raw_alpha_{y}[s, 1] ~ normal(omega_alpha_1_{y}[s], tau_alpha_{y}{lambda_term});",
+            paste0(
+              "omega_raw_alpha_{y}[s, 1] ~ normal(omega_alpha_1_{y}[s], ",
+              "tau_alpha_{y}{lambda_term});"
+            ),
             "for (i in 2:(D - 1)) {{",
-              "omega_raw_alpha_{y}[s, i] ~ normal(omega_raw_alpha_{y}[s, i - 1], tau_alpha_{y}{lambda_term});",
+              paste0(
+                "omega_raw_alpha_{y}[s, i] ~ ",
+                "normal(omega_raw_alpha_{y}[s, i - 1], ",
+                "tau_alpha_{y}{lambda_term});"
+              ),
             "}}",
           "}}",
           .indent = idt(c(1, 2, 2, 3, 2, 1)),
@@ -779,7 +819,10 @@ model_lines_categorical <- quote({
           "for (i in 2:D) {{",
           ifelse_(
             shrinkage,
-            "omega_{y}[s, , i] ~ normal(omega_{y}[s, , i - 1], lambda[i - 1] * tau_{y});",
+            paste0(
+              "omega_{y}[s, , i] ~ normal(omega_{y}[s, , i - 1], ",
+              "lambda[i - 1] * tau_{y});"
+            ),
             "omega_{y}[s, , i] ~ normal(omega_{y}[s, , i - 1], tau_{y});"
           ),
           "}}",
@@ -814,7 +857,10 @@ model_lines_categorical <- quote({
     !has_random_intercept,
     "Categorical family does not yet support random intercepts."
   )
-  likelihood_term <- "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], {intercept}, append_col(zeros_K_{y}, gamma_{y}));"
+  likelihood_term <- paste0(
+    "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], ",
+    "{intercept}, append_col(zeros_K_{y}, gamma_{y}));"
+  )
   paste_rows(
     mtext_intercept,
     mtext_fixed,
@@ -856,7 +902,10 @@ model_lines_gaussian <- quote({
     glue::glue("{intercept_alpha}{plus}{intercept_nu}"),
     ""
   )
-  likelihood_term <- "{y}[{obs}, t] ~ normal_id_glm(X[t][{obs}, {{{cs(J)}}}], {intercept}, gamma_{y}, sigma_{y});"
+  likelihood_term <- paste0(
+    "{y}[{obs}, t] ~ normal_id_glm(X[t][{obs}, {{{cs(J)}}}], ",
+    "{intercept}, gamma_{y}, sigma_{y});"
+  )
   mtext <- paste_rows(
     sigma_term,
     "{{",
@@ -911,7 +960,10 @@ model_lines_binomial <- quote({
     glue::glue("{intercept_alpha}{plus_i}{intercept_nu}"),
     ""
   )
-  likelihood_term <- "{y}[t, {obs}] ~ binomial_logit(trials_{y}[t, {obs}], {intercept}{plus_ic}{fixed_term}{plus_c}{varying_term});"
+  likelihood_term <- paste0(
+    "{y}[t, {obs}] ~ binomial_logit(trials_{y}[t, {obs}], ",
+    "{intercept}{plus_ic}{fixed_term}{plus_c}{varying_term});"
+  )
   mtext <- paste_rows(
     "for (t in 1:T) {{",
     likelihood_term,
@@ -943,7 +995,10 @@ model_lines_bernoulli <- quote({
     glue::glue("{intercept_alpha}{plus}{intercept_nu}"),
     "0"
   )
-  likelihood_term <- "{y}[t, {obs}] ~ bernoulli_logit_glm(X[t][{obs}, {{{cs(J)}}}], {intercept}, gamma_{y});"
+  likelihood_term <- paste0(
+    "{y}[t, {obs}] ~ bernoulli_logit_glm(X[t][{obs}, ",
+    "{{{cs(J)}}}], {intercept}, gamma_{y});"
+  )
   mtext <- paste_rows(
     "{{",
     "vector[{K}] gamma_{y};",
@@ -990,7 +1045,10 @@ model_lines_poisson <- quote({
   if (!has_offset && !nzchar(intercept)) {
     intercept <- "0"
   }
-  likelihood_term <- "{y}[t, {obs}] ~ poisson_log_glm(X[t][{obs}, {{{cs(J)}}}], {intercept}{plus2}{offset_term}, gamma_{y});"
+  likelihood_term <- paste0(
+    "{y}[t, {obs}] ~ poisson_log_glm(X[t][{obs}, {{{cs(J)}}}], ",
+    "{intercept}{plus2}{offset_term}, gamma_{y});"
+  )
   mtext <- paste_rows(
     "{{",
     "vector[{K}] gamma_{y};",
@@ -1039,7 +1097,10 @@ model_lines_negbin <- quote({
   if (!has_offset && !nzchar(intercept)) {
     intercept <- "0"
   }
-  likelihood_term <- "{y}[t, {obs}] ~ neg_binomial_2_log_glm(X[t][{obs}, {{{cs(J)}}}], {intercept}{plus2}{offset_term}, gamma_{y}, phi_{y});"
+  likelihood_term <- paste0(
+    "{y}[t, {obs}] ~ neg_binomial_2_log_glm(X[t][{obs}, {{{cs(J)}}}], ",
+    "{intercept}{plus2}{offset_term}, gamma_{y}, phi_{y});"
+  )
   mtext <- paste_rows(
     phi_term,
     "{{",
@@ -1094,7 +1155,10 @@ model_lines_exponential <- quote({
     glue::glue("{intercept_alpha}{plus_i}{intercept_nu}"),
     ""
   )
-  likelihood_term <- "{y}[{obs}, t] ~ exponential(exp(-({intercept}{plus_ic}{fixed_term}{plus_c}{varying_term})));"
+  likelihood_term <- paste0(
+    "{y}[{obs}, t] ~ exponential(exp(-({intercept}{plus_ic}",
+    "{fixed_term}{plus_c}{varying_term})));"
+  )
   mtext <- paste_rows(
     "for (t in 1:T) {{",
     likelihood_term,
@@ -1145,7 +1209,10 @@ model_lines_gamma <- quote({
     glue::glue("{intercept_alpha}{plus_i}{intercept_nu}"),
     ""
   )
-  likelihood_term <- "{y}[{obs}, t] ~ gamma(phi_{y}, phi_{y} * exp(-({intercept}{plus_ic}{fixed_term}{plus_c}{varying_term})));"
+  likelihood_term <- paste0(
+    "{y}[{obs}, t] ~ gamma(phi_{y}, phi_{y} * ",
+    "exp(-({intercept}{plus_ic}{fixed_term}{plus_c}{varying_term})));"
+  )
   mtext <- paste_rows(
     phi_term,
     "for (t in 1:T) {{",
