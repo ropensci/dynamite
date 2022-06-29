@@ -63,6 +63,25 @@ where $K$ is the number of covariates, $B_t$ is a vector of B-spline values at t
 \]
 with user defined prior $p(\omega^c_{k,1})$ on the first coefficient, which due to the structure of $B_1$ corresponds to the prior on the $\delta^c_{k,1}$. Here, the parameter $\tau^c_k$ controls the smoothness of the spline curves.
 
+# Defining the model
+
+The models in the `dynamite` package are defined by combining the channel-specific formulas defined via the R's formula syntax. Each channel is defined within a special `obs` function, and these are combined with `+`. For example a formula `obs(y ~ lag(x), family = "gaussian") + obs(x ~ z, family = "poisson")` defines a model with two channels; first we declare that `y` is a gaussian variable depending on a previous value of `x` (`lag(x)`), and then we add a second channel declaring `x` as Poisson distributed depending on some exogenous variable `z` (for which we do not define any distribution). 
+
+The `dynamite` models do not support contemporaneous dependencies in order to avoid complex cyclic dependencies which would make handling missing data, subsequent predictions, and causal inference channelling or impossible. This is why we used `lag(x)` in the previous example, a shorthand for `lag(x, k = 1)`, which defines a one-step lag of the variable `x`. Longer lags can also be defined by adjusting the argument `k`.
+
+In addition to declaring response variables via `obs`, we can also use function `aux` to define auxiliary channels which are deterministic functions of other variables. Defining these auxiliary variables explicitly instead of defining these directly on the right-hand side of the formulas makes the subsequent prediction steps more clear and allows easier checks on the model validity. An example of a formula using an auxiliary channel could be `obs(y ~ lag(log1x), family = "gaussian") + obs(x ~ z, family = "poisson") + aux(log1x = log(1 + x))`. Note that the auxiliary channel can also depend on other variables without lags. The function `aux` also does not use the `family` argument, which is automatically set to `deterministic`.
+
+Currently the `dynamite` package supports the following distributions for the observations:
+
+* Categorical: `categorical` (with a softmax link using the first category as reference). See the documentation of the `categorical_logit_glm` in the Stan function reference manual (https://mc-stan.org/users/documentation/).
+* Gaussian: `gaussian` (identity link, parameterized using mean and standard deviation).
+* Poisson: `poisson` (log-link, with an optional known offset variable).
+* Negative-binomial: `negbin` (log-link, using mean and dispersion parameterization, with an optional known offset variable). See the documentation on `NegBinomial2` in the Stan function reference manual.
+* Bernoulli: `bernoulli` (logit-link).
+* Binomial: `binomial` (logit-link).
+* Exponential: `exponential` (log-link).
+* Gamma: `gamma` (log-link, using mean and shape parameterisation).
+
 # Example
 
 use grunfeld data and or employment for a few examples, see predlife/dynamitepaper/examples on gitlab.
