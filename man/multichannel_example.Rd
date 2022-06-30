@@ -11,7 +11,7 @@ A data frame with 3000 rows and 5 variables:
 \item{time}{Variable defining the time point of the measurement (1 to 20).}
 \item{g}{Response variable following gaussian distribution.}
 \item{p}{Response variable following Poisson distribution.}
-\item{b}{Response variable following bernoulli distribution.}
+\item{b}{Response variable following Bernoulli distribution.}
 }
 }
 \source{

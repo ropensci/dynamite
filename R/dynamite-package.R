@@ -1,7 +1,7 @@
 #' The 'dynamite' package.
 #'
 #' @description Easy-to-use and efficient interface for Bayesian inference of
-#' complex panel data consisting of multiple indivuals with multiple
+#' complex panel data consisting of multiple individuals with multiple
 #' measurements over time. Supports several observational distributions,
 #' time-varying effects and realistic counterfactual predictions which take into
 #' account the dynamic structure of the model. See the package vignette for
@@ -22,11 +22,18 @@
 #' @importFrom stats plogis rbinom reformulate rnbinom rnorm rpois runif sd
 #' @importFrom stats nobs
 #'
-#' @srrstats {G5.1} Package data is exported
-#' @srrstats {BS1.2b} Package has a vignette.
-#' @srrstats {G2.8} Input types are well defined.
+#' @srrstats {G2.0, G2.0a, G2.1, G2.1a, G2.2, G2.3, G2.3a, G2.3b}
+#'   Input types are asserted and appropriately restricted and tested
+#' @srrstats {G2.7} `data.frame` and its extensions are supported.
+#'   Input types are well defined and asserted.
+#' @srrstats {G2.8} Package subfunctions receive well defined-inputs.
+#' @srrstats {G1.3} Terminology is defined and explained
+#' @srrstats {G1.4, G1.4a} roxygen2 is used.
+#' @srrstats {G5.1} Package data is exported.
 #' @srrstats {G2.10} Extraction of single columns is systematic and robust.
 #' @srrstats {RE1.2} Documented across the package.
+#' @srrstats {BS1.2, BS1.2a, BS1.2b, BS1.2c} Prior specification is documented.
+#' @srrstats {RE5.0} *Scaling relationships between sizes of input data (numbers of observations, with potential extension to numbers of variables/columns) and speed of algorithm.*
 NULL
 #' Simulated Data of Gaussian Responses
 #'
@@ -80,7 +87,7 @@ NULL
 #'   \item{time}{Variable defining the time point of the measurement (1 to 20).}
 #'   \item{g}{Response variable following gaussian distribution.}
 #'   \item{p}{Response variable following Poisson distribution.}
-#'   \item{b}{Response variable following bernoulli distribution.}
+#'   \item{b}{Response variable following Bernoulli distribution.}
 #' }
 "multichannel_example"
 #' Model Fit for the multichannel_example Data

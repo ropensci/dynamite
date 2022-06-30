@@ -32,11 +32,7 @@ full_model.matrix <- function(dformula, data) {
 #' Test collinearity within each channel
 #'
 #' @inheritParams full_model.matrix
-#' @srrstats {BS3.1} *Implement pre-processing routines to diagnose perfect collinearity, and provide appropriate diagnostic messages or warnings*
-#' @srrstats {BS3.2} *Provide distinct routines for processing perfectly collinear data, potentially bypassing sampling algorithms*
-#' @srrstats {RE2.4} *Regression Software should implement pre-processing routines to identify whether aspects of input data are perfectly collinear, notably including:*
-#' @srrstats {RE2.4a} *Perfect collinearity among predictor variables*
-#' @srrstats {RE2.4b} *Perfect collinearity between independent and dependent variables*
+#' @srrstats {BS3.1, BS3.2, RE2.4, RE2.4a, RE2.4b} Collinearity is tested.
 #' @noRd
 test_collinearity <- function(dformula, data) {
   formulas <- get_formulas(dformula)

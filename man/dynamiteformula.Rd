@@ -26,7 +26,7 @@ An object of class \code{dynamiteformula}.
 }
 \description{
 Defines a new observational or a new auxiliary channel for the model.
-See 'Details' or the package vigentte for more information.
+See 'Details' or the package vignette for more information.
 }
 \details{
 Currently the \code{dynamite} package supports the following

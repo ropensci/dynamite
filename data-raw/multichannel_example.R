@@ -2,19 +2,26 @@
 
 library(dynamite)
 set.seed(1)
-n_id <- 50
-n_time <- 20
+n_id <- 50L
+n_time <- 20L
 
 # first time point
 d <- data.frame(
   g = rnorm(n_id),
-  p = rpois(n_id, 4),
-  b = rbinom(n_id, 1, 0.4),
-  time = 1, id = 1:n_id)
+  p = rpois(n_id, 4.0),
+  b = rbinom(n_id, 1.0, 0.4),
+  time = 1L,
+  id = seq_len(n_id)
+)
+
 # rest of the time points
-d <- dplyr::right_join(d, data.frame(
-  time = rep(1:n_time, each = n_id),
-  id = 1:n_id))
+d <- dplyr::right_join(
+  d,
+  data.frame(
+    time = rep(seq_len(n_time), each = n_id),
+    id = seq_len(n_id)
+  )
+)
 
 # formula for dynamite
 f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
@@ -41,9 +48,16 @@ beta_b <- c(0.5, 0.2, 0.4, -0.6, 0.2)
 # Run the model with the fixed parameters to obtain proper dynamitefit object
 init <- dplyr::lst(a_g, beta_g, sigma_g, beta_p, a_p, beta_b, a_b)
 
-fit <- dynamite(f, d, "id", "time",
-                chains = 1, iter = 1,
-                algorithm = "Fixed_param", init = list(init))
+fit <- dynamite(
+  dformula = f,
+  data = d,
+  group = "id",
+  time = "time",
+  chains = 1,
+  iter = 1,
+  algorithm = "Fixed_param",
+  init = list(init)
+)
 
 # simulate data for time > 1
 multichannel_example <- predict(fit, n_draws = 1) |>

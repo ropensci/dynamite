@@ -8,7 +8,13 @@ gaussian_example_single_fit <- dynamite(
   data = gaussian_example |>
     dplyr::filter(.data$id == 1) |>
     dplyr::select(!.data$id),
-  time = "time", iter = 2000, chains = 2, cores = 2, refresh = 0
+  time = "time",
+  iter = 2000,
+  chains = 2,
+  cores = 2,
+  refresh = 0
 )
 
-usethis::use_data(gaussian_example_single_fit, overwrite = TRUE, compress = "xz")
+usethis::use_data(
+  gaussian_example_single_fit, overwrite = TRUE, compress = "xz"
+)

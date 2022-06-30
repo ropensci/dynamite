@@ -15,16 +15,16 @@ coverage](https://codecov.io/gh/santikka/dynamite/branch/main/graph/badge.svg)](
 
 The `dynamite` package provides easy-to-use interface for Bayesian
 inference of complex panel data. The main features distinguishing the
-package and the underlying methodology from many other approaches are
+package and the underlying methodology from many other approaches are:
 
--   Support for both time-varying and time-invariant effects
--   Joint modelling of multiple measurements per individual (multiple
-    channels)
+-   Support for both time-varying and time-invariant effects.
+-   Joint modeling of multiple measurements per individual (multiple
+    channels).
 -   Support for non-gaussian observations.
--   Realistic counterfactual predictions which take account the dynamic
-    structure of the model
+-   Realistic counterfactual predictions which take into account the
+    dynamic structure of the model.
 -   Clear quantification of parameter and predictive uncertainty due to
-    Bayesian approach
+    a Bayesian approach.
 -   User-friendly and efficient R interface with state-of-the-art
     estimation via Stan.
 
@@ -43,7 +43,7 @@ devtools::install_github("santikka/dynamite")
 
 ## Example
 
-A single-channel model with time-invariant effect of z, time-varying
+A single-channel model with time-invariant effect of `z`, time-varying
 effect of `x`, lagged value of the response variable `y` and a
 group-specific random intercepts:
 
@@ -83,3 +83,8 @@ plot_nus(gaussian_example_fit)
 ```
 
 <img src="man/figures/README-unnamed-chunk-6-1.png" width="50%" />
+
+## Related packages
+
+The `dynamite` package uses Stan via `rstan` (see
+<https://mc-stan.org>).

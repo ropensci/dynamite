@@ -9,8 +9,7 @@
 #' @examples
 #' summary(gaussian_example_fit, types = "beta")
 #'
-#' @srrstats {BS6.4} *Software may provide `summary` methods for return objects*
-#' @srrstats {RE4.18} *Regression Software may also implement `summary` methods for model objects, and in particular should implement distinct `summary` methods for any cases in which calculation of summary statistics is computationally non-trivial (for example, for bootstrapped estimates of confidence intervals).*
+#' @srrstats {BS6.4, RE4.18} Implements `summary` method.
 summary.dynamitefit <- function(object, ...) {
   stopifnot_(
     is.dynamitefit(object),

@@ -10,7 +10,7 @@
 #' and then modify the `priors` column of the obtained data frame before
 #' supplying it to the `dynamite`.
 #'
-#' The default priors for regression coeffiicents are based on the standard
+#' The default priors for regression coefficients are based on the standard
 #' deviation of the covariates at the first non-fixed time point. In case this
 #' is 0 or NA, it is transformed to (arbitrary) 0.5. The final prior is then
 #' normal distribution with zero mean and two times this standard deviation.
@@ -77,7 +77,6 @@
 #' @srrstats {RE4.13} `dynamitefit` object contains the predictor variables
 #' @srrstats {BS1.1} Data input is documented in the `data` parameter.,
 #' @srrstats {BS1.3, BS1.3b} Computational parameters are delegated to Stan.
-#' @srrstats {BS1.2} Prior specification is documented in 'Details'.
 #' @srrstats {BS2.6} Checks for computational parameters are performed by Stan.
 #' @srrstats {BS2.7} Starting values can be controlled via `...`.
 #' @srrstats {BS2.9} Chains have different starting values by default.
@@ -257,6 +256,7 @@ is.dynamitefit <- function(x) {
 #' @param group_var \[`character(1)`] Grouping variable name.
 #' @param time_var \[`character(1)`] Time index variable name.
 #' @srrstats {G2.4d, G2.5} Factors and ordered factors are considered.
+#' @srrstats {G2.6} Columns are preprocessed.
 #' @srrstats {G2.11} Data checks rely on type, not class, except for factors.
 #' @srrstats {G2.12} List columns are not supported.
 #' @srrstats {G2.16} Non-finite values are not supported.

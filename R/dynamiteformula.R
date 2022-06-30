@@ -1,7 +1,7 @@
 #' Model formula for \pkg{dynamite}
 #'
 #' Defines a new observational or a new auxiliary channel for the model.
-#' See 'Details' or the package vigentte for more information.
+#' See 'Details' or the package vignette for more information.
 #'
 #' @details Currently the `dynamite` package supports the following
 #' distributions for the observations:
@@ -82,7 +82,7 @@
 #'   lags(type = "varying") + splines(df = 20)
 #'
 #' @srrstats {G2.3b} Uses tolower.
-#' @srrstats {RE1.0} Used a formula interface.
+#' @srrstats {RE1.0} Uses a formula interface.
 dynamiteformula <- function(formula, family, random_intercept = FALSE) {
   stopifnot_(
     is.formula(formula),

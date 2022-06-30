@@ -101,7 +101,8 @@ create_parameters <- function(dformula, idt, vars) {
       ),
       .indent = idt(c(1, 1))
     )
-    # TODO handle centered case where spline is not defined but user inserts varying(.) terms
+    # TODO handle centered case where spline is
+    # not defined but user inserts varying(.) terms
   }
   pars <- character(length(dformula))
   for (i in seq_along(dformula)) {

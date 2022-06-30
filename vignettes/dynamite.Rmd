@@ -25,14 +25,14 @@ library(dynamite)
 
 # Introduction
 
-The `dynamite` package provides easy-to-use interface for Bayesian inference of complex panel data. The main features distinguishing the package and the underlying methodology from many other approaches are 
+The `dynamite` package provides easy-to-use interface for Bayesian inference of complex panel data. The main features distinguishing the package and the underlying methodology from many other approaches are:
 
-* Support for both time-varying and time-invariant effects 
-* Joint modelling of multiple measurements per individual (multiple channels)
-* Support for non-gaussian observations
-* Realistic counterfactual predictions which take account the dynamic structure of the model
-* Clear quantification of parameter and predictive uncertainty due to Bayesian approach
-* User-friendly and efficient R interface with state-of-the-art estimation via [@rstan] 
+* Support for both time-varying and time-invariant effects.
+* Joint modelling of multiple measurements per individual (multiple channels).
+* Support for non-gaussian observations.
+* Realistic counterfactual predictions which take into account the dynamic structure of the model.
+* Clear quantification of parameter and predictive uncertainty due to a Bayesian approach.
+* User-friendly and efficient R interface with state-of-the-art estimation via [@rstan].
 
 # Model
 

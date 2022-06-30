@@ -6,11 +6,23 @@ set.seed(1)
 library(dynamite)
 
 gaussian_example_fit <- dynamite(
-  obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian",
-      random_intercept = TRUE) + splines(df = 20),
-  data = gaussian_example, time = "time", group = "id",
-  iter = 2000, warmup = 1000, thin = 5,
-  chains = 2, cores = 2, refresh = 0, save_warmup = FALSE
+  dformula =
+    obs(
+      y ~ -1 + z + varying(~ x + lag(y)),
+      family = "gaussian",
+      random_intercept = TRUE
+    ) +
+    splines(df = 20),
+  data = gaussian_example,
+  group = "id",
+  time = "time",
+  iter = 2000,
+  warmup = 1000,
+  thin = 5,
+  chains = 2,
+  cores = 2,
+  refresh = 0,
+  save_warmup = FALSE
 )
 
 usethis::use_data(gaussian_example_fit, overwrite = TRUE, compress = "xz")
@@ -21,8 +33,15 @@ d <- gaussian_example |> dplyr::filter(id == 1)
 gaussian_example_single_fit <- dynamite(
   obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
     splines(df = 20),
-  data = d, time = "time", init = 0,
-  iter = 1100, warmup = 1000, chains = 1, refresh = 0, save_warmup = FALSE
+  data = d,
+  time = "time",
+  init = 0,
+  iter = 1100,
+  warmup = 1000,
+  chains = 1,
+  refresh = 0,
+  save_warmup = FALSE
 )
+
 usethis::use_data(gaussian_example_single_fit, overwrite = TRUE,
                   compress = "xz", internal = TRUE)

@@ -23,7 +23,6 @@ NULL
 #' @srrstatsNA {G3.1} No covariance calculations are done.
 #' @srrstatsNA {G3.1a} There are no covariance methods.
 #' @srrstatsNA {G4.0} Output to local files is not supported.
-#' @srrstatsNA {G5.11a} Data for tests is not downloaded.
 #' @srrstatsNA {BS1.0} The term "Hyperparameter" is not used.
 #' @srrstatsNA {BS1.3a, BS2.8} This is not supported by the package.
 #' @srrstatsNA {BS2.10, BS2.11} Setting of seeds and starting values

@@ -1,5 +1,5 @@
 Package: dynamite
-Title: Bayesian Modelling and Causal Inference for Multivariate
+Title: Bayesian Modeling and Causal Inference for Multivariate
     Longitudinal Data
 Version: 0.0.1
 Authors@R: c(
@@ -9,10 +9,10 @@ Authors@R: c(
            comment = c(ORCID = "0000-0001-7130-793X"))
   )
 Description: Easy-to-use and efficient interface for 
-  Bayesian inference of complex panel data. The package supports joint modelling
-  of multiple measurements per individual, time-varying and
+  Bayesian inference of complex panel data. The package supports joint 
+  modeling of multiple measurements per individual, time-varying and
   time-invariant effects, and a wide range of discrete and 
-  continuous distributions. Estimation of the models is carried out via Stan.
+  continuous distributions. Estimation of the models is carried out via 'Stan'.
 License: GPL (>= 3)
 URL: https://github.com/santikka/dynamite
 BugReports: https://github.com/santikka/dynamite/issues
