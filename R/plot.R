@@ -24,13 +24,13 @@
 #' @param responses  \[`character()`]\cr Response(s) for which the plots should
 #'   be drawn. Possible options are `unique(x$priors$response)`. Default is
 #'   all responses.
-#' @param types \[`character(1)`]\cr Type of the parameter for which the plots
+#' @param type \[`character(1)`]\cr Type of the parameter for which the plots
 #'   should be drawn. See details of possible values.
 #' @param ... Further arguments to [bayesplot::mcmc_combo].
 #' @return The output object from [bayesplot::mcmc_combo].
 #' @export
 #' @examples
-#' plot(gaussian_example_fit, types = "beta")
+#' plot(gaussian_example_fit, type = "beta")
 #' @srrstats {BS6.1, RE6.0, RE6.1} Implements the `plot` method.
 plot.dynamitefit <- function(x, responses = NULL, type, ...) {
 

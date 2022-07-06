@@ -13,10 +13,10 @@
 be drawn. Possible options are \code{unique(x$priors$response)}. Default is
 all responses.}
 
-\item{...}{Further arguments to \link[bayesplot:MCMC-combos]{bayesplot::mcmc_combo}.}
-
-\item{types}{[\code{character(1)}]\cr Type of the parameter for which the plots
+\item{type}{[\code{character(1)}]\cr Type of the parameter for which the plots
 should be drawn. See details of possible values.}
+
+\item{...}{Further arguments to \link[bayesplot:MCMC-combos]{bayesplot::mcmc_combo}.}
 }
 \value{
 The output object from \link[bayesplot:MCMC-combos]{bayesplot::mcmc_combo}.
@@ -45,5 +45,5 @@ parameters \code{delta} (and \code{alpha}), spline coefficients, or random
 intercepts leads to too many plots.
 }
 \examples{
-plot(gaussian_example_fit, types = "beta")
+plot(gaussian_example_fit, type = "beta")
 }
