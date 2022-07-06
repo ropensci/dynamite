@@ -40,7 +40,9 @@ definitions. See 'Details'.}
 \item{verbose}{[\code{logical(1)}]\cr All warnings are suppressed if set to
 \code{FALSE}. Defaults to \code{TRUE}.}
 
-\item{debug}{TODO}
+\item{debug}{[\code{list()}]\cr A named list of form \code{name = TRUE} indicating
+additional objects in the environment of the \code{dynamite} function which are
+added to the return object.}
 
 \item{...}{Additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}.}
 }

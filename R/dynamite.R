@@ -36,7 +36,9 @@
 #'   definitions. See 'Details'.
 #' @param verbose \[`logical(1)`]\cr All warnings are suppressed if set to
 #'   `FALSE`. Defaults to `TRUE`.
-#' @param debug TODO
+#' @param debug \[`list()`]\cr A named list of form `name = TRUE` indicating
+#'   additional objects in the environment of the `dynamite` function which are
+#'   added to the return object.
 #' @param ... Additional arguments to [rstan::sampling()].
 #' @export
 #' @examples
