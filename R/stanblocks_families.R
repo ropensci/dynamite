@@ -949,15 +949,14 @@ model_lines_binomial <- quote({
   }
   plus_i <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
   plus_c <- ifelse_(has_fixed && has_varying, " + ", "")
-  plus_ic <- ifelse_(
-    (has_varying_intercept || has_random_intercept) &&
-      (has_fixed || has_varying),
-    " + ",
-    ""
-  )
   intercept <- ifelse_(
     nzchar(intercept_alpha) || has_random_intercept,
     glue::glue("{intercept_alpha}{plus_i}{intercept_nu}"),
+    ""
+  )
+  plus_ic <- ifelse_(
+    nzchar(intercept_alpha) && (has_fixed || has_varying),
+    " + ",
     ""
   )
   likelihood_term <- paste0(
@@ -1144,15 +1143,14 @@ model_lines_exponential <- quote({
   }
   plus_i <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
   plus_c <- ifelse_(has_fixed && has_varying, " + ", "")
-  plus_ic <- ifelse_(
-    (has_varying_intercept || has_random_intercept) &&
-      (has_fixed || has_varying),
-    " + ",
-    ""
-  )
   intercept <- ifelse_(
     nzchar(intercept_alpha) || has_random_intercept,
     glue::glue("{intercept_alpha}{plus_i}{intercept_nu}"),
+    ""
+  )
+  plus_ic <- ifelse_(
+    nzchar(intercept_alpha) && (has_fixed || has_varying),
+    " + ",
     ""
   )
   likelihood_term <- paste0(
@@ -1198,15 +1196,14 @@ model_lines_gamma <- quote({
   }
   plus_i <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
   plus_c <- ifelse_(has_fixed && has_varying, " + ", "")
-  plus_ic <- ifelse_(
-    (has_varying_intercept || has_random_intercept) &&
-      (has_fixed || has_varying),
-    " + ",
-    ""
-  )
   intercept <- ifelse_(
     nzchar(intercept_alpha) || has_random_intercept,
     glue::glue("{intercept_alpha}{plus_i}{intercept_nu}"),
+    ""
+  )
+  plus_ic <- ifelse_(
+    nzchar(intercept_alpha) && (has_fixed || has_varying),
+    " + ",
     ""
   )
   likelihood_term <- paste0(
