@@ -51,13 +51,10 @@ test_that("fit object can be printed", {
   )
 })
 
-test_that("default plot informs", {
-  expect_message(
-    plot(gaussian_example_fit),
-    paste0(
-      "Please use `plot_deltas\\(\\)`, `plot_betas\\(\\)`, or ",
-      "`plot_nus\\(\\)` to produce plots of a <dynamitefit> object\\."
-    )
+test_that("default plot works", {
+  expect_error(
+    plot(gaussian_example_fit, type = "beta"),
+    NA
   )
 })
 
