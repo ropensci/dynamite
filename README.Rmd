@@ -82,5 +82,11 @@ And group-specific intercepts:
 plot_nus(gaussian_example_fit)
 ```
 
+Traceplots and density plots:
+```{r}
+plot(gaussian_example_fit, type = "beta")
+```
+
 ## Related packages
-The `dynamite` package uses Stan via `rstan` (see https://mc-stan.org).
+
+The `dynamite` package uses Stan via [`rstan`](https://CRAN.R-project.org/package=rstan) (see also https://mc-stan.org).

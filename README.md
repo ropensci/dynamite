@@ -84,7 +84,16 @@ plot_nus(gaussian_example_fit)
 
 <img src="man/figures/README-unnamed-chunk-6-1.png" width="50%" />
 
+Traceplots and density plots:
+
+``` r
+plot(gaussian_example_fit, type = "beta")
+```
+
+<img src="man/figures/README-unnamed-chunk-7-1.png" width="50%" />
+
 ## Related packages
 
-The `dynamite` package uses Stan via `rstan` (see
+The `dynamite` package uses Stan via
+[`rstan`](https://CRAN.R-project.org/package=rstan) (see also
 <https://mc-stan.org>).

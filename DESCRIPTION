@@ -19,6 +19,7 @@ BugReports: https://github.com/santikka/dynamite/issues
 Depends: 
     R (>= 4.1.0)
 Imports: 
+    bayesplot,
     checkmate,
     cli,
     data.table (>= 1.14.3),

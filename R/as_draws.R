@@ -6,6 +6,24 @@
 #' packages. Note that this function returns all variables in a wide format,
 #' whereas [dynamite::as.data.frame()] uses the long format.
 #'
+#' You can use the arguments `responses` and `types` to extract only a subset
+#' of the model parameters (i.e., only certain types of parameters related to a
+#' certain response variable).
+#'
+#' Potential values for the types argument are
+#'  * `alpha` Intercept terms (time-invariant or time-varying).
+#'  * `beta` Time-invariant regression coefficients.
+#'  * `delta` Time-varying regression coefficients.
+#'  * `nu` Random intercepts.
+#'  * `tau` Standard deviations of the spline coefficients of `delta`.
+#'  * `tau_alpha` Standard deviations of the spline coefficients of
+#'    time-varying `alpha`.
+#'  * `sigma_nu` Standard deviation of the random intercepts `nu`.
+#'  * `sigma` Standard deviations of gaussian responses.
+#'  * `phi` Dispersion parameters of negative binomial responses.
+#'  * `omega` Spline coefficients of the regression coefficients `delta`.
+#'  * `omega_alpha` Spline coefficients of time-varying `alpha`.
+#'
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @inheritParams as.data.frame.dynamitefit
 #' @return A `draws_df` object.
@@ -24,8 +42,8 @@ as_draws_df.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
   )
   d <- as.data.frame.dynamitefit(
     x,
-    responses,
-    types,
+    responses = responses,
+    types = types,
     summary = FALSE,
     include_fixed = FALSE
   ) |>

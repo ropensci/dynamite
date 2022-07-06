@@ -40,8 +40,8 @@ NULL
 #' @srrstatsNA {RE4.15, RE6.3, RE4.14, RE7.4} Forecasting is not supported
 #' @srrstatsNA {RE7.0, RE7.0a, RE7.1, RE7.1a} Not relevant to the package.
 #' @srrstatsNA {RE6.2} We feel that such a plot as a default could be
-#'   misleasing because there are multiple channels and various parameter types
-#'   that can potentially be plotted.
+#'   misleading and overly complicated because there are multiple channels and
+#'   various parameter types that can potentially be plotted.
 #' @srrstatsNA {BS6.2, BS6.3, BS6.5} These can be accomplished with
 #'   ggplot and bayesplot, for example.
 #' @noRd

@@ -15,7 +15,8 @@
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
 \item{responses}{[\code{character()}]\cr Response(s) for which the samples
-should be extracted. Possible options are \code{unique(x$priors$response)}}
+should be extracted. Possible options are elements of
+\code{unique(x$priors$response)}, and the default is this whole vector.}
 
 \item{types}{[\code{character()}]\cr Type(s) of the parameters for which the
 samples should be extracted. See details of possible values. Default is
@@ -33,6 +34,27 @@ Converts the output from \code{\link[=dynamite]{dynamite()}} call to a
 of diagnostics and plotting methods of \code{posterior} and \code{bayesplot}
 packages. Note that this function returns all variables in a wide format,
 whereas \code{\link[=as.data.frame]{as.data.frame()}} uses the long format.
+}
+\details{
+You can use the arguments \code{responses} and \code{types} to extract only a subset
+of the model parameters (i.e., only certain types of parameters related to a
+certain response variable).
+
+Potential values for the types argument are
+\itemize{
+\item \code{alpha} Intercept terms (time-invariant or time-varying).
+\item \code{beta} Time-invariant regression coefficients.
+\item \code{delta} Time-varying regression coefficients.
+\item \code{nu} Random intercepts.
+\item \code{tau} Standard deviations of the spline coefficients of \code{delta}.
+\item \code{tau_alpha} Standard deviations of the spline coefficients of
+time-varying \code{alpha}.
+\item \code{sigma_nu} Standard deviation of the random intercepts \code{nu}.
+\item \code{sigma} Standard deviations of gaussian responses.
+\item \code{phi} Dispersion parameters of negative binomial responses.
+\item \code{omega} Spline coefficients of the regression coefficients \code{delta}.
+\item \code{omega_alpha} Spline coefficients of time-varying \code{alpha}.
+}
 }
 \examples{
 as_draws(gaussian_example_fit, types = c("sigma", "beta"))

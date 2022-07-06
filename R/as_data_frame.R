@@ -22,7 +22,8 @@
 #' @param row.names Ignored.
 #' @param optional Ignored.
 #' @param responses  \[`character()`]\cr Response(s) for which the samples
-#'   should be extracted. Possible options are `unique(x$priors$response)`
+#'   should be extracted. Possible options are elements of
+#'   `unique(x$priors$response)`, and the default is this whole vector.
 #' @param types \[`character()`]\cr Type(s) of the parameters for which the
 #'   samples should be extracted. See details of possible values. Default is
 #'   all values listed in details except spline coefficients `omega` and

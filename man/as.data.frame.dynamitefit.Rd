@@ -24,7 +24,8 @@
 \item{optional}{Ignored.}
 
 \item{responses}{[\code{character()}]\cr Response(s) for which the samples
-should be extracted. Possible options are \code{unique(x$priors$response)}}
+should be extracted. Possible options are elements of
+\code{unique(x$priors$response)}, and the default is this whole vector.}
 
 \item{types}{[\code{character()}]\cr Type(s) of the parameters for which the
 samples should be extracted. See details of possible values. Default is

@@ -2,63 +2,48 @@
 % Please edit documentation in R/plot.R
 \name{plot.dynamitefit}
 \alias{plot.dynamitefit}
-\alias{plot_deltas}
-\alias{plot_betas}
-\alias{plot_nus}
-\title{Plot Regression Coefficients of a Dynamite Model}
+\title{Traceplots and Density Plots of \code{dynamitefit} Object}
 \usage{
-\method{plot}{dynamitefit}(x, ...)
-
-plot_deltas(
-  x,
-  level = 0.05,
-  alpha = 0.5,
-  scales = c("fixed", "free"),
-  include_alpha = TRUE
-)
-
-plot_betas(x, level = 0.05, include_alpha = TRUE)
-
-plot_nus(x, level = 0.05)
+\method{plot}{dynamitefit}(x, responses = NULL, type, ...)
 }
 \arguments{
-\item{x}{[\code{dynamitefit}]\cr The model fit object}
+\item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
-\item{...}{Ignored.}
+\item{responses}{[\code{character()}]\cr Response(s) for which the plots should
+be drawn. Possible options are \code{unique(x$priors$response)}. Default is
+all responses.}
 
-\item{level}{[\code{numeric(1)}]\cr Level for posterior intervals.
-Default is 0.05, leading to 90\% intervals.}
+\item{...}{Further arguments to \link[bayesplot:MCMC-combos]{bayesplot::mcmc_combo}.}
 
-\item{alpha}{[\code{numeric(1)}]\cr Opacity level for \code{geom_ribbon}.
-Default is 0.5.}
-
-\item{scales}{[\code{character(1)}] Should y-axis of the panels be \code{"fixed"}
-(the default) or \code{"free"}? See \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}.}
-
-\item{include_alpha}{[\code{logical(1)}]\cr If \code{TRUE} (default), extracts also
-time-invariant intercept term alpha if time-invariant parameters beta are
-extracted, and time-varying alpha if time-varying delta are extracted.}
+\item{types}{[\code{character(1)}]\cr Type of the parameter for which the plots
+should be drawn. See details of possible values.}
 }
 \value{
-A \code{ggplot} object.
+The output object from \link[bayesplot:MCMC-combos]{bayesplot::mcmc_combo}.
 }
 \description{
-Plot Regression Coefficients of a Dynamite Model
-}
-\section{Functions}{
+Plots the traceplots and the density plots of of the model parameters.
+Possible parameter types are
 \itemize{
-\item \code{plot_deltas}: Visualize Time-varying Regression Coefficients of a Dynamite Model
-
-\item \code{plot_betas}: Time-invariant Regression Coefficients of a Dynamite Model
-
-\item \code{plot_nus}: Visualize Random Intercepts of a Dynamite Model
-}}
-
+\item \code{alpha} Intercept terms (time-invariant or time-varying).
+\item \code{beta} Time-invariant regression coefficients.
+\item \code{delta} Time-varying regression coefficients.
+\item \code{nu} Random intercepts.
+\item \code{tau} Standard deviations of the spline coefficients of \code{delta}.
+\item \code{tau_alpha} Standard deviations of the spline coefficients of
+time-varying \code{alpha}.
+\item \code{sigma_nu} Standard deviation of the random intercepts \code{nu}.
+\item \code{sigma} Standard deviations of gaussian responses.
+\item \code{phi} Dispersion parameters of negative binomial responses.
+\item \code{omega} Spline coefficients of the regression coefficients \code{delta}.
+\item \code{omega_alpha} Spline coefficients of time-varying \code{alpha}.
+}
+}
+\details{
+Note however typically that drawing these plots for the time-varying
+parameters \code{delta} (and \code{alpha}), spline coefficients, or random
+intercepts leads to too many plots.
+}
 \examples{
-plot(gaussian_example_fit)
-plot_deltas(gaussian_example_fit, scales = "free") +
-  ggplot2::theme_minimal()
-plot_betas(gaussian_example_fit)
-plot_nus(gaussian_example_fit)
-
+plot(gaussian_example_fit, types = "beta")
 }
