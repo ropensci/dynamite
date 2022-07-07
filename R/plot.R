@@ -19,7 +19,6 @@
 #' parameters `delta` (and `alpha`), spline coefficients, or random
 #' intercepts leads to too many plots.
 #'
-#' @importFrom bayesplot mcmc_combo
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param responses  \[`character()`]\cr Response(s) for which the plots should
 #'   be drawn. Possible options are `unique(x$priors$response)`. Default is
@@ -51,7 +50,7 @@ plot.dynamitefit <- function(x, responses = NULL, type, ...) {
   )
 
   out <- suppressWarnings(as_draws(x, responses = responses, types = type))
-  mcmc_combo(out, ...)
+  bayesplot::mcmc_combo(out, ...)
 
 }
 

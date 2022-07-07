@@ -9,6 +9,7 @@
 #'
 #' @docType package
 #' @name dynamite-package
+#' @importFrom bayesplot mcmc_combo
 #' @importFrom checkmate test_int test_integer test_string test_numeric
 #' @importFrom checkmate test_number test_flag test_logical test_character
 #' @importFrom cli cli_abort cli_warn cli_inform
@@ -35,9 +36,6 @@
 #' @srrstats {BS1.2, BS1.2a, BS1.2b, BS1.2c} Prior specification is documented.
 #' @srrstats {BS1.0} The term "Hyperparameter" is not used.
 #' @srrstats {BS2.15} Errors can be caught using base R functionalities.
-#' @srrstatsNA {BS2.10, BS2.11} Setting of seeds and starting values is handled
-#'   by appropriate arguments to `dynamite` which are passed to
-#'   `rstan::sampling`.
 NULL
 #' Simulated Data of Gaussian Responses
 #'

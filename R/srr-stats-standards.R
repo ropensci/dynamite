@@ -27,6 +27,9 @@ NULL
 #' @srrstatsNA {BS4.1} There are no sampler comparisons.
 #' @srrstatsNA {BS1.4, BS1.5, BS4.3, BS4.4, BS4.5, BS4.6, BS4.7, BS5.4}
 #'   Sampling is done in Stan, which has no automatic convergence checkers.
+#' @srrstatsNA {BS2.10, BS2.11} Setting of seeds and starting values is handled
+#'   by appropriate arguments to `dynamite` which are passed to
+#'   `rstan::sampling`.
 #' @srrstatsNA {RE2.3} No automatic data transformations are carried out in
 #'   this sense, naturally the user can choose to center their data beforehand.
 #' @srrstatsNA {RE3.2, RE3.3} Not applicable to Markov chain Monte Carlo
@@ -41,6 +44,7 @@ NULL
 #'   lagged dependency structures and and overly complicated because there are
 #'   multiple channels with various distributional assumptions
 #'   (i.e., discrete vs continuous).
+#'
 
 #' @noRd
 NULL
