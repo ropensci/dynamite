@@ -23,26 +23,24 @@ NULL
 #' @srrstatsNA {G3.1} No covariance calculations are done.
 #' @srrstatsNA {G3.1a} There are no covariance methods.
 #' @srrstatsNA {G4.0} Output to local files is not supported.
-#' @srrstatsNA {BS1.0} The term "Hyperparameter" is not used.
 #' @srrstatsNA {BS1.3a, BS2.8} This is not supported by the package.
-#' @srrstatsNA {BS2.10, BS2.11} Setting of seeds and starting values
-#'   is handled by Stan.
-#' @srrstatsNA {BS2.15} Errors can be caught using base R functionalities.
 #' @srrstatsNA {BS4.1} There are no sampler comparisons.
 #' @srrstatsNA {BS1.4, BS1.5, BS4.3, BS4.4, BS4.5, BS4.6, BS4.7, BS5.4}
-#'   Sampling is done in Stan, which has no convergence checkers.
+#'   Sampling is done in Stan, which has no automatic convergence checkers.
 #' @srrstatsNA {RE2.3} No automatic data transformations are carried out in
 #'   this sense, naturally the user can choose to center their data beforehand.
-#' @srrstatsNA {RE3.2, RE3.3}
-#'   Sampling is done in Stan, which has no convergence checkers.
-#' @srrstatsNA {RE4.6} Not applicable to a Bayesian model.
+#' @srrstatsNA {RE3.2, RE3.3} Not applicable to Markov chain Monte Carlo
+#'   algorithms.
+#' @srrstatsNA {RE4.6} Not applicable to a Bayesian model, although posterior
+#'   correlations of any parameters can be manually computed based on the
+#'   extracted posterior samples.
 #' @srrstatsNA {RE4.7, RE4.10, RE4.11, RE4.12} Not applicable.
 #' @srrstatsNA {RE4.15, RE6.3, RE4.14, RE7.4} Forecasting is not supported
 #' @srrstatsNA {RE7.0, RE7.0a, RE7.1, RE7.1a} Not relevant to the package.
-#' @srrstatsNA {RE6.2} We feel that such a plot as a default could be
-#'   misleading and overly complicated because there are multiple channels and
-#'   various parameter types that can potentially be plotted.
-#' @srrstatsNA {BS6.2, BS6.3, BS6.5} These can be accomplished with
-#'   ggplot and bayesplot, for example.
+#' @srrstatsNA {RE6.2} Such a plot as a default could be s misleading due to the
+#'   lagged dependency structures and and overly complicated because there are
+#'   multiple channels with various distributional assumptions
+#'   (i.e., discrete vs continuous).
+
 #' @noRd
 NULL

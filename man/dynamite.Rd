@@ -64,6 +64,12 @@ is 0 or NA, it is transformed to (arbitrary) 0.5. The final prior is then
 normal distribution with zero mean and two times this standard deviation.
 
 See more details in the package vignette on how to define a dynamite model.
+
+The best-case scalability of the dynamite in terms of data size should be
+approximately linear in terms of number of time points and and number of
+groups, but as wall-clock time of the MCMC algorithms provided by Stan can
+depend on the discrepancy of the data and the model (and the subsequent
+shape of the posterior), this can vary greatly.
 }
 \examples{
 \dontrun{

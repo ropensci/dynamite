@@ -25,6 +25,14 @@ library(dynamite)
 
 # Introduction
 
+Panel data is common in various fields such as social sciences. These data consists of multiple subjects, followed over several time points, and there are often many observations per individual at each time, for example family status and income of each individual at each time point of interest. Such data can be analyzed in various ways, depending on the research questions and the characteristics of the data such as the number of individuals and time points, and the assumed distribution of the response variables. Some of the methods are based on the time series modelling approaches, such as (mixture) hidden Markov models [@seqHMM] and panel vector autoregressive models [@Holtz-Eakin1988], while others approach the problem from a point of structural equation models [@Bollen2010] or so called fixed effect models [@Allison2009]. In the linear fixed effect models where we assume that individual $i$ at time $t$ follows a linear model 
+
+\[
+y_{i,t} = \mu_t + \beta x_{i,t} + \gamma z_i + \alpha_i + \epsilon_{i,t},
+\]
+where $\mu_t$
+
+
 The `dynamite` package provides easy-to-use interface for Bayesian inference of complex panel data. The main features distinguishing the package and the underlying methodology from many other approaches are:
 
 * Support for both time-varying and time-invariant effects.

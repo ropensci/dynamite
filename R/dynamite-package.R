@@ -4,8 +4,8 @@
 #' complex panel data consisting of multiple individuals with multiple
 #' measurements over time. Supports several observational distributions,
 #' time-varying effects and realistic counterfactual predictions which take into
-#' account the dynamic structure of the model. See the package vignette for
-#' details.
+#' account the dynamic structure of the model. See the README and the package
+#' vignette for details.
 #'
 #' @docType package
 #' @name dynamite-package
@@ -33,7 +33,11 @@
 #' @srrstats {G2.10} Extraction of single columns is systematic and robust.
 #' @srrstats {RE1.2} Documented across the package.
 #' @srrstats {BS1.2, BS1.2a, BS1.2b, BS1.2c} Prior specification is documented.
-#' @srrstats {RE5.0} *Scaling relationships between sizes of input data (numbers of observations, with potential extension to numbers of variables/columns) and speed of algorithm.*
+#' @srrstats {BS1.0} The term "Hyperparameter" is not used.
+#' @srrstats {BS2.15} Errors can be caught using base R functionalities.
+#' @srrstatsNA {BS2.10, BS2.11} Setting of seeds and starting values is handled
+#'   by appropriate arguments to `dynamite` which are passed to
+#'   `rstan::sampling`.
 NULL
 #' Simulated Data of Gaussian Responses
 #'

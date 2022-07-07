@@ -1,16 +1,21 @@
 #' @srrstats {G5.10} Extended tests can be switched on via setting the
 #'   environment variable DYNAMITE_EXTENDED_TESTS to 1.
+#' @srrstats {G5.5, G5.6b} Fixed and random seeds are used appropriately.
 #' @srrstats {G5.6, G5.6a} Simple linear regression and GLM models are tested
 #'   so that they match with lm and glm function (within a tolerance due to
 #'   MCMC, use of default priors, and discrepancy between mode vs posterior
 #'   mean).
-#' @srrstats {G5.6a} *Parameter recovery tests should generally be expected
-#' to succeed within a defined tolerance rather than recovering exact values.*
+#' @srrstats {G5.0, G5.4} The recovery of the parameters of model fitted to a classic
+#'   Grunfeld data works.
+#' @srrstats {G5.0, G5.4} The recovery of the parameters of model fitted to a classic
+#'   Grunfeld data works.
 #' @srrstats {G5.6b} *Parameter recovery tests should be run with multiple
 #' random seeds when either data simulation or the algorithm contains a random component.
 #' (When long-running, such tests may be part of an extended, rather than regular, test suite; see G4.10-4.12, below).*
+#'
 #' @srrstats {G5.4} **Correctness tests** *to test that statistical algorithms produce expected results to some fixed test data sets
 #' (potentially through comparisons using binding frameworks such as RStata)*
+#'
 #' @srrstats {G5.4a} *For new methods, it can be difficult to separate out correctness of the method
 #' from the correctness of the implementation, as there may not be reference for comparison. In this case, testing may be implemented
 #' against simple, trivial cases or against multiple implementations such as an initial R implementation compared with results from a C/C++ implementation.*
@@ -99,7 +104,7 @@ test_that("parameters of a time-varying gaussian model are recovered", {
   skip_if_not(run_extended_tests)
 
   set.seed(1)
-  N <- 100L
+  N <- 500L
   T_ <- 500L
   K_fixed <- 1L
   K_varying <- 2L
@@ -107,26 +112,24 @@ test_that("parameters of a time-varying gaussian model are recovered", {
   sigma <- 0.1
   beta <- 2.0
   Bs <-
-    t(splines::bs(seq.int(2L, T_), df = 100L, degree = 3L, intercept = TRUE))
+    t(splines::bs(seq.int(1L, T_), df = 100L, degree = 3L, intercept = TRUE))
   D <- nrow(Bs)
-  sigma_nu <- 0.1
-  nu <- rnorm(N, 0.0, sigma_nu)
   a <- array(0.0, c(K_varying, D))
   # Splines start from t = 2, first time point is fixed
   delta <- array(NA, c(T_, K_varying))
 
   for (k in seq_len(K_varying)) {
     a[k, ] <- cumsum(rnorm(D, 0, tau[k]))
-    for (t in seq.int(2L, T_)) {
-      delta[t, k] <- a[k, ] %*% Bs[, t - 1]
+    for (t in seq.int(1L, T_)) {
+      delta[t, k] <- a[k, ] %*% Bs[, t]
     }
   }
   x <- matrix(rnorm(T_ * N), N, T_)
   z <- matrix(rbinom(T_ * N, 1.0, 0.7), N, T_)
   y <- matrix(NA, N, T_)
   y[, 1L] <- rnorm(N)
-  for (t in seq.int(2L, T_)) {
-    m <- nu + beta * z[, t] + delta[t, 1L] +
+  for (t in seq.int(1L, T_)) {
+    m <- beta * z[, t] + delta[t, 1L] +
       delta[t, 2L] * x[, t]
     y[, t] <- rnorm(N, m, sigma)
   }
@@ -136,21 +139,21 @@ test_that("parameters of a time-varying gaussian model are recovered", {
     time = rep(seq_len(T_), each = N))
 
   fit <- dynamite(
-    dformula =
       obs(
         y ~ -1 + z + varying(~ x),
-        family = "gaussian",
-        random_intercept = TRUE
+        family = "gaussian"
       ) +
-      splines(df = 100),
+      splines(df = D),
     data = d,
     group = "id",
     time = "time",
-    iter = 6000,
+    iter = 2000,
     warmup = 1000,
-    chains = 2,
-    cores = 2,
+    chains = 1,
+    cores = 1,
     refresh = 0,
     save_warmup = FALSE
   )
+
+
 })

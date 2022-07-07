@@ -9,6 +9,6 @@ Easy-to-use and efficient interface for Bayesian inference of
 complex panel data consisting of multiple individuals with multiple
 measurements over time. Supports several observational distributions,
 time-varying effects and realistic counterfactual predictions which take into
-account the dynamic structure of the model. See the package vignette for
-details.
+account the dynamic structure of the model. See the README and the package
+vignette for details.
 }

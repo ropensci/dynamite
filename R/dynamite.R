@@ -17,6 +17,12 @@
 #'
 #' See more details in the package vignette on how to define a dynamite model.
 #'
+#' The best-case scalability of the dynamite in terms of data size should be
+#' approximately linear in terms of number of time points and and number of
+#' groups, but as wall-clock time of the MCMC algorithms provided by Stan can
+#' depend on the discrepancy of the data and the model (and the subsequent
+#' shape of the posterior), this can vary greatly.
+#'
 #' @param dformula \[`dynamiteformula`]\cr The model formula. See 'Details'.
 #'   Input `data` is converted to channel specific matrix representations
 #'   via [stats::model.matrix.lm].
@@ -90,6 +96,10 @@
 #' @srrstats {BS4.0} Stan is referenced.
 #' @srrstats {BS5.0, BS5.1, BS5.2, BS5.3, BS5.5}
 #'   Available from the resulting `dynamitefit` object
+#' @srrstats {RE5.0} The scalability of the algorithms are studied to some
+#' extent in the tests and note also here. As the computational algorithms are
+#' based on Stan, the  scalability of the package depends directly on the
+#' scalability of Stan.
 dynamite <- function(dformula, data, group = NULL, time,
                      priors = NULL, verbose = TRUE, debug = NULL, ...) {
   stopifnot_(

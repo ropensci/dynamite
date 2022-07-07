@@ -1,5 +1,4 @@
 #' @srrstats {G3.0} Floating point numbers are not compared for equality
-#' @srrstats {G5.0} *Where applicable or practicable, tests should use standard data sets with known properties (for example, the NIST Standard Reference Datasets, or data sets provided by other widely-used R packages).*
 #' @srrstats {G5.2, G5.2a, G5.2b, G5.3, RE7.2, RE7.3}
 #'   Demonstrated by package tests.
 #' @srrstats {G5.9} **Noise susceptibility tests** *Packages should test for expected stochastic behaviour, such as through the following conditions:*

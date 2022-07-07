@@ -31,7 +31,9 @@
 #' @export
 #' @examples
 #' plot(gaussian_example_fit, type = "beta")
-#' @srrstats {BS6.1, RE6.0, RE6.1} Implements the `plot` method.
+#' @srrstats {BS6.1, RE6.0, RE6.1, BS6.2, BS6.3, BS6.5} Implements the `plot`
+#' method. Further plots can be easily constructed with the help of `as_draws`
+#' combined with `ggplot2` and `bayesplot`, for example.
 plot.dynamitefit <- function(x, responses = NULL, type, ...) {
 
   stopifnot_(
@@ -70,7 +72,7 @@ plot.dynamitefit <- function(x, responses = NULL, type, ...) {
 #'   ggplot2::theme_minimal()
 #'
 #' @srrstats {G2.3a} Uses match.arg.
-#' @srrstats {BS6.1, RE6.0, RE6.1} Implements the `plot` method.
+#' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @export
 plot_deltas <- function(x, level = 0.05, alpha = 0.5,
                         scales = c("fixed", "free"),
@@ -147,7 +149,7 @@ plot_deltas <- function(x, level = 0.05, alpha = 0.5,
 #' @examples
 #' plot_betas(gaussian_example_fit, level = 0.1)
 #'
-#' @srrstats {BS6.1, RE6.0, RE6.1} Implements the `plot` method.
+#' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @export
 plot_betas <- function(x, level = 0.05, include_alpha = TRUE){
   stopifnot_(
@@ -201,7 +203,7 @@ plot_betas <- function(x, level = 0.05, include_alpha = TRUE){
 #' @examples
 #' plot_nus(gaussian_example_fit)
 #'
-#' @srrstats {BS6.1, RE6.0, RE6.1} Implements the `plot` method.
+#' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @export
 plot_nus <- function(x, level = 0.05){
   stopifnot_(

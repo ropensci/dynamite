@@ -1,11 +1,12 @@
-#' @srrstats {BS7.3} Scaling is approximately linear in number of time points,
-#'  and less than linear in terms of groups. However, this is the best case
-#'  scenario, as the performance of the NUTS algorithm depends on the posterior
-#'  geometry. Also, the implementation of different probability distributions
-#'  in Stan vary in terms of performance, e.g., gamma, exponential and
-#'  categorical distributions can be slower than other supported distributions
-#'  because of the lack of glm style parameterization. Finally, the splines and
-#'  other more complex terms can likely affect the scaling in various ways.
+#' @srrstats {RE5.0, BS7.3} Scaling is approximately linear in number of time
+#'  points, and less than linear in terms of groups. However, this is the best
+#'  case scenario, as the performance of the NUTS algorithm depends on the
+#'  posterior geometry. Also, the implementation of different probability
+#'  distributions in Stan vary in terms of performance, e.g., gamma,
+#'  exponential and categorical distributions can be slower than other
+#'  supported distributions because of the lack of glm style parameterization.
+#'  Finally, the splines and other more complex terms can likely affect the
+#'  scaling in various ways.
 #'
 run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "1")
 
