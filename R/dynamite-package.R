@@ -35,9 +35,11 @@
 #' @srrstats {BS1.2, BS1.2a, BS1.2b, BS1.2c} Prior specification is documented.
 #' @srrstats {BS1.0} The term "Hyperparameter" is not used.
 #' @srrstats {BS2.15} Errors can be caught using base R functionalities.
-#' @srrstatsNA {BS2.10, BS2.11} Setting of seeds and starting values is handled
+#' @srrstats {BS2.10, BS2.11} Setting of seeds and starting values is handled
 #'   by appropriate arguments to `dynamite` which are passed to
 #'   `rstan::sampling`.
+#' @srrstats {BS7.1, BS7.2} Parameters used to simulate example datasets are
+#'   recovered.
 NULL
 #' Simulated Data of Gaussian Responses
 #'

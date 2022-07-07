@@ -41,6 +41,10 @@ NULL
 #'   lagged dependency structures and and overly complicated because there are
 #'   multiple channels with various distributional assumptions
 #'   (i.e., discrete vs continuous).
-
+#' @srrstatsNA {G5.11, G5.11a} No large data sets are used in the extended
+#'   tests.
+#' @srrstatsNA {BS7.4a} No assumptions on the scale of the input data is made
+#' and the scales should not matter as long as numerical issues are not
+#' encountered.
 #' @noRd
 NULL

@@ -1,3 +1,27 @@
+#' @srrstats {BS7.4}. Tests are made that the input and fitted values are on a
+#'   same scale.
+
+test_that("scale of predictions are on the same scale as input data", {
+  expect_error(pred <- predict(gaussian_example_fit,
+    type = "response", n_draws = 1), NA)
+  expect_equal(sd(pred$y), sd(pred$y_new), tolerance = 0.5)
+  expect_equal(mean(pred$y), mean(pred$y_new), tolerance = 0.5)
+
+  expect_error(pred <- fitted(gaussian_example_fit, n_draws = 1), NA)
+  expect_equal(sd(pred$y), sd(pred$y_fitted, na.rm = TRUE), tolerance = 0.5)
+  expect_equal(mean(pred$y), mean(pred$y_fitted, na.rm = TRUE),
+    tolerance = 0.5)
+
+  expect_error(pred <- predict(multichannel_example_fit,
+    type = "response", n_draws = 1), NA)
+  expect_equal(sd(pred$g), sd(pred$g_new), tolerance = 0.5)
+  expect_equal(mean(pred$g), mean(pred$g_new), tolerance = 0.5)
+  expect_equal(sd(pred$p), sd(pred$p_new), tolerance = 0.5)
+  expect_equal(mean(pred$p), mean(pred$p_new), tolerance = 0.5)
+  expect_equal(sd(pred$b), sd(pred$b_new), tolerance = 0.1)
+  expect_equal(mean(pred$b), mean(pred$b_new), tolerance = 0.1)
+})
+
 test_that("prediction works", {
   expect_error(predict(gaussian_example_fit,
                        type = "response", n_draws = 2), NA)

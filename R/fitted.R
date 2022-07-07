@@ -80,6 +80,7 @@ fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
       eval(e$call, envir = e)
     }
   }
+  newdata[, c(lhs_det, lhs_stoch) := NULL]
   data.table::setkeyv(newdata, cols = c("draw", group_var, time_var))
   data.table::setDF(newdata)
 }
