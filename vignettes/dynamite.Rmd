@@ -64,16 +64,19 @@ where $\alpha_t$ (possibly time-varying) is the intercept term, $Z^c_t$ defines 
 \]
 where $K$ is the number of covariates, $B_t$ is a vector of B-spline values at time $t$ and $\omega_k^c$ is vector of corresponding spline coefficients. In general the number of B-splines $D$ used for constructing the splines for the study period $1,\ldots,T$ can be chosen freely, bit too large $D$ can result in overfitting. To mitigate this, we define a random walk prior for $\omega^c_k$ as
 \[
-\begin{aligned}
-\omega^c_{k,1} &\sim p(\omega^c_{k,1}),\
-\omega^c_{k,d} &\sim N(\omega^c_{k,d-1}, (\tau^c_k)^2), \quad d=2,\ldots, D.\
-\end{aligned}
+\omega^c_{k,1} \sim p(\omega^c_{k,1}), \quad
+\omega^c_{k,d} \sim N(\omega^c_{k,d-1}, (\tau^c_k)^2), \quad d=2, \ldots, D.
 \]
 with user defined prior $p(\omega^c_{k,1})$ on the first coefficient, which due to the structure of $B_1$ corresponds to the prior on the $\delta^c_{k,1}$. Here, the parameter $\tau^c_k$ controls the smoothness of the spline curves.
 
 # Defining the model
 
-Currently the `dynamite` package supports the following distributions for the observations:
+The models in the `dynamite` package are defined by combining the channel-specific formulas defined via the function `dynamiteformula` for which a shorthand alias `obs` is available. The function `obs` takes two arguments: `formula` and `family`, which define how the response variable of the channel depends on the predictor variables in the standard R formula syntax and the family of the response variable, respectively. These channel specific definitions are then combined into a single model with `+`. For example, the following formula 
+```{r, echo=TRUE, eval=FALSE}
+obs(y ~ lag(x), family = "gaussian") + 
+obs(x ~ z, family = "poisson")
+``` 
+defines a model with two channels; first we declare that `y` is a gaussian variable depending on the previous value of `x` (`lag(x)`) and then we add a second channel declaring `x` as Poisson distributed depending on some exogenous variable `z` (for which we do not define any distribution). Note that the model formula can be defined without any reference to some external data, just as an R formula can. Currently the `dynamite` package supports the following distributions for the observations:
 
 * Categorical: `categorical` (with a softmax link using the first category as reference). See the documentation of the `categorical_logit_glm` in the Stan function reference manual (https://mc-stan.org/users/documentation/).
 * Gaussian: `gaussian` (identity link, parameterized using mean and standard deviation).
@@ -84,33 +87,64 @@ Currently the `dynamite` package supports the following distributions for the ob
 * Exponential: `exponential` (log-link).
 * Gamma: `gamma` (log-link, using mean and shape parameterization).
 
-The models in the `dynamite` package are defined by combining the channel-specific formulas defined via the R's formula syntax. Each channel is defined within a special `obs` function, and these are combined with `+`. For example a formula `obs(y ~ lag(x), family = "gaussian") + obs(x ~ z, family = "poisson")` defines a model with two channels; first we declare that `y` is a gaussian variable depending on a previous value of `x` (`lag(x)`), and then we add a second channel declaring `x` as Poisson distributed depending on some exogenous variable `z` (for which we do not define any distribution). 
 
-The `dynamite` models do not support contemporaneous dependencies in order to avoid complex cyclic dependencies which would make handling missing data, subsequent predictions, and causal inference challenging or impossible. This is why we used `lag(x)` in the previous example, a shorthand for `lag(x, k = 1)`, which defines a one-step lag of the variable `x`. Longer lags can also be defined by adjusting the argument `k`. A special model component `lags` can also be used to quickly add lagged responses as predictors. This component adds a lagged value of each response in the model as a predictor to every channel. For example, calling `obs(y ~ z, family = "gaussian") + obs(x ~ z, family = "poisson") + lags(k = 1)` would add `lag(y, k = 1)` as a predictor of `x` and conversely, `lag(x, k = 1)` as a predictor of `y`. Just as with the function `lag()`, the argument `k` in `lags` can be adjusted to add longer lags of each response to each channel.
-The inclusion of lagged response variables in the model implies that some time points have to be considered fixed in the estimation. The number of fixed time points in the model is equal to the largest shift value of any observed response variable in the model (defined either via `lag` or the global `lags`).
+The `dynamite` models do not support contemporaneous dependencies in order to avoid complex cyclic dependencies which would make handling missing data, subsequent predictions, and causal inference challenging or impossible. In other words, response variables can only depend on the previous values of other response variables. This is why we used `lag(x)` in the previous example, a shorthand for `lag(x, k = 1)`, which defines a one-step lag of the variable `x`. Longer lags can also be defined by adjusting the argument `k`. 
 
-In addition to declaring response variables via `obs`, we can also use function `aux` to define auxiliary channels which are deterministic functions of other variables. Defining these auxiliary variables explicitly instead of defining them directly on the right-hand side of the formulas (i.e., by using the "as is" function `I()`) makes the subsequent prediction steps more clear and allows easier checks on the model validity. The values of auxiliary variables are computed dynamically during prediction, making the use of lagged values and other transformations possible. An example of a formula using an auxiliary channel could be `obs(y ~ lag(log1x), family = "gaussian") + obs(x ~ z, family = "poisson") + aux(log1x ~ log(1 + x))`. Note that the auxiliary channel can also depend on other variables without lags. The function `aux` also does not use the `family` argument, which is automatically set to `deterministic` and is a special channel type of `obs`. Note that lagged values of deterministic `aux` channels do not imply fixed time points. Instead they must be given starting values using a special function `past()`, which defines the starting values of the channel and its lags.
+A special model component `lags` can also be used to quickly add lagged responses as predictors. This component adds a lagged value of each response in the model as a predictor to every channel. For example, calling 
+```{r, echo=TRUE, eval=FALSE}
+obs(y ~ z, family = "gaussian") + 
+obs(x ~ z, family = "poisson") +
+lags(k = 1)
+``` 
+would add `lag(y, k = 1)` as a predictor of `x` and conversely, `lag(x, k = 1)` as a predictor of `y`. Therefore, the previous code would produce the exact same model as writing
+```{r, echo=TRUE, eval=FALSE}
+obs(y ~ z + lag(x, k = 1), family = "gaussian") + 
+obs(x ~ z + lag(y, k = 1), family = "poisson")
+```
+Just as with the function `lag()`, the argument `k` in `lags` can be adjusted to add longer lags of each response to each channel, but for `lags` it can also be a vector. The inclusion of lagged response variables in the model implies that some time points have to be considered fixed in the estimation. The number of fixed time points in the model is equal to the largest shift value of any observed response variable in the model (defined either via `lag` or the global `lags`).
 
-The formula within `obs` can also contain an additional special function `varying`, which defines the time-varying part of the model equation, in which case we could write for example `obs(x ~ z + varying(~ -1 + w), family = "poisson")`, which defines a model equation with a constant intercept and time-invariant effect of `z`, and a time-varying effect of `w`. We also remove the duplicate intercept with `-1` in order to avoid identifiability issues in the model estimation (we could also define a time varying intercept, in which case we would write `obs(x ~ -1 + z + varying(~ w), family = "poisson)`). The part of the formula not wrapped with `varying` is assumed to correspond to the fixed part of the model, so `obs(x ~ z + varying(~ -1 + w), family = "poisson")` is actually identical to `obs(x ~ -1 + fixed(~ z) + varying(~ -1 + w), family = "poisson")` and `obs(x ~ fixed(~ z) + varying(~ -1 + w), family = "poisson")`.
+The formula within `obs` can also contain an additional special function `varying`, which defines the time-varying part of the model equation, in which case we could write for example `obs(x ~ z + varying(~ -1 + w), family = "poisson")`, which defines a model equation with a constant intercept and time-invariant effect of `z`, and a time-varying effect of `w`. We also remove the duplicate intercept with `-1` in order to avoid identifiability issues in the model estimation (we could also define a time varying intercept, in which case we would write `obs(x ~ -1 + z + varying(~ w), family = "poisson)`). The part of the formula not wrapped with `varying` is assumed to correspond to the fixed part of the model, so `obs(x ~ z + varying(~ -1 + w), family = "poisson")` is actually identical to `obs(x ~ -1 + fixed(~ z) + varying(~ -1 + w), family = "poisson")` and `obs(x ~ fixed(~ z) + varying(~ -1 + w), family = "poisson")`. The use of `fixed` is therefore optional.
 
 When defining varying effects, we also need to define how the these time-varying regression coefficient behave. For this, a `splines` component should be added to the model, e.g. `obs(x ~ varying(~ -1 + w), family = "poisson) + splines(df = 10)` defines a cubic B-spline with 10 degrees of freedom for the time-varying coefficient corresponding to the `w`. If the model contains multiple time-varying coefficients, same spline basis is used for all coefficients, with unique spline coefficients and their standard deviation, as defined in the previous Section.
 
 It is also possible to define a random intercept term for each group by using `random_intercept = TRUE` inside the `obs` function. This leads to a model where the in addition to the common intercept each individual/group has their own intercept with zero-mean normal prior and unknown standard deviation, analogously with the typical mixed models. 
 
-Finally, the declared model is supplied to `dynamite`, for which we also supply the data, optional user-defined priors for the model parameters, and additional arguments to the `rstan::sampling` which handles the model estimation. For example, `dynamite(obs(x ~ varying(~ -1 + w), family = "poisson) + splines(df = 10), data = d, time = "year", group = "id", chains = 2, cores = 2)` estimates the model using the data in the data frame `d`, which contains variables `year` and `id` (defining the time-index and group-index variables of the data). Arguments `chains` and `cores` are passed to `rstan::sampling`
-which then uses to parallel Markov chains in the the Markov chain Monte Carlo (MCMC) sampling of the model parameters.
+In addition to declaring response variables via `obs`, we can also use function `aux` to define auxiliary channels which are deterministic functions of other variables. Defining these auxiliary variables explicitly instead of defining them directly on the right-hand side of the formulas (i.e., by using the "as is" function `I()`) makes the subsequent prediction steps more clear and allows easier checks on the model validity. In fact, we do not allow the use of `I()` within `dynamiteformula`. The values of auxiliary variables are computed dynamically during prediction, making the use of lagged values and other transformations possible. An example of a formula using an auxiliary channel could be 
+```{r, echo=TRUE, eval=FALSE}
+obs(y ~ lag(log1x), family = "gaussian") + 
+obs(x ~ z, family = "poisson") +
+aux(log1x ~ log(1 + x))
+``` 
+which defines `log1x` as the logarithm of `1 + x`. We can then use this auxiliary variable in the formulas of other channels. Note that an auxiliary channel can also depend on other variables without lags. The function `aux` also does not use the `family` argument, which is automatically set to `deterministic` and is a special channel type of `obs`. Note that lagged values of deterministic `aux` channels do not imply fixed time points. Instead they must be given starting values using a special function `past()`, which defines the starting values of the channel and its lags. However, starting values are needed only when the values of the auxiliary channel cannot be computed based on its definition.
+
+Finally, the declared model is supplied to `dynamite`, which has the following arguments and default values:
+```{r, echo=TRUE, eval=FALSE}
+dynamite(dformula, data, group = NULL, time, priors = NULL, verbose = TRUE, debug = NULL, ...)
+```
+The first argument `dformula` is the `dynamiteformula` object that defines the model and the second argument `data` is a `data.frame` that contains the variables used in the model formula. The argument `group` is a column name of `data` that specified the unique groups (individuals) and similarly, `time` is a column name of `data` that specifies the unique time points. Note that `group` is optional: when `group = NULL` we assume that there is only a single group (or individual). The argument `priors` supplies optional user-defined priors for the model parameters, and `...` supplies additional arguments to `rstan::sampling` which handles the model estimation. Finally, `verbose` controls the verbosity of the output and `debug` can be used for various debugging options (see `?dynamite` for further information on these parameters). For example, 
+```{r, echo=TRUE, eval=FALSE}
+dynamite(
+  dformula = obs(x ~ varying(~ -1 + w), family = "poisson") + splines(df = 10), 
+  data = d, 
+  group = "id"
+  time = "year", 
+  chains = 2, 
+  cores = 2
+)
+``` 
+estimates the model using the data in the data frame `d`, which contains variables `year` and `id` (defining the time-index and group-index variables of the data). Arguments `chains` and `cores` are passed to `rstan::sampling` which then uses to parallel Markov chains in the the Markov chain Monte Carlo (MCMC) sampling of the model parameters.
 
 # Example
 
-As an example, consider a following simulated multichannel data:
+As an example, consider the following simulated multichannel data:
 
 ```{r}
 library(dynamite)
 head(multichannel_example)
 ```
 
-The data is in a long format (as required by the `dynamite`), containing the variables
-`id` (50 unique firms), the `time` (20 time points), a continuous variable `g`, a variable with non-negative integer values `p`, and a binary variable `b`. We define a following model (which actually matches the data generating process used in simulating the data):
+This data set is in a long format (as required by the `dynamite` function), containing the variables
+`id` (50 unique firms), the `time` (20 time points), a continuous variable `g`, a variable with non-negative integer values `p`, and a binary variable `b`. We define the following model (which actually matches the data generating process used in simulating the data):
 
 ```{r}
 set.seed(1)
@@ -120,8 +154,7 @@ f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
   aux(numeric(logp) ~ log(p + 1))
 ```
 
-
-We can the fit the model using the `dynamite` function (note the small number of iterations and additional thinning in order to satisfy the CRAN requirements):
+We fit the model using the `dynamite` function (note the small number of iterations and additional thinning in order to satisfy the CRAN requirements):
 ```{r, eval = FALSE}
 multichannel_example_fit <- dynamite(
   f, multichannel_example, "id", "time",
