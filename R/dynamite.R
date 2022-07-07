@@ -153,7 +153,7 @@ dynamite <- function(dformula, data, group = NULL, time,
   model_code <- create_blocks(
     dformula = dformulas$stoch,
     indent = 2L,
-     vars = stan$model_vars
+    vars = stan$model_vars
   )
   model <- onlyif(
     is.null(debug) || !isTRUE(debug$no_compile),

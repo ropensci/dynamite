@@ -9,6 +9,7 @@
 #'
 #' @docType package
 #' @name dynamite-package
+#' @importFrom bayesplot mcmc_combo
 #' @importFrom checkmate test_int test_integer test_string test_numeric
 #' @importFrom checkmate test_number test_flag test_logical test_character
 #' @importFrom cli cli_abort cli_warn cli_inform
