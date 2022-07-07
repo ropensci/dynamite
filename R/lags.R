@@ -58,6 +58,39 @@ lag_ <- function(x, k = 1) {
   out
 }
 
+#' Adds default shift values to terms of the form lag(y)
+#'
+#' @param x A `language` object.
+#' @noRd
+complete_lags <- function(x) {
+  if (identical(length(x), 1L)) {
+    return(x)
+  }
+  if (identical(deparse1(x[[1]]), "lag")) {
+    xlen <- length(x)
+    if (identical(xlen, 2L)) {
+      x <- str2lang(
+        paste0("lag(", deparse1(x[[2L]]), ", ", "1)")
+      )
+    } else if (identical(xlen, 3L)) {
+      k <- verify_lag(x[[3L]], deparse1(x))
+      x <- str2lang(
+        paste0("lag(", deparse1(x[[2L]]), ", ", k, ")")
+      )
+    } else {
+      stop_(c(
+        "Invalid lag definition {.code {deparse1(x)}}:",
+        `x` = "Too many arguments supplied to {.fun lag}."
+      ))
+    }
+  } else {
+    for (i in seq_along(x)) {
+      x[[i]] <- complete_lags(x[[i]])
+    }
+  }
+  x
+}
+
 #' Find Lag Terms in a Character Vector
 #'
 #' @param x \[`character()`]\cr A character vector.
@@ -90,8 +123,8 @@ extract_lags <- function(x) {
   }
   lag_regex <- gregexec(
     pattern = paste0(
-      "(?<src>lag\\(\\s*(?<var>[^\\+\\)\\,]+?)\\s*",
-      "(?:,\\s*(?<k>.+?)){0,1}\\))\\s"
+      "(?<src>lag\\((?<var>[^\\+\\)\\,]+?)",
+      "(?:,\\s*(?<k>[0-9]+)){0,1}\\))"
     ),
     text = lag_terms,
     perl = TRUE
@@ -100,29 +133,9 @@ extract_lags <- function(x) {
   if (length(lag_matches) > 0L) {
     lag_map <- do.call("cbind", args = lag_matches)
     lag_map <- as.data.frame(t(lag_map)[, -1L, drop = FALSE])
-    n_lag <- nrow(lag_map)
-    k_str <- lag_map$k
-    lag_map$k <- integer(n_lag)
+    lag_map$k <- as.integer(lag_map$k)
+    lag_map$k[is.na(lag_map$k)] <- 1L
     lag_map$present <- TRUE
-    lag_map$increment <- FALSE
-    for (j in seq_len(n_lag)) {
-      if (nzchar(k_str[j])) {
-        k_ver <- verify_lag(k_str[j], lag_map$src[j])
-        lag_map$k[j] <- k_ver[1L]
-        if (length(k_ver) > 1L) {
-          new_lags <- data.frame(
-            src = lag_map$src[j],
-            var = lag_map$var[j],
-            k = k_ver[-1L],
-            present = TRUE,
-            increment = TRUE
-          )
-          lag_map <- rbind(lag_map, new_lags)
-        }
-      } else {
-        lag_map$k[j] <- 1L
-      }
-    }
     lag_map |>
       dplyr::distinct() |>
       dplyr::group_by(.data$var) |>
@@ -142,17 +155,14 @@ extract_lags <- function(x) {
 
 #' Verify that `k` in `lag(y, k)` represents a valid shift value expression
 #'
-#' @param k_str The shift value definition as a `character` string.
-#' @param k_src The full lag term definitions as a `character` string.
+#' @param k The shift value definition as a `language` object.
+#' @param lag_str The full lag term definition as a `character` string.
 #' @noRd
-verify_lag <- function(k_str, k_src) {
-  k_expr <- try(str2lang(k_str), silent = TRUE)
-  if ("try-error" %in% class(k_expr)) {
-    stop_("Invalid shifted value expression {.code {k_str}}.")
-  }
-  k_coerce <- try(eval(k_expr), silent = TRUE)
+verify_lag <- function(k, lag_str) {
+  k_str <- deparse1(k)
+  k_coerce <- try(eval(k), silent = TRUE)
   if ("try-error" %in% class(k_coerce)) {
-    stop_("Invalid lagged value definition {.code {k_src}}.")
+    stop_("Invalid shift value expression {.code {k_str}}.")
   }
   k_coerce <- tryCatch(
     expr = as.integer(k_coerce),
@@ -163,13 +173,19 @@ verify_lag <- function(k_str, k_src) {
       identical(length(k_coerce), 0L) ||
       any(is.na(k_coerce))) {
     stop_(
-      "Unable to coerce lag shift value to {.cls integer} in {.code {k_src}}."
+      "Unable to coerce shift value to {.cls integer} in {.code {lag_str}}."
     )
   }
-  if (any(k_coerce <= 0L)) {
+  if (length(k_coerce) > 1L) {
     stop_(c(
-      "Shift values must be positive in {.fun lag}:",
-      `x` = "Nonpositive shift value was found in {.code {k_src}}."
+      "Shift value must be a single {.cls integer} in {.fun lag}:",
+      `x` = "Multiple shift values were found in {.code {lag_str}}."
+    ))
+  }
+  if (k_coerce <= 0L) {
+    stop_(c(
+      "Shift value must be positive in {.fun lag}:",
+      `x` = "Nonpositive shift value was found in {.code {lag_str}}."
     ))
   }
   k_coerce

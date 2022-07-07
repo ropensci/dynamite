@@ -165,7 +165,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
       list(
         y = resp,
         Y = Y,
-        channel,
+        channel = channel,
         sd_x = sd_x,
         resp_class = resp_classes[[resp]],
         priors = priors

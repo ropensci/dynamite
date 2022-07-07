@@ -57,12 +57,6 @@ test_that("formula incrementation logic is correct", {
     expect_equal(form_list[[1]], out_list[[i]][[1]], ignore_attr = TRUE)
     expect_equal(form_list[[2]], out_list[[i]][[2]], ignore_attr = TRUE)
   }
-  obs_aux <- aux(numeric(d) ~ 1 + x)
-  obs_aux_inc <- aux(numeric(d) ~ 1 + x + lag(y))
-  expect_equal(
-    increment_formula_deterministic(obs_aux[[1]]$formula, "lag(y)"),
-    obs_aux_inc[[1]]$formula,
-    ignore_attr = TRUE)
 })
 
 test_that("internally unsupported families fail", {
