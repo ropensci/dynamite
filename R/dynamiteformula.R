@@ -68,7 +68,14 @@
 #' using `random_intercept = TRUE` inside the `obs` function. This leads to a
 #' model where the in addition to the common intercept each individual/group
 #' has their own intercept with zero-mean normal prior and unknown standard
-#' deviation, analogously with the typical mixed models.
+#' deviation, analogously with the typical mixed models. Note however that with
+#' a large number of time points these intercepts can become challenging
+#' sample with default priors. This is because with large group sizes the
+#' group-level intercepts tend to be behave similarly to fixed group-factor
+#' variable so the model becomes overparameterized given these and the common
+#' intercept term. In these cases, a better option might be to use fixed group
+#' effects, i.e. to include the grouping variable to the model instead of
+#' random intercept (this way the one group is included in the intercept).
 #'
 #' @param formula \[`formula`]\cr An \R formula describing the model.
 #' @param family \[`character(1)`]\cr The family name. See 'Details' for the
