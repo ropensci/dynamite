@@ -350,16 +350,13 @@ parse_lags <- function(data, dformula, group_var, time_var) {
   channels_stoch <- which_stochastic(dformula)
   resp_all <- get_responses(dformula)
   resp_stoch <- resp_all[channels_stoch]
-  n_rows <- data[,.N]
+  n_rows <- data[, .N]
   n_channels <- length(resp_all)
   max_lag <- 0L
   for (i in seq_len(n_channels)) {
-    dformula[[i]]$formula <- gsub_formula(
-      pattern = "lag\\(([^\\,\\)]+)\\)",
-      replacement = "lag\\(\\1, 1\\)",
-      formula = dformula[[i]]$formula,
-      fixed = FALSE,
-      perl = TRUE,
+    fix_rhs <- complete_lags(formula_rhs(dformula[[i]]$formula))
+    dformula[[i]]$formula <- as.formula(
+      paste0(resp_all[i], "~", deparse1(fix_rhs))
     )
   }
   data_names <- names(data)
@@ -569,52 +566,14 @@ parse_singleton_lags <- function(dformula, lag_map, max_lag, valid_resp) {
 parse_present_lags <- function(dformula, lag_map, y, i, lhs) {
   k <- y$lag_idx[i]
   if (lag_map$present[k]) {
-    if (lag_map$increment[k]) {
-      for (j in seq_along(dformula)) {
-        if (y$origin[i, j]) {
-          dformula[[j]] <- increment_dynamiteformula(
-            dformula[[j]], y, y$term_type[i, j], lhs
-          )
-        }
-      }
-    } else {
-      for (j in seq_along(dformula)) {
-        if (y$origin[i, j]) {
-          dformula[[j]]$formula <- gsub_formula(
-            pattern = lag_map$src[k],
-            replacement = lhs,
-            formula = dformula[[j]]$formula,
-            fixed = TRUE
-          )
-        }
-      }
+    for (j in seq_along(dformula)) {
+      dformula[[j]]$formula <- gsub_formula(
+        pattern = lag_map$src[k],
+        replacement = lhs,
+        formula = dformula[[j]]$formula,
+        fixed = TRUE
+      )
     }
-  }
-  dformula
-}
-
-#' Add a new lag term to a dynamiteformula
-#'
-#' @inheritParams parse_present_lags
-#' @param type Type of term to add, either `"fixed"` or `"varying"`.
-#' @noRd
-increment_dynamiteformula <- function(dformula, y, type, lhs) {
-  if (y$deterministic) {
-    dformula$formula <- increment_formula_deterministic(dformula$formula, lhs)
-  } else {
-    dformula <- dynamiteformula_(
-      formula = increment_formula(
-        formula = dformula$formula,
-        x = lhs,
-        type = type,
-        varying_idx = dformula$varying,
-        varying_icpt = dformula$has_varying_intercept,
-        fixed_icpt = dformula$has_fixed_intercept
-      ),
-      original = dformula$original,
-      family = dformula$family,
-      random_intercept = dformula$has_random_intercept
-    )
   }
   dformula
 }
@@ -667,42 +626,8 @@ prepare_lagged_response <- function(dformula, lag_map, max_lag, resp,
       y$past_idx <- 0L
     }
   }
-  get_origin(dformula, y)
-}
-
-#' Determine which channel a lagged response originated from
-#'
-#' @inheritParams parse_present_lags
-#' @noRd
-get_origin <- function(dformula, y) {
-  n_resp <- length(dformula)
-  n_src <- length(y$src)
-  y$origin <- matrix(FALSE, n_src, n_resp)
-  y$term_type <- matrix("", n_src, n_resp)
-  if (y$deterministic) {
-    form_str <- vapply(get_formulas(dformula), deparse1, character(1L))
-    for (i in seq_len(n_src)) {
-      y$origin[i, ] <- grepl(y$src[i], form_str, fixed = TRUE)
-    }
-  } else {
-    for (j in seq_len(n_resp)) {
-      dform_terms <- get_terms(dformula[j])[[1L]]
-      for (i in seq_len(n_src)) {
-        term_idx <- which(dform_terms == y$src[i])
-        if (length(term_idx) > 0L) {
-          y$origin[i, j] <- TRUE
-          y$term_type[i, j] <- ifelse_(
-            term_idx %in% dformula[[j]]$fixed,
-            "fixed",
-            "varying"
-          )
-        }
-      }
-    }
-  }
   y
 }
-
 
 #' Evaluate Definitions of Deterministic Channels
 #'

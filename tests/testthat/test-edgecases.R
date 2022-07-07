@@ -184,25 +184,6 @@ test_that("higher order lags() and lag() give equal results", {
   )
 })
 
-test_that("vector of lags and lag of vector give equal resuls", {
-  f1 <- obs(y1 ~ x1 + lag(y1, 1:2), family = "categorical")
-  f2 <- obs(y1 ~ x1 + lag(y1, c(1, 2)), family = "categorical")
-  f3 <- obs(y1 ~ x1 + lag(y1, seq(1, 2)), family = "categorical")
-  f4 <- obs(y1 ~ x1 + lag(y1, 1) + lag(y1, 2), family = "categorical")
-  expect_identical(
-    get_priors(f1, test_data, "group", "time"),
-    get_priors(f2, test_data, "group", "time")
-  )
-  expect_identical(
-    get_priors(f1, test_data, "group", "time"),
-    get_priors(f3, test_data, "group", "time")
-  )
-  expect_identical(
-    get_priors(f1, test_data, "group", "time"),
-    get_priors(f4, test_data, "group", "time")
-  )
-})
-
 test_that("deterministic channels are parsed", {
   expect_error(
     obs_det <- obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1),

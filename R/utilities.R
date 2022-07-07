@@ -67,7 +67,7 @@ increment_formula <- function(formula, x, type = c("fixed", "varying"),
   tr <- attr(ft, "term.labels")
   v <- paste0(tr[varying_idx], collapse = " + ")
   formula_str <- ""
-  if (n_varying > 0) {
+  if (n_varying > 0L) {
     if (n_varying < length(tr)) {
       formula <- drop.terms(ft, dropx = varying_idx, keep.response = TRUE)
       ft <- terms(formula)
@@ -77,9 +77,11 @@ increment_formula <- function(formula, x, type = c("fixed", "varying"),
     }
   }
   if (length(tr) > 0) {
-    formula <- reformulate(tr,
-                           response = formula_lhs(formula),
-                           intercept = fixed_icpt)
+    formula <- reformulate(
+      termlabels = tr,
+      response = formula_lhs(formula),
+      intercept = fixed_icpt
+    )
     formula_str <- deparse1(formula)
   } else {
     formula_str <- paste0(
@@ -95,22 +97,13 @@ increment_formula <- function(formula, x, type = c("fixed", "varying"),
     if (nzchar(v)) {
       v <- paste0(" + ", v)
     }
-    if (n_varying > 0 || varying_icpt) {
+    if (n_varying > 0L || varying_icpt) {
       out_str <- glue::glue("{formula_str} + {x_plus} + varying(~{v_icpt}{v})")
     } else {
       out_str <- glue::glue("{formula_str} + {x_plus}")
     }
   }
   as.formula(out_str)
-}
-
-#' Add terms to a formula of a deterministic channel
-#'
-#' @param formula A `formula` object.
-#' @param x A `character` vector of terms to add.
-#' @noRd
-increment_formula_deterministic <- function(formula, x) {
-  as.formula(paste0(deparse1(formula), " + ", x))
 }
 
 #' Create a comma-separated character string to represent a Stan integer array

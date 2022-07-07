@@ -340,35 +340,37 @@ test_that("bernoulli without 0/1 values fails", {
   )
 })
 
-
 # Lag errors --------------------------------------------------------------
-
-test_that("invalid shift value expression fails", {
-  expect_error(
-    extract_lags("lag(y, a % b)"),
-    "Invalid shifted value expression `a % b`\\."
-  )
-})
 
 test_that("invalid lagged value definition fails", {
   expect_error(
-    extract_lags("lag(y, a:b)"),
-    "Invalid lagged value definition `lag\\(y, a:b\\)`\\."
+    complete_lags(quote(lag(y, a:b))),
+    "Invalid shift value expression `a:b`\\."
   )
 })
 
 test_that("non coerceable shift value fails", {
   expect_error(
-    extract_lags("lag(y, 'a')"),
-    "Unable to coerce lag shift value to <integer> in `lag\\(y, 'a'\\)`\\."
+    complete_lags(quote(lag(y, 'a'))),
+    'Unable to coerce shift value to <integer> in `lag\\(y, "a"\\)`\\.'
+  )
+})
+
+test_that("multiple shift values fail", {
+  expect_error(
+    complete_lags(quote(lag(y, 1:2))),
+    paste0(
+      "Shift value must be a single <integer> in `lag\\(\\)`:\n",
+      "x Multiple shift values were found in `lag\\(y, 1:2\\)`\\."
+    )
   )
 })
 
 test_that("negative lag shift value fails", {
   expect_error(
-    extract_lags("lag(y, -1)"),
+    complete_lags(quote(lag(y, -1))),
     paste0(
-      "Shift values must be positive in `lag\\(\\)`:\n",
+      "Shift value must be positive in `lag\\(\\)`:\n",
       "x Nonpositive shift value was found in `lag\\(y, -1\\)`\\."
     )
   )
