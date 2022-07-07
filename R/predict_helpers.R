@@ -254,7 +254,7 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
     } else {
       resp_levels <- NULL
       if (model_vars[[j]]$has_fixed_intercept) {
-        e$alpha <- samples[[alpha]][idx_draws, drop = FALSE]
+        e$alpha <- array(samples[[alpha]][idx_draws], c(n_draws, 1L))
       }
       if (model_vars[[j]]$has_varying_intercept) {
         e$alpha <- samples[[alpha]][idx_draws, , drop = FALSE]
