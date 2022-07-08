@@ -11,7 +11,7 @@
 #' @examples
 #' fitted(gaussian_example_fit, n_draws = 2L)
 #'
-#' @srrstats {RE4.9} *Modelled values of response variables.*
+#' @srrstats {RE4.9} Returns the fitted values.
 fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
   n_draws <- check_ndraws(n_draws, ndraws(object))
   fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
@@ -80,7 +80,16 @@ fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
       eval(e$call, envir = e)
     }
   }
+  # remove extra columns
+  for (i in seq_along(resp_stoch)) {
+    resp <- resp_stoch[i]
+    store <- glue::glue("{resp}_store")
+    newdata[, c(store) := NULL]
+  }
+  lhs_det <- get_responses(object$dformulas$lag_det)
+  lhs_stoch <- get_responses(object$dformulas$lag_stoch)
   newdata[, c(lhs_det, lhs_stoch) := NULL]
   data.table::setkeyv(newdata, cols = c("draw", group_var, time_var))
   data.table::setDF(newdata)
+  newdata
 }

@@ -204,5 +204,6 @@ predict.dynamitefit <- function(object, newdata = NULL,
   }
   newdata[, c(lhs_det, lhs_stoch) := NULL]
   data.table::setkeyv(newdata, cols = c("draw", group_var, time_var))
-  data.table::setDF(newdata) # for consistency with other output types
+  data.table::setDF(newdata)
+  newdata
 }
