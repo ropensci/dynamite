@@ -110,12 +110,14 @@ test_that("fitted and predict give equal results for the first time point", {
   expect_equal(
     predict(multichannel_example_fit, type = "mean", n_draws = 2) |>
       dplyr::filter(time == 2) |>
-      dplyr::pull(.data$y_mean),
+      dplyr::select(.data$g_mean, .data$p_mean, .data$b_mean),
     fitted(multichannel_example_fit, n_draws = 2) |>
       dplyr::filter(time == 2) |>
-      dplyr::pull(.data$y_fitted)
+      dplyr::select(.data$g_fitted, .data$p_fitted, .data$b_fitted),
+    ignore_attr = TRUE
   )
-})
+
+  })
 
 test_that("predict with NA-imputed newdata works as default NULL", {
   set.seed(1)
@@ -134,12 +136,13 @@ test_that("predict with NA-imputed newdata works as default NULL", {
   pred1 <- predict(categorical_example_fit, type = "mean", n_draws = 2)
   newdata <- categorical_example_fit$data
   newdata$y[newdata$time > 1] <- NA
+  newdata$x[newdata$time > 1] <- NA
   set.seed(1)
   pred2 <- predict(categorical_example_fit, type = "mean", n_draws = 2,
     newdata = newdata)
   expect_equal(
-    pred1 |> dplyr::pull(.data$y_mean),
-    pred2 |> dplyr::pull(.data$y_mean)
+    pred1 |> dplyr::select(-c(y, x)),
+    pred2 |> dplyr::select(-c(y, x))
   )
 })
 test_that("permuting newdata for predict does not alter results", {
