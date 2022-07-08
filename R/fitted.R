@@ -49,7 +49,7 @@ fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
     newdata,
     object$stan$u_names
   )
-  #model_matrix <- model_matrix[rep(seq_len(n_new), n_draws), ]
+  model_matrix <- model_matrix[rep(seq_len(n_new), each = n_draws), ]
   newdata <- data.table::as.data.table(newdata)
   newdata <- newdata[rep(seq_len(n_new), each = n_draws), ]
   newdata[, ("draw") := rep(seq_len(n_draws), n_new)]
@@ -69,7 +69,7 @@ fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
     (fixed - 1L) * n_draws
   for (i in seq.int(fixed + 1L, n_time)) {
     idx <- idx + n_draws
-    model_matrix_sub <- model_matrix[seq(i, n_id * n_time, by = n_time), ]
+    model_matrix_sub <- model_matrix[idx, ]
     for (j in seq_along(resp_stoch)) {
       e <- eval_envs[[j]]
       e$idx <- idx

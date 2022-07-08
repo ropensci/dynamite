@@ -67,6 +67,13 @@ test_that("fitted works", {
 
 })
 
+test_that("fitted and predict give identical results for first time point", {
+  expect_equal(
+    predict(gaussian_example_fit, type = "mean", n_draws = 2) |>
+      dplyr::filter(time == 2) |> dplyr::pull(y_mean),
+    fitted(gaussian_example_fit, n_draws = 2) |>
+      dplyr::filter(time == 2) |> dplyr::pull(y_fitted))
+})
 test_that("no groups fitted works", {
   expect_error(fitted(gaussian_example_single_fit, n_draws = 2), NA)
 })
