@@ -28,7 +28,7 @@ seeds <- sample(1:1000, size = 5)
 test_that("parameters for the linear regression are recovered as with lm", {
   # Need to skip on CRAN as the compilation can take too much time
   skip_on_cran()
-  set.seed(seed[1])
+  set.seed(seeds[1])
   n <- 100
   x <- rnorm(n)
   y <- 2 - 1 * x + rnorm(n, sd = 0.1)
@@ -48,7 +48,7 @@ test_that("parameters for the linear regression are recovered as with lm", {
 test_that("parameters for the poisson glm are recovered as with glm", {
   # Need to skip on CRAN as the compilation can take too much time
   skip_on_cran()
-  set.seed(seed[2])
+  set.seed(seeds[2])
   n <- 100
   x <- rnorm(n)
   y <- rpois(n, exp(2 - 1 * x))
@@ -64,7 +64,7 @@ test_that("parameters for the poisson glm are recovered as with glm", {
 test_that("parameters for the binomial glm are recovered as with glm", {
   # Need to skip on CRAN as the compilation can take too much time
   skip_on_cran()
-  set.seed(seed[3])
+  set.seed(seeds[3])
   n <- 100
   u <- sample(1:10, n, TRUE)
   x <- rnorm(n)
@@ -81,7 +81,7 @@ test_that("parameters for the binomial glm are recovered as with glm", {
 test_that("parameters for the gamma glm are recovered as with glm", {
   # Need to skip on CRAN as the compilation can take too much time
   skip_on_cran()
-  set.seed(seed[4])
+  set.seed(seeds[4])
   n <- 100
   x <- rnorm(n)
   y <- rgamma(n, 2, 2/exp(1 - 2 * x))
@@ -101,7 +101,7 @@ test_that("parameters of a time-varying gaussian model are recovered", {
 
   skip_if_not(run_extended_tests)
 
-  set.seed(seed[5])
+  set.seed(seeds[5])
 
   create_data <- function(N = 10L, T_ = 100L, D = 50L) {
     K_fixed <- 1L
