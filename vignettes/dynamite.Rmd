@@ -5,8 +5,10 @@ output:
   html_document: default
   pdf_document: default
 bibliography: dynamite.bib
-vignette: |
-  %\VignetteIndexEntry{dynamite} %\VignetteEngine{knitr::rmarkdown} %\VignetteEncoding{UTF-8}
+vignette: >
+  %\VignetteIndexEntry{dynamite} 
+  %\VignetteEngine{knitr::rmarkdown} 
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r, include = FALSE}
