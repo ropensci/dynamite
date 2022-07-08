@@ -50,8 +50,21 @@ test_that("no groups prediction works", {
 })
 
 test_that("fitted works", {
-  expect_error(fitted(gaussian_example_fit, n_draws = 2), NA)
+  expect_error(fitg <- fitted(gaussian_example_fit, n_draws = 2), NA)
   expect_error(fitted(categorical_example_fit, n_draws = 2), NA)
+
+  # first chain, second draw (permuted)
+  iter <- gaussian_example_fit$stanfit@sim$permutation[[1]][2]
+  xzy <- gaussian_example_fit$data |> dplyr::filter(id == 5 & time == 20)
+  manual <- as_draws(gaussian_example_fit) |>
+    dplyr::filter(.iteration == iter & .chain == 1) |>
+    dplyr::summarise(fit = `alpha_y[20]` + nu_y_id5 + `delta_y_x[20]` * xzy$x +
+        beta_y_z * xzy$z + `delta_y_y_lag1[20]` * xzy$y_lag1) |>
+    dplyr::pull(fit)
+  automatic <- fitg |> dplyr::filter(id == 5 & time == 20) |>
+    dplyr::pull(y_fitted)
+  expect_equal(automatic[2], manual)
+
 })
 
 test_that("no groups fitted works", {
