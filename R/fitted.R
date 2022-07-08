@@ -65,7 +65,8 @@ fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
     group_var
   )
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
-  idx <- as.integer(newdata[ ,.I[newdata[[time_var]] == fixed]])
+  idx <- as.integer(newdata[ ,.I[newdata[[time_var]] == time[1L]]]) +
+    (fixed - 1L) * n_draws
   for (i in seq.int(fixed + 1L, n_time)) {
     idx <- idx + n_draws
     model_matrix_sub <- model_matrix[idx, ]
@@ -80,6 +81,8 @@ fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
       eval(e$call, envir = e)
     }
   }
+  lhs_det <- get_responses(object$dformulas$lag_det)
+  lhs_stoch <- get_responses(object$dformulas$lag_stoch)
   newdata[, c(lhs_det, lhs_stoch) := NULL]
   data.table::setkeyv(newdata, cols = c("draw", group_var, time_var))
   data.table::setDF(newdata)
