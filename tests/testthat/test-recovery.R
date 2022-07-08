@@ -25,9 +25,10 @@
 set.seed(123)
 seeds <- sample(1:1000, size = 5)
 
+run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "1")
+
 test_that("parameters for the linear regression are recovered as with lm", {
-  # Need to skip on CRAN as the compilation can take too much time
-  skip_on_cran()
+  skip_if_not(run_extended_tests)
   set.seed(seeds[1])
   n <- 100
   x <- rnorm(n)
@@ -46,8 +47,7 @@ test_that("parameters for the linear regression are recovered as with lm", {
 })
 
 test_that("parameters for the poisson glm are recovered as with glm", {
-  # Need to skip on CRAN as the compilation can take too much time
-  skip_on_cran()
+  skip_if_not(run_extended_tests)
   set.seed(seeds[2])
   n <- 100
   x <- rnorm(n)
@@ -62,8 +62,7 @@ test_that("parameters for the poisson glm are recovered as with glm", {
 })
 
 test_that("parameters for the binomial glm are recovered as with glm", {
-  # Need to skip on CRAN as the compilation can take too much time
-  skip_on_cran()
+  skip_if_not(run_extended_tests)
   set.seed(seeds[3])
   n <- 100
   u <- sample(1:10, n, TRUE)
@@ -79,8 +78,7 @@ test_that("parameters for the binomial glm are recovered as with glm", {
 })
 
 test_that("parameters for the gamma glm are recovered as with glm", {
-  # Need to skip on CRAN as the compilation can take too much time
-  skip_on_cran()
+  skip_if_not(run_extended_tests)
   set.seed(seeds[4])
   n <- 100
   x <- rnorm(n)
@@ -95,14 +93,9 @@ test_that("parameters for the gamma glm are recovered as with glm", {
 })
 
 
-run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "1")
-
 test_that("parameters of a time-varying gaussian model are recovered", {
-
   skip_if_not(run_extended_tests)
-
   set.seed(seeds[5])
-
   create_data <- function(N = 10L, T_ = 100L, D = 50L) {
     K_fixed <- 1L
     K_varying <- 2L

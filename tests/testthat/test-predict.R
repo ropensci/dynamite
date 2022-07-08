@@ -51,7 +51,6 @@ test_that("no groups prediction works", {
 
 test_that("fitted works", {
   expect_error(fitg <- fitted(gaussian_example_fit, n_draws = 2), NA)
-  expect_error(fitted(categorical_example_fit, n_draws = 2), NA)
 
   # first chain, second draw (permuted)
   iter <- gaussian_example_fit$stanfit@sim$permutation[[1]][2]
@@ -65,14 +64,57 @@ test_that("fitted works", {
     dplyr::pull(y_fitted)
   expect_equal(automatic[2], manual)
 
+  expect_error(fitc <- fitted(categorical_example_fit, n_draws = 2), NA)
+  # first chain, second draw (permuted)
+  iter <- categorical_example_fit$stanfit@sim$permutation[[1]][2]
+  xzy <- categorical_example_fit$data |> dplyr::filter(id == 5 & time == 20)
+  manual <- as_draws(categorical_example_fit) |>
+    dplyr::filter(.iteration == iter & .chain == 1) |>
+    dplyr::summarise(
+      x_A = 0,
+      x_B = alpha_x_B + beta_x_z_B * xzy$z + beta_x_x_lag1C_B +
+        beta_x_y_lag1b_B,
+      x_C = alpha_x_C + beta_x_z_C * xzy$z + beta_x_x_lag1C_C +
+        beta_x_y_lag1b_C)
+  manual <- (exp(manual)/sum(exp(manual)))[1, "x_C"]
+  automatic <- fitc |> dplyr::filter(id == 5 & time == 20) |>
+    dplyr::pull(x_fitted_C)
+  expect_equal(automatic[2], manual)
 })
 
-test_that("fitted and predict give identical results for first time point", {
+test_that("Categorical predict with type = link works", {
+  expect_error(fitc <-
+      predict(categorical_example_fit, type = "link", n_draws = 2), NA)
+
+  # first chain, second draw (permuted)
+  iter <- categorical_example_fit$stanfit@sim$permutation[[1]][2]
+  xzy <- categorical_example_fit$data |> dplyr::filter(id == 5 & time == 2)
+  manual <- as_draws(categorical_example_fit) |>
+    dplyr::filter(.iteration == iter & .chain == 1) |>
+    dplyr::summarise(x = alpha_x_C + beta_x_z_C * xzy$z + beta_x_x_lag1C_C) |>
+    dplyr::pull(x)
+  automatic <- fitc |> dplyr::filter(id == 5 & time == 2) |>
+    dplyr::pull(x_link_C)
+  expect_equal(automatic[2], manual)
+})
+
+test_that("fitted and predict give equal results for the first time point", {
   expect_equal(
     predict(gaussian_example_fit, type = "mean", n_draws = 2) |>
-      dplyr::filter(time == 2) |> dplyr::pull(y_mean),
+      dplyr::filter(time == 2) |>
+      dplyr::pull(.data$y_mean),
     fitted(gaussian_example_fit, n_draws = 2) |>
-      dplyr::filter(time == 2) |> dplyr::pull(y_fitted))
+      dplyr::filter(time == 2) |>
+      dplyr::pull(.data$y_fitted)
+  )
+  expect_equal(
+    predict(multichannel_example_fit, type = "mean", n_draws = 2) |>
+      dplyr::filter(time == 2) |>
+      dplyr::pull(.data$y_mean),
+    fitted(multichannel_example_fit, n_draws = 2) |>
+      dplyr::filter(time == 2) |>
+      dplyr::pull(.data$y_fitted)
+  )
 })
 
 test_that("predict with NA-imputed newdata works as default NULL", {
@@ -83,8 +125,22 @@ test_that("predict with NA-imputed newdata works as default NULL", {
   set.seed(1)
   pred2 <- predict(gaussian_example_fit, type = "mean", n_draws = 2,
     newdata = newdata)
-  expect_equal(pred1 |> dplyr::pull(y_mean), pred2 |> dplyr::pull(y_mean))
+  expect_equal(
+    pred1 |> dplyr::pull(.data$y_mean),
+    pred2 |> dplyr::pull(.data$y_mean)
+  )
 
+  set.seed(1)
+  pred1 <- predict(categorical_example_fit, type = "mean", n_draws = 2)
+  newdata <- categorical_example_fit$data
+  newdata$y[newdata$time > 1] <- NA
+  set.seed(1)
+  pred2 <- predict(categorical_example_fit, type = "mean", n_draws = 2,
+    newdata = newdata)
+  expect_equal(
+    pred1 |> dplyr::pull(.data$y_mean),
+    pred2 |> dplyr::pull(.data$y_mean)
+  )
 })
 test_that("permuting newdata for predict does not alter results", {
   newdata <- gaussian_example_fit$data
