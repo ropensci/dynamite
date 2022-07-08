@@ -33,6 +33,7 @@ Imports:
 Suggests: 
     covr,
     knitr,
+    plm,
     rmarkdown,
     testthat (>= 3.0.0)
 VignetteBuilder: 
