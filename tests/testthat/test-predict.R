@@ -74,6 +74,32 @@ test_that("fitted and predict give identical results for first time point", {
     fitted(gaussian_example_fit, n_draws = 2) |>
       dplyr::filter(time == 2) |> dplyr::pull(y_fitted))
 })
+
+test_that("predict with NA-imputed newdata works as default NULL", {
+  set.seed(1)
+  pred1 <- predict(gaussian_example_fit, type = "mean", n_draws = 2)
+  newdata <- gaussian_example_fit$data
+  newdata$y[newdata$time > 1] <- NA
+  set.seed(1)
+  pred2 <- predict(gaussian_example_fit, type = "mean", n_draws = 2,
+    newdata = newdata)
+  expect_equal(pred1 |> dplyr::pull(y_mean), pred2 |> dplyr::pull(y_mean))
+
+})
+test_that("permuting newdata for predict does not alter results", {
+  newdata <- gaussian_example_fit$data
+  newdata$y[newdata$time > 1] <- NA
+  set.seed(1)
+  pred1 <- predict(gaussian_example_fit, type = "mean", n_draws = 2,
+    newdata = newdata)
+
+  newdata2 <- newdata[sample(1:nrow(newdata)), ]
+  set.seed(1)
+  expect_error(pred2 <- predict(gaussian_example_fit, type = "mean",
+    n_draws = 2, newdata = newdata2), NA)
+  expect_equal(pred1, pred2)
+})
+
 test_that("no groups fitted works", {
   expect_error(fitted(gaussian_example_single_fit, n_draws = 2), NA)
 })
