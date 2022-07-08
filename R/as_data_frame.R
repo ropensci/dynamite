@@ -291,9 +291,14 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     dplyr::mutate(value = list(values(.data$type, .data$response))) |>
     tidyr::unnest(cols = .data$value)
   if (summary) {
+    pars <- unique(out$parameter)
     out <- out |>
-      dplyr::group_by(.data$parameter, .data$time, .data$category, .data$group,
-                      .data$response, .data$type) |>
+      dplyr::group_by(
+        # create ordered factor so the order of parameters is not changed by
+        # group_by + summarise
+        parameter = factor(.data$parameter, levels = pars, ordered = TRUE),
+        .data$time, .data$category, .data$group,
+        .data$response, .data$type) |>
       dplyr::summarise(
         mean = mean(.data$value),
         sd = sd(.data$value),
@@ -301,7 +306,8 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         dplyr::as_tibble(
           as.list(posterior::quantile2(.data$value, probs = probs)))
         ) |>
-      dplyr::ungroup()
+      dplyr::ungroup() |>
+      dplyr::mutate(parameter = as.character(.data$parameter))
   }
   out
 }
