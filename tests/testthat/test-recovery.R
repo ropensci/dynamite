@@ -28,7 +28,7 @@ seeds <- sample(1:1000, size = 5)
 test_that("parameters for the linear regression are recovered as with lm", {
   # Need to skip on CRAN as the compilation can take too much time
   skip_on_cran()
-  set.seed(seed[1])
+  set.seed(seeds[1])
   n <- 100
   x <- rnorm(n)
   y <- 2 - 1 * x + rnorm(n, sd = 0.1)
@@ -48,7 +48,7 @@ test_that("parameters for the linear regression are recovered as with lm", {
 test_that("parameters for the poisson glm are recovered as with glm", {
   # Need to skip on CRAN as the compilation can take too much time
   skip_on_cran()
-  set.seed(seed[2])
+  set.seed(seeds[2])
   n <- 100
   x <- rnorm(n)
   y <- rpois(n, exp(2 - 1 * x))
@@ -64,7 +64,7 @@ test_that("parameters for the poisson glm are recovered as with glm", {
 test_that("parameters for the binomial glm are recovered as with glm", {
   # Need to skip on CRAN as the compilation can take too much time
   skip_on_cran()
-  set.seed(seed[3])
+  set.seed(seeds[3])
   n <- 100
   u <- sample(1:10, n, TRUE)
   x <- rnorm(n)
@@ -81,7 +81,7 @@ test_that("parameters for the binomial glm are recovered as with glm", {
 test_that("parameters for the gamma glm are recovered as with glm", {
   # Need to skip on CRAN as the compilation can take too much time
   skip_on_cran()
-  set.seed(seed[4])
+  set.seed(seeds[4])
   n <- 100
   x <- rnorm(n)
   y <- rgamma(n, 2, 2/exp(1 - 2 * x))
@@ -101,7 +101,7 @@ test_that("parameters of a time-varying gaussian model are recovered", {
 
   skip_if_not(run_extended_tests)
 
-  set.seed(seed[5])
+  set.seed(seeds[5])
 
   create_data <- function(N = 10L, T_ = 100L, D = 50L) {
     K_fixed <- 1L
@@ -133,7 +133,7 @@ test_that("parameters of a time-varying gaussian model are recovered", {
     list(data = data.frame(
       y = c(y), x = c(x), z = c(z), id = seq_len(N),
       time = rep(seq_len(T_), each = N)),
-      true_values = c(delta, tau, beta, sigma))
+      true_values = c(delta = delta, tau = tau, beta = beta, sigma = sigma))
   }
   d <- create_data()
   dformula <- obs(y ~ -1 + z + varying(~ x), family = "gaussian") +
@@ -145,6 +145,7 @@ test_that("parameters of a time-varying gaussian model are recovered", {
     time = "time")
   model <- rstan::stan_model(model_code = code)
 
+  # simulate multiple datasets
   n <- 10
   diffs <- matrix(NA, length(d$true_values), n)
   pars <- c("alpha_y",  "delta_y", "tau_alpha_y", "tau_y", "beta_y", "sigma_y")
@@ -157,15 +158,17 @@ test_that("parameters of a time-varying gaussian model are recovered", {
     d <- create_data()
     print(i)
   }
-
+  # small MSE
   expect_lt(mean(diffs^2), 0.005)
 
+  # test with a single large dataset
   d <- create_data(T_ = 1000, N = 1000, D = 500)
-  data <- get_data(dformula, group = "id", time = "time", data = d$data)
-  estimates <- c(rstan::get_posterior_mean(
-    rstan::sampling(model, data = data,
-      refresh = 0, chains = 1, iter = 2000,
-      pars = pars), pars = pars))
+  data <- get_data(obs(y ~ -1 + z + varying(~ x), family = "gaussian") +
+      splines(df = 500), group = "id", time = "time", data = d$data)
+  fit_long <- rstan::sampling(model, data = data,
+    refresh = 0, chains = 1, iter = 2000,
+    pars = pars)
+  estimates <- c(rstan::get_posterior_mean(fit_long, pars = pars))
   expect_equal(c(estimates), d$true_values)
 
   p <- get_priors(dformula,
