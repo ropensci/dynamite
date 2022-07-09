@@ -1,29 +1,16 @@
 #' @srrstats {G5.10} Extended tests can be switched on via setting the
 #'   environment variable DYNAMITE_EXTENDED_TESTS to 1.
 #' @srrstats {G5.5, G5.6b} Seeds are used appropriately in the tests.
-#' @srrstats {G5.6, G5.6a, BS7.0, BS7.1, BS7.2} Simple linear regression and
-#'   GLM models are tested so that they match with lm and glm function
-#'   (within a tolerance due to MCMC, use of default priors, and discrepancy
-#'   between mode vs posterior mean). Furher recovery tests are also
-#'   implemented.
-#'
-#' @srrstats {G5.4} **Correctness tests** *to test that statistical algorithms produce expected results to some fixed test data sets
-#' (potentially through comparisons using binding frameworks such as RStata)*
-#'
-#' @srrstats {G5.4a, G5.4b, G5.4c}
-#'
-#'  *For new methods, it can be difficult to separate out correctness of the method
-#' from the correctness of the implementation, as there may not be reference for comparison. In this case, testing may be implemented
-#' against simple, trivial cases or against multiple implementations such as an initial R implementation compared with results from a C/C++ implementation.*
-#' @srrstats {G5.4b} *For new implementations of existing methods, correctness tests should include tests against previous implementations.
-#' Such testing may explicitly call those implementations in testing, preferably from fixed-versions of other software, o
-#' r use stored outputs from those where that is not possible.*
-#' @srrstats {G5.4c} *Where applicable, stored values may be drawn from published paper outputs when applicable and where code from original
-#' implementations is not available*
-#' @srrstats {G5.7} **Algorithm performance tests** *to test that implementation performs as expected as properties of data change. For instance, a test may show that parameters approach correct estimates within tolerance as data size increases, or that convergence times decrease for higher convergence thresholds.*
+#' @srrstats {G5.4, G5.4a, G5.4b, G5.4c, G5.6, G5.6a, BS7.0, BS7.1, BS7.2}
+#'   Simple linear regression and GLM models are tested so that they match with
+#'   lm and glm function outputs (within a tolerance due to MCMC, use of
+#'   default priors, and discrepancy between ML estimate vs posterior mean).
+#'   Further recovery and correctness tests are also implemented.
+#' @srrstats {G5.7} Tested that the parameters of the true data generating
+#'   process are recovered when increasing the data size.
 
 set.seed(123)
-seeds <- sample(1:1000, size = 5)
+seeds <- sample(1:1000, size = 6)
 
 run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "1")
 
@@ -146,8 +133,8 @@ test_that("parameters of a time-varying gaussian model are recovered", {
     data <- get_data(dformula, group = "id", time = "time", data = d$data)
     diffs[, i] <- rstan::get_posterior_mean(
       rstan::sampling(model, data = data,
-      refresh = 0, chains = 1, iter = 2000,
-      pars = pars), pars = pars) - d$true_values
+        refresh = 0, chains = 1, iter = 2000,
+        pars = pars), pars = pars) - d$true_values
     d <- create_data()
     print(i)
   }
@@ -162,25 +149,53 @@ test_that("parameters of a time-varying gaussian model are recovered", {
     refresh = 0, chains = 1, iter = 2000,
     pars = pars)
   estimates <- c(rstan::get_posterior_mean(fit_long, pars = pars))
-  expect_equal(c(estimates), d$true_values)
+  expect_equal(c(estimates), d$true_values,
+    ignore_attr = TRUE, tolerance = 0.01)
+})
 
-  p <- get_priors(dformula,
-    data = d$data,
-    group = "id",
-    time = "time")
-  p$priors[] #TODO WIP
-  d$data$y[] <- NA
-  fit_prior <- dynamite(dformula,
-    data = d$data,
+
+test_that("prior parameters are recovered with zero observations", {
+
+  skip_if_not(run_extended_tests)
+  set.seed(seeds[6])
+  d <- data.frame(y = rep(NA, 10), x = rnorm(10), id = 1, time = 1:10)
+  p <- get_priors(obs(y  ~ x, "gaussian"), d, "id", "time")
+  p$prior[] <- c("normal(2, 0.1)", "normal(5, 0.5)", "exponential(10)")
+  fit_prior <- dynamite(obs(y  ~ x, "gaussian"),
+    data = d,
     group = "id",
     time = "time",
     priors = p,
-    iter = 2000,
-    warmup = 1000,
+    iter = 55000,
+    warmup = 5000,
     chains = 1,
     cores = 1,
     refresh = 0,
     save_warmup = FALSE
   )
-  # TODO WIP
+  sumr <- summary(fit_prior) |>
+    dplyr::select(parameter, mean, sd, q5, q95) |>
+    as.data.frame()
+
+  sigma_y <- sumr |>
+    dplyr::filter(parameter == "alpha_y") |>
+    dplyr::select(mean, sd, q5, q95)
+
+  m <- 2 - d$x[1] * 5
+  s <- sqrt(0.1^2 + d$x[1]^2 * 0.5^2)
+  expect_equal(
+    unlist(sumr[1, 2:5]),
+    c(m, s, qnorm(c(0.05,0.95), m, s)),
+    tolerance = 0.01, ignore_attr = TRUE
+  )
+  expect_equal(
+    unlist(sumr[2, 2:5]),
+    c(5, 0.5, qnorm(c(0.05, 0.95), 5, 0.5)),
+    tolerance = 0.01, ignore_attr = TRUE
+  )
+  expect_equal(
+    unlist(sumr[3, 2:5]),
+    c(0.1, 0.1, qexp(c(0.05, 0.95), 10)),
+    tolerance = 0.01, ignore_attr = TRUE
+  )
 })
