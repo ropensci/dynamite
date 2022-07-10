@@ -9,7 +9,8 @@ A \code{dynamitefit} object.
 }
 \source{
 The data was generated according to a script in
-\url{https://github.com/santikka/dynamite/blob/main/data-raw/gaussian_example_fit.R}
+\url{https://github.com/santikka/dynamite/blob/main/data-raw/
+gaussian_example_fit.R}
 }
 \usage{
 gaussian_example_fit

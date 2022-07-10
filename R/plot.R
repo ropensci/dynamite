@@ -219,18 +219,20 @@ plot_nus <- function(x, level = 0.05){
     "Argument {.arg level} must be a single
      {.cls numeric} value between 0 and 1."
   )
-  coefs <- coef(
+  coefs <- try(coef(
     x,
     "nu",
     probs = c(level, 1 - level)
-  ) |>
-    dplyr::mutate(parameter = glue::glue("{parameter}_{group}")) |>
-    dplyr::mutate(parameter = factor(.data$parameter,
-                                     levels = .data$parameter))
+  ), silent = TRUE)
   stopifnot_(
-    nrow(coefs) > 0L,
+    !"try-error" %in% class(coefs),
     "The model does not contain random intercepts nu."
   )
+  coefs <- coefs |>
+    dplyr::mutate(parameter = glue::glue("{parameter}_{group}")) |>
+    dplyr::mutate(parameter = factor(.data$parameter,
+      levels = .data$parameter))
+
   title <- paste0(
     "Posterior mean and ",
     100 * (1 - 2 * level),

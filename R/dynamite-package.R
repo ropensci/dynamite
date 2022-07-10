@@ -28,7 +28,7 @@
 #' @srrstats {G2.7} `data.frame` and its extensions are supported.
 #'   Input types are well defined and asserted.
 #' @srrstats {G2.8} Package subfunctions receive well defined-inputs.
-#' @srrstats {G1.3} Terminology is defined and explained
+#' @srrstats {G1.3} Terminology is defined and explained.
 #' @srrstats {G1.4, G1.4a} roxygen2 is used.
 #' @srrstats {G5.1} Package data is exported.
 #' @srrstats {G2.10} Extraction of single columns is systematic and robust.
@@ -48,14 +48,15 @@ NULL
 #' coefficients vary according to a spline with 20 degrees of freedom.
 #'
 #' @source The data was generated according to a script in
-#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/gaussian_example.R}
+#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/
+#' gaussian_example.R}
 #' @format A data frame with 3000 rows and 5 variables:
 #' \describe{
-#'   \item{y}{The response variable.}
-#'   \item{x}{A continuous covariate.}
-#'   \item{z}{A binary covariate.}
-#'   \item{id}{Variable defining individuals (1 to 50).}
-#'   \item{time}{Variable defining the time point of the measurement (1 to 30).}
+#'  \item{y}{The response variable.}
+#'  \item{x}{A continuous covariate.}
+#'  \item{z}{A binary covariate.}
+#'  \item{id}{Variable defining individuals (1 to 50).}
+#'  \item{time}{Variable defining the time point of the measurement (1 to 30).}
 #' }
 "gaussian_example"
 #' Model Fit for the Simulated Data of Gaussian Responses
@@ -75,7 +76,8 @@ NULL
 #' }
 #' Note the small number of samples due to size restrictions on CRAN.
 #' @source The data was generated according to a script in
-#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/gaussian_example_fit.R}
+#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/
+#' gaussian_example_fit.R}
 #' @format A `dynamitefit` object.
 "gaussian_example_fit"
 #' Simulated Multivariate Panel Data
@@ -84,14 +86,15 @@ NULL
 #' response variables of different distributions.
 #'
 #' @source The data was generated according to a script in
-#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/multichannel_example.R}
+#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/
+#' multichannel_example.R}
 #' @format A data frame with 3000 rows and 5 variables:
 #' \describe{
-#'   \item{id}{Variable defining individuals (1 to 50).}
-#'   \item{time}{Variable defining the time point of the measurement (1 to 20).}
-#'   \item{g}{Response variable following gaussian distribution.}
-#'   \item{p}{Response variable following Poisson distribution.}
-#'   \item{b}{Response variable following Bernoulli distribution.}
+#'  \item{id}{Variable defining individuals (1 to 50).}
+#'  \item{time}{Variable defining the time point of the measurement (1 to 20).}
+#'  \item{g}{Response variable following gaussian distribution.}
+#'  \item{p}{Response variable following Poisson distribution.}
+#'  \item{b}{Response variable following Bernoulli distribution.}
 #' }
 "multichannel_example"
 #' Model Fit for the multichannel_example Data
@@ -112,7 +115,8 @@ NULL
 #' }
 #' Note the small number of samples due to size restrictions on CRAN.
 #' @source Script in
-#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/multichannel_example_fit.R}
+#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/
+#' multichannel_example_fit.R}
 #' @format A `dynamitefit` object.
 "multichannel_example_fit"
 #' Simulated Multivariate Panel Data
@@ -121,14 +125,15 @@ NULL
 #' response variables.
 #'
 #' @source The data was generated according to a script in
-#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/categorical_example.R}
+#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/
+#' categorical_example.R}
 #' @format A data frame with 2000 rows and 5 variables:
 #' \describe{
-#'   \item{id}{Variable defining individuals (1 to 100).}
-#'   \item{time}{Variable defining the time point of the measurement (1 to 20).}
-#'   \item{x}{Categorical variable with three levels, A, B, and C.}
-#'   \item{y}{Categorical variable with three levels, a, b, and c.}
-#'   \item{z}{A continuous covariate.}
+#'  \item{id}{Variable defining individuals (1 to 100).}
+#'  \item{time}{Variable defining the time point of the measurement (1 to 20).}
+#'  \item{x}{Categorical variable with three levels, A, B, and C.}
+#'  \item{y}{Categorical variable with three levels, a, b, and c.}
+#'  \item{z}{A continuous covariate.}
 #' }
 "categorical_example"
 #' Model Fit for the categorical_example Data
@@ -146,6 +151,7 @@ NULL
 #' }
 #' Note the small number of samples due to size restrictions on CRAN.
 #' @source Script in
-#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/categorical_example_fit.R}
+#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/
+#' categorical_example_fit.R}
 #' @format A `dynamitefit` object.
 "categorical_example_fit"

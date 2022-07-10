@@ -287,7 +287,12 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     dplyr::rowwise() |>
     dplyr::filter(any(grepl(paste0("^", .data$parameter),
                             x$stanfit@sim$pars_oi))) |>
-    dplyr::select(.data$response, .data$type) |>
+    dplyr::select(.data$response, .data$type)
+  stopifnot_(nrow(out) > 0L,
+    paste0("No parameters of type {.var ", paste(types, collapse = "}, {.var "),
+    "} found for any of the response channels {.var ",
+      paste(responses, collapse = "}, {.var "), "}."))
+  out <- out |>
     dplyr::mutate(value = list(values(.data$type, .data$response))) |>
     tidyr::unnest(cols = .data$value)
   if (summary) {

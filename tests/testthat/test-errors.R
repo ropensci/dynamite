@@ -44,7 +44,7 @@ test_that("duplicate spline definition fails", {
   )
 })
 
-test_that("duplicate algs definition fails", {
+test_that("duplicate lags definition fails", {
   expect_error(
     obs_test + lags() + lags(),
     "Multiple definitions for lags\\."
@@ -376,6 +376,16 @@ test_that("negative lag shift value fails", {
   )
 })
 
+test_that("too many arguments to lag fails", {
+  expect_error(
+    complete_lags(quote(lag(y, 1, 2))),
+    paste0(
+      "Invalid lag definition `lag\\(y, 1, 2\\)`:\n",
+      "x Too many arguments supplied to `lag\\(\\)`\\."
+    )
+  )
+})
+
 # Output errors -----------------------------------------------------------
 
 test_that("output for non dynamitefit objects fails", {
@@ -574,3 +584,44 @@ test_that("constrained prior for unconstrained parameter fails", {
   )
 })
 
+# Plot errors ----------------------------------------------------------
+
+test_that("plot errors when the input is not a dynamitefit object", {
+  expect_error(
+    plot.dynamitefit(1),
+    "Argument `x` must be a <dynamitefit> object."
+  )
+})
+test_that("plot errors when no type is defined", {
+  expect_error(
+    plot(categorical_example_fit),
+    paste0("Argument `type` is missing while it should be a single ",
+    "<character> string.")
+  )
+})
+test_that("plot errors when type is vector", {
+  expect_error(
+    plot(gaussian_example_fit, type = c("beta", "delta")),
+    "Argument `type` must be a single <character> string."
+  )
+})
+
+test_that("plot errors when no variable is found ", {
+  expect_error(
+    plot(categorical_example_fit, type = "delta"),
+    paste0("No parameters of type `delta` found for any of the response ",
+    "channels `x`, `y`.")
+  )
+})
+test_that("plot_deltas errors when the model does not contain deltas", {
+  expect_error(
+    plot_deltas(categorical_example_fit),
+    "The model does not contain varying coefficients delta."
+  )
+})
+test_that("plot_nus errors when the model does not contain nus", {
+  expect_error(
+    plot_nus(categorical_example_fit),
+    "The model does not contain random intercepts nu."
+  )
+})

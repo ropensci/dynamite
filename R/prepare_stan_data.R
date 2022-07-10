@@ -640,19 +640,6 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
   out
 }
 
-#' Give a warning about nonfinite standard deviation
-#'
-#' @param y Response variable the warning is related to.
-#' @noRd
-warn_nonfinite <- function(y) {
-  warning_(c(
-    "Found nonfinite prior standard deviation when using default priors
-    for regression coeffients for response {.var {y}}
-    indicating constant covariate:",
-    `i` = "Switching to N(0, 0.01) prior."
-  ))
-}
-
 #' Raise an error if factor type is not supported by a family
 #'
 #' @param y Response variable the error is related to.

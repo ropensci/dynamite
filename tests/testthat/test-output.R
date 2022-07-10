@@ -63,6 +63,10 @@ test_that("betas can be plotted", {
     plot_betas(gaussian_example_fit),
     NA
   )
+  expect_error(
+    plot_betas(categorical_example_fit),
+    NA
+  )
 })
 
 test_that("deltas can be plotted", {
@@ -162,5 +166,16 @@ test_that("summary can be extracted", {
   expect_error(
     summary(gaussian_example_fit),
     NA
+  )
+})
+
+test_that("summary work when no fit is available", {
+  expect_message(
+    summary(dynamite(
+      obs(y ~ x, "gaussian"),
+      data = data.frame(y=1:2,x=c(3,1),id=1,time=1:2),
+      "id", "time", debug = list(no_compile = TRUE))
+    ),
+    "No Stan model fit is available\\."
   )
 })

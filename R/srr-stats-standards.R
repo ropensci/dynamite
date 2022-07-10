@@ -47,7 +47,10 @@ NULL
 #' @srrstatsNA {G5.11, G5.11a} No large data sets are used in the extended
 #'   tests.
 #' @srrstatsNA {BS7.4a} No assumptions on the scale of the input data is made
-#' and the scales should not matter as long as numerical issues are not
-#' encountered.
+#'   and the scales should not matter as long as numerical issues are not
+#'   encountered.
+#' @srrstatsNA {G5.9, G5.9a, G5.9b} Due to the Monte Carlo variation in the
+#'   results, it is not possible to test the explicit effect of negligible
+#'   noise in the data.
 #' @noRd
 NULL

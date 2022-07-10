@@ -1,6 +1,8 @@
 #' @srrstats {BS7.4}. Tests are made that the input and fitted values are on a
 #'   same scale.
-
+#' @srrstats {G5.4} Predict and fitted method produce results identical with
+#'   "manual" computation based on the same posterior samples.
+#'
 test_that("scale of predictions are on the same scale as input data", {
   expect_error(pred <- predict(gaussian_example_fit,
     type = "response", n_draws = 1), NA)
@@ -152,7 +154,7 @@ test_that("permuting newdata for predict does not alter results", {
   pred1 <- predict(gaussian_example_fit, type = "mean", n_draws = 2,
     newdata = newdata)
 
-  newdata2 <- newdata[sample(1:nrow(newdata)), ]
+  newdata2 <- newdata[sample(seq_len(nrow(newdata))), ]
   set.seed(1)
   expect_error(pred2 <- predict(gaussian_example_fit, type = "mean",
     n_draws = 2, newdata = newdata2), NA)

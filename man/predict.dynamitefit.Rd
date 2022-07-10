@@ -17,12 +17,12 @@
 \arguments{
 \item{object}{[\code{dynamitefit}]\cr The model fit object.}
 
-\item{newdata}{[\code{data.frame}]\cr Data used in predictions.
+\item{newdata}{[\code{data.frame}]\cr Data used in predictions. Predictions are
+computed for missing (\code{NA}) values in the response variable columns, and
+non-missing values are assumed fixed.
 If \code{NULL} (default), the data used in model estimation is used for
-predictions as well. Predictions are computed for missing values in the
-response variable columns, and non-missing values are assumed fixed. If
-\code{newdata} is \code{NULL}, all values in the response variable columns
-after the first \code{fixed} time points will be converted to \code{NA} values.
+predictions as well, after all values in the response variable columns
+after the first \code{fixed} time points are converted to \code{NA} values.
 Missing values in predictor columns can be imputed (argument \code{impute}).
 There should be no new time points that were not present in the data that
 were used to fit the model. New group levels can be included, but if the
