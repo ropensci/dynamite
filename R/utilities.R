@@ -269,6 +269,16 @@ onlyif <- function(test, yes) {
 #' @param time \[numeric()]\cr A vector of the time index values in the data.
 #' @noRd
 fill_time <- function(data, time, group_var, time_var) {
+  if (is.factor(data[[time_var]])) {
+    warning_("Time indexing variable {.arg {time_var}} is a {.cls factor},
+      converting the variable to {.cls integer} based on its levels.")
+    data[[time_var]] <- as.integer(data[[time_var]])
+  }
+  time <- sort(unique(data[[time_var]]))
+  stopifnot_(
+    length(time) > 1L,
+    "There must be at least two time points in the data."
+  )
   time_ivals <- diff(time)
   time_scale <- min(diff(time))
   if (any(time_ivals[!is.na(time_ivals)] %% time_scale > 0)) {

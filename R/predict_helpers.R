@@ -68,6 +68,9 @@ parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
     time_var %in% names(newdata),
     "Can't find time index variable {.var {time_var}} in {.var newdata}."
   )
+  if (is.factor(newdata[[time_var]])) {
+    newdata[[time_var]] <- as.integer(newdata[[time_var]])
+  }
   time <- unique(newdata[[time_var]])
   extra_times <- unique(time[!time %in% data[[time_var]]])
   stopifnot_(
@@ -315,8 +318,9 @@ generate_sim_call <- function(resp, resp_levels, family, type,
         "{ifelse_(has_fixed_intercept, 'alpha[, s]', '')}",
         "{ifelse_(has_varying_intercept, 'alpha[, a_time, s]', '')}",
         "{ifelse_(has_fixed, ",
-        "' + .rowSums(x = model_matrix[idx_draw, J_fixed, drop = FALSE] * beta[, , s],
-                        m = n_draws, n = K_fixed)', '')}",
+        "' + .rowSums(x = model_matrix[idx_draw, J_fixed, drop = FALSE] ",
+                        " * beta[, , s], ",
+                        " m = n_draws, n = K_fixed)', '')}",
         "{ifelse_(has_varying, ",
         "' + .rowSums(x = model_matrix[idx_draw, J_varying, drop = FALSE] ",
         " * delta[, time, , s],",

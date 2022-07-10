@@ -37,7 +37,9 @@
 #' @param group \[`character(1)`]\cr A column name of `data` that denotes the
 #'   unique groups, or `NULL` corresponding to a scenario without grouping.
 #' @param time \[`character(1)`]\cr A column name of `data` that denotes the
-#'   time axis.
+#'   time index of observations. If this variable is a factor, the integer
+#'   representation of its levels are used internally for defining the time
+#'   indexing.
 #' @param priors \[`data.frame`]\cr An optional data frame with prior
 #'   definitions. See 'Details'.
 #' @param verbose \[`logical(1)`]\cr All warnings are suppressed if set to
@@ -276,6 +278,9 @@ is.dynamitefit <- function(x) {
 parse_data <- function(data, dformula, group_var, time_var, verbose) {
   data <- droplevels(data)
   data_names <- names(data)
+  stopifnot_(!is.character(data[[time_var]]),
+    "Time indexing variable {.arg {time_var}} is of type {.cls character}, but
+    it should be of type {.cls numeric} or {.cls factor}.")
   data <- data |> dplyr::mutate(dplyr::across(where(is.character), as.factor))
   valid_types <- c("integer", "logical", "double")
   col_types <- vapply(data, typeof, character(1L))
@@ -302,8 +307,7 @@ parse_data <- function(data, dformula, group_var, time_var, verbose) {
   ordered_factor_resp <- vapply(
     seq_along(resp),
     function(i) {
-      is_categorical(dformula[[i]]$family) &&
-      all(c("ordered", "factor") %in% class(data[, resp[i]]))
+      is_categorical(dformula[[i]]$family) && is.ordered(data[, resp[i]])
     },
     logical(1L)
   )
@@ -329,11 +333,6 @@ parse_data <- function(data, dformula, group_var, time_var, verbose) {
     all(finite_cols),
     "Non-finite values in variable{?s} {.var {data_names[!finite_cols]}} of
      {.arg data}."
-  )
-  time <- sort(unique(data[[time_var]]))
-  stopifnot_(
-    length(time) > 1L,
-    "There must be at least two time points in the data."
   )
   data <- fill_time(data, time, group_var, time_var)
   data <- data.table::as.data.table(data)
