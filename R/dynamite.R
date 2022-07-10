@@ -334,7 +334,7 @@ parse_data <- function(data, dformula, group_var, time_var, verbose) {
     "Non-finite values in variable{?s} {.var {data_names[!finite_cols]}} of
      {.arg data}."
   )
-  data <- fill_time(data, time, group_var, time_var)
+  data <- fill_time(data, group_var, time_var)
   data <- data.table::as.data.table(data)
   data.table::setkeyv(data, c(group_var, time_var))
   data

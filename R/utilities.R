@@ -266,9 +266,8 @@ onlyif <- function(test, yes) {
 #' Adds NA gaps to fill in missing time points in a data frame
 #'
 #' @inheritParams dynamite
-#' @param time \[numeric()]\cr A vector of the time index values in the data.
 #' @noRd
-fill_time <- function(data, time, group_var, time_var) {
+fill_time <- function(data, group_var, time_var) {
   if (is.factor(data[[time_var]])) {
     warning_("Time indexing variable {.arg {time_var}} is a {.cls factor},
       converting the variable to {.cls integer} based on its levels.")
