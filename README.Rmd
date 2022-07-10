@@ -25,7 +25,7 @@ knitr::opts_chunk$set(
 [![Codecov test coverage](https://codecov.io/gh/santikka/dynamite/branch/main/graph/badge.svg)](https://app.codecov.io/gh/santikka/dynamite?branch=main)
 <!-- badges: end -->
 
-The `dynamite` package provides easy-to-use interface for Bayesian inference of complex panel data. The main features distinguishing the package and the underlying methodology from many other approaches are:
+The `dynamite` [R](https://www.r-project.org/) package provides easy-to-use interface for Bayesian inference of complex panel data. The main features distinguishing the package and the underlying methodology from many other approaches are:
 
 * Support for both time-varying and time-invariant effects.
 * Joint modeling of multiple measurements per individual (multiple channels).
@@ -38,9 +38,36 @@ The `dynamite` package is developed with the support of Academy of Finland grant
 
 ## Installation
 
-You can install the development version of dynamite from [GitHub](https://github.com/) with:
+`dynamite` uses R's native pipe operator, so R version 4.1.0 or newer is required.
 
-``` r
+`dynamite` also relies on some of the features of [Stan](https://mc-stan.org/)'s 
+which are not yet available on the [CRAN](https://cran.r-project.org/) version 
+of [rstan](https://CRAN.R-project.org/package=rstan) pacakge. Therefore you 
+need to install latest `rstan` and `StanHeaders` packages as
+```{r, eval = FALSE}
+# run the next line if you already have rstan installed:
+# remove.packages(c("StanHeaders", "rstan"))
+install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", 
+  getOption("repos")))
+```
+(See more help on [RStan wiki](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started))
+
+Finally, a version `1.14.3` or newer of the 
+[data.table](https://github.com/Rdatatable/data.table) package is required, 
+which can be installed as
+
+```{r}
+# run the next line if you do not have any version of the data.table installed:
+#install.packages("data.table")
+
+# install the latest development version:
+data.table::update.dev.pkg()
+```
+
+After these steps, you can install the development version of dynamite from 
+[GitHub](https://github.com/) with:
+
+```{r, eval = FALSE}
 # install.packages("devtools")
 devtools::install_github("santikka/dynamite")
 ```

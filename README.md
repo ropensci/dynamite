@@ -13,9 +13,10 @@ developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.re
 coverage](https://codecov.io/gh/santikka/dynamite/branch/main/graph/badge.svg)](https://app.codecov.io/gh/santikka/dynamite?branch=main)
 <!-- badges: end -->
 
-The `dynamite` package provides easy-to-use interface for Bayesian
-inference of complex panel data. The main features distinguishing the
-package and the underlying methodology from many other approaches are:
+The `dynamite` [R](https://www.r-project.org/) package provides
+easy-to-use interface for Bayesian inference of complex panel data. The
+main features distinguishing the package and the underlying methodology
+from many other approaches are:
 
 -   Support for both time-varying and time-invariant effects.
 -   Joint modeling of multiple measurements per individual (multiple
@@ -33,8 +34,40 @@ Finland grant 331817.
 
 ## Installation
 
-You can install the development version of dynamite from
-[GitHub](https://github.com/) with:
+`dynamite` uses R’s native pipe operator, so R version 4.1.0 or newer is
+required.
+
+`dynamite` also relies on some of the features of
+[Stan](https://mc-stan.org/)’s which are not yet available on the
+[CRAN](https://cran.r-project.org/) version of
+[rstan](https://CRAN.R-project.org/package=rstan) pacakge. Therefore you
+need to install latest `rstan` and `StanHeaders` packages as
+
+``` r
+# run the next line if you already have rstan installed:
+# remove.packages(c("StanHeaders", "rstan"))
+install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", 
+  getOption("repos")))
+```
+
+(See more help on [RStan
+wiki](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started))
+
+Finally, a version `1.14.3` or newer of the
+[data.table](https://github.com/Rdatatable/data.table) package is
+required, which can be installed as
+
+``` r
+# run the next line if you do not have any version of the data.table installed:
+#install.packages("data.table")
+
+# install the latest development version:
+data.table::update.dev.pkg()
+#> R data.table package is up-to-date at e9a323de01a17af70d5316016606fa8d35b25023 (1.14.3)
+```
+
+After these steps, you can install the development version of dynamite
+from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
@@ -65,7 +98,7 @@ Posterior estimates of the fixed effects:
 plot_betas(gaussian_example_fit)
 ```
 
-<img src="man/figures/README-unnamed-chunk-4-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-7-1.png" width="50%" />
 
 Posterior estimates of time-varying effects
 
@@ -74,7 +107,7 @@ plot_deltas(gaussian_example_fit, scales = "free")
 #> Warning: Removed 1 row(s) containing missing values (geom_path).
 ```
 
-<img src="man/figures/README-unnamed-chunk-5-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-8-1.png" width="50%" />
 
 And group-specific intercepts:
 
@@ -82,7 +115,7 @@ And group-specific intercepts:
 plot_nus(gaussian_example_fit)
 ```
 
-<img src="man/figures/README-unnamed-chunk-6-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-9-1.png" width="50%" />
 
 Traceplots and density plots:
 
@@ -90,7 +123,7 @@ Traceplots and density plots:
 plot(gaussian_example_fit, type = "beta")
 ```
 
-<img src="man/figures/README-unnamed-chunk-7-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-10-1.png" width="50%" />
 
 ## Related packages
 
