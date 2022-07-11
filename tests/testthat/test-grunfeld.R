@@ -42,8 +42,8 @@ test_that("parameters of the Grunfield model are recovered", {
     -10.084975, 158.146755, -173.565297, 30.013812, -55.072784, 34.483764,
     -8.106796, 0.644707, -28.183244, 50.348913)
   sumr <- as_draws(fit) |> posterior::summarise_draws(
-    default_mcse_measures(),
-    default_summary_measures())
+    posterior::default_mcse_measures(),
+    posterior::default_summary_measures())
   for(i in 1:15) {
     expect_equal(sumr$mean[i], brms_est[i],
       tolerance = 10 * sumr$mcse_mean[i], label = sumr$variable[i])
