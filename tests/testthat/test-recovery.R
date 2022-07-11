@@ -1,5 +1,5 @@
 #' @srrstats {G5.10} Extended tests can be switched on via setting the
-#'   environment variable DYNAMITE_EXTENDED_TESTS to 1.
+#'   environment variable DYNAMITE_EXTENDED_TESTS to "true".
 #' @srrstats {G5.5, G5.6b} Seeds are used appropriately in the tests.
 #' @srrstats {G5.4, G5.4a, G5.4b, G5.4c, G5.6, G5.6a, BS7.0, BS7.1, BS7.2}
 #'   Simple linear regression and GLM models are tested so that they match with
@@ -11,8 +11,6 @@
 
 set.seed(123)
 seeds <- sample(1:1000, size = 6)
-
-run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "1")
 
 test_that("parameters for the linear regression are recovered as with lm", {
   skip_if_not(run_extended_tests)

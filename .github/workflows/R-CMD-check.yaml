@@ -27,15 +27,21 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
-      #DYNAMITE_EXTENDED_TESTS: ${{contains(github.event.head_commit.message, 'run-extended')}}
+      # this sets the env variable to true or false depending on whether the
+      # commit message contains text 'run-extended'
+      DYNAMITE_EXTENDED_TESTS: ${{contains(github.event.head_commit.message, 'run-extended')}}
 
     steps:
 
-      - name: Set the value of DYNAMITE_EXTENDED_TESTS
-        if: contains(github.event.head_commit.message, 'run-extended')
-        run: |
-          echo "DYNAMITE_EXTENDED_TESTS=1" >> $GITHUB_ENV
-
+      # alternative way to set up the environment variable
+      # - name: Set the value of DYNAMITE_EXTENDED_TESTS
+      #   if: contains(github.event.head_commit.message, 'run-extended')
+      #   run: |
+      #     if [ "$RUNNER_OS" == "Windows" ]; then
+      #       echo "DYNAMITE_EXTENDED_TESTS=1" >> $env:GITHUB_ENV
+      #     else
+      #       echo "DYNAMITE_EXTENDED_TESTS=1" >> $GITHUB_ENV
+      #     fi
       - uses: actions/checkout@v2
 
       - uses: r-lib/actions/setup-pandoc@v2

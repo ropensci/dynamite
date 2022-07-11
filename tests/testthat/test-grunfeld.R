@@ -1,6 +1,5 @@
 #' @srrstats {G5.0, G5.4, G5.4a, G5.4b, G5.4c} The parameter estimates of
 #'   model fitted to a classic Grunfeld data match with brms and plm.
-run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "1")
 
 test_that("parameters of the Grunfield model are recovered", {
 
