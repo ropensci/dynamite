@@ -18,7 +18,7 @@ knitr::opts_chunk$set(
 )
 ```
 ```{r srr, eval = FALSE, echo = FALSE}
-#' @srrstats {BS1.2b} *At least one package vignette, both as general and applied textual descriptions, and example code*
+#' @srrstats {BS1.2b} The package contains a vignette.
 ```
 
 ```{r setup}
@@ -27,12 +27,12 @@ library(dynamite)
 
 # Introduction
 
-Panel data is common in various fields such as social sciences. These data consists of multiple subjects, followed over several time points, and there are often many observations per individual at each time, for example family status and income of each individual at each time point of interest. Such data can be analyzed in various ways, depending on the research questions and the characteristics of the data such as the number of individuals and time points, and the assumed distribution of the response variables. Some of the methods are based on the time series modelling approaches, such as (mixture) hidden Markov models [@seqHMM] and panel vector autoregressive models [@Holtz-Eakin1988], while others approach the problem from a point of structural equation models [@Bollen2010] or so called fixed effect models [@Allison2009]. In the linear fixed effect models where we assume that individual $i$ at time $t$ follows a linear model 
+Panel data is common in various fields such as social sciences. These data consists of multiple subjects, followed over several time points, and there are often many observations per individual at each time, for example family status and income of each individual at each time point of interest. Such data can be analyzed in various ways, depending on the research questions and the characteristics of the data such as the number of individuals and time points, and the assumed distribution of the response variables. Some of the methods are based on the time series modelling approaches, such as (mixture) hidden Markov models [@seqHMM] and panel vector autoregressive models [@Holtz-Eakin1988], while others approach the problem from a point of structural equation models [@Bollen2010] or so called fixed effect models [@Allison2009]. In the linear fixed effect model we assume that individual $i$ at time $t$ follows a linear model 
 
 \[
 y_{i,t} = \mu_t + \beta x_{i,t} + \gamma z_i + \alpha_i + \epsilon_{i,t},
 \]
-where $\mu_t$
+where $\mu_t$ is the common time-varying intercept term, 
 
 
 The `dynamite` package provides easy-to-use interface for Bayesian inference of complex panel data. The main features distinguishing the package and the underlying methodology from many other approaches are:
@@ -121,7 +121,8 @@ which defines `log1x` as the logarithm of `1 + x`. We can then use this auxiliar
 
 Finally, the declared model is supplied to `dynamite`, which has the following arguments and default values:
 ```{r, echo=TRUE, eval=FALSE}
-dynamite(dformula, data, group = NULL, time, priors = NULL, verbose = TRUE, debug = NULL, ...)
+dynamite(dformula, data, group = NULL, time, priors = NULL, verbose = TRUE, 
+  debug = NULL, ...)
 ```
 The first argument `dformula` is the `dynamiteformula` object that defines the model and the second argument `data` is a `data.frame` that contains the variables used in the model formula. The argument `group` is a column name of `data` that specified the unique groups (individuals) and similarly, `time` is a column name of `data` that specifies the unique time points. Note that `group` is optional: when `group = NULL` we assume that there is only a single group (or individual). The argument `priors` supplies optional user-defined priors for the model parameters, and `...` supplies additional arguments to `rstan::sampling` which handles the model estimation. Finally, `verbose` controls the verbosity of the output and `debug` can be used for various debugging options (see `?dynamite` for further information on these parameters). For example, 
 ```{r, echo=TRUE, eval=FALSE}

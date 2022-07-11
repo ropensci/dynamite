@@ -32,7 +32,9 @@ fashion (per time-point and per channel).}
 unique groups, or \code{NULL} corresponding to a scenario without grouping.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
-time axis.}
+time index of observations. If this variable is a factor, the integer
+representation of its levels are used internally for defining the time
+indexing.}
 
 \item{priors}{[\code{data.frame}]\cr An optional data frame with prior
 definitions. See 'Details'.}
