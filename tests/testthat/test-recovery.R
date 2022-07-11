@@ -8,6 +8,7 @@
 #'   Further recovery and correctness tests are also implemented.
 #' @srrstats {G5.7} Tested that the parameters of the true data generating
 #'   process are recovered when increasing the data size.
+run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "true")
 
 set.seed(123)
 seeds <- sample(1:1000, size = 6)

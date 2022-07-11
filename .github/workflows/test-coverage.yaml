@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      DYNAMITE_EXTENDED_TESTS: ${{contains(github.event.head_commit.message, 'run-extended')}}
 
     steps:
       - uses: actions/checkout@v2

@@ -8,6 +8,7 @@
 #'  Finally, the splines and other more complex terms can likely affect the
 #'  scaling in various ways.
 #'
+run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "true")
 
 test_that("scaling for gaussian model is linear in number of time points", {
 
