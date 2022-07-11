@@ -110,7 +110,7 @@ test_that("scaling for gamma model is linear in number of time points", {
       init = 0, refresh = 0, chains = 1, iter = 5000, seed = 1)
     times[i] <- sum(rstan::get_elapsed_time(fit))
   }
-  expect_equal(min(times / n), max(times / n), tolerance = 0.1)
+  expect_equal(min(times / n) / max(times / n), 1, tolerance = 0.5)
 })
 
 test_that("scaling for gamma model is linear in number of groups", {
@@ -141,8 +141,8 @@ test_that("scaling for gamma model is linear in number of groups", {
       group = "id",
       time = "time")
     fit <- rstan::sampling(model, data = data,
-      init = 0, refresh = 0, chains = 1, iter = 5000, seed = 1)
+      init = 0, refresh = 0, chains = 1, iter = 10000, seed = 1)
     times[i] <- sum(rstan::get_elapsed_time(fit))
   }
-  expect_equal(min(times / n), max(times / n), tolerance = 0.1)
+  expect_equal(min(times / n) / max(times / n), 1, tolerance = 0.5)
 })
