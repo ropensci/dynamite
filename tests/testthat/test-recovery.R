@@ -135,7 +135,6 @@ test_that("parameters of a time-varying gaussian model are recovered", {
         refresh = 0, chains = 1, iter = 2000,
         pars = pars), pars = pars) - d$true_values
     d <- create_data()
-    print(i)
   }
   # small MSE
   expect_lt(mean(diffs^2), 0.005)
@@ -149,7 +148,7 @@ test_that("parameters of a time-varying gaussian model are recovered", {
     pars = pars)
   estimates <- c(rstan::get_posterior_mean(fit_long, pars = pars))
   expect_equal(c(estimates), d$true_values,
-    ignore_attr = TRUE, tolerance = 0.01)
+    ignore_attr = TRUE, tolerance = 0.1)
 })
 
 
@@ -185,16 +184,16 @@ test_that("prior parameters are recovered with zero observations", {
   expect_equal(
     unlist(sumr[1, 2:5]),
     c(m, s, qnorm(c(0.05,0.95), m, s)),
-    tolerance = 0.01, ignore_attr = TRUE
+    tolerance = 0.1, ignore_attr = TRUE
   )
   expect_equal(
     unlist(sumr[2, 2:5]),
     c(5, 0.5, qnorm(c(0.05, 0.95), 5, 0.5)),
-    tolerance = 0.01, ignore_attr = TRUE
+    tolerance = 0.1, ignore_attr = TRUE
   )
   expect_equal(
     unlist(sumr[3, 2:5]),
     c(0.1, 0.1, qexp(c(0.05, 0.95), 10)),
-    tolerance = 0.01, ignore_attr = TRUE
+    tolerance = 0.1, ignore_attr = TRUE
   )
 })
