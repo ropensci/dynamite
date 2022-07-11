@@ -27,7 +27,7 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
-      DYNAMITE_EXTENDED_TESTS: ${{contains(github.event.head_commit.message, 'run-extended')}}
+      #DYNAMITE_EXTENDED_TESTS: ${{contains(github.event.head_commit.message, 'run-extended')}}
 
     steps:
 
