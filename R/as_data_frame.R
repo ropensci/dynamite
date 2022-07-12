@@ -178,7 +178,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
             all_time_points[seq.int(fixed + 1L, length(all_time_points))]
           )
           n_time <- length(time_points)
-          n_na <- include_fixed * fixed * n_draws
+          n_na <- include_fixed * fixed * n_draws * length(category)
         } else {
           n_time <- 1L
           time_points <- NA
