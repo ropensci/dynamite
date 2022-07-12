@@ -10,7 +10,31 @@
 #' @inheritParams predict.dynamitefit
 #' @examples
 #' fitted(gaussian_example_fit, n_draws = 2L)
+#' \dontrun{
+#' set.seed(1)
+#' fit <- dynamite(obs(LakeHuron ~ 1, "gaussian") + lags(),
+#'   data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
+#'   "id", "time", chains = 1, refresh = 0)
 #'
+#' # One-step ahead samples (fitted values) from the posterior
+#' # (first time point is fixed due to lag in the model):
+#' fitted(fit) |>
+#'   filter(time > 2) |>
+#'   ggplot(aes(time, LakeHuron_fitted, group = draw)) +
+#'   geom_line(alpha = 0.5) +
+#'   # observed values
+#'   geom_line(aes(y = LakeHuron), colour = "tomato") +
+#'   theme_bw()
+#'
+#' # Posterior predictive distribution given the first time point:
+#' predict(fit, type = "mean") |>
+#'   filter(time > 2) |>
+#'   ggplot(aes(time, LakeHuron_mean, group = draw)) +
+#'   geom_line(alpha = 0.5) +
+#'   # observed values
+#'   geom_line(aes(y = LakeHuron), colour = "tomato") +
+#'   theme_bw()
+#' }
 #' @srrstats {RE4.9} Returns the fitted values.
 fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
   n_draws <- check_ndraws(n_draws, ndraws(object))
@@ -49,7 +73,8 @@ fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
     newdata,
     object$stan$u_names
   )
-  model_matrix <- model_matrix[rep(seq_len(n_new), each = n_draws), ]
+  model_matrix <-
+    model_matrix[rep(seq_len(n_new), each = n_draws), , drop = FALSE]
   newdata <- data.table::as.data.table(newdata)
   newdata <- newdata[rep(seq_len(n_new), each = n_draws), ]
   newdata[, ("draw") := rep(seq_len(n_draws), n_new)]
@@ -69,7 +94,7 @@ fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
     (fixed - 1L) * n_draws
   for (i in seq.int(fixed + 1L, n_time)) {
     idx <- idx + n_draws
-    model_matrix_sub <- model_matrix[idx, ]
+    model_matrix_sub <- model_matrix[idx, , drop = FALSE]
     for (j in seq_along(resp_stoch)) {
       e <- eval_envs[[j]]
       e$idx <- idx
