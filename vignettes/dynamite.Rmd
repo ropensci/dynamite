@@ -27,22 +27,30 @@ library(dynamite)
 
 # Introduction
 
-Panel data is common in various fields such as social sciences. These data consists of multiple subjects, followed over several time points, and there are often many observations per individual at each time, for example family status and income of each individual at each time point of interest. Such data can be analyzed in various ways, depending on the research questions and the characteristics of the data such as the number of individuals and time points, and the assumed distribution of the response variables. Some of the methods are based on the time series modelling approaches, such as (mixture) hidden Markov models [@seqHMM] and panel vector autoregressive models [@Holtz-Eakin1988], while others approach the problem from a point of structural equation models [@Bollen2010] or so called fixed effect models [@Allison2009]. In the linear fixed effect model we assume that individual $i$ at time $t$ follows a linear model 
+Panel data is common in various fields such as social sciences. These data consists of multiple subjects, followed over several time points, and there are often many observations per individual at each time, for example family status and income of each individual at each time point of interest. Such data can be analyzed in various ways, depending on the research questions and the characteristics of the data such as the number of individuals and time points, and the assumed distribution of the response variables. Popular modelling approaches include fixed effect models, cross-lagged panel models, and dynamic panel models with parameter estimation based on ordinary least squares, generalized method of moments, or maximum likelihood using structural equation models [@arellano1991, @Allison2009, @Bollen2010, @Allison2017]. Other suitable methods include (mixture) hidden Markov models [@seqHMM], and panel vector autoregressive models [@Holtz-Eakin1988].
 
-\[
-y_{i,t} = \mu_t + \beta x_{i,t} + \gamma z_i + \alpha_i + \epsilon_{i,t},
-\]
-where $\mu_t$ is the common time-varying intercept term, 
+In traditional panel data models, the effects of predictors are typically assumed to be time-invariant, although some extensions to time-varying effects have emerged [@hayakawa2019]. On the other hand, there are various methods to model time-varying effects in (generalized) regression models based on state space models [@harvey1982; @durbin2012], with various R implementations [@helske2022; @knaus2021; @brodersen2014]. The state space modelling approaches are highly flexible but often computationally demanding due to assumed latent processes for the regression coefficients and an analytically intractable marginal likelihood, so they are most useful in settings with only few subjects. Methods based on the varying coefficients models [@hastie1993; @eubank2004] can be computationally more convenient, especially when the varying coefficients are based on splines. Some of the R implementations of time-varying coefficient models include [@casas2019; @dziak2021].
 
+The `dynamite` package provides an alternative approach to panel data inference 
+which avoids some of the limitations and drawbacks of the aforementioned 
+methods. The main features distinguishing the package and the underlying 
+methodology from many other approaches are:
 
-The `dynamite` package provides easy-to-use interface for Bayesian inference of complex panel data. The main features distinguishing the package and the underlying methodology from many other approaches are:
+* Support for effects which vary smoothly over time. This allows modelling for 
+  example effects of interventions which increase or decrease over time.
+* Support for non-Gaussian observations. `dynamite` supports not only Gaussian 
+  response variables, but also many other common types such as categorical 
+  variables.
+* Joint modelling of multiple measurements per individual (multiple channels). 
+* Realistic counterfactual predictions which take into account the dynamic 
+structure of the model.
+* Transparent quantification of parameter and predictive uncertainty due to the 
+  use of Bayesian estimation methods. 
 
-* Support for both time-varying and time-invariant effects.
-* Joint modelling of multiple measurements per individual (multiple channels).
-* Support for non-gaussian observations.
-* Realistic counterfactual predictions which take into account the dynamic structure of the model.
-* Clear quantification of parameter and predictive uncertainty due to a Bayesian approach.
-* User-friendly and efficient R interface with state-of-the-art estimation via [@rstan].
+As we are modelling all endogenous variables jointly, it is also possible to 
+consider long-term effects of interventions which take into account the 
+interdependency of several variables of the model, and allows simulation of 
+complex counterfactual scenarios.
 
 # Model
 
@@ -88,7 +96,6 @@ defines a model with two channels; first we declare that `y` is a gaussian varia
 * Binomial: `binomial` (logit-link).
 * Exponential: `exponential` (log-link).
 * Gamma: `gamma` (log-link, using mean and shape parameterization).
-
 
 The `dynamite` models do not support contemporaneous dependencies in order to avoid complex cyclic dependencies which would make handling missing data, subsequent predictions, and causal inference challenging or impossible. In other words, response variables can only depend on the previous values of other response variables. This is why we used `lag(x)` in the previous example, a shorthand for `lag(x, k = 1)`, which defines a one-step lag of the variable `x`. Longer lags can also be defined by adjusting the argument `k`. 
 
@@ -137,17 +144,64 @@ dynamite(
 ``` 
 estimates the model using the data in the data frame `d`, which contains variables `year` and `id` (defining the time-index and group-index variables of the data). Arguments `chains` and `cores` are passed to `rstan::sampling` which then uses to parallel Markov chains in the the Markov chain Monte Carlo (MCMC) sampling of the model parameters.
 
-# Example
+# Examples
 
-As an example, consider the following simulated multichannel data:
+
+## Grunfeld data
+
+
+As an example, we consider the famous Grunfeld dataset, available in the package `plm` [@plm]:
+```{r, eval = FALSE}
+library(dynamite)
+library(dplyr)
+data(Grunfeld, package = "plm")
+d <- Grunfeld |> 
+  mutate(invest = inv, firm = factor(firm) |> 
+  select(-inv)
+head(d)
+```
+
+The data is in a long format (as required by the `dynamite`), containing the 
+firm id (`firm`, 10 firms), the `year` (20 years), value of the firm (`value`), 
+the firms’ gross investment (`invest`) and stock of plant and equipment 
+(`capital`). 
+
+Let's first fit the basic model without time-invariant effects of value and 
+capital on the investment, but with a firm-specific random intercept (using the 
+`random_intercept = TRUE` inside of `obs`):
+```{r, eval = FALSE}
+fit_grunfeld <- dynamite(obs(invest ~ value + capital,
+  family = "gaussian", random_intercept = TRUE),
+  d, "firm", "year",
+  chains = 1, cores = 1, refresh = 500, iter = 2000, 
+  save_warmup = FALSE)
+fit_grunfeld
+```
+
+Instead of random intercept terms for each firm, an fixed effect approach would 
+have been possible by using the formula
+`obs(invest ~ firm + value + capital, family = "gaussian")`.
+
+As we used weakly informative default priors, the coefficient estiamtes are 
+close to the ones obtained with the `plm` package which is based on the 
+ordinary least squares:
+```{r, eval = FALSE}
+fit_plm <- plm::plm(invest ~ value + capital, data = d, 
+                    index = c("firm", "year"), 
+                    effect = "individual", model = "within")
+fit_plm
+```
+
+## Multichannel model
+
+As a second example, consider the following simulated multichannel data:
 
 ```{r}
 library(dynamite)
 head(multichannel_example)
 ```
 
-This data set is in a long format (as required by the `dynamite` function), containing the variables
-`id` (50 unique firms), the `time` (20 time points), a continuous variable `g`, a variable with non-negative integer values `p`, and a binary variable `b`. We define the following model (which actually matches the data generating process used in simulating the data):
+The data contains 50 unique groups (variable `id`), over 20 time points (`time`), a continuous variable `g`, a variable with non-negative integer values `p`, and a binary variable `b`. We define the following model (which actually matches the data generating process used in simulating the data):
 
 ```{r}
 set.seed(1)
@@ -157,7 +211,12 @@ f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
   aux(numeric(logp) ~ log(p + 1))
 ```
 
-We fit the model using the `dynamite` function (note the small number of iterations and additional thinning in order to satisfy the CRAN requirements):
+As a directed acyclic graph (DAG), the model for the first three time points 
+looks as
+[dag](dag.png)
+
+We again fit the model using the `dynamite` function (note the small number of 
+iterations and additional thinning in order to satisfy the CRAN requirements):
 ```{r, eval = FALSE}
 multichannel_example_fit <- dynamite(
   f, multichannel_example, "id", "time",
@@ -165,13 +224,89 @@ multichannel_example_fit <- dynamite(
   thin = 5, save_warmup = FALSE)
 ```
 
-We can obtain posterior samples or summary statistics of the model usign the `as.data.frame`, `coef`, and `summary` functions, but here we opt for visualizing the results using the `plot_betas` function:
+We can obtain posterior samples or summary statistics of the model using the 
+`as.data.frame`, `coef`, and `summary` functions, but here we opt for 
+visualizing the results using the `plot_betas` function:
 
 ```{r}
 plot_betas(multichannel_example_fit)
 ```
 
-Note the naming of the model parameters; for example `beta_b_g_lag1` corresponds to a fixed coefficient `beta` of lagged variabe `g` of the the channel `b`.
+Note the naming of the model parameters; for example `beta_b_g_lag1` 
+corresponds to a fixed coefficient `beta` of lagged variable `g` of the 
+channel `b`.
+
+Assume now that we are interested in studying the causal effect of variable 
+$b_5$ on variable $g_t$ at $t=6,\ldots,20$. There is no direct effect from 
+$b_5$ to $g_6$, but as $g_t$ at affects $b_{t+1}$ (and $p_{t+1}$), 
+which in turn has an effect on all the variables at $t+2$, we should see an 
+indirect effect of $b_5$ to $g_t$ from time $t=7$ onward.
+
+For this task, we first create a new dataset where the values of of our 
+response variables after time 5 are set to NA:
+
+```{r}
+d <- multichannel_example
+d <- d |> 
+  dplyr::mutate(
+    g = ifelse(time > 5, NA, g),
+    p = ifelse(time > 5, NA, p),
+    b = ifelse(time > 5, NA, b))
+```
+
+We then predict time points 6 to 20 when $b$ at time 5 is 0 or 1 for everyone:
+
+```{r}
+newdata0 <- d |> 
+  dplyr::mutate(
+    b = ifelse(time == 5, 0, b))
+pred0 <- predict(multichannel_example_fit, newdata = newdata0)
+newdata1 <- d |> 
+  dplyr::mutate(
+    b = ifelse(time == 5, 1, b))
+pred1 <- predict(multichannel_example_fit, newdata = newdata1)
+```
+
+The output from `predict` contains now the original `newdata` and additional 
+columns `g_new`, `p_new`, and `b_new` where the NA values of `newdata` are 
+replaced with the posterior samples from the model (the output also contains 
+additional column corresponding to the auxiliary channel `logp` and indexing 
+variable `draw`:
+
+```{r}
+head(pred0)
+```
+
+We can now compute summary statistics over the individuals and then over the posterior samples to obtain posterior distribution of the causal effects as
+```{r}
+sumr <- dplyr::bind_rows(
+  list(b0 = pred0, b1 = pred1), .id = "case") |> 
+  dplyr::group_by(case, draw, time) |> 
+  dplyr::summarise(mean_t = mean(g_new)) |> 
+  dplyr::group_by(case, time) |> 
+  dplyr::summarise(
+    mean = mean(mean_t),
+    q5 = quantile(mean_t, 0.05), 
+    q95 = quantile(mean_t, 0.95))
+```
+
+which can the be visualized with the `ggplot2` [@ggplot2] as
+```{r}
+library(ggplot2)
+ggplot(sumr, aes(time, mean)) + 
+  geom_ribbon(aes(ymin = q5, ymax = q95), alpha = 0.5) +
+  geom_line() + 
+  scale_x_continuous(n.breaks = 10) + 
+  facet_wrap(~ case) +
+  theme_bw()
+```
+
+Note that these estimates do indeed coincide with the causal effects (assuming of course that our model is correct), as we can find the backdoor adjustment formula [@Pearl1995]
+\[
+P(g_t | do(b_5 = x)) = \sum_{g_5, p_5}P(g_t | b_5 = x, g_5, p_5) P(g_5, p_5), 
+\]
+which is equal to `mean_t` in above codes.
+
 
 
 # References
