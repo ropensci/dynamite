@@ -98,7 +98,7 @@ Posterior estimates of the fixed effects:
 plot_betas(gaussian_example_fit)
 ```
 
-<img src="man/figures/README-unnamed-chunk-7-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-7-1.png" width="80%" />
 
 Posterior estimates of time-varying effects
 
@@ -107,7 +107,7 @@ plot_deltas(gaussian_example_fit, scales = "free")
 #> Warning: Removed 1 row(s) containing missing values (geom_path).
 ```
 
-<img src="man/figures/README-unnamed-chunk-8-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-8-1.png" width="80%" />
 
 And group-specific intercepts:
 
@@ -115,7 +115,7 @@ And group-specific intercepts:
 plot_nus(gaussian_example_fit)
 ```
 
-<img src="man/figures/README-unnamed-chunk-9-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-9-1.png" width="80%" />
 
 Traceplots and density plots:
 
@@ -123,10 +123,46 @@ Traceplots and density plots:
 plot(gaussian_example_fit, type = "beta")
 ```
 
-<img src="man/figures/README-unnamed-chunk-10-1.png" width="50%" />
+<img src="man/figures/README-unnamed-chunk-10-1.png" width="80%" />
+
+Posterior predictive samples for first 4 groups (samples based on the
+posterior distribution of model parameters and observed data on first
+time point):
+
+``` r
+library(ggplot2)
+#> Warning: package 'ggplot2' was built under R version 4.1.3
+pred <- predict(gaussian_example_fit, n_draws = 50)
+pred |> dplyr::filter(id < 5) |> 
+  ggplot(aes(time, y_new, group = draw)) +
+  geom_line(alpha = 0.5) + 
+  # observed values
+  geom_line(aes(y = y), colour = "tomato") +
+  facet_wrap(~ id) +
+  theme_bw()
+```
+
+<img src="man/figures/README-unnamed-chunk-11-1.png" width="80%" />
+
+For more examples, see the package vignette.
 
 ## Related packages
 
-The `dynamite` package uses Stan via
-[`rstan`](https://CRAN.R-project.org/package=rstan) (see also
-<https://mc-stan.org>).
+-   The `dynamite` package uses Stan via
+    [`rstan`](https://CRAN.R-project.org/package=rstan) (see also
+    <https://mc-stan.org>), which is a probabilistic programming
+    language for general Bayesian modelling.
+
+-   The [`brms`](https://CRAN.R-project.org/package=brms) package also
+    uses Stan, and can be used to fit various complex multilevel models.
+
+-   Regression modelling with time-varying coefficients based on kernel
+    smoothing and least squares estimation is available in package
+    [`tvReg`](https://CRAN.R-project.org/package=tvReg). The
+    [`tvem`](https://CRAN.R-project.org/package=tvem) package provides
+    similar functionality for gaussian, binomial and poisson responses
+    with [`mgcv`](https://CRAN.R-project.org/package=mgcv) backend.
+
+-   [`plm`](https://CRAN.R-project.org/package=plm) contains various
+    methods to estimate linear models for panel data, e.g. the fixed
+    effect models.
