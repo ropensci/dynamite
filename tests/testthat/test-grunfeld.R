@@ -48,6 +48,6 @@ test_that("parameters of the Grunfield model are recovered", {
     posterior::default_summary_measures())
   for(i in 1:15) {
     expect_equal(sumr$mean[i], brms_est[i],
-      tolerance = 10 * sumr$mcse_mean[i], label = sumr$variable[i])
+      tolerance = 100 * sumr$mcse_mean[i], label = sumr$variable[i])
   }
 })

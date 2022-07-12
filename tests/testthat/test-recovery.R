@@ -10,12 +10,9 @@
 #'   process are recovered when increasing the data size.
 run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "true")
 
-set.seed(123)
-seeds <- sample(1:1000, size = 6)
-
 test_that("parameters for the linear regression are recovered as with lm", {
   skip_if_not(run_extended_tests)
-  set.seed(seeds[1])
+  set.seed(1)
   n <- 100
   x <- rnorm(n)
   y <- 2 - 1 * x + rnorm(n, sd = 0.1)
@@ -27,14 +24,14 @@ test_that("parameters for the linear regression are recovered as with lm", {
   priors$prior <- c("normal(0, 5)", "normal(0, 1)", "exponential(1)")
   fit_dynamite <- dynamite(obs(y ~ x, family = "gaussian"),
     data = d, time = "time", priors = priors, chains = 1, refresh = 0)
-  expect_equal(coef(fit_lm), coef(fit_dynamite)$mean, tolerance = 0.01,
+  expect_equal(coef(fit_dynamite)$mean, coef(fit_lm), tolerance = 0.01,
     ignore_attr = TRUE)
 
 })
 
 test_that("parameters for the poisson glm are recovered as with glm", {
   skip_if_not(run_extended_tests)
-  set.seed(seeds[2])
+  set.seed(1)
   n <- 100
   x <- rnorm(n)
   y <- rpois(n, exp(2 - 1 * x))
@@ -43,13 +40,13 @@ test_that("parameters for the poisson glm are recovered as with glm", {
   fit_glm <- glm(y ~ x, data = d, family = poisson)
   fit_dynamite <- dynamite(obs(y ~ x, family = "poisson"),
     data = d, time = "time", chains = 1, refresh = 0)
-  expect_equal(coef(fit_glm), coef(fit_dynamite)$mean, tolerance = 0.01,
+  expect_equal(coef(fit_dynamite)$mean, coef(fit_glm), tolerance = 0.01,
     ignore_attr = TRUE)
 })
 
 test_that("parameters for the binomial glm are recovered as with glm", {
   skip_if_not(run_extended_tests)
-  set.seed(seeds[3])
+  set.seed(1)
   n <- 100
   u <- sample(1:10, n, TRUE)
   x <- rnorm(n)
@@ -59,13 +56,13 @@ test_that("parameters for the binomial glm are recovered as with glm", {
   fit_glm <- glm(cbind(y, u - y) ~ x, data = d, family = binomial)
   fit_dynamite <- dynamite(obs(y ~ x + trials(u), family = "binomial"),
     data = d, time = "time", chains = 1, refresh = 0)
-  expect_equal(coef(fit_glm), coef(fit_dynamite)$mean, tolerance = 0.01,
+  expect_equal(coef(fit_dynamite)$mean, coef(fit_glm), tolerance = 0.01,
     ignore_attr = TRUE)
 })
 
 test_that("parameters for the gamma glm are recovered as with glm", {
   skip_if_not(run_extended_tests)
-  set.seed(seeds[4])
+  set.seed(1)
   n <- 100
   x <- rnorm(n)
   y <- rgamma(n, 2, 2/exp(1 - 2 * x))
@@ -74,14 +71,29 @@ test_that("parameters for the gamma glm are recovered as with glm", {
   fit_glm <- glm(y ~ x, data = d, family = Gamma(link = "log"))
   fit_dynamite <- dynamite(obs(y ~ x, family = "gamma"),
     data = d, time = "time", chains = 1, refresh = 0)
-  expect_equal(coef(fit_glm), coef(fit_dynamite)$mean[1:2], tolerance = 0.01,
+  expect_equal(coef(fit_dynamite)$mean[1:2], coef(fit_glm), tolerance = 0.01,
     ignore_attr = TRUE)
 })
 
+test_that("parameters for an AR(1) model are recovered as with arima", {
+  skip_if_not(run_extended_tests)
+  set.seed(1)
+  fit <- dynamite(obs(LakeHuron ~ 1, "gaussian") + lags(),
+    data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
+    "id", "time", chains = 1, refresh = 0)
+  fit_arima <- arima(LakeHuron, c(1, 0, 0))
+  expect_equal(coef(fit)$mean[2], coef(fit_arima)[1], tolerance = 0.01,
+    ignore_attr = TRUE)
+  expect_equal(
+    coef(fit)$mean[1],
+    coef(fit_arima)[2] * (1 - coef(fit_arima)[1]),
+    tolerance = 1, ignore_attr = TRUE
+  )
+})
 
 test_that("parameters of a time-varying gaussian model are recovered", {
   skip_if_not(run_extended_tests)
-  set.seed(seeds[5])
+  set.seed(1)
   create_data <- function(N = 10L, T_ = 100L, D = 50L) {
     K_fixed <- 1L
     K_varying <- 2L
@@ -155,7 +167,7 @@ test_that("parameters of a time-varying gaussian model are recovered", {
 test_that("prior parameters are recovered with zero observations", {
 
   skip_if_not(run_extended_tests)
-  set.seed(seeds[6])
+  set.seed(1)
   d <- data.frame(y = rep(NA, 10), x = rnorm(10), id = 1, time = 1:10)
   p <- get_priors(obs(y  ~ x, "gaussian"), d, "id", "time")
   p$prior[] <- c("normal(2, 0.1)", "normal(5, 0.5)", "exponential(10)")
