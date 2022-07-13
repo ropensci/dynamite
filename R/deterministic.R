@@ -18,6 +18,10 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
   }
   rhs_stoch <- get_predictors(dls)
   for (i in seq_along(dls)) {
+    stopifnot_(
+      rhs_stoch[i] %in% names(data),
+      "Can't find variable{?s} {.var {rhs_stoch[i]}} in {.arg data}."
+    )
     data[ ,(dls[[i]]$response) := data[[rhs_stoch[i]]]]
     data[ ,(dls[[i]]$response) := NA]
   }

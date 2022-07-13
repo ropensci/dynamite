@@ -307,6 +307,4 @@ P(g_t | do(b_5 = x)) = \sum_{g_5, p_5}P(g_t | b_5 = x, g_5, p_5) P(g_5, p_5),
 \]
 which is equal to `mean_t` in above codes.
 
-
-
 # References

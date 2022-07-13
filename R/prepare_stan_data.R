@@ -26,6 +26,11 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
                               priors = NULL, fixed, verbose) {
 
   resp_names <- get_responses(dformula)
+  missing_resp <- !(resp_names %in% names(data))
+  stopifnot_(
+    all(!missing_resp),
+    "Can't find variable{?s} {.var {resp_names[missing_resp]}} in {.arg data}."
+  )
   responses <- as.data.frame(data[, .SD, .SDcols = resp_names])
   # Needs sapply/lapply instead of apply to keep factors as factors
   attr(responses, "resp_class") <- lapply(responses, function(x) {
