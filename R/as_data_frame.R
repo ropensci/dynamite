@@ -159,6 +159,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     if (is.null(category)) {
       category <- NA
     }
+    n_cat <- length(category)
     d <- switch(type,
       `nu` = {
         n_group <- dim(draws)[3L]
@@ -177,20 +178,28 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
             all_time_points,
             all_time_points[seq.int(fixed + 1L, length(all_time_points))]
           )
+          n_na <- include_fixed * fixed * n_draws
           n_time <- length(time_points)
-          n_na <- include_fixed * fixed * n_draws * length(category)
+          n_time2 <- n_time - include_fixed * fixed
+          do.call(dplyr::bind_rows, lapply(seq_len(n_cat), function(i) {
+            data.frame(
+              parameter = paste0("alpha_", response),
+              value = c(rep(NA, n_na),
+                c(draws[, , (i - 1L) * n_time2 + seq_len(n_time2)])),
+              time = rep(time_points, each = n_draws),
+              category = category[i],
+              group = NA
+            )
+          }))
         } else {
-          n_time <- 1L
-          time_points <- NA
-          n_na <- 0L
+          data.frame(
+            parameter = paste0("alpha_", response),
+            value = c(draws),
+            time = NA,
+            category = rep(category, each = n_draws),
+            group = NA
+          )
         }
-        data.frame(
-          parameter = paste0("alpha_", response),
-          value = c(rep(NA, n_na), c(draws)),
-          time = rep(time_points, each = n_draws),
-          category = rep(category, each = n_time * n_draws),
-          group = NA
-        )
       },
       `beta` = {
         var_names <- paste0(
@@ -220,15 +229,20 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         n_na <- include_fixed * fixed * n_draws
         n_time <- length(time_points)
         n_time2 <- n_time - include_fixed * fixed
-        d <- do.call(dplyr::bind_rows, lapply(seq_len(n_vars), function(i) {
-          data.frame(
-            parameter = var_names[i],
-            value = c(rep(NA, n_na),
-                      c(draws[, , (i - 1L) * n_time2 + seq_len(n_time2)])),
-            time = rep(time_points, each = n_draws),
-            category = rep(category, each = n_time * n_draws),
-            group = NA
-          )
+        do.call(dplyr::bind_rows, lapply(seq_len(n_cat), function(j) {
+          do.call(dplyr::bind_rows,
+            lapply(seq_len(n_vars), function(i) {
+              idx <- (j - 1L) * n_time2 * n_vars +
+                (i - 1L) * n_time2 + seq_len(n_time2)
+              data.frame(
+                parameter = var_names[i],
+                value = c(rep(NA, n_na),
+                  c(draws[, , idx])),
+                time = rep(time_points, each = n_draws),
+                category = rep(category[j], each = n_time * n_draws),
+                group = NA
+              )
+            }))
         }))
       },
       `tau` = {
@@ -236,7 +250,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
           "tau_", response, "_",
           names(x$stan$model_vars[[response]]$J_varying)
         )
-        d <- data.frame(
+        data.frame(
           parameter = rep(var_names, each = n_draws),
           value = c(draws),
           time = NA,
@@ -250,21 +264,23 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         k <- length(var_names)
         data.frame(
           parameter = rep(
-            paste0("omega_",
-                   rep(seq_len(D), each = k), "_", var_names), each = n_draws),
+            paste0("omega_", rep(seq_len(D), each = n_cat * k), "_",
+              rep(var_names, each = n_cat)),
+            each = n_draws),
           value = c(draws),
           time = NA,
-          category = NA,
+          category = rep(category, each = n_draws),
           group = NA
         )
       },
       `omega_alpha` = {
         D <- x$stan$sampling_vars$D
-        d <- data.frame(
-          parameter = rep(paste0("omega_alpha_", seq_len(D)), each = n_draws),
+        data.frame(
+          parameter = rep(paste0("omega_alpha_", seq_len(D)),
+            each = n_cat * n_draws),
           value = c(draws),
           time = NA,
-          category = NA,
+          category = rep(category, each = n_draws),
           group = NA
         )
       },

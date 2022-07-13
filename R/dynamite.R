@@ -42,11 +42,13 @@
 #'   indexing.
 #' @param priors \[`data.frame`]\cr An optional data frame with prior
 #'   definitions. See 'Details'.
-#' @param verbose \[`logical(1)`]\cr All warnings are suppressed if set to
-#'   `FALSE`. Defaults to `TRUE`.
+#' @param verbose \[`logical(1)`]\cr All warnings and messages are suppressed
+#'   if set to `FALSE`. Defaults to `TRUE`.
 #' @param debug \[`list()`]\cr A named list of form `name = TRUE` indicating
 #'   additional objects in the environment of the `dynamite` function which are
-#'   added to the return object.
+#'   added to the return object. Additionally, values `no_compile = TRUE` and
+#'   `no_sampling = TRUE` can be used to skip the compilation of the Stan code
+#'   and sampling steps respectively.
 #' @param ... Additional arguments to [rstan::sampling()].
 #' @export
 #' @examples
@@ -159,7 +161,10 @@ dynamite <- function(dformula, data, group = NULL, time,
   )
   model <- onlyif(
     is.null(debug) || !isTRUE(debug$no_compile),
-    rstan::stan_model(model_code = model_code)
+    {
+      onlyif(verbose, rlang::inform("Compiling Stan model."))
+      rstan::stan_model(model_code = model_code)
+    }
   )
   stanfit <- onlyif(
     !isTRUE(debug$no_compile) && !isTRUE(debug$no_sampling),
