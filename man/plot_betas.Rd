@@ -4,10 +4,14 @@
 \alias{plot_betas}
 \title{Plot Time-invariant Regression Coefficients of a Dynamite Model}
 \usage{
-plot_betas(x, level = 0.05, include_alpha = TRUE)
+plot_betas(x, responses = NULL, level = 0.05, include_alpha = TRUE)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object}
+
+\item{responses}{[\code{character()}]\cr Response(s) for which the coefficients
+should be drawn. Possible options are elements of
+\code{unique(x$priors$response)}, and the default is this whole vector.}
 
 \item{level}{[\code{numeric(1)}]\cr Level for posterior intervals.
 Default is 0.05, leading to 90\% intervals.}

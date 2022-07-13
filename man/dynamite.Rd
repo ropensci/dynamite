@@ -39,12 +39,14 @@ indexing.}
 \item{priors}{[\code{data.frame}]\cr An optional data frame with prior
 definitions. See 'Details'.}
 
-\item{verbose}{[\code{logical(1)}]\cr All warnings are suppressed if set to
-\code{FALSE}. Defaults to \code{TRUE}.}
+\item{verbose}{[\code{logical(1)}]\cr All warnings and messages are suppressed
+if set to \code{FALSE}. Defaults to \code{TRUE}.}
 
 \item{debug}{[\code{list()}]\cr A named list of form \code{name = TRUE} indicating
 additional objects in the environment of the \code{dynamite} function which are
-added to the return object.}
+added to the return object. Additionally, values \code{no_compile = TRUE} and
+\code{no_sampling = TRUE} can be used to skip the compilation of the Stan code
+and sampling steps respectively.}
 
 \item{...}{Additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}.}
 }

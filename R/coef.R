@@ -18,7 +18,8 @@
 #'
 #' @srrstats {G2.3a, RE4.2} Provides model coefficients.
 coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
-                             summary = TRUE, probs = c(0.05, 0.95),
+                             responses = NULL, summary = TRUE,
+                             probs = c(0.05, 0.95),
                              include_alpha = TRUE, ...) {
   type <- onlyif(is.character(type), tolower(type))
   type <- try(match.arg(type, c("beta", "delta", "nu")), silent = TRUE)
@@ -35,6 +36,7 @@ coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
     out <- as.data.frame(
       object,
       types = types,
+      responses = responses,
       summary = summary,
       probs = probs
     )
@@ -48,6 +50,7 @@ coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
     out <- as.data.frame(
       object,
       types = type,
+      responses = responses,
       summary = summary,
       probs = probs
     )

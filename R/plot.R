@@ -57,12 +57,16 @@ plot.dynamitefit <- function(x, responses = NULL, type, ...) {
 #' Plot Time-varying Regression Coefficients of a Dynamite Model
 #'
 #' @param x \[`dynamitefit`]\cr The model fit object
+#' @param responses  \[`character()`]\cr Response(s) for which the coefficients
+#'   should be drawn. Possible options are elements of
+#'   `unique(x$priors$response)`, and the default is this whole vector.
 #' @param level \[`numeric(1)`]\cr Level for posterior intervals.
 #'   Default is 0.05, leading to 90% intervals.
 #' @param alpha \[`numeric(1)`]\cr Opacity level for `geom_ribbon`.
 #'   Default is 0.5.
 #' @param scales \[`character(1)`] Should y-axis of the panels be `"fixed"`
 #'   (the default) or `"free"`? See [ggplot2::facet_wrap()].
+
 #' @param include_alpha \[`logical(1)`]\cr If `TRUE` (default), plots also
 #'   the time-varying alphas if such parameters exists in the model.
 #' @return A `ggplot` object.
@@ -73,9 +77,8 @@ plot.dynamitefit <- function(x, responses = NULL, type, ...) {
 #' @srrstats {G2.3a} Uses match.arg.
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @export
-plot_deltas <- function(x, level = 0.05, alpha = 0.5,
-                        scales = c("fixed", "free"),
-                        include_alpha = TRUE) {
+plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
+                        scales = c("fixed", "free"), include_alpha = TRUE) {
   stopifnot_(
     is.dynamitefit(x),
     "Argument {.var x} must be a {.cls dynamitefit} object."
@@ -103,6 +106,7 @@ plot_deltas <- function(x, level = 0.05, alpha = 0.5,
   coefs <- coef(
     x,
     "delta",
+    responses = responses,
     probs = c(level, 1 - level),
     include_alpha = include_alpha
   )
@@ -150,7 +154,8 @@ plot_deltas <- function(x, level = 0.05, alpha = 0.5,
 #'
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @export
-plot_betas <- function(x, level = 0.05, include_alpha = TRUE){
+plot_betas <- function(x, responses = NULL, level = 0.05,
+  include_alpha = TRUE){
   stopifnot_(
     is.dynamitefit(x),
     "Argument {.var x} must be a {.cls dynamitefit} object."
@@ -168,6 +173,7 @@ plot_betas <- function(x, level = 0.05, include_alpha = TRUE){
   coefs <- coef(
     x,
     "beta",
+    responses = responses,
     probs = c(level, 1 - level),
     include_alpha = include_alpha
   )
@@ -204,7 +210,7 @@ plot_betas <- function(x, level = 0.05, include_alpha = TRUE){
 #'
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @export
-plot_nus <- function(x, level = 0.05){
+plot_nus <- function(x, responses = NULL, level = 0.05){
   stopifnot_(
     is.dynamitefit(x),
     "Argument {.var x} must be a {.cls dynamitefit} object."
@@ -222,6 +228,7 @@ plot_nus <- function(x, level = 0.05){
   coefs <- try(coef(
     x,
     "nu",
+    responses = responses,
     probs = c(level, 1 - level)
   ), silent = TRUE)
   stopifnot_(

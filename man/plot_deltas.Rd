@@ -6,6 +6,7 @@
 \usage{
 plot_deltas(
   x,
+  responses = NULL,
   level = 0.05,
   alpha = 0.5,
   scales = c("fixed", "free"),
@@ -14,6 +15,10 @@ plot_deltas(
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object}
+
+\item{responses}{[\code{character()}]\cr Response(s) for which the coefficients
+should be drawn. Possible options are elements of
+\code{unique(x$priors$response)}, and the default is this whole vector.}
 
 \item{level}{[\code{numeric(1)}]\cr Level for posterior intervals.
 Default is 0.05, leading to 90\% intervals.}

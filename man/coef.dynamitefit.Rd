@@ -7,6 +7,7 @@
 \method{coef}{dynamitefit}(
   object,
   type = c("beta", "delta", "nu"),
+  responses = NULL,
   summary = TRUE,
   probs = c(0.05, 0.95),
   include_alpha = TRUE,
@@ -19,6 +20,10 @@
 \item{type}{[\code{character(1)}]\cr Either \code{beta} (the default) for
 time-invariant coefficients, \code{delta} for time-varying coefficients, or
 \code{nu} for random intercepts.}
+
+\item{responses}{[\code{character()}]\cr Response(s) for which the samples
+should be extracted. Possible options are elements of
+\code{unique(x$priors$response)}, and the default is this whole vector.}
 
 \item{summary}{[\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
 mean, standard deviation, and posterior quantiles (as defined by the
