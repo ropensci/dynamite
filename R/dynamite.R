@@ -48,7 +48,8 @@
 #'   additional objects in the environment of the `dynamite` function which are
 #'   added to the return object. Additionally, values `no_compile = TRUE` and
 #'   `no_sampling = TRUE` can be used to skip the compilation of the Stan code
-#'   and sampling steps respectively.
+#'   and sampling steps respectively. This can be useful for debugging when
+#'   combined with `model_code = TRUE`.
 #' @param ... Additional arguments to [rstan::sampling()].
 #' @export
 #' @examples

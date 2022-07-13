@@ -46,7 +46,8 @@ if set to \code{FALSE}. Defaults to \code{TRUE}.}
 additional objects in the environment of the \code{dynamite} function which are
 added to the return object. Additionally, values \code{no_compile = TRUE} and
 \code{no_sampling = TRUE} can be used to skip the compilation of the Stan code
-and sampling steps respectively.}
+and sampling steps respectively. This can be useful for debugging when
+combined with \code{model_code = TRUE}.}
 
 \item{...}{Additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}.}
 }

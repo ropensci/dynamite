@@ -80,6 +80,10 @@ get_priors.dynamitefit <- function(x, ...) {
 #' d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
 #' cat(get_code(obs(y ~ x, family = "gaussian"),
 #'   data = d, time = "time", group = "id"))
+#' # same as
+#' cat(dynamite(obs(y ~ x, family = "gaussian"),
+#'   data = d, time = "time", group = "id",
+#'   debug = list(model_code = TRUE, no_compile = TRUE))$model_code)
 get_code <- function(x, ...) {
   UseMethod("get_code", x)
 }
