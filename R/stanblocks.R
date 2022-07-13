@@ -55,10 +55,10 @@ create_data <- function(dformula, idt, vars) {
   mtext <- paste_rows(
     "int<lower=1> T; // number of time points",
     "int<lower=1> N; // number of individuals",
-    "int<lower=1> K; // total number of covariates across all channels",
+    "int<lower=0> K; // total number of covariates across all channels",
     "matrix[N, K] X[T]; // covariates as an array of N x K matrices",
     "row_vector[K] X_m; // Means of all covariates at first time point",
-    onlyif(has_splines, "int<lower=0> D; // number of B-splines"),
+    onlyif(has_splines, "int<lower=1> D; // number of B-splines"),
     onlyif(has_splines, "matrix[D, T] Bs; // B-spline basis matrix"),
     .indent = idt(1),
     .parse = FALSE
