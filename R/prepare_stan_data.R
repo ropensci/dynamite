@@ -383,8 +383,8 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
     out$channel$sigma_prior_distr <- sigma_prior$prior
     out$priors <- dplyr::bind_rows(out$priors, sigma_prior)
   } else {
-    pdef <- priors |>
-      dplyr::filter(.data$response == y & .data$type == "sigma")
+    priors <- priors |> dplyr::filter(.data$response == y)
+    pdef <- priors |> dplyr::filter(.data$type == "sigma")
     if (nrow(pdef) == 1L) {
       out$channel$sigma_prior_distr <- pdef$prior
     }
@@ -532,8 +532,8 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
     out$channel$phi_prior_distr <- phi_prior$prior
     out$priors <- dplyr::bind_rows(out$priors, phi_prior)
   } else {
-    pdef <- priors |>
-      dplyr::filter(.data$response == y & .data$type == "phi")
+    priors <- priors |> dplyr::filter(.data$response == y)
+    pdef <- priors |> dplyr::filter(.data$type == "phi")
     if (nrow(pdef) == 1L) {
       out$channel$phi_prior_distr <- pdef$prior
     }
@@ -632,8 +632,8 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
     out$channel$phi_prior_distr <- phi_prior$prior
     out$priors <- dplyr::bind_rows(out$priors, phi_prior)
   } else {
-    pdef <- priors |>
-      dplyr::filter(.data$response == y & .data$type == "phi")
+    priors <- priors |> dplyr::filter(.data$response == y)
+    pdef <- priors |> dplyr::filter(.data$type == "phi")
     if (nrow(pdef) == 1) {
       out$channel$phi_prior_distr <- pdef$prior
     }
