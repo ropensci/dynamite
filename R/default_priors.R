@@ -8,6 +8,10 @@
 #' @param sd_y Standard deviation of the response variable at time `fixed + 1`.
 #' @noRd
 default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
+  mean_y <- signif(mean_y, 2)
+  sd_y <- signif(sd_y, 2)
+  mean_gamma <- signif(mean_gamma, 2)
+  sd_gamma <- signif(sd_gamma, 2)
   priors <- list()
   if (channel$has_random_intercept) {
     channel$sigma_nu_prior_distr <-  paste0("normal(", 0, ", ", sd_y, ")")
@@ -92,7 +96,7 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
   S_y <- length(attr(resp_class, "levels"))
   # remove the first level which acts as reference
   resp_levels <- attr(resp_class, "levels")[-1]
-  sd_gamma <- 2 / sd_x
+  sd_gamma <- signif(2 / sd_x, 2)
   priors <- list()
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {
     m <- rep(0.0, S_y - 1L)

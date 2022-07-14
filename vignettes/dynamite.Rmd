@@ -284,10 +284,34 @@ ggplot(sumr, aes(time, mean)) +
   theme_bw()
 ```
 
+
 Note that these estimates do indeed coincide with the causal effects (assuming of course that our model is correct), as we can find the backdoor adjustment formula [@Pearl1995]
 \[
 P(g_t | do(b_5 = x)) = \sum_{g_5, p_5}P(g_t | b_5 = x, g_5, p_5) P(g_5, p_5), 
 \]
 which is equal to `mean_t` in above codes.
+
+We can also compute the difference 
+$P(g_t | do(b_5 = 1)) - P(g_t | do(b_5 = 0))$ as
+```{r}
+sumr <- dplyr::bind_rows(
+  list(b0 = pred0, b1 = pred1), .id = "case") |> 
+  dplyr::group_by(draw, time) |>
+  dplyr::summarise(
+    mean_t = mean(g_new[case == "b1"] - g_new[case == "b0"])) |>
+  dplyr::group_by(time) |>
+  dplyr::summarise(
+    mean = mean(mean_t),
+    q5 = quantile(mean_t, 0.05),
+    q95 = quantile(mean_t, 0.95))
+
+ggplot(sumr, aes(time, mean)) +
+  geom_ribbon(aes(ymin = q5, ymax = q95), alpha = 0.5) +
+  geom_line() +
+  scale_x_continuous(n.breaks = 10) +
+  theme_bw()
+```
+
+Which shows that there is a short term effect of $b$ on $g$, although the posterior uncertainty is quite large.
 
 # References

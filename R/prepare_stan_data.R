@@ -375,7 +375,7 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   sigma_prior <- data.frame(
     parameter = paste0("sigma_", y),
     response = y,
-    prior = paste0("exponential(", 1.0 / sd_y, ")"),
+    prior = paste0("exponential(", signif(1.0 / sd_y, 2), ")"),
     type = "sigma",
     category = ""
   )
