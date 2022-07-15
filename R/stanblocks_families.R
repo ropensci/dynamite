@@ -231,11 +231,7 @@ transformed_data_lines_gamma <- quote({
 # Parameters block --------------------------------------------------------
 
 parameters_lines_default <- quote({
-  re <- paste_rows(
-    "real<lower=0> sigma_nu_{y};",
-    "vector[N] nu_raw_{y};",
-    .parse = FALSE
-  )
+  re <- "real<lower=0> sigma_nu_{y};"
   intercept <- ifelse_(
     has_fixed_intercept || has_varying_intercept,
     "real a_{y};",
@@ -255,10 +251,7 @@ parameters_lines_default <- quote({
 })
 
 parameters_lines_categorical <- quote({
-  re <- paste_rows(
-    "real<lower=0> sigma_nu_{y};",
-    "vector[N] nu_raw_{y}[{S - 1}];"
-  )
+
   intercept <- ifelse_(
     has_fixed_intercept || has_varying_intercept,
     "vector[{S - 1}] a_{y};",
@@ -431,11 +424,7 @@ transformed_parameters_lines_default <- quote({
     mtext_varying_noncentered,
     mtext_varying,
     mtext_intercept,
-    onlyif(
-      has_random_intercept,
-      "vector[N] nu_{y} = sigma_nu_{y} * nu_raw_{y};"
-    ),
-    .indent = idt(c(1, 0, 0, 0))
+    .indent = idt(c(1, 0, 0))
   )
 })
 
@@ -613,12 +602,7 @@ model_lines_default <- quote({
   mtext_tau <- ""
   mtext_u <- ifelse_(
     has_random_intercept,
-    paste_rows(
-      "sigma_nu_{y} ~ {sigma_nu_prior_distr};",
-      "nu_raw_{y} ~ std_normal();",
-      .indent = idt(c(0, 1)),
-      .parse = FALSE
-    ),
+    "sigma_nu_{y} ~ {sigma_nu_prior_distr};",
     ""
   )
   if (has_fixed_intercept || has_varying_intercept) {
@@ -740,16 +724,6 @@ model_lines_categorical <- quote({
   mtext_varying <- ""
   mtext_tau_alpha <- ""
   mtext_tau <- ""
-  mtext_u <- ifelse_(
-    has_random_intercept,
-    paste_rows(
-      "sigma_nu_{y} ~ {sigma_nu_prior_distr};",
-      "to_vector(nu_raw_{y}) ~ std_normal();",
-      .indent = idt(c(0, 1)),
-      .parse = FALSE
-    ),
-    ""
-  )
   if (has_fixed_intercept || has_varying_intercept) {
     if (vectorizable_prior(alpha_prior_distr)) {
       np <- alpha_prior_npars
@@ -892,9 +866,10 @@ model_lines_categorical <- quote({
     )
   )
   # categorical_logit_glm does not support id-varying intercept
+  # and categorical distribution is very slow without it
   stopifnot_(
     !has_random_intercept,
-    "Categorical family does not yet support random intercepts."
+    "Categorical family does not support random intercepts."
   )
   if (has_fixed || has_varying) {
     likelihood_term <- paste0(

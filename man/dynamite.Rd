@@ -10,6 +10,7 @@ dynamite(
   group = NULL,
   time,
   priors = NULL,
+  correlated_nu = TRUE,
   verbose = TRUE,
   debug = NULL,
   ...
@@ -38,6 +39,10 @@ indexing.}
 
 \item{priors}{[\code{data.frame}]\cr An optional data frame with prior
 definitions. See 'Details'.}
+
+\item{correlated_nu}{[\code{logical(1)}]\cr If \code{TRUE} (default), model the
+correlation between the random intercepts of different channels where
+\code{random_intercept = TRUE}.}
 
 \item{verbose}{[\code{logical(1)}]\cr All warnings and messages are suppressed
 if set to \code{FALSE}. Defaults to \code{TRUE}.}

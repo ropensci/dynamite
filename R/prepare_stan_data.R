@@ -183,6 +183,8 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
   sampling_vars$N <- N
   sampling_vars$K <- K
   sampling_vars$X <- X
+  sampling_vars$M <- sum(unlist(lapply(model_vars, "[[",
+    "has_random_intercept")))
   # avoid goodpractice warning, T is a Stan variable, not an R variable
   sampling_vars[["T"]] <- T_full - fixed
   sampling_vars$X_m <- as.array(x_means)
