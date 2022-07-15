@@ -160,8 +160,8 @@ create_model <- function(dformula, idt, vars) {
   if (!is.null(spline_defs <- attr(dformula, "splines"))) {
     if (spline_defs$shrinkage) {
       lambda_prior <- attr(vars, "common_priors") |>
-        dplyr::filter(parameter == "lambda") |>
-        dplyr::pull(prior)
+        dplyr::filter(.data$parameter == "lambda") |>
+        dplyr::pull(.data$prior)
       splinetext <- paste_rows("lambda ~ {lambda_prior};",.indent = idt(1))
     }
   }
@@ -170,8 +170,8 @@ create_model <- function(dformula, idt, vars) {
   if (has_nu) {
     if(attr(dformula, "random")$correlated) {
       L_prior <- attr(vars, "common_priors") |>
-        dplyr::filter(parameter == "L") |>
-        dplyr::pull(prior)
+        dplyr::filter(.data$parameter == "L") |>
+        dplyr::pull(.data$prior)
     }
     randomtext <- paste_rows(
       "to_vector(nu_raw) ~ std_normal();",
