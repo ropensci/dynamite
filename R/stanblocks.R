@@ -199,10 +199,10 @@ create_generated_quantities <- function(dformula, idt, vars) {
     # evaluate number of corrs to avoid Stan warning about integer division
     gen <- paste_rows(
       "corr_matrix[M] Sigma_nu = multiply_lower_tri_self_transpose(L);",
-      "vector<lower=-1,upper=1>[{M*(M-1)/2}] nu_corr;",
+      "vector<lower=-1,upper=1>[{M*(M-1)/2}] corr_nu;",
       "for (k in 1:M) {{",
       "  for (j in 1:(k - 1)) {{",
-      "    nu_corr[choose(k - 1, 2) + j] = Sigma_nu[j, k];",
+      "    corr_nu[choose(k - 1, 2) + j] = Sigma_nu[j, k];",
       "  }}",
       "}}", .indent = idt(c(1, 1, 1, 2, 3, 2, 1))
       )

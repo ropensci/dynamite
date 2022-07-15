@@ -42,9 +42,6 @@
 #'   indexing.
 #' @param priors \[`data.frame`]\cr An optional data frame with prior
 #'   definitions. See 'Details'.
-#' @param correlated_nu \[`logical(1)`]\cr If `TRUE` (default), model the
-#'   correlation between the random intercepts of different channels where
-#'   `random_intercept = TRUE`.
 #' @param verbose \[`logical(1)`]\cr All warnings and messages are suppressed
 #'   if set to `FALSE`. Defaults to `TRUE`.
 #' @param debug \[`list()`]\cr A named list of form `name = TRUE` indicating
@@ -109,8 +106,7 @@
 #' based on Stan, the  scalability of the package depends directly on the
 #' scalability of Stan.
 dynamite <- function(dformula, data, group = NULL, time,
-                     priors = NULL, correlated_nu = TRUE,
-                     verbose = TRUE, debug = NULL, ...) {
+                     priors = NULL, verbose = TRUE, debug = NULL, ...) {
   stopifnot_(
     is.dynamiteformula(dformula),
     "Argument {.arg dformula} must be a {.cls dynamiteformula} object."
@@ -145,10 +141,6 @@ dynamite <- function(dformula, data, group = NULL, time,
     "Can't find time index variable {.var {time}} in {.arg data}."
   )
   stopifnot_(
-    checkmate::test_flag(x = correlated_nu),
-    "Argument {.arg correlated_nu} must be a single {.cls logical} value."
-  )
-  stopifnot_(
     checkmate::test_flag(x = verbose),
     "Argument {.arg verbose} must be a single {.cls logical} value."
   )
@@ -163,9 +155,9 @@ dynamite <- function(dformula, data, group = NULL, time,
     priors,
     fixed = attr(dformulas$all, "max_lag")
   )
-  # if only one random interceptt, no need to create correlation matrix
-  attr(dformulas$stoch, "correlated_nu") <-
-    correlated_nu && stan$sampling_vars$M > 1
+  # if only one random intercept, no need to create correlation matrix
+  # for now, always allow potential correlation between random intercepts
+  attr(dformulas$stoch, "correlated_nu") <- stan$sampling_vars$M > 1
   model_code <- create_blocks(
     dformula = dformulas$stoch,
     indent = 2L,
