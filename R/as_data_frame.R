@@ -127,7 +127,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     "Argument {.arg include_fixed} must be a single {.cls logical} value."
   )
   if (is.null(responses)) {
-    responses <- unique(x$priors$response)
+    responses <- setdiff(unique(x$priors$response), "")
   } else {
     z <- responses %in% unique(x$priors$response)
     stopifnot_(
@@ -183,7 +183,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       },
       `corr_nu` = {
         resp <- get_responses(x$dformulas$stoch)
-        pairs <- apply(combn(resp, 2), 2, paste, collapse = "_")
+        pairs <- apply(utils::combn(resp, 2), 2, paste, collapse = "_")
         data.frame(
           parameter = paste0("corr_nu_", pairs),
           value = c(draws),

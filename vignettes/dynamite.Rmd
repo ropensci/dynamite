@@ -99,7 +99,14 @@ The formula within `obs` can also contain an additional special function `varyin
 
 When defining varying effects, we also need to define how the these time-varying regression coefficient behave. For this, a `splines` component should be added to the model, e.g. `obs(x ~ varying(~ -1 + w), family = "poisson) + splines(df = 10)` defines a cubic B-spline with 10 degrees of freedom for the time-varying coefficient corresponding to the `w`. If the model contains multiple time-varying coefficients, same spline basis is used for all coefficients, with unique spline coefficients and their standard deviation, as defined in the previous Section.
 
-It is also possible to define a random intercept term for each group by using `random_intercept = TRUE` inside the `obs` function. This leads to a model where the in addition to the common intercept each individual/group has their own intercept with zero-mean normal prior and unknown standard deviation, analogously with the typical mixed models. 
+It is also possible to define a random intercept term for each group by
+using component `random` where the first argument defines for which channels
+the intercept should be added, and second argument defines whether or not
+these intercepts should be correlated between channels. This leads to a
+model where the in addition to the common intercept each individual/group
+has their own intercept with zero-mean normal prior and unknown standard
+deviation (or multivariate gaussian in case argument `correlated = TRUE`),
+analogously with the typical mixed models. 
 
 In addition to declaring response variables via `obs`, we can also use function `aux` to define auxiliary channels which are deterministic functions of other variables. Defining these auxiliary variables explicitly instead of defining them directly on the right-hand side of the formulas (i.e., by using the "as is" function `I()`) makes the subsequent prediction steps more clear and allows easier checks on the model validity. In fact, we do not allow the use of `I()` within `dynamiteformula`. The values of auxiliary variables are computed dynamically during prediction, making the use of lagged values and other transformations possible. An example of a formula using an auxiliary channel could be 
 ```{r, echo=TRUE, eval=FALSE}
