@@ -917,7 +917,7 @@ model_lines_gaussian <- quote({
   intercept <- ifelse_(
     nzchar(intercept_alpha) || has_random_intercept,
     glue::glue("{intercept_alpha}{plus}{intercept_nu}"),
-    ""
+    "0"
   )
   if (has_fixed || has_varying) {
     likelihood_term <- paste0(
