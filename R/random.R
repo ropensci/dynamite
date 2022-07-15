@@ -4,15 +4,15 @@
 #' intercepts for each group.
 #'
 #' @param channels \[`character()`]\cr Names of the channels for which the
-#'   random intercepts should be defined.
+#'   random intercepts should be defined. Default is all channels.
 #' @param correlated \[`logical(1)`]\cr If `TRUE` (the default), correlation of
 #'   intercepts within a group (i.e. between channels) is modelled
 #'   (as multivariate normal).
 #' @return An object of class `random`.
 #' @export
-random <- function(channels, correlated = TRUE) {
+random <- function(channels = NULL, correlated = TRUE) {
   stopifnot_(
-    checkmate::test_character(x = channels, min.len = 1L),
+    checkmate::test_character(x = channels, min.len = 1L, null.ok = TRUE),
     "Argument {.arg channels} must be a {.cls character} vector."
   )
   stopifnot_(

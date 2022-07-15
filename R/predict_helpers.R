@@ -157,28 +157,71 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch,
 #'
 #' @inheritParams predict
 #' @param nu Posterior draws of the random intercept parameters.
-#' @param sigma_nu Posterior draws of the SD of the random intercept parameters.
+#' @param sigma_nu Posterior draws of the standard deviations of the random
+#'   intercept parameters.
+#' @param corr_matrix_nu Posterior draws of the correlation matrix of
+#'   intercepts (within-group).
 #' @param orig_ids Group levels of the original data.
 #' @param new_ids  Group levels of `newdata` in
 #'   [dynamite::predict.dynamitefit()].
+#' @param new_levels \[`character(1)`]\cr
+#'   Defines if and how to sample the random intercepts for observations whose
+#'   group level was not present in the original data. The options are
+#'     * `"none"` (the default) which will signal an error if new levels
+#'       are encountered.
+#'     * `"bootstrap"` which will randomly draw from the posterior samples of
+#'       the random intercepts across all original levels.
+#'     * `"gaussian"` which will randomly draw from a gaussian
+#'       distribution using the posterior samples of the random intercept
+#'       standard deviation (and correlation matrix if applicable).
+#'     * `"original"` which will randomly match each new level to one of
+#'       the original levels. The posterior samples of the random intercept of
+#'       the matched levels will then be used for the new levels.
+#' @return An n_draws x n_groups x n_intercepts array of random intercepts.
 #' @noRd
-generate_random_intercept <- function(nu, sigma_nu, n_draws, n_id,
-                                      orig_ids, new_ids, new_levels) {
-  is_orig <- orig_ids %in% new_ids
+generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
+                                      n_id, orig_ids, new_ids, new_levels) {
+  is_orig <- which(orig_ids %in% new_ids)
   is_new <- !new_ids %in% orig_ids
   out <- NULL
   if (identical(new_levels, "none")) {
-    out <- nu[, is_orig, drop = FALSE]
+    out <- nu[, is_orig, , drop = FALSE]
   } else {
-    out <- matrix(0.0, n_draws, n_id)
-    out[, !is_new] <- nu[, is_orig, drop = FALSE]
+    M <- nrow(sigma_nu)
+    out <- array(0.0, c(n_draws, n_id, M))
+    out[, which(!is_new), ] <- nu[, is_orig, , drop = FALSE]
     if (any(is_new)) {
-      out[ ,is_new] <- switch(new_levels,
-        `bootstrap` = sample(c(nu), n_draws * sum(is_new), TRUE),
-        `gaussian` = rnorm(n_draws * sum(is_new), 0, sigma_nu),
+      n_new <- sum(is_new)
+      out[ , which(is_new), ] <- switch(new_levels,
+        `bootstrap` = {
+          idx <- sample.int(n_draws * n_id, n_draws * n_new, TRUE)
+          array(matrix(nu, ncol = M)[idx, ], c(n_draws, n_new, M))
+        },
+        `gaussian` = {
+          x <- array(0, c(n_new, M, n_draws))
+          zeros <- rep(0, M)
+          if (is.null(corr_matrix_nu)) {
+            # easy to optimise...
+            for(i in seq_len(n_draws)) {
+              s <- diag(sigma_nu[, i]^2, M)
+              x[, , i] <- MASS::mvrnorm(n_new, zeros, s)
+            }
+          } else {
+            # Could also keep the Cholesky L from the sampling phase if this is
+            # too slow, or switch algorithm. But probably no need as this is only
+            # done once
+            for(i in seq_len(n_draws)) {
+              s <- diag(sigma_nu[, i])
+              x[, , i] <- MASS::mvrnorm(
+                n_new, zeros, s %*% corr_matrix_nu[, ,i] %*% s
+              )
+            }
+          }
+          aperm(x, c(3, 1, 2))
+        },
         `original` = {
-          match_ids <- sample(orig_ids, sum(is_new), replace = TRUE)
-          nu[, match_ids, drop = FALSE]
+          match_ids <- sample(orig_ids, n_new, replace = TRUE)
+          nu[, match_ids, , drop = FALSE]
         }
       )
     }
@@ -204,6 +247,36 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
   n_resp <- length(resp_stoch)
   eval_envs <- vector(mode = "list", length = n_resp)
   idx_draws <- seq_len(n_draws)
+  nu_channels <- attr(object$dformulas$stoch, "random")$channels
+  M <- length(nu_channels)
+  if (!is.null(group_var) && M > 0) {
+    orig_ids <- unique(object$data[[group_var]])
+    new_ids <-  unique(newdata[[group_var]])
+    n_all_draws <- ndraws(object)
+    sigma_nus <- glue::glue("sigma_nu_{nu_channels}")
+    sigma_nu <- t(do.call("cbind",
+      samples[sigma_nus])[idx_draws, , drop = FALSE])
+    nus <- glue::glue("nu_{nu_channels}")
+    nu_samples <- array(unlist(samples[nus]),
+      c(n_all_draws, n_id, M))[idx_draws, , , drop = FALSE]
+    if (attr(object$dformulas$stoch, "random")$correlated) {
+      corr_matrix_nu <- aperm(
+        samples[["corr_matrix_nu"]][idx_draws, , , drop = FALSE])
+    } else {
+      corr_matrix_nu <- NULL
+    }
+    nu_samples <- generate_random_intercept(
+      nu = nu_samples,
+      sigma_nu = sigma_nu,
+      corr_matrix_nu = corr_matrix_nu,
+      n_draws = n_draws,
+      n_id = n_id,
+      orig_ids = orig_ids,
+      new_ids = new_ids,
+      new_levels = new_levels
+    )
+    dimnames(nu_samples)[[3]] <- nus
+  }
   for (j in seq_len(n_resp)) {
     resp <- resp_stoch[j]
     resp_family <- object$dformulas$stoch[[j]]$family
@@ -212,8 +285,6 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
     delta <- paste0("delta_", resp)
     phi <- paste0("phi_", resp)
     sigma <- paste0("sigma_", resp)
-    nu <- paste0("nu_", resp)
-    sigma_nu <- paste0("sigma_nu_", resp)
     e <- new.env()
     e$type <- predict_type
     e$n_id <- n_id
@@ -227,18 +298,8 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
     e$resp <- resp_stoch[j]
     e$phi <- samples[[phi]][idx_draws]
     e$sigma <- samples[[sigma]][idx_draws]
-    if (!is.null(group_var)) {
-      orig_ids <- unique(object$data[[group_var]])
-      new_ids <-  unique(newdata[[group_var]])
-      e$nu <- generate_random_intercept(
-        nu = samples[[nu]][idx_draws, , drop = FALSE],
-        sigma_nu = samples[[sigma_nu]][idx_draws],
-        n_draws = n_draws,
-        n_id = n_id,
-        orig_ids = orig_ids,
-        new_ids = new_ids,
-        new_levels = new_levels
-      )
+    if (resp %in% nu_channels) {
+      e$nu <- matrix(nu_samples[, , paste0("nu_", resp)], ncol = n_id)
     }
     if (is_categorical(resp_family)) {
       resp_levels <- attr(object$stan$responses, "resp_class")[[resp]] |>

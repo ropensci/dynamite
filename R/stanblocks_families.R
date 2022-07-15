@@ -259,7 +259,6 @@ parameters_lines_categorical <- quote({
   )
   oname <- ifelse_(noncentered, "omega_raw_", "omega_")
   paste_rows(
-    onlyif(has_random_intercept, re),
     onlyif(has_fixed, "matrix[{K_fixed}, {S - 1}] beta_{y};"),
     onlyif(has_varying, "matrix[{K_varying}, D] {oname}{y}[{S - 1}];"),
     onlyif(has_varying, "vector<lower={lb}>[{K_varying}] tau_{y};"),

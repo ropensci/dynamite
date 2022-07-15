@@ -15,7 +15,7 @@
 #'  * `sigma_nu` Standard deviation of the random intercepts `nu`.
 #'  * `corr_nu` Pairwise within-group correlations of random intercepts `nu`.
 #'     Samples of the full correlation matrix can be extracted manually as
-#'     `rstan::extract(fit$stanfit, pars = "Sigma_nu")` if necessary.
+#'     `rstan::extract(fit$stanfit, pars = "corr_matrix_nu")` if necessary.
 #'  * `sigma` Standard deviations of gaussian responses.
 #'  * `phi` Dispersion parameters of negative binomial responses.
 #'  * `omega` Spline coefficients of the regression coefficients `delta`.
@@ -140,7 +140,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     "sigma_nu", "corr_nu", "sigma", "phi", "nu", "omega", "omega_alpha"
   )
   if (is.null(types)) {
-    types <- all_types[1L:9L]
+    types <- all_types[1L:11L]
   } else {
     types <- onlyif(is.character(types), tolower(types))
     types <- try(match.arg(types, all_types, TRUE), silent = TRUE)

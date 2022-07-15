@@ -9,9 +9,9 @@ gaussian_example_fit <- dynamite(
   dformula =
     obs(
       y ~ -1 + z + varying(~ x + lag(y)),
-      family = "gaussian",
-      random_intercept = TRUE
+      family = "gaussian"
     ) +
+    random() +
     splines(df = 20),
   data = gaussian_example,
   group = "id",

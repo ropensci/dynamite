@@ -10,7 +10,6 @@ dynamite(
   group = NULL,
   time,
   priors = NULL,
-  correlated_nu = TRUE,
   verbose = TRUE,
   debug = NULL,
   ...
@@ -40,10 +39,6 @@ indexing.}
 \item{priors}{[\code{data.frame}]\cr An optional data frame with prior
 definitions. See 'Details'.}
 
-\item{correlated_nu}{[\code{logical(1)}]\cr If \code{TRUE} (default), model the
-correlation between the random intercepts of different channels where
-\code{random_intercept = TRUE}.}
-
 \item{verbose}{[\code{logical(1)}]\cr All warnings and messages are suppressed
 if set to \code{FALSE}. Defaults to \code{TRUE}.}
 
@@ -72,6 +67,12 @@ The default priors for regression coefficients are based on the standard
 deviation of the covariates at the first non-fixed time point. In case this
 is 0 or NA, it is transformed to (arbitrary) 0.5. The final prior is then
 normal distribution with zero mean and two times this standard deviation.
+
+The prior for the correlation structure of the random intercepts is defined
+via the Cholesky decomposition of the correlation matrix, as
+\code{lkj_corr_cholesky(1)}. See
+\url{https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html}
+for details.
 
 See more details in the package vignette on how to define a dynamite model.
 

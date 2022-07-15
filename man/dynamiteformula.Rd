@@ -6,9 +6,9 @@
 \alias{aux}
 \title{Model formula for \pkg{dynamite}}
 \usage{
-dynamiteformula(formula, family, random_intercept = FALSE)
+dynamiteformula(formula, family)
 
-obs(formula, family, random_intercept = FALSE)
+obs(formula, family)
 
 aux(formula)
 }
@@ -17,9 +17,6 @@ aux(formula)
 
 \item{family}{[\code{character(1)}]\cr The family name. See 'Details' for the
 supported families.}
-
-\item{random_intercept}{[\code{logical(1)}]\cr If \code{TRUE}, adds
-individual-level intercepts to the channel.}
 }
 \value{
 An object of class \code{dynamiteformula}.
