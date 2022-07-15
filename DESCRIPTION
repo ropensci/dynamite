@@ -26,10 +26,13 @@ Imports:
     dplyr,
     glue,
     ggplot2,
+    MASS,
     posterior,
     rlang,
     rstan (>= 2.26.11),
-    tidyr
+    stats,
+    tidyr,
+    utils
 Suggests: 
     covr,
     knitr,

@@ -60,6 +60,7 @@ create_data <- function(dformula, idt, vars) {
     "row_vector[K] X_m; // Means of all covariates at first time point",
     onlyif(has_splines, "int<lower=1> D; // number of B-splines"),
     onlyif(has_splines, "matrix[D, T] Bs; // B-spline basis matrix"),
+    "int<lower=0> M; // number of channels with random intercept",
     .indent = idt(1),
     .parse = FALSE
   )
@@ -102,56 +103,119 @@ create_parameters <- function(dformula, idt, vars) {
       .indent = idt(c(1, 1))
     )
   }
+  randomtext <- ""
+  has_nu <- length(attr(dformula, "random")$channels) > 0
+  if (has_nu) {
+    randomtext <- paste_rows(
+      "// Random intercepts",
+      onlyif(attr(dformula, "random")$correlated,
+        "cholesky_factor_corr[M] L; // Cholesky for correlated intercepts"),
+      "matrix[N, M] nu_raw;",
+      .indent = idt(c(1, 1, 1))
+    )
+  }
   pars <- character(length(dformula))
   for (i in seq_along(dformula)) {
     family <- dformula[[i]]$family$name
     line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
     pars[i] <- lines_wrap("parameters", family, line_args)
   }
-  paste_rows("parameters {", splinetext, pars, "}", .parse = FALSE)
+  paste_rows("parameters {", splinetext, randomtext, pars, "}", .parse = FALSE)
 }
 
 #' @describeIn create_function Create the 'Transformed Parameters'
 #'   Block of the Stan Model Code
 #' @noRd
 create_transformed_parameters <- function(dformula, idt, vars) {
-  spline_defs <- attr(dformula, "splines")
+  randomtext <- ""
+  nus <- attr(dformula, "random")$channels
+  M <- length(nus)
+  if (M > 0) {
+    if (attr(dformula, "random")$correlated) {
+      randomtext <- paste_rows(
+        "matrix[N, M] nu = nu_raw * L';",
+        glue::glue("vector[N] nu_{nus} = sigma_nu_{nus} * nu[, {1:M}];"),
+        .indent = idt(1)
+      )
+    } else {
+      randomtext <- paste_rows(
+        glue::glue("vector[N] nu_{nus} = sigma_nu_{nus} * nu_raw[, {1:M}];"),
+        .indent = idt(1)
+      )
+    }
+  }
   tr_pars <- character(length(dformula))
   for (i in seq_along(dformula)) {
     family <- dformula[[i]]$family$name
     line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
     tr_pars[i] <- lines_wrap("transformed_parameters", family, line_args)
   }
-  paste_rows("transformed parameters {", tr_pars, "}", .parse = FALSE)
+  paste_rows("transformed parameters {", randomtext, tr_pars, "}", .parse = FALSE)
 }
 
 #' @describeIn create_function Create the 'Model' Block of the Stan Model Code
 #' @noRd
 create_model <- function(dformula, idt, vars) {
+  splinetext <- ""
+  if (!is.null(spline_defs <- attr(dformula, "splines"))) {
+    if (spline_defs$shrinkage) {
+      lambda_prior <- attr(vars, "common_priors") |>
+        dplyr::filter(.data$parameter == "lambda") |>
+        dplyr::pull(.data$prior)
+      splinetext <- paste_rows("lambda ~ {lambda_prior};",.indent = idt(1))
+    }
+  }
+  randomtext <- ""
+  has_nu <- length(attr(dformula, "random")$channels) > 0
+  if (has_nu) {
+    if(attr(dformula, "random")$correlated) {
+      L_prior <- attr(vars, "common_priors") |>
+        dplyr::filter(.data$parameter == "L") |>
+        dplyr::pull(.data$prior)
+    }
+    randomtext <- paste_rows(
+      "to_vector(nu_raw) ~ std_normal();",
+      onlyif(attr(dformula, "random")$correlated, "L ~ {L_prior};"),
+      .indent = idt(c(1, 1))
+    )
+  }
   mod <- character(length(dformula))
   for (i in seq_along(dformula)) {
     family <- dformula[[i]]$family$name
     line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
     mod[i] <- lines_wrap("model", family, line_args)
   }
-  paste_rows("model {", mod, "}", .parse = FALSE)
+  paste_rows("model {", splinetext, randomtext, mod, "}", .parse = FALSE)
 }
 
 #' @describeIn create_function Create the 'Generated Quantities'
 #'   Block of the Stan Model Code
 #' @noRd
 create_generated_quantities <- function(dformula, idt, vars) {
+  gen <- ""
+  M <- length(attr(dformula, "random")$channels)
+  if (M > 0 && attr(dformula, "random")$correlated) {
+    # evaluate number of corrs to avoid Stan warning about integer division
+    gen <- paste_rows(
+      "corr_matrix[M] corr_matrix_nu = multiply_lower_tri_self_transpose(L);",
+      "vector<lower=-1,upper=1>[{M*(M-1)/2}] corr_nu;",
+      "for (k in 1:M) {{",
+        "for (j in 1:(k - 1)) {{",
+           "corr_nu[choose(k - 1, 2) + j] = corr_matrix_nu[j, k];",
+         "}}",
+      "}}", .indent = idt(c(1, 1, 1, 2, 3, 2, 1))
+      )
+  }
+  if (any(nzchar(gen))) {
+    paste_rows("generated quantities {", gen, "}", .parse = FALSE)
+  } else {
+   NULL
+  }
+  # uncomment if needed in the future
   #gen <- character(length(dformula))
   #for (i in seq_along(dformula)) {
   #  family <- dformula[[i]]$family$name
   #  line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
   #  gen[i] <- lines_wrap("generated_quantities", family, line_args)
   #}
-  #if (any(nzchar(gen))) {
-  #  paste_rows("generated quantities {", gen, "}", .parse = FALSE)
-  #} else {
-  #  NULL
-  #}
-  # uncomment if needed in the future
-  NULL
 }

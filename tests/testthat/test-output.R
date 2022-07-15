@@ -123,9 +123,9 @@ test_that("MCMC diagnostics can be computed", {
 
 test_that("gets can be got", {
   expect_error(
-    get_code(obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian",
-             random_intercept = TRUE) + splines(df = 20),
-             gaussian_example, "id", "time"),
+    get_code(obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
+        random() + splines(df = 20),
+      gaussian_example, "id", "time"),
     NA
   )
   expect_error(
@@ -133,9 +133,9 @@ test_that("gets can be got", {
     NA
   )
   expect_error(
-    get_data(obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian",
-             random_intercept = TRUE) + splines(df = 20),
-             gaussian_example, "id", "time"),
+    get_data(obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
+        random() + splines(df = 20),
+      gaussian_example, "id", "time"),
     NA
   )
   expect_error(

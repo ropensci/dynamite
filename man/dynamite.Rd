@@ -68,6 +68,12 @@ deviation of the covariates at the first non-fixed time point. In case this
 is 0 or NA, it is transformed to (arbitrary) 0.5. The final prior is then
 normal distribution with zero mean and two times this standard deviation.
 
+The prior for the correlation structure of the random intercepts is defined
+via the Cholesky decomposition of the correlation matrix, as
+\code{lkj_corr_cholesky(1)}. See
+\url{https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html}
+for details.
+
 See more details in the package vignette on how to define a dynamite model.
 
 The best-case scalability of the dynamite in terms of data size should be

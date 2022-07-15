@@ -13,6 +13,9 @@
 #'  * `tau_alpha` Standard deviations of the spline coefficients of
 #'    time-varying `alpha`.
 #'  * `sigma_nu` Standard deviation of the random intercepts `nu`.
+#'  * `corr_nu` Pairwise within-group correlations of random intercepts `nu`.
+#'     Samples of the full correlation matrix can be extracted manually as
+#'     `rstan::extract(fit$stanfit, pars = "corr_matrix_nu")` if necessary.
 #'  * `sigma` Standard deviations of gaussian responses.
 #'  * `phi` Dispersion parameters of negative binomial responses.
 #'  * `omega` Spline coefficients of the regression coefficients `delta`.
@@ -124,7 +127,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     "Argument {.arg include_fixed} must be a single {.cls logical} value."
   )
   if (is.null(responses)) {
-    responses <- unique(x$priors$response)
+    responses <- setdiff(unique(x$priors$response), "")
   } else {
     z <- responses %in% unique(x$priors$response)
     stopifnot_(
@@ -133,11 +136,11 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     )
   }
   all_types <- c(
-    "alpha", "beta", "delta", "tau", "tau_alpha",
-    "sigma_nu", "sigma", "phi", "nu", "omega", "omega_alpha"
+    "alpha", "beta", "delta", "tau", "tau_alpha", "lambda",
+    "sigma_nu", "corr_nu", "sigma", "phi", "nu", "omega", "omega_alpha"
   )
   if (is.null(types)) {
-    types <- all_types[1L:9L]
+    types <- all_types[1L:11L]
   } else {
     types <- onlyif(is.character(types), tolower(types))
     types <- try(match.arg(types, all_types, TRUE), silent = TRUE)
@@ -149,11 +152,19 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
   all_time_points <- sort(unique(x$data[[x$time_var]]))
   fixed <- x$stan$fixed
   values <- function(type, response) {
-    draws <- rstan::extract(
-      x$stanfit,
-      pars = paste0(type, "_", response),
-      permuted = FALSE
-    )
+    if (type %in% c("lambda", "corr_nu")) {
+      draws <- rstan::extract(
+        x$stanfit,
+        pars = type,
+        permuted = FALSE
+      )
+    } else {
+      draws <- rstan::extract(
+        x$stanfit,
+        pars = paste0(type, "_", response),
+        permuted = FALSE
+      )
+    }
     n_draws <- prod(dim(draws)[1L:2L])
     category <- attr(x$stan$responses[[response]], "levels")[-1L]
     if (is.null(category)) {
@@ -161,6 +172,26 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     }
     n_cat <- length(category)
     d <- switch(type,
+      `lambda` = {
+        data.frame(
+          parameter = "lambda",
+          value = c(draws),
+          time = NA,
+          category = NA,
+          group = NA
+        )
+      },
+      `corr_nu` = {
+        resp <- get_responses(x$dformulas$stoch)
+        pairs <- apply(utils::combn(resp, 2), 2, paste, collapse = "_")
+        data.frame(
+          parameter = paste0("corr_nu_", pairs),
+          value = c(draws),
+          time = NA,
+          category = NA,
+          group = NA
+        )
+      },
       `nu` = {
         n_group <- dim(draws)[3L]
         data.frame(
@@ -298,15 +329,27 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     d$.chain <- rep(seq_len(ncol(draws)), each = nrow(draws))
     d
   }
-  out <- tidyr::expand_grid(type = types, response = responses) |>
-    dplyr::mutate(parameter = glue::glue("{type}_{response}")) |>
+  out_all <- NULL
+  if ("lambda" %in% types) {
+    out_all <- data.frame(type = "lambda", response = "", parameter = "lambda")
+  }
+  if ("corr_nu" %in% types) {
+    out_all <- rbind(out_all,
+      data.frame(type = "corr_nu", response = "", parameter = "corr_nu")
+    )
+  }
+  out <- dplyr::bind_rows(out_all,
+    tidyr::expand_grid(type = types, response = responses) |>
+      dplyr::mutate(parameter = glue::glue("{type}_{response}"))
+  ) |>
     dplyr::rowwise() |>
     dplyr::filter(any(grepl(paste0("^", .data$parameter),
-                            x$stanfit@sim$pars_oi))) |>
+      x$stanfit@sim$pars_oi))) |>
     dplyr::select(.data$response, .data$type)
   stopifnot_(nrow(out) > 0L,
-    paste0("No parameters of type {.var ", paste(types, collapse = "}, {.var "),
-    "} found for any of the response channels {.var ",
+    paste0("No parameters of type {.var ",
+      paste(types, collapse = "}, {.var "),
+      "} found for any of the response channels {.var ",
       paste(responses, collapse = "}, {.var "), "}."))
   out <- out |>
     dplyr::mutate(value = list(values(.data$type, .data$response))) |>

@@ -68,6 +68,9 @@ Potential values for the types argument are
 \item \code{tau_alpha} Standard deviations of the spline coefficients of
 time-varying \code{alpha}.
 \item \code{sigma_nu} Standard deviation of the random intercepts \code{nu}.
+\item \code{corr_nu} Pairwise within-group correlations of random intercepts \code{nu}.
+Samples of the full correlation matrix can be extracted manually as
+\code{rstan::extract(fit$stanfit, pars = "corr_matrix_nu")} if necessary.
 \item \code{sigma} Standard deviations of gaussian responses.
 \item \code{phi} Dispersion parameters of negative binomial responses.
 \item \code{omega} Spline coefficients of the regression coefficients \code{delta}.

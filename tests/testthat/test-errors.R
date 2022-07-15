@@ -116,8 +116,14 @@ test_that("plus method fails for nondynamiteformula", {
 
 test_that("categorical random intercept fails", {
   expect_error(
-    obs(y ~ x, family = "categorical", random_intercept = TRUE),
-    "Random intercepts are not yet supported for the categorical family\\."
+    dynamite(obs(y ~ x, family = "categorical") + random(),
+      data = data.frame(y=factor(1:4), x= runif(4), id = 1, time = 1:4),
+      "id", "time",
+      debug = list(no_compile = TRUE)),
+    paste0(
+      "No valid channels for random intercept component:\n",
+      "x Random intercepts are not supported for the categorical family\\."
+    )
   )
 })
 
@@ -526,8 +532,8 @@ test_that("negative n_draws fails", {
 # Prior errors ------------------------------------------------------------
 
 p <- get_priors(gaussian_example_fit)
-f <- obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian",
-         random_intercept = TRUE) + splines(df = 20)
+f <- obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
+  random() + splines(df = 20)
 
 test_that("incomplete priors fails", {
   p2 <- p[-1,]

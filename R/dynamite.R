@@ -15,6 +15,12 @@
 #' is 0 or NA, it is transformed to (arbitrary) 0.5. The final prior is then
 #' normal distribution with zero mean and two times this standard deviation.
 #'
+#' The prior for the correlation structure of the random intercepts is defined
+#' via the Cholesky decomposition of the correlation matrix, as
+#' `lkj_corr_cholesky(1)`. See
+#' \url{https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html}
+#' for details.
+#'
 #' See more details in the package vignette on how to define a dynamite model.
 #'
 #' The best-case scalability of the dynamite in terms of data size should be
@@ -167,9 +173,17 @@ dynamite <- function(dformula, data, group = NULL, time,
       rstan::stan_model(model_code = model_code)
     }
   )
+  # don't save redundant parameters by default
+  # could also remove omega_raw
+  dots <- list(...)
+  if (is.null(dots$pars) && stan$sampling_vars$M > 0) {
+    dots$pars <- c("nu_raw", "nu", "L")
+    dots$include <- FALSE
+  }
   stanfit <- onlyif(
     !isTRUE(debug$no_compile) && !isTRUE(debug$no_sampling),
-    rstan::sampling(model, data = stan$sampling_vars, ...)
+    do.call(rstan::sampling,
+      c(list(object = model, data = stan$sampling_vars), dots))
   )
   out <- structure(
     list(
@@ -348,6 +362,7 @@ parse_data <- function(data, dformula, group_var, time_var, verbose) {
 
 #' Parse Lag and Lags Definitions of a `dynamiteformula` Object
 #'
+#' Also processes the checks on random component and adds it to dformulas.
 #' @inheritParams parse_data
 #' @noRd
 parse_lags <- function(data, dformula, group_var, time_var) {
@@ -412,12 +427,46 @@ parse_lags <- function(data, dformula, group_var, time_var) {
     order(c(gl$rank[!gl$stoch], sl$rank[!sl$stoch & !sl$pred]))
   attr(dformula_lag_pred, "original_response") <- sl$resp[sl$pred]
   attr(dformula, "max_lag") <- max_lag
+  random_defs <- attr(dformula, "random")
+  if (!is.null(random_defs)) {
+    families <- unlist(get_families(dformula[channels_stoch]))
+    valid_channels <- resp_stoch[!(families %in% "categorical")]
+    # default, use all channels except categorical
+    if (is.null(random_defs$channels)) {
+      random_defs$channels <- valid_channels
+      stopifnot_(length(valid_channels) > 0,
+        c("No valid channels for random intercept component:",
+          `x` = "Random intercepts are not supported for the categorical
+          family."
+        )
+      )
+    } else {
+      nu_channels <- random_defs$channels %in% resp_stoch
+      stopifnot_(all(nu_channels),
+        c("Argument {.arg channel} of {.fun random} contains variables
+       {.var {cs(resp_stoch[nu_channels])}}:",
+          `x` = "No such response variables in the model."
+        )
+      )
+      nu_channels <- random_defs$channels %in% valid_channels
+      stopifnot_(all(nu_channels),
+        c("Random intercepts are not supported for the categorical family:",
+          `x` = "Found random intercept declaration for categorical variable{?s}
+          {.var {cs(valid_channels[nu_channels])}}."
+        )
+      )
+    }
+    if(length(random_defs$channels) < 2) {
+      random_defs$correlated <- FALSE
+    }
+  }
   list(
     all = dformula,
     det = dformula_det,
     stoch = structure(
       dformula[channels_stoch],
-      splines = attr(dformula, "splines")
+      splines = attr(dformula, "splines"),
+      random = random_defs
     ),
     lag_pred = dformula_lag_pred,
     lag_det = dformula_lag_det,
@@ -478,8 +527,7 @@ parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
           fixed_icpt = dformula[[j]]$has_fixed_intercept
         ),
         original = dformula[[j]]$original,
-        family = dformula[[j]]$family,
-        random_intercept = dformula[[j]]$has_random_intercept
+        family = dformula[[j]]$family
       )
     }
     lag_map <- lag_map |>
