@@ -80,8 +80,6 @@
 #' @param formula \[`formula`]\cr An \R formula describing the model.
 #' @param family \[`character(1)`]\cr The family name. See 'Details' for the
 #' supported families.
-#' @param random_intercept \[`logical(1)`]\cr If `TRUE`, adds
-#'   individual-level intercepts to the channel.
 #' @return An object of class `dynamiteformula`.
 #' @export
 #' @examples
@@ -90,7 +88,7 @@
 #'
 #' @srrstats {G2.3b} Uses tolower.
 #' @srrstats {RE1.0} Uses a formula interface.
-dynamiteformula <- function(formula, family, random_intercept = FALSE) {
+dynamiteformula <- function(formula, family) {
   stopifnot_(
     is.formula(formula),
     "Argument {.arg formula} must be a {.cls formula} object."
@@ -98,10 +96,6 @@ dynamiteformula <- function(formula, family, random_intercept = FALSE) {
   stopifnot_(
     checkmate::test_string(x = family, na.ok = FALSE),
     "Argument {.arg family} must be a single {.cls character} string."
-  )
-  stopifnot_(
-    checkmate::test_flag(x = random_intercept),
-    "Argument {.arg random_intercept} must be a single {.cls logical} value."
   )
   family <- tolower(family)
   if (is_supported(family)) {
@@ -113,7 +107,7 @@ dynamiteformula <- function(formula, family, random_intercept = FALSE) {
     !has_as_is(deparse1(formula)),
     "{.code I(.)} is not supported by {.fun dynamiteformula}."
   )
-  x <- dynamiteformula_(formula, formula, family, random_intercept)
+  x <- dynamiteformula_(formula, formula, family)
   structure(
     list(
       dynamitechannel(
@@ -125,8 +119,7 @@ dynamiteformula <- function(formula, family, random_intercept = FALSE) {
         varying = x$varying,
         specials = x$specials,
         has_fixed_intercept = x$has_fixed_intercept,
-        has_varying_intercept = x$has_varying_intercept,
-        has_random_intercept = x$has_random_intercept
+        has_varying_intercept = x$has_varying_intercept
       )
     ),
     class = "dynamiteformula"
@@ -135,8 +128,7 @@ dynamiteformula <- function(formula, family, random_intercept = FALSE) {
 
 #' @describeIn dynamiteformula Internal Version of `dynamiteformula`
 #' @noRd
-dynamiteformula_ <- function(formula, original, family,
-                             random_intercept = FALSE) {
+dynamiteformula_ <- function(formula, original, family) {
   if (is_deterministic(family)) {
     out <- formula_past(formula)
     resp_parsed <- formula_response(deparse1(formula_lhs(formula)))
@@ -153,12 +145,7 @@ dynamiteformula_ <- function(formula, original, family,
     out$response <- deparse1(formula_lhs(formula))
   }
   out$family <- family
-  stopifnot_(
-    !(random_intercept && is_categorical(family)),
-    "Random intercepts are not yet supported for the categorical family."
-  )
   out$original <- original
-  out$has_random_intercept <- random_intercept
   out
 }
 
@@ -179,8 +166,7 @@ dynamitechannel <- function(formula, original = NULL, family, response,
                             fixed = integer(0L), varying = integer(0L),
                             specials = list(),
                             has_fixed_intercept = FALSE,
-                            has_varying_intercept = FALSE,
-                            has_random_intercept = FALSE) {
+                            has_varying_intercept = FALSE) {
   list(
     formula = formula,
     original = original,
@@ -190,8 +176,7 @@ dynamitechannel <- function(formula, original = NULL, family, response,
     varying = varying,
     specials = specials,
     has_fixed_intercept = has_fixed_intercept,
-    has_varying_intercept = has_varying_intercept,
-    has_random_intercept = has_random_intercept
+    has_varying_intercept = has_varying_intercept
   )
 }
 
@@ -348,6 +333,8 @@ add_dynamiteformula <- function(e1, e2) {
     out <- set_lags(e1, e2)
   } else if (is.splines(e2)) {
     out <- set_splines(e1, e2)
+  } else if (is.random(e2)) {
+    out <- set_random(e1, e2)
   } else {
     stop_(
       "Unable to add an object of class {.cls {class(e2)}}
@@ -382,6 +369,10 @@ join_dynamiteformulas <- function(e1, e2) {
   stopifnot_(
     is.null(attr(e1, "splines")) || is.null(attr(e2, "splines")),
     "Both dynamiteformulas contain a splines definition."
+  )
+  stopifnot_(
+    is.null(attr(e1, "random")) || is.null(attr(e2, "random")),
+    "Both dynamiteformulas contain a random intercepts definition."
   )
   rhs_list <- list(
     lapply(get_terms(e1), extract_nonlags),
@@ -440,5 +431,19 @@ set_splines <- function(e1, e2) {
     "Multiple definitions for splines."
   )
   attr(e1, "splines") <- e2
+  e1
+}
+
+#' Set the Random Intercepts of the Model
+#'
+#' @param e1 A `dynamiteformula` object.
+#' @param e2 A `random` object.
+#' @noRd
+set_random <- function(e1, e2) {
+  stopifnot_(
+    is.null(attr(e1, "random")) || attr(e2, "random"),
+    "Multiple definitions for random intercepts."
+  )
+  attr(e1, "random") <- e2
   e1
 }

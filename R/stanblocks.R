@@ -104,11 +104,11 @@ create_parameters <- function(dformula, idt, vars) {
     )
   }
   randomtext <- ""
-  has_nu <- any(unlist(lapply(dformula, "[[", "has_random_intercept")))
+  has_nu <- length(attr(dformula, "random")$channels) > 0
   if (has_nu) {
     randomtext <- paste_rows(
       "// Random intercepts",
-      onlyif(attr(dformula, "correlated_nu"),
+      onlyif(attr(dformula, "random")$correlated,
         "cholesky_factor_corr[M] L; // Cholesky for correlated intercepts"),
       "matrix[M, N] nu_raw;",
       .indent = idt(c(1, 1, 1))
@@ -128,26 +128,20 @@ create_parameters <- function(dformula, idt, vars) {
 #' @noRd
 create_transformed_parameters <- function(dformula, idt, vars) {
   randomtext <- ""
-  has_nu <- any(unlist(lapply(dformula, "[[", "has_random_intercept")))
-  if (has_nu) {
-    if (attr(dformula, "correlated_nu")) {
+  nus <- attr(dformula, "random")$channels
+  M <- length(nus)
+  if (M > 0) {
+    if (attr(dformula, "random")$correlated) {
       randomtext <- paste_rows(
         "matrix[N, M] nu = (L * nu_raw)';",
-        .indent = idt(1))
-      for (i in seq_along(dformula)) {
-        y <- dformula[[i]]$response
-        randomtext <- paste_rows(
-          randomtext,
-          glue::glue("vector[N] nu_{y} = sigma_nu_{y} * nu[, {i}];"),
-          .indent = idt(c(0, 1))
-        )
-      }
+        glue::glue("vector[N] nu_{nus} = sigma_nu_{nus} * nu[, {1:M}];"),
+        .indent = idt(1)
+      )
     } else {
-      for (i in seq_along(dformula)) {
-        y <- dformula[[i]]$response
-        randomtext <- paste_rows(randomtext,
-          glue::glue("vector[N] nu_{y} = sigma_nu_{y} * nu_raw[, {i}];"))
-      }
+      randomtext <- paste_rows(
+        glue::glue("vector[N] nu_{nus} = sigma_nu_{nus} * nu_raw[, {1:M}];"),
+        .indent = idt(1)
+      )
     }
   }
   tr_pars <- character(length(dformula))
@@ -164,18 +158,24 @@ create_transformed_parameters <- function(dformula, idt, vars) {
 create_model <- function(dformula, idt, vars) {
   splinetext <- ""
   if (!is.null(spline_defs <- attr(dformula, "splines"))) {
-    paste_rows(
-      splinetext <- onlyif(
-        spline_defs$shrinkage,
-        "lambda ~ std_normal();" #TODO user-defined prior
-      ), .indent = idt(1))
+    if (spline_defs$shrinkage) {
+      lambda_prior <- attr(vars, "common_priors") |>
+        dplyr::filter(parameter == "lambda") |>
+        dplyr::pull(prior)
+    }
+    splinetext <- paste_rows("lambda ~ {lambda_prior};",.indent = idt(1))
   }
   randomtext <- ""
-  has_nu <- any(unlist(lapply(dformula, "[[", "has_random_intercept")))
+  has_nu <- length(attr(dformula, "random")$channels) > 0
   if (has_nu) {
+    if(attr(dformula, "random")$correlated) {
+      L_prior <- attr(vars, "common_priors") |>
+        dplyr::filter(parameter == "L") |>
+        dplyr::pull(prior)
+    }
     randomtext <- paste_rows(
       "to_vector(nu_raw) ~ std_normal();",
-      onlyif(attr(dformula, "correlated_nu"), "L ~ lkj_corr_cholesky(1);"), #TODO user-defined prior
+      onlyif(attr(dformula, "random")$correlated, "L ~ {L_prior};"),
       .indent = idt(c(1, 1))
     )
   }
@@ -193,17 +193,16 @@ create_model <- function(dformula, idt, vars) {
 #' @noRd
 create_generated_quantities <- function(dformula, idt, vars) {
   gen <- ""
-  has_nu <- unlist(lapply(dformula, "[[", "has_random_intercept"))
-  M <- sum(has_nu)
-  if (M > 0 && attr(dformula, "correlated_nu")) {
+  M <- length(attr(dformula, "random")$channels)
+  if (M > 0 && attr(dformula, "random")$correlated) {
     # evaluate number of corrs to avoid Stan warning about integer division
     gen <- paste_rows(
       "corr_matrix[M] Sigma_nu = multiply_lower_tri_self_transpose(L);",
       "vector<lower=-1,upper=1>[{M*(M-1)/2}] corr_nu;",
       "for (k in 1:M) {{",
-      "  for (j in 1:(k - 1)) {{",
-      "    corr_nu[choose(k - 1, 2) + j] = Sigma_nu[j, k];",
-      "  }}",
+        "for (j in 1:(k - 1)) {{",
+           "corr_nu[choose(k - 1, 2) + j] = Sigma_nu[j, k];",
+         "}}",
       "}}", .indent = idt(c(1, 1, 1, 2, 3, 2, 1))
       )
   }

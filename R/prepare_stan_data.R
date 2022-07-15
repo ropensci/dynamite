@@ -63,6 +63,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
   )
   sampling_vars$D <- spline_defs$D
   sampling_vars$Bs <- spline_defs$Bs
+  has_random <- attr(dformula, "random")$channels
   N <- ifelse_(groups, length(unique(group)), 1L)
   K <- ncol(model_matrix)
   X <- aperm(
@@ -132,7 +133,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
     )
     channel$has_fixed_intercept <- dformula[[i]]$has_fixed_intercept
     channel$has_varying_intercept <- dformula[[i]]$has_varying_intercept
-    channel$has_random_intercept <- dformula[[i]]$has_random_intercept
+    channel$has_random_intercept <- resp %in% has_random
     channel$has_fixed <- channel$K_fixed > 0L
     channel$has_varying <- channel$K_varying > 0L
     channel$lb <- spline_defs$lb[i]
@@ -188,6 +189,44 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
   # avoid goodpractice warning, T is a Stan variable, not an R variable
   sampling_vars[["T"]] <- T_full - fixed
   sampling_vars$X_m <- as.array(x_means)
+
+  if (spline_defs$shrinkage) {
+    if (is.null(priors)) {
+      prior_list[["common_priors"]] <-
+        data.frame(
+          parameter = "lambda",
+          response = "",
+          prior = "normal(0, 1)",
+          type = "lambda",
+          category = ""
+        )
+    } else {
+      prior_list[["common_priors"]] <-
+        priors |> dplyr::filter(.data$type == "lambda")
+    }
+  }
+  if (sampling_vars$M > 1) {
+    if (is.null(priors)) {
+      prior_list[["common_priors"]] <-
+        dplyr::bind_rows(
+          prior_list[["common_priors"]],
+          data.frame(
+            parameter = "L",
+            response = "",
+            prior = "lkj_corr_cholesky(1)",
+            type = "L",
+            category = ""
+          )
+        )
+    } else {
+      prior_list[["common_priors"]] <- dplyr::bind_rows(
+        prior_list[["common_priors"]],
+        priors |> dplyr::filter(.data$type == "L")
+      )
+    }
+  }
+  # for stanblocks
+  attr(model_vars, "common_priors") <- prior_list[["common_priors"]]
   list(
     model_vars = model_vars,
     sampling_vars = sampling_vars,
@@ -233,7 +272,7 @@ prepare_splines <- function(spline_defs, n_channels, T_idx, verbose) {
     out <- list(
       lb = numeric(n_channels),
       noncentered = logical(n_channels),
-      shrinkage = logical(n_channels)
+      shrinkage = logical(1)
     )
   }
   out

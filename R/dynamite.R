@@ -15,6 +15,12 @@
 #' is 0 or NA, it is transformed to (arbitrary) 0.5. The final prior is then
 #' normal distribution with zero mean and two times this standard deviation.
 #'
+#' The prior for the correlation structure of the random intercepts is defined
+#' via the Cholesky decomposition of the correlation matrix, as
+#' `lkj_corr_cholesky(1)`. See
+#' \url{https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html}
+#' for details.
+#'
 #' See more details in the package vignette on how to define a dynamite model.
 #'
 #' The best-case scalability of the dynamite in terms of data size should be
@@ -155,9 +161,6 @@ dynamite <- function(dformula, data, group = NULL, time,
     priors,
     fixed = attr(dformulas$all, "max_lag")
   )
-  # if only one random intercept, no need to create correlation matrix
-  # for now, always allow potential correlation between random intercepts
-  attr(dformulas$stoch, "correlated_nu") <- stan$sampling_vars$M > 1
   model_code <- create_blocks(
     dformula = dformulas$stoch,
     indent = 2L,
@@ -428,7 +431,8 @@ parse_lags <- function(data, dformula, group_var, time_var) {
     det = dformula_det,
     stoch = structure(
       dformula[channels_stoch],
-      splines = attr(dformula, "splines")
+      splines = attr(dformula, "splines"),
+      random = attr(dformula, "random")
     ),
     lag_pred = dformula_lag_pred,
     lag_det = dformula_lag_det,
