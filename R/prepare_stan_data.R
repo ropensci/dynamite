@@ -693,7 +693,7 @@ prepare_channel_beta <- function(y, Y, channel, sd_x, resp_class, priors) {
     abort_factor(y, "Beta", call = rlang::caller_env())
   }
   Y_obs <- Y[!is.na(Y)]
-  if (any(Y_obs <= 0.0 || Y_obs >= 1.0)) {
+  if (any(Y_obs <= 0.0) || any(Y_obs >= 1.0)) {
     abort_nonunit(y, "Beta", type = "values", call = rlang::caller_env())
   }
   sd_y <- 1.0
