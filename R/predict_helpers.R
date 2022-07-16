@@ -483,6 +483,15 @@ fitted_exponential <- "
 fitted_gamma <- "
   data.table::set(x = newdata, i = idx, j = '{resp}_fitted', value = exp(xbeta))
 "
+
+fitted_beta <- "
+  data.table::set(
+    x = newdata,
+    i = idx,
+    j = '{resp}_fitted',
+    value = plogis(xbeta)
+  )
+"
 # Predict expressions -----------------------------------------------------
 
 predict_gaussian <- "
@@ -640,5 +649,23 @@ predict_gamma <- "
     i = idx_data,
     j = '{resp}',
     value = rgamma(k, shape = phi, rate = phi * exp(-xbeta))[idx_pred]
+  )
+"
+
+predict_beta <- "
+  mu <- {'plogis(xbeta)'}
+  if (type == 'mean') {{
+    data.table::set(
+      x = newdata,
+      i = idx_data,
+      j = '{resp}_mean',
+      value = mu[idx_pred])
+    )
+  }
+  data.table::set(
+    x = newdata,
+    i = idx_data,
+    j = '{resp}',
+    value = rbeta(k,  mu * phi, (1 - mu) * phi)[idx_pred]
   )
 "

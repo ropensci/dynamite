@@ -105,6 +105,15 @@ data_lines_gamma <- quote({
   paste_rows(dtext_def, dtext, .parse = FALSE)
 })
 
+data_lines_beta <- quote({
+  dtext_def <- eval(data_lines_default)
+  dtext <- paste_rows(
+    "matrix<lower=0, upper=1>[N, T] {y};",
+    .indent = idt(1)
+  )
+  paste_rows(dtext_def, dtext, .parse = FALSE)
+})
+
 # Transformed data block --------------------------------------------------
 
 transformed_data_lines_default <- quote({
@@ -228,6 +237,10 @@ transformed_data_lines_gamma <- quote({
   eval(transformed_data_lines_default)
 })
 
+transformed_data_lines_beta <- quote({
+  eval(transformed_data_lines_default)
+})
+
 # Parameters block --------------------------------------------------------
 
 parameters_lines_default <- quote({
@@ -305,6 +318,14 @@ parameters_lines_exponential <- quote({
 })
 
 parameters_lines_gamma <- quote({
+  paste_rows(
+    eval(parameters_lines_default),
+    "real<lower=0> phi_{y};",
+    .indent = idt(c(0, 1))
+  )
+})
+
+parameters_lines_beta <- quote({
   paste_rows(
     eval(parameters_lines_default),
     "real<lower=0> phi_{y};",
@@ -590,6 +611,10 @@ transformed_parameters_lines_exponential <- quote({
 })
 
 transformed_parameters_lines_gamma <- quote({
+  eval(transformed_parameters_lines_default)
+})
+
+transformed_parameters_lines_beta <- quote({
   eval(transformed_parameters_lines_default)
 })
 
@@ -1258,6 +1283,61 @@ model_lines_gamma <- quote({
   paste_rows(mtext_def, mtext, .parse = FALSE)
 })
 
+
+model_lines_beta <- quote({
+  mtext_def <- eval(model_lines_default)
+  d <- phi_prior_distr
+  phi_term <- "phi_{y} ~ {d};"
+  fixed_term <- ifelse_(
+    has_fixed,
+    glue::glue("X[t][{obs}, {{{cs(J_fixed)}}}] * beta_{y}"),
+    ""
+  )
+  varying_term <- ifelse_(
+    has_varying,
+    glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"),
+    ""
+  )
+  intercept_alpha <- intercept_nu <- ""
+  if (has_fixed_intercept) {
+    intercept_alpha <- glue::glue("alpha_{y}")
+  }
+  if (has_varying_intercept) {
+    intercept_alpha <- glue::glue("alpha_{y}[t]")
+  }
+  if (has_random_intercept) {
+    intercept_nu <- ifelse(
+      nzchar(obs),
+      glue::glue("nu_{y}[{obs}]"),
+      glue::glue("nu_{y}")
+    )
+  }
+  plus_i <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
+  plus_c <- ifelse_(has_fixed && has_varying, " + ", "")
+  intercept <- ifelse_(
+    nzchar(intercept_alpha) || has_random_intercept,
+    glue::glue("{intercept_alpha}{plus_i}{intercept_nu}"),
+    ""
+  )
+  plus_ic <- ifelse_(
+    nzchar(intercept_alpha) && (has_fixed || has_varying),
+    " + ",
+    ""
+  )
+  likelihood_term <- paste0(
+    "{y}[{obs}, t] ~ beta_proportion(",
+    "inv_logit(({intercept}{plus_ic}{fixed_term}{plus_c}{varying_term})), phi_{y});"
+  )
+  mtext <- paste_rows(
+    phi_term,
+    "for (t in 1:T) {{",
+    likelihood_term,
+    "}}",
+    .indent = idt(c(1, 1, 2, 1))
+  )
+  paste_rows(mtext_def, mtext, .parse = FALSE)
+})
+
 # Generated quantities block ----------------------------------------------
 
 generated_quantities_lines_default <- quote({
@@ -1293,5 +1373,9 @@ generated_quantities_lines_exponential <- quote({
 })
 
 generated_quantities_lines_gamma <- quote({
+  eval(generated_quantities_lines_default)
+})
+
+generated_quantities_lines_beta <- quote({
   eval(generated_quantities_lines_default)
 })

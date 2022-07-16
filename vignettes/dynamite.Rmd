@@ -79,6 +79,7 @@ defines a model with two channels; first we declare that `y` is a gaussian varia
 * Binomial: `binomial` (logit-link).
 * Exponential: `exponential` (log-link).
 * Gamma: `gamma` (log-link, using mean and shape parameterization).
+* beta: `beta` (logit-link, using mean and precision parameterization).
 
 The `dynamite` models do not support contemporaneous dependencies in order to avoid complex cyclic dependencies which would make handling missing data, subsequent predictions, and causal inference challenging or impossible. In other words, response variables can only depend on the previous values of other response variables. This is why we used `lag(x)` in the previous example, a shorthand for `lag(x, k = 1)`, which defines a one-step lag of the variable `x`. Longer lags can also be defined by adjusting the argument `k`. 
 

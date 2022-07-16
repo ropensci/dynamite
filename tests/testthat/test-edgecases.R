@@ -20,6 +20,7 @@ test_data <- data.frame(
     y6 = rpois(n = total_obs, lambda = log(offset) + 1),
     y7 = rexp(n = total_obs, rate = 0.1),
     y8 = rgamma(n = total_obs, shape = 2, rate = 2 * exp(-5)),
+    y9 = rbeta(n = total_obs, 6, 4),
     x1 = sample(letters[1:4], size = total_obs, replace = TRUE),
     x2 = rnorm(total_obs),
     x3 = as.factor(sample(4, size = total_obs, replace = TRUE))
@@ -53,6 +54,9 @@ test_that("single channel models are valid", {
     obs_gamma <- obs(y8 ~ x1, family = "gamma"), NA
   )
   expect_error(
+    obs_beta <- obs(y9 ~ x3, family = "beta"), NA
+  )
+  expect_error(
     dynamite(obs_categorical, test_data, "group", "time", debug = debug), NA
   )
   expect_error(
@@ -76,6 +80,9 @@ test_that("single channel models are valid", {
   expect_error(
     dynamite(obs_gamma, test_data, "group", "time", debug = debug), NA
   )
+  expect_error(
+    dynamite(obs_beta, test_data, "group", "time", debug = debug), NA
+  )
 })
 
 test_that("multichannel models are valid", {
@@ -87,7 +94,8 @@ test_that("multichannel models are valid", {
       obs(y5 ~ x2, family = "negbin") +
       obs(y6 ~ x3 + offset(offset), family = "poisson") +
       obs(y7 ~ x3, family = "exponential") +
-      obs(y8 ~ x1, family = "gamma"),
+      obs(y8 ~ x1, family = "gamma") +
+      obs(y9 ~ x1, family = "beta"),
     NA
   )
   expect_error(

@@ -19,6 +19,7 @@
 #' * Binomial: `binomial` (logit-link).
 #' * Exponential: `exponential` (log-link).
 #' * Gamma: `gamma` (log-link, using mean and shape parameterisation).
+#' * Beta: `beta` (logit-link, using mean and precision parameterisation).
 #'
 #' The models in the \pkg{dynamite} package are defined by combining the
 #' channel-specific formulas defined via  \R formula syntax.

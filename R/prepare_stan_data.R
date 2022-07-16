@@ -162,7 +162,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
     }
     family <- dformula[[i]]$family
     sampling_vars[[resp]] <- ifelse_(
-      family %in% c("gaussian", "gamma", "exponential"),
+      family %in% c("gaussian", "gamma", "exponential", "beta"),
       t(Y_out),
       Y_out
     )
@@ -686,6 +686,62 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
   out
 }
 
+#' @describeIn prepare_channel_default Prepare a beta channel
+#' @noRd
+prepare_channel_beta <- function(y, Y, channel, sd_x, resp_class, priors) {
+  if ("factor" %in% resp_class) {
+    abort_factor(y, "Beta", call = rlang::caller_env())
+  }
+  Y_obs <- Y[!is.na(Y)]
+  if (any(Y_obs <= 0.0 || Y_obs >= 1.0)) {
+    abort_nonunit(y, "Beta", type = "values", call = rlang::caller_env())
+  }
+  sd_y <- 1.0
+  if (ncol(Y) > 1L) {
+    mean_y <- log(mean(Y[1L, ], na.rm = TRUE))
+  } else {
+    mean_y <- log(Y[1L])
+  }
+  if (is.na(mean_y)) {
+    mean_y <- 0.0
+  }
+  sd_gamma <- 2.0 / sd_x
+  mean_gamma <- rep(0.0, length(sd_gamma))
+  out <- prepare_channel_default(
+    y,
+    Y,
+    channel,
+    mean_gamma,
+    sd_gamma,
+    mean_y,
+    sd_y,
+    resp_class,
+    priors
+  )
+  phi_prior <- data.frame(
+    parameter = paste0("phi_", y),
+    response = y,
+    prior = "exponential(1)",
+    type = "phi",
+    category = ""
+  )
+
+  if (is.null(priors)) {
+    out$channel$phi_prior_distr <- phi_prior$prior
+    out$priors <- dplyr::bind_rows(out$priors, phi_prior)
+  } else {
+    priors <- priors |> dplyr::filter(.data$response == y)
+    pdef <- priors |> dplyr::filter(.data$type == "phi")
+    if (nrow(pdef) == 1) {
+      out$channel$phi_prior_distr <- pdef$prior
+    }
+    defaults <- dplyr::bind_rows(
+      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
+      phi_prior)
+    out$priors <- check_priors(priors, defaults)
+  }
+  out
+}
 #' Raise an error if factor type is not supported by a family
 #'
 #' @param y Response variable the error is related to.
@@ -710,5 +766,19 @@ abort_negative <- function(y, family, type, call) {
   stop_(c(
     "Response variable {.var {y}} is invalid:",
     `x` = "{family} family supports only non-negative {type}."
+  ), call = call)
+}
+
+#' Raise error if values outside unit interval
+#'
+#' @param y Response variable the error is related to.
+#' @param family Family as character vector.
+#' @param type Value type of the family.
+#' @param call call to be passed to [stop_()].
+#' @noRd
+abort_nonunit <- function(y, family, type, call) {
+  stop_(c(
+    "Response variable {.var {y}} is invalid:",
+    `x` = "{family} family supports only {type} on open interval (0, 1)."
   ), call = call)
 }

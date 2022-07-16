@@ -40,7 +40,8 @@ supported_families <- c(
   "poisson",
   "deterministic",
   "gamma",
-  "exponential"
+  "exponential",
+  "beta"
 )
 
 # Generate `family_` and `is_family` convenience functions

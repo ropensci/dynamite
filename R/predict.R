@@ -82,7 +82,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
   newdata_null <- is.null(newdata)
   if (newdata_null) {
     newdata <- data.table::setDF(data.table::copy(object$data))
-  } else if (data.table::is.data.table(newdata)) {
+  } else if (data.table::is.data.table(newdata) || is.data.frame(newdata)) {
     newdata <- data.table::setDF(data.table::copy(newdata))
   } else if (!is.data.frame(newdata)) {
     stop_("Argument {.arg newdata} must be a {.cls data.frame} object.")

@@ -305,7 +305,7 @@ test_that("non-factor categorical response fails", {
 
 test_that("factor types for non-categorical families fails", {
   test_data <- data.frame(y = factor(c(0, 1)), x = c(1, 1), z = c(1, 2))
-  families <- c("gaussian", "exponential", "gamma",
+  families <- c("gaussian", "exponential", "gamma", "beta",
                 "bernoulli", "binomial", "poisson", "negbin")
   for (f in families) {
     expect_error(
@@ -346,6 +346,17 @@ test_that("bernoulli without 0/1 values fails", {
   )
 })
 
+test_that("beta without (0, 1) values fails", {
+  test_data <- data.frame(y = c(2, 3), x = c(1, 1), z = c(1, 2))
+  expect_error(
+    dynamite(dformula = obs(y ~ 1, family = "beta"),
+      data = test_data, group = "x", time = "z"),
+    paste0(
+      "Response variable `y` is invalid:\n",
+      "x Beta family supports only values on open interval \\(0, 1\\)\\."
+    )
+  )
+})
 # Lag errors --------------------------------------------------------------
 
 test_that("invalid lagged value definition fails", {

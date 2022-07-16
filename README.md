@@ -14,23 +14,29 @@ coverage](https://codecov.io/gh/santikka/dynamite/branch/main/graph/badge.svg)](
 <!-- badges: end -->
 
 The `dynamite` [R](https://www.r-project.org/) package provides
-easy-to-use interface for Bayesian inference of complex panel data. The
-main features distinguishing the package and the underlying methodology
-from many other approaches are:
+easy-to-use interface for Bayesian inference of complex panel data
+comprising of multiple measurements per multiple individuals measured in
+time. The main features distinguishing the package and the underlying
+methodology from many other approaches are:
 
--   Support for both time-varying and time-invariant effects.
+-   Support for both time-invariant and time-varying effects modeled via
+    B-splines.
 -   Joint modeling of multiple measurements per individual (multiple
-    channels).
--   Support for non-gaussian observations.
--   Realistic counterfactual predictions which take into account the
-    dynamic structure of the model.
--   Clear quantification of parameter and predictive uncertainty due to
-    a Bayesian approach.
+    channels) based directly on the assumed data generating process.
+-   Support for non-Gaussian observations: Currently Gaussian,
+    Categorical, Poisson, Bernoulli, Binomial, Negative Binomial, Gamma,
+    Exponential, and Beta distributions are available and these can be
+    mixed arbitrarily in multichannel models.
+-   Allows evaluating realistic long-term counterfactual predictions
+    which take into account the dynamic structure of the model by
+    posterior predictive distribution simulation.
+-   Transparent quantification of parameter and predictive uncertainty
+    due to a fully Bayesian approach.
 -   User-friendly and efficient R interface with state-of-the-art
     estimation via Stan.
 
 The `dynamite` package is developed with the support of Academy of
-Finland grant 331817.
+Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)).
 
 ## Installation
 
@@ -84,8 +90,8 @@ group-specific random intercepts:
 set.seed(1)
 library(dynamite)
 gaussian_example_fit <- dynamite(
-  obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian",
-      random_intercept = TRUE) + splines(df = 20),
+  obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") + 
+    random() + splines(df = 20),
   data = gaussian_example, time = "time", group = "id",
   iter = 2000, warmup = 1000, thin = 5,
   chains = 2, cores = 2, refresh = 0, save_warmup = FALSE
