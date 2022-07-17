@@ -33,7 +33,7 @@ There are several R [@R] packages in CRAN focusing on panel data analysis. `plm`
 
 In traditional panel data models such as the ones provided by the aforementioned packages, the effects of predictors are typically assumed to be time-invariant (although some extensions to time-varying effects have emerged [@hayakawa2019]). On the other hand, there are various methods to model time-varying effects in (generalized) linear models based on state space models [@harvey1982; @durbin2012], with various R implementations [@helske2022; @knaus2021; @brodersen2014]. The state space modelling approaches are highly flexible but often computationally demanding due to assumed latent processes for the regression coefficients and an analytically intractable marginal likelihood, so they are most useful in settings with only few subjects. Methods based on the varying coefficients models [@hastie1993; @eubank2004] can be computationally more convenient, especially when the varying coefficients are based on splines. Some of the R implementations of time-varying coefficient models include [@casas2019; @dziak2021].
 
-The `dynamite` package provides an alternative approach to panel data inference which avoids some of the limitations and drawbacks of the aforementioned methods. First, `dynamite`support for effects which vary smoothly over time. This allows modelling for example effects of interventions which increase or decrease over time. Second, `dynamite` also supports response variable snot only from exponential family, but also categorical response variables commonly encountered in life-course research [@Helske2018]. Third, estimation is done in a fully Bayesian fashion using `Stan` [@Stan; @rstan], which leads to transparent and interpretable quantification of parameter and predictive uncertainty. Finally, with `dynamite` we can model multiple measurements per individual (i.e. multiple channels following [@seqHMM]). Jointly modelling all endogenous variables allows us to consider long-term effects of interventions which take into account the interdependency of several variables of the model, and allows simulation of complex counterfactual scenarios.
+The `dynamite` package provides an alternative approach to panel data inference which avoids some of the limitations and drawbacks of the aforementioned methods. First, `dynamite`support for effects which vary smoothly over time. This allows modelling for example effects of interventions which increase or decrease over time. Second, `dynamite` supports wide variety of distributions for the response variables such as categorical distribution commonly encountered in life-course research [@Helske2018]. Third, estimation is done in a fully Bayesian fashion using `Stan` [@Stan; @rstan], which leads to transparent and interpretable quantification of parameter and predictive uncertainty. Finally, with `dynamite` we can model arbitrary number of measurements per individual (i.e. multiple channels following [@seqHMM]). Jointly modelling all endogenous variables allows us to consider long-term effects of interventions which take into account the interdependency of several variables of the model, and allows realistic simulation of complex counterfactual scenarios.
   
 # Model
 
@@ -45,13 +45,15 @@ y_{i,t} &\sim p_t(y_{i,t} | y_{i,t-1},  x_{i,t}) = \prod_{c=1}^C p^c_t(y^c_{i,t}
 \]
 Here the parameters of the conditional distributions $p^c$ depend on time, which allows us to take into account the fact that the dynamics of our system can evolve over time. 
 
-For $p^c_t$, given a suitable link function depending on our distributional assumptions, we define a linear predictor $\eta^c_{t}$ for the channel $c$ with a following general form:
+For $p^c_t$, given a suitable link function depending on our distributional assumptions, we define a linear predictor $\eta^c_{i,t}$ for the channel $c$ with a following general form:
 \[
 \begin{aligned}
-\eta^c_{t} &= \alpha^c_{t} + Z^c_{t} \beta^c + X^c_{t} \delta^c_{t}
+\eta^c_{i,t} &= \nu_{i} + \alpha^c_{t} + Z^c_{i,t} \beta^c + X^c_{i,t} \delta^c_{t}
 \end{aligned}
 \]
-where $\alpha_t$ (possibly time-varying) is the intercept term, $Z^c_t$ defines the predictors corresponding to the vector of time-invariant coefficients  $\beta^c$, and similarly for the time-varying part $X^c_{t} \delta^c_{t}$. For time-varying coefficients $\delta$ (and similarly for $\alpha$), we use Bayesian P-splines (penalized B-splines) [@lang2004] where
+$\nu_{i}$ is the individual-specific random intercept, $\alpha_t$ (possibly time-varying) is the common intercept term, $Z^c_{i,t}$ defines the predictors corresponding to the vector of time-invariant coefficients $\beta^c$, and similarly for the time-varying part $X^c_{i,t} \delta^c_{t}$. The random intercept terms $\nu_{i}$ are assumed to follow zero-mean Gaussian and these can be correlated across channels. 
+
+For time-varying coefficients $\delta$ (and similarly for $\alpha$), we use Bayesian P-splines (penalized B-splines) [@lang2004] where
 \[
 \delta^c_{k,t} = B_t \omega_k^c, \quad k=1,\ldots,K,
 \]
@@ -100,14 +102,8 @@ The formula within `obs` can also contain an additional special function `varyin
 
 When defining varying effects, we also need to define how the these time-varying regression coefficient behave. For this, a `splines` component should be added to the model, e.g. `obs(x ~ varying(~ -1 + w), family = "poisson) + splines(df = 10)` defines a cubic B-spline with 10 degrees of freedom for the time-varying coefficient corresponding to the `w`. If the model contains multiple time-varying coefficients, same spline basis is used for all coefficients, with unique spline coefficients and their standard deviation, as defined in the previous Section.
 
-It is also possible to define a random intercept term for each group by
-using component `random` where the first argument defines for which channels
-the intercept should be added, and second argument defines whether or not
-these intercepts should be correlated between channels. This leads to a
-model where the in addition to the common intercept each individual/group
-has their own intercept with zero-mean normal prior and unknown standard
-deviation (or multivariate gaussian in case argument `correlated = TRUE`),
-analogously with the typical mixed models. 
+Defining the random intercept term for each group ca be done using component `random` where the first argument defines for which channels the intercept should be added, and second argument defines whether or not these intercepts should be correlated between channels. This leads to a model where the in addition to the common intercept each individual/group has their own intercept with zero-mean normal prior and unknown standard deviation (or multivariate gaussian in case argument `correlated = TRUE`),
+analogously with the typical mixed models. Note however, that currently random intercepts are not supported for categorical distribution due to technical reasons.
 
 In addition to declaring response variables via `obs`, we can also use function `aux` to define auxiliary channels which are deterministic functions of other variables. Defining these auxiliary variables explicitly instead of defining them directly on the right-hand side of the formulas (i.e., by using the "as is" function `I()`) makes the subsequent prediction steps more clear and allows easier checks on the model validity. In fact, we do not allow the use of `I()` within `dynamiteformula`. The values of auxiliary variables are computed dynamically during prediction, making the use of lagged values and other transformations possible. An example of a formula using an auxiliary channel could be 
 ```{r, echo=TRUE, eval=FALSE}
@@ -137,9 +133,7 @@ estimates the model using the data in the data frame `d`, which contains variabl
 
 # Examples
 
-
 ## Grunfeld data
-
 
 As an example, we consider the famous Grunfeld dataset, available in the package `plm`:
 ```{r, eval = FALSE}
