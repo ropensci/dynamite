@@ -17,12 +17,13 @@ random <- function(channels = NULL, correlated = TRUE) {
   )
   stopifnot_(
     checkmate::test_flag(x = correlated),
-    "Argument {.arg correlated} must be a single {.cls correlated} value."
+    "Argument {.arg correlated} must be a single {.cls logical} value."
   )
   structure(
     list(
       channels = channels,
-      correlated = correlated),
+      correlated = correlated
+    ),
     class = "random"
   )
 }
