@@ -1,5 +1,31 @@
 obs_test <- obs(y ~ x + w, family = "gaussian")
 
+set.seed(0)
+timepoints <- 10
+individuals <- 5
+total_obs <- timepoints * individuals
+
+test_data <- data.frame(
+  time = 1:timepoints,
+  group = gl(individuals, timepoints),
+  offset = sample(50:100, size = total_obs, replace = TRUE),
+  trials = sample(50:100, size = total_obs, replace = TRUE)
+) |>
+  dplyr::mutate(
+    y1 = as.factor(sample(5, size = total_obs, replace = TRUE)),
+    y2 = rnorm(n = total_obs, mean = 1, sd = 2),
+    y3 = rbinom(n = total_obs, size = trials, prob = 0.75),
+    y4 = rbinom(n = total_obs, size = 1, prob = 0.66),
+    y5 = rnbinom(n = total_obs, size = 100, prob = 0.33),
+    y6 = rpois(n = total_obs, lambda = log(offset) + 1),
+    y7 = rexp(n = total_obs, rate = 0.1),
+    y8 = rgamma(n = total_obs, shape = 2, rate = 2 * exp(-5)),
+    y9 = rbeta(n = total_obs, 6, 4),
+    x1 = sample(letters[1:4], size = total_obs, replace = TRUE),
+    x2 = rnorm(total_obs),
+    x3 = as.factor(sample(4, size = total_obs, replace = TRUE))
+  )
+
 # Formula errors ----------------------------------------------------------
 
 test_that("nonformula to dynamiteformula fails", {
@@ -148,6 +174,46 @@ test_that("time-varying definitions without splines fails", {
   )
 })
 
+
+test_that("noncentered definition throws error if not of correct length", {
+  expect_error(
+    obs_all_alpha <- obs(y1 ~ -1 + varying(~ x1), family = "categorical") +
+      obs(x3 ~ varying(~ -1 + x1), family = "categorical") +
+      obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
+      obs(y3 ~ lag(x3) + trials(trials), family = "binomial") +
+      obs(y4 ~ x1 + varying(~-1 + x2), family = "bernoulli") +
+      obs(y9 ~ -1 + x1 + varying(~x2), family = "beta") +
+      splines(df = 5, noncentered = rep(TRUE, 3)),
+    NA
+  )
+  expect_error(
+    dynamite(obs_all_alpha, test_data,
+      "group", "time", debug = debug),
+    paste("Length of the `noncentered` argument of `splines\\(\\)` function",
+      "is not equal to 1 or 6, the number of the channels\\."
+    )
+  )
+})
+
+test_that("lb_tau definition throws error if not of correct length", {
+  expect_error(
+    obs_all_alpha <- obs(y1 ~ -1 + varying(~ x1), family = "categorical") +
+      obs(x3 ~ varying(~ -1 + x1), family = "categorical") +
+      obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
+      obs(y3 ~ lag(x3) + trials(trials), family = "binomial") +
+      obs(y4 ~ x1 + varying(~-1 + x2), family = "bernoulli") +
+      obs(y9 ~ -1 + x1 + varying(~x2), family = "beta") +
+      splines(df = 5, lb_tau = rep(1, 3)),
+    NA
+  )
+  expect_error(
+    dynamite(obs_all_alpha, test_data,
+      "group", "time", debug = debug),
+    paste("Length of the `lb_tau` argument of `splines\\(\\)` function is not",
+      "equal to 1 or 6, the number of the channels\\."
+    )
+  )
+})
 # Formula specials errors -------------------------------------------------
 
 test_that("no intercept or predictors fails", {

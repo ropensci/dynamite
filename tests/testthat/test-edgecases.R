@@ -142,6 +142,29 @@ test_that("random intercepts are handled correctly", {
   )
 })
 
+test_that("shrinkage is handled correctly", {
+  expect_error(
+    obs_all_alpha <- obs(y1 ~ -1 + varying(~ x1), family = "categorical") +
+      obs(x3 ~ varying(~ -1 + x1), family = "categorical") +
+      obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
+      obs(y3 ~ lag(x3) + trials(trials), family = "binomial") +
+      obs(y4 ~ x1 + varying(~-1 + x2), family = "bernoulli") +
+      obs(y9 ~ -1 + x1 + varying(~x2), family = "beta") +
+      splines(df = 5, shrinkage = TRUE),
+    NA
+  )
+
+  expect_equal(
+    unname(unlist(lapply(
+      dynamite(obs_all_alpha, test_data,
+        "group", "time", debug = debug)$stan$model_vars, "[[", "shrinkage"))),
+    rep(TRUE, 6)
+  )
+  expect_equal(get_priors(obs_all_alpha, test_data,
+    "group", "time")$parameter[73], "lambda"
+  )
+})
+
 test_that("noncentered splines are handled correctly", {
   expect_error(
     obs_all_alpha <- obs(y1 ~ -1 + varying(~ x1), family = "categorical") +
