@@ -14,10 +14,10 @@ coverage](https://codecov.io/gh/santikka/dynamite/branch/main/graph/badge.svg)](
 <!-- badges: end -->
 
 The `dynamite` [R](https://www.r-project.org/) package provides
-easy-to-use interface for Bayesian inference of complex panel data
-comprising of multiple measurements per multiple individuals measured in
-time. The main features distinguishing the package and the underlying
-methodology from many other approaches are:
+easy-to-use interface for Bayesian inference of complex panel (time
+series) data comprising of multiple measurements per multiple
+individuals measured in time. The main features distinguishing the
+package and the underlying methodology from many other approaches are:
 
 -   Support for both time-invariant and time-varying effects modeled via
     B-splines.

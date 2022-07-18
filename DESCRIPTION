@@ -9,8 +9,8 @@ Authors@R: c(
            comment = c(ORCID = "0000-0001-7130-793X"))
   )
 Description: Easy-to-use and efficient interface for 
-  Bayesian inference of complex panel data. The package supports joint 
-  modeling of multiple measurements per individual, time-varying and
+  Bayesian inference of complex panel (time series) data. The package supports 
+  joint modeling of multiple measurements per individual, time-varying and
   time-invariant effects, and a wide range of discrete and 
   continuous distributions. Estimation of the models is carried out via 'Stan'.
 License: GPL (>= 3)
