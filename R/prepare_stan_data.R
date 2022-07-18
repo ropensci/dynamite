@@ -205,7 +205,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
         priors |> dplyr::filter(.data$type == "lambda")
     }
   }
-  if (sampling_vars$M > 1) {
+  if (sampling_vars$M > 1 && attr(dformula, "random")$correlated) {
     if (is.null(priors)) {
       prior_list[["common_priors"]] <-
         dplyr::bind_rows(
@@ -242,12 +242,10 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
 #' @param spline_defs A `splines` object.
 #' @param n_channels Number of channels
 #' @param T_idx An `integer` vector of time indices
-#' @param verbose If `TRUE`, outputs warnings
 #' @noRd
-prepare_splines <- function(spline_defs, n_channels, T_idx, verbose) {
+prepare_splines <- function(spline_defs, n_channels, T_idx) {
   out <- list()
   if (!is.null(spline_defs)) {
-    out$lb <- spline_defs$lb_tau
     out$shrinkage <- spline_defs$shrinkage
     out$bs_opts <- spline_defs$bs_opts
     out$bs_opts$x <- T_idx
@@ -256,17 +254,23 @@ prepare_splines <- function(spline_defs, n_channels, T_idx, verbose) {
     }
     out$Bs <- t(do.call(splines::bs, args = out$bs_opts))
     out$D <- nrow(out$Bs)
+    out$lb <- spline_defs$lb_tau
+    if (length(out$lb) %in% c(1L, n_channels)) {
+      out$lb <- rep(out$lb, length = n_channels)
+    } else {
+      stop_(
+        "Length of the {.arg lb_tau} argument of {.fun splines} function
+          is not equal to 1 or {n_channels}, the number of the channels."
+      )
+    }
     out$noncentered <- spline_defs$noncentered
     if (length(out$noncentered) %in% c(1L, n_channels)) {
       out$noncentered <- rep(out$noncentered, length = n_channels)
     } else {
-      if (verbose) {
-        warning_(
-          "Length of the {.arg noncentered} argument of {.fun splines} function
-          is not equal to 1 or the number of the channels.",
-          `i` = "Recycling."
-        )
-      }
+      stop_(
+        "Length of the {.arg noncentered} argument of {.fun splines} function
+          is not equal to 1 or {n_channels}, the number of the channels."
+      )
     }
   } else {
     out <- list(

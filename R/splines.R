@@ -15,12 +15,14 @@
 #'   standard deviation parameters \eqn{\tau} of the random walk priors. Can be
 #'   useful in avoiding divergences in some cases. See also `noncentered`
 #'   argument. Can be a single positive value, or vector defining the
-#'   lower bound separately for each channel.
+#'   lower bound separately for each channel, even for channels without
+#'   varying effects.
 #' @param noncentered  \[`logical()`]\cr If `TRUE`, use noncentered
 #'   parameterization for the spline coefficients. Default is `FALSE`. Try
 #'   changing this if you encounter divergences or other problems in sampling.
 #'   Can be a single logical value, or vector of logical values, defining the
-#'   parameterization separately for each channel.
+#'   parameterization separately for each channel, even for channels without
+#'   varying effects.
 #' @param df \[`integer(1)`]\cr Degree of freedom, i.e., the total number of
 #'   spline coefficients. See [splines::bs()]. Note that the knots are always
 #'   defined as equidistant sequence on the interval starting from the first

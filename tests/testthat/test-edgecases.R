@@ -117,6 +117,70 @@ test_that("intercepts are handled correctly", {
   )
 })
 
+test_that("random intercepts are handled correctly", {
+  expect_error(
+    obs_all_alpha <- obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
+      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = "binomial") +
+      obs(y4 ~ x1 + varying(~-1 + x2), family = "bernoulli") +
+      splines(df = 5) + random(c("y2", "y3")),
+    NA
+  )
+  expect_equal(
+    c("sigma_nu_y2", "sigma_nu_y3", "L"),
+    get_priors(obs_all_alpha, test_data, "group", "time")$parameter[c(1, 6, 24)]
+  )
+
+  expect_error(
+    obs_all_alpha <- obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
+      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = "binomial") +
+      obs(y4 ~ x1 + varying(~-1 + x2), family = "bernoulli") +
+      splines(df = 5) + random(correlated = FALSE),
+    NA
+  )
+  expect_false(
+    "L" %in% get_priors(obs_all_alpha, test_data, "group", "time")$parameter
+  )
+})
+
+test_that("noncentered splines are handled correctly", {
+  expect_error(
+    obs_all_alpha <- obs(y1 ~ -1 + varying(~ x1), family = "categorical") +
+      obs(x3 ~ varying(~ -1 + x1), family = "categorical") +
+      obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
+      obs(y3 ~ lag(x3) + trials(trials), family = "binomial") +
+      obs(y4 ~ x1 + varying(~-1 + x2), family = "bernoulli") +
+      obs(y9 ~ -1 + x1 + varying(~x2), family = "beta") +
+      splines(df = 5, noncentered = rep(TRUE, 6)),
+    NA
+  )
+
+  expect_equal(
+    unname(unlist(lapply(
+      dynamite(obs_all_alpha, test_data,
+        "group", "time", debug = debug)$stan$model_vars, "[[", "noncentered"))),
+      rep(TRUE, 6)
+  )
+})
+
+test_that("lower bounds for tau are handled correctly", {
+  expect_error(
+    obs_all_alpha <- obs(y1 ~ - + x1, family = "categorical") +
+      obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
+      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = "binomial") +
+      obs(y4 ~ x1 + varying(~-1 + x2), family = "bernoulli")+
+      obs(y9 ~ -1 + x1 + varying(~x2), family = "beta")  +
+      splines(df = 5, lb_tau = c(0, 2, 1, 0.4, 0.01)),
+    NA
+  )
+
+  expect_equal(
+    lapply(
+      dynamite(obs_all_alpha, test_data,
+        "group", "time", debug = debug)$stan$model_vars, "[[", "lb"),
+    list(y1 = 0, y2 = 2, y3 = 1, y4 = 0.4, y9 = 0.01)
+  )
+})
+
 test_that("lags are parsed", {
   expect_error(
     obs_a <- obs(y1 ~ x1 + lag(y2, 1), family = "categorical") +

@@ -159,7 +159,8 @@ dynamite <- function(dformula, data, group = NULL, time,
     group,
     time,
     priors,
-    fixed = attr(dformulas$all, "max_lag")
+    fixed = attr(dformulas$all, "max_lag"),
+    verbose
   )
   model_code <- create_blocks(
     dformula = dformulas$stoch,
