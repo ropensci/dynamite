@@ -69,7 +69,6 @@ required, which can be installed as
 
 # install the latest development version:
 data.table::update.dev.pkg()
-#> R data.table package is up-to-date at e9a323de01a17af70d5316016606fa8d35b25023 (1.14.3)
 ```
 
 After these steps, you can install the development version of dynamite
@@ -172,3 +171,7 @@ For more examples, see the package vignette.
 -   [`plm`](https://CRAN.R-project.org/package=plm) contains various
     methods to estimate linear models for panel data, e.g. the fixed
     effect models.
+
+-   [`lavaan`](https://CRAN.R-project.org/package=lavaan) provides tools
+    for structural equation modelling, and as such can be used to model
+    various panel data models as well.
