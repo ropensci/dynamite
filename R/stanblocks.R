@@ -17,22 +17,14 @@ create_blocks <- function(dformula, ...) {
 #' @noRd
 create_blocks.default <- function(dformula, indent = 2L, vars, ...) {
   idt <- indenter_(indent)
-  functions <- create_functions(dformula, idt, vars)
-  data <- create_data(dformula, idt, vars)
-  transformed_data <- create_transformed_data(dformula, idt, vars)
-  parameters <- create_parameters(dformula, idt, vars)
-  transformed_parameters <- create_transformed_parameters(dformula, idt, vars)
-  model <- create_model(dformula, idt, vars)
-  generated_quantities <- create_generated_quantities(dformula, idt, vars)
-  # combine above text blocks
   paste_rows(
-    functions,
-    data,
-    transformed_data,
-    parameters,
-    transformed_parameters,
-    model,
-    generated_quantities,
+    create_functions(dformula, idt, vars),
+    create_data(dformula, idt, vars),
+    create_transformed_data(dformula, idt, vars),
+    create_parameters(dformula, idt, vars),
+    create_transformed_parameters(dformula, idt, vars),
+    create_model(dformula, idt, vars),
+    create_generated_quantities(dformula, idt, vars),
     .parse = FALSE
   )
 }
