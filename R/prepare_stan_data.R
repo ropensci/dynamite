@@ -508,7 +508,7 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
   } else {
     mean_y <- log(Y[1L])
   }
-  if(is.na(mean_y)) {
+  if (is.na(mean_y)) {
     mean_y <- 0.0
   }
   sd_gamma <- 2.0 / sd_x
@@ -549,7 +549,7 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
   } else {
     mean_y <- log(Y[1L])
   }
-  if(is.na(mean_y)) {
+  if (is.na(mean_y)) {
     mean_y <- 0.0
   }
   sd_gamma <- 2.0 / sd_x
