@@ -394,7 +394,6 @@ parse_lags <- function(data, dformula, group_var, time_var) {
   lag_map <- extract_lags(predictors)
   gl <- parse_global_lags(dformula, lag_map, resp_stoch, channels_stoch)
   dformula <- gl$dformula
-  lag_map <- gl$lag_map
   max_lag <- gl$max_lag
   mis_lags <- which(!lag_map$var %in% c(resp_all, data_names))
   stopifnot_(
@@ -438,14 +437,14 @@ parse_lags <- function(data, dformula, group_var, time_var) {
       stopifnot_(length(valid_channels) > 0,
         c("No valid channels for random intercept component:",
           `x` = "Random intercepts are not supported for the categorical
-          family."
+                 family."
         )
       )
     } else {
       nu_channels <- random_defs$channels %in% resp_stoch
       stopifnot_(all(nu_channels),
         c("Argument {.arg channel} of {.fun random} contains variables
-       {.var {cs(resp_stoch[nu_channels])}}:",
+          {.var {cs(resp_stoch[nu_channels])}}:",
           `x` = "No such response variables in the model."
         )
       )
@@ -457,7 +456,7 @@ parse_lags <- function(data, dformula, group_var, time_var) {
         )
       )
     }
-    if(length(random_defs$channels) < 2) {
+    if (length(random_defs$channels) < 2) {
       random_defs$correlated <- FALSE
     }
   }
@@ -490,14 +489,17 @@ parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
   type <- lags_def$type
   resp_all <- get_responses(dformula)
   max_lag <- ifelse_(is.null(lags_def), 0L, max(k))
-  n_lag <- max_lag * length(resp_stoch)
+  n_stoch <- length(resp_stoch)
+  n_lag <- max_lag * n_stoch
   channels <- vector(mode = "list", length = n_lag)
+  dterms <- get_terms(dformula[channels_stoch])
   stoch <- logical(n_lag)
   rank <- integer(n_lag)
   lhs <- character(n_lag)
-  increment <- logical(n_lag)
+  include <- logical(n_lag)
+  increment <- replicate(n_stoch, logical(n_lag), simplify = FALSE)
   for (i in seq_len(max_lag)) {
-    for (j in seq_along(channels_stoch)) {
+    for (j in seq_len(n_stoch)) {
       y <- resp_stoch[j]
       idx <- idx + 1L
       lhs[idx] <- paste0(y, "_lag", i)
@@ -508,7 +510,13 @@ parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
         rhs <- paste0(y, "_lag", i - 1L)
       }
       rank[idx] <- i
-      increment[idx] <- i %in% k
+      new_term <- logical(n_stoch)
+      lag_term <- paste0("lag(", y, ", ", i, ")")
+      for (l in seq_len(n_stoch)) {
+        new_term[l] <- !lag_term %in% dterms[[l]]
+        increment[[l]][idx] <- (i %in% k) && new_term[l]
+      }
+      include[idx] <- any(new_term)
       channels[[idx]] <- dynamitechannel(
         formula = as.formula(paste0(lhs[idx], " ~ ", rhs)),
         family = deterministic_(),
@@ -516,12 +524,12 @@ parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
       )
     }
   }
-  if (!is.null(lags_def)) {
-    for (j in channels_stoch) {
+  for (j in channels_stoch) {
+    if (any(increment[[j]])) {
       dformula[[j]] <- dynamiteformula_(
         formula = increment_formula(
           formula = dformula[[j]]$formula,
-          x = lhs[increment],
+          x = lhs[increment[[j]]],
           type = type,
           varying_idx = dformula[[j]]$varying,
           varying_icpt = dformula[[j]]$has_varying_intercept,
@@ -531,16 +539,13 @@ parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
         family = dformula[[j]]$family
       )
     }
-    lag_map <- lag_map |>
-      dplyr::filter(!(.data$var %in% resp_all & .data$k %in% k))
   }
   list(
     dformula = dformula,
-    channels = channels,
-    lag_map = lag_map,
+    channels = channels[include],
     max_lag = max_lag,
-    rank = rank,
-    stoch = stoch
+    rank = rank[include],
+    stoch = stoch[include]
   )
 }
 

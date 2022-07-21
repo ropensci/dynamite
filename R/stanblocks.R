@@ -160,7 +160,7 @@ create_model <- function(dformula, idt, vars) {
   randomtext <- ""
   has_nu <- length(attr(dformula, "random")$channels) > 0
   if (has_nu) {
-    if(attr(dformula, "random")$correlated) {
+    if (attr(dformula, "random")$correlated) {
       L_prior <- attr(vars, "common_priors") |>
         dplyr::filter(.data$parameter == "L") |>
         dplyr::pull(.data$prior)
