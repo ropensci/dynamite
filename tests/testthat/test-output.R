@@ -96,10 +96,10 @@ test_that("formula can be extracted", {
     splines(df = 5)
   set.seed(0)
   d <- data.frame(
-    y = rnorm(5),
-    w = rexp(5),
-    x = rnorm(5),
-    z = seq.int(5)
+    y = rnorm(6),
+    w = rexp(6),
+    x = rnorm(6),
+    z = seq.int(6)
   )
   fit <- dynamite(f, d, time = "z", debug = list(no_compile = TRUE))
   expect_error(

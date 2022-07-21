@@ -39,20 +39,37 @@ test_collinearity <- function(dformula, data) {
   model_matrices <- vector(mode = "list", length = length(formulas))
   for (i in seq_along(formulas)) {
     y <- dformula[[i]]$resp
-    mm <- remove_intercept(model.matrix.lm(
+    mm <- model.matrix.lm(
       formulas[[i]],
       data = data,
       na.action = na.pass
-    ))
+    )
     nc <- ncol(mm)
     mm_obs <- stats::complete.cases(mm)
-    if (any(mm_obs) && !identical(qr(mm[mm_obs, ])$rank, nc)) {
+    # check for n < p
+    n <- sum(mm_obs)
+    if (n < nc) {
       warning_(
-        "Perfect collinearity found between predictor variables of
-         channel {.var {y}}."
+        "Number of non-missing observations {sum(mm_obs)} in channel {.var {y}}
+        is less than {nc}, the number of predictors (including possible
+        intercept)."
       )
     }
     mm_names <- colnames(mm)
+    if (any(mm_obs) && !identical(qr(mm[mm_obs, ])$rank, min(n, nc))) {
+      zero_col <- apply(mm[mm_obs, , drop = FALSE], 2, function(x) all(x == 0))
+      if (any(zero_col)) {
+        k <- sum(zero_col)
+        warning_("{cli::qty(k)} Predictor{?s} {.var {cs(mm_names[zero_col])}}
+        {cli::qty(k)} contain{?s/} only zeros in the complete case rows of the
+        design matrix for the channel {.var {y}}.")
+      } else {
+        warning_(
+          "Perfect collinearity found between predictor variables of
+           channel {.var {y}}."
+        )
+      }
+    }
     for (j in seq_len(ncol(mm))) {
       pred_resp <- cbind(as.numeric(mm[,j]), as.numeric(data[[y]]))
       pred_resp_obs <- stats::complete.cases(pred_resp)
@@ -66,7 +83,8 @@ test_collinearity <- function(dformula, data) {
         ))
       }
     }
-    model_matrices[[i]] <- mm
+    # Intercept is not part of X
+    model_matrices[[i]] <- remove_intercept(mm)
   }
   model_matrices
 }
