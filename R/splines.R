@@ -42,8 +42,8 @@
 #'   splines(df = 20, degree = 3, lb_tau = c(0, 0.1),
 #'     noncentered = c(TRUE, FALSE))
 #'
-splines <- function(shrinkage = FALSE, override = FALSE,
-                    df = NULL, degree = 3L, lb_tau = 0, noncentered = FALSE) {
+splines <- function(df = NULL, degree = 3L, lb_tau = 0,
+                    noncentered = FALSE,shrinkage = FALSE, override = FALSE) {
   stopifnot_(
     checkmate::test_flag(x = shrinkage),
     "Argument {.arg shrinkage} must be a single {.cls logical} value."
