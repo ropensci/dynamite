@@ -42,6 +42,7 @@ documentation on \code{NegBinomial2} in the Stan function reference manual.
 \item Binomial: \code{binomial} (logit-link).
 \item Exponential: \code{exponential} (log-link).
 \item Gamma: \code{gamma} (log-link, using mean and shape parameterisation).
+\item Beta: \code{beta} (logit-link, using mean and precision parameterisation).
 }
 
 The models in the \pkg{dynamite} package are defined by combining the
@@ -89,10 +90,13 @@ coefficients, same spline basis is used for all coefficients, with unique
 spline coefficients and their standard deviation.
 
 It is also possible to define a random intercept term for each group by
-using \code{random_intercept = TRUE} inside the \code{obs} function. This leads to a
+using component \code{random} where the first argument defines for which channels
+the intercept should be added, and second argument defines whether or not
+these intercepts should be correlated between channels. This leads to a
 model where the in addition to the common intercept each individual/group
 has their own intercept with zero-mean normal prior and unknown standard
-deviation, analogously with the typical mixed models. Note however that with
+deviation (or multivariate gaussian in case \code{correlated = TRUE}),
+analogously with the typical mixed models. Note however that with
 a large number of time points these intercepts can become challenging
 sample with default priors. This is because with large group sizes the
 group-level intercepts tend to be behave similarly to fixed group-factor

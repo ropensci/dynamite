@@ -5,25 +5,15 @@
 \title{Define the B-splines Used for the Time-varying Coefficients of the Model.}
 \usage{
 splines(
-  shrinkage = FALSE,
-  override = FALSE,
   df = NULL,
   degree = 3L,
   lb_tau = 0,
-  noncentered = FALSE
+  noncentered = FALSE,
+  shrinkage = FALSE,
+  override = FALSE
 )
 }
 \arguments{
-\item{shrinkage}{[\code{logical(1)}]\cr If \code{TRUE}, a common global shrinkage
-parameter \eqn{\lambda} is used for the splines so that the standard
-deviation of the random walk prior is of the spline coefficients is
-\eqn{\lambda\tau}. Default is \code{FALSE}. This is an experimental feature and
-not tested comprehensively.}
-
-\item{override}{[\code{logical(1)}]\cr If \code{FALSE} (the default), an existing
-definition for the splines will not be overridden by another call to
-\code{splines()}. If \code{TRUE}, any existing definitions will be replaced.}
-
 \item{df}{[\code{integer(1)}]\cr Degree of freedom, i.e., the total number of
 spline coefficients. See \code{\link[splines:bs]{splines::bs()}}. Note that the knots are always
 defined as equidistant sequence on the interval starting from the first
@@ -38,13 +28,25 @@ Should be an (unrestricted) positive integer.}
 standard deviation parameters \eqn{\tau} of the random walk priors. Can be
 useful in avoiding divergences in some cases. See also \code{noncentered}
 argument. Can be a single positive value, or vector defining the
-lower bound separately for each channel.}
+lower bound separately for each channel, even for channels without
+varying effects.}
 
 \item{noncentered}{[\code{logical()}]\cr If \code{TRUE}, use noncentered
 parameterization for the spline coefficients. Default is \code{FALSE}. Try
 changing this if you encounter divergences or other problems in sampling.
 Can be a single logical value, or vector of logical values, defining the
-parameterization separately for each channel.}
+parameterization separately for each channel, even for channels without
+varying effects.}
+
+\item{shrinkage}{[\code{logical(1)}]\cr If \code{TRUE}, a common global shrinkage
+parameter \eqn{\lambda} is used for the splines so that the standard
+deviation of the random walk prior is of the spline coefficients is
+\eqn{\lambda\tau}. Default is \code{FALSE}. This is an experimental feature and
+not tested comprehensively.}
+
+\item{override}{[\code{logical(1)}]\cr If \code{FALSE} (the default), an existing
+definition for the splines will not be overridden by another call to
+\code{splines()}. If \code{TRUE}, any existing definitions will be replaced.}
 }
 \value{
 An object of class \code{splines}.
