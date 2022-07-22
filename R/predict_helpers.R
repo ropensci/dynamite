@@ -208,8 +208,8 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
             }
           } else {
             # Could also keep the Cholesky L from the sampling phase if this is
-            # too slow, or switch algorithm. But probably no need as this is only
-            # done once
+            # too slow, or switch algorithm. But probably no need as this is
+            # only done once
             for(i in seq_len(n_draws)) {
               s <- diag(sigma_nu[, i])
               x[, , i] <- MASS::mvrnorm(

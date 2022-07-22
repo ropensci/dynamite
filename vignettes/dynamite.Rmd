@@ -57,7 +57,7 @@ For time-varying coefficients $\delta$ (and similarly for $\alpha$), we use Baye
 \[
 \delta^c_{k,t} = B_t \omega_k^c, \quad k=1,\ldots,K,
 \]
-where $K$ is the number of covariates, $B_t$ is a vector of B-spline values at time $t$ and $\omega_k^c$ is vector of corresponding spline coefficients. In general the number of B-splines $D$ used for constructing the splines for the study period $1,\ldots,T$ can be chosen freely, bit too large $D$ can result in overfitting. To mitigate this, we define a random walk prior for $\omega^c_k$ as
+where $K$ is the number of covariates, $B_t$ is a vector of B-spline values at time $t$ and $\omega_k^c$ is vector of corresponding spline coefficients. In general the number of B-splines $D$ used for constructing the splines for the study period $1,\ldots,T$ can be chosen freely, but too large $D$ can result in overfitting. To mitigate this, we define a random walk prior for $\omega^c_k$ as
 \[
 \omega^c_{k,1} \sim p(\omega^c_{k,1}), \quad
 \omega^c_{k,d} \sim N(\omega^c_{k,d-1}, (\tau^c_k)^2), \quad d=2, \ldots, D.

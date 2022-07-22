@@ -10,6 +10,13 @@
 #'   (as multivariate normal).
 #' @return An object of class `random`.
 #' @export
+#' @examples
+#' # three channel model with correlated random effects for channels x and y
+#' obs(y ~ 1, family = "gaussian") +
+#' obs(x ~ 1, family = "poisson") +
+#' obs(z ~ 1, family = "gaussian") +
+#' random(channels = c("y", "x"), correlated = TRUE)
+#'
 random <- function(channels = NULL, correlated = TRUE) {
   stopifnot_(
     checkmate::test_character(x = channels, min.len = 1L, null.ok = TRUE),

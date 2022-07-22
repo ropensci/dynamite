@@ -21,3 +21,11 @@ An object of class \code{random}.
 This function can be used as part of \code{dynamiteformula} to define random
 intercepts for each group.
 }
+\examples{
+# three channel model with correlated random effects for channels x and y
+obs(y ~ 1, family = "gaussian") +
+obs(x ~ 1, family = "poisson") +
+obs(z ~ 1, family = "gaussian") +
+random(channels = c("y", "x"), correlated = TRUE)
+
+}
