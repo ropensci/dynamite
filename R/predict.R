@@ -149,7 +149,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
   idx <- seq.int(1L, n_new, by = n_time) - 1L
   assign_initial_values(newdata, dd, dlp, dld, dls, idx, fixed, group_var)
   newdata <- newdata[rep(seq_len(n_new), each = n_draws), ]
-  newdata[, ("draw") := rep(seq.int(1L, n_draws), n_new)]
+  newdata[, (".draw") := rep(seq.int(1L, n_draws), n_new)]
   n <- newdata[, .N]
   eval_envs <- prepare_eval_envs(
     object,
@@ -204,7 +204,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
     newdata[, c(store) := NULL]
   }
   newdata[, c(lhs_det, lhs_stoch) := NULL]
-  data.table::setkeyv(newdata, cols = c("draw", group_var, time_var))
+  data.table::setkeyv(newdata, cols = c(".draw", group_var, time_var))
   data.table::setDF(newdata)
   newdata
 }

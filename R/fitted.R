@@ -21,7 +21,7 @@
 #' library(ggplot2)
 #' fitted(fit) |>
 #'   dplyr::filter(time > 2) |>
-#'   ggplot(aes(time, LakeHuron_fitted, group = draw)) +
+#'   ggplot(aes(time, LakeHuron_fitted, group = .draw)) +
 #'   geom_line(alpha = 0.5) +
 #'   # observed values
 #'   geom_line(aes(y = LakeHuron), colour = "tomato") +
@@ -30,7 +30,7 @@
 #' # Posterior predictive distribution given the first time point:
 #' predict(fit, type = "mean") |>
 #'   dplyr::filter(time > 2) |>
-#'   ggplot(aes(time, LakeHuron_mean, group = draw)) +
+#'   ggplot(aes(time, LakeHuron_mean, group = .draw)) +
 #'   geom_line(alpha = 0.5) +
 #'   # observed values
 #'   geom_line(aes(y = LakeHuron), colour = "tomato") +
