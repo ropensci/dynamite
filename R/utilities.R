@@ -345,6 +345,7 @@ fill_time <- function(data, group_var, time_var) {
 #' @export
 #' @export ndraws
 #' @rdname ndraws-dynamitefit
+#' @aliases ndraws
 #' @method ndraws dynamitefit
 #' @examples
 #' ndraws(gaussian_example_fit)
