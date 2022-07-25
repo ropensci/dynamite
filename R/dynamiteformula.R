@@ -153,6 +153,12 @@ dynamiteformula_ <- function(formula, original, family) {
     out$response <- resp_parsed$resp
   } else {
     out <- formula_specials(formula)
+    if (is_binomial(family)) {
+      stopifnot_(
+        "trials" %in% names(out$specials),
+        "Formula for a binomial channel must include a trials term."
+      )
+    }
     out$response <- deparse1(formula_lhs(formula))
   }
   out$family <- family
