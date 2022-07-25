@@ -41,10 +41,8 @@ print.dynamitefit <- function(x, ...) {
           dplyr::matches("^(?!.*^nu|^omega|.*\\[.*]).*", perl = TRUE)
         ) |>
         posterior::summarise_draws(), ...)
-
   } else {
     message_("No Stan model fit is available.")
   }
   invisible(x)
 }
-^(?!nu_|omega_)[^g]*
