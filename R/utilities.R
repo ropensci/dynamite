@@ -48,6 +48,25 @@ gsub_formula <- function(pattern, replacement, formula, ...) {
   as.formula(gsub(pattern, replacement, formula_str, ...))
 }
 
+#' A version of drop.terms with formula output and empty RHS support
+#' @inheritParams drop.terms
+#' @noRd
+drop_terms <- function(termobj, dropx) {
+  dropx_len <- length(dropx)
+  if (identical(dropx_len, 0L)) {
+    formula(termobj)
+  } else {
+    labs <- attr(termobj, "term.labels")
+    if (length(labs) > dropx_len) {
+      formula(drop.terms(termobj, dropx, keep.response = TRUE))
+    } else {
+      icpt <- attr(termobj, "intercept")
+      resp <- attr(termobj, "variables")[[attr(termobj, "response") + 1L]]
+      as.formula(paste0(as.character(resp), "~", ifelse_(icpt, "1", "-1")))
+    }
+  }
+}
+
 #' Add fixed or varying terms to a formula
 #'
 #' @param formula A `formula` object.

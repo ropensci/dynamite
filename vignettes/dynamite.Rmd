@@ -81,7 +81,7 @@ defines a model with two channels; first we declare that `y` is a gaussian varia
 * Binomial: `binomial` (logit-link).
 * Exponential: `exponential` (log-link).
 * Gamma: `gamma` (log-link, using mean and shape parameterization).
-* beta: `beta` (logit-link, using mean and precision parameterization).
+* Beta: `beta` (logit-link, using mean and precision parameterization).
 
 The `dynamite` models do not support contemporaneous dependencies in order to avoid complex cyclic dependencies which would make handling missing data, subsequent predictions, and causal inference challenging or impossible. In other words, response variables can only depend on the previous values of other response variables. This is why we used `lag(x)` in the previous example, a shorthand for `lag(x, k = 1)`, which defines a one-step lag of the variable `x`. Longer lags can also be defined by adjusting the argument `k`. 
 
@@ -256,7 +256,7 @@ The output from `predict` contains now the original `newdata` and additional
 columns `g_new`, `p_new`, and `b_new` where the NA values of `newdata` are 
 replaced with the posterior samples from the model (the output also contains 
 additional column corresponding to the auxiliary channel `logp` and indexing 
-variable `draw`:
+variable `.draw`:
 
 ```{r}
 head(pred0)
@@ -266,7 +266,7 @@ We can now compute summary statistics over the individuals and then over the pos
 ```{r}
 sumr <- dplyr::bind_rows(
   list(b0 = pred0, b1 = pred1), .id = "case") |> 
-  dplyr::group_by(case, draw, time) |> 
+  dplyr::group_by(case, .draw, time) |> 
   dplyr::summarise(mean_t = mean(g_new)) |> 
   dplyr::group_by(case, time) |> 
   dplyr::summarise(
@@ -298,7 +298,7 @@ $P(g_t | do(b_5 = 1)) - P(g_t | do(b_5 = 0))$ as
 ```{r}
 sumr <- dplyr::bind_rows(
   list(b0 = pred0, b1 = pred1), .id = "case") |> 
-  dplyr::group_by(draw, time) |>
+  dplyr::group_by(.draw, time) |>
   dplyr::summarise(
     mean_t = mean(g_new[case == "b1"] - g_new[case == "b0"])) |>
   dplyr::group_by(time) |>

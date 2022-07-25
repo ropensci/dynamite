@@ -233,6 +233,13 @@ test_that("past in the middle of formula fails", {
   )
 })
 
+test_that("binomial channel without a trials term fails", {
+  expect_error(
+    obs(y ~ x, family = "binomial"),
+    "Formula for a binomial channel must include a trials term\\."
+  )
+})
+
 # Data errors -------------------------------------------------------------
 
 test_that("data is not data.frame fails", {
@@ -374,8 +381,9 @@ test_that("factor types for non-categorical families fails", {
   families <- c("gaussian", "exponential", "gamma", "beta",
                 "bernoulli", "binomial", "poisson", "negbin")
   for (f in families) {
+    form <- ifelse_(identical(f, "binomial"), y ~ 1 + trials(x), y ~ 1)
     expect_error(
-      dynamite(dformula = obs(y ~ 1, family = f),
+      dynamite(dformula = obs(form, family = f),
                data = test_data, group = "x", time = "z"),
       paste0(
         "Response variable `y` is invalid:\n",
@@ -389,8 +397,9 @@ test_that("negative values for distributions with positive support fails", {
   test_data <- data.frame(y = c(-1, -2), x = c(1, 1), z = c(1, 2))
   families <- c("exponential", "gamma", "binomial", "negbin", "poisson")
   for (f in families) {
+    form <- ifelse_(identical(f, "binomial"), y ~ 1 + trials(x), y ~ 1)
     expect_error(
-      dynamite(dformula = obs(y ~ 1, family = f),
+      dynamite(dformula = obs(form, family = f),
                data = test_data, group = "x", time = "z"),
       paste0(
         "Response variable `y` is invalid:\n",
