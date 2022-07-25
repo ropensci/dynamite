@@ -2,15 +2,14 @@
 #'
 #' This function can be used as part of `dynamiteformula` to define the splines
 #' for the time-varying coefficients \eqn{\delta}.
-#'
-#' @param shrinkage \[`logical(1)`]\cr If `TRUE`, a common global shrinkage
-#'   parameter \eqn{\lambda} is used for the splines so that the standard
-#'   deviation of the random walk prior is of the spline coefficients is
-#'   \eqn{\lambda\tau}. Default is `FALSE`. This is an experimental feature and
-#'   not tested comprehensively.
-#' @param override \[`logical(1)`]\cr If `FALSE` (the default), an existing
-#'    definition for the splines will not be overridden by another call to
-#'    `splines()`. If `TRUE`, any existing definitions will be replaced.
+#' @param df \[`integer(1)`]\cr Degree of freedom, i.e., the total number of
+#'   spline coefficients. See [splines::bs()]. Note that the knots are always
+#'   defined as equidistant sequence on the interval starting from the first
+#'   non-fixed time point to the last time point in the data. See
+#'   [dynamite::dynamiteformula()] for more information on fixed time points.
+#'   Should be an (unrestricted) positive integer.
+#' @param degree \[`integer(1)`]\cr See [splines::bs()]. Should be an
+#'   (unrestricted) positive integer.
 #' @param lb_tau \[`numeric()`]\cr Hard constraint(s) on the lower bound of the
 #'   standard deviation parameters \eqn{\tau} of the random walk priors. Can be
 #'   useful in avoiding divergences in some cases. See also `noncentered`
@@ -23,14 +22,14 @@
 #'   Can be a single logical value, or vector of logical values, defining the
 #'   parameterization separately for each channel, even for channels without
 #'   varying effects.
-#' @param df \[`integer(1)`]\cr Degree of freedom, i.e., the total number of
-#'   spline coefficients. See [splines::bs()]. Note that the knots are always
-#'   defined as equidistant sequence on the interval starting from the first
-#'   non-fixed time point to the last time point in the data. See
-#'   [dynamite::dynamiteformula()] for more information on fixed time points.
-#'   Should be an (unrestricted) positive integer.
-#' @param degree \[`integer(1)`]\cr See [splines::bs()]. Should be an
-#'   (unrestricted) positive integer.
+#' @param shrinkage \[`logical(1)`]\cr If `TRUE`, a common global shrinkage
+#'   parameter \eqn{\lambda} is used for the splines so that the standard
+#'   deviation of the random walk prior is of the spline coefficients is
+#'   \eqn{\lambda\tau}. Default is `FALSE`. This is an experimental feature and
+#'   not tested comprehensively.
+#' @param override \[`logical(1)`]\cr If `FALSE` (the default), an existing
+#'    definition for the splines will not be overridden by another call to
+#'    `splines()`. If `TRUE`, any existing definitions will be replaced.
 #' @return An object of class `splines`.
 #' @export
 #' @examples

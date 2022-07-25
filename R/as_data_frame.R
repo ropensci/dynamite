@@ -325,6 +325,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         )
       }
     )
+    d$.draw <- seq_len(nrow(d))
     d$.iteration <- seq_len(nrow(draws))
     d$.chain <- rep(seq_len(ncol(draws)), each = nrow(draws))
     d

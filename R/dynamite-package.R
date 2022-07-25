@@ -16,7 +16,7 @@
 #' @importFrom data.table data.table as.data.table is.data.table
 #' @importFrom data.table set setDT setDF setkey setkeyv :=
 #' @importFrom rstan sampling
-#' @importFrom posterior as_draws as_draws_df
+#' @importFrom posterior as_draws as_draws_df ndraws
 #' @importFrom rlang .data caller_env
 #' @importFrom stats drop.terms formula model.matrix model.matrix.lm na.exclude
 #' @importFrom stats quantile coef setNames as.formula fitted na.pass terms

@@ -36,11 +36,11 @@ print.dynamitefit <- function(x, ...) {
     nu <- ifelse(any(x$priors$type == "sigma_nu"), " (excluding nu)", "")
     cat(paste0("\nSummary statistics of the time-invariant parameters", nu,
       ":\n"))
-
     print(draws |>
-        dplyr::select(dplyr::matches("^(?!nu).*([^\\]])$", perl = TRUE)) |>
+        dplyr::select(
+          dplyr::matches("^(?!.*^nu|^omega|.*\\[.*]).*", perl = TRUE)
+        ) |>
         posterior::summarise_draws(), ...)
-
   } else {
     message_("No Stan model fit is available.")
   }

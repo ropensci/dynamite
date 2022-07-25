@@ -4,11 +4,11 @@
 \alias{random}
 \title{Define the Random Intercepts for the Dynamite Model.}
 \usage{
-random(channels, correlated = TRUE)
+random(channels = NULL, correlated = TRUE)
 }
 \arguments{
 \item{channels}{[\code{character()}]\cr Names of the channels for which the
-random intercepts should be defined.}
+random intercepts should be defined. Default is all channels.}
 
 \item{correlated}{[\code{logical(1)}]\cr If \code{TRUE} (the default), correlation of
 intercepts within a group (i.e. between channels) is modelled
@@ -20,4 +20,12 @@ An object of class \code{random}.
 \description{
 This function can be used as part of \code{dynamiteformula} to define random
 intercepts for each group.
+}
+\examples{
+# three channel model with correlated random effects for channels x and y
+obs(y ~ 1, family = "gaussian") +
+obs(x ~ 1, family = "poisson") +
+obs(z ~ 1, family = "gaussian") +
+random(channels = c("y", "x"), correlated = TRUE)
+
 }

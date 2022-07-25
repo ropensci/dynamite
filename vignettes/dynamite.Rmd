@@ -51,13 +51,13 @@ For $p^c_t$, given a suitable link function depending on our distributional assu
 \eta^c_{i,t} &= \nu_{i} + \alpha^c_{t} + Z^c_{i,t} \beta^c + X^c_{i,t} \delta^c_{t}
 \end{aligned}
 \]
-$\nu_{i}$ is the individual-specific random intercept, $\alpha_t$ (possibly time-varying) is the common intercept term, $Z^c_{i,t}$ defines the predictors corresponding to the vector of time-invariant coefficients $\beta^c$, and similarly for the time-varying part $X^c_{i,t} \delta^c_{t}$. The random intercept terms $\nu_{i}$ are assumed to follow zero-mean Gaussian and these can be correlated across channels. 
+$\nu_{i}$ is the individual-specific random intercept, $\alpha_t$ (possibly time-varying) is the common intercept term, $Z^c_{i,t}$ defines the predictors corresponding to the vector of time-invariant coefficients $\beta^c$, and similarly for the time-varying part $X^c_{i,t} \delta^c_{t}$. The random intercept terms $\nu_{i}$ are assumed to follow zero-mean Gaussian and these can be correlated across channels. However, because dynamite does not center the response nor predictor variables, in a common situation where predictors include lagged variable of the response variable, the $\nu_i$ parameter is actually a individual-specific slope; the individual differences in the overall mean is already accounted by conditioning on the first time point.
 
 For time-varying coefficients $\delta$ (and similarly for $\alpha$), we use Bayesian P-splines (penalized B-splines) [@lang2004] where
 \[
 \delta^c_{k,t} = B_t \omega_k^c, \quad k=1,\ldots,K,
 \]
-where $K$ is the number of covariates, $B_t$ is a vector of B-spline values at time $t$ and $\omega_k^c$ is vector of corresponding spline coefficients. In general the number of B-splines $D$ used for constructing the splines for the study period $1,\ldots,T$ can be chosen freely, bit too large $D$ can result in overfitting. To mitigate this, we define a random walk prior for $\omega^c_k$ as
+where $K$ is the number of covariates, $B_t$ is a vector of B-spline values at time $t$ and $\omega_k^c$ is vector of corresponding spline coefficients. In general the number of B-splines $D$ used for constructing the splines for the study period $1,\ldots,T$ can be chosen freely, but too large $D$ can result in overfitting. To mitigate this, we define a random walk prior for $\omega^c_k$ as
 \[
 \omega^c_{k,1} \sim p(\omega^c_{k,1}), \quad
 \omega^c_{k,d} \sim N(\omega^c_{k,d-1}, (\tau^c_k)^2), \quad d=2, \ldots, D.

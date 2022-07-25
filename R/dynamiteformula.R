@@ -39,7 +39,12 @@
 #' transformations possible. Note that the auxiliary channel can also depend
 #' on other variables without lags. The function `aux` also does not use the
 #' `family` argument, which is automatically set to `deterministic` and is a
-#' special channel type of `obs`.
+#' special channel type of `obs`.  Note that lagged values of deterministic
+#' `aux` channels do not imply fixed time points. Instead they must be given
+#' starting values using a special function `past()`, which defines the
+#' starting values of the channel and its lags. However, starting values are
+#' needed only when the values of the auxiliary channel cannot be computed
+#' based on its definition.
 #'
 #' The formula within `obs` can also contain an additional special
 #' function `varying`, which defines the time-varying part of the model
@@ -72,8 +77,10 @@
 #' model where the in addition to the common intercept each individual/group
 #' has their own intercept with zero-mean normal prior and unknown standard
 #' deviation (or multivariate gaussian in case `correlated = TRUE`),
-#' analogously with the typical mixed models. Note however that with
-#' a large number of time points these intercepts can become challenging
+#' analogously with the typical mixed models. Note however that if the channel
+#' already contains the lagged response variable, the "intercept" is actually a
+#' slope of (linear) trend as dynamite does not do any centering of variables.
+#' With a large number of time points these intercepts can become challenging
 #' sample with default priors. This is because with large group sizes the
 #' group-level intercepts tend to be behave similarly to fixed group-factor
 #' variable so the model becomes overparameterized given these and the common

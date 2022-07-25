@@ -142,7 +142,8 @@ create_transformed_parameters <- function(dformula, idt, vars) {
     line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
     tr_pars[i] <- lines_wrap("transformed_parameters", family, line_args)
   }
-  paste_rows("transformed parameters {", randomtext, tr_pars, "}", .parse = FALSE)
+  paste_rows("transformed parameters {", randomtext, tr_pars, "}",
+    .parse = FALSE)
 }
 
 #' @describeIn create_function Create the 'Model' Block of the Stan Model Code

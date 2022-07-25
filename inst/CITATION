@@ -1,13 +1,12 @@
 citHeader("To cite dynamite in publications use:")
 
-citEntry(
-  entry    = "Article",
-  title    = "todo",
-  author   = "todo",
-  journal  = "todo",
-  year     = "todo",
-  url      = "todo",
-  textVersion = paste("todo"
-
-  )
+bibentry(
+  key = "dynamite",
+  bibtype  = "Manual",
+  title    = "Bayesian Modeling and Causal Inference for Multivariate
+    Longitudinal Data",
+  author   = "Santtu Tikka and Jouni Helske",
+  note  = "R package version 0.0.1",
+  year     = "2022",
+  url      = "https://github.com/santikka/dynamite"
 )
