@@ -20,20 +20,13 @@ formula_specials <- function(x) {
     special_vars[!names(special_vars) %in% "offset"],
     special_vars
   )
-  x <- ifelse_(
-    length(special_vars) > 0,
-    formula(
-      drop.terms(
-        xt,
-        dropx = get_special_term_indices(
-          special_vars,
-          xt_variables,
-          xt_terms
-        ),
-        keep.response = TRUE
-      )
-    ),
-    x
+  x <- drop_terms(
+    termobj = xt,
+    dropx = get_special_term_indices(
+      special_vars,
+      xt_variables,
+      xt_terms
+    )
   )
   xt <- terms(x, specials = c("fixed", "varying"))
   xt_specials <- attr(xt, "specials")[c("fixed", "varying")]
@@ -56,26 +49,15 @@ formula_specials <- function(x) {
     varying_terms <- formula_terms(varying_form)
     varying_icpt <- attr(terms(varying_form), "intercept")
   }
-  if (!is.null(special_vars)) {
-    if (length(xt_terms) > length(special_vars)) {
-      x <- formula(
-        drop.terms(
-          xt,
-          dropx = get_special_term_indices(
-            special_vars,
-            xt_variables,
-            xt_terms
-          ),
-          keep.response = TRUE
-        )
-      )
-      form_terms <- formula_terms(x)
-    } else {
-      form_terms <- character(0)
-    }
-  } else {
-    form_terms <- formula_terms(x)
-  }
+  x <- drop_terms(
+    termobj = xt,
+    dropx = get_special_term_indices(
+      special_vars,
+      xt_variables,
+      xt_terms
+    )
+  )
+  form_terms <- formula_terms(x)
   fixed_terms <- union(form_terms, fixed_terms)
   fixed_icpt <- attr(xt, "intercept") || fixed_icpt
   full_terms <- union(fixed_terms, varying_terms)

@@ -103,6 +103,15 @@ test_that("multichannel models are valid", {
   )
 })
 
+test_that("binomial with trials only works", {
+  expect_error(
+    obs_binomial <- obs(y3 ~ trials(trials), family = "binomial"), NA
+  )
+  expect_error(
+    dynamite(obs_binomial, test_data, "group", "time", debug = debug), NA
+  )
+})
+
 test_that("intercepts are handled correctly", {
   expect_error(
     obs_all_alpha <- obs(y1 ~ -1 + x1, family = "categorical") +
