@@ -6,9 +6,12 @@
 \usage{
 \method{ndraws}{dynamitefit}(x)
 }
+\arguments{
+\item{x}{[\code{dynamitefit}]\cr The model fit object.}
+}
 \description{
 Return the Number of Posterior Draws of the dynamitefit Object
 }
 \examples{
-ndraws(gaussian_examplefit)
+ndraws(gaussian_example_fit)
 }

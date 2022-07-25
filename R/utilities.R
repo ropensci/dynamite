@@ -322,12 +322,13 @@ fill_time <- function(data, group_var, time_var) {
 #   #invisible(NULL)
 # }
 #' Return the Number of Posterior Draws of the dynamitefit Object
+#' @param x \[`dynamitefit`]\cr The model fit object.
 #' @export
 #' @export ndraws
 #' @rdname ndraws-dynamitefit
 #' @method ndraws dynamitefit
 #' @examples
-#' ndraws(gaussian_examplefit)
+#' ndraws(gaussian_example_fit)
 ndraws.dynamitefit <- function(x) {
   as.integer(
     (x$stanfit@sim$n_save[1] - x$stanfit@sim$warmup2[1]) * x$stanfit@sim$chains
