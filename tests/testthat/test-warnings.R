@@ -85,7 +85,7 @@ test_that("deterministic fixed warns", {
   expect_warning(
     aux(numeric(y) ~ fixed(~ x)),
     paste(
-      "fixed\\(\\) definitions of a determinstic channel",
+      "fixed\\(\\) definitions of a deterministic channel",
       "`numeric\\(y\\)` will be ignored\\."
     )
   )
@@ -95,7 +95,7 @@ test_that("deterministic varying warns", {
   expect_warning(
     aux(numeric(y) ~ varying(~ x)),
     paste(
-      "varying\\(\\) definitions of a determinstic channel",
+      "varying\\(\\) definitions of a deterministic channel",
       "`numeric\\(y\\)` will be ignored\\."
     )
   )
@@ -114,13 +114,27 @@ test_that("untyped deterministic warns", {
 
 # Predict warnings --------------------------------------------------------
 
-test_that("Too large n_draws warns", {
+test_that("too large n_draws warns", {
   expect_warning(
     predict(gaussian_example_fit, n_draws = 500),
     paste0(
       "You've supplied `n_draws` = 500 but ",
       "there are only 400 samples available:\n",
       "i The available samples will be used for prediction\\."
+    )
+  )
+})
+
+test_that("gaps in newdata with exogenous predictors and no no impute warns", {
+  newdata <- multichannel_example |>
+    dplyr::mutate(b = ifelse(time > 5, NA, b)) |>
+    dplyr::filter(time < 3 | time > 10)
+  expect_warning(
+    predict(multichannel_example_fit, newdata = newdata, n_draws = 4),
+    paste0("Time index variable `time` of `newdata` has gaps:\n",
+     "i Filling the `newdata` to regular time points\\. This will lead to ",
+     "propagation of NA values if the model contains exogenous predictors ",
+     "and `impute` is \"none\"\\."
     )
   )
 })

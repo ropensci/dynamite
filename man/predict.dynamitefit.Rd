@@ -27,7 +27,9 @@ Missing values in predictor columns can be imputed (argument \code{impute}).
 There should be no new time points that were not present in the data that
 were used to fit the model. New group levels can be included, but if the
 model contains random intercepts, an options for the random
-effects for the new levels must be chosen (argument \code{new_levels}).}
+effects for the new levels must be chosen (argument \code{new_levels}). Note
+that as \code{newdata} is expanded with predictions, it can be beneficial
+in terms of memory usage to first remove redundant columns from \code{newdata}.}
 
 \item{type}{[\code{character(1)}]\cr Type of prediction,
 \code{"response"} (default), \code{"mean"}, or \code{"link"}.}

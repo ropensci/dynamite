@@ -88,6 +88,8 @@ parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
       "Can't find response variable {.var {resp}} in {.var newdata}."
     )
   }
+  newdata <- fill_time_predict(newdata, group_var, time_var,
+    original_times[2] - original_times[1])
   data.table::setDT(newdata, key = c(group_var, time_var))
   # create separate column for each level of categorical variables
   for (i in seq_along(resp_stoch)) {
@@ -108,7 +110,60 @@ parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
   }
   newdata
 }
+#' Adds NA gaps to fill in missing time points in a data frame for predictions
+#'
+#' Note that if `impute` is `none` and model contains lagged predictors,
+#' predictions will eventually fail.
+#'
+#' @inheritParams dynamite
+#' @noRd
+fill_time_predict <- function(data, group_var, time_var, time_scale) {
 
+  time <- sort(unique(data[[time_var]]))
+  if (length(time) > 1L) {
+    original_order <- colnames(data)
+    full_time <- seq(time[1L], time[length(time)], by = time_scale)
+    groups <- !is.null(group_var)
+    if (groups) {
+      time_groups <- data |>
+        dplyr::group_by(.data[[group_var]]) |>
+        dplyr::summarise(
+          has_missing = !identical(sort(.data[[time_var]]), full_time)
+        )
+      if (any(time_groups$has_missing)) {
+        warning_(c(
+          "Time index variable {.var {time_var}} of {.arg newdata} has gaps:",
+          `i` = "Filling the {.arg newdata} to regular time points. This will
+          lead to propagation of NA values if the model contains
+          exogenous predictors and {.arg impute} is {.val none}."
+        ))
+        full_data_template <- expand.grid(
+          time = full_time,
+          group = unique(data[[group_var]])
+        )
+        names(full_data_template) <- c(time_var, group_var)
+        data <- full_data_template |>
+          dplyr::left_join(data, by = c(group_var, time_var)) |>
+          dplyr::select(original_order)
+      }
+    } else {
+      if (!identical(data[[time_var]], full_time)) {
+        warning_(c(
+          "Time index variable {.var {time_var}} of {.arg newdata} has gaps:",
+          `i` = "Filling the {.arg newdata} to regular time points. This will
+          lead to propagation of NA values if the model contains
+          exogenous predictors and {.arg impute} is {.val none}."
+        ))
+        full_data_template <- data.frame(time = full_time)
+        names(full_data_template) <- time_var
+        data <- full_data_template |>
+          dplyr::left_join(data, by = time_var) |>
+          dplyr::select(original_order)
+      }
+    }
+  }
+  data
+}
 #' Impute Predictor values in New Data
 #'
 #' @inheritParams predict

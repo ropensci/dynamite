@@ -120,13 +120,13 @@ formula_past <- function(formula) {
   form_both <- c(form_def, form_past)
   if (any(grepl("fixed\\(.+\\)", form_both, perl = TRUE))) {
     warning_(
-      "fixed() definitions of a determinstic channel
+      "fixed() definitions of a deterministic channel
        {.var {deparse1(formula_lhs(formula))}} will be ignored."
     )
   }
   if (any(grepl("varying\\(.+\\)", form_both, perl = TRUE))) {
     warning_(
-      "varying() definitions of a determinstic channel
+      "varying() definitions of a deterministic channel
        {.var {deparse1(formula_lhs(formula))}} will be ignored."
     )
   }

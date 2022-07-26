@@ -11,7 +11,9 @@
 #'   There should be no new time points that were not present in the data that
 #'   were used to fit the model. New group levels can be included, but if the
 #'   model contains random intercepts, an options for the random
-#'   effects for the new levels must be chosen (argument `new_levels`).
+#'   effects for the new levels must be chosen (argument `new_levels`). Note
+#'   that as `newdata` is expanded with predictions, it can be beneficial
+#'   in terms of memory usage to first remove redundant columns from `newdata`.
 #' @param type \[`character(1)`]\cr Type of prediction,
 #'   `"response"` (default), `"mean"`, or `"link"`.
 #' @param impute \[`character(1)`]\cr Which imputation scheme to use for
@@ -107,6 +109,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
   rhs_det <- get_predictors(dld)
   lhs_stoch <- get_responses(dls)
   rhs_stoch <- get_predictors(dls)
+  predictors <- setdiff(colnames(newdata),
+    c(resp_stoch, lhs_stoch, group_var, time_var))
   newdata <- parse_newdata(
     newdata,
     object$data,
@@ -118,7 +122,6 @@ predict.dynamitefit <- function(object, newdata = NULL,
     group_var,
     time_var
   )
-  predictors <- setdiff(names(newdata), resp_stoch)
   impute_newdata(newdata, impute, predictors, group_var)
   groups <- !is.null(group_var)
   group <- onlyif(groups, unique(newdata[[group_var]]))
