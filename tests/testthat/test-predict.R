@@ -39,6 +39,52 @@ test_that("prediction works", {
                        type = "link", n_draws = 2), NA)
 })
 
+
+test_that("prediction works when starting from arbitrary time point", {
+  newdata <- gaussian_example |>
+    dplyr::mutate(y = ifelse(time > 8, NA, y))
+
+  set.seed(1)
+  expect_error(
+    pred1 <- predict(gaussian_example_fit,
+      newdata = newdata,
+      n_draws = 4),
+    NA
+  )
+  set.seed(1)
+  expect_error(
+    pred2 <- predict(gaussian_example_fit,
+      newdata = newdata |> dplyr::filter(time > 5),
+      n_draws = 4),
+    NA
+  )
+  expect_equal(pred1 |> dplyr::filter(time > 5), pred2)
+  fit <- gaussian_example_fit
+  fit$data <- fit$data |>
+    dplyr::mutate(time = time + 10)
+
+
+  newdata <- fit$data |>
+    dplyr::mutate(y = ifelse(time > 20, NA, y))
+  set.seed(1)
+  expect_error(
+    pred1 <- predict(fit,
+      newdata = newdata,
+      n_draws = 4),
+    NA
+  )
+  set.seed(1)
+  expect_error(
+    pred2 <- predict(fit,
+      newdata = newdata |> dplyr::filter(time > 15),
+      n_draws = 4),
+    NA
+  )
+  expect_equal(pred1 |> dplyr::filter(time > 15), pred2)
+
+})
+
+
 gaussian_example_single_fit <- get0("gaussian_example_single_fit",
                                     envir = asNamespace("dynamite"))
 

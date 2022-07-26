@@ -166,7 +166,9 @@ predict.dynamitefit <- function(object, newdata = NULL,
   idx <- as.integer(newdata[ ,.I[newdata[[time_var]] == ..time[1L]]]) +
     (fixed - 1L) * n_draws
   skip <- TRUE
+  original_times <- unique(object$data[[time_var]])
   for (i in seq.int(fixed + 1L, n_time)) {
+    time_i <- which(original_times == time[i]) - fixed
     idx <- idx + n_draws
     assign_lags(newdata, ro_det, idx, lhs_det, rhs_det, skip, n_draws)
     assign_lags(newdata, ro_stoch, idx, lhs_stoch, rhs_stoch, skip, n_draws)
@@ -180,13 +182,13 @@ predict.dynamitefit <- function(object, newdata = NULL,
       e <- eval_envs[[j]]
       idx_na <- is.na(newdata[idx, .SD, .SDcols = resp_stoch[j]])
       e$idx <- idx
-      e$time <- i - fixed
+      e$time <- time_i
       e$idx_pred <- which(idx_na)
       e$idx_data <- idx[e$idx_pred]
       e$model_matrix <- model_matrix
       e$offset <- specials[[j]]$offset[idx]
       e$trials <- specials[[j]]$trials[idx]
-      e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, i - fixed)
+      e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
       if (any(idx_na)) {
         eval(e$call, envir = e)
       }

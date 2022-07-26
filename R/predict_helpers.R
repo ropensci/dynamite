@@ -72,9 +72,10 @@ parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
     newdata[[time_var]] <- as.integer(newdata[[time_var]])
   }
   time <- unique(newdata[[time_var]])
-  extra_times <- unique(time[!time %in% data[[time_var]]])
+  original_times <- unique(data[[time_var]])
+  extra_times <- time[!time %in% original_times]
   stopifnot_(
-    all(time %in% data[[time_var]]),
+    all(time %in% original_times),
     c(
       "Time index variable {.var {time_var}} contains unknown time points:",
       `x` = "Time point{?s} {.val {as.character(extra_times)}}
