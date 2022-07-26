@@ -4,10 +4,18 @@
 \alias{fitted.dynamitefit}
 \title{Extract Fitted Values of a Dynamite Model}
 \usage{
-\method{fitted}{dynamitefit}(object, n_draws = NULL, ...)
+\method{fitted}{dynamitefit}(object, newdata = NULL, n_draws = NULL, ...)
 }
 \arguments{
 \item{object}{[\code{dynamitefit}]\cr The model fit object.}
+
+\item{newdata}{[\code{data.frame}]\cr Data used in predictions.
+If \code{NULL} (default), the data used in model estimation is used for
+predictions as well,
+There should be no new time points that were not present in the data that
+were used to fit the model, and now new group levels can be included. Note
+that as \code{newdata} is expanded with predictions, it can be beneficial
+in terms of memory usage to first remove redundant columns from \code{newdata}.}
 
 \item{n_draws}{[\code{integer(1)}]\cr Number of posterior samples to use,
 default is \code{NULL} which uses all samples.}
@@ -15,11 +23,9 @@ default is \code{NULL} which uses all samples.}
 \item{...}{Ignored.}
 }
 \description{
-Note that these are conditional on the observed data i.e., we don't
-simulate new lagged values for covariates, so we underestimate the
-uncertainty. It is typically better to use predict with \code{type = "mean"}.
-These fitted value are mostly useful only for studying one-step ahead
-estimates.
+Note that these are conditional on the observed data in \code{newdata},
+i.e. these are one-step estimates E(y_t|y_t-1,...,y_1). Often the
+\link{predict.dynamitefit} is what you want.
 }
 \examples{
 fitted(gaussian_example_fit, n_draws = 2L)

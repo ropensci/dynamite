@@ -1,13 +1,19 @@
 #' Extract Fitted Values of a Dynamite Model
 #'
-#' Note that these are conditional on the observed data i.e., we don't
-#' simulate new lagged values for covariates, so we underestimate the
-#' uncertainty. It is typically better to use predict with `type = "mean"`.
-#' These fitted value are mostly useful only for studying one-step ahead
-#' estimates.
+#' Note that these are conditional on the observed data in `newdata`,
+#' i.e. these are one-step estimates E(y_t|y_t-1,...,y_1). Often the
+#' [predict.dynamitefit] is what you want.
 #'
 #' @export
 #' @inheritParams predict.dynamitefit
+#' @param newdata \[`data.frame`]\cr Data used in predictions.
+#'   If `NULL` (default), the data used in model estimation is used for
+#'   predictions as well,
+#'   There should be no new time points that were not present in the data that
+#'   were used to fit the model, and now new group levels can be included. Note
+#'   that as `newdata` is expanded with predictions, it can be beneficial
+#'   in terms of memory usage to first remove redundant columns from `newdata`.
+#' @seealso
 #' @examples
 #' fitted(gaussian_example_fit, n_draws = 2L)
 #' \dontrun{
@@ -37,24 +43,43 @@
 #'   theme_bw()
 #' }
 #' @srrstats {RE4.9} Returns the fitted values.
-fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
+fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, ...) {
   n_draws <- check_ndraws(n_draws, ndraws(object))
+  newdata_null <- is.null(newdata)
+  if (newdata_null) {
+    newdata <- data.table::setDF(data.table::copy(object$data))
+  } else if (data.table::is.data.table(newdata) || is.data.frame(newdata)) {
+    newdata <- data.table::setDF(data.table::copy(newdata))
+  } else if (!is.data.frame(newdata)) {
+    stop_("Argument {.arg newdata} must be a {.cls data.frame} object.")
+  }
+
   fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
   group_var <- object$group_var
   time_var <- object$time_var
-  formulas_stoch <- get_formulas(object$dformulas$stoch)
-  families_stoch <- get_families(object$dformulas$stoch)
+  dd <- object$dformulas$det
+  ds <- object$dformulas$stoch
+  dlp <- object$dformulas$lag_pred
+  dld <- object$dformulas$lag_det
+  dls <- object$dformulas$lag_stoch
+  formulas_stoch <- get_formulas(ds)
+  families_stoch <- get_families(ds)
   categories <- lapply(
     attr(object$stan$responses, "resp_class"),
-    "attr",
-    "levels"
+    "attr", "levels"
   )
-  resp_stoch <- get_responses(object$dformulas$stoch)
-  newdata <- data.table::setDF(data.table::copy(object$data))
+  resp_stoch <- get_responses(ds)
+  resp_det <- get_responses(dd)
+  lhs_det <- get_responses(dld)
+  rhs_det <- get_predictors(dld)
+  lhs_stoch <- get_responses(dls)
+  rhs_stoch <- get_predictors(dls)
+  predictors <- setdiff(colnames(newdata),
+    c(resp_stoch, lhs_stoch, group_var, time_var))
   newdata <- parse_newdata(
     newdata,
     object$data,
-    type = "response",
+    type = "fitted",
     families_stoch,
     resp_stoch,
     categories,
@@ -66,24 +91,27 @@ fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
   group <- onlyif(groups, unique(newdata[[group_var]]))
   n_id <- ifelse_(groups, length(group), 1L)
   time <- unique(newdata[[time_var]])
+  cl <- get_quoted(object$dformulas$det)
   n_time <- length(time)
   n_new <- nrow(newdata)
-  n_time <- length(time)
-  model_matrix <- full_model.matrix_fast(
-    formulas_stoch,
-    newdata,
-    object$stan$u_names
+  n_det <- length(resp_det)
+  n_lag_det <- length(lhs_det)
+  n_lag_stoch <- length(lhs_stoch)
+  ro_det <- onlyif(
+    n_lag_det > 0L,
+    attr(object$dformulas$lag_det, "rank_order")
   )
-  model_matrix <-
-    model_matrix[rep(seq_len(n_new), each = n_draws), , drop = FALSE]
-  newdata <- data.table::as.data.table(newdata)
+  ro_stoch <- seq_len(n_lag_stoch)
+  initialize_deterministic(newdata, dd, dlp, dld, dls)
+  idx <- seq.int(1L, n_new, by = n_time) - 1L
+  assign_initial_values(newdata, dd, dlp, dld, dls, idx, fixed, group_var)
   newdata <- newdata[rep(seq_len(n_new), each = n_draws), ]
-  newdata[, ("draw") := rep(seq_len(n_draws), n_new)]
+  newdata[, (".draw") := rep(seq.int(1L, n_draws), n_new)]
   eval_envs <- prepare_eval_envs(
     object,
     newdata,
     eval_type = "fitted",
-    predict_type = "response",
+    predict_type = "mean",
     resp_stoch,
     n_id,
     n_draws,
@@ -93,31 +121,36 @@ fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
   idx <- as.integer(newdata[ ,.I[newdata[[time_var]] == ..time[1L]]]) +
     (fixed - 1L) * n_draws
+  skip <- TRUE
+  original_times <- unique(object$data[[time_var]])
   for (i in seq.int(fixed + 1L, n_time)) {
+    time_i <- which(original_times == time[i]) - fixed
     idx <- idx + n_draws
-    model_matrix_sub <- model_matrix[idx, , drop = FALSE]
+    assign_lags(newdata, ro_det, idx, lhs_det, rhs_det, skip, n_draws)
+    assign_lags(newdata, ro_stoch, idx, lhs_stoch, rhs_stoch, skip, n_draws)
+    model_matrix <- full_model.matrix_predict(
+      formulas_stoch,
+      newdata,
+      idx,
+      object$stan$u_names
+    )
     for (j in seq_along(resp_stoch)) {
       e <- eval_envs[[j]]
       e$idx <- idx
-      e$time <- i - fixed
-      e$model_matrix <- model_matrix_sub
+      e$time <- time_i
+      e$model_matrix <- model_matrix
       e$offset <- specials[[j]]$offset[idx]
       e$trials <- specials[[j]]$trials[idx]
-      e$a_time <- ifelse_(NCOL(e$alpha) == 1L, 1L, i - fixed)
+      e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
       eval(e$call, envir = e)
     }
-  }
-
-  # remove extra columns
-  for (i in seq_along(resp_stoch)) {
-    resp <- resp_stoch[i]
-    store <- glue::glue("{resp}_store")
-    newdata[, c(store) := NULL]
+    assign_deterministic(newdata, cl, idx)
+    skip <- FALSE
   }
   lhs_det <- get_responses(object$dformulas$lag_det)
   lhs_stoch <- get_responses(object$dformulas$lag_stoch)
   newdata[, c(lhs_det, lhs_stoch) := NULL]
-  data.table::setkeyv(newdata, cols = c("draw", group_var, time_var))
+  data.table::setkeyv(newdata, cols = c(".draw", group_var, time_var))
   data.table::setDF(newdata)
   newdata
 }

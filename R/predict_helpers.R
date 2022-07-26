@@ -144,7 +144,7 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
         names(full_data_template) <- c(time_var, group_var)
         data <- full_data_template |>
           dplyr::left_join(data, by = c(group_var, time_var)) |>
-          dplyr::select(original_order)
+          dplyr::select(dplyr::all_of(original_order))
       }
     } else {
       if (!identical(data[[time_var]], full_time)) {
@@ -158,7 +158,7 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
         names(full_data_template) <- time_var
         data <- full_data_template |>
           dplyr::left_join(data, by = time_var) |>
-          dplyr::select(original_order)
+          dplyr::select(dplyr::all_of(original_order))
       }
     }
   }
