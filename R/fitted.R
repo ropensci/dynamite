@@ -91,7 +91,7 @@ fitted.dynamitefit <- function(object, n_draws = NULL, ...) {
     group_var
   )
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
-  idx <- as.integer(newdata[ ,.I[newdata[[time_var]] == time[1L]]]) +
+  idx <- as.integer(newdata[ ,.I[newdata[[time_var]] == ..time[1L]]]) +
     (fixed - 1L) * n_draws
   for (i in seq.int(fixed + 1L, n_time)) {
     idx <- idx + n_draws

@@ -163,7 +163,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
     group_var
   )
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
-  idx <- as.integer(newdata[ ,.I[newdata[[time_var]] == time[1L]]]) +
+  idx <- as.integer(newdata[ ,.I[newdata[[time_var]] == ..time[1L]]]) +
     (fixed - 1L) * n_draws
   skip <- TRUE
   for (i in seq.int(fixed + 1L, n_time)) {
