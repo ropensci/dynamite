@@ -153,7 +153,6 @@ predict.dynamitefit <- function(object, newdata = NULL,
   assign_initial_values(newdata, dd, dlp, dld, dls, idx, fixed, group_var)
   newdata <- newdata[rep(seq_len(n_new), each = n_draws), ]
   newdata[, (".draw") := rep(seq.int(1L, n_draws), n_new)]
-  n <- newdata[, .N]
   eval_envs <- prepare_eval_envs(
     object,
     newdata,
