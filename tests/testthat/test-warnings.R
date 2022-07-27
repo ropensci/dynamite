@@ -125,7 +125,7 @@ test_that("too large n_draws warns", {
   )
 })
 
-test_that("gaps in newdata with exogenous predictors and no no impute warns", {
+test_that("gaps in newdata with exogenous predictors and no impute warns", {
   newdata <- multichannel_example |>
     dplyr::mutate(b = ifelse(time > 5, NA, b)) |>
     dplyr::filter(time < 3 | time > 10)

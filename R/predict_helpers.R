@@ -128,15 +128,19 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
       time_groups <- data |>
         dplyr::group_by(.data[[group_var]]) |>
         dplyr::summarise(
-          has_missing = !identical(sort(.data[[time_var]]), full_time)
+          has_missing = !identical(sort(.data[[time_var]]), full_time),
+          has_gaps =
+            dplyr::n() != (diff(range(.data[[time_var]])) + 1L) * time_scale
         )
       if (any(time_groups$has_missing)) {
-        warning_(c(
-          "Time index variable {.var {time_var}} of {.arg newdata} has gaps:",
-          `i` = "Filling the {.arg newdata} to regular time points. This will
-          lead to propagation of NA values if the model contains
-          exogenous predictors and {.arg impute} is {.val none}."
-        ))
+        if (any(time_groups$has_gaps)) {
+          warning_(c(
+            "Time index variable {.var {time_var}} of {.arg newdata} has gaps:",
+            `i` = "Filling the {.arg newdata} to regular time points. This will
+            lead to propagation of NA values if the model contains
+            exogenous predictors and {.arg impute} is {.val none}."
+          ))
+        }
         full_data_template <- expand.grid(
           time = full_time,
           group = unique(data[[group_var]])
@@ -147,7 +151,7 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
           dplyr::select(dplyr::all_of(original_order))
       }
     } else {
-      if (!identical(data[[time_var]], full_time)) {
+      if (!identical(sort(data[[time_var]]), full_time)) {
         warning_(c(
           "Time index variable {.var {time_var}} of {.arg newdata} has gaps:",
           `i` = "Filling the {.arg newdata} to regular time points. This will
