@@ -153,7 +153,7 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
     channel$tau_prior_pars <- cbind(0.0, rep(1.0, channel$K_varying))
     channel$tau_prior_distr <- "normal"
     priors$tau <- data.frame(
-      parameter = paste0("tau_", y, "_", names(s)),
+      parameter = paste0("tau_", y, "_", names(sd_gamma[channel$J_varying])),
       response = y,
       prior = "normal(0, 1)",
       type = "tau",

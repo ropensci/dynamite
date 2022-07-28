@@ -292,7 +292,7 @@ prepare_varying_prior <- function(ptype, priors, channel) {
   pdef <- priors |> dplyr::filter(.data$type == ptype)
   channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
   dists <- sub("\\(.*", "", pdef$prior)
-  if (nrow(pdef) > 0L && length(unique(dists)) == 1L) {
+  if (nrow(pdef) > 1L && length(unique(dists)) == 1L) {
     pars <- strsplit(sub(".*\\((.*)\\).*", "\\1", pdef$prior), ",")
     pars <- do.call("rbind", lapply(pars, as.numeric))
     channel[[paste0(ptype, "_prior_npars")]] <- ncol(pars)
@@ -679,7 +679,7 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
   } else {
     priors <- priors |> dplyr::filter(.data$response == y)
     pdef <- priors |> dplyr::filter(.data$type == "phi")
-    if (nrow(pdef) == 1) {
+    if (nrow(pdef) == 1L) {
       out$channel$phi_prior_distr <- pdef$prior
     }
     defaults <- dplyr::bind_rows(
@@ -736,7 +736,7 @@ prepare_channel_beta <- function(y, Y, channel, sd_x, resp_class, priors) {
   } else {
     priors <- priors |> dplyr::filter(.data$response == y)
     pdef <- priors |> dplyr::filter(.data$type == "phi")
-    if (nrow(pdef) == 1) {
+    if (nrow(pdef) == 1L) {
       out$channel$phi_prior_distr <- pdef$prior
     }
     defaults <- dplyr::bind_rows(
