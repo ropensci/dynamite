@@ -288,7 +288,7 @@ prepare_splines <- function(spline_defs, n_channels, T_idx) {
 #' @param priors A `data.frame` defining the priors
 #' @param channel A `list` of channel-specific variables for Stan sampling
 #' @noRd
-prepare_varying_prior <- function(ptype, priors, channel) {
+prepare_prior <- function(ptype, priors, channel) {
   pdef <- priors |> dplyr::filter(.data$type == ptype)
   channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
   dists <- sub("\\(.*", "", pdef$prior)
@@ -335,15 +335,15 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
       channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
     }
     for (ptype in c("beta", "delta", "tau")) {
-      channel <- prepare_varying_prior(ptype, priors, channel)
+      channel <- prepare_prior(ptype, priors, channel)
     }
   }
   channel$write_beta <- channel$has_fixed &&
-    length(channel$beta_prior_distr) == 1L
+    length(channel$beta_prior_distr) == 1L && channel$K_fixed > 1L
   channel$write_delta <- channel$has_varying &&
-    length(channel$delta_prior_distr) == 1L
+    length(channel$delta_prior_distr) == 1L && channel$K_varying > 1L
   channel$write_tau <- channel$has_varying &&
-    length(channel$tau_prior_distr) == 1L
+    length(channel$tau_prior_distr) == 1L && channel$K_varying > 1L
   list(channel = channel, priors = priors)
 }
 
@@ -367,7 +367,7 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
   } else {
     priors <- priors |> dplyr::filter(.data$response == y)
     for (ptype in c("alpha", "tau_alpha", "beta", "delta", "tau")) {
-      channel <- prepare_varying_prior(ptype, priors, channel)
+      channel <- prepare_prior(ptype, priors, channel)
     }
     priors <- check_priors(
       priors, default_priors_categorical(y, channel, sd_x, resp_class)$priors

@@ -754,7 +754,7 @@ model_lines_default <- function(
     }
   }
   if (has_fixed) {
-    if (vectorizable_prior(beta_prior_distr)) {
+    if (K_fixed > 1L && vectorizable_prior(beta_prior_distr)) {
       dpars_fixed <- paste0(
         "beta_prior_pars_", y, "[, ", seq_len(beta_prior_npars), "]",
         collapse = ", "
@@ -766,7 +766,7 @@ model_lines_default <- function(
   }
   if (has_varying) {
     if (noncentered) {
-      if (vectorizable_prior(delta_prior_distr)) {
+      if (K_varying > 1L && vectorizable_prior(delta_prior_distr)) {
         dpars_varying <- paste0(
           "delta_prior_pars_", y, "[, ", seq_len(delta_prior_npars), "]",
           collapse = ", "
@@ -784,7 +784,7 @@ model_lines_default <- function(
         .parse = FALSE
       )
     } else {
-      if (vectorizable_prior(delta_prior_distr)) {
+      if (K_varying > 1L && vectorizable_prior(delta_prior_distr)) {
         dpars_varying <- paste0(
           "delta_prior_pars_", y, "[, ", seq_len(delta_prior_npars), "]",
           collapse = ", "
@@ -811,7 +811,7 @@ model_lines_default <- function(
         .parse = FALSE
       )
     }
-    if (vectorizable_prior(tau_prior_distr)) {
+    if (K_varying > 1L && vectorizable_prior(tau_prior_distr)) {
       dpars_tau <- paste0(
         "tau_prior_pars_", y, "[, ", seq_len(tau_prior_npars), "]",
         collapse = ", "
