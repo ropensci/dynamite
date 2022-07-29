@@ -170,7 +170,7 @@ test_that("shrinkage is handled correctly", {
     rep(TRUE, 6)
   )
   expect_equal(get_priors(obs_all_alpha, test_data,
-    "group", "time")$parameter[73], "lambda"
+    "group", "time")$parameter[58], "lambda"
   )
 })
 
