@@ -88,6 +88,23 @@ parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
       "Can't find response variable {.var {resp}} in {.var newdata}."
     )
   }
+  # check and add missing factor levels
+  factor_cols <- setdiff(names(which(vapply(data, is.factor, logical(1L)))),
+    c(time_var, group_var))
+  cols <- intersect(names(newdata), factor_cols)
+  for (i in cols) {
+    l_orig <- levels(data[[i]])
+    l_new <- levels(newdata[[i]])
+    if (!identical(l_orig, l_new)) {
+      if (any(!l_new %in% l_orig)) {
+        stop_(c(
+          "{.cls factor} variable {i} in {.arg newdata} has new levels.",
+          `x` = "Levels {.val {setdiff(l_new, l_orig)}} not present in the
+            original data."))
+      }
+      newdata[[i]] <- factor(newdata[[i]], levels = l_orig)
+    }
+  }
   newdata <- fill_time_predict(newdata, group_var, time_var,
     original_times[2] - original_times[1])
   data.table::setDT(newdata, key = c(group_var, time_var))

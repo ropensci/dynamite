@@ -33,6 +33,7 @@
 #'     * `"original"` which will randomly match each new level to one of
 #'       the original levels. The posterior samples of the random intercept of
 #'       the matched levels will then be used for the new levels.
+#'   This argument is ignored if model does not contain random intercepts.
 #' @param n_draws \[`integer(1)`]\cr Number of posterior samples to use,
 #'   default is `NULL` which uses all samples.
 #' @param ... Ignored.
@@ -111,6 +112,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
   rhs_stoch <- get_predictors(dls)
   predictors <- setdiff(colnames(newdata),
     c(resp_stoch, lhs_stoch, group_var, time_var))
+  no_nu <- length(attr(object$dformulas$stoch, "random")$channels) == 0
+  if (no_nu) new_levels <- "ignore"
   newdata <- parse_newdata(
     newdata,
     object$data,
