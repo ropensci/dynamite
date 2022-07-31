@@ -289,7 +289,7 @@ ggplot(sumr, aes(time, mean)) +
 
 Note that these estimates do indeed coincide with the causal effects (assuming of course that our model is correct), as we can find the backdoor adjustment formula [@Pearl1995]
 \[
-P(g_t | do(b_5 = x)) = \sum_{g_5, p_5}P(g_t | b_5 = x, g_5, p_5) P(g_5, p_5), 
+E(g_t | do(b_5 = x)) = \sum_{g_5, p_5}E(g_t | b_5 = x, g_5, p_5) P(g_5, p_5), 
 \]
 which is equal to `mean_t` in above codes.
 
@@ -314,6 +314,6 @@ ggplot(sumr, aes(time, mean)) +
   theme_bw()
 ```
 
-Which shows that there is a short term effect of $b$ on $g$, although the posterior uncertainty is quite large.
+Which shows that there is a short term effect of $b$ on $g$, although the posterior uncertainty is quite large. Note that for multistep causal effects these estimates contain also Monte Carlo variation due to the simulation of the trajectories (e.g. the there is also uncertainty in `mean_t` for fixed parameters given finite number of individuals were are marginalizing over).
 
 # References

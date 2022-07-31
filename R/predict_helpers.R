@@ -221,7 +221,8 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch,
     predict_idx <- rep(seq.int(fixed + 1L, n_time), n_id) +
       rep(seq.int(0L, n_id - 1L) * n_time, each = n_time - fixed)
     newdata[predict_idx, c(resp_stoch) := NA]
-    newdata_names <- names(newdata)
+    # use c to force a copy, otherwise newdata_names changes inside the loop
+    newdata_names <- c(names(newdata))
     for (name in newdata_names) {
       if (name %in% clear_names) {
         newdata[ , (name) := NULL]
