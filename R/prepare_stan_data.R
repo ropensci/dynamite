@@ -381,7 +381,7 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
   channel$write_delta <- channel$has_varying &&
     length(channel$delta_prior_distr) == 1L
   channel$write_tau <- channel$has_varying &&
-    length(channel$tau_prior_distr) == 1L
+    length(channel$tau_prior_distr) == 1L && channel$K_varying > 1L
   list(channel = channel, priors = priors)
 }
 
