@@ -124,7 +124,7 @@ predict_dynamitefit <- function(object, newdata, type, eval_type,
   predictors <- setdiff(colnames(newdata),
     c(resp_stoch, lhs_stoch, group_var, time_var))
   new_levels <- ifelse_(
-    length(attr(object$dformulas$stoch, "random")$channels) == 0,
+    length(attr(object$dformulas$stoch, "random")$responses) == 0,
     "ignore",
     new_levels
   )

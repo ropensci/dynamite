@@ -432,23 +432,23 @@ parse_lags <- function(data, dformula, group_var, time_var) {
     families <- unlist(get_families(dformula[channels_stoch]))
     valid_channels <- resp_stoch[!(families %in% "categorical")]
     # default, use all channels except categorical
-    if (is.null(random_defs$channels)) {
-      random_defs$channels <- valid_channels
+    if (is.null(random_defs$responses)) {
+      random_defs$responses <- valid_channels
       stopifnot_(length(valid_channels) > 0,
-        c("No valid channels for random intercept component:",
+        c("No valid responses for random intercept component:",
           `x` = "Random intercepts are not supported for the categorical
                  family."
         )
       )
     } else {
-      nu_channels <- random_defs$channels %in% resp_stoch
+      nu_channels <- random_defs$responses %in% resp_stoch
       stopifnot_(all(nu_channels),
-        c("Argument {.arg channel} of {.fun random} contains variables
+        c("Argument {.arg responses} of {.fun random} contains variables
           {.var {cs(resp_stoch[nu_channels])}}:",
           `x` = "No such response variables in the model."
         )
       )
-      nu_channels <- random_defs$channels %in% valid_channels
+      nu_channels <- random_defs$responses %in% valid_channels
       stopifnot_(all(nu_channels),
         c("Random intercepts are not supported for the categorical family:",
           `x` = "Found random intercept declaration for categorical variable{?s}
@@ -456,7 +456,7 @@ parse_lags <- function(data, dformula, group_var, time_var) {
         )
       )
     }
-    if (length(random_defs$channels) < 2) {
+    if (length(random_defs$responses) < 2) {
       random_defs$correlated <- FALSE
     }
   }

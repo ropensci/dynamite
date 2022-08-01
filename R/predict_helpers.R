@@ -345,7 +345,7 @@ prepare_eval_envs <- function(object, newdata, type, eval_type,
   n_resp <- length(resp_stoch)
   eval_envs <- vector(mode = "list", length = n_resp)
   idx_draws <- seq_len(n_draws)
-  nu_channels <- attr(object$dformulas$stoch, "random")$channels
+  nu_channels <- attr(object$dformulas$stoch, "random")$responses
   M <- length(nu_channels)
   if (!is.null(group_var) && M > 0) {
     orig_ids <- unique(object$data[[group_var]])

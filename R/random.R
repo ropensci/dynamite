@@ -3,24 +3,25 @@
 #' This function can be used as part of `dynamiteformula` to define random
 #' intercepts for each group.
 #'
-#' @param channels \[`character()`]\cr Names of the channels for which the
-#'   random intercepts should be defined. Default is all channels.
-#' @param correlated \[`logical(1)`]\cr If `TRUE` (the default), correlation of
-#'   intercepts within a group (i.e. between channels) is modelled
-#'   (as multivariate normal).
+#' @param responses \[`character()`]\cr Names of the responses for which the
+#'   random intercepts should be defined. Default is all responses defined with
+#'   `obs`.
+#' @param correlated \[`logical(1)`]\cr If `TRUE` (the default), correlations of
+#'   intercepts within a group (i.e. between responses) are modeled so that
+#'   the intercept follow a multivariate normal distribution.
 #' @return An object of class `random`.
 #' @export
 #' @examples
-#' # three channel model with correlated random effects for channels x and y
+#' # three channel model with correlated random effects for responses x and y
 #' obs(y ~ 1, family = "gaussian") +
 #' obs(x ~ 1, family = "poisson") +
 #' obs(z ~ 1, family = "gaussian") +
-#' random(channels = c("y", "x"), correlated = TRUE)
+#' random(responses = c("y", "x"), correlated = TRUE)
 #'
-random <- function(channels = NULL, correlated = TRUE) {
+random <- function(responses = NULL, correlated = TRUE) {
   stopifnot_(
-    checkmate::test_character(x = channels, min.len = 1L, null.ok = TRUE),
-    "Argument {.arg channels} must be a {.cls character} vector."
+    checkmate::test_character(x = responses, min.len = 1L, null.ok = TRUE),
+    "Argument {.arg responses} must be a {.cls character} vector."
   )
   stopifnot_(
     checkmate::test_flag(x = correlated),
@@ -28,7 +29,7 @@ random <- function(channels = NULL, correlated = TRUE) {
   )
   structure(
     list(
-      channels = channels,
+      responses = responses,
       correlated = correlated
     ),
     class = "random"

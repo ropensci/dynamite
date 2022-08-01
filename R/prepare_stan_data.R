@@ -63,7 +63,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
   )
   sampling_vars$D <- spline_defs$D
   sampling_vars$Bs <- spline_defs$Bs
-  has_random <- attr(dformula, "random")$channels
+  has_random <- attr(dformula, "random")$responses
   N <- ifelse_(groups, length(unique(group)), 1L)
   K <- ncol(model_matrix)
   X <- aperm(

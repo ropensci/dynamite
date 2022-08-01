@@ -96,7 +96,7 @@ create_parameters <- function(dformula, idt, vars) {
     )
   }
   randomtext <- ""
-  has_nu <- length(attr(dformula, "random")$channels) > 0
+  has_nu <- length(attr(dformula, "random")$responses) > 0
   if (has_nu) {
     randomtext <- paste_rows(
       "// Random intercepts",
@@ -120,7 +120,7 @@ create_parameters <- function(dformula, idt, vars) {
 #' @noRd
 create_transformed_parameters <- function(dformula, idt, vars) {
   randomtext <- ""
-  nus <- attr(dformula, "random")$channels
+  nus <- attr(dformula, "random")$responses
   M <- length(nus)
   if (M > 0) {
     if (attr(dformula, "random")$correlated) {
@@ -159,7 +159,7 @@ create_model <- function(dformula, idt, vars) {
     }
   }
   randomtext <- ""
-  has_nu <- length(attr(dformula, "random")$channels) > 0
+  has_nu <- length(attr(dformula, "random")$responses) > 0
   if (has_nu) {
     if (attr(dformula, "random")$correlated) {
       L_prior <- attr(vars, "common_priors") |>
@@ -186,7 +186,7 @@ create_model <- function(dformula, idt, vars) {
 #' @noRd
 create_generated_quantities <- function(dformula, idt, vars) {
   gen <- ""
-  M <- length(attr(dformula, "random")$channels)
+  M <- length(attr(dformula, "random")$responses)
   if (M > 0 && attr(dformula, "random")$correlated) {
     # evaluate number of corrs to avoid Stan warning about integer division
     gen <- paste_rows(
