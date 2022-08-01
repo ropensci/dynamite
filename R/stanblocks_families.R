@@ -858,17 +858,17 @@ model_lines_categorical <- function(
       mtext_intercept <- "a_{y}[{s}] ~ {alpha_prior_distr};"
     }
     if (has_varying_intercept) {
-      if (noncentered) {
-        mtext_omega <- paste_rows(
+      lambda_term <- ifelse_(shrinkage, " * lambda[i - 1]", "")
+      mtext_omega <- ifelse_(
+        noncentered,
+        paste_rows(
           "for (s in 1:{S - 1}) {{",
             "omega_raw_alpha_{y}[s] ~ std_normal();",
           "}}",
           .indent = idt(c(1, 2, 1)),
           .parse = FALSE
-        )
-      } else {
-        lambda_term <- ifelse_(shrinkage, " * lambda[i - 1]", "")
-        mtext_omega <- paste_rows(
+        ),
+        paste_rows(
           "for (s in 1:{S - 1}) {{",
             paste0(
               "omega_raw_alpha_{y}[s, 1] ~ normal(omega_alpha_1_{y}[s], ",
@@ -885,7 +885,7 @@ model_lines_categorical <- function(
           .indent = idt(c(1, 2, 2, 3, 2, 1)),
           .parse = FALSE
         )
-      }
+      )
       mtext_tau_alpha <- "tau_alpha_{y} ~ {tau_alpha_prior_distr};"
       mtext_intercept <- paste_rows(
         mtext_intercept,
@@ -991,14 +991,14 @@ model_lines_categorical <- function(
     !has_random_intercept,
     "Categorical family does not support random intercepts."
   )
-  if (has_fixed || has_varying) {
-    likelihood_term <- paste0(
+  likelihood_term <- ifelse_(
+    has_fixed || has_varying,
+    paste0(
       "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], ",
       "{intercept}, append_col(zeros_K_{y}, gamma_{y}));"
-    )
-  } else {
-    likelihood_term <- "{y}[t, {obs}] ~ categorical_logit({intercept});"
-  }
+    ),
+    "{y}[t, {obs}] ~ categorical_logit({intercept});"
+  )
   paste_rows(
     mtext_intercept,
     mtext_fixed,

@@ -55,7 +55,6 @@ predict.dynamitefit <- function(object, newdata = NULL,
                                   "none", "bootstrap", "gaussian", "original"
                                 ),
                                 n_draws = NULL, ...) {
-
   type <- onlyif(is.character(type), tolower(type))
   type <- try(match.arg(type, c("response", "mean", "link")), silent = TRUE)
   stopifnot_(
@@ -81,15 +80,27 @@ predict.dynamitefit <- function(object, newdata = NULL,
     "Argument {.arg type} must be either \"none\", \"bootstrap\",
      \"gaussian\" or \"original\"."
   )
+  predict_dynamitefit(
+    object,
+    newdata,
+    type,
+    eval_type = "predict",
+    impute,
+    new_levels,
+    n_draws
+  )
+}
+
+#' Internal function for predict/fitted methods
+#'
+#' @inheritParams predict.dynamitefit
+#' @param eval_type \[`character(1)`]\cr Either `"predict"` or `"fitted"`.
+#' @noRd
+predict_dynamitefit <- function(object, newdata, type, eval_type,
+                                impute, new_levels, n_draws) {
   n_draws <- check_ndraws(n_draws, ndraws(object))
   newdata_null <- is.null(newdata)
-  if (newdata_null) {
-    newdata <- data.table::setDF(data.table::copy(object$data))
-  } else if (data.table::is.data.table(newdata) || is.data.frame(newdata)) {
-    newdata <- data.table::setDF(data.table::copy(newdata))
-  } else if (!is.data.frame(newdata)) {
-    stop_("Argument {.arg newdata} must be a {.cls data.frame} object.")
-  }
+  newdata <- check_newdata(object, newdata)
   fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
   group_var <- object$group_var
   time_var <- object$time_var
@@ -112,12 +123,16 @@ predict.dynamitefit <- function(object, newdata = NULL,
   rhs_stoch <- get_predictors(dls)
   predictors <- setdiff(colnames(newdata),
     c(resp_stoch, lhs_stoch, group_var, time_var))
-  no_nu <- length(attr(object$dformulas$stoch, "random")$channels) == 0
-  if (no_nu) new_levels <- "ignore"
+  new_levels <- ifelse_(
+    length(attr(object$dformulas$stoch, "random")$channels) == 0,
+    "ignore",
+    new_levels
+  )
   newdata <- parse_newdata(
     newdata,
     object$data,
     type,
+    eval_type,
     families_stoch,
     resp_stoch,
     categories,
@@ -145,11 +160,10 @@ predict.dynamitefit <- function(object, newdata = NULL,
     newdata,
     newdata_null,
     resp_stoch,
+    eval_type,
     group_var,
     clear_names = c(resp_det, lhs_det, lhs_stoch),
-    fixed,
-    n_id,
-    n_time
+    fixed
   )
   initialize_deterministic(newdata, dd, dlp, dld, dls)
   idx <- seq.int(1L, n_new, by = n_time) - 1L
@@ -159,8 +173,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
   eval_envs <- prepare_eval_envs(
     object,
     newdata,
-    eval_type = "predict",
-    predict_type = type,
+    type,
+    eval_type,
     resp_stoch,
     n_id,
     n_draws,
@@ -168,12 +182,14 @@ predict.dynamitefit <- function(object, newdata = NULL,
     group_var
   )
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
-  idx <- as.integer(newdata[ ,.I[newdata[[time_var]] == ..time[1L]]]) +
-    (fixed - 1L) * n_draws
+  # temporary variable used here to avoid possible name conflicts / global
+  # variable issues within newdata
+  newdata_time_idx <- newdata[, .I[newdata[[time_var]]]]
+  idx <- which(newdata_time_idx == time[1L]) + (fixed - 1L) * n_draws
+  time_offset <- which(unique(object$data[[time_var]]) == time[1L]) - 1L
   skip <- TRUE
-  original_times <- unique(object$data[[time_var]])
   for (i in seq.int(fixed + 1L, n_time)) {
-    time_i <- which(original_times == time[i]) - fixed
+    time_i <- time_offset + i - fixed
     idx <- idx + n_draws
     assign_lags(newdata, ro_det, idx, lhs_det, rhs_det, skip, n_draws)
     assign_lags(newdata, ro_stoch, idx, lhs_stoch, rhs_stoch, skip, n_draws)
@@ -185,30 +201,36 @@ predict.dynamitefit <- function(object, newdata = NULL,
     )
     for (j in seq_along(resp_stoch)) {
       e <- eval_envs[[j]]
-      idx_na <- is.na(newdata[idx, .SD, .SDcols = resp_stoch[j]])
       e$idx <- idx
       e$time <- time_i
-      e$idx_pred <- which(idx_na)
-      e$idx_data <- idx[e$idx_pred]
       e$model_matrix <- model_matrix
       e$offset <- specials[[j]]$offset[idx]
       e$trials <- specials[[j]]$trials[idx]
       e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
-      if (any(idx_na)) {
+      if (identical(eval_type, "predict")) {
+        idx_na <- is.na(newdata[idx, .SD, .SDcols = resp_stoch[j]])
+        e$idx_pred <- which(idx_na)
+        e$idx_data <- idx[e$idx_pred]
+        if (any(idx_na)) {
+          eval(e$call, envir = e)
+        }
+      } else {
         eval(e$call, envir = e)
       }
     }
     assign_deterministic(newdata, cl, idx)
     skip <- FALSE
   }
-  for (i in seq_along(resp_stoch)) {
-    resp <- resp_stoch[i]
-    store <- glue::glue("{resp}_store")
-    if (identical(type, "response")) {
-      newdata[, glue::glue("{resp}_new") := newdata[[resp]]]
+  if (identical(eval_type, "predict")) {
+    for (i in seq_along(resp_stoch)) {
+      resp <- resp_stoch[i]
+      store <- glue::glue("{resp}_store")
+      if (identical(type, "response")) {
+        newdata[, glue::glue("{resp}_new") := newdata[[resp]]]
+      }
+      newdata[, c(resp) := newdata[[store]]]
+      newdata[, c(store) := NULL]
     }
-    newdata[, c(resp) := newdata[[store]]]
-    newdata[, c(store) := NULL]
   }
   newdata[, c(lhs_det, lhs_stoch) := NULL]
   data.table::setkeyv(newdata, cols = c(".draw", group_var, time_var))

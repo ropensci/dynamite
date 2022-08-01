@@ -1,4 +1,4 @@
-#' Check Validity of `n_draws`
+#' Check Validity of `n_draws` for Prediction
 #'
 #' @param n_draws \[`integer(1)`]\cr
 #'   Number of draws to use for `fitted` or `predict`.
@@ -27,12 +27,26 @@ check_ndraws <- function(n_draws, full_draws) {
   as.integer(n_draws)
 }
 
+#' Check Validity of `newdata` for Prediction
+#'
+#' @inheritParams predict.dynamitefit
+#' @noRd
+check_newdata <- function(object, newdata) {
+  if (is.null(newdata)) {
+    data.table::setDF(data.table::copy(object$data))
+  } else if (data.table::is.data.table(newdata) || is.data.frame(newdata)) {
+    data.table::setDF(data.table::copy(newdata))
+  } else if (!is.data.frame(newdata)) {
+    stop_("Argument {.arg newdata} must be a {.cls data.frame} object.")
+  }
+}
+
 #' Parse and Prepare New Data for Prediction
 #'
 #' @param newdata \[`data.frame`]\cr The data to be used for prediction.
 #' @param data \[`data.frame`]\cr The original data used to fit the model.
-#' @param type \[`character`]\cr Either `"response"`, `"mean"`, `"link"` or
-#'   `"fitted"`.
+#' @param type \[`character`]\cr Either `"response"`, `"mean"`, `"link"`.
+#' @param eval_type \[`character(1)`]\cr Either `"predict"` or `"fitted"`
 #' @param families_stoch \[`list`]\cr of `dynamitefamily` object.
 #' @param resp_stoch \[`character`]\cr A vector of response variables
 #' @param categories \[`list`]\cr Response variable categories
@@ -43,7 +57,8 @@ check_ndraws <- function(n_draws, full_draws) {
 #'   if there is only one group.
 #' @param time_var \[`character(1)`]\cr Time index variable name.
 #' @noRd
-parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
+parse_newdata <- function(newdata, data, type,
+                          eval_type, families_stoch, resp_stoch,
                           categories, new_levels, group_var, time_var) {
   if (!is.null(group_var)) {
     stopifnot_(
@@ -82,12 +97,11 @@ parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
              {?is/are} not present in the original data."
     )
   )
-  for (resp in resp_stoch) {
-    stopifnot_(
-      !is.null(newdata[[resp]]),
-      "Can't find response variable {.var {resp}} in {.var newdata}."
-    )
-  }
+  missing_resp <- resp_stoch[!resp_stoch %in% names(newdata)]
+  stopifnot_(
+    length(missing_resp) == 0L,
+    "Can't find response variable{?s} {.var {missing_resp}} in {.var newdata}."
+  )
   # check and add missing factor levels
   factor_cols <- setdiff(names(which(vapply(data, is.factor, logical(1L)))),
     c(time_var, group_var))
@@ -95,20 +109,23 @@ parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
   for (i in cols) {
     l_orig <- levels(data[[i]])
     l_new <- levels(newdata[[i]])
-    if (!identical(l_orig, l_new)) {
-      if (any(!l_new %in% l_orig)) {
-        stop_(c(
-          "{.cls factor} variable {i} in {.arg newdata} has new levels.",
-          `x` = "Levels {.val {setdiff(l_new, l_orig)}} not present in the
-            original data."))
-      }
+    if (!setequal(l_orig, l_new) && any(!l_new %in% l_orig)) {
+      stop_(c(
+        "{.cls factor} variable {.var {i}} in {.arg newdata} has new levels.",
+        `x` = "Levels {.val {setdiff(l_new, l_orig)}} not present in the
+          original data."))
       newdata[[i]] <- factor(newdata[[i]], levels = l_orig)
     }
   }
   newdata <- fill_time_predict(newdata, group_var, time_var,
-    original_times[2] - original_times[1])
+    original_times[2L] - original_times[1L])
   data.table::setDT(newdata, key = c(group_var, time_var))
-  # create separate column for each level of categorical variables
+  type <- ifelse_(
+    identical(eval_type, "fitted"),
+    "fitted",
+    type
+  )
+  # create separate column for each level of categorical response variables
   for (i in seq_along(resp_stoch)) {
     resp <- resp_stoch[i]
     if (is_categorical(families_stoch[[i]])) {
@@ -127,6 +144,7 @@ parse_newdata <- function(newdata, data, type, families_stoch, resp_stoch,
   }
   newdata
 }
+
 #' Adds NA gaps to fill in missing time points in a data frame for predictions
 #'
 #' Note that if `impute` is `none` and model contains lagged predictors,
@@ -193,12 +211,8 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
 #' @noRd
 impute_newdata <- function(newdata, impute, predictors, group_var) {
   if (identical(impute, "locf")) {
-    if (is.null(group_var)) {
-      newdata[, (predictors) := lapply(.SD, locf), .SDcols = predictors]
-    } else {
-      newdata[, (predictors) := lapply(.SD, locf), .SDcols = predictors,
-              by = group_var]
-    }
+    newdata[, (predictors) := lapply(.SD, locf), .SDcols = predictors,
+            by = group_var]
   }
 }
 
@@ -211,21 +225,25 @@ impute_newdata <- function(newdata, impute, predictors, group_var) {
 #' @param clear_names \[character()]\cr
 #'   Vector of column names to remove from `newdata`.
 #' @param fixed \[integer(1)]\cr The number of fixed time points.
-#' @param n_id \[integer(1)]\cr Number of unique groups.
-#' @param n_time \[integer(1)]\cr Number of unique time points.
 #' @noRd
-clear_nonfixed <- function(newdata, newdata_null, resp_stoch,
-                           group_var, clear_names, fixed, n_id, n_time) {
+clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
+                           group_var, clear_names, fixed, global_fixed = TRUE) {
 
-  if (newdata_null) {
-    predict_idx <- rep(seq.int(fixed + 1L, n_time), n_id) +
-      rep(seq.int(0L, n_id - 1L) * n_time, each = n_time - fixed)
-    newdata[predict_idx, c(resp_stoch) := NA]
+  if (newdata_null && identical(eval_type, "predict")) {
+    if (global_fixed) {
+      clear_idx <- newdata[, .I[seq.int(..fixed + 1L, .N)], by = group_var]$V1
+    } else {
+      clear_idx <-
+        newdata[, .I[seq.int(which(!is.na(.SD))[1L] + ..fixed + 1L, .N)],
+                .SDcols = time_var, by = group_var]$V1
+    }
+    newdata[clear_idx, c(resp_stoch) := NA]
     # use c to force a copy, otherwise newdata_names changes inside the loop
+    # (possible issue with the data.table package)
     newdata_names <- c(names(newdata))
     for (name in newdata_names) {
       if (name %in% clear_names) {
-        newdata[ , (name) := NULL]
+        newdata[, (name) := NULL]
       }
     }
   }
@@ -311,12 +329,12 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
 #'
 #' @inheritParams predict
 #' @inheritParams clear_nonfixed
+#' @param type \[`character()`]\cr
+#'   Either `"response"`, `"mean"`, or `"link"`.
 #' @param eval_type \[`character(1)`]\cr
 #'   Either `"predict"` or `"fitted"`
-#' @param predict_type \[`character()`]\cr
-#'   Either `"response"`, `"mean"`, or `"link"`.
 #' @noRd
-prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
+prepare_eval_envs <- function(object, newdata, type, eval_type,
                               resp_stoch, n_id, n_draws,
                               new_levels, group_var) {
   samples <- rstan::extract(object$stanfit)
@@ -364,7 +382,7 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
     phi <- paste0("phi_", resp)
     sigma <- paste0("sigma_", resp)
     e <- new.env()
-    e$type <- predict_type
+    e$type <- type
     e$n_id <- n_id
     e$n_draws <- n_draws
     e$k <- n_draws * n_id
@@ -427,7 +445,7 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
 #' @param resp \[`character(1)`]\cr Name of the response.
 #' @param resp_levels \[`character()`]\cr Levels of a categorical response.
 #' @param family \[`dynamitefamily`]\cr Family of the response.
-#' @param type  \[`character(1)`]\cr Either `"predict"` or `"fitted"`.
+#' @param eval_type  \[`character(1)`]\cr Either `"predict"` or `"fitted"`.
 #' @param has_fixed \[logical(1)]\cr
 #'   Does the channel have time-invariant predictors?
 #' @param has_varying \[logical(1)]\cr
@@ -441,7 +459,7 @@ prepare_eval_envs <- function(object, newdata, eval_type, predict_type,
 #' @param has_offset \[logical(1)]\cr
 #'   Does the channel have an offset?
 #' @noRd
-generate_sim_call <- function(resp, resp_levels, family, type,
+generate_sim_call <- function(resp, resp_levels, family, eval_type,
                               has_fixed, has_varying,
                               has_fixed_intercept, has_varying_intercept,
                               has_random_intercept, has_offset) {
@@ -467,7 +485,7 @@ generate_sim_call <- function(resp, resp_levels, family, type,
         "}}\n",
         "}}\n"
       ),
-      eval(str2lang(glue::glue("{type}_categorical"))),
+      eval(str2lang(glue::glue("{eval_type}_categorical"))),
       "}}"
     ) |> str2lang()
   } else {
@@ -490,7 +508,7 @@ generate_sim_call <- function(resp, resp_levels, family, type,
                         "m = n_draws, n = K_varying)', '')}",
         "}}\n"
       ),
-      ifelse_(identical(type, "predict"),
+      ifelse_(identical(eval_type, "predict"),
         paste0(
           "if (type == 'link') {{",
           "  data.table::set(x = newdata, i = idx_data, j = '{resp}_link',
@@ -499,7 +517,7 @@ generate_sim_call <- function(resp, resp_levels, family, type,
         ),
         ""
       ),
-      eval(str2lang(glue::glue("{type}_{family}"))),
+      eval(str2lang(glue::glue("{eval_type}_{family}"))),
       "}}"
     ) |> str2lang()
   }
@@ -731,7 +749,7 @@ predict_gamma <- "
 "
 
 predict_beta <- "
-  mu <- {'plogis(xbeta)'}
+  mu <- plogis(xbeta)
   if (type == 'mean') {{
     data.table::set(
       x = newdata,

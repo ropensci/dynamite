@@ -51,7 +51,8 @@ distribution using the posterior samples of the random intercept
 standard deviation.
 * \code{"original"} which will randomly match each new level to one of
 the original levels. The posterior samples of the random intercept of
-the matched levels will then be used for the new levels.}
+the matched levels will then be used for the new levels.
+This argument is ignored if model does not contain random intercepts.}
 
 \item{n_draws}{[\code{integer(1)}]\cr Number of posterior samples to use,
 default is \code{NULL} which uses all samples.}

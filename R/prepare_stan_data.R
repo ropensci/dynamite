@@ -191,39 +191,36 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
   sampling_vars$X_m <- as.array(x_means)
 
   if (spline_defs$shrinkage) {
-    if (is.null(priors)) {
-      prior_list[["common_priors"]] <-
-        data.frame(
-          parameter = "lambda",
-          response = "",
-          prior = "normal(0, 1)",
-          type = "lambda",
-          category = ""
-        )
-    } else {
-      prior_list[["common_priors"]] <-
-        priors |> dplyr::filter(.data$type == "lambda")
-    }
+    prior_list[["common_priors"]] <- ifelse_(
+      is.null(priors),
+      data.frame(
+        parameter = "lambda",
+        response = "",
+        prior = "normal(0, 1)",
+        type = "lambda",
+        category = ""
+      ),
+      priors |> dplyr::filter(.data$type == "lambda")
+    )
   }
   if (sampling_vars$M > 1 && attr(dformula, "random")$correlated) {
-    if (is.null(priors)) {
-      prior_list[["common_priors"]] <-
-        dplyr::bind_rows(
-          prior_list[["common_priors"]],
-          data.frame(
-            parameter = "L",
-            response = "",
-            prior = "lkj_corr_cholesky(1)",
-            type = "L",
-            category = ""
-          )
+    prior_list[["common_priors"]] <- ifelse_(
+      is.null(priors),
+      dplyr::bind_rows(
+        prior_list[["common_priors"]],
+        data.frame(
+          parameter = "L",
+          response = "",
+          prior = "lkj_corr_cholesky(1)",
+          type = "L",
+          category = ""
         )
-    } else {
-      prior_list[["common_priors"]] <- dplyr::bind_rows(
+      ),
+      dplyr::bind_rows(
         prior_list[["common_priors"]],
         priors |> dplyr::filter(.data$type == "L")
       )
-    }
+    )
   }
   # for stanblocks
   attr(model_vars, "common_priors") <- prior_list[["common_priors"]]

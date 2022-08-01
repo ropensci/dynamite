@@ -282,53 +282,6 @@ onlyif <- function(test, yes) {
   }
 }
 
-#' Adds NA gaps to fill in missing time points in a data frame
-#'
-#' @inheritParams dynamite
-#' @noRd
-fill_time <- function(data, group_var, time_var) {
-  if (is.factor(data[[time_var]])) {
-    warning_("Time indexing variable {.arg {time_var}} is a {.cls factor},
-      converting the variable to {.cls integer} based on its levels.")
-    data[[time_var]] <- as.integer(data[[time_var]])
-  }
-  time <- sort(unique(data[[time_var]]))
-  stopifnot_(
-    length(time) > 1L,
-    "There must be at least two time points in the data."
-  )
-  time_ivals <- diff(time)
-  time_scale <- min(diff(time))
-  if (any(time_ivals[!is.na(time_ivals)] %% time_scale > 0)) {
-    stop_("Observations must occur at regular time intervals.")
-  } else {
-    full_time <- seq(time[1L], time[length(time)], by = time_scale)
-    groups <- !is.null(group_var)
-    if (groups) {
-      time_groups <- data |>
-        dplyr::group_by(.data[[group_var]]) |>
-        dplyr::summarise(has_missing = !identical(.data[[time_var]], full_time))
-      if (any(time_groups$has_missing)) {
-        full_data_template <- expand.grid(
-          time = full_time,
-          group = unique(data[[group_var]])
-        )
-        names(full_data_template) <- c(time_var, group_var)
-        data <- full_data_template |>
-          dplyr::left_join(data, by = c(group_var, time_var))
-      }
-    } else {
-      if (!identical(data[[time_var]], full_time)) {
-        full_data_template <- data.frame(time = full_time)
-        names(full_data_template) <- time_var
-        data <- full_data_template |>
-          dplyr::left_join(data, by = time_var)
-      }
-    }
-  }
-  data
-}
-
 # Placeholder for future
 # Startup message for the package
 # .onAttach <- function(libname, pkgname) {
@@ -340,17 +293,3 @@ fill_time <- function(data, group_var, time_var) {
 # .onLoad <- function(libname, pkgname) {
 #   #invisible(NULL)
 # }
-#' Return the Number of Posterior Draws of the dynamitefit Object
-#' @param x \[`dynamitefit`]\cr The model fit object.
-#' @export
-#' @export ndraws
-#' @rdname ndraws-dynamitefit
-#' @aliases ndraws
-#' @method ndraws dynamitefit
-#' @examples
-#' ndraws(gaussian_example_fit)
-ndraws.dynamitefit <- function(x) {
-  as.integer(
-    (x$stanfit@sim$n_save[1] - x$stanfit@sim$warmup2[1]) * x$stanfit@sim$chains
-  )
-}

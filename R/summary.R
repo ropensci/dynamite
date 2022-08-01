@@ -17,7 +17,6 @@ summary.dynamitefit <- function(object, ...) {
   )
   if (!is.null(object$stanfit)) {
     as.data.frame(object, ...)
-
   } else {
     message_("No Stan model fit is available.")
   }
