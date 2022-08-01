@@ -754,7 +754,7 @@ model_lines_default <- function(
     }
   }
   if (has_fixed) {
-    if (K_fixed > 1L && vectorizable_prior(beta_prior_distr)) {
+    if (vectorizable_prior(beta_prior_distr)) {
       dpars_fixed <- paste0(
         "beta_prior_pars_", y, "[, ", seq_len(beta_prior_npars), "]",
         collapse = ", "
