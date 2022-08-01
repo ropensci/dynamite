@@ -103,17 +103,21 @@ parse_newdata <- function(newdata, data, type,
     "Can't find response variable{?s} {.var {missing_resp}} in {.var newdata}."
   )
   # check and add missing factor levels
-  factor_cols <- setdiff(names(which(vapply(data, is.factor, logical(1L)))),
-    c(time_var, group_var))
+  factor_cols <- setdiff(
+    names(which(vapply(data, is.factor, logical(1L)))),
+    c(time_var, group_var)
+  )
   cols <- intersect(names(newdata), factor_cols)
   for (i in cols) {
     l_orig <- levels(data[[i]])
     l_new <- levels(newdata[[i]])
-    if (!setequal(l_orig, l_new) && any(!l_new %in% l_orig)) {
-      stop_(c(
-        "{.cls factor} variable {.var {i}} in {.arg newdata} has new levels.",
-        `x` = "Levels {.val {setdiff(l_new, l_orig)}} not present in the
-          original data."))
+    if (!setequal(l_orig, l_new)) {
+      stopifnot_(
+        all(l_new %in% l_orig),
+        c("{.cls factor} variable {.var {i}} in {.arg newdata} has new levels.",
+          `x` = "Levels {.val {setdiff(l_new, l_orig)}} not present in the
+                 original data.")
+      )
       newdata[[i]] <- factor(newdata[[i]], levels = l_orig)
     }
   }
@@ -128,15 +132,13 @@ parse_newdata <- function(newdata, data, type,
   # create separate column for each level of categorical response variables
   for (i in seq_along(resp_stoch)) {
     resp <- resp_stoch[i]
-    if (is_categorical(families_stoch[[i]])) {
-      if (type %in% c("mean", "link", "fitted")) {
-        resp_levels <- categories[[resp]]
-        newdata[, (glue::glue("{resp}_{type}_{resp_levels}")) := NA_real_]
-      }
-    } else {
-      if (type %in% c("mean", "link", "fitted")) {
-        newdata[, (glue::glue("{resp}_{type}")) := NA_real_]
-      }
+    if (type %in% c("mean", "link", "fitted")) {
+      pred_col <- ifelse_(
+        is_categorical(families_stoch[[i]]),
+        glue::glue("{resp}_{type}_{categories[[resp]]}"),
+        glue::glue("{resp}_{type}")
+      )
+      newdata[, (pred_col) := NA_real_]
     }
     if (!identical(type, "fitted")) {
       newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
