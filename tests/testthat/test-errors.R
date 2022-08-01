@@ -147,7 +147,7 @@ test_that("categorical random intercept fails", {
       "id", "time",
       debug = list(no_compile = TRUE)),
     paste0(
-      "No valid channels for random intercept component:\n",
+      "No valid responses for random intercept component:\n",
       "x Random intercepts are not supported for the categorical family\\."
     )
   )
