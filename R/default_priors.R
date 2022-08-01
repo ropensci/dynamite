@@ -112,7 +112,7 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
       category = resp_levels
     )
     if (channel$has_varying_intercept) {
-      channel$tau_alpha_prior_distr <- "normal(0, 1);"
+      channel$tau_alpha_prior_distr <- "normal(0, 1)"
       priors$tau_alpha <- data.frame(
         parameter = paste0("tau_alpha_", y),
         response = y,

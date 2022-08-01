@@ -766,7 +766,7 @@ model_lines_default <- function(
   }
   if (has_varying) {
     if (noncentered) {
-      if (K_varying > 1L && vectorizable_prior(delta_prior_distr)) {
+      if (vectorizable_prior(delta_prior_distr)) {
         dpars_varying <- paste0(
           "delta_prior_pars_", y, "[, ", seq_len(delta_prior_npars), "]",
           collapse = ", "
@@ -784,7 +784,7 @@ model_lines_default <- function(
         .parse = FALSE
       )
     } else {
-      if (K_varying > 1L && vectorizable_prior(delta_prior_distr)) {
+      if (vectorizable_prior(delta_prior_distr)) {
         dpars_varying <- paste0(
           "delta_prior_pars_", y, "[, ", seq_len(delta_prior_npars), "]",
           collapse = ", "
@@ -811,7 +811,7 @@ model_lines_default <- function(
         .parse = FALSE
       )
     }
-    if (K_varying > 1L && vectorizable_prior(tau_prior_distr)) {
+    if (vectorizable_prior(tau_prior_distr)) {
       dpars_tau <- paste0(
         "tau_prior_pars_", y, "[, ", seq_len(tau_prior_npars), "]",
         collapse = ", "
