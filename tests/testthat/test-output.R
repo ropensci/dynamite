@@ -169,13 +169,26 @@ test_that("summary can be extracted", {
   )
 })
 
-test_that("summary work when no fit is available", {
+test_that("summary works when no fit is available", {
   expect_message(
     summary(dynamite(
       obs(y ~ x, "gaussian"),
-      data = data.frame(y=1:2,x=c(3,1),id=1,time=1:2),
+      data = data.frame(y = 1:2, x = c(3, 1), id = 1, time = 1:2),
       "id", "time", debug = list(no_compile = TRUE))
     ),
+    "No Stan model fit is available\\."
+  )
+})
+
+test_that("number of draws can be extraced", {
+  expect_error(
+    ndraws(gaussian_example_fit),
+    NA
+  )
+  gaussian_example_fit_null <- gaussian_example_fit
+  gaussian_example_fit_null$stanfit <- NULL
+  expect_message(
+    mcmc_diagnostics(gaussian_example_fit_null),
     "No Stan model fit is available\\."
   )
 })

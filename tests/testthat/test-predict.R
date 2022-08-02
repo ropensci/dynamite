@@ -3,7 +3,7 @@
 #' @srrstats {G5.4} Predict and fitted method produce results identical with
 #'   "manual" computation based on the same posterior samples.
 #'
-test_that("scale of predictions are on the same scale as input data", {
+test_that("predictions are on the same scale as input data", {
   expect_error(pred <- predict(gaussian_example_fit,
     type = "response", n_draws = 1), NA)
   expect_equal(sd(pred$y), sd(pred$y_new), tolerance = 0.5)
@@ -39,8 +39,7 @@ test_that("prediction works", {
                        type = "link", n_draws = 2), NA)
 })
 
-
-test_that("prediction works when starting from arbitrary time point", {
+test_that("prediction works when starting from an arbitrary time point", {
   newdata <- gaussian_example |>
     dplyr::mutate(y = ifelse(time > 8, NA, y))
 
@@ -62,7 +61,6 @@ test_that("prediction works when starting from arbitrary time point", {
   fit <- gaussian_example_fit
   fit$data <- fit$data |>
     dplyr::mutate(time = time + 10)
-
 
   newdata <- fit$data |>
     dplyr::mutate(y = ifelse(time > 20, NA, y))
@@ -130,7 +128,7 @@ test_that("fitted works", {
   expect_equal(automatic[2], manual)
 })
 
-test_that("Categorical predict with type = link works", {
+test_that("categorical predict with type = link works", {
   expect_error(fitc <-
       predict(categorical_example_fit, type = "link", n_draws = 2), NA)
 
@@ -164,8 +162,7 @@ test_that("fitted and predict give equal results for the first time point", {
       dplyr::select(.data$g_fitted, .data$p_fitted, .data$b_fitted),
     ignore_attr = TRUE
   )
-
-  })
+})
 
 test_that("predict with NA-imputed newdata works as default NULL", {
   set.seed(1)
@@ -193,6 +190,7 @@ test_that("predict with NA-imputed newdata works as default NULL", {
     pred2 |> dplyr::select(-c(y, x))
   )
 })
+
 test_that("permuting newdata for predict does not alter results", {
   newdata <- gaussian_example_fit$data
   newdata$y[newdata$time > 1] <- NA
@@ -209,6 +207,18 @@ test_that("permuting newdata for predict does not alter results", {
 
 test_that("no groups fitted works", {
   expect_error(fitted(gaussian_example_single_fit, n_draws = 2), NA)
+})
+
+test_that("missing factor levels are restored", {
+  categorical_example_noC <- categorical_example |>
+    dplyr::mutate(x = dplyr::recode(x, "C" = "B")) |>
+    dplyr::filter(time < 5)
+  pred <- predict(
+    categorical_example_fit,
+    newdata = categorical_example_noC,
+    ndraws = 2
+  )
+  expect_equal(levels(pred$x), c("A", "B", "C"))
 })
 
 test_that("new group levels can be included in newdata", {

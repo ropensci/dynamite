@@ -114,9 +114,9 @@ parse_newdata <- function(newdata, data, type,
     if (!setequal(l_orig, l_new)) {
       stopifnot_(
         all(l_new %in% l_orig),
-        c("{.cls factor} variable {.var {i}} in {.arg newdata} has new levels.",
-          `x` = "Levels {.val {setdiff(l_new, l_orig)}} not present in the
-                 original data.")
+        c("{.cls factor} variable {.var {i}} in {.arg newdata} has new levels:",
+          `x` = "Level{?s} {.val {setdiff(l_new, l_orig)}} {?is/are}
+                 not present in the original data.")
       )
       newdata[[i]] <- factor(newdata[[i]], levels = l_orig)
     }

@@ -644,6 +644,18 @@ test_that("newdata with duplicated time points fails", {
   )
 })
 
+test_that("newdata with unknown factor levels fails", {
+  categorical_example_newlevel <- categorical_example |>
+    dplyr::mutate(x = dplyr::recode(x, "C" = "D"))
+  expect_error(
+    predict(categorical_example_fit, newdata = categorical_example_newlevel),
+    paste0(
+      "<factor> variable `x` in `newdata` has new levels:\n",
+      "x Level \"D\" is not present in the original data\\."
+    )
+  )
+})
+
 test_that("newdata with missing response fails", {
   gaussian_example_misresp <- gaussian_example_small |> dplyr::select(!.data$y)
   expect_error(
