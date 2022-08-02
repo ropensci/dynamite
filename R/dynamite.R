@@ -18,7 +18,8 @@
 #' The prior for the correlation structure of the random intercepts is defined
 #' via the Cholesky decomposition of the correlation matrix, as
 #' `lkj_corr_cholesky(1)`. See
-#' \url{https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html}
+#' \url{https://mc-stan.org/docs/functions-reference/
+#' cholesky-lkj-correlation-distribution.html}
 #' for details.
 #'
 #' See more details in the package vignette on how to define a dynamite model.
@@ -87,8 +88,8 @@
 #'   warnings are issued when appropriate.
 #' @srrstats {RE2.1} Non-finite values are not allowed, NAs are appropriately
 #'   considered.
-#' @srrstats {RE3.0} Convergence diagnostics are delegated to Stan
-#' @srrstats {RE3.1} Stan messages can be suppressed
+#' @srrstats {RE3.0} Convergence diagnostics are delegated to Stan.
+#' @srrstats {RE3.1} Stan messages can be suppressed.
 #' @srrstats {RE4.0} `dynamite` returns a `dynamitefit` object.
 #' @srrstats {RE4.1} `dynamitefit` object can be generated without sampling.
 #' @srrstats {RE4.4} The model is specified via formula objects.
@@ -106,7 +107,7 @@
 #' @srrstats {BS3.0} Documented in `data` parameter.
 #' @srrstats {BS4.0} Stan is referenced.
 #' @srrstats {BS5.0, BS5.1, BS5.2, BS5.3, BS5.5}
-#'   Available from the resulting `dynamitefit` object
+#'   Available from the resulting `dynamitefit` object.
 #' @srrstats {RE5.0} The scalability of the algorithms are studied to some
 #' extent in the tests and note also here. As the computational algorithms are
 #' based on Stan, the  scalability of the package depends directly on the
@@ -502,14 +503,10 @@ parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
     for (j in seq_len(n_stoch)) {
       y <- resp_stoch[j]
       idx <- idx + 1L
+      stoch[idx] <- identical(i, 1L)
       lhs[idx] <- paste0(y, "_lag", i)
-      if (identical(i, 1L)) {
-        rhs <- y
-        stoch[idx] <- TRUE
-      } else {
-        rhs <- paste0(y, "_lag", i - 1L)
-      }
       rank[idx] <- i
+      rhs <- ifelse_(stoch[idx], y, paste0(y, "_lag", i - 1L))
       new_term <- logical(n_stoch)
       lag_term <- paste0("lag(", y, ", ", i, ")")
       for (l in seq_len(n_stoch)) {
@@ -524,24 +521,8 @@ parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
       )
     }
   }
-  for (j in channels_stoch) {
-    if (any(increment[[j]])) {
-      dformula[[j]] <- dynamiteformula_(
-        formula = increment_formula(
-          formula = dformula[[j]]$formula,
-          x = lhs[increment[[j]]],
-          type = type,
-          varying_idx = dformula[[j]]$varying,
-          varying_icpt = dformula[[j]]$has_varying_intercept,
-          fixed_icpt = dformula[[j]]$has_fixed_intercept
-        ),
-        original = dformula[[j]]$original,
-        family = dformula[[j]]$family
-      )
-    }
-  }
   list(
-    dformula = dformula,
+    dformula = parse_new_lags(dformula, channels_stoch, increment, type, lhs),
     channels = channels[include],
     max_lag = max_lag,
     rank = rank[include],
@@ -615,11 +596,41 @@ parse_singleton_lags <- function(dformula, lag_map, max_lag, valid_resp) {
   )
 }
 
+#' Parse and add lags defined via `lags`
+#'
+#' @inheritParams parse_global_lags
+#' @param channels_stoch A `logical` vector indicating which channels are
+#'   stochastic.
+#' @param increment A `logical` vector indicating whether to add the new
+#'   lag term or not (e.g.,, whether it was already present or not).
+#' @param type Either `"fixed"` or `"varying"`.
+#' @param lhs A `character` vector of the new lagged variable names.
+#' @noRd
+parse_new_lags <- function(dformula, channels_stoch, increment, type, lhs) {
+  for (i in channels_stoch) {
+    if (any(increment[[i]])) {
+      dformula[[i]] <- dynamiteformula_(
+        formula = increment_formula(
+          formula = dformula[[i]]$formula,
+          x = lhs[increment[[i]]],
+          type = type,
+          varying_idx = dformula[[i]]$varying,
+          varying_icpt = dformula[[i]]$has_varying_intercept,
+          fixed_icpt = dformula[[i]]$has_fixed_intercept
+        ),
+        original = dformula[[i]]$original,
+        family = dformula[[i]]$family
+      )
+    }
+  }
+  dformula
+}
+
 #' Parse lags that actually appear in a dynamiteformula
 #'
 #' @inheritParams parse_singleton_lags
 #' @param y Output of `prepare_lagged_response`.
-#' @param i Row index of lag_map
+#' @param i Row index of lag_map.
 #' @param lhs Name of the new lagged response.
 #' @noRd
 parse_present_lags <- function(dformula, lag_map, y, i, lhs) {

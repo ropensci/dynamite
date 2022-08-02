@@ -114,9 +114,9 @@ random intercept (this way the one group is included in the intercept).
 }
 \section{Functions}{
 \itemize{
-\item \code{aux}: Prepare a Deterministic Auxiliary Channel
-}}
+\item \code{aux()}: Prepare a Deterministic Auxiliary Channel
 
+}}
 \examples{
 obs(y ~ -1 + varying(~x), family = "gaussian") +
   lags(type = "varying") + splines(df = 20)

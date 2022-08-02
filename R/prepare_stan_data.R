@@ -139,12 +139,11 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
     channel$lb <- spline_defs$lb[i]
     channel$shrinkage <- spline_defs$shrinkage
     channel$noncentered <- spline_defs$noncentered[i]
-    if (!has_splines &&
-        (channel$has_varying || channel$has_varying_intercept)) {
-      stop_("Model for response variable {.var {resp}}
-             contains time-varying definitions
-             but splines have not been defined.")
-    }
+    stopifnot_(
+      has_splines || !(channel$has_varying || channel$has_varying_intercept),
+      "Model for response variable {.var {resp}} contains time-varying
+       definitions but splines have not been defined."
+    )
     for (spec in formula_special_funs) {
       if (!is.null(form_specials[[spec]])) {
         spec_split <- ifelse_(
@@ -189,39 +188,12 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
   # avoid goodpractice warning, T is a Stan variable, not an R variable
   sampling_vars[["T"]] <- T_full - fixed
   sampling_vars$X_m <- as.array(x_means)
-
-  if (spline_defs$shrinkage) {
-    prior_list[["common_priors"]] <- ifelse_(
-      is.null(priors),
-      data.frame(
-        parameter = "lambda",
-        response = "",
-        prior = "normal(0, 1)",
-        type = "lambda",
-        category = ""
-      ),
-      priors |> dplyr::filter(.data$type == "lambda")
-    )
-  }
-  if (sampling_vars$M > 1 && attr(dformula, "random")$correlated) {
-    prior_list[["common_priors"]] <- ifelse_(
-      is.null(priors),
-      dplyr::bind_rows(
-        prior_list[["common_priors"]],
-        data.frame(
-          parameter = "L",
-          response = "",
-          prior = "lkj_corr_cholesky(1)",
-          type = "L",
-          category = ""
-        )
-      ),
-      dplyr::bind_rows(
-        prior_list[["common_priors"]],
-        priors |> dplyr::filter(.data$type == "L")
-      )
-    )
-  }
+  prior_list[["common_priors"]] <- prepare_common_priors(
+    priors = priors,
+    M = sampling_vars$M,
+    shrinkage = spline_defs$shrinkage,
+    correlated = attr(dformula, "random")$correlated
+  )
   # for stanblocks
   attr(model_vars, "common_priors") <- prior_list[["common_priors"]]
   list(
@@ -257,7 +229,7 @@ prepare_splines <- function(spline_defs, n_channels, T_idx) {
     } else {
       stop_(
         "Length of the {.arg lb_tau} argument of {.fun splines} function
-          is not equal to 1 or {n_channels}, the number of the channels."
+         is not equal to 1 or {n_channels}, the number of the channels."
       )
     }
     out$noncentered <- spline_defs$noncentered
@@ -266,7 +238,7 @@ prepare_splines <- function(spline_defs, n_channels, T_idx) {
     } else {
       stop_(
         "Length of the {.arg noncentered} argument of {.fun splines} function
-          is not equal to 1 or {n_channels}, the number of the channels."
+         is not equal to 1 or {n_channels}, the number of the channels."
       )
     }
   } else {
@@ -297,6 +269,49 @@ prepare_prior <- function(ptype, priors, channel) {
     channel[[paste0(ptype, "_prior_distr")]] <- dists[1L]
   }
   channel
+}
+
+#' Construct Common Priors among Channels
+#'
+#' @inheritParams splines
+#' @param priors Custom prior definitions or `NULL` if not specified
+#' @param M Number of channels with random intercept
+#' @noRd
+prepare_common_priors <- function(priors, M, shrinkage, correlated) {
+  common_priors <- NULL
+  if (shrinkage) {
+    common_priors <- ifelse_(
+      is.null(priors),
+      data.frame(
+        parameter = "lambda",
+        response = "",
+        prior = "normal(0, 1)",
+        type = "lambda",
+        category = ""
+      ),
+      priors |> dplyr::filter(.data$type == "lambda")
+    )
+  }
+  if (M > 1 && correlated) {
+    common_priors <- ifelse_(
+      is.null(priors),
+      dplyr::bind_rows(
+        common_priors,
+        data.frame(
+          parameter = "L",
+          response = "",
+          prior = "lkj_corr_cholesky(1)",
+          type = "L",
+          category = ""
+        )
+      ),
+      dplyr::bind_rows(
+        common_priors,
+        priors |> dplyr::filter(.data$type == "L")
+      )
+    )
+  }
+  common_priors
 }
 
 #' Default channel preparation

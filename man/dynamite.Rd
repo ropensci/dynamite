@@ -71,7 +71,8 @@ normal distribution with zero mean and two times this standard deviation.
 The prior for the correlation structure of the random intercepts is defined
 via the Cholesky decomposition of the correlation matrix, as
 \code{lkj_corr_cholesky(1)}. See
-\url{https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html}
+\url{https://mc-stan.org/docs/functions-reference/
+cholesky-lkj-correlation-distribution.html}
 for details.
 
 See more details in the package vignette on how to define a dynamite model.

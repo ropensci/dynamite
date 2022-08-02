@@ -48,12 +48,13 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
   if (length(dd) > 0L) {
     cl <- get_quoted(dd)
     res <- try(assign_deterministic(data, cl, 1L), silent = TRUE)
-    if ("try-error" %in% class(res)) {
-      stop_(c(
+    stopifnot_(
+      !"try-error" %in% class(res),
+      c(
         "Unable to evaluate definitions of deterministic channels:",
         `i` = "Some variables are possibly missing or incorrect."
-      ))
-    }
+      )
+    )
   }
 }
 
