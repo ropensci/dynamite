@@ -279,6 +279,38 @@ test_that("single time point fails", {
   )
 })
 
+test_that("duplicated time points fail", {
+  # groups
+  expect_error(
+    dynamite(
+      dformula = obs(y ~ x, family = "gaussian"),
+      data = data.frame(
+       y = rep(1, 9),
+       x = gl(3, 3),
+       z = c(1, 2, 2, 1, 2, 3, 1, 3, 3)
+      ),
+      group = "x",
+      time = "z"
+    ),
+    paste0(
+      "Each time index must correspond to a single observation per group:\n",
+      "x Groups `1` and `3` of `x` have duplicate observations\\."
+    )
+  )
+  # no groups
+  expect_error(
+    dynamite(
+      dformula = obs(y ~ x, family = "gaussian"),
+      data = data.frame(
+        y = rep(1, 3),
+        z = c(1, 2, 2)
+      ),
+      time = "z"
+    ),
+    "Each time index must correspond to a single observation\\."
+  )
+})
+
 test_that("missing lag variable fails", {
   expect_error(
     dynamite(dformula = obs(y ~ lag(d, 1), family = "gaussian"),
@@ -583,6 +615,32 @@ test_that("newdata with new time points fails", {
       "Time index variable `time` contains unknown time points:\n",
       "x Time point \"31\" is not present in the original data\\."
     )
+  )
+})
+
+test_that("newdata with duplicated time points fails", {
+  # groups
+  gaussian_example_duplicated <- rbind(
+    gaussian_example_small,
+    data.frame(y = 1, x = 1, z = 0, id = 1, time = 1)
+  )
+  expect_error(
+    predict(gaussian_example_fit, newdata = gaussian_example_duplicated),
+    paste0(
+      "Each time index must correspond to a single observation per group:\n",
+      "x Group `1` of `id` has duplicate observations\\."
+    )
+  )
+  # no groups
+  gaussian_example_duplicated <- rbind(
+    gaussian_example_small |>
+      dplyr::filter(.data$id == 1) |>
+      dplyr::select(!.data$id),
+    data.frame(y = 1, x = 1, z = 0, time = 1)
+  )
+  expect_error(
+    predict(gaussian_example_single_fit, newdata = gaussian_example_duplicated),
+    "Each time index must correspond to a single observation\\."
   )
 })
 

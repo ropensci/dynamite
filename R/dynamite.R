@@ -171,7 +171,7 @@ dynamite <- function(dformula, data, group = NULL, time,
   model <- onlyif(
     is.null(debug) || !isTRUE(debug$no_compile),
     {
-      onlyif(verbose, rlang::inform("Compiling Stan model."))
+      onlyif(verbose, message_("Compiling Stan model."))
       rstan::stan_model(model_code = model_code)
     }
   )
@@ -300,30 +300,40 @@ is.dynamitefit <- function(x) {
 parse_data <- function(data, dformula, group_var, time_var, verbose) {
   data <- droplevels(data)
   data_names <- names(data)
-  stopifnot_(!is.character(data[[time_var]]),
-    "Time indexing variable {.arg {time_var}} is of type {.cls character}, but
-    it should be of type {.cls numeric} or {.cls factor}.")
+  stopifnot_(
+    !is.character(data[[time_var]]),
+    "Time index variable {.arg {time_var}} is of type {.cls character}, but
+    it should be of type {.cls numeric} or {.cls factor}."
+  )
+  if (is.factor(data[[time_var]])) {
+    if (verbose) {
+      warning_(c(
+        "Time index variable {.arg {time_var}} is a {.cls factor}:",
+        `i` = "Converting the variable to {.cls integer} based on its levels."
+      ))
+    }
+    data[[time_var]] <- as.integer(data[[time_var]])
+  }
   data <- data |> dplyr::mutate(dplyr::across(where(is.character), as.factor))
   valid_types <- c("integer", "logical", "double")
   col_types <- vapply(data, typeof, character(1L))
   factor_cols <- vapply(data, is.factor, logical(1L))
   valid_cols <- (col_types %in% valid_types) | factor_cols
-  if (any(!valid_cols)) {
-    invalid_cols <- data_names[!valid_cols]
-    invalid_types <- col_types[!valid_cols]
-    stop_(c(
-      "Column{?s} {.var {invalid_cols}} of {.arg data} {?is/are} invalid:",
-      `x` = "Column type{?s} {.cls {invalid_types}} {?is/are} not supported."
-    ))
-  }
-  coerce_cols <- valid_cols & !factor_cols
-  if (any(coerce_cols)) {
-    for (i in which(coerce_cols)) {
-      data[,i] <- do.call(
-        paste0("as.", typeof(data[[i]])),
-        args = list(data[[i]])
-      )
-    }
+  stopifnot_(
+    all(valid_cols),
+    c(
+      "Column{?s} {.var {data_names[!valid_cols]}} of {.arg data}
+       {?is/are} invalid:",
+      `x` = "Column type{?s} {.cls {col_types[!valid_cols]}}
+             {?is/are} not supported."
+    )
+  )
+  coerce_cols <- which(valid_cols & !factor_cols)
+  for (i in coerce_cols) {
+    data[,i] <- do.call(
+      paste0("as.", typeof(data[[i]])),
+      args = list(data[[i]])
+    )
   }
   resp <- get_responses(dformula)
   ordered_factor_resp <- vapply(
@@ -704,23 +714,38 @@ prepare_lagged_response <- function(dformula, lag_map, max_lag, resp,
 #' @inheritParams dynamite
 #' @noRd
 fill_time <- function(data, group_var, time_var) {
-  if (is.factor(data[[time_var]])) {
-    warning_("Time index variable {.arg {time_var}} is a {.cls factor},
-      converting the variable to {.cls integer} based on its levels.")
-    data[[time_var]] <- as.integer(data[[time_var]])
-  }
+  groups <- !is.null(group_var)
   time <- sort(unique(data[[time_var]]))
   stopifnot_(
     length(time) > 1L,
     "There must be at least two time points in the data."
   )
+  if (groups) {
+    time_count <- data |>
+      dplyr::group_by(.data[[group_var]]) |>
+      dplyr::count(.data[[time_var]]) |>
+      dplyr::summarise(unique = all(.data[["n"]] == 1L))
+    d <- time_count[[group_var]][!time_count$unique]
+    stopifnot_(
+      all(time_count$unique),
+      c(
+        "Each time index must correspond to a single observation per group:",
+        `x` = "{cli::qty(d)}Group{?s} {.var {d}} of {.var {group_var}}
+               {cli::qty(d)}{?has/have} duplicate observations."
+      )
+    )
+  } else {
+    stopifnot_(
+      all(!duplicated(data[[time_var]])),
+      "Each time index must correspond to a single observation."
+    )
+  }
   time_ivals <- diff(time)
   time_scale <- min(diff(time))
   if (any(time_ivals[!is.na(time_ivals)] %% time_scale > 0)) {
     stop_("Observations must occur at regular time intervals.")
   } else {
     full_time <- seq(time[1L], time[length(time)], by = time_scale)
-    groups <- !is.null(group_var)
     if (groups) {
       time_groups <- data |>
         dplyr::group_by(.data[[group_var]]) |>

@@ -370,7 +370,7 @@ test_that("data expansion to full time scale works", {
     test_data_mis, "group", "time", debug = debug
   )
   expected_data <- test_data
-  expected_data[mis_rows, 3:ncol(test_data)] <- NA
+  expected_data[mis_rows, seq(3, ncol(test_data))] <- NA
   expected_data$x1 <- factor(expected_data$x1)
   expected_data <- droplevels(expected_data)
   data.table::setDT(expected_data, key = c("group", "time"))
@@ -385,7 +385,7 @@ test_that("data expansion to full time scale works", {
     data = test_data_single_mis, time = "time", debug = debug
   )
   expected_data_single <- test_data_single
-  expected_data_single[mis_rows_single, 2:ncol(test_data_single)] <- NA
+  expected_data_single[mis_rows_single, seq(2, ncol(test_data_single))] <- NA
   expected_data_single$x1 <- factor(expected_data_single$x1)
   expected_data_single <- droplevels(expected_data_single)
   data.table::setDT(expected_data_single, key = c("time"))

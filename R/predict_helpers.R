@@ -155,12 +155,31 @@ parse_newdata <- function(newdata, data, type,
 #' @inheritParams dynamite
 #' @noRd
 fill_time_predict <- function(data, group_var, time_var, time_scale) {
-
+  groups <- !is.null(group_var)
+  if (groups) {
+    time_count <- data |>
+      dplyr::group_by(.data[[group_var]]) |>
+      dplyr::count(.data[[time_var]]) |>
+      dplyr::summarise(unique = all(.data[["n"]] == 1L))
+    d <- time_count[[group_var]][!time_count$unique]
+    stopifnot_(
+      all(time_count$unique),
+      c(
+        "Each time index must correspond to a single observation per group:",
+        `x` = "{cli::qty(d)}Group{?s} {.var {d}} of {.var {group_var}}
+               {cli::qty(d)}{?has/have} duplicate observations."
+      )
+    )
+  } else {
+    stopifnot_(
+      all(!duplicated(data[[time_var]])),
+      "Each time index must correspond to a single observation."
+    )
+  }
   time <- sort(unique(data[[time_var]]))
   if (length(time) > 1L) {
     original_order <- colnames(data)
     full_time <- seq(time[1L], time[length(time)], by = time_scale)
-    groups <- !is.null(group_var)
     if (groups) {
       time_groups <- data |>
         dplyr::group_by(.data[[group_var]]) |>
@@ -174,8 +193,8 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
           warning_(c(
             "Time index variable {.var {time_var}} of {.arg newdata} has gaps:",
             `i` = "Filling the {.arg newdata} to regular time points. This will
-            lead to propagation of NA values if the model contains
-            exogenous predictors and {.arg impute} is {.val none}."
+                   lead to propagation of NA values if the model contains
+                   exogenous predictors and {.arg impute} is {.val none}."
           ))
         }
         full_data_template <- expand.grid(
@@ -192,8 +211,8 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
         warning_(c(
           "Time index variable {.var {time_var}} of {.arg newdata} has gaps:",
           `i` = "Filling the {.arg newdata} to regular time points. This will
-          lead to propagation of NA values if the model contains
-          exogenous predictors and {.arg impute} is {.val none}."
+                 lead to propagation of NA values if the model contains
+                 exogenous predictors and {.arg impute} is {.val none}."
         ))
         full_data_template <- data.frame(time = full_time)
         names(full_data_template) <- time_var
