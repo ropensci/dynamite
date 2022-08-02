@@ -104,22 +104,6 @@ full_model.matrix_predict <- function(formula_list, newdata, idx, u_names) {
   model_matrix[, u_names, drop = FALSE]
 }
 
-#' A fast version of full_model.matrix using formulas directly
-#'
-#' @param formula_list A `list` of `formula` objects
-#' @param newdata A `data.frame` containing the variables in the model
-#' @param u_names A character vector of unique predictor names
-#'
-#' @noRd
-full_model.matrix_fast <- function(formula_list, newdata, u_names) {
-  model_matrices <- lapply(formula_list, function(x) {
-    model.matrix.lm(x, newdata, na.action = na.pass)
-  })
-  model_matrices <- lapply(model_matrices, remove_intercept)
-  model_matrix <- do.call(cbind, model_matrices)
-  model_matrix[, u_names, drop = FALSE]
-}
-
 #' Remove Intercept from the Model Matrix
 #'
 #' @param x A model matrix from `model.matrix.lm`
