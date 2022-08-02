@@ -149,8 +149,6 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       "Argument {.arg type} contains unknown types."
     )
   }
-  all_time_points <- sort(unique(x$data[[x$time_var]]))
-  fixed <- x$stan$fixed
   values <- function(type, response) {
     if (type %in% c("lambda", "corr_nu")) {
       draws <- rstan::extract(
@@ -165,165 +163,20 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         permuted = FALSE
       )
     }
-    n_draws <- prod(dim(draws)[1L:2L])
     category <- attr(x$stan$responses[[response]], "levels")[-1L]
     if (is.null(category)) {
       category <- NA
     }
-    n_cat <- length(category)
-    d <- switch(type,
-      `lambda` = {
-        data.frame(
-          parameter = "lambda",
-          value = c(draws),
-          time = NA,
-          category = NA,
-          group = NA
-        )
-      },
-      `corr_nu` = {
-        resp <- get_responses(x$dformulas$stoch)
-        pairs <- apply(utils::combn(resp, 2), 2, paste, collapse = "_")
-        data.frame(
-          parameter = paste0("corr_nu_", pairs),
-          value = c(draws),
-          time = NA,
-          category = NA,
-          group = NA
-        )
-      },
-      `nu` = {
-        n_group <- dim(draws)[3L]
-        data.frame(
-          parameter = paste0("nu_", response),
-          value = c(draws),
-          time = NA,
-          category = NA,
-          group = rep(seq_len(n_group), each = n_draws)
-        )
-      },
-      `alpha` = {
-        if (x$stan$model_vars[[response]]$has_varying_intercept) {
-          time_points <- ifelse_(
-            include_fixed,
-            all_time_points,
-            all_time_points[seq.int(fixed + 1L, length(all_time_points))]
-          )
-          n_na <- include_fixed * fixed * n_draws
-          n_time <- length(time_points)
-          n_time2 <- n_time - include_fixed * fixed
-          do.call(dplyr::bind_rows, lapply(seq_len(n_cat), function(i) {
-            data.frame(
-              parameter = paste0("alpha_", response),
-              value = c(rep(NA, n_na),
-                c(draws[, , (i - 1L) * n_time2 + seq_len(n_time2)])),
-              time = rep(time_points, each = n_draws),
-              category = category[i],
-              group = NA
-            )
-          }))
-        } else {
-          data.frame(
-            parameter = paste0("alpha_", response),
-            value = c(draws),
-            time = NA,
-            category = rep(category, each = n_draws),
-            group = NA
-          )
-        }
-      },
-      `beta` = {
-        var_names <- paste0(
-          "beta_", response, "_",
-          names(x$stan$model_vars[[response]]$J_fixed)
-        )
-        n_vars <- length(var_names)
-        data.frame(
-          parameter = rep(var_names, each = n_draws),
-          value = c(draws),
-          time = NA,
-          category = rep(category, each = n_vars * n_draws),
-          group = NA
-        )
-      },
-      `delta` = {
-        var_names <- paste0(
-          "delta_", response, "_",
-          names(x$stan$model_vars[[response]]$J_varying)
-        )
-        n_vars <- length(var_names)
-        time_points <- ifelse_(
-          include_fixed,
-          all_time_points,
-          all_time_points[seq.int(fixed + 1L, length(all_time_points))]
-        )
-        n_na <- include_fixed * fixed * n_draws
-        n_time <- length(time_points)
-        n_time2 <- n_time - include_fixed * fixed
-        do.call(dplyr::bind_rows, lapply(seq_len(n_cat), function(j) {
-          do.call(dplyr::bind_rows,
-            lapply(seq_len(n_vars), function(i) {
-              idx <- (j - 1L) * n_time2 * n_vars +
-                (i - 1L) * n_time2 + seq_len(n_time2)
-              data.frame(
-                parameter = var_names[i],
-                value = c(rep(NA, n_na),
-                  c(draws[, , idx])),
-                time = rep(time_points, each = n_draws),
-                category = rep(category[j], each = n_time * n_draws),
-                group = NA
-              )
-            }))
-        }))
-      },
-      `tau` = {
-        var_names <- paste0(
-          "tau_", response, "_",
-          names(x$stan$model_vars[[response]]$J_varying)
-        )
-        data.frame(
-          parameter = rep(var_names, each = n_draws),
-          value = c(draws),
-          time = NA,
-          category = NA,
-          group = NA
-        )
-      },
-      `omega` = {
-        D <- x$stan$sampling_vars$D
-        var_names <- names(x$stan$model_vars[[response]]$J_varying)
-        k <- length(var_names)
-        data.frame(
-          parameter = rep(
-            paste0("omega_", rep(seq_len(D), each = n_cat * k), "_",
-              rep(var_names, each = n_cat)),
-            each = n_draws),
-          value = c(draws),
-          time = NA,
-          category = rep(category, each = n_draws),
-          group = NA
-        )
-      },
-      `omega_alpha` = {
-        D <- x$stan$sampling_vars$D
-        data.frame(
-          parameter = rep(paste0("omega_alpha_", seq_len(D)),
-            each = n_cat * n_draws),
-          value = c(draws),
-          time = NA,
-          category = rep(category, each = n_draws),
-          group = NA
-        )
-      },
-      { # default case for tau_alpha, sigma, phi and sigma_nu
-        data.frame(
-          parameter = paste0(type, "_", response),
-          value = c(draws),
-          time = NA,
-          category = NA,
-          group = NA
-        )
-      }
+    d <- do.call(
+      what = paste0("as_data_frame_", type),
+      args = list(
+        x = x,
+        draws = draws,
+        n_draws = prod(dim(draws)[1L:2L]),
+        response = response,
+        category = category,
+        include_fixed = include_fixed
+      )
     )
     d$.draw <- seq_len(nrow(d))
     d$.iteration <- seq_len(nrow(draws))
@@ -335,7 +188,8 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     out_all <- data.frame(type = "lambda", response = "", parameter = "lambda")
   }
   if ("corr_nu" %in% types) {
-    out_all <- rbind(out_all,
+    out_all <- rbind(
+      out_all,
       data.frame(type = "corr_nu", response = "", parameter = "corr_nu")
     )
   }
@@ -347,11 +201,15 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     dplyr::filter(any(grepl(paste0("^", .data$parameter),
       x$stanfit@sim$pars_oi))) |>
     dplyr::select(.data$response, .data$type)
-  stopifnot_(nrow(out) > 0L,
-    paste0("No parameters of type {.var ",
+  stopifnot_(
+    nrow(out) > 0L,
+    paste0(
+      "No parameters of type {.var ",
       paste(types, collapse = "}, {.var "),
       "} found for any of the response channels {.var ",
-      paste(responses, collapse = "}, {.var "), "}."))
+      paste(responses, collapse = "}, {.var "), "}."
+    )
+  )
   out <- out |>
     dplyr::mutate(value = list(values(.data$type, .data$response))) |>
     tidyr::unnest(cols = .data$value)
@@ -375,4 +233,230 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       dplyr::mutate(parameter = as.character(.data$parameter))
   }
   out
+}
+
+#' Construct a data frame for a parameter type from a dynamitefit object
+#'
+#' Arguments for all as_data_frame_type functions are documented here.
+#'
+#' @inheritParams as.data.frame.dynamitefit
+#' @param draws \[`list()`]\cr A Stan fit draws object.
+#' @param n_draws \[`integer(1)`]\cr Number of draws.
+#' @param response \[`character(1)`]\cr Response variable name.
+#' @param categories \[`character()`]\cr Levels of categorical responses.
+#' @noRd
+as_data_frame_default <- function(type, draws, response) {
+  data.frame(
+    parameter = paste0(type, "_", response),
+    value = c(draws),
+    time = NA,
+    category = NA,
+    group = NA
+  )
+}
+
+#' @describeIn as_data_frame_default Data frame of a "lambda" type parameter
+#' @noRd
+as_data_frame_lambda <- function(x, draws, ...) {
+  data.frame(
+    parameter = "lambda",
+    value = c(draws),
+    time = NA,
+    category = NA,
+    group = NA
+  )
+}
+
+#' @describeIn as_data_frame_default Data frame of a "corr_nu" type parameter
+#' @noRd
+as_data_frame_corr_nu <- function(x, draws, ...) {
+  resp <- get_responses(x$dformulas$stoch)
+  pairs <- apply(utils::combn(resp, 2), 2, paste, collapse = "_")
+  data.frame(
+    parameter = paste0("corr_nu_", pairs),
+    value = c(draws),
+    time = NA,
+    category = NA,
+    group = NA
+  )
+}
+
+#' @describeIn as_data_frame_default Data frame of a "nu" type parameter
+#' @noRd
+as_data_frame_nu <- function(x, draws, n_draws, response, ...) {
+  n_group <- dim(draws)[3L]
+  data.frame(
+    parameter = paste0("nu_", response),
+    value = c(draws),
+    time = NA,
+    category = NA,
+    group = rep(seq_len(n_group), each = n_draws)
+  )
+}
+
+#' @describeIn as_data_frame_default Data frame of a "alpha" type parameter
+#' @noRd
+as_data_frame_alpha <- function(x, draws, n_draws,
+                                response, category, include_fixed) {
+  n_cat <- length(category)
+  fixed <- x$stan$fixed
+  all_time_points <- sort(unique(x$data[[x$time_var]]))
+  if (x$stan$model_vars[[response]]$has_varying_intercept) {
+    time_points <- ifelse_(
+      include_fixed,
+      all_time_points,
+      all_time_points[seq.int(fixed + 1L, length(all_time_points))]
+    )
+    n_na <- include_fixed * fixed * n_draws
+    n_time <- length(time_points)
+    n_time2 <- n_time - include_fixed * fixed
+    do.call(dplyr::bind_rows, lapply(seq_len(n_cat), function(i) {
+      data.frame(
+        parameter = paste0("alpha_", response),
+        value = c(
+          rep(NA, n_na),
+          c(draws[, , (i - 1L) * n_time2 + seq_len(n_time2)])
+        ),
+        time = rep(time_points, each = n_draws),
+        category = category[i],
+        group = NA
+      )
+    }))
+  } else {
+    data.frame(
+      parameter = paste0("alpha_", response),
+      value = c(draws),
+      time = NA,
+      category = rep(category, each = n_draws),
+      group = NA
+    )
+  }
+}
+
+#' @describeIn as_data_frame_default Data frame of a "beta" type parameter
+#' @noRd
+as_data_frame_beta <- function(x, draws, n_draws, response, category, ...) {
+  var_names <- paste0(
+    "beta_", response, "_",
+    names(x$stan$model_vars[[response]]$J_fixed)
+  )
+  n_vars <- length(var_names)
+  data.frame(
+    parameter = rep(var_names, each = n_draws),
+    value = c(draws),
+    time = NA,
+    category = rep(category, each = n_vars * n_draws),
+    group = NA
+  )
+}
+
+#' @describeIn as_data_frame_default Data frame of a "delta" type parameter
+#' @noRd
+as_data_frame_delta <- function(x, draws, n_draws,
+                                response, category, include_fixed) {
+  n_cat <- length(category)
+  fixed <- x$stan$fixed
+  all_time_points <- sort(unique(x$data[[x$time_var]]))
+  var_names <- paste0(
+    "delta_", response, "_",
+    names(x$stan$model_vars[[response]]$J_varying)
+  )
+  n_vars <- length(var_names)
+  time_points <- ifelse_(
+    include_fixed,
+    all_time_points,
+    all_time_points[seq.int(fixed + 1L, length(all_time_points))]
+  )
+  n_na <- include_fixed * fixed * n_draws
+  n_time <- length(time_points)
+  n_time2 <- n_time - include_fixed * fixed
+  do.call(dplyr::bind_rows, lapply(seq_len(n_cat), function(j) {
+    do.call(dplyr::bind_rows, lapply(seq_len(n_vars), function(i) {
+      idx <- (j - 1L) * n_time2 * n_vars + (i - 1L) * n_time2 + seq_len(n_time2)
+      data.frame(
+        parameter = var_names[i],
+        value = c(
+          rep(NA, n_na),
+          c(draws[, , idx])
+        ),
+        time = rep(time_points, each = n_draws),
+        category = rep(category[j], each = n_time * n_draws),
+        group = NA
+      )
+    }))
+  }))
+}
+
+#' @describeIn as_data_frame_default Data frame of a "tau" type parameter
+#' @noRd
+as_data_frame_tau <- function(x, draws, n_draws, response, ...) {
+  var_names <- paste0(
+    "tau_", response, "_",
+    names(x$stan$model_vars[[response]]$J_varying)
+  )
+  data.frame(
+    parameter = rep(var_names, each = n_draws),
+    value = c(draws),
+    time = NA,
+    category = NA,
+    group = NA
+  )
+}
+
+#' @describeIn as_data_frame_default Data frame of a "omega" type parameter
+#' @noRd
+as_data_frame_omega <- function(x, draws, n_draws, response, category, ...) {
+  n_cat <- length(category)
+  D <- x$stan$sampling_vars$D
+  var_names <- names(x$stan$model_vars[[response]]$J_varying)
+  k <- length(var_names)
+  data.frame(
+    parameter = rep(
+      paste0("omega_", rep(seq_len(D), each = n_cat * k), "_",
+             rep(var_names, each = n_cat)),
+      each = n_draws),
+    value = c(draws),
+    time = NA,
+    category = rep(category, each = n_draws),
+    group = NA
+  )
+}
+
+#' @describeIn as_data_frame_default
+#'   Data frame of a "omega_alpha" type parameter
+#' @noRd
+as_data_frame_omega_alpha <- function(x, draws, n_draws, category, ...) {
+  n_cat <- length(category)
+  D <- x$stan$sampling_vars$D
+  data.frame(
+    parameter = rep(paste0("omega_alpha_", seq_len(D)), each = n_cat * n_draws),
+    value = c(draws),
+    time = NA,
+    category = rep(category, each = n_draws),
+    group = NA
+  )
+}
+
+#' @describeIn as_data_frame_default Data frame of a "tau_alpha" type parameter
+#' @noRd
+as_data_frame_tau_alpha <- function(draws, response, ...) {
+  as_data_frame_default("tau_alpha", draws, response)
+}
+
+#' @describeIn as_data_frame_default Data frame of a "sigma" type parameter
+#' @noRd
+as_data_frame_sigma <- function(draws, response, ...) {
+  as_data_frame_default("sigma", draws, response)
+}
+
+#' @describeIn as_data_frame_default Data frame of a "sigma_nu" type parameter
+#' @noRd
+as_data_frame_sigma_nu <- function(draws, response, ...) {
+  as_data_frame_default("sigma_nu", draws, response)
+}
+
+#' @describeIn as_data_frame_default Data frame of a "phi" type parameter
+#' @noRd
+as_data_frame_phi <- function(draws, response, ...) {
+  as_data_frame_default("phi", draws, response)
 }
