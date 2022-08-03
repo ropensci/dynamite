@@ -1,5 +1,7 @@
 #' @srrstats {G5.8,G5.8a, G5.8b, G5.8c, G5.8d} Edge conditions are tested.
 
+# Model edgecases ---------------------------------------------------------
+
 set.seed(0)
 timepoints <- 10
 individuals <- 5
@@ -213,6 +215,15 @@ test_that("lower bounds for tau are handled correctly", {
   )
 })
 
+test_that("manual fixed() terms work", {
+  expect_error(
+    obs_fixed <- obs(y1 ~ fixed(~x1 + lag(y2, 1)), family = "categorical"),
+    NA
+  )
+})
+
+# Lag edgecases -----------------------------------------------------------
+
 test_that("lags are parsed", {
   expect_error(
     obs_a <- obs(y1 ~ x1 + lag(y2, 1), family = "categorical") +
@@ -273,7 +284,6 @@ test_that("lags() and lag() give equal results", {
   )
 })
 
-
 test_that("higher order lags() and lag() give equal results", {
   f1 <- obs(y1 ~ x1, family = "categorical") +
     obs(y2 ~ x2, family = "gaussian") +
@@ -313,52 +323,7 @@ test_that("lags() is ignored if all lags already exist", {
   )
 })
 
-test_that("deterministic channels are parsed", {
-  expect_error(
-    obs_det <- obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1),
-                   family = "negbin") +
-      aux(numeric(d) ~ lag(d, 1) + lag(f, 2) + x2 + past(0)) +
-      aux(numeric(f) ~ lag(y5, 1) + x2 * 3 + 1 + past(0, 1)),
-    NA
-  )
-  expect_error(
-    dynamite(obs_det, test_data, "group", "time", debug = debug), NA
-  )
-})
-
-test_that("deterministic simultaneity is supported", {
-  expect_error(
-      obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1), family = "negbin") +
-      aux(numeric(d) ~ y5 + 3),
-    NA
-  )
-})
-
-test_that("deterministic types are supported", {
-  expect_error(
-    aux(factor(a) ~ factor(c(1,2,3), levels = c(1,2,3))) +
-    aux(numeric(b) ~ log(1.0)) +
-    aux(integer(c) ~ 1L) +
-    aux(logical(d) ~ TRUE),
-    NA
-  )
-})
-
-test_that("manual fixed() terms work", {
-  expect_error(
-    obs_fixed <- obs(y1 ~ fixed(~x1 + lag(y2, 1)), family = "categorical"),
-    NA
-  )
-})
-
-test_that("deterministic lags with zero observed lags is evaluated", {
-  obs_zerolag <-
-    obs(y2 ~ x1, family = "gaussian") +
-    aux(numeric(d) ~ abs(y2) + lag(d) + past(0.5))
-  expect_error(
-    dynamite(obs_zerolag, test_data, "group", "time", debug = debug), NA
-  )
-})
+# Data edgecases ----------------------------------------------------------
 
 test_that("data expansion to full time scale works", {
   set.seed(0)
@@ -366,13 +331,22 @@ test_that("data expansion to full time scale works", {
   mis_rows <- sample(2L:(nrow(test_data) - 1L), 10)
   test_data_mis <- test_data[-mis_rows, ]
   fit <- dynamite(
-    obs(y2 ~ x2, family = "gaussian"),
-    test_data_mis, "group", "time", debug = debug
+    obs(
+      y2 ~ x1 + x2 + x3 + y1 + y3 + y4 + y5 + y6 + y7 + y8 + y9,
+      family = "gaussian"
+    ),
+    data = test_data_mis,
+    group = "group",
+    time = "time",
+    verbose = FALSE,
+    debug = debug
   )
   expected_data <- test_data
   expected_data[mis_rows, seq(3, ncol(test_data))] <- NA
   expected_data$x1 <- factor(expected_data$x1)
   expected_data <- droplevels(expected_data)
+  expected_data$trials <- NULL
+  expected_data$offset <- NULL
   data.table::setDT(expected_data, key = c("group", "time"))
   expect_equal(fit$data, expected_data, ignore_attr = TRUE)
   # no groups
@@ -381,13 +355,21 @@ test_that("data expansion to full time scale works", {
   mis_rows_single <- c(3, 5, 6, 9)
   test_data_single_mis <- test_data_single[-mis_rows_single, ]
   fit_single <- dynamite(
-    obs(y2 ~ x2, family = "gaussian"),
-    data = test_data_single_mis, time = "time", debug = debug
+    obs(
+      y2 ~ x1 + x2 + x3 + y1 + y3 + y4 + y5 + y6 + y7 + y8 + y9,
+      family = "gaussian"
+    ),
+    data = test_data_single_mis,
+    time = "time",
+    verbose = FALSE,
+    debug = debug
   )
   expected_data_single <- test_data_single
   expected_data_single[mis_rows_single, seq(2, ncol(test_data_single))] <- NA
   expected_data_single$x1 <- factor(expected_data_single$x1)
   expected_data_single <- droplevels(expected_data_single)
+  expected_data_single$trials <- NULL
+  expected_data_single$offset <- NULL
   data.table::setDT(expected_data_single, key = c("time"))
   expect_equal(fit_single$data, expected_data_single, ignore_attr = TRUE)
 })
@@ -407,5 +389,59 @@ test_that("no groups data preparation works", {
   expect_error(
     dynamite(obs_all, test_data_single, time = "time", debug = debug),
     NA
+  )
+})
+
+
+# Deterministic edgecases -------------------------------------------------
+
+test_that("deterministic channels are parsed", {
+  expect_error(
+    obs_det <- obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1),
+                   family = "negbin") +
+      aux(numeric(d) ~ lag(d, 1) + lag(f, 2) + x2 | init(0)) +
+      aux(numeric(f) ~ lag(y5, 1) + x2 * 3 + 1 | init(c(0, 1))),
+    NA
+  )
+  expect_error(
+    dynamite(obs_det, test_data, "group", "time", debug = debug), NA
+  )
+})
+
+test_that("deterministic simultaneity is supported", {
+  expect_error(
+      obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1), family = "negbin") +
+      aux(numeric(d) ~ y5 + 3),
+    NA
+  )
+})
+
+test_that("deterministic types are supported", {
+  expect_error(
+    aux(factor(a) ~ factor(c(1, 2, 3), levels = c(1, 2, 3))) +
+    aux(numeric(b) ~ log(1.0)) +
+    aux(integer(c) ~ 1L) +
+    aux(logical(d) ~ TRUE),
+    NA
+  )
+})
+
+test_that("deterministic lags with zero observed lags is evaluated", {
+  obs_zerolag <-
+    obs(y2 ~ x1, family = "gaussian") +
+    aux(numeric(d) ~ abs(y2) + lag(d) | init(0.5))
+  expect_error(
+    dynamite(obs_zerolag, test_data, "group", "time", debug = debug), NA
+  )
+})
+
+test_that("past definition computed from data is supported", {
+  expect_error(
+    obs_past <- obs(y7 ~ lag(d) + lag(y7, 1), family = "exponential") +
+      aux(numeric(d) ~ lag(d, 1) + lag(y3, 1) | past(log(abs(x2)))),
+    NA
+  )
+  expect_error(
+    fit <- dynamite(obs_past, test_data, "group", "time", debug = debug), NA
   )
 })

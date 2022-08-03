@@ -105,6 +105,11 @@ dynamiteformula <- function(formula, family) {
     "Argument {.arg formula} must be a {.cls formula} object."
   )
   stopifnot_(
+    length(formula) == 3L,
+    "Argument {.arg formula} must include
+     a response and the model specification."
+  )
+  stopifnot_(
     checkmate::test_string(x = family, na.ok = FALSE),
     "Argument {.arg family} must be a single {.cls character} string."
   )
@@ -144,12 +149,6 @@ dynamiteformula_ <- function(formula, original, family) {
     out <- formula_past(formula)
     resp_parsed <- formula_response(deparse1(formula_lhs(formula)))
     out$specials$resp_type <- resp_parsed$type
-    if (!is.null(out$specials$past)) {
-      out$specials$past <- do.call(
-        what = paste0("as.", resp_parsed$type),
-        args = list(out$specials$past)
-      )
-    }
     out$response <- resp_parsed$resp
   } else {
     out <- formula_specials(formula)
@@ -335,7 +334,7 @@ which_stochastic <- function(x) {
 #' @param x A `dynamiteformula` object
 #' @noRd
 has_past <- function(x) {
-  vapply(x, function(y) length(y$specials$past) > 0L, logical(1L))
+  vapply(x, function(y) !is.null(y$specials$past), logical(1L))
 }
 
 #' Internal `+.dynamiteformula` For Model Construction

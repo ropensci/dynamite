@@ -151,9 +151,10 @@ dynamite <- function(dformula, data, group = NULL, time,
     checkmate::test_flag(x = verbose),
     "Argument {.arg verbose} must be a single {.cls logical} value."
   )
-  data <- parse_data(data, dformula, group, time, verbose)
-  dformulas <- parse_lags(data, dformula, group, time)
-  evaluate_deterministic(data, dformulas, group, time)
+  data <- parse_data(dformula, data, group, time, verbose)
+  dformula <- parse_past(dformula, data, group, time)
+  dformulas <- parse_lags(dformula, data, group, time)
+  evaluate_deterministic(dformulas, data, group, time)
   stan <- prepare_stan_data(
     data,
     dformulas$stoch,
@@ -297,13 +298,15 @@ is.dynamitefit <- function(x) {
 #' @srrstats {G2.12} List columns are not supported.
 #' @srrstats {G2.16} Non-finite values are not supported.
 #' @noRd
-parse_data <- function(data, dformula, group_var, time_var, verbose) {
+parse_data <- function(dformula, data, group_var, time_var, verbose) {
   data <- droplevels(data)
   data_names <- names(data)
   stopifnot_(
     !is.character(data[[time_var]]),
-    "Time index variable {.arg {time_var}} is of type {.cls character}, but
-    it should be of type {.cls numeric} or {.cls factor}."
+    c(
+      "Time index variable {.arg {time_var}} is of type {.cls character}:",
+      `i` = "It must be of type {.cls numeric} or {.cls factor}."
+    )
   )
   if (is.factor(data[[time_var]])) {
     if (verbose) {
@@ -368,8 +371,47 @@ parse_data <- function(data, dformula, group_var, time_var, verbose) {
   )
   data <- fill_time(data, group_var, time_var)
   data <- data.table::as.data.table(data)
+  drop_unused(dformula, data, group_var, time_var)
   data.table::setkeyv(data, c(group_var, time_var))
   data
+}
+
+#' Evaluate past value definitions of each deterministic channel
+#'
+#' @inheritParams parse_data
+#' @noRd
+parse_past <- function(dformula, data, group_var, time_var) {
+  past_defs <- which(has_past(dformula))
+  n_time <- length(unique(data[[time_var]]))
+  n_group <- ifelse_(
+    is.null(group_var),
+    1L,
+    length(unique(data[[group_var]]))
+  )
+  for (i in past_defs) {
+    y <- dformula[[i]]$response
+    past_eval <- try(data[, eval(dformula[[i]]$specials$past)], silent = TRUE)
+    stopifnot_(
+      !"try-error" %in% class(past_eval),
+      c(
+        "Unable to evaluate past definition of
+         deterministic channel {.var {y}}:",
+        `x` = attr(past_eval, "condition")$message
+      )
+    )
+    past_type <- dformula[[i]]$specials$past_type
+    past_len <- length(past_eval)
+    stopifnot_(
+      identical(past_type, "init") || identical(past_len, nrow(data)),
+      c(
+        "Incompatible past definition of deterministic channel {.var {y}}:",
+        `x` = "The definition evaluates to length {past_len} but the data has
+               {nrow(data)} rows."
+      )
+    )
+    dformula[[i]]$specials$past <- past_eval
+  }
+  dformula
 }
 
 #' Parse Lag and Lags Definitions of a `dynamiteformula` Object
@@ -377,7 +419,7 @@ parse_data <- function(data, dformula, group_var, time_var, verbose) {
 #' Also processes the checks on random component and adds it to dformulas.
 #' @inheritParams parse_data
 #' @noRd
-parse_lags <- function(data, dformula, group_var, time_var) {
+parse_lags <- function(dformula, data, group_var, time_var) {
   channels_det <- which_deterministic(dformula)
   channels_stoch <- which_stochastic(dformula)
   resp_all <- get_responses(dformula)
@@ -418,10 +460,19 @@ parse_lags <- function(data, dformula, group_var, time_var) {
   stoch_k <- lag_map |>
     dplyr::filter(.data$var %in% resp_stoch) |>
     dplyr::pull(.data$k)
-  if (length(stoch_k) > 0) {
-    max_lag <- max(max_lag, lag_map$k[stoch_k])
-  }
-  sl <- parse_singleton_lags(dformula, lag_map, max_lag, valid_resp)
+  max_lag <- ifelse_(
+    length(stoch_k) > 0L,
+    max(max_lag, stoch_k),
+    max_lag
+  )
+  sl <- parse_singleton_lags(
+    dformula,
+    data,
+    group_var,
+    lag_map,
+    max_lag,
+    valid_resp
+  )
   dformula <- sl$dformula
   dformula_det <- dformula[channels_det]
   dformula_lag_pred <- sl$channels[sl$pred]
@@ -445,29 +496,34 @@ parse_lags <- function(data, dformula, group_var, time_var) {
     # default, use all channels except categorical
     if (is.null(random_defs$responses)) {
       random_defs$responses <- valid_channels
-      stopifnot_(length(valid_channels) > 0,
-        c("No valid responses for random intercept component:",
+      stopifnot_(
+        length(valid_channels) > 0L,
+        c(
+          "No valid responses for random intercept component:",
           `x` = "Random intercepts are not supported for the categorical
                  family."
         )
       )
     } else {
       nu_channels <- random_defs$responses %in% resp_stoch
-      stopifnot_(all(nu_channels),
+      stopifnot_(
+        all(nu_channels),
         c("Argument {.arg responses} of {.fun random} contains variables
-          {.var {cs(resp_stoch[nu_channels])}}:",
+           {.var {cs(resp_stoch[nu_channels])}}:",
           `x` = "No such response variables in the model."
         )
       )
       nu_channels <- random_defs$responses %in% valid_channels
-      stopifnot_(all(nu_channels),
-        c("Random intercepts are not supported for the categorical family:",
+      stopifnot_(
+        all(nu_channels),
+        c(
+          "Random intercepts are not supported for the categorical family:",
           `x` = "Found random intercept declaration for categorical variable{?s}
-          {.var {cs(valid_channels[nu_channels])}}."
+                 {.var {cs(valid_channels[nu_channels])}}."
         )
       )
     }
-    if (length(random_defs$responses) < 2) {
+    if (length(random_defs$responses) < 2L) {
       random_defs$correlated <- FALSE
     }
   }
@@ -487,7 +543,7 @@ parse_lags <- function(data, dformula, group_var, time_var) {
 
 #' Parse a lags definition in a dynamiteformula
 #'
-#' @inheritParams parse_data
+#' @inheritParams parse_lags
 #' @param lag_map Output of `extract_lags`.
 #' @param resp_stoch A `character` of stochastic response variable names.
 #' @param channels_stoch
@@ -542,12 +598,14 @@ parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
 
 #' Parse manual lag terms in a dynamiteformula
 #'
-#' @inheritParams parse_global_lags
+#' @inheritParams parse_lags
+#' @param lag_map Output of `extract_lags`.
 #' @param max_lag Largest shift value of the model in any lag.
 #' @param valid_resp A `character` vector of valid LHS variables that can
 #'   appear in the model formulas.
 #' @noRd
-parse_singleton_lags <- function(dformula, lag_map, max_lag, valid_resp) {
+parse_singleton_lags <- function(dformula, data, group_var,
+                                 lag_map, max_lag, valid_resp) {
   n_lag <- nrow(lag_map)
   n_resp <- length(dformula)
   resp_all <- get_responses(dformula)
@@ -562,10 +620,8 @@ parse_singleton_lags <- function(dformula, lag_map, max_lag, valid_resp) {
     y <- prepare_lagged_response(
       dformula,
       lag_map,
-      max_lag,
       resp,
-      resp_all,
-      valid_resp
+      resp_all
     )
     if (y$deterministic) {
       dformula[[y$idx]]$specials$past <- NULL
@@ -579,13 +635,20 @@ parse_singleton_lags <- function(dformula, lag_map, max_lag, valid_resp) {
       pred[idx] <- !y$is_resp
       resp_lag[idx] <- resp
       spec <- NULL
-      if (y$is_resp && !is.null(y$past) && i > y$past_offset) {
-        y$past_idx <- y$past_idx + 1L
-        spec <- list(
-          past = y$past[y$past_idx],
-          past_offset = max_lag,
-          resp_type = y$type
-        )
+      if (y$is_resp && !is.null(y$past_val)) {
+        if (identical(y$past_type, "past")) {
+          past_out <- lag_(y$past_val, i)
+          past_out[data[, .I[seq_len(..i)], by = group_var]$V1] <- NA
+          spec <- list(
+            past = past_out,
+            resp_type = y$type
+          )
+        } else if (identical(y$past_type, "init")) {
+          spec <- list(
+            past = y$past_val[i],
+            resp_type = y$type
+          )
+        }
       }
       channels[[idx]] <- dynamitechannel(
         formula = as.formula(paste0(lhs, " ~ ", rhs)),
@@ -604,6 +667,46 @@ parse_singleton_lags <- function(dformula, lag_map, max_lag, valid_resp) {
     resp = resp_lag,
     stoch = stoch
   )
+}
+
+#' Prepare a response variable for a new lag channel
+#'
+#' @inheritParams parse_singleton_lags
+#' @param resp Name of the response variable being lagged
+#' @param resp_all All responses in the model as a `character` vector.
+#' @noRd
+prepare_lagged_response <- function(dformula, lag_map, resp, resp_all) {
+  n_resp <- length(dformula)
+  y <- list()
+  y_obs <- NULL
+  y_self <- NULL
+  y$resp <- resp
+  y$lag_idx <- which(lag_map$var == resp)
+  y$src <- lag_map$src[y$lag_idx]
+  y$idx <- which(resp_all == resp)
+  y$is_resp <- length(y$idx) > 0L
+  y$deterministic <- FALSE
+  if (y$is_resp) {
+    y$past_val <- dformula[[y$idx]]$specials$past
+    y$past_idx <- NULL
+    y$past_offset <- NULL
+    y$deterministic <- is_deterministic(dformula[[y$idx]]$family)
+    y$type <- dformula[[y$idx]]$specials$resp_type
+    y$past_type <- dformula[[y$idx]]$specials$past_type
+    if (y$deterministic && !identical(y$past_type, "past")) {
+      y_past_req <- max(lag_map$k[y$lag_idx])
+      y_past_len <- length(y$past_val)
+      stopifnot_(
+        y_past_len >= y_past_req,
+        c(
+          "Deterministic channel {.var {resp}} requires {y_past_req} initial
+           value{?s}:",
+          `x` = "You've supplied {cli::no(y_past_len)} initial value{?s//s}."
+        )
+      )
+    }
+  }
+  y
 }
 
 #' Parse and add lags defined via `lags`
@@ -658,55 +761,19 @@ parse_present_lags <- function(dformula, lag_map, y, i, lhs) {
   dformula
 }
 
-#' Prepare a response variable for a new lag channel
+#' Drop variables from the data that are not used by any model formula
 #'
-#' @inheritParams parse_singleton_lags
-#' @param resp Name of the response variable being lagged
-#' @param resp_all All responses in the model as a `character` vector.
+#' @inheritParams dynamite
 #' @noRd
-prepare_lagged_response <- function(dformula, lag_map, max_lag, resp,
-                                    resp_all, valid_resp) {
-  n_resp <- length(dformula)
-  y <- list()
-  y_obs <- NULL
-  y_self <- NULL
-  y$resp <- resp
-  y$lag_idx <- which(lag_map$var == resp)
-  y$src <- lag_map$src[y$lag_idx]
-  y$idx <- which(resp_all == resp)
-  y$is_resp <- length(y$idx) > 0L
-  y$deterministic <- FALSE
-  if (y$is_resp) {
-    y$past <- NULL
-    y$past_idx <- NULL
-    y$past_offset <- NULL
-    y$deterministic <- is_deterministic(dformula[[y$idx]]$family)
-    y$type <- dformula[[y$idx]]$specials$resp_type
-    if (y$deterministic) {
-      y_form <- deparse1(dformula[[y$idx]]$formula)
-      y$past <- dformula[[y$idx]]$specials$past
-      y_past_len <- length(y$past)
-      y_self <- max(extract_self_lags(y_form, resp))
-      y_max <- max(lag_map$k[y$lag_idx])
-      y_obs <- extract_lags(y_form) |>
-        dplyr::filter(.data$var %in% valid_resp) |>
-        dplyr::pull(.data$k)
-      y_obs <- ifelse_(length(y_obs) > 0L, max(y_obs), 0L)
-      y_req_past <- min(y_max - max_lag + max(y_self, y_obs), y_max)
-      y$past_offset <- y_max - y_req_past
-      stopifnot_(
-        y_past_len >= y_req_past,
-        c(
-          "Deterministic channel {.var {resp}} requires {y_req_past} initial
-           value{?s}:",
-          `x` = "You've supplied {cli::no(y_past_len)}
-                 initial value{?s//s}."
-        )
-      )
-      y$past_idx <- 0L
-    }
+drop_unused <- function(dformula, data, group_var, time_var) {
+  used <- c(group_var, time_var)
+  for (i in seq_along(dformula)) {
+    used <- c(used, all.vars(dformula[[i]]$original))
   }
-  y
+  unused <- setdiff(names(data), used)
+  for (u in unused) {
+    data[, (u) := NULL]
+  }
 }
 
 #' Adds NA gaps to fill in missing time points in a data frame
@@ -776,7 +843,7 @@ fill_time <- function(data, group_var, time_var) {
 #' @inheritParams parse_data
 #' @param dformulas The return object of [dynamite::parse_lags()].
 #' @noRd
-evaluate_deterministic <- function(data, dformulas, group_var, time_var) {
+evaluate_deterministic <- function(dformulas, data, group_var, time_var) {
   fixed <- as.integer(attr(dformulas$all, "max_lag"))
   n_time <- length(unique(data[[time_var]]))
   n_id <- ifelse_(is.null(group_var), 1L, length(unique(data[[group_var]])))

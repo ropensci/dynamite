@@ -43,6 +43,7 @@ check_newdata <- function(object, newdata) {
 
 #' Parse and Prepare New Data for Prediction
 #'
+#' @param dformula \[`dynamiteformula`]\cr The model formula.
 #' @param newdata \[`data.frame`]\cr The data to be used for prediction.
 #' @param data \[`data.frame`]\cr The original data used to fit the model.
 #' @param type \[`character`]\cr Either `"response"`, `"mean"`, `"link"`.
@@ -57,7 +58,7 @@ check_newdata <- function(object, newdata) {
 #'   if there is only one group.
 #' @param time_var \[`character(1)`]\cr Time index variable name.
 #' @noRd
-parse_newdata <- function(newdata, data, type,
+parse_newdata <- function(dformula, newdata, data, type,
                           eval_type, families_stoch, resp_stoch,
                           categories, new_levels, group_var, time_var) {
   if (!is.null(group_var)) {
@@ -124,6 +125,7 @@ parse_newdata <- function(newdata, data, type,
   newdata <- fill_time_predict(newdata, group_var, time_var,
     original_times[2L] - original_times[1L])
   data.table::setDT(newdata, key = c(group_var, time_var))
+  drop_unused(dformula, newdata, group_var, time_var)
   type <- ifelse_(
     identical(eval_type, "fitted"),
     "fitted",
@@ -248,7 +250,8 @@ impute_newdata <- function(newdata, impute, predictors, group_var) {
 #' @param fixed \[integer(1)]\cr The number of fixed time points.
 #' @noRd
 clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
-                           group_var, clear_names, fixed, global_fixed = TRUE) {
+                           group_var, time_var, clear_names,
+                           fixed, global_fixed = TRUE) {
 
   if (newdata_null && identical(eval_type, "predict")) {
     if (global_fixed) {

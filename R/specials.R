@@ -95,52 +95,57 @@ formula_specials <- function(x) {
   out
 }
 
+
 #' Process Formulas for Deterministic Channels and Get Past Value Definitions
 #'
 #' @param x A `formula` object.
 #' @noRd
 formula_past <- function(formula) {
   formula_str <- deparse1(formula)
-  form_comp <- regexpr(
-    pattern = paste0(
-      "^(?<resp>[^~]+) ~ (?<def>.+?)",
-      "(?: \\+ past\\((?<past>.+)\\)){0,1}$"
-    ),
-    text = formula_str,
-    perl = TRUE
+  rhs <- formula_rhs(formula)
+  past_def <- NULL
+  past_type <- NULL
+  if (length(rhs) > 1L && identical(deparse1(rhs[[1L]]), "|")) {
+    past_type <- deparse1(rhs[[3L]][[1L]])
+    stopifnot_(
+      past_type %in% c("init", "past"),
+      c(
+        "Invalid formula of a determnistic channel:",
+        `x` = "Unsupported definition {.var {past_type}}
+               on the right-hand side of {.fun |}."
+      )
+    )
+    stopifnot_(
+      identical(length(rhs[[3L]]), 2L),
+      "Invalid number of arguments supplied to {.fun {past_type}}
+       in {.var {formula_str}}."
+    )
+    past_def <- rhs[[3L]][[2L]]
+    formula[[3]] <- rhs[[2L]]
+  }
+  stopifnot_(
+    !grepl("fixed\\(.+\\)", formula_str, perl = TRUE),
+    c(
+      "The use of {.fun fixed} is not meaningful for deterministic channels:",
+      `x` = "Time-invariant definition was found in {.var {formula_str}}."
+    )
   )
-  start <- attr(form_comp, "capture.start")
-  end <- start + attr(form_comp, "capture.length") - 1
-  form_resp <- substr(formula_str, start[1], end[1])
-  form_def <- substr(formula_str, start[2], end[2])
-  if (grepl("past\\(", form_def, perl = TRUE)) {
-    stop_("Past values term must be the last term of the formula.")
-  }
-  form_past <- substr(formula_str, start[3], end[3])
-  form_both <- c(form_def, form_past)
-  if (any(grepl("fixed\\(.+\\)", form_both, perl = TRUE))) {
-    warning_(
-      "fixed() definitions of a deterministic channel
-       {.var {deparse1(formula_lhs(formula))}} will be ignored."
+  stopifnot_(
+    !grepl("varying\\(.+\\)", formula_str, perl = TRUE),
+    c(
+      "The use of {.fun varying} is not meaningful for deterministic channels:",
+      `x` = "Time-varying definition was found in {.var {formula_str}}."
     )
-  }
-  if (any(grepl("varying\\(.+\\)", form_both, perl = TRUE))) {
-    warning_(
-      "varying() definitions of a deterministic channel
-       {.var {deparse1(formula_lhs(formula))}} will be ignored."
-    )
-  }
-  past_str <- strsplit(form_past, ",")[[1]]
-  na_str <- grepl("NA", past_str)
-  past_str[na_str] <- NA
+  )
   list(
-    formula = as.formula(paste0(form_resp, "~", form_def)),
+    formula = formula,
     specials = list(
-      past = past_str,
+      past_type = past_type,
+      past = past_def,
       rank = Inf
     ),
-    fixed = integer(0),
-    varying = integer(0)
+    fixed = integer(0L),
+    varying = integer(0L)
   )
 }
 
@@ -178,7 +183,7 @@ formula_response <- function(x) {
 #' @noRd
 evaluate_specials <- function(formula, data) {
   lapply(seq_along(formula), function(i) {
-    if (length(formula[[i]]$specials) > 0) {
+    if (length(formula[[i]]$specials) > 0L) {
       out <- list()
       for (spec in formula_special_funs) {
         spec_formula <- formula[[i]]$specials[[spec]]
@@ -203,7 +208,7 @@ evaluate_specials <- function(formula, data) {
 get_special_term_indices <- function(special, vars, term_labels) {
   out <- integer(length(special))
   for (i in seq_along(special)) {
-    v <- deparse1(vars[[special[i] + 1]])
+    v <- deparse1(vars[[special[i] + 1L]])
     out[i] <- which(term_labels == v)
   }
   out

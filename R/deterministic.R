@@ -37,7 +37,7 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
   for (k in ro_det) {
     if (init[k]) {
       as_fun <- paste0("as.", dld[[k]]$specials$resp_type)
-      past <- do.call(as_fun, args = list(dld[[k]]$specials$past))
+      past <- do.call(as_fun, args = list(dld[[k]]$specials$past[1L]))
       data[ ,(dld[[k]]$response) := past]
       data[ ,(dld[[k]]$response) := NA]
     } else {
@@ -52,7 +52,7 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
       !"try-error" %in% class(res),
       c(
         "Unable to evaluate definitions of deterministic channels:",
-        `i` = "Some variables are possibly missing or incorrect."
+        `x` = attr(res, "condition")$message
       )
     )
   }
@@ -89,24 +89,22 @@ assign_initial_values <- function(data, dd, dlp, dld, dls,
   rhs_stoch <- get_predictors(dls)
   cl <- get_quoted(dd)
   for (k in ro_pred) {
-    data[, (dlp[[k]]$response) := lapply(.SD, lag_, k = 1L),
+    data[, (dlp[[k]]$response) := lapply(.SD, lag_, ..k),
          .SDcols = resp_pred[k], by = group_var]
   }
-  skip <- TRUE # skip lags at first index to avoid overriding initial values
-  for (i in seq_len(fixed + 1L)) {
-    idx <- idx + 1L
-    assign_lags(data, ro_det, idx, lhs_det, rhs_det, skip)
-    assign_lags(data, ro_stoch, idx, lhs_stoch, rhs_stoch, skip)
-    assign_deterministic(data, cl, idx)
-    skip <- FALSE
+  init <- which(has_past(dld))
+  for (i in init) {
+    as_fun <- paste0("as.", dld[[i]]$specials$resp_type)
+    past <- do.call(as_fun, args = list(dld[[i]]$specials$past))
+    data[ , (lhs_det[i]) := past]
   }
-  init <- has_past(dld)
-  for (i in seq_along(dld)) {
-    if (init[i]) {
-      as_fun <- paste0("as.", dld[[i]]$specials$resp_type)
-      past <- do.call(as_fun, args = list(dld[[i]]$specials$past))
-      data[idx, (lhs_det[i]) := past]
-    }
+  idx <- idx + 1L
+  assign_deterministic(data, cl, idx)
+  for (i in seq_len(fixed)) {
+    idx <- idx + 1L
+    assign_lags_init(data, ro_det, idx, lhs_det, rhs_det)
+    assign_lags_init(data, ro_stoch, idx, lhs_stoch, rhs_stoch)
+    assign_deterministic(data, cl, idx)
   }
   assign_deterministic(data, cl, idx)
 }
@@ -138,5 +136,18 @@ assign_lags <- function(data, ro, idx, lhs, rhs, skip = FALSE, offset = 1L) {
     for (k in ro) {
       set(data, i = idx, j = lhs[k], value = data[[rhs[k]]][idx - offset])
     }
+  }
+}
+
+#' Assign Values of Lagged Channels Without Overriding Initial Values
+#'
+#' @inheritParams assign_lags
+#' @noRd
+assign_lags_init <- function(data, ro, idx, lhs, rhs, offset = 1L) {
+  for (k in ro) {
+    val <- data[[rhs[k]]][idx - offset]
+    na_val <- is.na(val)
+    val[na_val] <- data[[lhs[k]]][idx][na_val]
+    set(data, i = idx, j = lhs[k], value = val)
   }
 }

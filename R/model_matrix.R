@@ -1,16 +1,16 @@
 #' Combine model.matrix objects of all formulas of a dynamiteformula into one
 #'
-#' @param dformula A `dynamiteformula` object
-#' @param data A `data.table` containing the variables in the model
-#'
+#' @inheritParams dynamite
 #' @srrstats {RE1.3, RE1.3a} `full_model.matrix` preserves relevant attributes.
 #' @noRd
-full_model.matrix <- function(dformula, data) {
+full_model.matrix <- function(dformula, data, verbose) {
   formulas <- get_formulas(dformula)
   model_matrices <- vector(mode = "list", length = length(formulas))
   for (i in seq_along(formulas)) {
     mm <- model.matrix.lm(formulas[[i]], data = data, na.action = na.pass)
-    test_collinearity(dformula[[i]]$resp, mm, data)
+    if (verbose) {
+      test_collinearity(dformula[[i]]$resp, mm, data)
+    }
     # Intercept is not part of X
     model_matrices[[i]] <- remove_intercept(mm)
   }

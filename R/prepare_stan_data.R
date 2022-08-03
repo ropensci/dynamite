@@ -39,7 +39,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
     cl
   })
   specials <- evaluate_specials(dformula, data)
-  model_matrix <- full_model.matrix(dformula, data)
+  model_matrix <- full_model.matrix(dformula, data, verbose)
   #resp_names <- colnames(responses)
   n_channels <- length(resp_names)
   # A list of variables for stan sampling without grouping by channel

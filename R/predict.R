@@ -129,6 +129,7 @@ predict_dynamitefit <- function(object, newdata, type, eval_type,
     new_levels
   )
   newdata <- parse_newdata(
+    object$dformulas$all,
     newdata,
     object$data,
     type,
@@ -162,6 +163,7 @@ predict_dynamitefit <- function(object, newdata, type, eval_type,
     resp_stoch,
     eval_type,
     group_var,
+    time_var,
     clear_names = c(resp_det, lhs_det, lhs_stoch),
     fixed
   )
@@ -182,8 +184,6 @@ predict_dynamitefit <- function(object, newdata, type, eval_type,
     group_var
   )
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
-  # temporary variable used here to avoid possible name conflicts / global
-  # variable issues within newdata
   newdata_time_idx <- newdata[, .I[newdata[[time_var]]]]
   idx <- which(newdata_time_idx == time[1L]) + (fixed - 1L) * n_draws
   time_offset <- which(unique(object$data[[time_var]]) == time[1L]) - 1L

@@ -80,7 +80,6 @@ test_that("scaling for gaussian model is linear in number of groups", {
   expect_equal(min(times / n), max(times / n), tolerance = 0.5)
 })
 
-
 test_that("scaling for gamma model is linear in number of time points", {
 
   skip_if_not(run_extended_tests)

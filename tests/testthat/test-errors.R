@@ -174,7 +174,6 @@ test_that("time-varying definitions without splines fails", {
   )
 })
 
-
 test_that("noncentered definition throws error if not of correct length", {
   expect_error(
     obs_all_alpha <- obs(y1 ~ -1 + varying(~ x1), family = "categorical") +
@@ -214,6 +213,7 @@ test_that("lb_tau definition throws error if not of correct length", {
     )
   )
 })
+
 # Formula specials errors -------------------------------------------------
 
 test_that("no intercept or predictors fails", {
@@ -226,17 +226,34 @@ test_that("no intercept or predictors fails", {
   )
 })
 
-test_that("past in the middle of formula fails", {
-  expect_error(
-    aux(y ~ x + past(0) + z),
-    "Past values term must be the last term of the formula\\."
-  )
-})
-
 test_that("binomial channel without a trials term fails", {
   expect_error(
     obs(y ~ x, family = "binomial"),
     "Formula for a binomial channel must include a trials term\\."
+  )
+})
+
+test_that("deterministic fixed fails", {
+  expect_error(
+    aux(numeric(y) ~ fixed(~ x)),
+    paste0(
+      "The use of `fixed\\(\\)` is not meaningful ",
+      "for deterministic channels:\n",
+      "x Time-invariant definition was found in ",
+      "`numeric\\(y\\) ~ fixed\\(~x\\)`\\."
+    )
+  )
+})
+
+test_that("deterministic varying fails", {
+  expect_error(
+    aux(numeric(y) ~ varying(~ x)),
+    paste0(
+      "The use of `varying\\(\\)` is not meaningful ",
+      "for deterministic channels:\n",
+      "x Time-varying definition was found in ",
+      "`numeric\\(y\\) ~ varying\\(~x\\)`\\."
+    )
   )
 })
 
@@ -339,7 +356,7 @@ test_that("invalid deterministic channel definition fails", {
              group = "x", time = "z"),
     paste0(
       "Unable to evaluate definitions of deterministic channels:\n",
-      "i Some variables are possibly missing or incorrect\\."
+      "x object 'w' not found"
     )
   )
 })
@@ -358,10 +375,12 @@ test_that("irregular time intervals fails", {
 
 test_that("deterministic insufficient initial values fails", {
   expect_error(
-    dynamite(dformula = aux(numeric(d) ~ lag(d, 1)),
-             data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
-             group = "x",
-             time = "z"),
+    dynamite(
+      dformula = aux(numeric(d) ~ lag(d, 1)),
+      data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
+      group = "x",
+      time = "z"
+    ),
     paste0(
       "Deterministic channel `d` requires 1 initial value:\n",
        "x You've supplied no initial values\\."
@@ -464,6 +483,7 @@ test_that("beta without (0, 1) values fails", {
     )
   )
 })
+
 # Lag errors --------------------------------------------------------------
 
 test_that("invalid lagged value definition fails", {
@@ -754,13 +774,17 @@ test_that("plot errors when the input is not a dynamitefit object", {
     "Argument `x` must be a <dynamitefit> object."
   )
 })
+
 test_that("plot errors when no type is defined", {
   expect_error(
     plot(categorical_example_fit),
-    paste0("Argument `type` is missing while it should be a single ",
-    "<character> string.")
+    paste0(
+      "Argument `type` is missing while it should be a single ",
+      "<character> string."
+    )
   )
 })
+
 test_that("plot errors when type is vector", {
   expect_error(
     plot(gaussian_example_fit, type = c("beta", "delta")),
@@ -771,16 +795,20 @@ test_that("plot errors when type is vector", {
 test_that("plot errors when no variable is found ", {
   expect_error(
     plot(categorical_example_fit, type = "delta"),
-    paste0("No parameters of type `delta` found for any of the response ",
-    "channels `x`, `y`.")
+    paste0(
+      "No parameters of type `delta` found for any of the response ",
+      "channels `x`, `y`."
+    )
   )
 })
+
 test_that("plot_deltas errors when the model does not contain deltas", {
   expect_error(
     plot_deltas(categorical_example_fit),
     "The model does not contain varying coefficients delta."
   )
 })
+
 test_that("plot_nus errors when the model does not contain nus", {
   expect_error(
     plot_nus(categorical_example_fit),
