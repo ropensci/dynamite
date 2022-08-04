@@ -46,8 +46,8 @@ required.
 `dynamite` also relies on some of the features of
 [Stan](https://mc-stan.org/)’s which are not yet available on the
 [CRAN](https://cran.r-project.org/) version of
-[rstan](https://CRAN.R-project.org/package=rstan) pacakge. Therefore you
-need to install latest `rstan` and `StanHeaders` packages as
+[rstan](https://CRAN.R-project.org/package=rstan) package. Therefore you
+need to install the latest `rstan` and `StanHeaders` packages:
 
 ``` r
 # run the next line if you already have rstan installed:
@@ -61,11 +61,11 @@ wiki](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started))
 
 Finally, a version `1.14.3` or newer of the
 [data.table](https://github.com/Rdatatable/data.table) package is
-required, which can be installed as
+required, which can be installed via:
 
 ``` r
 # run the next line if you do not have any version of the data.table installed:
-#install.packages("data.table")
+# install.packages("data.table")
 
 # install the latest development version:
 data.table::update.dev.pkg()
@@ -130,16 +130,15 @@ plot(gaussian_example_fit, type = "beta")
 
 <img src="man/figures/README-unnamed-chunk-10-1.png" width="80%" />
 
-Posterior predictive samples for first 4 groups (samples based on the
-posterior distribution of model parameters and observed data on first
-time point):
+Posterior predictive samples for the first 4 groups (samples based on
+the posterior distribution of model parameters and observed data on
+first time point):
 
 ``` r
 library(ggplot2)
-#> Warning: package 'ggplot2' was built under R version 4.1.3
 pred <- predict(gaussian_example_fit, n_draws = 50)
 pred |> dplyr::filter(id < 5) |> 
-  ggplot(aes(time, y_new, group = draw)) +
+  ggplot(aes(time, y_new, group = .draw)) +
   geom_line(alpha = 0.5) + 
   # observed values
   geom_line(aes(y = y), colour = "tomato") +
