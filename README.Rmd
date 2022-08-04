@@ -25,8 +25,7 @@ knitr::opts_chunk$set(
 [![Codecov test coverage](https://codecov.io/gh/santikka/dynamite/branch/main/graph/badge.svg)](https://app.codecov.io/gh/santikka/dynamite?branch=main)
 <!-- badges: end -->
 
-The `dynamite` [R](https://www.r-project.org/) package provides easy-to-use interface for Bayesian inference of complex panel (time series) data comprising of multiple measurements per multiple individuals measured in time. The main features 
-distinguishing the package and the underlying methodology from many other approaches are:
+The `dynamite` [R](https://www.r-project.org/) package provides easy-to-use interface for Bayesian inference of complex panel (time series) data comprising of multiple measurements per multiple individuals measured in time. The main features distinguishing the package and the underlying methodology from many other approaches are:
 
 * Support for both time-invariant and time-varying effects modeled via 
   B-splines.
@@ -69,7 +68,7 @@ which can be installed as
 
 ```{r, eval = FALSE}
 # run the next line if you do not have any version of the data.table installed:
-#install.packages("data.table")
+# install.packages("data.table")
 
 # install the latest development version:
 data.table::update.dev.pkg()
@@ -125,7 +124,8 @@ Traceplots and density plots:
 plot(gaussian_example_fit, type = "beta")
 ```
 
-Posterior predictive samples for first 4 groups (samples based on the posterior distribution of model parameters and observed data on first time point):
+Posterior predictive samples for first 4 groups (samples based on the posterior
+distribution of model parameters and observed data on first time point):
 ```{r}
 library(ggplot2)
 pred <- predict(gaussian_example_fit, n_draws = 50)

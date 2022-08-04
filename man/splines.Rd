@@ -57,7 +57,7 @@ for the time-varying coefficients \eqn{\delta}.
 }
 \examples{
 # Two channel model with varying effects, with explicit lower bounds for the
-# random walk prior standard deviations, with noncentered parameterisation
+# random walk prior standard deviations, with noncentered parameterization
 # for the first channel and centered for the second channel.
 obs(y ~ 1, family = "gaussian") + obs(x ~ 1, family = "gaussian") +
   lags(type = "varying") +

@@ -188,7 +188,7 @@ test_that("number of draws can be extraced", {
   gaussian_example_fit_null <- gaussian_example_fit
   gaussian_example_fit_null$stanfit <- NULL
   expect_message(
-    mcmc_diagnostics(gaussian_example_fit_null),
+    ndraws(gaussian_example_fit_null),
     "No Stan model fit is available\\."
   )
 })

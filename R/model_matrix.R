@@ -17,9 +17,11 @@ full_model.matrix <- function(dformula, data, verbose) {
   model_matrix <- do.call(cbind, model_matrices)
   u_names <- unique(colnames(model_matrix))
   model_matrix <- model_matrix[, u_names, drop = FALSE]
-  n_models <- length(model_matrices)
   y_names <- get_responses(dformula)
-  empty_list <- setNames(vector(mode = "list", length = n_models), y_names)
+  empty_list <- setNames(
+    vector(mode = "list", length = length(model_matrices)),
+    y_names
+  )
   attr(model_matrix, "assign") <- empty_list
   attr(model_matrix, "fixed") <- empty_list
   attr(model_matrix, "varying") <- empty_list

@@ -27,7 +27,7 @@ d <- dplyr::right_join(
 f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
   obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
-  aux(numeric(logp) ~ log(p + 1))
+  aux(numeric(logp) ~ log(p + 1) | init(0))
 
 # true values used for generating the data
 alpha_g <- 0

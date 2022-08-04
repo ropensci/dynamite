@@ -214,6 +214,18 @@ test_that("lb_tau definition throws error if not of correct length", {
   )
 })
 
+test_that("pure deterministic formula to dynamite fails", {
+  expect_error(
+    dynamite(
+      dformula = aux(numeric(d) ~ lag(d, 1)),
+      data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
+      group = "x",
+      time = "z"
+    ),
+    "Argument `dformula` must contain at least one stochastic channel\\."
+  )
+})
+
 # Formula specials errors -------------------------------------------------
 
 test_that("no intercept or predictors fails", {
@@ -351,7 +363,8 @@ test_that("missing predictor fails", {
 
 test_that("invalid deterministic channel definition fails", {
   expect_error(
-    dynamite(dformula = aux(integer(d) ~ 1 + w),
+    dynamite(dformula = obs(y ~ x, family = "gaussian") +
+               aux(integer(d) ~ 1 + w),
              data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
              group = "x", time = "z"),
     paste0(
@@ -370,21 +383,6 @@ test_that("irregular time intervals fails", {
   expect_error(
     dynamite(obs_test, data = data_irreg, group = "x", time = "t"),
     "Observations must occur at regular time intervals\\."
-  )
-})
-
-test_that("deterministic insufficient initial values fails", {
-  expect_error(
-    dynamite(
-      dformula = aux(numeric(d) ~ lag(d, 1)),
-      data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
-      group = "x",
-      time = "z"
-    ),
-    paste0(
-      "Deterministic channel `d` requires 1 initial value:\n",
-       "x You've supplied no initial values\\."
-    )
   )
 })
 

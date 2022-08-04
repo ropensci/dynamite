@@ -71,6 +71,24 @@ test_that("zero predictor warns", {
   )
 })
 
+test_that("deterministic channel insufficient initial values warns", {
+  expect_warning(
+    dynamite(
+      dformula = obs(y ~ x, family = "gaussian") + aux(numeric(d) ~ lag(d, 1)),
+      data = data.frame(y = c(1, 2, 1), x = c(1, 2, 3), z = c(1, 2, 3)),
+      group = NULL,
+      time = "z",
+      debug = list(no_compile = TRUE)
+    ),
+    paste0(
+      "Deterministic channel `d` has a maximum lag of 1 but ",
+      "you've supplied no initial values:\n",
+      "i This may result in NA values for `d`\\."
+    )
+  )
+})
+
+
 # Specials warnings -------------------------------------------------------
 
 test_that("multiple intercept warns", {

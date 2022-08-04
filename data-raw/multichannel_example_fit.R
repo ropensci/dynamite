@@ -11,7 +11,7 @@ f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
   aux(numeric(logp) ~ log(p + 1))
 
 multichannel_example_fit <- dynamite(f, multichannel_example, "id", "time",
-  chains = 1, cores = 1, iter = 2000, warmup = 1000, init = 0, refresh = 0,
-  thin = 5, save_warmup = FALSE)
+  verbose = FALSE, chains = 1, cores = 1, iter = 2000, warmup = 1000,
+  init = 0, refresh = 0, thin = 5, save_warmup = FALSE)
 
 usethis::use_data(multichannel_example_fit, overwrite = TRUE, compress = "xz")

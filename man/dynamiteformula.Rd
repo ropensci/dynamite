@@ -41,8 +41,8 @@ documentation on \code{NegBinomial2} in the Stan function reference manual.
 \item Bernoulli: \code{bernoulli} (logit-link).
 \item Binomial: \code{binomial} (logit-link).
 \item Exponential: \code{exponential} (log-link).
-\item Gamma: \code{gamma} (log-link, using mean and shape parameterisation).
-\item Beta: \code{beta} (logit-link, using mean and precision parameterisation).
+\item Gamma: \code{gamma} (log-link, using mean and shape parameterization).
+\item Beta: \code{beta} (logit-link, using mean and precision parameterization).
 }
 
 The models in the \pkg{dynamite} package are defined by combining the
