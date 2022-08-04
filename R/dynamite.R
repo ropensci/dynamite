@@ -31,8 +31,6 @@
 #' shape of the posterior), this can vary greatly.
 #'
 #' @param dformula \[`dynamiteformula`]\cr The model formula. See 'Details'.
-#'   Input `data` is converted to channel specific matrix representations
-#'   via [stats::model.matrix.lm].
 #' @param data
 #'   \[`data.frame`, `tibble::tibble`, or `data.table::data.table`]\cr
 #'   The data frame, tibble or a data.table containing the variables in the
@@ -40,9 +38,10 @@
 #'   `factor`. `character` columns will be converted to factors.
 #'   Unused factor levels will be dropped. The `data` can contain missing
 #'   values which will simply be ignored in the estimation in a case-wise
-#'   fashion (per time-point and per channel).
+#'   fashion (per time-point and per channel). Input `data` is converted to
+#'   channel specific matrix representations via [stats::model.matrix.lm].
 #' @param group \[`character(1)`]\cr A column name of `data` that denotes the
-#'   unique groups, or `NULL` corresponding to a scenario without grouping.
+#'   unique groups, or `NULL` corresponding to a scenario without any groups.
 #' @param time \[`character(1)`]\cr A column name of `data` that denotes the
 #'   time index of observations. If this variable is a factor, the integer
 #'   representation of its levels are used internally for defining the time
@@ -56,7 +55,8 @@
 #'   added to the return object. Additionally, values `no_compile = TRUE` and
 #'   `no_sampling = TRUE` can be used to skip the compilation of the Stan code
 #'   and sampling steps respectively. This can be useful for debugging when
-#'   combined with `model_code = TRUE`.
+#'   combined with `model_code = TRUE`, which adds the Stan model code to the
+#'   return object.
 #' @param ... Additional arguments to [rstan::sampling()].
 #' @export
 #' @examples
@@ -108,10 +108,10 @@
 #' @srrstats {BS4.0} Stan is referenced.
 #' @srrstats {BS5.0, BS5.1, BS5.2, BS5.3, BS5.5}
 #'   Available from the resulting `dynamitefit` object.
-#' @srrstats {RE5.0} The scalability of the algorithms are studied to some
-#' extent in the tests and note also here. As the computational algorithms are
-#' based on Stan, the  scalability of the package depends directly on the
-#' scalability of Stan.
+#' @srrstats {RE5.0} The scalability of the algorithms is studied to some
+#'   extent in the tests and noted here. As the computational algorithms are
+#'   based on Stan, the  scalability of the package depends directly on the
+#'   scalability of Stan.
 dynamite <- function(dformula, data, group = NULL, time,
                      priors = NULL, verbose = TRUE, debug = NULL, ...) {
   stopifnot_(
@@ -129,12 +129,10 @@ dynamite <- function(dformula, data, group = NULL, time,
     ),
     "Argument {.arg group} must be a single character string or {.code NULL}."
   )
-  if (!is.null(group)) {
-    stopifnot_(
-      !is.null(data[[group]]),
-      "Can't find grouping variable {.var {group}} in {.arg data}."
-    )
-  }
+  stopifnot_(
+    is.null(group) || !is.null(data[[group]]),
+    "Can't find grouping variable {.var {group}} in {.arg data}."
+  )
   stopifnot_(
     !missing(time),
     "Argument {.var time} is missing."
@@ -155,7 +153,7 @@ dynamite <- function(dformula, data, group = NULL, time,
   dformula <- parse_past(dformula, data, group, time)
   dformulas <- parse_lags(dformula, data, group, time)
   evaluate_deterministic(dformulas, data, group, time)
-  stan <- prepare_stan_data(
+  stan <- prepare_stan_input(
     data,
     dformulas$stoch,
     group,
@@ -236,31 +234,32 @@ formula.dynamitefit <- function(x, ...) {
   )
   lag_defs <- attr(x$dformulas$all, "lags")
   spline_defs <- attr(x$dformulas$stoch, "splines")
-  obs_str <- ""
-  aux_str <- ""
-  lags_str <- ""
-  spline_str <- ""
-  n_stoch <- length(ch_stoch)
-  if (n_stoch > 0L) {
+  obs_str <- ifelse_(
+    length(ch_stoch) > 0L,
     obs_str <- paste0(
       glue::glue(
         "obs({formula_str[ch_stoch]}, family = {family_str[ch_stoch]}())"
       ),
       collapse = " +\n"
-    )
-  }
-  n_det <- length(ch_det)
-  if (n_det > 0L) {
+    ),
+    ""
+  )
+  aux_str <- ifelse_(
+    length(ch_det) > 0L,
     aux_str <- paste0(
       glue::glue("aux({formula_str[ch_det]})"),
       collapse = " +\n"
-    )
-  }
-  if (!is.null(lag_defs)) {
-    lags_str <- glue::glue("lags(k = {lag_defs$k}, type = {lag_defs$type})")
-  }
-  if (!is.null(spline_defs)) {
-    spline_str <- paste0(
+    ),
+    ""
+  )
+  lags_str <- ifelse_(
+    !is.null(lag_defs),
+    glue::glue("lags(k = {lag_defs$k}, type = {lag_defs$type})"),
+    ""
+  )
+  spline_str <- ifelse_(
+    !is.null(spline_defs),
+    paste0(
       "splines(",
       "shrinkage = ", spline_defs$shrinkage, ", ",
       "override = FALSE, ",
@@ -268,8 +267,9 @@ formula.dynamitefit <- function(x, ...) {
       "degree = ", spline_defs$bs_opts$degree, ", ",
       "lb_tau = ", spline_defs$lb_tau, ", ",
       "noncentered = ",  spline_defs$noncentered, ")"
-    )
-  }
+    ),
+    ""
+  )
   str2lang(
     paste0(
       "{\n",
@@ -331,8 +331,7 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
              {?is/are} not supported."
     )
   )
-  coerce_cols <- which(valid_cols & !factor_cols)
-  for (i in coerce_cols) {
+  for (i in which(valid_cols & !factor_cols)) {
     data[,i] <- do.call(
       paste0("as.", typeof(data[[i]])),
       args = list(data[[i]])
@@ -366,8 +365,8 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
   )
   stopifnot_(
     all(finite_cols),
-    "Non-finite values in variable{?s} {.var {data_names[!finite_cols]}} of
-     {.arg data}."
+    "Non-finite values were found in variable{?s}
+     {.var {data_names[!finite_cols]}} of {.arg data}."
   )
   data <- fill_time(data, group_var, time_var)
   data <- data.table::as.data.table(data)
@@ -376,19 +375,14 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
   data
 }
 
-#' Evaluate past value definitions of each deterministic channel
+#' Evaluate Past Value Definitions of Each Deterministic Channel
 #'
 #' @inheritParams parse_data
 #' @noRd
 parse_past <- function(dformula, data, group_var, time_var) {
-  past_defs <- which(has_past(dformula))
   n_time <- length(unique(data[[time_var]]))
-  n_group <- ifelse_(
-    is.null(group_var),
-    1L,
-    length(unique(data[[group_var]]))
-  )
-  for (i in past_defs) {
+  n_group <- ifelse_(is.null(group_var), 1L, length(unique(data[[group_var]])))
+  for (i in which(has_past(dformula))) {
     y <- dformula[[i]]$response
     past_eval <- try(data[, eval(dformula[[i]]$specials$past)], silent = TRUE)
     stopifnot_(
@@ -470,7 +464,6 @@ parse_lags <- function(dformula, data, group_var, time_var) {
     data,
     group_var,
     lag_map,
-    max_lag,
     valid_resp
   )
   dformula <- sl$dformula
@@ -541,13 +534,15 @@ parse_lags <- function(dformula, data, group_var, time_var) {
   )
 }
 
-#' Parse a lags definition in a dynamiteformula
+#' Parse a `lags` Definition in a `dynamiteformula` Object
 #'
 #' @inheritParams parse_lags
-#' @param lag_map Output of `extract_lags`.
-#' @param resp_stoch A `character` of stochastic response variable names.
-#' @param channels_stoch
-#'   A `logical` vector indicating which channels are stochastic.
+#' @param lag_map \[`data.frame`]\cr
+#'   Output of `extract_lags`.
+#' @param resp_stoch \[`character()`]\cr
+#'   A vector of stochastic response variable names.
+#' @param channels_stoch \[`logical()`]\cr
+#'   A vector indicating which channels are stochastic.
 #' @noRd
 parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
   lags_def <- attr(dformula, "lags")
@@ -596,16 +591,16 @@ parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
   )
 }
 
-#' Parse manual lag terms in a dynamiteformula
+#' Parse Manual Lag Terms in a `dynamiteformula` Object
 #'
 #' @inheritParams parse_lags
-#' @param lag_map Output of `extract_lags`.
-#' @param max_lag Largest shift value of the model in any lag.
-#' @param valid_resp A `character` vector of valid LHS variables that can
-#'   appear in the model formulas.
+#' @param lag_map \[`data.frame`]\cr
+#'   Output of `extract_lags`.
+#' @param valid_resp \[`character()`]\cr
+#'   A vector of valid LHS variables that can  appear in the model formulas.
 #' @noRd
 parse_singleton_lags <- function(dformula, data, group_var,
-                                 lag_map, max_lag, valid_resp) {
+                                 lag_map, valid_resp) {
   n_lag <- nrow(lag_map)
   n_resp <- length(dformula)
   resp_all <- get_responses(dformula)
@@ -625,6 +620,7 @@ parse_singleton_lags <- function(dformula, data, group_var,
     )
     if (y$deterministic) {
       dformula[[y$idx]]$specials$past <- NULL
+      dformula[[y$idx]]$specials$past_type <- NULL
     }
     for (i in seq_along(y$lag_idx)) {
       idx <- idx + 1L
@@ -669,11 +665,11 @@ parse_singleton_lags <- function(dformula, data, group_var,
   )
 }
 
-#' Prepare a response variable for a new lag channel
+#' Prepare a New Channel for a Lagged Response
 #'
 #' @inheritParams parse_singleton_lags
-#' @param resp Name of the response variable being lagged
-#' @param resp_all All responses in the model as a `character` vector.
+#' @param resp \[`character(1)`]\cr Name of the response variable being lagged
+#' @param resp_all  \[`character()`]\cr Vector of all responses in the model.
 #' @noRd
 prepare_lagged_response <- function(dformula, lag_map, resp, resp_all) {
   n_resp <- length(dformula)
@@ -709,15 +705,15 @@ prepare_lagged_response <- function(dformula, lag_map, resp, resp_all) {
   y
 }
 
-#' Parse and add lags defined via `lags`
+#' Parse and Add Lags Defined via `lags` to a `dynamiteformula` Object
 #'
 #' @inheritParams parse_global_lags
-#' @param channels_stoch A `logical` vector indicating which channels are
-#'   stochastic.
-#' @param increment A `logical` vector indicating whether to add the new
-#'   lag term or not (e.g.,, whether it was already present or not).
-#' @param type Either `"fixed"` or `"varying"`.
-#' @param lhs A `character` vector of the new lagged variable names.
+#' @param channels_stoch \[`logical()`]\cr A vector indicating which channels
+#'   are stochastic.
+#' @param increment \[`logical()`]\cr  A vector indicating whether to add
+#'   the new lag term or not (e.g.,, whether it was already present or not).
+#' @param type \[`character(1)`]\cr Either `"fixed"` or `"varying"`.
+#' @param lhs \[`character()`]\cr A vector of the new lagged variable names.
 #' @noRd
 parse_new_lags <- function(dformula, channels_stoch, increment, type, lhs) {
   for (i in channels_stoch) {
@@ -739,12 +735,12 @@ parse_new_lags <- function(dformula, channels_stoch, increment, type, lhs) {
   dformula
 }
 
-#' Parse lags that actually appear in a dynamiteformula
+#' Parse Lags That Actually Appear in a `dynamiteformula` Object
 #'
 #' @inheritParams parse_singleton_lags
-#' @param y Output of `prepare_lagged_response`.
-#' @param i Row index of lag_map.
-#' @param lhs Name of the new lagged response.
+#' @param y \[`list()`]\cr Output of `prepare_lagged_response`.
+#' @param i \[`integer(1)`]\cr Row index of lag_map.
+#' @param lhs \[`character(1)`]\cr Name of the new lagged response.
 #' @noRd
 parse_present_lags <- function(dformula, lag_map, y, i, lhs) {
   k <- y$lag_idx[i]
@@ -761,33 +757,18 @@ parse_present_lags <- function(dformula, lag_map, y, i, lhs) {
   dformula
 }
 
-#' Drop variables from the data that are not used by any model formula
-#'
-#' @inheritParams dynamite
-#' @noRd
-drop_unused <- function(dformula, data, group_var, time_var) {
-  used <- c(group_var, time_var)
-  for (i in seq_along(dformula)) {
-    used <- c(used, all.vars(dformula[[i]]$original))
-  }
-  unused <- setdiff(names(data), used)
-  for (u in unused) {
-    data[, (u) := NULL]
-  }
-}
-
-#' Adds NA gaps to fill in missing time points in a data frame
+#' Adds NA Gaps to Fill In Missing Time Points in a Data Frame
 #'
 #' @inheritParams dynamite
 #' @noRd
 fill_time <- function(data, group_var, time_var) {
-  groups <- !is.null(group_var)
+  has_groups <- !is.null(group_var)
   time <- sort(unique(data[[time_var]]))
   stopifnot_(
     length(time) > 1L,
     "There must be at least two time points in the data."
   )
-  if (groups) {
+  if (has_groups) {
     time_count <- data |>
       dplyr::group_by(.data[[group_var]]) |>
       dplyr::count(.data[[time_var]]) |>
@@ -813,7 +794,7 @@ fill_time <- function(data, group_var, time_var) {
     stop_("Observations must occur at regular time intervals.")
   } else {
     full_time <- seq(time[1L], time[length(time)], by = time_scale)
-    if (groups) {
+    if (has_groups) {
       time_groups <- data |>
         dplyr::group_by(.data[[group_var]]) |>
         dplyr::summarise(has_missing = !identical(.data[[time_var]], full_time))
@@ -836,42 +817,4 @@ fill_time <- function(data, group_var, time_var) {
     }
   }
   data
-}
-
-#' Evaluate Definitions of Deterministic Channels
-#'
-#' @inheritParams parse_data
-#' @param dformulas The return object of [dynamite::parse_lags()].
-#' @noRd
-evaluate_deterministic <- function(dformulas, data, group_var, time_var) {
-  fixed <- as.integer(attr(dformulas$all, "max_lag"))
-  n_time <- length(unique(data[[time_var]]))
-  n_id <- ifelse_(is.null(group_var), 1L, length(unique(data[[group_var]])))
-  dd <- dformulas$det
-  dlp <- dformulas$lag_pred
-  dld <- dformulas$lag_det
-  dls <- dformulas$lag_stoch
-  cl <- get_quoted(dd)
-  initialize_deterministic(data, dd, dlp, dld, dls)
-  idx <- seq.int(1L, n_time * n_id, by = n_time) - 1L
-  assign_initial_values(data, dd, dlp, dld, dls, idx, fixed, group_var)
-  if (n_time > fixed + 1L) {
-    ro_stoch <- seq_len(length(dls))
-    ro_det <- ifelse_(
-      is.null(attr(dld, "rank_order")),
-      integer(0L),
-      attr(dld, "rank_order")
-    )
-    lhs_det <- get_responses(dld)
-    rhs_det <- get_predictors(dld)
-    lhs_stoch <- get_responses(dls)
-    rhs_stoch <- get_predictors(dls)
-    idx <- idx + fixed + 1L
-    for (i in seq.int(fixed + 2L, n_time)) {
-      idx <- idx + 1L
-      assign_lags(data, ro_det, idx, lhs_det, rhs_det)
-      assign_lags(data, ro_stoch, idx, lhs_stoch, rhs_stoch)
-      assign_deterministic(data, cl, idx)
-    }
-  }
 }

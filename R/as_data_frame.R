@@ -1,10 +1,10 @@
-#' Extract Samples From the `dynamitefit` Object as a Data Frame.
+#' Extract Samples From the `dynamitefit` Object as a Data Frame
 #'
-#' You can use the arguments `responses` and `types` to extract only a subset
+#' The arguments `responses` and `types` can be used to extract only a subset
 #' of the model parameters (i.e., only certain types of parameters related to a
 #' certain response variable).
 #'
-#' Potential values for the types argument are
+#' Potential values for the `types` argument are:
 #'  * `alpha` Intercept terms (time-invariant or time-varying).
 #'  * `beta` Time-invariant regression coefficients.
 #'  * `delta` Time-varying regression coefficients.
@@ -26,7 +26,7 @@
 #' @param optional Ignored.
 #' @param responses  \[`character()`]\cr Response(s) for which the samples
 #'   should be extracted. Possible options are elements of
-#'   `unique(x$priors$response)`, and the default is this whole vector.
+#'   `unique(x$priors$response)`, and the default is this entire vector.
 #' @param types \[`character()`]\cr Type(s) of the parameters for which the
 #'   samples should be extracted. See details of possible values. Default is
 #'   all values listed in details except spline coefficients `omega` and
@@ -235,7 +235,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
   out
 }
 
-#' Construct a data frame for a parameter type from a dynamitefit object
+#' Construct a Data Frame for a Parameter Type from a `dynamitefit` Object
 #'
 #' Arguments for all as_data_frame_type functions are documented here.
 #'
@@ -255,7 +255,7 @@ as_data_frame_default <- function(type, draws, response) {
   )
 }
 
-#' @describeIn as_data_frame_default Data frame of a "lambda" type parameter
+#' @describeIn as_data_frame_default Data Frame for a "lambda" Parameter
 #' @noRd
 as_data_frame_lambda <- function(x, draws, ...) {
   data.frame(
@@ -267,11 +267,11 @@ as_data_frame_lambda <- function(x, draws, ...) {
   )
 }
 
-#' @describeIn as_data_frame_default Data frame of a "corr_nu" type parameter
+#' @describeIn as_data_frame_default Data Frame for a "corr_nu" Parameter
 #' @noRd
 as_data_frame_corr_nu <- function(x, draws, ...) {
   resp <- get_responses(x$dformulas$stoch)
-  pairs <- apply(utils::combn(resp, 2), 2, paste, collapse = "_")
+  pairs <- apply(utils::combn(resp, 2L), 2L, paste, collapse = "_")
   data.frame(
     parameter = paste0("corr_nu_", pairs),
     value = c(draws),
@@ -281,7 +281,7 @@ as_data_frame_corr_nu <- function(x, draws, ...) {
   )
 }
 
-#' @describeIn as_data_frame_default Data frame of a "nu" type parameter
+#' @describeIn as_data_frame_default Data Frame for a "nu" Parameter
 #' @noRd
 as_data_frame_nu <- function(x, draws, n_draws, response, ...) {
   n_group <- dim(draws)[3L]
@@ -294,7 +294,7 @@ as_data_frame_nu <- function(x, draws, n_draws, response, ...) {
   )
 }
 
-#' @describeIn as_data_frame_default Data frame of a "alpha" type parameter
+#' @describeIn as_data_frame_default Data Frame for a "alpha" Parameter
 #' @noRd
 as_data_frame_alpha <- function(x, draws, n_draws,
                                 response, category, include_fixed) {
@@ -333,7 +333,7 @@ as_data_frame_alpha <- function(x, draws, n_draws,
   }
 }
 
-#' @describeIn as_data_frame_default Data frame of a "beta" type parameter
+#' @describeIn as_data_frame_default Data Frame for a "beta" Parameter
 #' @noRd
 as_data_frame_beta <- function(x, draws, n_draws, response, category, ...) {
   var_names <- paste0(
@@ -350,7 +350,7 @@ as_data_frame_beta <- function(x, draws, n_draws, response, category, ...) {
   )
 }
 
-#' @describeIn as_data_frame_default Data frame of a "delta" type parameter
+#' @describeIn as_data_frame_default Data Frame for a "delta" Parameter
 #' @noRd
 as_data_frame_delta <- function(x, draws, n_draws,
                                 response, category, include_fixed) {
@@ -387,7 +387,7 @@ as_data_frame_delta <- function(x, draws, n_draws,
   }))
 }
 
-#' @describeIn as_data_frame_default Data frame of a "tau" type parameter
+#' @describeIn as_data_frame_default Data Frame for a "tau" Parameter
 #' @noRd
 as_data_frame_tau <- function(x, draws, n_draws, response, ...) {
   var_names <- paste0(
@@ -403,7 +403,7 @@ as_data_frame_tau <- function(x, draws, n_draws, response, ...) {
   )
 }
 
-#' @describeIn as_data_frame_default Data frame of a "omega" type parameter
+#' @describeIn as_data_frame_default Data Frame for a "omega" Parameter
 #' @noRd
 as_data_frame_omega <- function(x, draws, n_draws, response, category, ...) {
   n_cat <- length(category)
@@ -422,8 +422,7 @@ as_data_frame_omega <- function(x, draws, n_draws, response, category, ...) {
   )
 }
 
-#' @describeIn as_data_frame_default
-#'   Data frame of a "omega_alpha" type parameter
+#' @describeIn as_data_frame_default Data Frame for a "omega_alpha" Parameter
 #' @noRd
 as_data_frame_omega_alpha <- function(x, draws, n_draws, category, ...) {
   n_cat <- length(category)
@@ -437,25 +436,25 @@ as_data_frame_omega_alpha <- function(x, draws, n_draws, category, ...) {
   )
 }
 
-#' @describeIn as_data_frame_default Data frame of a "tau_alpha" type parameter
+#' @describeIn as_data_frame_default Data Frame for a "tau_alpha" Parameter
 #' @noRd
 as_data_frame_tau_alpha <- function(draws, response, ...) {
   as_data_frame_default("tau_alpha", draws, response)
 }
 
-#' @describeIn as_data_frame_default Data frame of a "sigma" type parameter
+#' @describeIn as_data_frame_default Data Frame for a "sigma" Parameter
 #' @noRd
 as_data_frame_sigma <- function(draws, response, ...) {
   as_data_frame_default("sigma", draws, response)
 }
 
-#' @describeIn as_data_frame_default Data frame of a "sigma_nu" type parameter
+#' @describeIn as_data_frame_default Data Frame for a "sigma_nu" Parameter
 #' @noRd
 as_data_frame_sigma_nu <- function(draws, response, ...) {
   as_data_frame_default("sigma_nu", draws, response)
 }
 
-#' @describeIn as_data_frame_default Data frame of a "phi" type parameter
+#' @describeIn as_data_frame_default Data Frame for a "phi" Pparameter
 #' @noRd
 as_data_frame_phi <- function(draws, response, ...) {
   as_data_frame_default("phi", draws, response)

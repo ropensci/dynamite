@@ -1,4 +1,4 @@
-#' Combine model.matrix objects of all formulas of a dynamiteformula into one
+#' Combine `model.matrix` Objects of All Formulas of a `dynamiteformula`
 #'
 #' @inheritParams dynamite
 #' @srrstats {RE1.3, RE1.3a} `full_model.matrix` preserves relevant attributes.
@@ -36,11 +36,11 @@ full_model.matrix <- function(dformula, data, verbose) {
   model_matrix
 }
 
-#' Test collinearity within a channel
+#' Test Collinearity Within a Channel
 #'
-#' @param y The response variable of the channel
-#' @param mm Model matrix based on the channel model formula
-#' @param data A `data.table` containing the variables in the model
+#' @param y \[`character(1)`]\cr The response variable of the channel.
+#' @param mm \[`matrix`]\cr Model matrix based on the channel model formula.
+#' @param data \[`data.table`]\cr Data containing the variables in the model.
 #' @srrstats {BS3.1, BS3.2, RE2.4, RE2.4a, RE2.4b} Collinearity is tested.
 #' @noRd
 test_collinearity <- function(y, mm, data) {
@@ -86,13 +86,13 @@ test_collinearity <- function(y, mm, data) {
   }
 }
 
-#' A streamlined version of full_model.matrix for prediction
+#' A streamlined Version of `full_model.matrix` for Prediction
 #'
-#' @param formula_list A `list` of `formula` objects
-#' @param newdata A `data.frame` containing the variables in the model
-#' @param idx An `integer` vector of row indices to subset by
-#' @param u_names A `character` vector of unique column names of the resulting
-#'   matrix
+#' @param formula_list \[`list`]\cr A `list` of `formula` objects.
+#' @param newdata \[`data.table`]\cr Data containing the variables in the model.
+#' @param idx \[`integer()`]\cr A vector of row indices to subset with.
+#' @param u_names \[`character()`]\cr A vector of unique column names of
+#'   the resulting matrix.
 #' @noRd
 full_model.matrix_predict <- function(formula_list, newdata, idx, u_names) {
   newdata_sub <- newdata[idx, ]

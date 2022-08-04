@@ -2,7 +2,7 @@
 % Please edit documentation in R/nobs.R
 \name{nobs.dynamitefit}
 \alias{nobs.dynamitefit}
-\title{Extract the Number of Observations used to fit a Dynamite Model}
+\title{Extract the Number of Observations Used to Fit a Dynamite Model}
 \usage{
 \method{nobs}{dynamitefit}(object, ...)
 }
@@ -12,13 +12,13 @@
 \item{...}{Not used.}
 }
 \value{
-Total number of observations as integer.
+Total number of observations as an integer.
 Missing values are not accounted for as the
 number of complete cases may vary across
-channels, time points and groups.
+channels, time points, and groups.
 }
 \description{
-Extract the Number of Observations used to fit a Dynamite Model
+Extract the Number of Observations Used to Fit a Dynamite Model
 }
 \examples{
 nobs(gaussian_example_fit)

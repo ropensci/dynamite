@@ -10,7 +10,7 @@
 #' of the model parameters (i.e., only certain types of parameters related to a
 #' certain response variable).
 #'
-#' Potential values for the types argument are
+#' Potential values for the types argument are:
 #'  * `alpha` Intercept terms (time-invariant or time-varying).
 #'  * `beta` Time-invariant regression coefficients.
 #'  * `delta` Time-varying regression coefficients.

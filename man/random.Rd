@@ -2,7 +2,7 @@
 % Please edit documentation in R/random.R
 \name{random}
 \alias{random}
-\title{Define the Random Intercepts for the Dynamite Model.}
+\title{Define Random Intercepts for the Dynamite Model.}
 \usage{
 random(responses = NULL, correlated = TRUE)
 }
@@ -12,8 +12,8 @@ random intercepts should be defined. Default is all responses defined with
 \code{obs}.}
 
 \item{correlated}{[\code{logical(1)}]\cr If \code{TRUE} (the default), correlations of
-intercepts within a group (i.e. between responses) are modeled so that
-the intercept follow a multivariate normal distribution.}
+intercepts within a group (i.e., between responses) are modeled so that
+the intercepts follow a multivariate normal distribution.}
 }
 \value{
 An object of class \code{random}.

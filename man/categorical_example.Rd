@@ -3,7 +3,7 @@
 \docType{data}
 \name{categorical_example}
 \alias{categorical_example}
-\title{Simulated Multivariate Panel Data}
+\title{Simulated Categorical Multivariate Panel Data}
 \format{
 A data frame with 2000 rows and 5 variables:
 \describe{

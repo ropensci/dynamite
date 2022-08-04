@@ -2,7 +2,7 @@
 % Please edit documentation in R/as_data_frame.R
 \name{as.data.frame.dynamitefit}
 \alias{as.data.frame.dynamitefit}
-\title{Extract Samples From the \code{dynamitefit} Object as a Data Frame.}
+\title{Extract Samples From the \code{dynamitefit} Object as a Data Frame}
 \usage{
 \method{as.data.frame}{dynamitefit}(
   x,
@@ -25,7 +25,7 @@
 
 \item{responses}{[\code{character()}]\cr Response(s) for which the samples
 should be extracted. Possible options are elements of
-\code{unique(x$priors$response)}, and the default is this whole vector.}
+\code{unique(x$priors$response)}, and the default is this entire vector.}
 
 \item{types}{[\code{character()}]\cr Type(s) of the parameters for which the
 samples should be extracted. See details of possible values. Default is
@@ -53,12 +53,12 @@ model parameters in a long format. For a wide format, see
 \code{\link[=as_draws]{as_draws()}}.
 }
 \description{
-You can use the arguments \code{responses} and \code{types} to extract only a subset
+The arguments \code{responses} and \code{types} can be used to extract only a subset
 of the model parameters (i.e., only certain types of parameters related to a
 certain response variable).
 }
 \details{
-Potential values for the types argument are
+Potential values for the \code{types} argument are:
 \itemize{
 \item \code{alpha} Intercept terms (time-invariant or time-varying).
 \item \code{beta} Time-invariant regression coefficients.

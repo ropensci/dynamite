@@ -23,8 +23,8 @@ gaussian_example.R}
 gaussian_example
 }
 \description{
-A simulated data containing gaussian response variables with two covariates.
-The data was generated from a model with time-varying effects of
+Simulated data containing gaussian response variables with two covariates.
+The dataset was generated from a model with time-varying effects of
 covariate x and the lagged value of the response variable, time-varying
 intercept, and time-invariant effect of covariate z. The time-varying
 coefficients vary according to a spline with 20 degrees of freedom.

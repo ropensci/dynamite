@@ -13,9 +13,7 @@
 If \code{NULL} (default), the data used in model estimation is used for
 predictions as well,
 There should be no new time points that were not present in the data that
-were used to fit the model, and now new group levels can be included. Note
-that as \code{newdata} is expanded with predictions, it can be beneficial
-in terms of memory usage to first remove redundant columns from \code{newdata}.}
+were used to fit the model, and no new group levels can be included.}
 
 \item{n_draws}{[\code{integer(1)}]\cr Number of posterior samples to use,
 default is \code{NULL} which uses all samples.}
@@ -24,7 +22,7 @@ default is \code{NULL} which uses all samples.}
 }
 \description{
 Note that these are conditional on the observed data in \code{newdata},
-i.e. these are one-step estimates E(y_t|y_t-1,...,y_1). Often the
+i.e., these are one-step estimates E(y_t|y_t-1,...,y_1). Often
 \link{predict.dynamitefit} is what you want.
 }
 \examples{

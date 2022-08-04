@@ -1,4 +1,4 @@
-#' Predict method for a Bayesian Time-Varying Coefficients Model
+#' Predict Method for a Dynamite Model
 #'
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param newdata \[`data.frame`]\cr Data used in predictions. Predictions are
@@ -91,7 +91,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
   )
 }
 
-#' Internal function for predict/fitted methods
+#' Internal Function for Both Predict and Fitted Methods
 #'
 #' @inheritParams predict.dynamitefit
 #' @param eval_type \[`character(1)`]\cr Either `"predict"` or `"fitted"`.
@@ -124,7 +124,7 @@ predict_dynamitefit <- function(object, newdata, type, eval_type,
   predictors <- setdiff(colnames(newdata),
     c(resp_stoch, lhs_stoch, group_var, time_var))
   new_levels <- ifelse_(
-    length(attr(object$dformulas$stoch, "random")$responses) == 0,
+    identical(length(attr(object$dformulas$stoch, "random")$responses), 0L),
     "ignore",
     new_levels
   )
@@ -142,21 +142,15 @@ predict_dynamitefit <- function(object, newdata, type, eval_type,
     time_var
   )
   impute_newdata(newdata, impute, predictors, group_var)
-  groups <- !is.null(group_var)
-  group <- onlyif(groups, unique(newdata[[group_var]]))
-  n_id <- ifelse_(groups, length(group), 1L)
   time <- unique(newdata[[time_var]])
   cl <- get_quoted(object$dformulas$det)
   n_time <- length(time)
   n_new <- nrow(newdata)
-  n_det <- length(resp_det)
-  n_lag_det <- length(lhs_det)
-  n_lag_stoch <- length(lhs_stoch)
   ro_det <- onlyif(
-    n_lag_det > 0L,
+    length(lhs_det) > 0L,
     attr(object$dformulas$lag_det, "rank_order")
   )
-  ro_stoch <- seq_len(n_lag_stoch)
+  ro_stoch <- seq_len(length(lhs_stoch))
   clear_nonfixed(
     newdata,
     newdata_null,
@@ -178,7 +172,6 @@ predict_dynamitefit <- function(object, newdata, type, eval_type,
     type,
     eval_type,
     resp_stoch,
-    n_id,
     n_draws,
     new_levels,
     group_var

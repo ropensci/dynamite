@@ -7,17 +7,17 @@
 lags(k = 1L, type = c("fixed", "varying"))
 }
 \arguments{
-\item{k}{[\code{integer()}: \sQuote{1}]\cr
+\item{k}{[\code{integer()}]\cr
 Values lagged by \code{k} units of time of each observed response variable
 will be added as a predictor for each channel. Should be a positive
 (unrestricted) integer.}
 
-\item{type}{[\code{integer(1)}: \sQuote{"fixed"}]\cr Either
+\item{type}{[\code{integer(1)}]\cr Either
 \code{"fixed"} or \code{"varying"} which indicates whether the coefficients of the
 added lag terms should vary in time or not.}
 }
 \value{
-A object of class \code{lags}.
+An object of class \code{lags}.
 }
 \description{
 Add Lagged Responses as Predictors to Each Channel of a Dynamite Model

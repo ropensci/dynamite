@@ -2,9 +2,10 @@
 #'
 #' This function can be used as part of `dynamiteformula` to define the splines
 #' for the time-varying coefficients \eqn{\delta}.
-#' @param df \[`integer(1)`]\cr Degree of freedom, i.e., the total number of
+#'
+#' @param df \[`integer(1)`]\cr Degrees of freedom, i.e., the total number of
 #'   spline coefficients. See [splines::bs()]. Note that the knots are always
-#'   defined as equidistant sequence on the interval starting from the first
+#'   defined as an equidistant sequence on the interval starting from the first
 #'   non-fixed time point to the last time point in the data. See
 #'   [dynamite::dynamiteformula()] for more information on fixed time points.
 #'   Should be an (unrestricted) positive integer.
@@ -16,7 +17,7 @@
 #'   argument. Can be a single positive value, or vector defining the
 #'   lower bound separately for each channel, even for channels without
 #'   varying effects.
-#' @param noncentered  \[`logical()`]\cr If `TRUE`, use noncentered
+#' @param noncentered \[`logical()`]\cr If `TRUE`, use a noncentered
 #'   parameterization for the spline coefficients. Default is `FALSE`. Try
 #'   changing this if you encounter divergences or other problems in sampling.
 #'   Can be a single logical value, or vector of logical values, defining the
@@ -33,7 +34,7 @@
 #' @return An object of class `splines`.
 #' @export
 #' @examples
-#' # two channel model with varying effects, with explicit lower bounds for the
+#' # Two channel model with varying effects, with explicit lower bounds for the
 #' # random walk prior standard deviations, with noncentered parameterisation
 #' # for the first channel and centered for the second channel.
 #' obs(y ~ 1, family = "gaussian") + obs(x ~ 1, family = "gaussian") +
@@ -99,7 +100,7 @@ splines <- function(df = NULL, degree = 3L, lb_tau = 0,
   )
 }
 
-#' Is The Argument a Splines Definition
+#' Is The Argument a Splines Definition?
 #'
 #' @param x An \R object
 #' @noRd

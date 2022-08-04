@@ -1,4 +1,4 @@
-#' Print a Summary of a Dynamite Object
+#' Print a Summary of a Dynamite Model Fit Object
 #'
 #' Prints the summary information of the estimated dynamite model: The smallest
 #' effective sample sizes, largest Rhat and summary statistics of the
@@ -34,13 +34,21 @@ print.dynamitefit <- function(x, ...) {
     print(rstan::get_elapsed_time(x$stanfit))
 
     nu <- ifelse(any(x$priors$type == "sigma_nu"), " (excluding nu)", "")
-    cat(paste0("\nSummary statistics of the time-invariant parameters", nu,
-      ":\n"))
-    print(draws |>
+    cat(
+      paste0(
+        "\nSummary statistics of the time-invariant parameters",
+        nu,
+        ":\n"
+      )
+    )
+    print(
+      draws |>
         dplyr::select(
           dplyr::matches("^(?!.*^nu|^omega|.*\\[.*]).*", perl = TRUE)
         ) |>
-        posterior::summarise_draws(), ...)
+        posterior::summarise_draws(),
+      ...
+    )
   } else {
     message_("No Stan model fit is available.")
   }

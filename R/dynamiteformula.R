@@ -39,7 +39,7 @@
 #' transformations possible. Note that the auxiliary channel can also depend
 #' on other variables without lags. The function `aux` also does not use the
 #' `family` argument, which is automatically set to `deterministic` and is a
-#' special channel type of `obs`.  Note that lagged values of deterministic
+#' special channel type of `obs`. Note that lagged values of deterministic
 #' `aux` channels do not imply fixed time points. Instead they must be given
 #' starting values using a special function `past()`, which defines the
 #' starting values of the channel and its lags. However, starting values are
@@ -101,7 +101,7 @@
 #' @srrstats {RE1.0} Uses a formula interface.
 dynamiteformula <- function(formula, family) {
   stopifnot_(
-    is.formula(formula),
+    inherits(formula, "formula"),
     "Argument {.arg formula} must be a {.cls formula} object."
   )
   stopifnot_(
@@ -114,11 +114,11 @@ dynamiteformula <- function(formula, family) {
     "Argument {.arg family} must be a single {.cls character} string."
   )
   family <- tolower(family)
-  if (is_supported(family)) {
-    family <- do.call(paste0(family, "_"), args = list())
-  } else {
-    stop_("Family {.val {family}} is not supported.")
-  }
+  stopifnot_(
+    is_supported(family),
+    "Family {.val {family}} is not supported."
+  )
+  family <- do.call(paste0(family, "_"), args = list())
   stopifnot_(
     !has_as_is(deparse1(formula)),
     "{.code I(.)} is not supported by {.fun dynamiteformula}."
@@ -147,7 +147,7 @@ dynamiteformula <- function(formula, family) {
 dynamiteformula_ <- function(formula, original, family) {
   if (is_deterministic(family)) {
     out <- formula_past(formula)
-    resp_parsed <- formula_response(deparse1(formula_lhs(formula)))
+    resp_parsed <- deterministic_response(deparse1(formula_lhs(formula)))
     out$specials$resp_type <- resp_parsed$type
     out$response <- resp_parsed$resp
   } else {
@@ -165,7 +165,7 @@ dynamiteformula_ <- function(formula, original, family) {
   out
 }
 
-#' Create a Channel for a `dynamiteformula` Directly
+#' Create a Channel For a `dynamiteformula` Object Directly
 #'
 #' @inheritParams dynamiteformula
 #' @param response \[`character(1)`]\cr Name of the response.
@@ -200,7 +200,7 @@ dynamitechannel <- function(formula, original = NULL, family, response,
 #' @export
 obs <- dynamiteformula
 
-#' Is the Argument a `dynamiteformula` Object
+#' Is the Argument a `dynamiteformula` Object?
 #'
 #' @param x An \R object.
 #' @noRd
@@ -222,21 +222,12 @@ aux <- function(formula) {
 #' @examples
 #' obs(y ~ x, family = "gaussian") + obs(z ~ w, family = "exponential")
 `+.dynamiteformula` <- function(e1, e2) {
-  if (is.dynamiteformula(e1)) {
-    out <- add_dynamiteformula(e1, e2)
-  } else {
-    stop_("Method {.fun +.dynamiteformula} is not supported for
-          {.cls {class(e1)}} objects.")
-  }
-  out
-}
-
-#' Is the Argument a `formula` Object.
-#'
-#' @param x An \R object
-#' @noRd
-is.formula <- function(x) {
-  inherits(x, "formula")
+  stopifnot_(
+    is.dynamiteformula(e1),
+    "Method {.fun +.dynamiteformula} is not supported for
+     {.cls {class(e1)}} objects."
+  )
+  add_dynamiteformula(e1, e2)
 }
 
 #' Get All Response Variables of a `dynamiteformula` Object
@@ -424,8 +415,8 @@ join_dynamiteformulas <- function(e1, e2) {
 
 #' Set Lags Definitions for All Channels in a `dynamiteformula` Object
 #'
-#' @param e1 A `dynamiteformula` object,
-#' @param e2 A `lags` object,
+#' @param e1 A `dynamiteformula` object.
+#' @param e2 A `lags` object.
 #' @noRd
 set_lags <- function(e1, e2) {
   stopifnot_(

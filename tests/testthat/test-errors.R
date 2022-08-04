@@ -411,7 +411,7 @@ test_that("non-finite values in data fail", {
   expect_error(
     dynamite(dformula = obs(y ~ x, family = "gaussian"),
              data = test_data, group = "x", time = "z"),
-    "Non-finite values in variables `y`, `w`, and `u` of `data`\\."
+    "Non-finite values were found in variables `y`, `w`, and `u` of `data`\\."
   )
 })
 
@@ -479,7 +479,7 @@ test_that("beta without (0, 1) values fails", {
       data = test_data, group = "x", time = "z"),
     paste0(
       "Response variable `y` is invalid:\n",
-      "x Beta family supports only values on open interval \\(0, 1\\)\\."
+      "x Beta family supports only values on the open interval \\(0, 1\\)\\."
     )
   )
 })

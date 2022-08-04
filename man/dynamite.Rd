@@ -16,9 +16,7 @@ dynamite(
 )
 }
 \arguments{
-\item{dformula}{[\code{dynamiteformula}]\cr The model formula. See 'Details'.
-Input \code{data} is converted to channel specific matrix representations
-via \link[stats:model.matrix]{stats::model.matrix.lm}.}
+\item{dformula}{[\code{dynamiteformula}]\cr The model formula. See 'Details'.}
 
 \item{data}{[\code{data.frame}, \code{tibble::tibble}, or \code{data.table::data.table}]\cr
 The data frame, tibble or a data.table containing the variables in the
@@ -26,10 +24,11 @@ model. Supported column types are \code{integer}, \code{logical}, \code{double},
 \code{factor}. \code{character} columns will be converted to factors.
 Unused factor levels will be dropped. The \code{data} can contain missing
 values which will simply be ignored in the estimation in a case-wise
-fashion (per time-point and per channel).}
+fashion (per time-point and per channel). Input \code{data} is converted to
+channel specific matrix representations via \link[stats:model.matrix]{stats::model.matrix.lm}.}
 
 \item{group}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
-unique groups, or \code{NULL} corresponding to a scenario without grouping.}
+unique groups, or \code{NULL} corresponding to a scenario without any groups.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time index of observations. If this variable is a factor, the integer
@@ -47,7 +46,8 @@ additional objects in the environment of the \code{dynamite} function which are
 added to the return object. Additionally, values \code{no_compile = TRUE} and
 \code{no_sampling = TRUE} can be used to skip the compilation of the Stan code
 and sampling steps respectively. This can be useful for debugging when
-combined with \code{model_code = TRUE}.}
+combined with \code{model_code = TRUE}, which adds the Stan model code to the
+return object.}
 
 \item{...}{Additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}.}
 }

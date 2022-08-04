@@ -46,7 +46,7 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
   if (channel$has_fixed) {
     m <- mean_gamma[channel$J_fixed]
     s <- sd_gamma[channel$J_fixed]
-    channel$beta_prior_npars <- 2
+    channel$beta_prior_npars <- 2L
     channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
     channel$beta_prior_distr <- "normal"
     priors$beta <- data.frame(
@@ -60,7 +60,7 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
   if (channel$has_varying) {
     m <- mean_gamma[channel$J_varying]
     s <- sd_gamma[channel$J_varying]
-    channel$delta_prior_npars <- 2
+    channel$delta_prior_npars <- 2L
     channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
     channel$delta_prior_distr <- "normal"
     priors$delta <- data.frame(
@@ -125,7 +125,7 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
   if (channel$has_fixed) {
     m <- rep(0.0, channel$K_fixed * (S_y - 1L))
     s <- rep(sd_gamma[channel$J_fixed], S_y - 1L)
-    channel$beta_prior_npars <- 2
+    channel$beta_prior_npars <- 2L
     channel$beta_prior_distr <- "normal"
     channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
     priors$beta <- data.frame(
@@ -139,7 +139,7 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
   if (channel$has_varying) {
     m <- rep(0.0, channel$K_varying * (S_y - 1L))
     s <- rep(sd_gamma[channel$J_varying], S_y - 1L)
-    channel$delta_prior_npars <- 2
+    channel$delta_prior_npars <- 2L
     channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
     channel$delta_prior_distr <- "normal"
     priors$delta <- data.frame(

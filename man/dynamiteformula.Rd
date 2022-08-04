@@ -63,7 +63,7 @@ dynamically during prediction, making the use of lagged values and other
 transformations possible. Note that the auxiliary channel can also depend
 on other variables without lags. The function \code{aux} also does not use the
 \code{family} argument, which is automatically set to \code{deterministic} and is a
-special channel type of \code{obs}.  Note that lagged values of deterministic
+special channel type of \code{obs}. Note that lagged values of deterministic
 \code{aux} channels do not imply fixed time points. Instead they must be given
 starting values using a special function \code{past()}, which defines the
 starting values of the channel and its lags. However, starting values are

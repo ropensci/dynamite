@@ -1,4 +1,4 @@
-#' Define the Random Intercepts for the Dynamite Model.
+#' Define Random Intercepts for the Dynamite Model.
 #'
 #' This function can be used as part of `dynamiteformula` to define random
 #' intercepts for each group.
@@ -7,8 +7,8 @@
 #'   random intercepts should be defined. Default is all responses defined with
 #'   `obs`.
 #' @param correlated \[`logical(1)`]\cr If `TRUE` (the default), correlations of
-#'   intercepts within a group (i.e. between responses) are modeled so that
-#'   the intercept follow a multivariate normal distribution.
+#'   intercepts within a group (i.e., between responses) are modeled so that
+#'   the intercepts follow a multivariate normal distribution.
 #' @return An object of class `random`.
 #' @export
 #' @examples
@@ -36,9 +36,9 @@ random <- function(responses = NULL, correlated = TRUE) {
   )
 }
 
-#' Is The Argument a Random Definition
+#' Is The Argument a `random` Definition?
 #'
-#' @param x An \R object
+#' @param x An \R object.
 #' @noRd
 is.random <- function(x) {
   inherits(x, "random")

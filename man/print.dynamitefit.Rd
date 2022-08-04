@@ -2,7 +2,7 @@
 % Please edit documentation in R/print.R
 \name{print.dynamitefit}
 \alias{print.dynamitefit}
-\title{Print a Summary of a Dynamite Object}
+\title{Print a Summary of a Dynamite Model Fit Object}
 \usage{
 \method{print}{dynamitefit}(x, ...)
 }

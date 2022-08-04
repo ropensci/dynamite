@@ -6,9 +6,9 @@
 #'
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param n \[`integer(1)`: \sQuote{1L}]\cr How many rows to print in
-#'   parameter-specific convergence measures. Default is 1. Should be a
+#'   parameter-specific convergence measures. The default is 1. Should be a
 #'   positive (unrestricted) integer.
-#' @return The original `dynamitefit` object.
+#' @return The original `dynamitefit` object (invisibly).
 #' @export
 #' @examples
 #' mcmc_diagnostics(gaussian_example_fit)
@@ -25,7 +25,7 @@ mcmc_diagnostics <- function(x, n = 1L) {
     "Argument {.arg n} must be a single {.cls integer}."
   )
   if (!is.null(x$stanfit)) {
-    if (x$stanfit@stan_args[[1L]]$algorithm == "NUTS") {
+    if (identical(x$stanfit@stan_args[[1L]]$algorithm, "NUTS")) {
       cat("NUTS sampler diagnostics:\n")
       invisible(utils::capture.output(msg <-
         utils::capture.output(rstan::check_hmc_diagnostics(x$stanfit),

@@ -1,7 +1,7 @@
 #' Extract Fitted Values of a Dynamite Model
 #'
 #' Note that these are conditional on the observed data in `newdata`,
-#' i.e. these are one-step estimates E(y_t|y_t-1,...,y_1). Often the
+#' i.e., these are one-step estimates E(y_t|y_t-1,...,y_1). Often
 #' [predict.dynamitefit] is what you want.
 #'
 #' @export
@@ -10,9 +10,7 @@
 #'   If `NULL` (default), the data used in model estimation is used for
 #'   predictions as well,
 #'   There should be no new time points that were not present in the data that
-#'   were used to fit the model, and now new group levels can be included. Note
-#'   that as `newdata` is expanded with predictions, it can be beneficial
-#'   in terms of memory usage to first remove redundant columns from `newdata`.
+#'   were used to fit the model, and no new group levels can be included.
 #' @examples
 #' fitted(gaussian_example_fit, n_draws = 2L)
 #' \dontrun{

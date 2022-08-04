@@ -19,12 +19,11 @@
 \value{
 The rows of the resulting matrix will be named using the following
 logic: \verb{\{parameter\}_\{time\}_\{category\}_\{group\}} where \code{parameter} is the
-name of the parameter, \code{response} is the name of the response variable
-the parameter is related to, \code{time} is the time index of the parameter,
+name of the parameter, \code{time} is the time index of the parameter,
 \code{category} specifies the level of the response the parameter
-is related to if the response is categorical and \code{group} determined which
+is related to if the response is categorical, and \code{group} determines which
 group of observations the parameter is related to in the case of random
-intercepts. Unrelated fields in the row name syntax are set to \code{NA}.
+intercepts. Non-applicable fields in the this syntax are set to \code{NA}.
 }
 \description{
 Credible Intervals for Dynamite Model Parameters

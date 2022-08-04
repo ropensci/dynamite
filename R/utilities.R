@@ -1,34 +1,34 @@
-# This is needed to use tidyselect's where which is not exported.
+# For data.table and tidyselect
 utils::globalVariables(c(".", ".I", ".N", ".SD", "where"))
 
 # Data table awareness
 .datatable.aware <- TRUE
 
-#' Get the left-hand side of a formula
+#' Get the Left-hand Side of a Formula
 #'
 #' @param x A `formula` object.
 #' @noRd
 formula_lhs <- function(x) {
-  if (length(x) == 3) {
+  if (identical(length(x), 3L)) {
     x[[2]]
   } else {
     NULL
   }
 }
 
-#' Get the right-hand side of formula
+#' Get the Right-hand Side of a Formula
 #'
 #' @param x A `formula` object.
 #' @noRd
 formula_rhs <- function(x) {
-  if (length(x) == 3) {
+  if (identical(length(x), 3L)) {
     x[[3]]
   } else {
     x[[2]]
   }
 }
 
-#' Get the right-hand side terms of a formula
+#' Get the Right-hand Side Terms of a Formula
 #'
 #' @param x A `formula` object.
 #' @noRd
@@ -44,11 +44,11 @@ formula_terms <- function(x) {
 #' @param ... Additional arguments passed to [base::gsub()]
 #' @noRd
 gsub_formula <- function(pattern, replacement, formula, ...) {
-  formula_str <- deparse1(formula)
-  as.formula(gsub(pattern, replacement, formula_str, ...))
+  as.formula(gsub(pattern, replacement, deparse1(formula), ...))
 }
 
-#' A version of drop.terms with formula output and empty RHS support
+#' Wrapper of `drop.terms` with Formula Output And Empty RHS Support
+#'
 #' @inheritParams drop.terms
 #' @noRd
 drop_terms <- function(termobj, dropx) {
@@ -67,15 +67,32 @@ drop_terms <- function(termobj, dropx) {
   }
 }
 
-#' Add fixed or varying terms to a formula
+#' Drops Variables from the Data That Are Not Used by Any Model Formula
 #'
-#' @param formula A `formula` object.
-#' @param x A `character` vector of terms to add.
-#' @param type Either `"fixed"` or `"varying"` indicating type of terms to add.
-#' @param varying_idx Indices of left-hand side terms that have
+#' @inheritParams dynamite
+#' @noRd
+drop_unused <- function(dformula, data, group_var, time_var) {
+  used <- c(group_var, time_var)
+  for (i in seq_along(dformula)) {
+    used <- c(used, all.vars(dformula[[i]]$original))
+  }
+  unused <- setdiff(names(data), used)
+  for (u in unused) {
+    data[, (u) := NULL]
+  }
+}
+
+#' Add Fixed or Varying Terms to a Formula
+#'
+#' @param formula \[`formula`]\cr A formula object.
+#' @param x \[`character()`]\cr A vector of terms to add.
+#' @param type \[`character(1)`]\cr Either `"fixed"` or `"varying"`
+#'   indicatingthe  type of terms to add.
+#' @param varying_idx \[`integer()`] Indices of left-hand side terms that have
 #'   time-varying coefficients
-#' @param varying_icpt Does the formula have a varying intercept?
-#' @param fixed_icpt Does the formula have a fixed intercept?
+#' @param varying_icpt \[`logical(1)`] Does the formula have a varying
+#'   intercept?
+#' @param fixed_icpt \[`logical(1)`] Does the formula have a fixed intercept?
 #' @noRd
 increment_formula <- function(formula, x, type = c("fixed", "varying"),
                               varying_idx, varying_icpt, fixed_icpt) {
@@ -92,10 +109,10 @@ increment_formula <- function(formula, x, type = c("fixed", "varying"),
       ft <- terms(formula)
       tr <- attr(ft, "term.labels")
     } else {
-      tr <- character(0)
+      tr <- character(0L)
     }
   }
-  if (length(tr) > 0) {
+  if (length(tr) > 0L) {
     formula <- reformulate(
       termlabels = tr,
       response = formula_lhs(formula),
@@ -113,19 +130,17 @@ increment_formula <- function(formula, x, type = c("fixed", "varying"),
     v <- paste0(" + ", v, ifelse_(nzchar(v), " + ", ""), x_plus)
     out_str <- glue::glue("{formula_str} + varying(~{v_icpt}{v})")
   } else {
-    if (nzchar(v)) {
-      v <- paste0(" + ", v)
-    }
-    if (n_varying > 0L || varying_icpt) {
-      out_str <- glue::glue("{formula_str} + {x_plus} + varying(~{v_icpt}{v})")
-    } else {
-      out_str <- glue::glue("{formula_str} + {x_plus}")
-    }
+    v <- ifelse_(nzchar(v), paste0(" + ", v), v)
+    out_str <- ifelse_(
+      n_varying > 0L || varying_icpt,
+      glue::glue("{formula_str} + {x_plus} + varying(~{v_icpt}{v})"),
+      glue::glue("{formula_str} + {x_plus}")
+    )
   }
   as.formula(out_str)
 }
 
-#' Create a comma-separated character string to represent a Stan integer array
+#' Create a Comma-separated Character String
 #'
 #' @param x A `character` vector.
 #' @noRd
@@ -133,19 +148,19 @@ cs <- function(x) {
   paste0(x, collapse = ", ")
 }
 
-#' Paste and optionally parse character strings containing glue syntax
+#' Paste And Optionally Parse Character Strings Containing `glue` Syntax
 #'
-#' @param ... Any number of `character` vectors of arbitrary length
-#' @param .indent A `character` string to prefix each row with
-#' @param .parse A `logical` value indicating whether glue syntax should be
-#'   parsed by [glue::glue()].
+#' @param ... Any number of `character` vectors of arbitrary length.
+#' @param .indent \[`character(1)`]\cr A string to prefix each row with
+#' @param .parse \[`logical(1)`]\cr Should `glue` syntaxbe parsed
+#'   by [glue::glue()].
 #' @noRd
 paste_rows <- function(..., .indent = "", .parse = TRUE) {
   dots <- list(...)
   ndots <- length(dots)
-  if (ndots) {
+  if (ndots > 0L) {
     idt_vec <- character(ndots)
-    idt_vec[seq.int(1L, ndots)] <- .indent
+    idt_vec[seq_len(ndots)] <- .indent
   }
   pasted <- rep("", ndots)
   for (i in seq_len(ndots)) {
@@ -187,10 +202,10 @@ paste_rows <- function(..., .indent = "", .parse = TRUE) {
   )
 }
 
-#' Create an indenter
+#' Create an Indentation Function
 #'
-#' @param m An integer denoting how many spaces does one unit of indentation
-#'   correspond to (default = 2L)
+#' @param m \[`integer(1)`]\cr An integer denoting how many spaces does one
+#'   unit of indentation correspond to (default is 2).
 #' @noRd
 indenter_ <- function(m = 2L) {
   x <- rep(" ", m)
@@ -203,7 +218,7 @@ indenter_ <- function(m = 2L) {
   }
 }
 
-#' Check if x contains a string of the form I(.)
+#' Check If Argument Contains a String of the Form I(.)
 #'
 #' @param x A `character` vector.
 #' @noRd
@@ -211,9 +226,9 @@ has_as_is <- function(x) {
   grepl("I\\(.+\\)", x, perl = TRUE)
 }
 
-#' Fill gaps (NAs) in a vector with the last non-NA observation
+#' Fill Gaps (NAs) in a Vector with the Last Non-NA Observation
 #'
-#' @param x A vector possibly containing NA values
+#' @param x \[`vector()`]\cr A vector possibly containing NA values.
 #' @noRd
 locf <- function(x) {
   non_na <- ifelse_(is.na(x[1L]), c(1L, which(!is.na(x))), which(!is.na(x)))
@@ -221,35 +236,39 @@ locf <- function(x) {
   rep(x[non_na], fill)
 }
 
-#' Stop function execution without displaying the call
+#' Stop Function Execution Without Displaying the Call
 #'
-#' @param message See [cli::cli_abort()]
-#' @param ... See [cli::cli_abort()]
-#' @param call See See [cli::cli_abort()]
+#' @param message See [cli::cli_abort()].
+#' @param ... See [cli::cli_abort()].
+#' @param call See See [cli::cli_abort()].
 #' @noRd
 stop_ <- function(message, ..., call = rlang::caller_env()) {
   cli::cli_abort(message, ..., .envir = parent.frame(), call = call)
 }
 
+#' Stop Function Execution Unless Condition Is True
+#' @inheritParams stop_
+#' @param cond \[`logical(1)`] Condition to evaluate.
+#' @noRd
 stopifnot_ <- function(cond, message, ..., call = rlang::caller_env()) {
   if (!cond) {
     cli::cli_abort(message, ..., .envir = parent.frame(), call = call)
   }
 }
 
-#' Generate a warning message
+#' Generate a Warning Message
 #'
-#' @param message See [cli::cli_abort()]
-#' @param ... See [cli::cli_abort()]
+#' @param message See [cli::cli_warn()].
+#' @param ... See [cli::cli_warn()].
 #' @noRd
 warning_ <- function(message, ...) {
   cli::cli_warn(message, ..., .envir = parent.frame())
 }
 
-#' Generate an informative message
+#' Generate an Informative Message
 #'
-#' @param message See [cli::cli_abort()]
-#' @param ... See [cli::cli_abort()]
+#' @param message See [cli::cli_inform()]
+#' @param ... See [cli::cli_inform()]
 #' @noRd
 message_ <- function(message, ...) {
   cli::cli_inform(message, ..., .envir = parent.frame())
@@ -257,7 +276,7 @@ message_ <- function(message, ...) {
 
 #' Shorthand for `if (test) yes else no`
 #'
-#' @param test An object which can be coerced into `logical`.
+#' @param test \[`logical(1)`] Condition to evaluate.
 #' @param yes An \R object to return when `test` evaluates to `TRUE`.
 #' @param no An \R object to return when `test` evaluates to `FALSE`.
 #' @noRd
@@ -269,9 +288,9 @@ ifelse_ <- function(test, yes, no) {
   }
 }
 
-#' Return yes if test is TRUE, otherwise return NULL
+#' Return `yes` If `test` Is `TRUE`, Otherwise Return `NULL`
 #'
-#' @param tes An object which can be coerced into `logical`.
+#' @param test \[`logical(1)`] Condition to evaluate.
 #' @param yes An \R object to return when `test` evaluates to `TRUE`.
 #' @noRd
 onlyif <- function(test, yes) {

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot.R
 \name{plot.dynamitefit}
 \alias{plot.dynamitefit}
-\title{Traceplots and Density Plots of \code{dynamitefit} Object}
+\title{Traceplots and Density Plots of a \code{dynamitefit} Object}
 \usage{
 \method{plot}{dynamitefit}(x, responses = NULL, type, ...)
 }
@@ -22,8 +22,8 @@ should be drawn. See details of possible values.}
 The output object from \link[bayesplot:MCMC-combos]{bayesplot::mcmc_combo}.
 }
 \description{
-Plots the traceplots and the density plots of of the model parameters.
-Possible parameter types are
+Produces the traceplots and the density plots of of the model parameters.
+Possible parameter types are:
 \itemize{
 \item \code{alpha} Intercept terms (time-invariant or time-varying).
 \item \code{beta} Time-invariant regression coefficients.
@@ -40,7 +40,7 @@ time-varying \code{alpha}.
 }
 }
 \details{
-Note however typically that drawing these plots for the time-varying
+Note however that typically drawing these plots for the time-varying
 parameters \code{delta} (and \code{alpha}), spline coefficients, or random
 intercepts leads to too many plots.
 }

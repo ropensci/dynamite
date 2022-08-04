@@ -3,7 +3,7 @@
 \docType{data}
 \name{multichannel_example_fit}
 \alias{multichannel_example_fit}
-\title{Model Fit for the multichannel_example Data}
+\title{Model Fit for the Simulated Multivariate Panel Data}
 \format{
 A \code{dynamitefit} object.
 }

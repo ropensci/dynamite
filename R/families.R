@@ -6,9 +6,10 @@
 #' @noRd
 dynamitefamily <- function(name) {
   name <- tolower(as.character(name)[1])
-  if (!is_supported(name)) {
-    stop_("{.val {name}} is not a supported family.")
-  }
+  stopifnot_(
+    is_supported(name),
+    "{.val {name}} is not a supported family."
+  )
   structure(
     list(name = name),
     class = "dynamitefamily"
@@ -23,7 +24,7 @@ is.dynamitefamily <- function(x) {
   inherits(x, "dynamitefamily")
 }
 
-#' Check if a Family is Supported
+#' Check If a Family Is Supported
 #'
 #' @param \[`character(1)`]\cr Name of the family.
 #' @noRd

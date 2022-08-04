@@ -3,7 +3,7 @@
 \name{ndraws.dynamitefit}
 \alias{ndraws.dynamitefit}
 \alias{ndraws}
-\title{Return the Number of Posterior Draws of a dynamitefit Object}
+\title{Return the Number of Posterior Draws of a \code{dynamitefit} Object}
 \usage{
 \method{ndraws}{dynamitefit}(x)
 }
@@ -11,7 +11,7 @@
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 }
 \description{
-Return the Number of Posterior Draws of a dynamitefit Object
+Return the Number of Posterior Draws of a \code{dynamitefit} Object
 }
 \examples{
 ndraws(gaussian_example_fit)

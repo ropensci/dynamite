@@ -1,13 +1,13 @@
 #' Add Lagged Responses as Predictors to Each Channel of a Dynamite Model
 #'
-#' @param k \[`integer()`: \sQuote{1}]\cr
+#' @param k \[`integer()`]\cr
 #'   Values lagged by `k` units of time of each observed response variable
 #'   will be added as a predictor for each channel. Should be a positive
 #'   (unrestricted) integer.
-#' @param type \[`integer(1)`: \sQuote{"fixed"}]\cr Either
+#' @param type \[`integer(1)`]\cr Either
 #'   `"fixed"` or `"varying"` which indicates whether the coefficients of the
 #'   added lag terms should vary in time or not.
-#' @return A object of class `lags`.
+#' @return An object of class `lags`.
 #' @export
 #' @examples
 #' obs(y ~ -1 + varying(~x), family = "gaussian") +
@@ -48,7 +48,7 @@ is.lags <- function(x) {
 #' Create a Lagged Version of a Vector
 #'
 #' @param x \[`vector()`]\cr A vector of values.
-#' @param k \[`integer(1)`: \sQuote{1}]\cr Number of positions to lag by.
+#' @param k \[`integer(1)`]\cr Number of positions to lag by.
 #' @noRd
 lag_ <- function(x, k = 1) {
   lag_idx <- seq_len(length(x) - k)
@@ -58,7 +58,7 @@ lag_ <- function(x, k = 1) {
   out
 }
 
-#' Adds default shift values to terms of the form lag(y)
+#' Adds Default Shift Values to Terms of the Form `lag(y)`
 #'
 #' @param x A `language` object.
 #' @noRd
@@ -116,11 +116,11 @@ extract_nonlags <- function(x) {
 #' @noRd
 extract_lags <- function(x) {
   has_lag <- find_lags(x)
-  if (any(has_lag)) {
-    lag_terms <- paste0(x[has_lag], " ")
-  } else {
-    lag_terms <- character(0)
-  }
+  lag_terms <- ifelse_(
+    any(has_lag),
+    paste0(x[has_lag], " "),
+    character(0)
+  )
   lag_regex <- gregexec(
     pattern = paste0(
       "(?<src>lag\\((?<var>[^\\+\\)\\,]+?)",
@@ -153,61 +153,41 @@ extract_lags <- function(x) {
   }
 }
 
-#' Verify that `k` in `lag(y, k)` represents a valid shift value expression
+#' Verify that `k` in `lag(y, k)` Represents a Valid Shift Value Expression
 #'
-#' @param k The shift value definition as a `language` object.
-#' @param lag_str The full lag term definition as a `character` string.
+#' @param k \[`language`]\cr The shift value definition.
+#' @param lag_str \[`character(1)`]\cr The full lag term definition.
 #' @noRd
 verify_lag <- function(k, lag_str) {
   k_str <- deparse1(k)
   k_coerce <- try(eval(k), silent = TRUE)
-  if ("try-error" %in% class(k_coerce)) {
-    stop_("Invalid shift value expression {.code {k_str}}.")
-  }
+  stopifnot_(
+    !"try-error" %in% class(k_coerce),
+    "Invalid shift value expression {.code {k_str}}."
+  )
   k_coerce <- tryCatch(
     expr = as.integer(k_coerce),
     error = function(e) NULL,
     warning = function(w) NULL
   )
-  if (is.null(k_coerce) ||
-      identical(length(k_coerce), 0L) ||
-      any(is.na(k_coerce))) {
-    stop_(
-      "Unable to coerce shift value to {.cls integer} in {.code {lag_str}}."
-    )
-  }
-  if (length(k_coerce) > 1L) {
-    stop_(c(
+  k_len <- length(k_coerce)
+  stopifnot_(
+    !is.null(k_coerce) && !identical(k_len, 0L) && !any(is.na(k_coerce)),
+    "Unable to coerce shift value to {.cls integer} in {.code {lag_str}}."
+  )
+  stopifnot_(
+    identical(k_len, 1L),
+    c(
       "Shift value must be a single {.cls integer} in {.fun lag}:",
       `x` = "Multiple shift values were found in {.code {lag_str}}."
-    ))
-  }
-  if (k_coerce <= 0L) {
-    stop_(c(
+    )
+  )
+  stopifnot_(
+    k_coerce > 0L,
+    c(
       "Shift value must be positive in {.fun lag}:",
       `x` = "Nonpositive shift value was found in {.code {lag_str}}."
-    ))
-  }
-  k_coerce
-}
-
-#' Extract Lag Shift Values of a Specific Variable from a Character String
-#'
-#' @param x \[`character(1)`]\cr String to search for lag definitions.
-#' @param self \[`character(1)`]\cr Variable whose lags to look for.
-#' @noRd
-extract_self_lags <- function(x, self) {
-  lag_regex <-  gregexec(
-    pattern = paste0(
-      "lag\\(", self, ",\\s*(?<k>.+?)\\s*\\)"
-    ),
-    text = x,
-    perl = TRUE
+    )
   )
-  lag_matches <- regmatches(x, lag_regex)[[1]]
-  if (length(lag_matches) > 0L) {
-    as.integer(lag_matches["k", ])
-  } else {
-    0L
-  }
+  k_coerce
 }

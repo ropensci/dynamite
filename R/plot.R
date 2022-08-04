@@ -1,7 +1,7 @@
-#' Traceplots and Density Plots of `dynamitefit` Object
+#' Traceplots and Density Plots of a `dynamitefit` Object
 #'
-#' Plots the traceplots and the density plots of of the model parameters.
-#' Possible parameter types are
+#' Produces the traceplots and the density plots of of the model parameters.
+#' Possible parameter types are:
 #'  * `alpha` Intercept terms (time-invariant or time-varying).
 #'  * `beta` Time-invariant regression coefficients.
 #'  * `delta` Time-varying regression coefficients.
@@ -15,12 +15,12 @@
 #'  * `omega` Spline coefficients of the regression coefficients `delta`.
 #'  * `omega_alpha` Spline coefficients of time-varying `alpha`.
 #'
-#' Note however typically that drawing these plots for the time-varying
+#' Note however that typically drawing these plots for the time-varying
 #' parameters `delta` (and `alpha`), spline coefficients, or random
 #' intercepts leads to too many plots.
 #'
 #' @param x \[`dynamitefit`]\cr The model fit object.
-#' @param responses  \[`character()`]\cr Response(s) for which the plots should
+#' @param responses \[`character()`]\cr Response(s) for which the plots should
 #'   be drawn. Possible options are `unique(x$priors$response)`. Default is
 #'   all responses.
 #' @param type \[`character(1)`]\cr Type of the parameter for which the plots
@@ -34,7 +34,6 @@
 #' method. Further plots can be easily constructed with the help of `as_draws`
 #' combined with `ggplot2` and `bayesplot`, for example.
 plot.dynamitefit <- function(x, responses = NULL, type, ...) {
-
   stopifnot_(
     is.dynamitefit(x),
     "Argument {.arg x} must be a {.cls dynamitefit} object."
@@ -48,10 +47,8 @@ plot.dynamitefit <- function(x, responses = NULL, type, ...) {
     checkmate::test_string(x = type, na.ok = FALSE),
     "Argument {.arg type} must be a single {.cls character} string."
   )
-
   out <- suppressWarnings(as_draws(x, responses = responses, types = type))
   bayesplot::mcmc_combo(out, ...)
-
 }
 
 #' Plot Time-varying Regression Coefficients of a Dynamite Model
@@ -66,7 +63,6 @@ plot.dynamitefit <- function(x, responses = NULL, type, ...) {
 #'   Default is 0.5.
 #' @param scales \[`character(1)`] Should y-axis of the panels be `"fixed"`
 #'   (the default) or `"free"`? See [ggplot2::facet_wrap()].
-
 #' @param include_alpha \[`logical(1)`]\cr If `TRUE` (default), plots also
 #'   the time-varying alphas if such parameters exists in the model.
 #' @return A `ggplot` object.
@@ -252,4 +248,3 @@ plot_nus <- function(x, responses = NULL, level = 0.05){
       xmax = paste0("q", 100 * (1 - level)))) +
     ggplot2::labs(title = title, x = "Value", y = "Parameter")
 }
-

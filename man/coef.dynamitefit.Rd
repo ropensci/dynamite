@@ -2,7 +2,7 @@
 % Please edit documentation in R/coef.R
 \name{coef.dynamitefit}
 \alias{coef.dynamitefit}
-\title{Extract Regression Coefficients of Dynamite Model}
+\title{Extract Regression Coefficients of a Dynamite Model}
 \usage{
 \method{coef}{dynamitefit}(
   object,
@@ -23,7 +23,7 @@ time-invariant coefficients, \code{delta} for time-varying coefficients, or
 
 \item{responses}{[\code{character()}]\cr Response(s) for which the samples
 should be extracted. Possible options are elements of
-\code{unique(x$priors$response)}, and the default is this whole vector.}
+\code{unique(x$priors$response)}, and the default is this entire vector.}
 
 \item{summary}{[\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
 mean, standard deviation, and posterior quantiles (as defined by the

@@ -14,9 +14,9 @@ splines(
 )
 }
 \arguments{
-\item{df}{[\code{integer(1)}]\cr Degree of freedom, i.e., the total number of
+\item{df}{[\code{integer(1)}]\cr Degrees of freedom, i.e., the total number of
 spline coefficients. See \code{\link[splines:bs]{splines::bs()}}. Note that the knots are always
-defined as equidistant sequence on the interval starting from the first
+defined as an equidistant sequence on the interval starting from the first
 non-fixed time point to the last time point in the data. See
 \code{\link[=dynamiteformula]{dynamiteformula()}} for more information on fixed time points.
 Should be an (unrestricted) positive integer.}
@@ -31,7 +31,7 @@ argument. Can be a single positive value, or vector defining the
 lower bound separately for each channel, even for channels without
 varying effects.}
 
-\item{noncentered}{[\code{logical()}]\cr If \code{TRUE}, use noncentered
+\item{noncentered}{[\code{logical()}]\cr If \code{TRUE}, use a noncentered
 parameterization for the spline coefficients. Default is \code{FALSE}. Try
 changing this if you encounter divergences or other problems in sampling.
 Can be a single logical value, or vector of logical values, defining the
@@ -56,7 +56,7 @@ This function can be used as part of \code{dynamiteformula} to define the spline
 for the time-varying coefficients \eqn{\delta}.
 }
 \examples{
-# two channel model with varying effects, with explicit lower bounds for the
+# Two channel model with varying effects, with explicit lower bounds for the
 # random walk prior standard deviations, with noncentered parameterisation
 # for the first channel and centered for the second channel.
 obs(y ~ 1, family = "gaussian") + obs(x ~ 1, family = "gaussian") +

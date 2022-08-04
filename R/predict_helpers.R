@@ -1,4 +1,4 @@
-#' Check Validity of `n_draws` for Prediction
+#' Check Validity of `n_draws` Argument for Prediction
 #'
 #' @param n_draws \[`integer(1)`]\cr
 #'   Number of draws to use for `fitted` or `predict`.
@@ -6,9 +6,7 @@
 #'   Number of draws avaiable in the `dynamitefit` object.
 #' @noRd
 check_ndraws <- function(n_draws, full_draws) {
-  if (is.null(n_draws)) {
-    n_draws <- full_draws
-  }
+  n_draws <- ifelse_(is.null(n_draws), full_draws, n_draws)
   stopifnot_(
     checkmate::test_int(
       x = n_draws,
@@ -41,7 +39,7 @@ check_newdata <- function(object, newdata) {
   }
 }
 
-#' Parse and Prepare New Data for Prediction
+#' Parse And Prepare `newdata` for Prediction
 #'
 #' @param dformula \[`dynamiteformula`]\cr The model formula.
 #' @param newdata \[`data.frame`]\cr The data to be used for prediction.
@@ -100,7 +98,7 @@ parse_newdata <- function(dformula, newdata, data, type,
   )
   missing_resp <- resp_stoch[!resp_stoch %in% names(newdata)]
   stopifnot_(
-    length(missing_resp) == 0L,
+    identical(length(missing_resp), 0L),
     "Can't find response variable{?s} {.var {missing_resp}} in {.var newdata}."
   )
   # check and add missing factor levels
@@ -122,15 +120,15 @@ parse_newdata <- function(dformula, newdata, data, type,
       newdata[[i]] <- factor(newdata[[i]], levels = l_orig)
     }
   }
-  newdata <- fill_time_predict(newdata, group_var, time_var,
-    original_times[2L] - original_times[1L])
+  newdata <- fill_time_predict(
+    newdata,
+    group_var,
+    time_var,
+    time_scale = original_times[2L] - original_times[1L]
+  )
   data.table::setDT(newdata, key = c(group_var, time_var))
   drop_unused(dformula, newdata, group_var, time_var)
-  type <- ifelse_(
-    identical(eval_type, "fitted"),
-    "fitted",
-    type
-  )
+  type <- ifelse_(identical(eval_type, "fitted"), "fitted", type)
   # create separate column for each level of categorical response variables
   for (i in seq_along(resp_stoch)) {
     resp <- resp_stoch[i]
@@ -149,7 +147,7 @@ parse_newdata <- function(dformula, newdata, data, type,
   newdata
 }
 
-#' Adds NA gaps to fill in missing time points in a data frame for predictions
+#' Adds NA Gaps to Fill Missing Time Points in a Data Frame For Predictions
 #'
 #' Note that if `impute` is `none` and model contains lagged predictors,
 #' predictions will eventually fail.
@@ -157,8 +155,8 @@ parse_newdata <- function(dformula, newdata, data, type,
 #' @inheritParams dynamite
 #' @noRd
 fill_time_predict <- function(data, group_var, time_var, time_scale) {
-  groups <- !is.null(group_var)
-  if (groups) {
+  has_groups <- !is.null(group_var)
+  if (has_groups) {
     time_count <- data |>
       dplyr::group_by(.data[[group_var]]) |>
       dplyr::count(.data[[time_var]]) |>
@@ -182,7 +180,7 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
   if (length(time) > 1L) {
     original_order <- colnames(data)
     full_time <- seq(time[1L], time[length(time)], by = time_scale)
-    if (groups) {
+    if (has_groups) {
       time_groups <- data |>
         dplyr::group_by(.data[[group_var]]) |>
         dplyr::summarise(
@@ -226,11 +224,11 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
   }
   data
 }
-#' Impute Predictor values in New Data
+#' Impute Predictor Values in `newdata`
 #'
 #' @inheritParams predict
-#' @param predictors \[`character()`] A vector of predictor column names
-#' @param group_var \[`character(1)`] Grouping variable name.
+#' @param predictors \[`character()`]\cr A vector of predictor column names.
+#' @param group_var \[`character(1)`]\cr Grouping variable name.
 #' @noRd
 impute_newdata <- function(newdata, impute, predictors, group_var) {
   if (identical(impute, "locf")) {
@@ -239,7 +237,7 @@ impute_newdata <- function(newdata, impute, predictors, group_var) {
   }
 }
 
-#' Assign NAs to Time Indices Beyond Fixed Time Points
+#' Assign NA Values to Time Indices Beyond Fixed Time Points
 #'
 #' @inheritParams parse_newdata
 #' @param newdata_null \[logical(1)]\cr
@@ -281,8 +279,9 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
 #'   intercept parameters.
 #' @param corr_matrix_nu Posterior draws of the correlation matrix of
 #'   intercepts (within-group).
-#' @param orig_ids Group levels of the original data.
-#' @param new_ids  Group levels of `newdata` in
+#' @param n_group \[`integer(1)`]\cr Number of groups.
+#' @param orig_ids \[`character()`]\cr Group levels of the original data.
+#' @param new_ids \[`character()`]\cr Group levels of `newdata` in
 #'   [dynamite::predict.dynamitefit()].
 #' @param new_levels \[`character(1)`]\cr
 #'   Defines if and how to sample the random intercepts for observations whose
@@ -300,7 +299,7 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
 #' @return An n_draws x n_groups x n_intercepts array of random intercepts.
 #' @noRd
 generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
-                                      n_id, orig_ids, new_ids, new_levels) {
+                                      n_group, orig_ids, new_ids, new_levels) {
   is_orig <- which(orig_ids %in% new_ids)
   is_new <- !new_ids %in% orig_ids
   out <- NULL
@@ -308,18 +307,18 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
     out <- nu[, is_orig, , drop = FALSE]
   } else {
     M <- nrow(sigma_nu)
-    out <- array(0.0, c(n_draws, n_id, M))
+    out <- array(0.0, c(n_draws, n_group, M))
     out[, which(!is_new), ] <- nu[, is_orig, , drop = FALSE]
     if (any(is_new)) {
       n_new <- sum(is_new)
       out[ , which(is_new), ] <- switch(new_levels,
         `bootstrap` = {
-          idx <- sample.int(n_draws * n_id, n_draws * n_new, TRUE)
+          idx <- sample.int(n_draws * n_group, n_draws * n_new, TRUE)
           array(matrix(nu, ncol = M)[idx, ], c(n_draws, n_new, M))
         },
         `gaussian` = {
-          x <- array(0, c(n_new, M, n_draws))
-          zeros <- rep(0, M)
+          x <- array(0.0, c(n_new, M, n_draws))
+          zeros <- rep(0.0, M)
           if (is.null(corr_matrix_nu)) {
             # easy to optimise...
             for(i in seq_len(n_draws)) {
@@ -337,7 +336,7 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
               )
             }
           }
-          aperm(x, c(3, 1, 2))
+          aperm(x, c(3L, 1L, 2L))
         },
         `original` = {
           match_ids <- sample(orig_ids, n_new, replace = TRUE)
@@ -351,15 +350,11 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
 
 #' Prepare Environments to Evaluate Predictions or Fitted Values
 #'
-#' @inheritParams predict
+#' @inheritParams predict_dynamitefit
 #' @inheritParams clear_nonfixed
-#' @param type \[`character()`]\cr
-#'   Either `"response"`, `"mean"`, or `"link"`.
-#' @param eval_type \[`character(1)`]\cr
-#'   Either `"predict"` or `"fitted"`
 #' @noRd
 prepare_eval_envs <- function(object, newdata, type, eval_type,
-                              resp_stoch, n_id, n_draws,
+                              resp_stoch, n_draws,
                               new_levels, group_var) {
   samples <- rstan::extract(object$stanfit)
   model_vars <- object$stan$model_vars
@@ -369,16 +364,19 @@ prepare_eval_envs <- function(object, newdata, type, eval_type,
   idx_draws <- seq_len(n_draws)
   nu_channels <- attr(object$dformulas$stoch, "random")$responses
   M <- length(nu_channels)
-  if (!is.null(group_var) && M > 0) {
+  has_groups <- !is.null(group_var)
+  n_group <- ifelse_(has_groups, length(unique(newdata[[group_var]])), 1L)
+  if (has_groups && M > 0L) {
     orig_ids <- unique(object$data[[group_var]])
     new_ids <-  unique(newdata[[group_var]])
     n_all_draws <- ndraws(object)
     sigma_nus <- glue::glue("sigma_nu_{nu_channels}")
-    sigma_nu <- t(do.call("cbind",
-      samples[sigma_nus])[idx_draws, , drop = FALSE])
+    sigma_nu <- t(
+      do.call("cbind", samples[sigma_nus])[idx_draws, , drop = FALSE]
+    )
     nus <- glue::glue("nu_{nu_channels}")
     nu_samples <- array(unlist(samples[nus]),
-      c(n_all_draws, n_id, M))[idx_draws, , , drop = FALSE]
+      c(n_all_draws, n_group, M))[idx_draws, , , drop = FALSE]
     if (attr(object$dformulas$stoch, "random")$correlated) {
       corr_matrix_nu <- aperm(
         samples[["corr_matrix_nu"]][idx_draws, , , drop = FALSE])
@@ -390,12 +388,12 @@ prepare_eval_envs <- function(object, newdata, type, eval_type,
       sigma_nu = sigma_nu,
       corr_matrix_nu = corr_matrix_nu,
       n_draws = n_draws,
-      n_id = n_id,
+      n_group = n_group,
       orig_ids = orig_ids,
       new_ids = new_ids,
       new_levels = new_levels
     )
-    dimnames(nu_samples)[[3]] <- nus
+    dimnames(nu_samples)[[3L]] <- nus
   }
   for (j in seq_len(n_resp)) {
     resp <- resp_stoch[j]
@@ -407,9 +405,9 @@ prepare_eval_envs <- function(object, newdata, type, eval_type,
     sigma <- paste0("sigma_", resp)
     e <- new.env()
     e$type <- type
-    e$n_id <- n_id
+    e$n_group <- n_group
     e$n_draws <- n_draws
-    e$k <- n_draws * n_id
+    e$k <- n_draws * n_group
     e$newdata <- newdata
     e$J_fixed <- model_vars[[j]]$J_fixed
     e$K_fixed <- model_vars[[j]]$K_fixed
@@ -419,7 +417,7 @@ prepare_eval_envs <- function(object, newdata, type, eval_type,
     e$phi <- samples[[phi]][idx_draws]
     e$sigma <- samples[[sigma]][idx_draws]
     if (resp %in% nu_channels) {
-      e$nu <- matrix(nu_samples[, , paste0("nu_", resp)], ncol = n_id)
+      e$nu <- matrix(nu_samples[, , paste0("nu_", resp)], ncol = n_group)
     }
     if (is_categorical(resp_family)) {
       resp_levels <- attr(object$stan$responses, "resp_class")[[resp]] |>
@@ -491,7 +489,7 @@ generate_sim_call <- function(resp, resp_levels, family, eval_type,
     glue::glue(
       "{{\n",
       paste0(
-        "for (j in seq_len(n_id)) {{\n",
+        "for (j in seq_len(n_group)) {{\n",
         "  idx_draw <- seq.int((j - 1L) * n_draws + 1L, j * n_draws)\n",
         "  for (s in seq_len(S - 1)) {{\n",
         "    xbeta[idx_draw, s + 1] <- ",
@@ -516,7 +514,7 @@ generate_sim_call <- function(resp, resp_levels, family, eval_type,
     glue::glue(
       "{{\n",
       paste0(
-        "for (j in seq_len(n_id)) {{\n",
+        "for (j in seq_len(n_group)) {{\n",
         "  idx_draw <- seq.int((j - 1L) * n_draws + 1L, j * n_draws)\n",
         "  xbeta[idx_draw] <- ",
         "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '0', '')}",
@@ -554,18 +552,18 @@ fitted_gaussian <- "
 "
 
 fitted_categorical <- "
-    resp_cols <- c({paste0('\"', resp, '_fitted_', resp_levels, '\"',
-                    collapse = ', ')})
-    maxs <- apply(xbeta, 1, max)
-    mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
-    for (s in 1:S) {{
-      data.table::set(
-        x = newdata,
-        i = idx,
-        j = resp_cols[s],
-        value = mval[, s]
-      )
-    }}
+  resp_cols <- c({paste0('\"', resp, '_fitted_', resp_levels, '\"',
+                  collapse = ', ')})
+  maxs <- apply(xbeta, 1, max)
+  mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+  for (s in 1:S) {{
+    data.table::set(
+      x = newdata,
+      i = idx,
+      j = resp_cols[s],
+      value = mval[, s]
+    )
+  }}
 "
 
 fitted_bernoulli <- "

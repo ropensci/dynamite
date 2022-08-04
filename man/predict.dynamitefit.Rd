@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict.R
 \name{predict.dynamitefit}
 \alias{predict.dynamitefit}
-\title{Predict method for a Bayesian Time-Varying Coefficients Model}
+\title{Predict Method for a Dynamite Model}
 \usage{
 \method{predict}{dynamitefit}(
   object,
@@ -60,7 +60,7 @@ default is \code{NULL} which uses all samples.}
 \item{...}{Ignored.}
 }
 \description{
-Predict method for a Bayesian Time-Varying Coefficients Model
+Predict Method for a Dynamite Model
 }
 \examples{
 predict(gaussian_example_fit, type = "response", n_draws = 2L)

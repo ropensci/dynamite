@@ -1,4 +1,5 @@
-#' Return the Number of Posterior Draws of a dynamitefit Object
+#' Return the Number of Posterior Draws of a `dynamitefit` Object
+#'
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @export
 #' @export ndraws
@@ -14,7 +15,7 @@ ndraws.dynamitefit <- function(x) {
   )
   if (!is.null(x$stanfit)) {
     as.integer(
-      (x$stanfit@sim$n_save[1] - x$stanfit@sim$warmup2[1]) *
+      (x$stanfit@sim$n_save[1L] - x$stanfit@sim$warmup2[1L]) *
         x$stanfit@sim$chains
     )
   } else {

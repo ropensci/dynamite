@@ -1,6 +1,6 @@
 #' Create Code Blocks for the Stan Model
 #'
-#' @param dformula A `dynamiteformula` defining the model
+#' @param dformula \[`dynamiteformula`]\cr The model formula.
 #' @param ... Additional arguments for block generation methods.
 #' @noRd
 create_blocks <- function(dformula, ...) {
@@ -12,7 +12,8 @@ create_blocks <- function(dformula, ...) {
 #' @inheritParams create_blocks
 #' @param indent \[`integer(1)`] How many units of indentation to use for the
 #'   code generation. One unit is equal to one space.
-#' @param vars The `model_vars` component of [prepare_stan_data()] output.
+#' @param vars \[`list()`]\cr The `model_vars` component of
+#'   [prepare_stan_input()] output.
 #' @param ... Not used.
 #' @noRd
 create_blocks.default <- function(dformula, indent = 2L, vars, ...) {
@@ -29,11 +30,10 @@ create_blocks.default <- function(dformula, indent = 2L, vars, ...) {
   )
 }
 
-#' Create the 'Functions' block of the Stan model code
+#' Create the 'Functions' Block of the Stan Model Code
 #'
-#' @param dformula A `dynamiteformula` defining the model
-#' @param idt An indeter function created by [indenter_()]
-#' @param vars The `model_vars` component of [prepare_stan_data()] output.
+#' @inheritParams create_blocks.default
+#' @param idt \[`function`] An indentation function created by [indenter_()]
 #' @noRd
 create_functions <- function(dformula, idt, vars) {
   NULL
@@ -84,9 +84,11 @@ create_transformed_data <- function(dformula, idt, vars) {
 #'   Block of the Stan Model Code
 #' @noRd
 create_parameters <- function(dformula, idt, vars) {
-  splinetext <- ""
-  if (!is.null(spline_defs <- attr(dformula, "splines"))) {
-    splinetext <- paste_rows(
+  spline_defs <- attr(dformula, "splines")
+  splinetext <- ifelse_(
+    is.null(spline_defs),
+    "",
+    paste_rows(
       "// Spline parameters",
       onlyif(
         spline_defs$shrinkage,
@@ -94,18 +96,20 @@ create_parameters <- function(dformula, idt, vars) {
       ),
       .indent = idt(c(1, 1))
     )
-  }
-  randomtext <- ""
-  has_nu <- length(attr(dformula, "random")$responses) > 0
-  if (has_nu) {
-    randomtext <- paste_rows(
+  )
+  randomtext <- ifelse_(
+    identical(length(attr(dformula, "random")$responses), 0L),
+    "",
+    paste_rows(
       "// Random intercepts",
-      onlyif(attr(dformula, "random")$correlated,
-        "cholesky_factor_corr[M] L; // Cholesky for correlated intercepts"),
+      onlyif(
+        attr(dformula, "random")$correlated,
+        "cholesky_factor_corr[M] L; // Cholesky for correlated intercepts"
+      ),
       "matrix[N, M] nu_raw;",
       .indent = idt(c(1, 1, 1))
     )
-  }
+  )
   pars <- character(length(dformula))
   for (i in seq_along(dformula)) {
     family <- dformula[[i]]$family$name
@@ -123,18 +127,18 @@ create_transformed_parameters <- function(dformula, idt, vars) {
   nus <- attr(dformula, "random")$responses
   M <- length(nus)
   if (M > 0) {
-    if (attr(dformula, "random")$correlated) {
-      randomtext <- paste_rows(
+    randomtext <- ifelse_(
+      attr(dformula, "random")$correlated,
+      paste_rows(
         "matrix[N, M] nu = nu_raw * L';",
         glue::glue("vector[N] nu_{nus} = sigma_nu_{nus} * nu[, {1:M}];"),
         .indent = idt(1)
-      )
-    } else {
-      randomtext <- paste_rows(
+      ),
+      paste_rows(
         glue::glue("vector[N] nu_{nus} = sigma_nu_{nus} * nu_raw[, {1:M}];"),
         .indent = idt(1)
       )
-    }
+    )
   }
   tr_pars <- character(length(dformula))
   for (i in seq_along(dformula)) {
@@ -142,21 +146,25 @@ create_transformed_parameters <- function(dformula, idt, vars) {
     line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
     tr_pars[i] <- lines_wrap("transformed_parameters", family, line_args)
   }
-  paste_rows("transformed parameters {", randomtext, tr_pars, "}",
-    .parse = FALSE)
+  paste_rows(
+    "transformed parameters {",
+    randomtext,
+    tr_pars,
+    "}",
+    .parse = FALSE
+  )
 }
 
 #' @describeIn create_function Create the 'Model' Block of the Stan Model Code
 #' @noRd
 create_model <- function(dformula, idt, vars) {
+  spline_defs <- attr(dformula, "splines")
   splinetext <- ""
-  if (!is.null(spline_defs <- attr(dformula, "splines"))) {
-    if (spline_defs$shrinkage) {
-      lambda_prior <- attr(vars, "common_priors") |>
-        dplyr::filter(.data$parameter == "lambda") |>
-        dplyr::pull(.data$prior)
-      splinetext <- paste_rows("lambda ~ {lambda_prior};",.indent = idt(1))
-    }
+  if (!is.null(spline_defs) && spline_defs$shrinkage) {
+    lambda_prior <- attr(vars, "common_priors") |>
+      dplyr::filter(.data$parameter == "lambda") |>
+      dplyr::pull(.data$prior)
+    splinetext <- paste_rows("lambda ~ {lambda_prior};",.indent = idt(1))
   }
   randomtext <- ""
   has_nu <- length(attr(dformula, "random")$responses) > 0
@@ -191,18 +199,19 @@ create_generated_quantities <- function(dformula, idt, vars) {
     # evaluate number of corrs to avoid Stan warning about integer division
     gen <- paste_rows(
       "corr_matrix[M] corr_matrix_nu = multiply_lower_tri_self_transpose(L);",
-      "vector<lower=-1,upper=1>[{M*(M-1)/2}] corr_nu;",
+      "vector<lower=-1,upper=1>[{(M * (M - 1L)) %/% 2L}] corr_nu;",
       "for (k in 1:M) {{",
         "for (j in 1:(k - 1)) {{",
            "corr_nu[choose(k - 1, 2) + j] = corr_matrix_nu[j, k];",
          "}}",
-      "}}", .indent = idt(c(1, 1, 1, 2, 3, 2, 1))
-      )
+      "}}",
+      .indent = idt(c(1, 1, 1, 2, 3, 2, 1))
+    )
   }
   if (any(nzchar(gen))) {
     paste_rows("generated quantities {", gen, "}", .parse = FALSE)
   } else {
-   NULL
+    NULL
   }
   # uncomment if needed in the future
   #gen <- character(length(dformula))

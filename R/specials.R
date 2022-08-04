@@ -32,17 +32,17 @@ formula_specials <- function(x) {
   xt_specials <- attr(xt, "specials")[c("fixed", "varying")]
   xt_variables <- attr(xt, "variables")
   xt_terms <- attr(xt, "term.labels")
-  fixed_icpt <- 0
+  fixed_icpt <- 0L
   special_vars <- unlist(xt_specials)
-  fixed_terms <- character(0)
+  fixed_terms <- character(0L)
   if (!is.null(xt_specials[["fixed"]])) {
     # eval to ensure fixed_form is a formula
     fixed_form <- eval(xt_variables[[xt_specials[["fixed"]] + 1]][[2]])
     fixed_terms <- formula_terms(fixed_form)
     fixed_icpt <- attr(terms(fixed_form), "intercept")
   }
-  varying_terms <- character(0)
-  varying_icpt <- 0
+  varying_terms <- character(0L)
+  varying_icpt <- 0L
   if (!is.null(xt_specials[["varying"]])) {
     # eval to ensure varying_form is a formula
     varying_form <- eval(xt_variables[[xt_specials[["varying"]] + 1]][[2]])
@@ -69,7 +69,7 @@ formula_specials <- function(x) {
     ))
     fixed_icpt <- FALSE
   }
-  if (length(full_terms) > 0) {
+  if (length(full_terms) > 0L) {
     x <- reformulate(
       termlabels = full_terms,
       response = xt_variables[[2]],
@@ -151,42 +151,42 @@ formula_past <- function(formula) {
 
 #' Process Response Variables for Deterministic Channels
 #'
-#' @param x a `character` vector of length 1.
+#' @param y \[`character(1)`] The response variable name.
 #' @noRd
-formula_response <- function(x) {
-  if (grepl("factor\\(.*\\)", x, perl = TRUE)) {
+deterministic_response <- function(y) {
+  if (grepl("factor\\(.*\\)", y, perl = TRUE)) {
     list(type = "factor",
-         resp = gsub("factor\\((.*)\\)", "\\1", x, perl = TRUE))
-  } else if (grepl("numeric\\(.*\\)", x, perl = TRUE)) {
+         resp = gsub("factor\\((.*)\\)", "\\1", y, perl = TRUE))
+  } else if (grepl("numeric\\(.*\\)", y, perl = TRUE)) {
     list(type = "numeric",
-         resp = gsub("numeric\\((.*)\\)", "\\1", x, perl = TRUE))
-  } else if (grepl("integer\\(.*\\)", x, perl = TRUE)) {
+         resp = gsub("numeric\\((.*)\\)", "\\1", y, perl = TRUE))
+  } else if (grepl("integer\\(.*\\)", y, perl = TRUE)) {
     list(type = "integer",
-         resp = gsub("integer\\((.*)\\)", "\\1", x, perl = TRUE))
-  } else if (grepl("logical\\(.*\\)", x, perl = TRUE)) {
+         resp = gsub("integer\\((.*)\\)", "\\1", y, perl = TRUE))
+  } else if (grepl("logical\\(.*\\)", y, perl = TRUE)) {
     list(type = "logical",
-         resp = gsub("logical\\((.*)\\)", "\\1", x, perl = TRUE))
+         resp = gsub("logical\\((.*)\\)", "\\1", y, perl = TRUE))
   } else {
     warning_(c(
-      "No type specified for deterministic channel {.var {x}}:",
+      "No type specified for deterministic channel {.var {y}}:",
       `i` = "Assuming type is {.cls numeric}."
     ))
-    list(type = "numeric", resp = x)
+    list(type = "numeric", resp = y)
   }
 }
 
 #' Computes All Specials Defined in a Formula in the Context of the Data
 #'
-#' @param formula A `dynamiteformula` object.
-#' @param data A `data.table` containing the variables present in the special
-#'   definitions in the formula.
+#' @param dformula \[`dformula`]\cr The model formula object.
+#' @param data \[`data.table`]\cr Data containing the variables used for
+#'   the special definitions in the formula.
 #' @noRd
-evaluate_specials <- function(formula, data) {
-  lapply(seq_along(formula), function(i) {
-    if (length(formula[[i]]$specials) > 0L) {
+evaluate_specials <- function(dformula, data) {
+  lapply(seq_along(dformula), function(i) {
+    if (length(dformula[[i]]$specials) > 0L) {
       out <- list()
       for (spec in formula_special_funs) {
-        spec_formula <- formula[[i]]$specials[[spec]]
+        spec_formula <- dformula[[i]]$specials[[spec]]
         if (!is.null(spec_formula)) {
           out[[spec]] <- data[, eval(spec_formula)]
         }
@@ -200,9 +200,11 @@ evaluate_specials <- function(formula, data) {
 
 #' Retrieve the Corresponding Term of a Special Variable in a Formula
 #'
-#' @param special An `integer` vector of special variable indices.
-#' @param vars `"variables"` attribute of a `terms` object.
-#' @param term_labels `"term.labels"` attribute of a `terms` object.
+#' @param special \[`integer()`]\cr A vector of special variable indices.
+#' @param vars \[`language`]\cr
+#'   The `"variables"` attribute of a `terms` object.
+#' @param term_labels \[`character()`]\cr
+#'   The `"term.labels"` attribute of a `terms` object.
 #'
 #' @noRd
 get_special_term_indices <- function(special, vars, term_labels) {

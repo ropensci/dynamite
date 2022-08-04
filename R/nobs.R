@@ -1,11 +1,11 @@
-#' Extract the Number of Observations used to fit a Dynamite Model
+#' Extract the Number of Observations Used to Fit a Dynamite Model
 #'
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param ... Not used.
-#' @return Total number of observations as integer.
+#' @return Total number of observations as an integer.
 #'   Missing values are not accounted for as the
 #'   number of complete cases may vary across
-#'   channels, time points and groups.
+#'   channels, time points, and groups.
 #' @export
 #' @examples
 #' nobs(gaussian_example_fit)

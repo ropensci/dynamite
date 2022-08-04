@@ -4,7 +4,7 @@
 #' that the column types are correct (e.g., a lagged value has the same type
 #' as its "parent").
 #'
-#' @param data \[`data.table`]\cr Data to assign initial values into.
+#' @param data \[`data.table()`]\cr Data to assign initial values into.
 #' @param dd  \[`dynamiteformula`]\cr Formula of deterministic channels.
 #' @param dlp \[`dynamiteformula`]\cr Formula of lagged predictors.
 #' @param dld \[`dynamiteformula`]\cr Formula of lagged deterministic channels.
@@ -96,7 +96,7 @@ assign_initial_values <- function(data, dd, dlp, dld, dls,
   for (i in init) {
     as_fun <- paste0("as.", dld[[i]]$specials$resp_type)
     past <- do.call(as_fun, args = list(dld[[i]]$specials$past))
-    data[ , (lhs_det[i]) := past]
+    data[, (lhs_det[i]) := past]
   }
   idx <- idx + 1L
   assign_deterministic(data, cl, idx)
@@ -116,7 +116,7 @@ assign_initial_values <- function(data, dd, dlp, dld, dls,
 #' @param idx \[`integer()`]\cr A vector of indices to assign values into.
 #' @noRd
 assign_deterministic <- function(data, cl, idx) {
-  # This should work in the development version of data.table
+  # Requires data.table version 1.14.3 or higher
   data[idx, cl, env = list(cl = cl)]
 }
 
@@ -149,5 +149,42 @@ assign_lags_init <- function(data, ro, idx, lhs, rhs, offset = 1L) {
     na_val <- is.na(val)
     val[na_val] <- data[[lhs[k]]][idx][na_val]
     set(data, i = idx, j = lhs[k], value = val)
+  }
+}
+
+#' Evaluate Definitions of Deterministic Channels
+#'
+#' @inheritParams parse_data
+#' @param dformulas \[list()]\cr The return object of [dynamite::parse_lags()].
+#' @noRd
+evaluate_deterministic <- function(dformulas, data, group_var, time_var) {
+  fixed <- as.integer(attr(dformulas$all, "max_lag"))
+  n_time <- length(unique(data[[time_var]]))
+  dd <- dformulas$det
+  dlp <- dformulas$lag_pred
+  dld <- dformulas$lag_det
+  dls <- dformulas$lag_stoch
+  cl <- get_quoted(dd)
+  initialize_deterministic(data, dd, dlp, dld, dls)
+  idx <- seq.int(1L, nrow(data), by = n_time) - 1L
+  assign_initial_values(data, dd, dlp, dld, dls, idx, fixed, group_var)
+  if (n_time > fixed + 1L) {
+    ro_stoch <- seq_len(length(dls))
+    ro_det <- ifelse_(
+      is.null(attr(dld, "rank_order")),
+      integer(0L),
+      attr(dld, "rank_order")
+    )
+    lhs_det <- get_responses(dld)
+    rhs_det <- get_predictors(dld)
+    lhs_stoch <- get_responses(dls)
+    rhs_stoch <- get_predictors(dls)
+    idx <- idx + fixed + 1L
+    for (i in seq.int(fixed + 2L, n_time)) {
+      idx <- idx + 1L
+      assign_lags(data, ro_det, idx, lhs_det, rhs_det)
+      assign_lags(data, ro_stoch, idx, lhs_stoch, rhs_stoch)
+      assign_deterministic(data, cl, idx)
+    }
   }
 }

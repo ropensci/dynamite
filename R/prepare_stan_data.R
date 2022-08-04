@@ -1,16 +1,16 @@
-#' Prepare data for Stan
+#' Prepare Input for Stan
 #'
-#' Prepares data for Stan sampling, Stan model code construction and
-#' default/user-modifiable prior definitions.
+#' Prepares data for Stan sampling, variables for Stan model code construction
+#' and default/user-modifiable prior definitions.
 #'
-#' @param data \[`data.table`]\cr The data used for model fitting
+#' @param data \[`data.table`]\cr The data used to fit the model.
 #' @param dformula \[`dynamiteformula`]\cr The model formula of stochastic
-#'   channels
-#' @param group_var \[`character(1)`]\cr The grouping variable name
-#' @param time_var \[`character(1)`]\cr The time index variable name
+#'   channels.
+#' @param group_var \[`character(1)`]\cr The grouping variable name.
+#' @param time_var \[`character(1)`]\cr The time index variable name.
 #' @param priors \[`data.frame`]\cr A data frame containing the prior
 #'   definitions, or `NULL`, in which case default priors are used.
-#' @param fixed \[`integer(1)`]\cr Number of fixed time points
+#' @param fixed \[`integer(1)`]\cr Number of fixed time points.
 #' @param verbose \[`logical(1)`]\cr If `TRUE`, outputs warnings.
 #'
 #' @srrstats {G2.13, G2.14, G2.14a, G2.14b, G2.14c, G2.15}
@@ -22,8 +22,8 @@
 #' @srrstats {BS2.2, BS2.3, BS2.4, BS2.5}
 #'   Distributional parameters are checked.
 #' @noRd
-prepare_stan_data <- function(data, dformula, group_var, time_var,
-                              priors = NULL, fixed, verbose) {
+prepare_stan_input <- function(data, dformula, group_var, time_var,
+                               priors = NULL, fixed, verbose) {
 
   resp_names <- get_responses(dformula)
   missing_resp <- !(resp_names %in% names(data))
@@ -32,7 +32,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
     "Can't find variable{?s} {.var {resp_names[missing_resp]}} in {.arg data}."
   )
   responses <- as.data.frame(data[, .SD, .SDcols = resp_names])
-  # Needs sapply/lapply instead of apply to keep factors as factors
+  # Needs lapply instead of apply to keep factors as factors
   attr(responses, "resp_class") <- lapply(responses, function(x) {
     cl <- class(x)
     attr(cl, "levels") <- levels(x)
@@ -40,21 +40,20 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
   })
   specials <- evaluate_specials(dformula, data)
   model_matrix <- full_model.matrix(dformula, data, verbose)
-  #resp_names <- colnames(responses)
   n_channels <- length(resp_names)
   # A list of variables for stan sampling without grouping by channel
   sampling_vars <- list()
   empty_list <- setNames(vector(mode = "list", length = n_channels), resp_names)
   # A list containing a list for each channel consisting of
-  # variables used to construct the stan model code
+  # variables used to construct the Stan model code
   model_vars <- empty_list
   # A list for getting current prior definitions
   prior_list <- empty_list
   time <- sort(unique(data[[time_var]]))
   T_full <- length(time)
   T_idx <- seq.int(fixed + 1L, T_full)
-  groups <- !is.null(group_var)
-  group <- onlyif(groups, data[[group_var]])
+  has_groups <- !is.null(group_var)
+  group <- onlyif(has_groups, data[[group_var]])
   has_splines <- !is.null(attr(dformula, "splines"))
   spline_defs <- prepare_splines(
     attr(dformula, "splines"),
@@ -64,7 +63,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
   sampling_vars$D <- spline_defs$D
   sampling_vars$Bs <- spline_defs$Bs
   has_random <- attr(dformula, "random")$responses
-  N <- ifelse_(groups, length(unique(group)), 1L)
+  N <- ifelse_(has_groups, length(unique(group)), 1L)
   K <- ncol(model_matrix)
   X <- aperm(
     array(as.numeric(unlist(split(model_matrix, gl(T_full, 1, N * T_full)))),
@@ -73,7 +72,6 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
     c(3L, 1L, 2L)
   )[T_idx, , , drop = FALSE]
   sd_x <- apply(X[1L, , , drop = FALSE], 3L, sd, na.rm = TRUE)
-
   # needed for default priors, 0.5 is pretty arbitrary
   sd_x <- setNames(pmax(0.5, sd_x, na.rm = TRUE), colnames(model_matrix))
   x_means <- apply(X[1L, , , drop = FALSE], 3L, mean, na.rm = TRUE)
@@ -90,7 +88,7 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
     channel <- list()
     resp <- resp_names[i]
     resp_split <- ifelse_(
-      groups,
+      has_groups,
       split(responses[, resp], group),
       responses[, resp]
     )
@@ -112,13 +110,13 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
     channel$K <- length(assigned[[i]])
     channel$K_fixed <- length(fixed_pars[[i]])
     channel$K_varying <- length(varying_pars[[i]])
-    obs_idx <- array(0, dim = c(N, T_full - fixed))
+    obs_idx <- array(0L, dim = c(N, T_full - fixed))
     obs_len <- integer(T_full - fixed)
     for (j in seq_len(T_full - fixed)) {
       x_na <- X_na[j, , channel$J, drop = FALSE]
       dim(x_na) <- c(N, channel$K)
       y_na <- Y_na[j, ]
-      obs_XY <- which(apply(x_na, 1, function(z) all(!z)) & !y_na)
+      obs_XY <- which(apply(x_na, 1L, function(z) all(!z)) & !y_na)
       obs_XY_len <- length(obs_XY)
       obs_idx[, j] <- c(obs_XY, rep(0L, N - obs_XY_len))
       obs_len[j] <- obs_XY_len
@@ -147,13 +145,13 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
     for (spec in formula_special_funs) {
       if (!is.null(form_specials[[spec]])) {
         spec_split <- ifelse_(
-          groups,
+          has_groups,
           split(form_specials[[spec]], group),
           form_specials[[spec]]
         )
         spec_array <- array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
         sampling_vars[[paste0(spec, "_", resp)]] <-
-          spec_array[seq.int(fixed + 1, T_full), , drop = FALSE]
+          spec_array[seq.int(fixed + 1L, T_full), , drop = FALSE]
         channel[[paste0("has_", spec)]] <- TRUE
       } else {
         channel[[paste0("has_", spec)]] <- FALSE
@@ -183,8 +181,9 @@ prepare_stan_data <- function(data, dformula, group_var, time_var,
   sampling_vars$N <- N
   sampling_vars$K <- K
   sampling_vars$X <- X
-  sampling_vars$M <- sum(unlist(lapply(model_vars, "[[",
-    "has_random_intercept")))
+  sampling_vars$M <- sum(unlist(
+    lapply(model_vars, "[[", "has_random_intercept")
+  ))
   # avoid goodpractice warning, T is a Stan variable, not an R variable
   sampling_vars[["T"]] <- T_full - fixed
   sampling_vars$X_m <- as.array(x_means)
@@ -245,7 +244,7 @@ prepare_splines <- function(spline_defs, n_channels, T_idx) {
     out <- list(
       lb = numeric(n_channels),
       noncentered = logical(n_channels),
-      shrinkage = logical(1)
+      shrinkage = logical(1L)
     )
   }
   out
@@ -253,9 +252,9 @@ prepare_splines <- function(spline_defs, n_channels, T_idx) {
 
 #' Construct a Prior Definition for a Time-varying Parameter
 #'
-#' @param ptype Type of the parameter
-#' @param priors A `data.frame` defining the priors
-#' @param channel A `list` of channel-specific variables for Stan sampling
+#' @param ptype \[chararcter(1L)]\cr Type of the parameter.
+#' @param priors \[`data.frame`]\cr Prior definitions.
+#' @param channel \[`list()`]\cr Channel-specific variables for Stan sampling
 #' @noRd
 prepare_prior <- function(ptype, priors, channel) {
   pdef <- priors |> dplyr::filter(.data$type == ptype)
@@ -292,7 +291,7 @@ prepare_common_priors <- function(priors, M, shrinkage, correlated) {
       priors |> dplyr::filter(.data$type == "lambda")
     )
   }
-  if (M > 1 && correlated) {
+  if (M > 1L && correlated) {
     common_priors <- ifelse_(
       is.null(priors),
       dplyr::bind_rows(
@@ -322,13 +321,17 @@ prepare_common_priors <- function(priors, M, shrinkage, correlated) {
 #' @param y \[`character(1)`]\cr Name of the response variable of the channel.
 #' @param Y \[`matrix()`]\cr A matrix of values of the response variable.
 #' @param channel \[`list()`]\cr Channel-specific helper variables.
-#' @param mean_gamma Prior mean betas and deltas (at time `fixed + 1`).
-#' @param sd_gamma Prior SD betas and deltas (at time `fixed + 1`).
-#' @param mean_y Mean of the response variable at time `fixed + 1`.
-#' @param sd_y SD of the response variable at time `fixed + 1`.
+#' @param mean_gamma \[`numeric(1)`]\cr Prior mean betas and deltas
+#'   (at time `fixed + 1`).
+#' @param sd_gamma \[`numeric(1)`]\cr  Prior SD betas and deltas
+#'   (at time `fixed + 1`).
+#' @param mean_y \[`numeric(1)`]\cr  Mean of the response variable
+#'   (at time `fixed + 1`).
+#' @param sd_y \[`numeric(1)`]\cr  SD of the response variable
+#'   (at time `fixed + 1`).
 #' @param resp_class \[`character()`]\cr Class(es) of the response `Y`.
-#' @param priors \[`data.frame`]\cr A data frame containing the prior
-#'   definitions, or `NULL`, in which case default priors are used.
+#' @param priors \[`data.frame`]\cr Prior definitions, or `NULL`, in which case
+#'   the default priors are used.
 #'
 #' @srrstats {RE1.2} Checks for expected types and classes along with other
 #'   `prepare_channel_*` functions.
@@ -351,15 +354,15 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
     }
   }
   channel$write_beta <- channel$has_fixed &&
-    length(channel$beta_prior_distr) == 1L
+    identical(length(channel$beta_prior_distr), 1L)
   channel$write_delta <- channel$has_varying &&
-    length(channel$delta_prior_distr) == 1L
+    identical(length(channel$delta_prior_distr), 1L)
   channel$write_tau <- channel$has_varying &&
-    length(channel$tau_prior_distr) == 1L
+    identical(length(channel$tau_prior_distr), 1L)
   list(channel = channel, priors = priors)
 }
 
-#' @describeIn prepare_channel_default Prepare a categorical channel
+#' @describeIn prepare_channel_default Prepare a Categorical Channel
 #' @noRd
 prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
                                         priors) {
@@ -399,7 +402,7 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
   list(channel = channel, priors = priors)
 }
 
-#' @describeIn prepare_channel_default Prepare a gaussian channel
+#' @describeIn prepare_channel_default Prepare a Gaussian Channel
 #' @noRd
 prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
@@ -412,7 +415,7 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
     sd_y <- sd(Y, na.rm = TRUE)
     mean_y <- Y[1L]
   }
-  if (is.na(sd_y) || sd_y == 0) {
+  if (is.na(sd_y) || identical(sd_y, 0.0)) {
     sd_y <- 1.0
   }
   if (is.na(mean_y)) {
@@ -434,7 +437,7 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   sigma_prior <- data.frame(
     parameter = paste0("sigma_", y),
     response = y,
-    prior = paste0("exponential(", signif(1.0 / sd_y, 2), ")"),
+    prior = paste0("exponential(", signif(1.0 / sd_y, 2L), ")"),
     type = "sigma",
     category = ""
   )
@@ -444,18 +447,19 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   } else {
     priors <- priors |> dplyr::filter(.data$response == y)
     pdef <- priors |> dplyr::filter(.data$type == "sigma")
-    if (nrow(pdef) == 1L) {
+    if (identical(nrow(pdef), 1L)) {
       out$channel$sigma_prior_distr <- pdef$prior
     }
     defaults <- dplyr::bind_rows(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
-      sigma_prior)
+      sigma_prior
+    )
     out$priors <- check_priors(priors, defaults)
   }
   out
 }
 
-#' @describeIn prepare_channel_default Prepare a binomial channel
+#' @describeIn prepare_channel_default Prepare a Binomial Channel
 #' @noRd
 prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
@@ -484,12 +488,13 @@ prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
   if (is.null(priors)) {
     out$priors <- check_priors(
       out$priors,
-      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors)
+      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
+    )
   }
   out
 }
 
-#' @describeIn prepare_channel_default Prepare a bernoulli channel
+#' @describeIn prepare_channel_default Prepare a Bernoulli Channel
 #' @noRd
 prepare_channel_bernoulli <- function(y, Y, channel, sd_x, resp_class,
                                       priors) {
@@ -541,12 +546,13 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
   if (is.null(priors)) {
     out$priors <- check_priors(
       out$priors,
-      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors)
+      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
+    )
   }
   out
 }
 
-#' @describeIn prepare_channel_default Prepare a negative binomial channel
+#' @describeIn prepare_channel_default Prepare a Negative Binomial Channel
 #' @noRd
 prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
@@ -593,18 +599,19 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
   } else {
     priors <- priors |> dplyr::filter(.data$response == y)
     pdef <- priors |> dplyr::filter(.data$type == "phi")
-    if (nrow(pdef) == 1L) {
+    if (identical(nrow(pdef), 1L)) {
       out$channel$phi_prior_distr <- pdef$prior
     }
     defaults <- dplyr::bind_rows(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
-      phi_prior)
+      phi_prior
+    )
     out$priors <- check_priors(priors, defaults)
   }
   out
 }
 
-#' @describeIn prepare_channel_default Prepare an exponential channel
+#' @describeIn prepare_channel_default Prepare an Exponential Channel
 #' @noRd
 prepare_channel_exponential <- function(y, Y, channel, sd_x, resp_class,
                                         priors) {
@@ -641,13 +648,14 @@ prepare_channel_exponential <- function(y, Y, channel, sd_x, resp_class,
   if (is.null(priors)) {
     out$priors <- check_priors(
       out$priors,
-      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors)
+      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
+    )
   }
   out
 
 }
 
-#' @describeIn prepare_channel_default Prepare a gamma channel
+#' @describeIn prepare_channel_default Prepare a Gamma channel
 #' @noRd
 prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
@@ -693,18 +701,19 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
   } else {
     priors <- priors |> dplyr::filter(.data$response == y)
     pdef <- priors |> dplyr::filter(.data$type == "phi")
-    if (nrow(pdef) == 1L) {
+    if (identical(nrow(pdef), 1L)) {
       out$channel$phi_prior_distr <- pdef$prior
     }
     defaults <- dplyr::bind_rows(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
-      phi_prior)
+      phi_prior
+    )
     out$priors <- check_priors(priors, defaults)
   }
   out
 }
 
-#' @describeIn prepare_channel_default Prepare a beta channel
+#' @describeIn prepare_channel_default Prepare a Beta Channel
 #' @noRd
 prepare_channel_beta <- function(y, Y, channel, sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
@@ -762,41 +771,45 @@ prepare_channel_beta <- function(y, Y, channel, sd_x, resp_class, priors) {
 }
 #' Raise an error if factor type is not supported by a family
 #'
-#' @param y Response variable the error is related to.
-#' @param family Family as character vector.
-#' @param call call to be passed to [stop_()].
+#' @param y \[`character(1)`]\cr Response variable the error is related to.
+#' @param family \[`character(1)`]\cr Family as a character string.
+#' @param call \[`call`]\cr Call to be passed to [stop_()].
 #' @noRd
 abort_factor <- function(y, family, call) {
-  stop_(c(
-    "Response variable {.var {y}} is invalid:",
-    `x` = "{family} family is not supported for {.cls factor} variables."
-  ), call = call)
+  stop_(
+    c(
+      "Response variable {.var {y}} is invalid:",
+      `x` = "{family} family is not supported for {.cls factor} variables."
+    ),
+    call = call
+  )
 }
 
-#' Raise error if negative values are not supported by a family
+#' Raise an Error If Negative Values Are Not Supported by a Family
 #'
-#' @param y Response variable the error is related to.
-#' @param family Family as character vector.
-#' @param type Value type of the family.
-#' @param call call to be passed to [stop_()].
+#' @inheritParams abort_factor
+#' @param type \[`character(1)`]\cr Value type of the family.
 #' @noRd
 abort_negative <- function(y, family, type, call) {
-  stop_(c(
-    "Response variable {.var {y}} is invalid:",
-    `x` = "{family} family supports only non-negative {type}."
-  ), call = call)
+  stop_(
+    c(
+      "Response variable {.var {y}} is invalid:",
+      `x` = "{family} family supports only non-negative {type}."
+    ),
+    call = call
+  )
 }
 
-#' Raise error if values outside unit interval
+#' Raise an Error If Values Are Outside of the Unit Interval
 #'
-#' @param y Response variable the error is related to.
-#' @param family Family as character vector.
-#' @param type Value type of the family.
-#' @param call call to be passed to [stop_()].
+#' @inheritParams abort_negative
 #' @noRd
 abort_nonunit <- function(y, family, type, call) {
-  stop_(c(
-    "Response variable {.var {y}} is invalid:",
-    `x` = "{family} family supports only {type} on open interval (0, 1)."
-  ), call = call)
+  stop_(
+    c(
+      "Response variable {.var {y}} is invalid:",
+      `x` = "{family} family supports only {type} on the open interval (0, 1)."
+    ),
+    call = call
+  )
 }

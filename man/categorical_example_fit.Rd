@@ -3,7 +3,7 @@
 \docType{data}
 \name{categorical_example_fit}
 \alias{categorical_example_fit}
-\title{Model Fit for the categorical_example Data}
+\title{Model Fit for the Simulated Categorical Multivariate Panel Data}
 \format{
 A \code{dynamitefit} object.
 }

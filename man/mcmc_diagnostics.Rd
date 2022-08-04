@@ -10,11 +10,11 @@ mcmc_diagnostics(x, n = 1L)
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
 \item{n}{[\code{integer(1)}: \sQuote{1L}]\cr How many rows to print in
-parameter-specific convergence measures. Default is 1. Should be a
+parameter-specific convergence measures. The default is 1. Should be a
 positive (unrestricted) integer.}
 }
 \value{
-The original \code{dynamitefit} object.
+The original \code{dynamitefit} object (invisibly).
 }
 \description{
 Prints HMC diagnostics, and lists parameters with smallest effective sample

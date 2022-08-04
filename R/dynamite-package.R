@@ -39,10 +39,11 @@
 #' @srrstats {BS7.1, BS7.2} Parameters used to simulate example datasets are
 #'   recovered.
 NULL
+
 #' Simulated Data of Gaussian Responses
 #'
-#' A simulated data containing gaussian response variables with two covariates.
-#' The data was generated from a model with time-varying effects of
+#' Simulated data containing gaussian response variables with two covariates.
+#' The dataset was generated from a model with time-varying effects of
 #' covariate x and the lagged value of the response variable, time-varying
 #' intercept, and time-invariant effect of covariate z. The time-varying
 #' coefficients vary according to a spline with 20 degrees of freedom.
@@ -59,6 +60,7 @@ NULL
 #'  \item{time}{Variable defining the time point of the measurement (1 to 30).}
 #' }
 "gaussian_example"
+
 #' Model Fit for the Simulated Data of Gaussian Responses
 #'
 #' A `dynamitefit` object obtained by running a `dynamite` on the
@@ -80,6 +82,7 @@ NULL
 #' gaussian_example_fit.R}
 #' @format A `dynamitefit` object.
 "gaussian_example_fit"
+
 #' Simulated Multivariate Panel Data
 #'
 #' A simulated multichannel data containing multiple individuals with multiple
@@ -97,7 +100,8 @@ NULL
 #'  \item{b}{Response variable following Bernoulli distribution.}
 #' }
 "multichannel_example"
-#' Model Fit for the multichannel_example Data
+
+#' Model Fit for the Simulated Multivariate Panel Data
 #'
 #' A `dynamitefit` object obtained by running a `dynamite` on the
 #' `multichannel_example` dataset as
@@ -119,7 +123,8 @@ NULL
 #' multichannel_example_fit.R}
 #' @format A `dynamitefit` object.
 "multichannel_example_fit"
-#' Simulated Multivariate Panel Data
+
+#' Simulated Categorical Multivariate Panel Data
 #'
 #' A simulated data containing multiple individuals with two categorical
 #' response variables.
@@ -136,7 +141,8 @@ NULL
 #'  \item{z}{A continuous covariate.}
 #' }
 "categorical_example"
-#' Model Fit for the categorical_example Data
+
+#' Model Fit for the Simulated Categorical Multivariate Panel Data
 #'
 #' A `dynamitefit` object obtained by running a `dynamite` on the
 #' `categorical_example` dataset as
