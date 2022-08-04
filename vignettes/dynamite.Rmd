@@ -27,67 +27,174 @@ library(dynamite)
 
 # Introduction
 
-Panel data is common in various fields such as social sciences. These data consists of multiple subjects, followed over several time points, and there are often many observations per individual at each time, for example family status and income of each individual at each time point of interest. Such data can be analyzed in various ways, depending on the research questions and the characteristics of the data such as the number of individuals and time points, and the assumed distribution of the response variables. Popular, somewhat overlapping modelling approaches include dynamic panel models, fixed effect models, cross-lagged panel models (CLPM), CLPM with fixed or random effects  [@arellano1991, @Allison2009, @Bollen2010, @Allison2017, @Hamaker2015, @Mulder2021]. Parameter estimation is typically based on ordinary least squares, generalized method of moments or maximum likelihood using structural equation models.
+Panel data is common in various fields such as social sciences. 
+These data consists of multiple subjects, followed over several time points, 
+and there are often many observations per individual at each time, for example 
+family status and income of each individual at each time point of interest.
+Such data can be analyzed in various ways, depending on the research questions 
+and the characteristics of the data such as the number of individuals and time 
+points, and the assumed distribution of the response variables. Popular, 
+somewhat overlapping modelling approaches include dynamic panel models, 
+fixed effect models, cross-lagged panel models (CLPM), CLPM with fixed or 
+random effects [@arellano1991, @Allison2009, @Bollen2010,
+@Allison2017, @Hamaker2015, @Mulder2021]. Parameter estimation is typically 
+based on ordinary least squares, generalized method of moments or maximum 
+likelihood using structural equation models.
 
-There are several R [@R] packages in CRAN focusing on panel data analysis. `plm` [@plm] provides various estimation methods and tests for linear panel data model, while `fixest` [@fixest] supports multiple fixed effects and different distributions of response variables (based on `stats::family`). `panelr` [@panelr] contains tools for panel data manipulation and estimation methods for "within-between" models which combine fixed effect and random effect models. This is done by using `lme4` [@lme4], `geepack` [@geepack], and `brms` [@brms] packages as a backend. Finally, the `lavaan` [@lavaan] package provides methods for general structural equation modelling, and thus can be used to estimate various panel data models such as cross-lagged panel models with fixed or random intercepts.
+There are several R [@R] packages in CRAN focusing on panel data analysis. 
+`plm` [@plm] provides various estimation methods and tests for linear panel 
+data model, while `fixest` [@fixest] supports multiple fixed effects and 
+different distributions of response variables (based on `stats::family`). 
+`panelr` [@panelr] contains tools for panel data manipulation and estimation 
+methods for "within-between" models which combine fixed effect and random 
+effect models. This is done by using `lme4` [@lme4], `geepack` [@geepack], 
+and `brms` [@brms] packages as a backend. Finally, the `lavaan` [@lavaan] 
+package provides methods for general structural equation modelling, and thus 
+can be used to estimate various panel data models such as cross-lagged panel
+models with fixed or random intercepts.
 
-In traditional panel data models such as the ones provided by the aforementioned packages, the number of time points considered is often assumed to be relatively small, say less than 10, while the number of individuals can be for example hundreds or thousands. Due to the small number of time points, the effects of predictors are typically assumed to be time-invariant (although some extensions to time-varying effects have emerged [@hayakawa2019]). On the other hand, when the number of time points is moderate or large, say hundreds or thousands, it can be reasonable to assume that the dynamics of the system change over time. There are various methods to model time-varying effects in (generalized) linear models based on state space models [@harvey1982; @durbin2012], with various R implementations [@helske2022; @knaus2021; @brodersen2014]. The state space modelling approaches are highly flexible but often computationally demanding due to assumed latent processes for the regression coefficients and an analytically intractable marginal likelihood, so they are most useful in settings with only few subjects. Methods based on the varying coefficients models [@hastie1993; @eubank2004] can be computationally more convenient, especially when the varying coefficients are based on splines. Some of the R implementations of time-varying coefficient models include [@casas2019; @dziak2021].
+In traditional panel data models such as the ones provided by the 
+aforementioned packages, the number of time points considered is often assumed 
+to be relatively small, say less than 10, while the number of individuals can 
+be for example hundreds or thousands. Due to the small number of time points, 
+the effects of predictors are typically assumed to be time-invariant (although 
+some extensions to time-varying effects have emerged [@hayakawa2019]). On the 
+other hand, when the number of time points is moderate or large, say hundreds 
+or thousands, it can be reasonable to assume that the dynamics of the system 
+change over time. There are various methods to model time-varying effects in 
+(generalized) linear models based on state space models 
+[@harvey1982; @durbin2012], with various R implementations 
+[@helske2022; @knaus2021; @brodersen2014]. The state space modelling approaches 
+are highly flexible but often computationally demanding due to assumed latent 
+processes for the regression coefficients and an analytically intractable 
+marginal likelihood, so they are most useful in settings with only few 
+subjects. Methods based on the varying coefficients models 
+[@hastie1993; @eubank2004] can be computationally more convenient, especially 
+when the varying coefficients are based on splines. Some of the R 
+implementations of time-varying coefficient models include 
+[@casas2019; @dziak2021].
 
-The `dynamite` package provides an alternative approach to panel data inference which avoids some of the limitations and drawbacks of the aforementioned methods. First, `dynamite` supports estimating effects which vary smoothly over time according to splines, with penalization based on random walk priors. This allows modelling for example effects of interventions which increase or decrease over time. Second, `dynamite` supports wide variety of distributions for the response variables such as categorical distribution commonly encountered in life-course research [@Helske2018]. Third, estimation is done in a fully Bayesian fashion using `Stan` [@Stan; @rstan], which leads to transparent and interpretable quantification of parameter and predictive uncertainty. Finally, with `dynamite` we can model arbitrary number of measurements per individual (i.e. multiple channels following [@seqHMM]). Jointly modelling all endogenous variables allows us to consider long-term effects of interventions which take into account the interdependency of several variables of the model, and allows realistic simulation of complex counterfactual scenarios.
+The `dynamite` package provides an alternative approach to panel data inference 
+which avoids some of the limitations and drawbacks of the aforementioned 
+methods. First, `dynamite` supports estimating effects which vary smoothly over 
+time according to splines, with penalization based on random walk priors. 
+This allows modelling for example effects of interventions which increase or 
+decrease over time. Second, `dynamite` supports wide variety of distributions 
+for the response variables such as categorical distribution commonly 
+encountered in life-course research [@Helske2018]. Third, estimation is done in 
+a fully Bayesian fashion using `Stan` [@Stan; @rstan], which leads to 
+transparent and interpretable quantification of parameter and predictive 
+uncertainty. Finally, with `dynamite` we can model arbitrary number of 
+measurements per individual (i.e. multiple channels following [@seqHMM]). 
+Jointly modelling all endogenous variables allows us to consider long-term 
+effects of interventions which take into account the interdependency of several 
+variables of the model, and allows realistic simulation of complex 
+counterfactual scenarios.
   
 # The Model
 
-Consider an individual $i$ with observations $y_{i,t} = (y^1_{i,t}, \ldots, y^c_{i,t},\ldots, y^C_{i,t})$, $t=1,\ldots,T$, $i = 1,\ldots,N$ i.e. at each time point $t$ we have $C$ observations from $N$ individuals. Assume that each element of $y_{i,t}$ can depend on the past values $y_{i,t-1}$, as well as additional exogenous covariates $x_{i,t}$. Then, assuming that the elements of $y_{i,t}$ are independent given $y_{i, t-1}$ and $x_{i,t}$, we have
+Consider an individual $i$ with observations 
+$y_{i,t} = (y^1_{i,t}, \ldots, y^c_{i,t},\ldots, y^C_{i,t})$, $t=1,\ldots,T$, 
+$i = 1,\ldots,N$ i.e. at each time point $t$ we have $C$ observations from $N$ 
+individuals. Assume that each element of $y_{i,t}$ can depend on the past values 
+$y_{i,t-1}$, as well as additional exogenous covariates $x_{i,t}$. 
+Then, assuming that the elements of $y_{i,t}$ are independent given 
+$y_{i, t-1}$ and $x_{i,t}$, we have
 \[
 \begin{aligned}
-  y_{i,t} &\sim p_t(y_{i,t} | y_{i,t-1},  x_{i,t}) = \prod_{c=1}^C p^c_t(y^c_{i,t} | y^1_{i,t-1}, \ldots, y^C_{i,t-1}, x_{i,t}).
+  y_{i,t} &\sim p_t(y_{i,t} | y_{i,t-1},x_{i,t}) = 
+    \prod_{c=1}^C p^c_t(y^c_{i,t} | y^1_{i,t-1}, \ldots, y^C_{i,t-1}, x_{i,t}).
 \end{aligned}
 \]
-Here the parameters of the conditional distributions $p^c$ depend on time, which allows us to take into account the fact that the dynamics of our system can evolve over time. 
+Here the parameters of the conditional distributions $p^c$ depend on time, 
+which allows us to take into account the fact that the dynamics of our system 
+can evolve over time. 
 
-For $p^c_t$, given a suitable link function depending on our distributional assumptions, we define a linear predictor $\eta^c_{i,t}$ for the channel $c$ with a following general form:
+For $p^c_t$, given a suitable link function depending on our distributional 
+assumptions, we define a linear predictor $\eta^c_{i,t}$ for the channel $c$ 
+with a following general form:
 \[
 \begin{aligned}
-  \eta^c_{i,t} &= \nu_{i} + \alpha^c_{t} + Z^c_{i,t} \beta^c + X^c_{i,t} \delta^c_{t}
+  \eta^c_{i,t} &= 
+    \nu_{i} + \alpha^c_{t} + Z^c_{i,t} \beta^c + X^c_{i,t} \delta^c_{t}
 \end{aligned}
 \]
-$\nu_{i}$ is the individual-specific random intercept, $\alpha_t$ (possibly time-varying) is the common intercept term, $Z^c_{i,t}$ defines the predictors corresponding to the vector of time-invariant coefficients $\beta^c$, and similarly for the time-varying part $X^c_{i,t} \delta^c_{t}$. The random intercept terms $\nu_{i}$ are assumed to follow zero-mean Gaussian and these can be correlated across channels. Note that dynamite does not center the response nor predictor variables.
+$\nu_{i}$ is the individual-specific random intercept, $\alpha_t$ 
+(possibly time-varying) is the common intercept term, $Z^c_{i,t}$ defines the 
+predictors corresponding to the vector of time-invariant coefficients 
+$\beta^c$, and similarly for the time-varying part $X^c_{i,t} \delta^c_{t}$. 
+The random intercept terms $\nu_{i}$ are assumed to follow zero-mean Gaussian 
+and these can be correlated across channels. Note that dynamite does not center 
+the response nor predictor variables.
 
-For time-varying coefficients $\delta$ (and similarly for $\alpha$), we use Bayesian P-splines (penalized B-splines) [@lang2004] where
+For time-varying coefficients $\delta$ (and similarly for $\alpha$), 
+we use Bayesian P-splines (penalized B-splines) [@lang2004] where
 \[
   \delta^c_{k,t} = B_t \omega_k^c, \quad k=1,\ldots,K,
 \]
-where $K$ is the number of covariates, $B_t$ is a vector of B-spline values at time $t$ and $\omega_k^c$ is vector of corresponding spline coefficients. In general the number of B-splines $D$ used for constructing the splines for the study period $1,\ldots,T$ can be chosen freely, but too large $D$ can result in overfitting. To mitigate this, we define a random walk prior for $\omega^c_k$ as
+where $K$ is the number of covariates, $B_t$ is a vector of B-spline values at 
+time $t$ and $\omega_k^c$ is vector of corresponding spline coefficients. In 
+general the number of B-splines $D$ used for constructing the splines for the 
+study period $1,\ldots,T$ can be chosen freely, but too large $D$ can result in 
+overfitting. To mitigate this, we define a random walk prior for $\omega^c_k$ as
 \[
   \omega^c_{k,1} \sim p(\omega^c_{k,1}), \quad
   \omega^c_{k,d} \sim N(\omega^c_{k,d-1}, (\tau^c_k)^2), \quad d=2, \ldots, D.
 \]
-with user defined prior $p(\omega^c_{k,1})$ on the first coefficient, which due to the structure of $B_1$ corresponds to the prior on the $\delta^c_{k,1}$. Here, the parameter $\tau^c_k$ controls the smoothness of the spline curves.
+with user defined prior $p(\omega^c_{k,1})$ on the first coefficient, which due 
+to the structure of $B_1$ corresponds to the prior on the $\delta^c_{k,1}$. 
+Here, the parameter $\tau^c_k$ controls the smoothness of the spline curves.
 
 # Defining The Model
 
-The models in the `dynamite` package are defined by combining the channel-specific formulas defined via the function `dynamiteformula` for which a shorthand alias `obs` is available. The function `obs` takes two arguments: `formula` and `family`, which define how the response variable of the channel depends on the predictor variables in the standard R formula syntax and the family of the response variable, respectively. These channel specific definitions are then combined into a single model with `+`. For example, the following formula 
+The models in the `dynamite` package are defined by combining the 
+channel-specific formulas defined via the function `dynamiteformula` for which 
+a shorthand alias `obs` is available. The function `obs` takes two arguments: 
+`formula` and `family`, which define how the response variable of the channel 
+depends on the predictor variables in the standard R formula syntax and the 
+family of the response variable, respectively. These channel specific 
+definitions are then combined into a single model with `+`. For example, 
+the following formula 
 
 ```{r, echo=TRUE, eval=FALSE}
 obs(y ~ lag(x), family = "gaussian") + 
 obs(x ~ z, family = "poisson")
 ``` 
 
-defines a model with two channels; first we declare that `y` is a gaussian variable depending on the previous value of `x` (`lag(x)`) and then we add a second channel declaring `x` as Poisson distributed depending on some exogenous variable `z` (for which we do not define any distribution). Note that the model formula can be defined without any reference to some external data, just as an R formula can. Currently the `dynamite` package supports the following distributions for the observations:
+defines a model with two channels; first we declare that `y` is a gaussian 
+variable depending on the previous value of `x` (`lag(x)`) and then we add a 
+second channel declaring `x` as Poisson distributed depending on some exogenous 
+variable `z` (for which we do not define any distribution). Note that the model 
+formula can be defined without any reference to some external data, just as an 
+R formula can. Currently the `dynamite` package supports the following 
+distributions for the observations:
 
-* Categorical: `categorical` (with a softmax link using the first category as reference). See the documentation of the `categorical_logit_glm` in the Stan function reference manual (https://mc-stan.org/users/documentation/).
-* Gaussian: `gaussian` (identity link, parameterized using mean and standard deviation).
+* Categorical: `categorical` (with a softmax link using the first  category 
+  as reference). See the documentation of the `categorical_logit_glm` in the 
+  Stan function reference manual (https://mc-stan.org/users/documentation/).
+* Gaussian: `gaussian` (identity link, parameterized using mean 
+  and standard deviation).
 * Poisson: `poisson` (log-link, with an optional known offset variable).
-* Negative-binomial: `negbin` (log-link, using mean and dispersion parameterization, with an optional known offset variable). See the documentation on `NegBinomial2` in the Stan function reference manual.
+* Negative-binomial: `negbin` (log-link, using mean and dispersion 
+  parameterization, with an optional known offset variable). 
+  See the documentation on `NegBinomial2` in the Stan function reference manual.
 * Bernoulli: `bernoulli` (logit-link).
 * Binomial: `binomial` (logit-link).
 * Exponential: `exponential` (log-link).
 * Gamma: `gamma` (log-link, using mean and shape parameterization).
 * Beta: `beta` (logit-link, using mean and precision parameterization).
 
-The `dynamite` models do not support contemporaneous dependencies in order to avoid complex cyclic dependencies which would make handling missing data, subsequent predictions, and causal inference challenging or impossible. In other words, response variables can only depend on the previous values of other response variables. This is why we used `lag(x)` in the previous example, a shorthand for `lag(x, k = 1)`, which defines a one-step lag of the variable `x`. Longer lags can also be defined by adjusting the argument `k`. 
+The `dynamite` models do not support contemporaneous dependencies in order to 
+avoid complex cyclic dependencies which would make handling missing data, 
+subsequent predictions, and causal inference challenging or impossible. 
+In other words, response variables can only depend on the previous values of 
+other response variables. This is why we used `lag(x)` in the previous example, 
+a shorthand for `lag(x, k = 1)`, which defines a one-step lag of the variable 
+`x`. Longer lags can also be defined by adjusting the argument `k`. 
 
-A special model component `lags` can also be used to quickly add lagged responses as predictors. This component adds a lagged value of each response in the model as a predictor to every channel. For example, calling 
+A special model component `lags` can also be used to quickly add lagged 
+responses as predictors. This component adds a lagged value of each response 
+in the model as a predictor to every channel. For example, calling 
 
 ```{r, echo=TRUE, eval=FALSE}
 obs(y ~ z, family = "gaussian") + 
@@ -95,23 +202,69 @@ obs(x ~ z, family = "poisson") +
 lags(k = 1)
 ``` 
 
-would add `lag(y, k = 1)` as a predictor of `x` and conversely, `lag(x, k = 1)` as a predictor of `y`. Therefore, the previous code would produce the exact same model as writing
+would add `lag(y, k = 1)` as a predictor of `x` and conversely, `lag(x, k = 1)` 
+as a predictor of `y`. Therefore, the previous code would produce the exact 
+same model as writing
 
 ```{r, echo=TRUE, eval=FALSE}
 obs(y ~ z + lag(x, k = 1), family = "gaussian") + 
 obs(x ~ z + lag(y, k = 1), family = "poisson")
 ```
 
-Just as with the function `lag()`, the argument `k` in `lags` can be adjusted to add longer lags of each response to each channel, but for `lags` it can also be a vector. The inclusion of lagged response variables in the model implies that some time points have to be considered fixed in the estimation. The number of fixed time points in the model is equal to the largest shift value of any observed response variable in the model (defined either via `lag` or the global `lags`).
+Just as with the function `lag()`, the argument `k` in `lags` can be adjusted 
+to add longer lags of each response to each channel, but for `lags` it can also 
+be a vector. The inclusion of lagged response variables in the model implies 
+that some time points have to be considered fixed in the estimation. The number 
+of fixed time points in the model is equal to the largest shift value of any 
+observed response variable in the model (defined either via `lag` or the 
+global `lags`).
 
-The formula within `obs` can also contain an additional special function `varying`, which defines the time-varying part of the model equation, in which case we could write for example `obs(x ~ z + varying(~ -1 + w), family = "poisson")`, which defines a model equation with a constant intercept and time-invariant effect of `z`, and a time-varying effect of `w`. We also remove the duplicate intercept with `-1` in order to avoid identifiability issues in the model estimation (we could also define a time varying intercept, in which case we would write `obs(x ~ -1 + z + varying(~ w), family = "poisson)`). The part of the formula not wrapped with `varying` is assumed to correspond to the fixed part of the model, so `obs(x ~ z + varying(~ -1 + w), family = "poisson")` is actually identical to `obs(x ~ -1 + fixed(~ z) + varying(~ -1 + w), family = "poisson")` and `obs(x ~ fixed(~ z) + varying(~ -1 + w), family = "poisson")`. The use of `fixed` is therefore optional.
+The formula within `obs` can also contain an additional special function 
+`varying`, which defines the time-varying part of the model equation, in which 
+case we could write for example 
+`obs(x ~ z + varying(~ -1 + w), family = "poisson")`, which defines a model 
+equation with a constant intercept and time-invariant effect of `z`, and a 
+time-varying effect of `w`. We also remove the duplicate intercept with `-1` 
+in order to avoid identifiability issues in the model estimation (we could also 
+define a time varying intercept, in which case we would write 
+`obs(x ~ -1 + z + varying(~ w), family = "poisson)`). The part of the formula 
+not wrapped with `varying` is assumed to correspond to the fixed part of the 
+model, so `obs(x ~ z + varying(~ -1 + w), family = "poisson")` is actually 
+identical to `obs(x ~ -1 + fixed(~ z) + varying(~ -1 + w), family = "poisson")` 
+and `obs(x ~ fixed(~ z) + varying(~ -1 + w), family = "poisson")`. 
+The use of `fixed` is therefore optional.
 
-When defining varying effects, we also need to define how the these time-varying regression coefficient behave. For this, a `splines` component should be added to the model, e.g. `obs(x ~ varying(~ -1 + w), family = "poisson) + splines(df = 10)` defines a cubic B-spline with 10 degrees of freedom for the time-varying coefficient corresponding to the `w`. If the model contains multiple time-varying coefficients, same spline basis is used for all coefficients, with unique spline coefficients and their standard deviation, as defined in the previous Section.
+When defining varying effects, we also need to define how the these 
+time-varying regression coefficient behave. For this, a `splines` component 
+should be added to the model, e.g. 
+`obs(x ~ varying(~ -1 + w), family = "poisson) + splines(df = 10)` 
+defines a cubic B-spline with 10 degrees of freedom for the time-varying 
+coefficient corresponding to the `w`. If the model contains multiple 
+time-varying coefficients, same spline basis is used for all coefficients, 
+with unique spline coefficients and their standard deviation, 
+as defined in the previous Section.
 
-Defining the random intercept term for each group ca be done using component `random` where the first argument defines for which channels the intercept should be added, and second argument defines whether or not these intercepts should be correlated between channels. This leads to a model where the in addition to the common intercept each individual/group has their own intercept with zero-mean normal prior and unknown standard deviation (or multivariate gaussian in case argument `correlated = TRUE`),
-analogously with the typical mixed models. Note however, that currently random intercepts are not supported for categorical distribution due to technical reasons.
+Defining the random intercept term for each group ca be done using 
+component `random` where the first argument defines for which channels the 
+intercept should be added, and second argument defines whether or not these 
+intercepts should be correlated between channels. This leads to a model where 
+the in addition to the common intercept each individual/group has their own 
+intercept with zero-mean normal prior and unknown standard deviation 
+(or multivariate gaussian in case argument `correlated = TRUE`),
+analogously with the typical mixed models. Note however, that currently random 
+intercepts are not supported for categorical distribution due to technical 
+reasons.
 
-In addition to declaring response variables via `obs`, we can also use function `aux` to define auxiliary channels which are deterministic functions of other variables. Defining these auxiliary variables explicitly instead of defining them directly on the right-hand side of the formulas (i.e., by using the "as is" function `I()`) makes the subsequent prediction steps more clear and allows easier checks on the model validity. In fact, we do not allow the use of `I()` within `dynamiteformula`. The values of auxiliary variables are computed dynamically during prediction, making the use of lagged values and other transformations possible. An example of a formula using an auxiliary channel could be 
+In addition to declaring response variables via `obs`, we can also use function 
+`aux` to define auxiliary channels which are deterministic functions of other 
+variables. Defining these auxiliary variables explicitly instead of defining 
+them directly on the right-hand side of the formulas (i.e., by using the 
+"as is" function `I()`) makes the subsequent prediction steps more clear and 
+allows easier checks on the model validity. In fact, we do not allow the use 
+of `I()` within `dynamiteformula`. The values of auxiliary variables are 
+computed dynamically during prediction, making the use of lagged values and 
+other transformations possible. An example of a formula using an auxiliary 
+channel could be 
 
 ```{r, echo=TRUE, eval=FALSE}
 obs(y ~ lag(log1x), family = "gaussian") + 
@@ -119,9 +272,19 @@ obs(x ~ z, family = "poisson") +
 aux(log1x ~ log(1 + x))
 ``` 
 
-which defines `log1x` as the logarithm of `1 + x`. We can then use this auxiliary variable in the formulas of other channels. Note that an auxiliary channel can also depend on other variables without lags. The function `aux` also does not use the `family` argument, which is automatically set to `deterministic` and is a special channel type of `obs`. Note that lagged values of deterministic `aux` channels do not imply fixed time points. Instead they must be given starting values using a special function `past()`, which defines the starting values of the channel and its lags. However, starting values are needed only when the values of the auxiliary channel cannot be computed based on its definition.
+which defines `log1x` as the logarithm of `1 + x`. We can then use this 
+auxiliary variable in the formulas of other channels. Note that an auxiliary 
+channel can also depend on other variables without lags. The function `aux` 
+also does not use the `family` argument, which is automatically set to 
+`deterministic` and is a special channel type of `obs`. Note that lagged values 
+of deterministic `aux` channels do not imply fixed time points. Instead they 
+must be given starting values using a special function `past()`, which defines 
+the starting values of the channel and its lags. However, starting values are 
+needed only when the values of the auxiliary channel cannot be computed based 
+on its definition.
 
-Finally, the declared model is supplied to `dynamite`, which has the following arguments and default values:
+Finally, the declared model is supplied to `dynamite`, which has the following 
+arguments and default values:
 
 ```{r, echo=TRUE, eval=FALSE}
 dynamite(dformula, data, group = NULL, time, priors = NULL, verbose = TRUE, 
@@ -129,7 +292,18 @@ dynamite(dformula, data, group = NULL, time, priors = NULL, verbose = TRUE,
 
 ```
 
-The first argument `dformula` is the `dynamiteformula` object that defines the model and the second argument `data` is a `data.frame` that contains the variables used in the model formula. The argument `group` is a column name of `data` that specified the unique groups (individuals) and similarly, `time` is a column name of `data` that specifies the unique time points. Note that `group` is optional: when `group = NULL` we assume that there is only a single group (or individual). The argument `priors` supplies optional user-defined priors for the model parameters, and `...` supplies additional arguments to `rstan::sampling` which handles the model estimation. Finally, `verbose` controls the verbosity of the output and `debug` can be used for various debugging options (see `?dynamite` for further information on these parameters). For example, 
+The first argument `dformula` is the `dynamiteformula` object that defines the 
+model and the second argument `data` is a `data.frame` that contains the 
+variables used in the model formula. The argument `group` is a column name of 
+`data` that specified the unique groups (individuals) and similarly, `time` is 
+a column name of `data` that specifies the unique time points. Note that 
+`group` is optional: when `group = NULL` we assume that there is only a single 
+group (or individual). The argument `priors` supplies optional user-defined 
+priors for the model parameters, and `...` supplies additional arguments to 
+`rstan::sampling` which handles the model estimation. Finally, `verbose` 
+controls the verbosity of the output and `debug` can be used for various 
+debugging options (see `?dynamite` for further information on these parameters). 
+For example, 
 
 ```{r, echo=TRUE, eval=FALSE}
 dynamite(
@@ -142,13 +316,18 @@ dynamite(
 )
 ``` 
 
-estimates the model using the data in the data frame `d`, which contains variables `year` and `id` (defining the time-index and group-index variables of the data). Arguments `chains` and `cores` are passed to `rstan::sampling` which then uses to parallel Markov chains in the the Markov chain Monte Carlo (MCMC) sampling of the model parameters.
+estimates the model using the data in the data frame `d`, which contains 
+variables `year` and `id` (defining the time-index and group-index variables 
+of the data). Arguments `chains` and `cores` are passed to `rstan::sampling` 
+which then uses to parallel Markov chains in the the Markov chain Monte Carlo 
+(MCMC) sampling of the model parameters.
 
 # Examples
 
 ## Grunfeld Data
 
-As an example, we consider the famous Grunfeld dataset, available in the package `plm`:
+As an example, we consider the famous Grunfeld dataset, available in the 
+package `plm`:
 
 ```{r, eval = FALSE}
 library(dynamite)
@@ -160,9 +339,14 @@ d <- Grunfeld |>
 head(d)
 ```
 
-The data is in a long format (as required by the `dynamite`), containing the firm id (`firm`, 10 firms), the `year` (20 years), value of the firm (`value`), the firms’ gross investment (`invest`) and stock of plant and equipment (`capital`). 
+The data is in a long format (as required by the `dynamite`), containing the 
+firm id (`firm`, 10 firms), the `year` (20 years), value of the firm (`value`), 
+the firms’ gross investment (`invest`) and stock of plant and equipment 
+(`capital`). 
 
-Let's first fit the basic model without time-invariant effects of value and capital on the investment, but with a firm-specific random intercept (using the `random_intercept = TRUE` inside of `obs`):
+Let's first fit the basic model without time-invariant effects of value and 
+capital on the investment, but with a firm-specific random intercept 
+(using the `random_intercept = TRUE` inside of `obs`):
 
 ```{r, eval = FALSE}
 fit_grunfeld <- dynamite(obs(invest ~ value + capital,
@@ -173,9 +357,13 @@ fit_grunfeld <- dynamite(obs(invest ~ value + capital,
 fit_grunfeld
 ```
 
-Instead of random intercept terms for each firm, an fixed effect approach would have been possible by using the formula `obs(invest ~ firm + value + capital, family = "gaussian")`.
+Instead of random intercept terms for each firm, an fixed effect approach would 
+have been possible by using the formula 
+`obs(invest ~ firm + value + capital, family = "gaussian")`.
 
-As we used weakly informative default priors, the coefficient estimates are close to the ones obtained with the `plm` package which is based on the ordinary least squares:
+As we used weakly informative default priors, the coefficient estimates are 
+close to the ones obtained with the `plm` package which is based on  
+ordinary least squares:
 
 ```{r, eval = FALSE}
 fit_plm <- plm::plm(invest ~ value + capital, data = d, 
@@ -193,7 +381,11 @@ library(dynamite)
 head(multichannel_example)
 ```
 
-The data contains 50 unique groups (variable `id`), over 20 time points (`time`), a continuous variable `g`, a variable with non-negative integer values `p`, and a binary variable `b`. We define the following model (which actually matches the data generating process used in simulating the data):
+The data contains 50 unique groups (variable `id`), over 20 time points 
+(`time`), a continuous variable `g`, a variable with non-negative integer 
+values `p`, and a binary variable `b`. We define the following model 
+(which actually matches the data generating process used in 
+simulating the data):
 
 ```{r}
 set.seed(1)
@@ -205,33 +397,47 @@ f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
 As a directed acyclic graph (DAG), the model for the first three time points is 
 ![A DAG of the multichannel model.](dag.png){width=80%}
 
-We again fit the model using the `dynamite` function (note the small number of iterations and additional thinning in order to satisfy the CRAN requirements):
+We again fit the model using the `dynamite` function (note the small number of 
+iterations and additional thinning in order to satisfy the CRAN requirements):
 ```{r, eval = FALSE}
 multichannel_example_fit <- dynamite(
   f, multichannel_example, "id", "time",
   chains = 1, cores = 1, iter = 2000, warmup = 1000, init = 0, refresh = 0,
   thin = 5, save_warmup = FALSE)
 ```
-Note that this produces a warning message related to the deterministic channel `logp`:
+Note that this produces a warning message related to the 
+deterministic channel `logp`:
 ```{r, eval = TRUE, echo = FALSE}
-  fit <- dynamite(f, multichannel_example, "id", "time", debug = list(no_compile = TRUE))
+  fit <- dynamite(f, multichannel_example, "id", "time", 
+                  debug = list(no_compile = TRUE))
 ```
 This happens because the formulas of the other channels have `lag(logp)` as a 
-predictor, whose value is undefined at the first time point without the initial values. 
-However, in this case we can safely ignore the warning because the model contains lags of `b` and `g` as well meaning that the
-first time point in the model is fixed and does not enter into the model fitting process.
+predictor, whose value is undefined at the first time point without the initial 
+values. However, in this case we can safely ignore the warning because the 
+model contains lags of `b` and `g` as well meaning that the
+first time point in the model is fixed and does not enter into the model 
+fitting process.
 
-We can obtain posterior samples or summary statistics of the model using the `as.data.frame`, `coef`, and `summary` functions, but here we opt for visualizing the results using the `plot_betas` function:
+We can obtain posterior samples or summary statistics of the model using the 
+`as.data.frame`, `coef`, and `summary` functions, but here we opt for 
+visualizing the results using the `plot_betas` function:
 
 ```{r}
 plot_betas(multichannel_example_fit)
 ```
 
-Note the naming of the model parameters; for example `beta_b_g_lag1` corresponds to a fixed coefficient `beta` of lagged variable `g` of the channel `b`.
+Note the naming of the model parameters; for example `beta_b_g_lag1` 
+corresponds to a fixed coefficient `beta` of lagged variable `g` 
+of the channel `b`.
 
-Assume now that we are interested in studying the causal effect of variable $b_5$ on variable $g_t$ at $t=6,\ldots,20$. There is no direct effect from $b_5$ to $g_6$, but as $g_t$ at affects $b_{t+1}$ (and $p_{t+1}$), which in turn has an effect on all the variables at $t+2$, we should see an indirect effect of $b_5$ to $g_t$ from time $t=7$ onward.
+Assume now that we are interested in studying the causal effect of variable 
+$b_5$ on variable $g_t$ at $t=6,\ldots,20$. There is no direct effect from 
+$b_5$ to $g_6$, but as $g_t$ at affects $b_{t+1}$ (and $p_{t+1}$), which in 
+turn has an effect on all the variables at $t+2$, we should see an indirect 
+effect of $b_5$ to $g_t$ from time $t=7$ onward.
 
-For this task, we first create a new dataset where the values of of our response variables after time 5 are set to NA:
+For this task, we first create a new dataset where the values of of our 
+response variables after time 5 are set to NA:
 
 ```{r}
 d <- multichannel_example
@@ -255,13 +461,18 @@ newdata1 <- d |>
 pred1 <- predict(multichannel_example_fit, newdata = newdata1)
 ```
 
-The output from `predict` contains now the original `newdata` and additional columns `g_new`, `p_new`, and `b_new` where the NA values of `newdata` are replaced with the posterior samples from the model (the output also contains additional column corresponding to the auxiliary channel `logp` and index variable `.draw`:
+The output from `predict` contains now the original `newdata` and additional 
+columns `g_new`, `p_new`, and `b_new` where the NA values of `newdata` are 
+replaced with the posterior samples from the model (the output also contains 
+additional column corresponding to the auxiliary channel 
+`logp` and index variable `.draw`:
 
 ```{r}
 head(pred0)
 ```
 
-We can now compute summary statistics over the individuals and then over the posterior samples to obtain posterior distribution of the causal effects as
+We can now compute summary statistics over the individuals and then over the 
+posterior samples to obtain posterior distribution of the causal effects as
 
 ```{r}
 sumr <- dplyr::bind_rows(
@@ -287,13 +498,16 @@ ggplot(sumr, aes(time, mean)) +
   theme_bw()
 ```
 
-Note that these estimates do indeed coincide with the causal effects (assuming of course that our model is correct), as we can find the backdoor adjustment formula [@Pearl1995]
+Note that these estimates do indeed coincide with the causal effects (assuming 
+of course that our model is correct), as we can find the backdoor adjustment 
+formula [@Pearl1995]
 \[
   E(g_t | do(b_5 = x)) = \sum_{g_5, p_5}E(g_t | b_5 = x, g_5, p_5) P(g_5, p_5), 
 \]
 which is equal to `mean_t` in above codes.
 
-We can also compute the difference $P(g_t | do(b_5 = 1)) - P(g_t | do(b_5 = 0))$ as
+We can also compute the difference
+$P(g_t | do(b_5 = 1)) - P(g_t | do(b_5 = 0))$ as
 ```{r}
 sumr <- dplyr::bind_rows(
   list(b0 = pred0, b1 = pred1), .id = "case") |> 
@@ -313,6 +527,10 @@ ggplot(sumr, aes(time, mean)) +
   theme_bw()
 ```
 
-Which shows that there is a short term effect of $b$ on $g$, although the posterior uncertainty is quite large. Note that for multistep causal effects these estimates contain also Monte Carlo variation due to the simulation of the trajectories (e.g., there is also uncertainty in `mean_t` for fixed parameters given finite number of individuals we are marginalizing over).
+Which shows that there is a short term effect of $b$ on $g$, although the 
+posterior uncertainty is quite large. Note that for multistep causal effects 
+these estimates contain also Monte Carlo variation due to the simulation of 
+the trajectories (e.g., there is also uncertainty in `mean_t` for fixed 
+parameters given finite number of individuals we are marginalizing over).
 
 # References
