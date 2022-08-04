@@ -2,6 +2,10 @@
 #'
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @export
+#' @export ndraws
+#' @rdname ndraws-dynamitefit
+#' @aliases ndraws
+#' @method ndraws dynamitefit
 #' @return Number of posterior draws as a single `integer` value.
 #' @examples
 #' ndraws(gaussian_example_fit)

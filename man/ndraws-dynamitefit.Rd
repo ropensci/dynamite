@@ -2,6 +2,7 @@
 % Please edit documentation in R/ndraws.R
 \name{ndraws.dynamitefit}
 \alias{ndraws.dynamitefit}
+\alias{ndraws}
 \title{Return the Number of Posterior Draws of a \code{dynamitefit} Object}
 \usage{
 \method{ndraws}{dynamitefit}(x)
