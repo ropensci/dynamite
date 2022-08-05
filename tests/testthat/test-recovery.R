@@ -26,7 +26,6 @@ test_that("parameters for the linear regression are recovered as with lm", {
     data = d, time = "time", priors = priors, chains = 1, refresh = 0)
   expect_equal(coef(fit_dynamite)$mean, coef(fit_lm), tolerance = 0.01,
     ignore_attr = TRUE)
-
 })
 
 test_that("parameters for the poisson glm are recovered as with glm", {

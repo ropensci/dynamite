@@ -990,12 +990,11 @@ model_lines_gaussian <- function(
   intercept_alpha <- ifelse_(
     has_fixed_intercept,
     glue::glue("alpha_{y}"),
-    ""
-  )
-  intercept_alpha <- ifelse_(
-    has_varying_intercept,
-    glue::glue("alpha_{y}[t]"),
-    ""
+    ifelse_(
+      has_varying_intercept,
+      glue::glue("alpha_{y}[t]"),
+      ""
+    )
   )
   intercept_nu <- ifelse_(
     has_random_intercept,
@@ -1056,12 +1055,11 @@ model_lines_binomial <- function(
   intercept_alpha <- ifelse_(
     has_fixed_intercept,
     glue::glue("alpha_{y}"),
-    ""
-  )
-  intercept_alpha <- ifelse_(
-    has_varying_intercept,
-    glue::glue("alpha_{y}[t]"),
-    ""
+    ifelse_(
+      has_varying_intercept,
+      glue::glue("alpha_{y}[t]"),
+      ""
+    )
   )
   intercept_nu <- ifelse_(
     has_random_intercept,
@@ -1108,12 +1106,11 @@ model_lines_bernoulli <- function(
   intercept_alpha <- ifelse_(
     has_fixed_intercept,
     glue::glue("alpha_{y}"),
-    ""
-  )
-  intercept_alpha <- ifelse_(
-    has_varying_intercept,
-    glue::glue("alpha_{y}[t]"),
-    ""
+    ifelse_(
+      has_varying_intercept,
+      glue::glue("alpha_{y}[t]"),
+      ""
+    )
   )
   intercept_nu <- ifelse_(
     has_random_intercept,
@@ -1165,24 +1162,24 @@ model_lines_poisson <- function(
     glue::glue("to_vector(offset_{y}[t, {obs}])"),
     ""
   )
-  intercept_nu <- ""
   intercept_alpha <- ifelse_(
     has_fixed_intercept,
     glue::glue("alpha_{y}"),
-    ""
+    ifelse_(
+      has_varying_intercept,
+      glue::glue("alpha_{y}[t]"),
+      ""
+    )
   )
-  intercept_alpha <- ifelse_(
-    has_varying_intercept,
-    glue::glue("alpha_{y}[t]"),
-    ""
-  )
-  if (has_random_intercept) {
-    intercept_nu <- ifelse(
+  intercept_nu <- ifelse_(
+    has_random_intercept,
+    ifelse(
       nzchar(obs),
       glue::glue("nu_{y}[{obs}]"),
       glue::glue("nu_{y}")
-    )
-  }
+    ),
+    ""
+  )
   plus1 <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
   intercept <- ifelse_(
     nzchar(intercept_alpha) || has_random_intercept,
@@ -1233,12 +1230,11 @@ model_lines_negbin <- function(
   intercept_alpha <- ifelse_(
     has_fixed_intercept,
     glue::glue("alpha_{y}"),
-    ""
-  )
-  intercept_alpha <- ifelse_(
-    has_varying_intercept,
-    glue::glue("alpha_{y}[t]"),
-    ""
+    ifelse_(
+      has_varying_intercept,
+      glue::glue("alpha_{y}[t]"),
+      ""
+    )
   )
   intercept_nu <- ifelse_(
     has_random_intercept,
@@ -1306,12 +1302,11 @@ model_lines_exponential <- function(
   intercept_alpha <- ifelse_(
     has_fixed_intercept,
     glue::glue("alpha_{y}"),
-    ""
-  )
-  intercept_alpha <- ifelse_(
-    has_varying_intercept,
-    glue::glue("alpha_{y}[t]"),
-    ""
+    ifelse_(
+      has_varying_intercept,
+      glue::glue("alpha_{y}[t]"),
+      ""
+    )
   )
   intercept_nu <- ifelse_(
     has_random_intercept,
@@ -1369,12 +1364,11 @@ model_lines_gamma <- function(
   intercept_alpha <- ifelse_(
     has_fixed_intercept,
     glue::glue("alpha_{y}"),
-    ""
-  )
-  intercept_alpha <- ifelse_(
-    has_varying_intercept,
-    glue::glue("alpha_{y}[t]"),
-    ""
+    ifelse_(
+      has_varying_intercept,
+      glue::glue("alpha_{y}[t]"),
+      ""
+    )
   )
   intercept_nu <- ifelse_(
     has_random_intercept,
@@ -1432,12 +1426,11 @@ model_lines_beta <- function(
   intercept_alpha <- ifelse_(
     has_fixed_intercept,
     glue::glue("alpha_{y}"),
-    ""
-  )
-  intercept_alpha <- ifelse_(
-    has_varying_intercept,
-    glue::glue("alpha_{y}[t]"),
-    ""
+    ifelse_(
+      has_varying_intercept,
+      glue::glue("alpha_{y}[t]"),
+      ""
+    )
   )
   intercept_nu <- ifelse_(
     has_random_intercept,
