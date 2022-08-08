@@ -21,6 +21,14 @@ coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
                              responses = NULL, summary = TRUE,
                              probs = c(0.05, 0.95),
                              include_alpha = TRUE, ...) {
+  stopifnot_(
+    !missing(object),
+    "Argument {.arg object} is missing."
+  )
+  stopifnot_(
+    is.dynamitefit(object),
+    "Argument {.arg object} must be a {.cls dynamitefit} object."
+  )
   type <- onlyif(is.character(type), tolower(type))
   type <- try(match.arg(type, c("beta", "delta", "nu")), silent = TRUE)
   stopifnot_(

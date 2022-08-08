@@ -11,6 +11,10 @@
 #' ndraws(gaussian_example_fit)
 ndraws.dynamitefit <- function(x) {
   stopifnot_(
+    !missing(x),
+    "Argument {.arg x} is missing."
+  )
+  stopifnot_(
     is.dynamitefit(x),
     "Argument {.arg x} must be a {.cls dynamitefit} object."
   )

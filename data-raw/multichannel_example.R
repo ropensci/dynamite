@@ -1,4 +1,4 @@
-## code to create `multichannel_example` dataset
+## code to create `multichannel_example` object
 
 library(dynamite)
 set.seed(1)
@@ -27,7 +27,7 @@ d <- dplyr::right_join(
 f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
   obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
-  aux(numeric(logp) ~ log(p + 1) | init(0))
+  aux(numeric(logp) ~ log(p + 1))
 
 # true values used for generating the data
 alpha_g <- 0
@@ -53,6 +53,7 @@ fit <- dynamite(
   data = d,
   group = "id",
   time = "time",
+  verbose = FALSE,
   chains = 1,
   iter = 1,
   algorithm = "Fixed_param",

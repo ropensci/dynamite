@@ -37,6 +37,10 @@
 #'
 as_draws_df.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
   stopifnot_(
+    !missing(x),
+    "Argument {.arg x} is missing."
+  )
+  stopifnot_(
     is.dynamitefit(x),
     "Argument {.arg x} must be a {.cls dynamitefit} object."
   )

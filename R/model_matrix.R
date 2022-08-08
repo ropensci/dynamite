@@ -7,7 +7,8 @@ full_model.matrix <- function(dformula, data, verbose) {
   formulas <- get_formulas(dformula)
   model_matrices <- vector(mode = "list", length = length(formulas))
   for (i in seq_along(formulas)) {
-    mm <- model.matrix.lm(formulas[[i]], data = data, na.action = na.pass)
+    mm <-
+      stats::model.matrix.lm(formulas[[i]], data = data, na.action = na.pass)
     if (verbose) {
       test_collinearity(dformula[[i]]$resp, mm, data)
     }
@@ -99,7 +100,7 @@ test_collinearity <- function(y, mm, data) {
 full_model.matrix_predict <- function(formula_list, newdata, idx, u_names) {
   newdata_sub <- newdata[idx, ]
   model_matrices <- lapply(formula_list, function(x) {
-    model.matrix.lm(x, newdata_sub, na.action = na.pass)
+    stats::model.matrix.lm(x, newdata_sub, na.action = na.pass)
   })
   model_matrices <- lapply(model_matrices, remove_intercept)
   model_matrix <- do.call(cbind, model_matrices)

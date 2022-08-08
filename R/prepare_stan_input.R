@@ -3,9 +3,9 @@
 #' Prepares data for Stan sampling, variables for Stan model code construction
 #' and default/user-modifiable prior definitions.
 #'
-#' @param data \[`data.table`]\cr The data used to fit the model.
 #' @param dformula \[`dynamiteformula`]\cr The model formula of stochastic
 #'   channels.
+#' @param data \[`data.table`]\cr The data used to fit the model.
 #' @param group_var \[`character(1)`]\cr The grouping variable name.
 #' @param time_var \[`character(1)`]\cr The time index variable name.
 #' @param priors \[`data.frame`]\cr A data frame containing the prior
@@ -22,7 +22,7 @@
 #' @srrstats {BS2.2, BS2.3, BS2.4, BS2.5}
 #'   Distributional parameters are checked.
 #' @noRd
-prepare_stan_input <- function(data, dformula, group_var, time_var,
+prepare_stan_input <- function(dformula, data, group_var, time_var,
                                priors = NULL, fixed, verbose) {
 
   resp_names <- get_responses(dformula)

@@ -86,6 +86,10 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
                                       summary = TRUE, probs = c(0.05, 0.95),
                                       include_fixed = TRUE, ...) {
   stopifnot_(
+    !missing(x),
+    "Argument {.arg x} is missing."
+  )
+  stopifnot_(
     is.dynamitefit(x),
     "Argument {.arg x} must be a {.cls dynamitefit} object."
   )

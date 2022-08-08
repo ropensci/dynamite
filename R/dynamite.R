@@ -115,6 +115,18 @@
 dynamite <- function(dformula, data, group = NULL, time,
                      priors = NULL, verbose = TRUE, debug = NULL, ...) {
   stopifnot_(
+    !missing(dformula),
+    "Argument {.arg dformula} is missing."
+  )
+  stopifnot_(
+    !missing(data),
+    "Argument {.arg data} is missing."
+  )
+  stopifnot_(
+    !missing(time),
+    "Argument {.var time} is missing."
+  )
+  stopifnot_(
     is.dynamiteformula(dformula),
     "Argument {.arg dformula} must be a {.cls dynamiteformula} object."
   )
@@ -138,10 +150,6 @@ dynamite <- function(dformula, data, group = NULL, time,
     "Can't find grouping variable {.var {group}} in {.arg data}."
   )
   stopifnot_(
-    !missing(time),
-    "Argument {.var time} is missing."
-  )
-  stopifnot_(
     checkmate::test_string(x = time),
     "Argument {.arg time} must be a single character string."
   )
@@ -153,13 +161,14 @@ dynamite <- function(dformula, data, group = NULL, time,
     checkmate::test_flag(x = verbose),
     "Argument {.arg verbose} must be a single {.cls logical} value."
   )
+  data_name <- deparse1(substitute(data))
   data <- parse_data(dformula, data, group, time, verbose)
   dformula <- parse_past(dformula, data, group, time)
   dformulas <- parse_lags(dformula, data, group, time, verbose)
   evaluate_deterministic(dformulas, data, group, time)
   stan <- prepare_stan_input(
-    data,
     dformulas$stoch,
+    data,
     group,
     time,
     priors,
@@ -195,6 +204,7 @@ dynamite <- function(dformula, data, group = NULL, time,
       stanfit = stanfit,
       dformulas = dformulas,
       data = data,
+      data_name = data_name,
       stan = stan,
       group_var = group,
       time_var = time,
@@ -224,6 +234,14 @@ dynamite <- function(dformula, data, group = NULL, time,
 #' @examples
 #' formula(gaussian_example_fit)
 formula.dynamitefit <- function(x, ...) {
+  stopifnot_(
+    !missing(x),
+    "Argument {.arg x} is missing."
+  )
+  stopifnot_(
+    is.dynamitefit(x),
+    "Argument {.arg x} must be a {.cls dynamitefit} object."
+  )
   formula_str <- vapply(
     get_originals(x$dformulas$all),
     deparse1,

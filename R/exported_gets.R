@@ -50,8 +50,8 @@ get_priors.dynamiteformula <- function(x, data, group, time, ...) {
     list(
       dformula = x,
       data = data,
-      group = substitute(group),
-      time = substitute(time),
+      group = group,
+      time = time,
       debug = list(no_compile = TRUE),
       ...
     )
@@ -96,8 +96,8 @@ get_code.dynamiteformula <- function(x, data, group, time, ...) {
     list(
       dformula = x,
       data = data,
-      group = substitute(group),
-      time = substitute(time),
+      group = group,
+      time = time,
       debug = list(no_compile = TRUE, model_code = TRUE),
       ...
     )
@@ -135,8 +135,8 @@ get_data.dynamiteformula <- function(x, data, group, time, ...) {
     list(
       dformula = x,
       data = data,
-      group = substitute(group),
-      time = substitute(time),
+      group = group,
+      time = time,
       debug = list(no_compile = TRUE, sampling_vars = TRUE),
       ...
     )

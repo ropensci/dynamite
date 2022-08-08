@@ -8,19 +8,36 @@
 #' @param ... Further arguments to the print method for tibbles.
 #'   See [tibble::formatting].
 #' @export
-#' @srrstats {BS6.0, RE4.17} Implements the `print` method.
+#' @srrstats {BS6.0, RE4.17} Implements the `print` method for the model fit.
 #' @srrstats {BS5.3, BS5.5} Contains convergence statistics in the output.
 #' @examples
 #' print(gaussian_example_fit)
 print.dynamitefit <- function(x, ...) {
   stopifnot_(
+    !missing(x),
+    "Argument {.arg x} is missing."
+  )
+  stopifnot_(
     is.dynamitefit(x),
     "Argument {.arg x} must be a {.cls dynamitefit} object."
   )
+  cat("Model:\n")
+  attr(x$dformulas$all, "random") <- attr(x$dformulas$stoch, "random")
+  print.dynamiteformula(x$dformulas$all)
+  cat("\nData: ", x$data_name, " (Number of observations: ", nobs(x), ")",
+      sep = "")
+  if (!is.null(x$group_var)) {
+    cat("\nGrouping variable: ", x$group_var, " (Number of groups: ",
+        length(unique(x$data[[x$group_var]])), ")", sep = "")
+  }
+  cat("\nTime index variable: ", x$time_var, " (Number of time points: ",
+      length(unique(x$data[[x$time_var]])), ")\n", sep = "")
   if (!is.null(x$stanfit)) {
     draws <- suppressWarnings(as_draws(x))
-    sumr <- posterior::summarise_draws(draws,
-              posterior::default_convergence_measures())
+    sumr <- posterior::summarise_draws(
+      draws,
+      posterior::default_convergence_measures()
+    )
     min_ess <- which.min(sumr$ess_bulk)
     cat("\nSmallest bulk-ESS: ", round(sumr$ess_bulk[min_ess]), " (",
         sumr$variable[min_ess], ")", sep = "")
@@ -50,7 +67,7 @@ print.dynamitefit <- function(x, ...) {
       ...
     )
   } else {
-    message_("No Stan model fit is available.")
+    cat("No Stan model fit is available.")
   }
   invisible(x)
 }

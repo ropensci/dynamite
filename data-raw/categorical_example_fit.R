@@ -1,10 +1,11 @@
-set.seed(1)
-library(dynamite)
-f <- obs(x ~ z + lag(x) + lag(y), family = "categorical") +
-  obs(y ~ z + lag(x) + lag(y), family = "categorical")
+# Code to create `categorical_example_fit` object
 
+library(dynamite)
+
+set.seed(1)
 categorical_example_fit <- dynamite(
-  dformula = f,
+  dformula = obs(x ~ z + lag(x) + lag(y), family = "categorical") +
+    obs(y ~ z + lag(x) + lag(y), family = "categorical"),
   data = categorical_example,
   group = "id",
   time = "time",

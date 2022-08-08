@@ -35,6 +35,10 @@
 #' combined with `ggplot2` and `bayesplot`, for example.
 plot.dynamitefit <- function(x, responses = NULL, type, ...) {
   stopifnot_(
+    !missing(x),
+    "Argument {.arg x} is missing."
+  )
+  stopifnot_(
     is.dynamitefit(x),
     "Argument {.arg x} must be a {.cls dynamitefit} object."
   )
@@ -75,6 +79,10 @@ plot.dynamitefit <- function(x, responses = NULL, type, ...) {
 #' @export
 plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
                         scales = c("fixed", "free"), include_alpha = TRUE) {
+  stopifnot_(
+    !missing(x),
+    "Argument {.arg x} is missing."
+  )
   stopifnot_(
     is.dynamitefit(x),
     "Argument {.var x} must be a {.cls dynamitefit} object."
@@ -151,7 +159,11 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @export
 plot_betas <- function(x, responses = NULL, level = 0.05,
-  include_alpha = TRUE){
+                       include_alpha = TRUE) {
+  stopifnot_(
+    !missing(x),
+    "Argument {.arg x} is missing."
+  )
   stopifnot_(
     is.dynamitefit(x),
     "Argument {.var x} must be a {.cls dynamitefit} object."
@@ -206,7 +218,11 @@ plot_betas <- function(x, responses = NULL, level = 0.05,
 #'
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @export
-plot_nus <- function(x, responses = NULL, level = 0.05){
+plot_nus <- function(x, responses = NULL, level = 0.05) {
+  stopifnot_(
+    !missing(x),
+    "Argument {.arg x} is missing."
+  )
   stopifnot_(
     is.dynamitefit(x),
     "Argument {.var x} must be a {.cls dynamitefit} object."

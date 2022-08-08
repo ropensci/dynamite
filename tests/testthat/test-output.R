@@ -45,9 +45,9 @@ test_that("fit object can be printed", {
   )
   gaussian_example_fit_null <- gaussian_example_fit
   gaussian_example_fit_null$stanfit <- NULL
-  expect_message(
+  expect_output(
     print(gaussian_example_fit_null),
-    "No Stan model fit is available\\."
+    "No Stan model fit is available"
   )
 })
 

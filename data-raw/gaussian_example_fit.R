@@ -1,10 +1,10 @@
 # Code to create `gaussian_example_fit` object
 
+library(dynamite)
+
 # Note the very small number of post-warmup iterations due to the data size
 # restrictions in CRAN.
 set.seed(1)
-library(dynamite)
-
 gaussian_example_fit <- dynamite(
   dformula =
     obs(
@@ -29,7 +29,9 @@ usethis::use_data(gaussian_example_fit, overwrite = TRUE, compress = "xz")
 
 # use only first id
 d <- gaussian_example |> dplyr::filter(id == 1)
+
 # convergence issues with the current setup but doesn't matter for tests
+set.seed(1)
 gaussian_example_single_fit <- dynamite(
   obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
     splines(df = 20),

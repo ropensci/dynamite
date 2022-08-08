@@ -65,10 +65,11 @@ on other variables without lags. The function \code{aux} also does not use the
 \code{family} argument, which is automatically set to \code{deterministic} and is a
 special channel type of \code{obs}. Note that lagged values of deterministic
 \code{aux} channels do not imply fixed time points. Instead they must be given
-starting values using a special function \code{past()}, which defines the
-starting values of the channel and its lags. However, starting values are
-needed only when the values of the auxiliary channel cannot be computed
-based on its definition.
+starting values using a special function \code{init} that directly initializes
+the lags to specified values, or by \code{past} which computes the initial values
+based on an R expression. Both \code{init} and \code{past} should appear on the
+right hand side of the model formula, separated from the primary defining
+expression via \code{|}.
 
 The formula within \code{obs} can also contain an additional special
 function \code{varying}, which defines the time-varying part of the model

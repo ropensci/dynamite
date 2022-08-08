@@ -13,6 +13,10 @@
 #' @srrstats {RE4.5} Provides number a crude number of observations.
 nobs.dynamitefit <- function(object, ...) {
   stopifnot_(
+    !missing(object),
+    "Argument {.arg object} is missing."
+  )
+  stopifnot_(
     is.dynamitefit(object),
     "Argument {.var object} must be a {.cls dynamitefit} object."
   )

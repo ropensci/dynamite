@@ -14,6 +14,10 @@
 #' mcmc_diagnostics(gaussian_example_fit)
 mcmc_diagnostics <- function(x, n = 1L) {
   stopifnot_(
+    !missing(x),
+    "Argument {.arg x} is missing."
+  )
+  stopifnot_(
     is.dynamitefit(x),
     "Argument {.arg x} must be a {.cls dynamitefit} object."
   )

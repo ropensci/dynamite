@@ -28,9 +28,23 @@ test_data <- data.frame(
 
 # Formula errors ----------------------------------------------------------
 
+test_that("missing formula fails", {
+  expect_error(
+    obs(),
+    "Argument `formula` is missing\\."
+  )
+})
+
+test_that("missing family fails", {
+  expect_error(
+    obs(y ~ x),
+    "Argument `family` is missing\\."
+  )
+})
+
 test_that("nonformula to dynamiteformula fails", {
   expect_error(
-    obs(formula = numeric()),
+    obs(formula = numeric(), family = "gaussian"),
     "Argument `formula` must be a <formula> object\\."
   )
 })
@@ -271,17 +285,10 @@ test_that("deterministic varying fails", {
 
 # Data errors -------------------------------------------------------------
 
-test_that("data is not data.frame fails", {
+test_that("missing data object fails", {
   expect_error(
-    dynamite(dformula = obs_test, data = list()),
-    "Argument `data` must be a <data.frame> object\\.")
-})
-
-test_that("group variable not in data fails", {
-  expect_error(
-    dynamite(dformula = obs_test,
-             data = data.frame(y = 1, x = 1), group = "z"),
-    "Can't find grouping variable `z` in `data`\\."
+    dynamite(dformula = obs_test),
+    "Argument `data` is missing\\."
   )
 })
 
@@ -289,6 +296,20 @@ test_that("missing time variable fails", {
   expect_error(
     dynamite(dformula = obs_test, data = data.frame(z = 1), group = "z"),
     "Argument `time` is missing\\."
+  )
+})
+
+test_that("data is not data.frame fails", {
+  expect_error(
+    dynamite(dformula = obs_test, data = list(), time = "z"),
+    "Argument `data` must be a <data.frame> object\\.")
+})
+
+test_that("group variable not in data fails", {
+  expect_error(
+    dynamite(dformula = obs_test,
+             data = data.frame(y = 1, x = 1), group = "z", time = "x"),
+    "Can't find grouping variable `z` in `data`\\."
   )
 })
 
@@ -530,6 +551,53 @@ test_that("too many arguments to lag fails", {
 
 # Output errors -----------------------------------------------------------
 
+test_that("output for missing argument fails", {
+  expect_error(
+    as.data.frame.dynamitefit(),
+    "Argument `x` is missing\\."
+  )
+  expect_error(
+    as_draws_df.dynamitefit(),
+    "Argument `x` is missing\\."
+  )
+  expect_error(
+    formula.dynamitefit(),
+    "Argument `x` is missing\\."
+  )
+  expect_error(
+    plot.dynamitefit(),
+    "Argument `x` is missing\\."
+  )
+  expect_error(
+    plot_deltas(),
+    "Argument `x` is missing\\."
+  )
+  expect_error(
+    plot_betas(),
+    "Argument `x` is missing\\."
+  )
+  expect_error(
+    plot_nus(),
+    "Argument `x` is missing\\."
+  )
+  expect_error(
+    print.dynamitefit(),
+    "Argument `x` is missing\\."
+  )
+  expect_error(
+    print.dynamiteformula(),
+    "Argument `x` is missing\\."
+  )
+  expect_error(
+    mcmc_diagnostics(),
+    "Argument `x` is missing\\."
+  )
+  expect_error(
+    nobs.dynamitefit(),
+    "Argument `object` is missing\\."
+  )
+})
+
 test_that("output for non dynamitefit objects fails", {
   expect_error(
     as.data.frame.dynamitefit(x = 1L),
@@ -537,6 +605,10 @@ test_that("output for non dynamitefit objects fails", {
   )
   expect_error(
     as_draws_df.dynamitefit(x = 1L),
+    "Argument `x` must be a <dynamitefit> object\\."
+  )
+  expect_error(
+    formula.dynamitefit(x = 1L),
     "Argument `x` must be a <dynamitefit> object\\."
   )
   expect_error(
@@ -566,6 +638,13 @@ test_that("output for non dynamitefit objects fails", {
   expect_error(
     nobs.dynamitefit(object = 1L),
     "Argument `object` must be a <dynamitefit> object\\."
+  )
+})
+
+test_that("non dynamiteformula print fails", {
+  expect_error(
+    print.dynamiteformula(x = 1L),
+    "Argument `x` must be a <dynamiteformula> object\\."
   )
 })
 
