@@ -41,10 +41,11 @@
 #' `family` argument, which is automatically set to `deterministic` and is a
 #' special channel type of `obs`. Note that lagged values of deterministic
 #' `aux` channels do not imply fixed time points. Instead they must be given
-#' starting values using a special function `past()`, which defines the
-#' starting values of the channel and its lags. However, starting values are
-#' needed only when the values of the auxiliary channel cannot be computed
-#' based on its definition.
+#' starting values using a special function `init` that directly initializes
+#' the lags to specified values, or by `past` which computes the initial values
+#' based on an R expression. Both `init` and `past` should appear on the
+#' right hand side of the model formula, separated from the primary defining
+#' expression via `|`.
 #'
 #' The formula within `obs` can also contain an additional special
 #' function `varying`, which defines the time-varying part of the model
@@ -100,6 +101,14 @@
 #' @srrstats {G2.3b} Uses tolower.
 #' @srrstats {RE1.0} Uses a formula interface.
 dynamiteformula <- function(formula, family) {
+  stopifnot_(
+    !missing(formula),
+    "Argument {.arg formula} is missing."
+  )
+  stopifnot_(
+    !missing(family),
+    "Argument {.arg family} is missing."
+  )
   stopifnot_(
     inherits(formula, "formula"),
     "Argument {.arg formula} must be a {.cls formula} object."
@@ -228,6 +237,52 @@ aux <- function(formula) {
      {.cls {class(e1)}} objects."
   )
   add_dynamiteformula(e1, e2)
+}
+
+#' Print a Dynamite Model Formula
+#'
+#' @param x \[`dynamiteformula`] The model formula.
+#' @param ... Ignored.
+#' @export
+#' @examples
+#' print(
+#'   obs(y ~ x, family = "gaussian") +
+#'   obs(z ~ w, family = "exponential") +
+#'   aux(d ~ log(y) | init(c(0, 1))) +
+#'   lags(k = 2) +
+#'   splines(df = 5) +
+#'   random(responses = c("y", "z"), correlated = TRUE)
+#' )
+print.dynamiteformula <- function(x, ...) {
+  stopifnot_(
+    !missing(x),
+    "Argument {.arg x} is missing."
+  )
+  stopifnot_(
+    is.dynamiteformula(x),
+    "Argument {.arg x} must be a {.cls dynamiteformula} object."
+  )
+  out <- data.frame(
+    Family = vapply(get_families(x), function(y) y$name, character(1L)),
+    Formula = vapply(get_originals(x), function(y) deparse1(y), character(1L))
+  )
+  rownames(out) <- get_responses(x)
+  print.data.frame(out, right = FALSE)
+  if (!is.null(attr(x, "lags"))) {
+    k <- attr(x, "lags")$k
+    cat("\nLagged responses added as predcitors with: k =", cs(k), "")
+  }
+  if (!is.null(attr(x, "random"))) {
+    resp <- attr(x, "random")$responses
+    co <- attr(x, "random")$correlated
+    cat(
+      ifelse_(co, "\nCorrelated random", "\nRandom"),
+      "effects added for response(s):",
+      cs(resp),
+      "\n"
+    )
+  }
+  invisible(x)
 }
 
 #' Get All Response Variables of a `dynamiteformula` Object
