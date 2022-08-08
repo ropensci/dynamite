@@ -64,11 +64,11 @@ or thousands, it can be reasonable to assume that the dynamics of the system
 change over time. There are various methods to model time-varying effects in 
 (generalized) linear models based on state space models 
 [@harvey1982; @durbin2012], with various R implementations 
-[@helske2022; @knaus2021; @brodersen2014]. The state space modelling approaches 
-are highly flexible but often computationally demanding due to assumed latent 
-processes for the regression coefficients and an analytically intractable 
-marginal likelihood, so they are most useful in settings with only few 
-subjects. Methods based on the varying coefficients models 
+[@helske2022; @knaus2021; @brodersen2014]. The state space modelling 
+approaches are highly flexible but often computationally demanding due to 
+assumed latent processes for the regression coefficients and an analytically 
+intractable marginal likelihood, so they are most useful in settings with only 
+few subjects. Methods based on the varying coefficients models 
 [@hastie1993; @eubank2004] can be computationally more convenient, especially 
 when the varying coefficients are based on splines. Some of the R 
 implementations of time-varying coefficient models include 
@@ -96,8 +96,8 @@ counterfactual scenarios.
 Consider an individual $i$ with observations 
 $y_{i,t} = (y^1_{i,t}, \ldots, y^c_{i,t},\ldots, y^C_{i,t})$, $t=1,\ldots,T$, 
 $i = 1,\ldots,N$ i.e. at each time point $t$ we have $C$ observations from $N$ 
-individuals. Assume that each element of $y_{i,t}$ can depend on the past values 
-$y_{i,t-1}$, as well as additional exogenous covariates $x_{i,t}$. 
+individuals. Assume that each element of $y_{i,t}$ can depend on the past 
+values $y_{i,t-1}$, as well as additional exogenous covariates $x_{i,t}$. 
 Then, assuming that the elements of $y_{i,t}$ are independent given 
 $y_{i, t-1}$ and $x_{i,t}$, we have
 \[
@@ -184,6 +184,8 @@ distributions for the observations:
 * Gamma: `gamma` (log-link, using mean and shape parameterization).
 * Beta: `beta` (logit-link, using mean and precision parameterization).
 
+## Lagged responses and predictors
+
 The `dynamite` models do not support contemporaneous dependencies in order to 
 avoid complex cyclic dependencies which would make handling missing data, 
 subsequent predictions, and causal inference challenging or impossible. 
@@ -219,6 +221,8 @@ of fixed time points in the model is equal to the largest shift value of any
 observed response variable in the model (defined either via `lag` or the 
 global `lags`).
 
+## Time-varying and time-invariant predictors
+
 The formula within `obs` can also contain an additional special function 
 `varying`, which defines the time-varying part of the model equation, in which 
 case we could write for example 
@@ -244,6 +248,8 @@ time-varying coefficients, same spline basis is used for all coefficients,
 with unique spline coefficients and their standard deviation, 
 as defined in the previous Section.
 
+## Random intercepts
+
 Defining the random intercept term for each group ca be done using 
 component `random` where the first argument defines for which channels the 
 intercept should be added, and second argument defines whether or not these 
@@ -255,10 +261,13 @@ analogously with the typical mixed models. Note however, that currently random
 intercepts are not supported for categorical distribution due to technical 
 reasons.
 
-In addition to declaring response variables via `obs`, we can also use function 
-`aux` to define auxiliary channels which are deterministic functions of other 
-variables. Defining these auxiliary variables explicitly instead of defining 
-them directly on the right-hand side of the formulas (i.e., by using the 
+## Auxiliary channels
+
+In addition to declaring response variables via `obs`, we can also use the 
+function `aux` to define auxiliary channels which are deterministic functions 
+of other variables. 
+Defining these auxiliary variables explicitly instead of defining 
+them implicitly on the right-hand side of the formulas (i.e., by using the 
 "as is" function `I()`) makes the subsequent prediction steps more clear and 
 allows easier checks on the model validity. In fact, we do not allow the use 
 of `I()` within `dynamiteformula`. The values of auxiliary variables are 
@@ -269,21 +278,58 @@ channel could be
 ```{r, echo=TRUE, eval=FALSE}
 obs(y ~ lag(log1x), family = "gaussian") + 
 obs(x ~ z, family = "poisson") +
-aux(log1x ~ log(1 + x))
+aux(numeric(log1x) ~ log(1 + x) | init(0))
 ``` 
 
-which defines `log1x` as the logarithm of `1 + x`. We can then use this 
-auxiliary variable in the formulas of other channels. Note that an auxiliary 
-channel can also depend on other variables without lags. The function `aux` 
-also does not use the `family` argument, which is automatically set to 
-`deterministic` and is a special channel type of `obs`. Note that lagged values 
-of deterministic `aux` channels do not imply fixed time points. Instead they 
-must be given starting values using a special function `past()`, which defines 
-the starting values of the channel and its lags. However, starting values are 
-needed only when the values of the auxiliary channel cannot be computed based 
-on its definition.
+For auxiliary channels, the formula declaration `~` should be understood as a 
+mathematical equality, where the right hand side provides the defining 
+expression. Thus the example above defines a new auxiliary channel 
+whose response is `log1x` defined as the logarithm of `1 + x` and assigns it to 
+be of type `numeric`. The type declaration is required, because it might not be
+possible to unambiguously determine the type of the response variable
+based on its expression alone from the data, especially for `factor` responses.
 
-Finally, the declared model is supplied to `dynamite`, which has the following 
+Auxiliary variables can be used directly in the formulas of other channels, 
+just like any other variable. Note that an auxiliary channel can also depend on 
+other response variables without lags, unlike observed channels.
+The function `aux` also does not use the `family` argument, which is 
+automatically set to `deterministic` and is a special channel type of `obs`. 
+Note that lagged values of deterministic `aux` channels do not imply fixed time 
+points. Instead they must be given starting values using one of the two special
+functions, `init` or `past` after the main formula separated by 
+the `|` symbol.
+
+In the example above, because the channel for `y` contains a lagged value of 
+`log1x` as a predictor, we also need to supply `log1x` with a single initial 
+value that determines the value of the lag at the first time point. 
+Here, `init(0)` defines the initial value of `lag(log1x)` 
+to be zero. In general, if the model contains higher order lags of an 
+auxiliary channel, then `init` can be supplied with a vector 
+initializing each lag.
+
+Note that `init` defines the same starting value to be used for all
+individuals. As an alternative, the function `past` can be used, which
+takes an R expression as its argument, and computes the starting value for
+each individual based on that expression. The expression is evaluated in the
+context of the `data` supplied to `dynamite`. For example, instead of `init(0)` 
+in the example above, we could write:
+
+```{r, echo=TRUE, eval=FALSE}
+obs(y ~ lag(log1x), family = "gaussian") + 
+obs(x ~ z, family = "poisson") +
+aux(numeric(log1x) ~ log(1 + x) | past(log(z)))
+``` 
+
+which defines that the value of `lag(log1x)` at the first time point is 
+`log(z)` for each individual, using the value of `z` in the data to
+be supplied to compute the actual value of the expression. The function `past` 
+can also be used if the model contains higher order lags of auxiliary 
+responses. In this case, more observations from the variables bound by the 
+expression given as the argument will simply be used.
+
+## Fitting the Model
+
+The declared model formula is supplied to `dynamite`, which has the following 
 arguments and default values:
 
 ```{r, echo=TRUE, eval=FALSE}
@@ -302,8 +348,8 @@ group (or individual). The argument `priors` supplies optional user-defined
 priors for the model parameters, and `...` supplies additional arguments to 
 `rstan::sampling` which handles the model estimation. Finally, `verbose` 
 controls the verbosity of the output and `debug` can be used for various 
-debugging options (see `?dynamite` for further information on these parameters). 
-For example, 
+debugging options (see `?dynamite` for further information on 
+these parameters). For example, 
 
 ```{r, echo=TRUE, eval=FALSE}
 dynamite(
@@ -399,21 +445,25 @@ As a directed acyclic graph (DAG), the model for the first three time points is
 
 We again fit the model using the `dynamite` function (note the small number of 
 iterations and additional thinning in order to satisfy the CRAN requirements):
+
 ```{r, eval = FALSE}
 multichannel_example_fit <- dynamite(
   f, multichannel_example, "id", "time",
   chains = 1, cores = 1, iter = 2000, warmup = 1000, init = 0, refresh = 0,
   thin = 5, save_warmup = FALSE)
 ```
+
 Note that this produces a warning message related to the 
 deterministic channel `logp`:
+
 ```{r, eval = TRUE, echo = FALSE}
   fit <- dynamite(f, multichannel_example, "id", "time", 
                   debug = list(no_compile = TRUE))
 ```
+
 This happens because the formulas of the other channels have `lag(logp)` as a 
 predictor, whose value is undefined at the first time point without the initial 
-values. However, in this case we can safely ignore the warning because the 
+value. However, in this case we can safely ignore the warning because the 
 model contains lags of `b` and `g` as well meaning that the
 first time point in the model is fixed and does not enter into the model 
 fitting process.
@@ -431,12 +481,12 @@ corresponds to a fixed coefficient `beta` of lagged variable `g`
 of the channel `b`.
 
 Assume now that we are interested in studying the causal effect of variable 
-$b_5$ on variable $g_t$ at $t=6,\ldots,20$. There is no direct effect from 
+$b_5$ on variable $g_t$ at $t = 6, \ldots, 20$. There is no direct effect from 
 $b_5$ to $g_6$, but as $g_t$ at affects $b_{t+1}$ (and $p_{t+1}$), which in 
 turn has an effect on all the variables at $t+2$, we should see an indirect 
 effect of $b_5$ to $g_t$ from time $t=7$ onward.
 
-For this task, we first create a new dataset where the values of of our 
+For this task, we first create a new dataset where the values of our 
 response variables after time 5 are set to NA:
 
 ```{r}
