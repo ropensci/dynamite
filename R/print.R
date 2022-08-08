@@ -25,13 +25,18 @@ print.dynamitefit <- function(x, ...) {
   attr(x$dformulas$all, "random") <- attr(x$dformulas$stoch, "random")
   print.dynamiteformula(x$dformulas$all)
   cat("\nData: ", x$data_name, " (Number of observations: ", nobs(x), ")",
-      sep = "")
+    sep = ""
+  )
   if (!is.null(x$group_var)) {
     cat("\nGrouping variable: ", x$group_var, " (Number of groups: ",
-        length(unique(x$data[[x$group_var]])), ")", sep = "")
+      length(unique(x$data[[x$group_var]])), ")",
+      sep = ""
+    )
   }
   cat("\nTime index variable: ", x$time_var, " (Number of time points: ",
-      length(unique(x$data[[x$time_var]])), ")\n", sep = "")
+    length(unique(x$data[[x$time_var]])), ")\n",
+    sep = ""
+  )
   if (!is.null(x$stanfit)) {
     draws <- suppressWarnings(as_draws(x))
     sumr <- posterior::summarise_draws(
@@ -40,13 +45,19 @@ print.dynamitefit <- function(x, ...) {
     )
     min_ess <- which.min(sumr$ess_bulk)
     cat("\nSmallest bulk-ESS: ", round(sumr$ess_bulk[min_ess]), " (",
-        sumr$variable[min_ess], ")", sep = "")
+      sumr$variable[min_ess], ")",
+      sep = ""
+    )
     min_ess <- which.min(sumr$ess_tail)
     cat("\nSmallest tail-ESS: ", round(sumr$ess_tail[min_ess]), " (",
-        sumr$variable[min_ess], ")", sep = "")
+      sumr$variable[min_ess], ")",
+      sep = ""
+    )
     max_rhat <- which.max(sumr$rhat)
     cat("\nLargest Rhat: ", round(sumr$rhat[max_rhat], 3), " (",
-        sumr$variable[max_rhat], ")", sep = "")
+      sumr$variable[max_rhat], ")",
+      sep = ""
+    )
     cat("\n\nElapsed time (seconds):\n")
     print(rstan::get_elapsed_time(x$stanfit))
 

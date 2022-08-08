@@ -15,12 +15,11 @@
 Print a Dynamite Model Formula
 }
 \examples{
-print(
-  obs(y ~ x, family = "gaussian") +
+x <-  obs(y ~ x, family = "gaussian") +
   obs(z ~ w, family = "exponential") +
   aux(d ~ log(y) | init(c(0, 1))) +
   lags(k = 2) +
   splines(df = 5) +
   random(responses = c("y", "z"), correlated = TRUE)
-)
+print(x)
 }

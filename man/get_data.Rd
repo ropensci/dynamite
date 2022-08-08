@@ -37,5 +37,6 @@ Returns the input data to the Stan model. Mostly useful for debugging.
 \examples{
 d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
 str(get_data(obs(y ~ x, family = "gaussian"),
-  data = d, time = "time", group = "id"))
+  data = d, time = "time", group = "id"
+))
 }

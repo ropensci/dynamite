@@ -164,7 +164,7 @@ create_model <- function(dformula, idt, vars) {
     lambda_prior <- attr(vars, "common_priors") |>
       dplyr::filter(.data$parameter == "lambda") |>
       dplyr::pull(.data$prior)
-    splinetext <- paste_rows("lambda ~ {lambda_prior};",.indent = idt(1))
+    splinetext <- paste_rows("lambda ~ {lambda_prior};", .indent = idt(1))
   }
   randomtext <- ""
   has_nu <- length(attr(dformula, "random")$responses) > 0
@@ -201,9 +201,9 @@ create_generated_quantities <- function(dformula, idt, vars) {
       "corr_matrix[M] corr_matrix_nu = multiply_lower_tri_self_transpose(L);",
       "vector<lower=-1,upper=1>[{(M * (M - 1L)) %/% 2L}] corr_nu;",
       "for (k in 1:M) {{",
-        "for (j in 1:(k - 1)) {{",
-           "corr_nu[choose(k - 1, 2) + j] = corr_matrix_nu[j, k];",
-         "}}",
+      "for (j in 1:(k - 1)) {{",
+      "corr_nu[choose(k - 1, 2) + j] = corr_matrix_nu[j, k];",
+      "}}",
       "}}",
       .indent = idt(c(1, 1, 1, 2, 3, 2, 1))
     )
@@ -214,10 +214,10 @@ create_generated_quantities <- function(dformula, idt, vars) {
     NULL
   }
   # uncomment if needed in the future
-  #gen <- character(length(dformula))
-  #for (i in seq_along(dformula)) {
+  # gen <- character(length(dformula))
+  # for (i in seq_along(dformula)) {
   #  family <- dformula[[i]]$family$name
   #  line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
   #  gen[i] <- lines_wrap("generated_quantities", family, line_args)
-  #}
+  # }
 }

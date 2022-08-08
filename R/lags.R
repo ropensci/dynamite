@@ -139,8 +139,10 @@ extract_lags <- function(x) {
     lag_map |>
       dplyr::distinct() |>
       dplyr::group_by(.data$var) |>
-      tidyr::complete(k = tidyr::full_seq(c(1L, .data$k), 1L),
-                      fill = list(src = "", present = FALSE)) |>
+      tidyr::complete(
+        k = tidyr::full_seq(c(1L, .data$k), 1L),
+        fill = list(src = "", present = FALSE)
+      ) |>
       dplyr::arrange(.data$var, .data$k) |>
       dplyr::ungroup()
   } else {

@@ -33,35 +33,44 @@ mcmc_diagnostics <- function(x, n = 1L) {
       cat("NUTS sampler diagnostics:\n")
       invisible(utils::capture.output(msg <-
         utils::capture.output(rstan::check_hmc_diagnostics(x$stanfit),
-                              type = "message")))
+          type = "message"
+        )))
       cat(msg, sep = "\n")
     }
-    sumr <- posterior::summarise_draws(suppressWarnings(as_draws(x)),
-      posterior::default_convergence_measures())
+    sumr <- posterior::summarise_draws(
+      suppressWarnings(as_draws(x)),
+      posterior::default_convergence_measures()
+    )
 
     cat("\nSmallest bulk-ESS values: \n")
     sumr |>
       dplyr::select(.data$variable, .data$ess_bulk) |>
       dplyr::arrange(.data$ess_bulk) |>
       utils::head(n) |>
-      tidyr::pivot_wider(names_from = .data$variable,
-                         values_from = .data$ess_bulk) |>
+      tidyr::pivot_wider(
+        names_from = .data$variable,
+        values_from = .data$ess_bulk
+      ) |>
       print()
     cat("\nSmallest tail-ESS values: \n")
     sumr |>
       dplyr::select(.data$variable, .data$ess_tail) |>
       dplyr::arrange(.data$ess_tail) |>
       utils::head(n) |>
-      tidyr::pivot_wider(names_from = .data$variable,
-                         values_from = .data$ess_tail) |>
+      tidyr::pivot_wider(
+        names_from = .data$variable,
+        values_from = .data$ess_tail
+      ) |>
       print()
     cat("\nLargest Rhat values: \n")
     sumr |>
       dplyr::select(.data$variable, .data$rhat) |>
       dplyr::arrange(dplyr::desc(.data$rhat)) |>
       utils::head(n) |>
-      tidyr::pivot_wider(names_from = .data$variable,
-                         values_from = .data$rhat) |>
+      tidyr::pivot_wider(
+        names_from = .data$variable,
+        values_from = .data$rhat
+      ) |>
       print()
   } else {
     message_("No Stan model fit is available.")

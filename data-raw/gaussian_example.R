@@ -35,6 +35,7 @@ for (t in seq.int(2L, T_)) {
 
 gaussian_example <- data.frame(
   y = c(y), x = c(x), z = c(z), id = seq_len(N),
-  time = rep(seq_len(T_), each = N))
+  time = rep(seq_len(T_), each = N)
+)
 
 usethis::use_data(gaussian_example, overwrite = TRUE)

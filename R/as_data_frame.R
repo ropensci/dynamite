@@ -48,7 +48,8 @@
 #' @export
 #' @examples
 #' results <- as.data.frame(gaussian_example_fit,
-#'   responses = "y", types = "beta", summary = FALSE)
+#'   responses = "y", types = "beta", summary = FALSE
+#' )
 #'
 #' results |>
 #'   dplyr::group_by(parameter) |>
@@ -56,7 +57,8 @@
 #'
 #' # basic summaries can be obtained automatically with summary = TRUE:
 #' as.data.frame(gaussian_example_fit,
-#'   responses = "y", types = "beta", summary = TRUE)
+#'   responses = "y", types = "beta", summary = TRUE
+#' )
 #'
 #' # Compute MCMC diagnostics via posterior package
 #' # For this we need to first convert to wide format
@@ -69,15 +71,18 @@
 #'
 #' # Time-varying coefficients delta
 #' as.data.frame(gaussian_example_fit,
-#'   responses = "y", types = "delta", summary = TRUE)
+#'   responses = "y", types = "delta", summary = TRUE
+#' )
 #'
 #' as.data.frame(gaussian_example_fit,
-#'   responses = "y", types = "delta", summary = FALSE) |>
+#'   responses = "y", types = "delta", summary = FALSE
+#' ) |>
 #'   dplyr::select(parameter, value, time, .iteration, .chain) |>
 #'   tidyr::pivot_wider(
 #'     values_from = value,
 #'     names_from = c(parameter, time),
-#'     names_sep = "_t=") |>
+#'     names_sep = "_t="
+#'   ) |>
 #'   posterior::as_draws() |>
 #'   posterior::summarise_draws()
 #'
@@ -197,13 +202,16 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       data.frame(type = "corr_nu", response = "", parameter = "corr_nu")
     )
   }
-  out <- dplyr::bind_rows(out_all,
+  out <- dplyr::bind_rows(
+    out_all,
     tidyr::expand_grid(type = types, response = responses) |>
       dplyr::mutate(parameter = glue::glue("{type}_{response}"))
   ) |>
     dplyr::rowwise() |>
-    dplyr::filter(any(grepl(paste0("^", .data$parameter),
-      x$stanfit@sim$pars_oi))) |>
+    dplyr::filter(any(grepl(
+      paste0("^", .data$parameter),
+      x$stanfit@sim$pars_oi
+    ))) |>
     dplyr::select(.data$response, .data$type)
   stopifnot_(
     nrow(out) > 0L,
@@ -225,14 +233,16 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         # group_by + summarise
         parameter = factor(.data$parameter, levels = pars, ordered = TRUE),
         .data$time, .data$category, .data$group,
-        .data$response, .data$type) |>
+        .data$response, .data$type
+      ) |>
       dplyr::summarise(
         mean = mean(.data$value),
         sd = sd(.data$value),
         # use quantile2 from posterior for simpler (more R-friendly) names
         dplyr::as_tibble(
-          as.list(posterior::quantile2(.data$value, probs = probs)))
-        ) |>
+          as.list(posterior::quantile2(.data$value, probs = probs))
+        )
+      ) |>
       dplyr::ungroup() |>
       dplyr::mutate(parameter = as.character(.data$parameter))
   }
@@ -416,9 +426,12 @@ as_data_frame_omega <- function(x, draws, n_draws, response, category, ...) {
   k <- length(var_names)
   data.frame(
     parameter = rep(
-      paste0("omega_", rep(seq_len(D), each = n_cat * k), "_",
-             rep(var_names, each = n_cat)),
-      each = n_draws),
+      paste0(
+        "omega_", rep(seq_len(D), each = n_cat * k), "_",
+        rep(var_names, each = n_cat)
+      ),
+      each = n_draws
+    ),
     value = c(draws),
     time = NA,
     category = rep(category, each = n_draws),

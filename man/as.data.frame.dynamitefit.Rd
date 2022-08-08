@@ -79,7 +79,8 @@ Samples of the full correlation matrix can be extracted manually as
 }
 \examples{
 results <- as.data.frame(gaussian_example_fit,
-  responses = "y", types = "beta", summary = FALSE)
+  responses = "y", types = "beta", summary = FALSE
+)
 
 results |>
   dplyr::group_by(parameter) |>
@@ -87,7 +88,8 @@ results |>
 
 # basic summaries can be obtained automatically with summary = TRUE:
 as.data.frame(gaussian_example_fit,
-  responses = "y", types = "beta", summary = TRUE)
+  responses = "y", types = "beta", summary = TRUE
+)
 
 # Compute MCMC diagnostics via posterior package
 # For this we need to first convert to wide format
@@ -100,15 +102,18 @@ results |>
 
 # Time-varying coefficients delta
 as.data.frame(gaussian_example_fit,
-  responses = "y", types = "delta", summary = TRUE)
+  responses = "y", types = "delta", summary = TRUE
+)
 
 as.data.frame(gaussian_example_fit,
-  responses = "y", types = "delta", summary = FALSE) |>
+  responses = "y", types = "delta", summary = FALSE
+) |>
   dplyr::select(parameter, value, time, .iteration, .chain) |>
   tidyr::pivot_wider(
     values_from = value,
     names_from = c(parameter, time),
-    names_sep = "_t=") |>
+    names_sep = "_t="
+  ) |>
   posterior::as_draws() |>
   posterior::summarise_draws()
 

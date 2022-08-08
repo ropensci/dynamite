@@ -24,7 +24,6 @@
 #' @noRd
 prepare_stan_input <- function(dformula, data, group_var, time_var,
                                priors = NULL, fixed, verbose) {
-
   resp_names <- get_responses(dformula)
   missing_resp <- !(resp_names %in% names(data))
   stopifnot_(
@@ -67,7 +66,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   K <- ncol(model_matrix)
   X <- aperm(
     array(as.numeric(unlist(split(model_matrix, gl(T_full, 1, N * T_full)))),
-          dim = c(N, K, T_full)
+      dim = c(N, K, T_full)
     ),
     c(3L, 1L, 2L)
   )[T_idx, , , drop = FALSE]
@@ -260,7 +259,7 @@ prepare_prior <- function(ptype, priors, channel) {
   pdef <- priors |> dplyr::filter(.data$type == ptype)
   channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
   dists <- sub("\\(.*", "", pdef$prior)
-  if (nrow(pdef) > 0L && length(unique(dists)) == 1L) {
+  if (nrow(pdef) > 0L && identical(length(unique(dists)), 1L)) {
     pars <- strsplit(sub(".*\\((.*)\\).*", "\\1", pdef$prior), ",")
     pars <- do.call("rbind", lapply(pars, as.numeric))
     channel[[paste0(ptype, "_prior_npars")]] <- ncol(pars)
@@ -338,7 +337,6 @@ prepare_common_priors <- function(priors, M, shrinkage, correlated) {
 #' @noRd
 prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
                                     mean_y, sd_y, resp_class, priors) {
-
   if (is.null(priors)) {
     out <- default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)
     channel <- out$channel
@@ -392,13 +390,13 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
   }
   channel$write_alpha <-
     (channel$has_fixed_intercept || channel$has_varying_intercept) &&
-    length(channel$alpha_prior_distr) == 1L
+      identical(length(channel$alpha_prior_distr), 1L)
   channel$write_beta <- channel$has_fixed &&
-    length(channel$beta_prior_distr) == 1L
+    identical(length(channel$beta_prior_distr), 1L)
   channel$write_delta <- channel$has_varying &&
-    length(channel$delta_prior_distr) == 1L
+    identical(length(channel$delta_prior_distr), 1L)
   channel$write_tau <- channel$has_varying &&
-    length(channel$tau_prior_distr) == 1L
+    identical(length(channel$tau_prior_distr), 1L)
   list(channel = channel, priors = priors)
 }
 
@@ -467,8 +465,10 @@ prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
   }
   Y_obs <- Y[!is.na(Y)]
   if (any(Y_obs < 0.0) || any(Y_obs != as.integer(Y_obs))) {
-    abort_negative(y, "Binomial", type = "integers",
-                   call = rlang::caller_env())
+    abort_negative(y, "Binomial",
+      type = "integers",
+      call = rlang::caller_env()
+    )
   }
   sd_y <- 0.5
   mean_y <- 0.0
@@ -560,8 +560,10 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
   }
   Y_obs <- Y[!is.na(Y)]
   if (any(Y_obs < 0.0) || any(Y_obs != as.integer(Y_obs))) {
-    abort_negative(y, "Negative binomial", type = "integers",
-                   call = rlang::caller_env())
+    abort_negative(y, "Negative binomial",
+      type = "integers",
+      call = rlang::caller_env()
+    )
   }
   sd_y <- 1.0
   if (ncol(Y) > 1L) {
@@ -620,8 +622,10 @@ prepare_channel_exponential <- function(y, Y, channel, sd_x, resp_class,
   }
   Y_obs <- Y[!is.na(Y)]
   if (any(Y_obs <= 0.0)) {
-    abort_negative(y, "Exponential", type = "values",
-                   call = rlang::caller_env())
+    abort_negative(y, "Exponential",
+      type = "values",
+      call = rlang::caller_env()
+    )
   }
   sd_y <- 1.0
   if (ncol(Y) > 1L) {
@@ -652,7 +656,6 @@ prepare_channel_exponential <- function(y, Y, channel, sd_x, resp_class,
     )
   }
   out
-
 }
 
 #' @describeIn prepare_channel_default Prepare a Gamma channel
@@ -759,12 +762,13 @@ prepare_channel_beta <- function(y, Y, channel, sd_x, resp_class, priors) {
   } else {
     priors <- priors |> dplyr::filter(.data$response == y)
     pdef <- priors |> dplyr::filter(.data$type == "phi")
-    if (nrow(pdef) == 1L) {
+    if (identical(nrow(pdef), 1L)) {
       out$channel$phi_prior_distr <- pdef$prior
     }
     defaults <- dplyr::bind_rows(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
-      phi_prior)
+      phi_prior
+    )
     out$priors <- check_priors(priors, defaults)
   }
   out

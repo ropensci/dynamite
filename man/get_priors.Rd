@@ -54,6 +54,7 @@ the user-defined priors for the \code{dynamite}.
 
 d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
 get_priors(obs(y ~ x, family = "gaussian"),
-  data = d, time = "time", group = "id")
+  data = d, time = "time", group = "id"
+)
 
 }

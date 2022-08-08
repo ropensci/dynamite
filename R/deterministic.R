@@ -13,8 +13,8 @@
 initialize_deterministic <- function(data, dd, dlp, dld, dls) {
   resp_pred <- attr(dlp, "original_response")
   for (i in seq_along(dlp)) {
-    data[ ,(dlp[[i]]$response) := data[[resp_pred[i]]]]
-    data[ ,(dlp[[i]]$response) := NA]
+    data[, (dlp[[i]]$response) := data[[resp_pred[i]]]]
+    data[, (dlp[[i]]$response) := NA]
   }
   rhs_stoch <- get_predictors(dls)
   for (i in seq_along(dls)) {
@@ -22,8 +22,8 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
       rhs_stoch[i] %in% names(data),
       "Can't find variable{?s} {.var {rhs_stoch[i]}} in {.arg data}."
     )
-    data[ ,(dls[[i]]$response) := data[[rhs_stoch[i]]]]
-    data[ ,(dls[[i]]$response) := NA]
+    data[, (dls[[i]]$response) := data[[rhs_stoch[i]]]]
+    data[, (dls[[i]]$response) := NA]
   }
   for (i in seq_along(dd)) {
     as_fun <- paste0("as.", dd[[i]]$specials$resp_type)
@@ -38,11 +38,11 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
     if (init[k]) {
       as_fun <- paste0("as.", dld[[k]]$specials$resp_type)
       past <- do.call(as_fun, args = list(dld[[k]]$specials$past[1L]))
-      data[ ,(dld[[k]]$response) := past]
-      data[ ,(dld[[k]]$response) := NA]
+      data[, (dld[[k]]$response) := past]
+      data[, (dld[[k]]$response) := NA]
     } else {
-      data[ ,(dld[[k]]$response) := data[[rhs_det[k]]]]
-      data[ ,(dld[[k]]$response) := NA]
+      data[, (dld[[k]]$response) := data[[rhs_det[k]]]]
+      data[, (dld[[k]]$response) := NA]
     }
   }
   if (length(dd) > 0L) {
@@ -90,7 +90,8 @@ assign_initial_values <- function(data, dd, dlp, dld, dls,
   cl <- get_quoted(dd)
   for (k in ro_pred) {
     data[, (dlp[[k]]$response) := lapply(.SD, lag_, ..k),
-         .SDcols = resp_pred[k], by = group_var]
+      .SDcols = resp_pred[k], by = group_var
+    ]
   }
   init <- which(has_past(dld))
   for (i in init) {

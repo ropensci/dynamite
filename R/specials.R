@@ -155,17 +155,25 @@ formula_past <- function(formula) {
 #' @noRd
 deterministic_response <- function(y) {
   if (grepl("factor\\(.*\\)", y, perl = TRUE)) {
-    list(type = "factor",
-         resp = gsub("factor\\((.*)\\)", "\\1", y, perl = TRUE))
+    list(
+      type = "factor",
+      resp = gsub("factor\\((.*)\\)", "\\1", y, perl = TRUE)
+    )
   } else if (grepl("numeric\\(.*\\)", y, perl = TRUE)) {
-    list(type = "numeric",
-         resp = gsub("numeric\\((.*)\\)", "\\1", y, perl = TRUE))
+    list(
+      type = "numeric",
+      resp = gsub("numeric\\((.*)\\)", "\\1", y, perl = TRUE)
+    )
   } else if (grepl("integer\\(.*\\)", y, perl = TRUE)) {
-    list(type = "integer",
-         resp = gsub("integer\\((.*)\\)", "\\1", y, perl = TRUE))
+    list(
+      type = "integer",
+      resp = gsub("integer\\((.*)\\)", "\\1", y, perl = TRUE)
+    )
   } else if (grepl("logical\\(.*\\)", y, perl = TRUE)) {
-    list(type = "logical",
-         resp = gsub("logical\\((.*)\\)", "\\1", y, perl = TRUE))
+    list(
+      type = "logical",
+      resp = gsub("logical\\((.*)\\)", "\\1", y, perl = TRUE)
+    )
   } else {
     warning_(c(
       "No type specified for deterministic channel {.var {y}}:",

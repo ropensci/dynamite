@@ -11,8 +11,8 @@ gaussian_example_fit <- dynamite(
       y ~ -1 + z + varying(~ x + lag(y)),
       family = "gaussian"
     ) +
-    random() +
-    splines(df = 20),
+      random() +
+      splines(df = 20),
   data = gaussian_example,
   group = "id",
   time = "time",
@@ -45,5 +45,7 @@ gaussian_example_single_fit <- dynamite(
   save_warmup = FALSE
 )
 
-usethis::use_data(gaussian_example_single_fit, overwrite = TRUE,
-                  compress = "xz", internal = TRUE)
+usethis::use_data(gaussian_example_single_fit,
+  overwrite = TRUE,
+  compress = "xz", internal = TRUE
+)

@@ -15,9 +15,14 @@
 #' fitted(gaussian_example_fit, n_draws = 2L)
 #' \dontrun{
 #' set.seed(1)
-#' fit <- dynamite(obs(LakeHuron ~ 1, "gaussian") + lags(),
+#' fit <- dynamite(
+#'   dformula = obs(LakeHuron ~ 1, "gaussian") + lags(),
 #'   data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
-#'   "id", "time", chains = 1, refresh = 0)
+#'   group = "id",
+#'   time = "time",
+#'   chains = 1,
+#'   refresh = 0
+#' )
 #'
 #' # One-step ahead samples (fitted values) from the posterior
 #' # (first time point is fixed due to lag in the model):

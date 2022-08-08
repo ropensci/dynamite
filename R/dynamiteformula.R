@@ -186,7 +186,7 @@ dynamiteformula_ <- function(formula, original, family) {
 #'   varying intercept?
 #' @param has_rand_intercept \[`logical(1)`]\cr Does the channel contain random
 #'   individual-level intercept term?
-#'@noRd
+#' @noRd
 dynamitechannel <- function(formula, original = NULL, family, response,
                             fixed = integer(0L), varying = integer(0L),
                             specials = list(),
@@ -245,14 +245,13 @@ aux <- function(formula) {
 #' @param ... Ignored.
 #' @export
 #' @examples
-#' print(
-#'   obs(y ~ x, family = "gaussian") +
+#' x <-  obs(y ~ x, family = "gaussian") +
 #'   obs(z ~ w, family = "exponential") +
 #'   aux(d ~ log(y) | init(c(0, 1))) +
 #'   lags(k = 2) +
 #'   splines(df = 5) +
 #'   random(responses = c("y", "z"), correlated = TRUE)
-#' )
+#' print(x)
 print.dynamiteformula <- function(x, ...) {
   stopifnot_(
     !missing(x),
@@ -299,7 +298,6 @@ get_responses <- function(x) {
 #' @noRd
 get_predictors <- function(x) {
   vapply(x, function(y) deparse1(formula_rhs(y$formula)), character(1L))
-
 }
 
 #' Get Terms of All Formulas of a `dynamiteformula` Object

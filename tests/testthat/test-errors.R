@@ -157,9 +157,10 @@ test_that("plus method fails for nondynamiteformula", {
 test_that("categorical random intercept fails", {
   expect_error(
     dynamite(obs(y ~ x, family = "categorical") + random(),
-      data = data.frame(y=factor(1:4), x= runif(4), id = 1, time = 1:4),
+      data = data.frame(y = factor(1:4), x = runif(4), id = 1, time = 1:4),
       "id", "time",
-      debug = list(no_compile = TRUE)),
+      debug = list(no_compile = TRUE)
+    ),
     paste0(
       "No valid responses for random intercept component:\n",
       "x Random intercepts are not supported for the categorical family\\."
@@ -175,10 +176,12 @@ test_that("negative lb_tau fails", {
 })
 
 test_that("time-varying definitions without splines fails", {
-  obs_varying <- obs(y ~ 1 + varying(~-1 + x), family = "gaussian")
-  test_data <- data.frame(y = c(1, 2, 3),
-                          x = c(0.5, -1, 0.25),
-                          z = c(1, 2, 3))
+  obs_varying <- obs(y ~ 1 + varying(~ -1 + x), family = "gaussian")
+  test_data <- data.frame(
+    y = c(1, 2, 3),
+    x = c(0.5, -1, 0.25),
+    z = c(1, 2, 3)
+  )
   expect_error(
     dynamite(obs_varying, test_data, time = "z"),
     paste(
@@ -190,19 +193,22 @@ test_that("time-varying definitions without splines fails", {
 
 test_that("noncentered definition throws error if not of correct length", {
   expect_error(
-    obs_all_alpha <- obs(y1 ~ -1 + varying(~ x1), family = "categorical") +
+    obs_all_alpha <- obs(y1 ~ -1 + varying(~x1), family = "categorical") +
       obs(x3 ~ varying(~ -1 + x1), family = "categorical") +
       obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
       obs(y3 ~ lag(x3) + trials(trials), family = "binomial") +
-      obs(y4 ~ x1 + varying(~-1 + x2), family = "bernoulli") +
+      obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
       obs(y9 ~ -1 + x1 + varying(~x2), family = "beta") +
       splines(df = 5, noncentered = rep(TRUE, 3)),
     NA
   )
   expect_error(
     dynamite(obs_all_alpha, test_data,
-      "group", "time", debug = debug),
-    paste("Length of the `noncentered` argument of `splines\\(\\)` function",
+      "group", "time",
+      debug = debug
+    ),
+    paste(
+      "Length of the `noncentered` argument of `splines\\(\\)` function",
       "is not equal to 1 or 6, the number of the channels\\."
     )
   )
@@ -210,19 +216,22 @@ test_that("noncentered definition throws error if not of correct length", {
 
 test_that("lb_tau definition throws error if not of correct length", {
   expect_error(
-    obs_all_alpha <- obs(y1 ~ -1 + varying(~ x1), family = "categorical") +
+    obs_all_alpha <- obs(y1 ~ -1 + varying(~x1), family = "categorical") +
       obs(x3 ~ varying(~ -1 + x1), family = "categorical") +
       obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
       obs(y3 ~ lag(x3) + trials(trials), family = "binomial") +
-      obs(y4 ~ x1 + varying(~-1 + x2), family = "bernoulli") +
+      obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
       obs(y9 ~ -1 + x1 + varying(~x2), family = "beta") +
       splines(df = 5, lb_tau = rep(1, 3)),
     NA
   )
   expect_error(
     dynamite(obs_all_alpha, test_data,
-      "group", "time", debug = debug),
-    paste("Length of the `lb_tau` argument of `splines\\(\\)` function is not",
+      "group", "time",
+      debug = debug
+    ),
+    paste(
+      "Length of the `lb_tau` argument of `splines\\(\\)` function is not",
       "equal to 1 or 6, the number of the channels\\."
     )
   )
@@ -261,7 +270,7 @@ test_that("binomial channel without a trials term fails", {
 
 test_that("deterministic fixed fails", {
   expect_error(
-    aux(numeric(y) ~ fixed(~ x)),
+    aux(numeric(y) ~ fixed(~x)),
     paste0(
       "The use of `fixed\\(\\)` is not meaningful ",
       "for deterministic channels:\n",
@@ -273,7 +282,7 @@ test_that("deterministic fixed fails", {
 
 test_that("deterministic varying fails", {
   expect_error(
-    aux(numeric(y) ~ varying(~ x)),
+    aux(numeric(y) ~ varying(~x)),
     paste0(
       "The use of `varying\\(\\)` is not meaningful ",
       "for deterministic channels:\n",
@@ -302,29 +311,36 @@ test_that("missing time variable fails", {
 test_that("data is not data.frame fails", {
   expect_error(
     dynamite(dformula = obs_test, data = list(), time = "z"),
-    "Argument `data` must be a <data.frame> object\\.")
+    "Argument `data` must be a <data.frame> object\\."
+  )
 })
 
 test_that("group variable not in data fails", {
   expect_error(
-    dynamite(dformula = obs_test,
-             data = data.frame(y = 1, x = 1), group = "z", time = "x"),
+    dynamite(
+      dformula = obs_test,
+      data = data.frame(y = 1, x = 1), group = "z", time = "x"
+    ),
     "Can't find grouping variable `z` in `data`\\."
   )
 })
 
 test_that("time variable not in data fails", {
   expect_error(
-    dynamite(dformula = obs_test,
-             data = data.frame(y = 1, x = 1), time = "z"),
+    dynamite(
+      dformula = obs_test,
+      data = data.frame(y = 1, x = 1), time = "z"
+    ),
     "Can't find time index variable `z` in `data`\\."
   )
 })
 
 test_that("single time point fails", {
   expect_error(
-    dynamite(dformula = obs_test, data = data.frame(y = 1, x = 1, z = 1),
-             group = "x", time = "z"),
+    dynamite(
+      dformula = obs_test, data = data.frame(y = 1, x = 1, z = 1),
+      group = "x", time = "z"
+    ),
     "There must be at least two time points in the data."
   )
 })
@@ -335,9 +351,9 @@ test_that("duplicated time points fail", {
     dynamite(
       dformula = obs(y ~ x, family = "gaussian"),
       data = data.frame(
-       y = rep(1, 9),
-       x = gl(3, 3),
-       z = c(1, 2, 2, 1, 2, 3, 1, 3, 3)
+        y = rep(1, 9),
+        x = gl(3, 3),
+        z = c(1, 2, 2, 1, 2, 3, 1, 3, 3)
       ),
       group = "x",
       time = "z"
@@ -363,9 +379,11 @@ test_that("duplicated time points fail", {
 
 test_that("missing lag variable fails", {
   expect_error(
-    dynamite(dformula = obs(y ~ lag(d, 1), family = "gaussian"),
-             data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
-             group = "x", time = "z"),
+    dynamite(
+      dformula = obs(y ~ lag(d, 1), family = "gaussian"),
+      data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
+      group = "x", time = "z"
+    ),
     paste0(
       "Unable to construct lagged values of `d`:\n",
       "x Can't find such variables in `data`\\."
@@ -375,19 +393,23 @@ test_that("missing lag variable fails", {
 
 test_that("missing predictor fails", {
   expect_error(
-    dynamite(dformula = obs(y ~ w, family = "gaussian"),
-             data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
-             group = "x", time = "z"),
+    dynamite(
+      dformula = obs(y ~ w, family = "gaussian"),
+      data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
+      group = "x", time = "z"
+    ),
     "Can't find variable `w` in `data`\\."
   )
 })
 
 test_that("invalid deterministic channel definition fails", {
   expect_error(
-    dynamite(dformula = obs(y ~ x, family = "gaussian") +
-               aux(integer(d) ~ 1 + w),
-             data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
-             group = "x", time = "z"),
+    dynamite(
+      dformula = obs(y ~ x, family = "gaussian") +
+        aux(integer(d) ~ 1 + w),
+      data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
+      group = "x", time = "z"
+    ),
     paste0(
       "Unable to evaluate definitions of deterministic channels:\n",
       "x object 'w' not found"
@@ -415,8 +437,10 @@ test_that("invalid column types fail", {
   test_data$w <- c(list(a = 1), list(b = 2))
   test_data$d <- as.raw(c(40, 20))
   expect_error(
-    dynamite(dformula = obs(y ~ x, family = "gaussian"),
-             data = test_data, group = "x", time = "z"),
+    dynamite(
+      dformula = obs(y ~ x, family = "gaussian"),
+      data = test_data, group = "x", time = "z"
+    ),
     paste0(
       "Columns `y`, `w`, and `d` of `data` are invalid:\n",
       "x Column types <complex/list/raw> are not supported\\."
@@ -425,11 +449,15 @@ test_that("invalid column types fail", {
 })
 
 test_that("non-finite values in data fail", {
-  test_data <- data.frame(y = c(1, Inf), x = c(1, 1),
-                          z = c(1, 2), w = c(-Inf, 2), u = c(1, Inf))
+  test_data <- data.frame(
+    y = c(1, Inf), x = c(1, 1),
+    z = c(1, 2), w = c(-Inf, 2), u = c(1, Inf)
+  )
   expect_error(
-    dynamite(dformula = obs(y ~ x, family = "gaussian"),
-             data = test_data, group = "x", time = "z"),
+    dynamite(
+      dformula = obs(y ~ x, family = "gaussian"),
+      data = test_data, group = "x", time = "z"
+    ),
     "Non-finite values were found in variables `y`, `w`, and `u` of `data`\\."
   )
 })
@@ -437,8 +465,10 @@ test_that("non-finite values in data fail", {
 test_that("non-factor categorical response fails", {
   test_data <- data.frame(y = c(0, 1), x = c(1, 1), z = c(1, 2))
   expect_error(
-    dynamite(dformula = obs(y ~ 1, family = "categorical"),
-             data = test_data, group = "x", time = "z"),
+    dynamite(
+      dformula = obs(y ~ 1, family = "categorical"),
+      data = test_data, group = "x", time = "z"
+    ),
     paste0(
       "Response variable `y` is invalid:\n",
       "x Categorical family supports only <factor> variables\\."
@@ -448,13 +478,17 @@ test_that("non-factor categorical response fails", {
 
 test_that("factor types for non-categorical families fails", {
   test_data <- data.frame(y = factor(c(0, 1)), x = c(1, 1), z = c(1, 2))
-  families <- c("gaussian", "exponential", "gamma", "beta",
-                "bernoulli", "binomial", "poisson", "negbin")
+  families <- c(
+    "gaussian", "exponential", "gamma", "beta",
+    "bernoulli", "binomial", "poisson", "negbin"
+  )
   for (f in families) {
     form <- ifelse_(identical(f, "binomial"), y ~ 1 + trials(x), y ~ 1)
     expect_error(
-      dynamite(dformula = obs(form, family = f),
-               data = test_data, group = "x", time = "z"),
+      dynamite(
+        dformula = obs(form, family = f),
+        data = test_data, group = "x", time = "z"
+      ),
       paste0(
         "Response variable `y` is invalid:\n",
         "x .+ family is not supported for <factor> variables\\."
@@ -469,8 +503,10 @@ test_that("negative values for distributions with positive support fails", {
   for (f in families) {
     form <- ifelse_(identical(f, "binomial"), y ~ 1 + trials(x), y ~ 1)
     expect_error(
-      dynamite(dformula = obs(form, family = f),
-               data = test_data, group = "x", time = "z"),
+      dynamite(
+        dformula = obs(form, family = f),
+        data = test_data, group = "x", time = "z"
+      ),
       paste0(
         "Response variable `y` is invalid:\n",
         "x .+ family supports only non-negative .+\\."
@@ -482,8 +518,10 @@ test_that("negative values for distributions with positive support fails", {
 test_that("bernoulli without 0/1 values fails", {
   test_data <- data.frame(y = c(2, 3), x = c(1, 1), z = c(1, 2))
   expect_error(
-    dynamite(dformula = obs(y ~ 1, family = "bernoulli"),
-             data = test_data, group = "x", time = "z"),
+    dynamite(
+      dformula = obs(y ~ 1, family = "bernoulli"),
+      data = test_data, group = "x", time = "z"
+    ),
     paste0(
       "Response variable `y` is invalid:\n",
       "x Bernoulli family supports only 0/1 integers\\."
@@ -494,8 +532,10 @@ test_that("bernoulli without 0/1 values fails", {
 test_that("beta without (0, 1) values fails", {
   test_data <- data.frame(y = c(2, 3), x = c(1, 1), z = c(1, 2))
   expect_error(
-    dynamite(dformula = obs(y ~ 1, family = "beta"),
-      data = test_data, group = "x", time = "z"),
+    dynamite(
+      dformula = obs(y ~ 1, family = "beta"),
+      data = test_data, group = "x", time = "z"
+    ),
     paste0(
       "Response variable `y` is invalid:\n",
       "x Beta family supports only values on the open interval \\(0, 1\\)\\."
@@ -514,7 +554,7 @@ test_that("invalid lagged value definition fails", {
 
 test_that("non coerceable shift value fails", {
   expect_error(
-    complete_lags(quote(lag(y, 'a'))),
+    complete_lags(quote(lag(y, "a"))),
     'Unable to coerce shift value to <integer> in `lag\\(y, "a"\\)`\\.'
   )
 })
@@ -789,10 +829,12 @@ f <- obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
   random() + splines(df = 20)
 
 test_that("incomplete priors fails", {
-  p2 <- p[-1,]
+  p2 <- p[-1, ]
   expect_error(
-    dynamite(f, data = gaussian_example, time = "time", group = "id",
-             priors = p2, debug = list(no_compile = TRUE)),
+    dynamite(f,
+      data = gaussian_example, time = "time", group = "id",
+      priors = p2, debug = list(no_compile = TRUE)
+    ),
     paste0(
       "Argument `priors` must contain all relevant parameters:\n",
       "x Prior for parameter `sigma_nu_y` is not defined\\."
@@ -801,14 +843,18 @@ test_that("incomplete priors fails", {
 })
 
 test_that("irrevelant parameters fails", {
-  p2 <- rbind(p, data.frame(parameter = "extra",
-                            response = "y",
-                            prior = "normal(0, 1.0)",
-                            type = "alpha",
-                            category = ""))
+  p2 <- rbind(p, data.frame(
+    parameter = "extra",
+    response = "y",
+    prior = "normal(0, 1.0)",
+    type = "alpha",
+    category = ""
+  ))
   expect_error(
-    dynamite(f, data = gaussian_example, time = "time", group = "id",
-             priors = p2, debug = list(no_compile = TRUE)),
+    dynamite(f,
+      data = gaussian_example, time = "time", group = "id",
+      priors = p2, debug = list(no_compile = TRUE)
+    ),
     paste0(
       "Argument `priors` must contain only relevant parameters:\n",
       "x Found a prior for parameter `extra` ",
@@ -820,8 +866,10 @@ test_that("irrevelant parameters fails", {
 test_that("unsupported prior distribution fails", {
   p$prior[5] <- "aaa"
   expect_error(
-    dynamite(f, data = gaussian_example, time = "time", group = "id",
-             priors = p, debug = list(no_compile = TRUE)),
+    dynamite(f,
+      data = gaussian_example, time = "time", group = "id",
+      priors = p, debug = list(no_compile = TRUE)
+    ),
     paste0(
       "Found an unsupported prior distribution in `priors`:\n",
       "x Distribution `aaa` is not available\\."
@@ -832,8 +880,10 @@ test_that("unsupported prior distribution fails", {
 test_that("constrained prior for unconstrained parameter fails", {
   p$prior[5] <- "gamma(2, 1)"
   expect_error(
-    dynamite(f, data = gaussian_example, time = "time", group = "id",
-             priors = p, debug = list(no_compile = TRUE)),
+    dynamite(f,
+      data = gaussian_example, time = "time", group = "id",
+      priors = p, debug = list(no_compile = TRUE)
+    ),
     paste0(
       "Priors for parameters alpha, beta, and delta ",
       "should have unconstrained support:\n",

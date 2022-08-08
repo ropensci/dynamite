@@ -51,14 +51,20 @@ as_draws_df.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
     summary = FALSE,
     include_fixed = FALSE
   ) |>
-    dplyr::select(.data$parameter, .data$value, .data$time, .data$category,
-                  .data$group, .data$.iteration, .data$.chain) |>
-    dplyr::arrange(.data$parameter, .data$time, .data$category, .data$group,
-      .data$.chain, .data$.iteration) |>
+    dplyr::select(
+      .data$parameter, .data$value, .data$time, .data$category,
+      .data$group, .data$.iteration, .data$.chain
+    ) |>
+    dplyr::arrange(
+      .data$parameter, .data$time, .data$category, .data$group,
+      .data$.chain, .data$.iteration
+    ) |>
     tidyr::pivot_wider(
       values_from = .data$value,
-      names_from = c(.data$parameter, .data$time, .data$category,
-                     .data$group),
+      names_from = c(
+        .data$parameter, .data$time, .data$category,
+        .data$group
+      ),
       names_glue = "{parameter}[{time}]_{category}_id{group}"
     )
   # remove NAs from time-invariant parameter names

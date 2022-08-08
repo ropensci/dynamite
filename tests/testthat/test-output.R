@@ -17,7 +17,7 @@ test_that("conversion to data.frame works", {
       types = c(
         "alpha", "beta", "delta", "tau", "tau_alpha",
         "sigma_nu", "sigma", "phi", "nu", "omega", "omega_alpha"
-       )
+      )
     ),
     NA
   )
@@ -88,7 +88,7 @@ test_that("formula can be extracted", {
     formula(gaussian_example_fit),
     NA
   )
-  f <- obs(y ~ 1 + varying(~-1 + x), family = "gaussian") +
+  f <- obs(y ~ 1 + varying(~ -1 + x), family = "gaussian") +
     obs(w ~ x + lag(y), family = "exponential") +
     aux(numeric(f) ~ w - 1) +
     aux(numeric(d) ~ y + 1) +
@@ -123,9 +123,11 @@ test_that("MCMC diagnostics can be computed", {
 
 test_that("gets can be got", {
   expect_error(
-    get_code(obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
+    get_code(
+      obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
         random() + splines(df = 20),
-      gaussian_example, "id", "time"),
+      gaussian_example, "id", "time"
+    ),
     NA
   )
   expect_error(
@@ -133,9 +135,11 @@ test_that("gets can be got", {
     NA
   )
   expect_error(
-    get_data(obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
+    get_data(
+      obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
         random() + splines(df = 20),
-      gaussian_example, "id", "time"),
+      gaussian_example, "id", "time"
+    ),
     NA
   )
   expect_error(
@@ -174,8 +178,8 @@ test_that("summary works when no fit is available", {
     summary(dynamite(
       obs(y ~ x, "gaussian"),
       data = data.frame(y = 1:2, x = c(3, 1), id = 1, time = 1:2),
-      "id", "time", debug = list(no_compile = TRUE))
-    ),
+      "id", "time", debug = list(no_compile = TRUE)
+    )),
     "No Stan model fit is available\\."
   )
 })

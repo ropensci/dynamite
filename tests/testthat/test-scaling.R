@@ -12,7 +12,6 @@
 run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "true")
 
 test_that("scaling for gaussian model is linear in number of time points", {
-
   skip_if_not(run_extended_tests)
   set.seed(1)
   N <- 10L
@@ -23,12 +22,14 @@ test_that("scaling for gaussian model is linear in number of time points", {
 
   d <- data.frame(
     y = c(y), x = c(x), id = seq_len(N),
-    time = rep(seq_len(T_), each = N))
+    time = rep(seq_len(T_), each = N)
+  )
 
   code <- get_code(obs(y ~ x, family = "gaussian"),
     data = d,
     group = "id",
-    time = "time")
+    time = "time"
+  )
   model <- rstan::stan_model(model_code = code)
 
   n <- seq(100, 1000, length = 5)
@@ -37,16 +38,18 @@ test_that("scaling for gaussian model is linear in number of time points", {
     data <- get_data(obs(y ~ x, family = "gaussian"),
       data = d |> dplyr::filter(time <= n[i]),
       group = "id",
-      time = "time")
-    fit <- rstan::sampling(model, data = data,
-       init = 0, refresh = 0, chains = 1, iter = 5000, seed = 1)
+      time = "time"
+    )
+    fit <- rstan::sampling(model,
+      data = data,
+      init = 0, refresh = 0, chains = 1, iter = 5000, seed = 1
+    )
     times[i] <- sum(rstan::get_elapsed_time(fit))
   }
   expect_equal(min(times / n), max(times / n), tolerance = 0.1)
 })
 
 test_that("scaling for gaussian model is linear in number of groups", {
-
   skip_if_not(run_extended_tests)
   set.seed(1)
   N <- 5000L
@@ -57,12 +60,14 @@ test_that("scaling for gaussian model is linear in number of groups", {
 
   d <- data.frame(
     y = c(y), x = c(x), id = seq_len(N),
-    time = rep(seq_len(T_), each = N))
+    time = rep(seq_len(T_), each = N)
+  )
 
   code <- get_code(obs(y ~ x, family = "gaussian"),
     data = d,
     group = "id",
-    time = "time")
+    time = "time"
+  )
   model <- rstan::stan_model(model_code = code)
 
   n <- c(1000, 5000)
@@ -71,9 +76,12 @@ test_that("scaling for gaussian model is linear in number of groups", {
     data <- get_data(obs(y ~ x, family = "gaussian"),
       data = d |> dplyr::filter(id <= n[i]),
       group = "id",
-      time = "time")
-    fit <- rstan::sampling(model, data = data,
-      init = 0, refresh = 0, chains = 1, iter = 5000, seed = 1)
+      time = "time"
+    )
+    fit <- rstan::sampling(model,
+      data = data,
+      init = 0, refresh = 0, chains = 1, iter = 5000, seed = 1
+    )
     times[i] <- sum(rstan::get_elapsed_time(fit))
   }
   # can actually be less than linear but challenging to test
@@ -81,7 +89,6 @@ test_that("scaling for gaussian model is linear in number of groups", {
 })
 
 test_that("scaling for gamma model is linear in number of time points", {
-
   skip_if_not(run_extended_tests)
   set.seed(1)
   N <- 10L
@@ -92,12 +99,14 @@ test_that("scaling for gamma model is linear in number of time points", {
 
   d <- data.frame(
     y = c(y), x = c(x), id = seq_len(N),
-    time = rep(seq_len(T_), each = N))
+    time = rep(seq_len(T_), each = N)
+  )
 
   code <- get_code(obs(y ~ x, family = "gamma"),
     data = d,
     group = "id",
-    time = "time")
+    time = "time"
+  )
   model <- rstan::stan_model(model_code = code)
 
   n <- seq(100, 1000, length = 5)
@@ -106,16 +115,18 @@ test_that("scaling for gamma model is linear in number of time points", {
     data <- get_data(obs(y ~ x, family = "gamma"),
       data = d |> dplyr::filter(time <= n[i]),
       group = "id",
-      time = "time")
-    fit <- rstan::sampling(model, data = data,
-      init = 0, refresh = 0, chains = 1, iter = 5000, seed = 1)
+      time = "time"
+    )
+    fit <- rstan::sampling(model,
+      data = data,
+      init = 0, refresh = 0, chains = 1, iter = 5000, seed = 1
+    )
     times[i] <- sum(rstan::get_elapsed_time(fit))
   }
   expect_equal(min(times / n) / max(times / n), 1, tolerance = 0.5)
 })
 
 test_that("scaling for gamma model is linear in number of groups", {
-
   skip_if_not(run_extended_tests)
   set.seed(1)
   N <- 5000L
@@ -126,12 +137,14 @@ test_that("scaling for gamma model is linear in number of groups", {
 
   d <- data.frame(
     y = c(y), x = c(x), id = seq_len(N),
-    time = rep(seq_len(T_), each = N))
+    time = rep(seq_len(T_), each = N)
+  )
 
   code <- get_code(obs(y ~ x, family = "gamma"),
     data = d,
     group = "id",
-    time = "time")
+    time = "time"
+  )
   model <- rstan::stan_model(model_code = code)
 
   n <- seq(100, 1000, length = 5)
@@ -140,9 +153,12 @@ test_that("scaling for gamma model is linear in number of groups", {
     data <- get_data(obs(y ~ x, family = "gamma"),
       data = d |> dplyr::filter(id <= n[i]),
       group = "id",
-      time = "time")
-    fit <- rstan::sampling(model, data = data,
-      init = 0, refresh = 0, chains = 1, iter = 10000, seed = 1)
+      time = "time"
+    )
+    fit <- rstan::sampling(model,
+      data = data,
+      init = 0, refresh = 0, chains = 1, iter = 10000, seed = 1
+    )
     times[i] <- sum(rstan::get_elapsed_time(fit))
   }
   expect_equal(min(times / n) / max(times / n), 1, tolerance = 0.5)

@@ -119,7 +119,7 @@ test_that("intercepts are handled correctly", {
     obs_all_alpha <- obs(y1 ~ -1 + x1, family = "categorical") +
       obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
       obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = "binomial") +
-      obs(y4 ~ x1 + varying(~-1 + x2), family = "bernoulli") +
+      obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
       splines(df = 5),
     NA
   )
@@ -132,7 +132,7 @@ test_that("random intercepts are handled correctly", {
   expect_error(
     obs_all_alpha <- obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
       obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = "binomial") +
-      obs(y4 ~ x1 + varying(~-1 + x2), family = "bernoulli") +
+      obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
       splines(df = 5) + random(c("y2", "y3")),
     NA
   )
@@ -144,7 +144,7 @@ test_that("random intercepts are handled correctly", {
   expect_error(
     obs_all_alpha <- obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
       obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = "binomial") +
-      obs(y4 ~ x1 + varying(~-1 + x2), family = "bernoulli") +
+      obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
       splines(df = 5) + random(correlated = FALSE),
     NA
   )
@@ -155,11 +155,11 @@ test_that("random intercepts are handled correctly", {
 
 test_that("shrinkage is handled correctly", {
   expect_error(
-    obs_all_alpha <- obs(y1 ~ -1 + varying(~ x1), family = "categorical") +
+    obs_all_alpha <- obs(y1 ~ -1 + varying(~x1), family = "categorical") +
       obs(x3 ~ varying(~ -1 + x1), family = "categorical") +
       obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
       obs(y3 ~ lag(x3) + trials(trials), family = "binomial") +
-      obs(y4 ~ x1 + varying(~-1 + x2), family = "bernoulli") +
+      obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
       obs(y9 ~ -1 + x1 + varying(~x2), family = "beta") +
       splines(df = 5, shrinkage = TRUE),
     NA
@@ -168,21 +168,25 @@ test_that("shrinkage is handled correctly", {
   expect_equal(
     unname(unlist(lapply(
       dynamite(obs_all_alpha, test_data,
-        "group", "time", debug = debug)$stan$model_vars, "[[", "shrinkage"))),
+        "group", "time",
+        debug = debug
+      )$stan$model_vars, "[[", "shrinkage"
+    ))),
     rep(TRUE, 6)
   )
-  expect_equal(get_priors(obs_all_alpha, test_data,
-    "group", "time")$parameter[58], "lambda"
-  )
+  expect_equal(get_priors(
+    obs_all_alpha, test_data,
+    "group", "time"
+  )$parameter[58], "lambda")
 })
 
 test_that("noncentered splines are handled correctly", {
   expect_error(
-    obs_all_alpha <- obs(y1 ~ -1 + varying(~ x1), family = "categorical") +
+    obs_all_alpha <- obs(y1 ~ -1 + varying(~x1), family = "categorical") +
       obs(x3 ~ varying(~ -1 + x1), family = "categorical") +
       obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
       obs(y3 ~ lag(x3) + trials(trials), family = "binomial") +
-      obs(y4 ~ x1 + varying(~-1 + x2), family = "bernoulli") +
+      obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
       obs(y9 ~ -1 + x1 + varying(~x2), family = "beta") +
       splines(df = 5, noncentered = rep(TRUE, 6)),
     NA
@@ -191,18 +195,21 @@ test_that("noncentered splines are handled correctly", {
   expect_equal(
     unname(unlist(lapply(
       dynamite(obs_all_alpha, test_data,
-        "group", "time", debug = debug)$stan$model_vars, "[[", "noncentered"))),
-      rep(TRUE, 6)
+        "group", "time",
+        debug = debug
+      )$stan$model_vars, "[[", "noncentered"
+    ))),
+    rep(TRUE, 6)
   )
 })
 
 test_that("lower bounds for tau are handled correctly", {
   expect_error(
-    obs_all_alpha <- obs(y1 ~ - + x1, family = "categorical") +
+    obs_all_alpha <- obs(y1 ~ -+x1, family = "categorical") +
       obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
       obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = "binomial") +
-      obs(y4 ~ x1 + varying(~-1 + x2), family = "bernoulli")+
-      obs(y9 ~ -1 + x1 + varying(~x2), family = "beta")  +
+      obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
+      obs(y9 ~ -1 + x1 + varying(~x2), family = "beta") +
       splines(df = 5, lb_tau = c(0, 2, 1, 0.4, 0.01)),
     NA
   )
@@ -210,14 +217,17 @@ test_that("lower bounds for tau are handled correctly", {
   expect_equal(
     lapply(
       dynamite(obs_all_alpha, test_data,
-        "group", "time", debug = debug)$stan$model_vars, "[[", "lb"),
+        "group", "time",
+        debug = debug
+      )$stan$model_vars, "[[", "lb"
+    ),
     list(y1 = 0, y2 = 2, y3 = 1, y4 = 0.4, y9 = 0.01)
   )
 })
 
 test_that("manual fixed() terms work", {
   expect_error(
-    obs_fixed <- obs(y1 ~ fixed(~x1 + lag(y2, 1)), family = "categorical"),
+    obs_fixed <- obs(y1 ~ fixed(~ x1 + lag(y2, 1)), family = "categorical"),
     NA
   )
 })
@@ -232,8 +242,9 @@ test_that("lags are parsed", {
   )
   expect_error(
     obs_b <- obs(y1 ~ -1 + x1 + varying(~ lag(y2, 1)),
-                 family = "categorical") +
-      obs(y2 ~ -1 + x2 + varying(~lag(y1, 1)), family = "gaussian") +
+      family = "categorical"
+    ) +
+      obs(y2 ~ -1 + x2 + varying(~ lag(y1, 1)), family = "gaussian") +
       splines(),
     NA
   )
@@ -273,11 +284,13 @@ test_that("lags() and lag() give equal results", {
     obs(y1 ~ x1, family = "categorical") +
       obs(y2 ~ x2, family = "gaussian") +
       lags(k = 1, type = "fixed"),
-    NA)
+    NA
+  )
   f2 <- expect_error(
     obs(y1 ~ x1 + lag(y1) + lag(y2), family = "categorical") +
       obs(y2 ~ x2 + lag(y1) + lag(y2), family = "gaussian"),
-    NA)
+    NA
+  )
   expect_identical(
     get_priors(f1, test_data, "group", "time"),
     get_priors(f2, test_data, "group", "time")
@@ -289,9 +302,9 @@ test_that("higher order lags() and lag() give equal results", {
     obs(y2 ~ x2, family = "gaussian") +
     lags(k = 1:2, type = "fixed")
   f2 <- obs(y1 ~ x1 + lag(y1, 1) + lag(y2, 1) +
-              lag(y1, 2) + lag(y2, 2), family = "categorical") +
+    lag(y1, 2) + lag(y2, 2), family = "categorical") +
     obs(y2 ~ x2 + lag(y1, 1) + lag(y2, 1) +
-          lag(y1, 2) + lag(y2, 2), family = "gaussian")
+      lag(y1, 2) + lag(y2, 2), family = "gaussian")
   expect_identical(
     get_priors(f1, test_data, "group", "time"),
     get_priors(f2, test_data, "group", "time")
@@ -398,7 +411,8 @@ test_that("no groups data preparation works", {
 test_that("deterministic channels are parsed", {
   expect_error(
     obs_det <- obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1),
-                   family = "negbin") +
+      family = "negbin"
+    ) +
       aux(numeric(d) ~ lag(d, 1) + lag(f, 2) + x2 | init(0)) +
       aux(numeric(f) ~ lag(y5, 1) + x2 * 3 + 1 | init(c(0, 1))),
     NA
@@ -410,7 +424,7 @@ test_that("deterministic channels are parsed", {
 
 test_that("deterministic simultaneity is supported", {
   expect_error(
-      obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1), family = "negbin") +
+    obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1), family = "negbin") +
       aux(numeric(d) ~ y5 + 3),
     NA
   )
@@ -419,9 +433,9 @@ test_that("deterministic simultaneity is supported", {
 test_that("deterministic types are supported", {
   expect_error(
     aux(factor(a) ~ factor(c(1, 2, 3), levels = c(1, 2, 3))) +
-    aux(numeric(b) ~ log(1.0)) +
-    aux(integer(c) ~ 1L) +
-    aux(logical(d) ~ TRUE),
+      aux(numeric(b) ~ log(1.0)) +
+      aux(integer(c) ~ 1L) +
+      aux(logical(d) ~ TRUE),
     NA
   )
 })

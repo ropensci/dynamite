@@ -14,45 +14,49 @@ test_that("formula incrementation logic is correct", {
     obs(y ~ -1 + varying(~x), family = "gaussian")[[1]],
     obs(y ~ -1 + x + varying(~z), family = "gaussian")[[1]],
     obs(y ~ x + varying(~ -1 + z), family = "gaussian")[[1]],
-    obs(y ~ -1 + varying(~x + z), family = "gaussian")[[1]]
+    obs(y ~ -1 + varying(~ x + z), family = "gaussian")[[1]]
   )
   out_list <- list(
     list(
       y ~ 1 + w,
-      y ~ 1 + varying(~-1 + w)
+      y ~ 1 + varying(~ -1 + w)
     ),
     list(
       y ~ -1 + w + varying(~1),
-      y ~ -1 + varying(~1 + w)
+      y ~ -1 + varying(~ 1 + w)
     ),
     list(
       y ~ x + w,
-      y ~ x + varying(~-1 + w)
+      y ~ x + varying(~ -1 + w)
     ),
     list(
-      y ~ -1 + w + varying(~1 + x),
-      y ~ -1 + varying(~1 + x + w)
+      y ~ -1 + w + varying(~ 1 + x),
+      y ~ -1 + varying(~ 1 + x + w)
     ),
     list(
-      y ~ x - 1 + w + varying(~1 + z),
-      y ~ x - 1 + varying(~1 + z + w)
+      y ~ x - 1 + w + varying(~ 1 + z),
+      y ~ x - 1 + varying(~ 1 + z + w)
     ),
     list(
       y ~ x + w + varying(~ -1 + z),
       y ~ x + varying(~ -1 + z + w)
     ),
     list(
-      y ~ -1 + w + varying(~1 + x + z),
-      y ~ -1 + varying(~1 + x + z + w)
+      y ~ -1 + w + varying(~ 1 + x + z),
+      y ~ -1 + varying(~ 1 + x + z + w)
     )
   )
   for (i in seq_along(obs_list)) {
     o <- obs_list[[i]]
     form_list <- list(
-      increment_formula(o$formula, "w", type = "fixed", o$varying,
-                        o$has_varying_intercept, o$has_fixed_intercept),
-      increment_formula(o$formula, "w", type = "varying", o$varying,
-                        o$has_varying_intercept, o$has_fixed_intercept)
+      increment_formula(o$formula, "w",
+        type = "fixed", o$varying,
+        o$has_varying_intercept, o$has_fixed_intercept
+      ),
+      increment_formula(o$formula, "w",
+        type = "varying", o$varying,
+        o$has_varying_intercept, o$has_fixed_intercept
+      )
     )
     expect_equal(form_list[[1]], out_list[[i]][[1]], ignore_attr = TRUE)
     expect_equal(form_list[[2]], out_list[[i]][[2]], ignore_attr = TRUE)

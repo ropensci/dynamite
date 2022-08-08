@@ -46,9 +46,11 @@ confint.dynamitefit <- function(object, parm, level = 0.95, ...) {
   )
   out <- d |>
     dplyr::select(
-      !c(.data$parameter, .data$time, .data$category,
-         .data$group, .data$response, .data$type,
-         .data$mean, .data$sd)
+      !c(
+        .data$parameter, .data$time, .data$category,
+        .data$group, .data$response, .data$type,
+        .data$mean, .data$sd
+      )
     ) |>
     as.matrix()
   colnames(out) <- paste0(100.0 * c(a, 1.0 - a), "%")

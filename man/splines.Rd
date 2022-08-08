@@ -61,7 +61,9 @@ for the time-varying coefficients \eqn{\delta}.
 # for the first channel and centered for the second channel.
 obs(y ~ 1, family = "gaussian") + obs(x ~ 1, family = "gaussian") +
   lags(type = "varying") +
-  splines(df = 20, degree = 3, lb_tau = c(0, 0.1),
-    noncentered = c(TRUE, FALSE))
+  splines(
+    df = 20, degree = 3, lb_tau = c(0, 0.1),
+    noncentered = c(TRUE, FALSE)
+  )
 
 }

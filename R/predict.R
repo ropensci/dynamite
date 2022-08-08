@@ -121,8 +121,10 @@ predict_dynamitefit <- function(object, newdata, type, eval_type,
   rhs_det <- get_predictors(dld)
   lhs_stoch <- get_responses(dls)
   rhs_stoch <- get_predictors(dls)
-  predictors <- setdiff(colnames(newdata),
-    c(resp_stoch, lhs_stoch, group_var, time_var))
+  predictors <- setdiff(
+    colnames(newdata),
+    c(resp_stoch, lhs_stoch, group_var, time_var)
+  )
   new_levels <- ifelse_(
     identical(length(attr(object$dformulas$stoch, "random")$responses), 0L),
     "ignore",

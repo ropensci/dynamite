@@ -14,9 +14,9 @@
 #' @examples
 #' # three channel model with correlated random effects for responses x and y
 #' obs(y ~ 1, family = "gaussian") +
-#' obs(x ~ 1, family = "poisson") +
-#' obs(z ~ 1, family = "gaussian") +
-#' random(responses = c("y", "x"), correlated = TRUE)
+#'   obs(x ~ 1, family = "poisson") +
+#'   obs(z ~ 1, family = "gaussian") +
+#'   random(responses = c("y", "x"), correlated = TRUE)
 #'
 random <- function(responses = NULL, correlated = TRUE) {
   stopifnot_(

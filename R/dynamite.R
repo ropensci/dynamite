@@ -61,9 +61,13 @@
 #' @export
 #' @examples
 #' \dontrun{
-#' fit <- dynamite(obs(y ~ -1 + varying(~x), family = "gaussian") +
-#'   lags(type = "varying") + splines(df = 20), gaussian_example, "id", "time",
-#'   chains = 1, refresh = 0)
+#' fit <- dynamite(
+#'   dformula = obs(y ~ -1 + varying(~x), family = "gaussian") +
+#'     lags(type = "varying") +
+#'     splines(df = 20), gaussian_example, "id", "time",
+#'   chains = 1,
+#'   refresh = 0
+#' )
 #'
 #' library(dplyr)
 #' library(ggplot2)
@@ -72,13 +76,15 @@
 #'   summarise(
 #'     mean = mean(value),
 #'     lwr = quantile(value, 0.025),
-#'     upr = quantile(value, 0.975))
+#'     upr = quantile(value, 0.975)
+#'   )
 #'
 #' cf %>%
-#'   ggplot(aes(time, mean)) + theme_bw() +
-#'     geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
-#'     geom_line() +
-#'     facet_wrap(~ variable, scales = "free_y")
+#'   ggplot(aes(time, mean)) +
+#'   theme_bw() +
+#'   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
+#'   geom_line() +
+#'   facet_wrap(~variable, scales = "free_y")
 #' }
 #'
 #' @srrstats {G2.9} Potential loss of information is reported by `dynamite`.
@@ -196,8 +202,10 @@ dynamite <- function(dformula, data, group = NULL, time,
   }
   stanfit <- onlyif(
     !isTRUE(debug$no_compile) && !isTRUE(debug$no_sampling),
-    do.call(rstan::sampling,
-      c(list(object = model, data = stan$sampling_vars), dots))
+    do.call(
+      rstan::sampling,
+      c(list(object = model, data = stan$sampling_vars), dots)
+    )
   )
   out <- structure(
     list(
@@ -288,7 +296,7 @@ formula.dynamitefit <- function(x, ...) {
       "df = ", spline_defs$bs_opts$df, ", ",
       "degree = ", spline_defs$bs_opts$degree, ", ",
       "lb_tau = ", spline_defs$lb_tau, ", ",
-      "noncentered = ",  spline_defs$noncentered, ")"
+      "noncentered = ", spline_defs$noncentered, ")"
     ),
     ""
   )
@@ -354,7 +362,7 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
     )
   )
   for (i in which(valid_cols & !factor_cols)) {
-    data[,i] <- do.call(
+    data[, i] <- do.call(
       paste0("as.", typeof(data[[i]])),
       args = list(data[[i]])
     )

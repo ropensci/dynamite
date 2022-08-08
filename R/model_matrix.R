@@ -79,7 +79,7 @@ test_collinearity <- function(y, mm, data) {
     pred_resp <- cbind(as.numeric(mm[, j]), as.numeric(data[[y]]))
     pred_resp_obs <- stats::complete.cases(pred_resp)
     if (any(pred_resp_obs) &&
-        !identical(qr(pred_resp[pred_resp_obs, ])$rank, 2L)) {
+      !identical(qr(pred_resp[pred_resp_obs, ])$rank, 2L)) {
       warning_(c(
         "Perfect collinearity found between response and predictor variable:",
         `i` = "Response variable {.var {y}} is perfectly
@@ -115,7 +115,7 @@ remove_intercept <- function(x) {
   idx <- which(attr(x, "assign") == 0L)
   if (length(idx) > 0L) {
     a <- attr(x, "assign")[-idx]
-    x <- x[, -idx,  drop = FALSE]
+    x <- x[, -idx, drop = FALSE]
     attr(x, "assign") <- a
   }
   x

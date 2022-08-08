@@ -3,30 +3,38 @@
 run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "true")
 
 test_that("parameters of the Grunfield model are recovered", {
-
   skip_if_not(run_extended_tests)
   library("plm")
 
   data(Grunfeld, package = "plm")
-  fit_plm <- plm(inv ~ value + capital, data = Grunfeld,
-    index = c("firm", "year"), effect = "individual", model = "within")
+  fit_plm <- plm(inv ~ value + capital,
+    data = Grunfeld,
+    index = c("firm", "year"), effect = "individual", model = "within"
+  )
 
   set.seed(1)
   # dynamite defines prior for the intercept based on the mean at the first time
   # point, which differs from the brms, so use dummy intercept instead in both
   Grunfeld$intercept <- 1
-  p <- get_priors(obs(inv ~ -1 + intercept + value + capital,
-    family = "gaussian") + random(),
-    Grunfeld, "firm", "year")
+  p <- get_priors(
+    obs(inv ~ -1 + intercept + value + capital,
+      family = "gaussian"
+    ) + random(),
+    Grunfeld, "firm", "year"
+  )
   # set very vague priors
   p$prior[] <- rep("normal(0, 1000)", nrow(p))
   fit <- dynamite(obs(inv ~ value + capital,
-    family = "gaussian") + random(),
-    Grunfeld, "firm", "year", refresh = 0, seed = 1,
-    chains = 2, cores = 2, iter = 20000, warmup = 1000)
+    family = "gaussian"
+  ) + random(),
+  Grunfeld, "firm", "year",
+  refresh = 0, seed = 1,
+  chains = 2, cores = 2, iter = 20000, warmup = 1000
+  )
 
   expect_equal(coef(fit_plm), coef(fit)$mean[2:3],
-    tolerance = 0.01, ignore_attr = TRUE)
+    tolerance = 0.01, ignore_attr = TRUE
+  )
 
   # Not run, values are stored
   # library(brms)
@@ -42,14 +50,17 @@ test_that("parameters of the Grunfield model are recovered", {
   brms_est <- c(
     -57.917705, 0.109846, 0.308349, 100.941716, 53.086506, -9.896139,
     158.194407, -173.491487, 29.99692, -54.875308, 34.459838, -7.931004,
-    0.646235, -28.227079, 50.50187)
+    0.646235, -28.227079, 50.50187
+  )
   # reorder parameters to match dynamite
   brms_est <- brms_est[c(1, 3, 2, 6:15, 5, 4)]
   sumr <- as_draws(fit) |> posterior::summarise_draws(
     posterior::default_mcse_measures(),
-    posterior::default_summary_measures())
-  for(i in 1:15) {
+    posterior::default_summary_measures()
+  )
+  for (i in 1:15) {
     expect_equal(sumr$mean[i], brms_est[i],
-      tolerance = 100 * sumr$mcse_mean[i], label = sumr$variable[i])
+      tolerance = 100 * sumr$mcse_mean[i], label = sumr$variable[i]
+    )
   }
 })

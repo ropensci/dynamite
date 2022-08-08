@@ -132,16 +132,19 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
   if (any(!is.na(coefs$category))) {
     p <- coefs |>
       ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean,
-                                   colour = .data$category,
-                                   fill = .data$category))
+        colour = .data$category,
+        fill = .data$category
+      ))
   } else {
     p <- coefs |>
       ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean))
   }
   p + ggplot2::geom_ribbon(ggplot2::aes_string(
     ymin = paste0("q", 100 * level),
-    ymax = paste0("q", 100 * (1 - level))),
-    alpha = alpha) +
+    ymax = paste0("q", 100 * (1 - level))
+  ),
+  alpha = alpha
+  ) +
     ggplot2::geom_line() +
     ggplot2::facet_wrap(~ .data$parameter, scales = scales) +
     ggplot2::labs(title = title, x = "Time", y = "Value")
@@ -197,17 +200,21 @@ plot_betas <- function(x, responses = NULL, level = 0.05,
   if (any(!is.na(coefs$category))) {
     p <- coefs |>
       ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter,
-                                   colour = .data$category,
-                                   group = .data$category))
+        colour = .data$category,
+        group = .data$category
+      ))
   } else {
     p <- coefs |>
       ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter))
   }
-  p + ggplot2::geom_pointrange(ggplot2::aes_string(
-    xmin = paste0("q", 100 * level),
-    xmax = paste0("q", 100 * (1 - level))),
-    position = ggplot2::position_dodge(0.5)) +
-    ggplot2::labs(title = title, x = "Value", y = "Parameter")
+  p + ggplot2::geom_pointrange(
+    ggplot2::aes_string(
+      xmin = paste0("q", 100 * level),
+      xmax = paste0("q", 100 * (1 - level))
+    ),
+    position = ggplot2::position_dodge(0.5)
+  ) +
+  ggplot2::labs(title = title, x = "Value", y = "Parameter")
 }
 
 #' Plot Random Intercepts of a Dynamite Model
@@ -250,7 +257,8 @@ plot_nus <- function(x, responses = NULL, level = 0.05) {
   coefs <- coefs |>
     dplyr::mutate(parameter = glue::glue("{parameter}_{group}")) |>
     dplyr::mutate(parameter = factor(.data$parameter,
-      levels = .data$parameter))
+      levels = .data$parameter
+    ))
 
   title <- paste0(
     "Posterior mean and ",
@@ -261,6 +269,7 @@ plot_nus <- function(x, responses = NULL, level = 0.05) {
     ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter)) +
     ggplot2::geom_pointrange(ggplot2::aes_string(
       xmin = paste0("q", 100 * level),
-      xmax = paste0("q", 100 * (1 - level)))) +
+      xmax = paste0("q", 100 * (1 - level))
+    )) +
     ggplot2::labs(title = title, x = "Value", y = "Parameter")
 }

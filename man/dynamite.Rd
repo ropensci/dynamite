@@ -85,9 +85,13 @@ shape of the posterior), this can vary greatly.
 }
 \examples{
 \dontrun{
-fit <- dynamite(obs(y ~ -1 + varying(~x), family = "gaussian") +
-  lags(type = "varying") + splines(df = 20), gaussian_example, "id", "time",
-  chains = 1, refresh = 0)
+fit <- dynamite(
+  dformula = obs(y ~ -1 + varying(~x), family = "gaussian") +
+    lags(type = "varying") +
+    splines(df = 20), gaussian_example, "id", "time",
+  chains = 1,
+  refresh = 0
+)
 
 library(dplyr)
 library(ggplot2)
@@ -96,13 +100,15 @@ cf <- coef(fit) \%>\%
   summarise(
     mean = mean(value),
     lwr = quantile(value, 0.025),
-    upr = quantile(value, 0.975))
+    upr = quantile(value, 0.975)
+  )
 
 cf \%>\%
-  ggplot(aes(time, mean)) + theme_bw() +
-    geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
-    geom_line() +
-    facet_wrap(~ variable, scales = "free_y")
+  ggplot(aes(time, mean)) +
+  theme_bw() +
+  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
+  geom_line() +
+  facet_wrap(~variable, scales = "free_y")
 }
 
 }

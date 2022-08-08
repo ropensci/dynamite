@@ -1,12 +1,16 @@
 # Data warnings -----------------------------------------------------------
 
 test_that("ordered factor conversion to factor warns", {
-  test_data <- data.frame(y = factor(c(1, 2, 2), ordered = TRUE),
-                          x = c(1, 1, 2), z = c(1, 2, 3))
+  test_data <- data.frame(
+    y = factor(c(1, 2, 2), ordered = TRUE),
+    x = c(1, 1, 2), z = c(1, 2, 3)
+  )
   expect_warning(
-    dynamite(dformula = obs(y ~ x, family = "categorical"),
-             data = test_data, group = "x", time = "z",
-             debug = list(no_compile = TRUE)),
+    dynamite(
+      dformula = obs(y ~ x, family = "categorical"),
+      data = test_data, group = "x", time = "z",
+      debug = list(no_compile = TRUE)
+    ),
     paste0(
       "Response variable `y` is of class <ordered factor> ",
       "whose channel is categorical:\n",
@@ -44,8 +48,10 @@ test_that("perfect collinearity warns", {
 
 test_that("too few observations warns", {
   f <- obs(y ~ x + z + w, family = "gaussian")
-  test_data <- data.frame(y = rnorm(3), x = rnorm(3), z = rnorm(3),
-    w = rnorm(3))
+  test_data <- data.frame(
+    y = rnorm(3), x = rnorm(3), z = rnorm(3),
+    w = rnorm(3)
+  )
   expect_warning(
     full_model.matrix(f, test_data, TRUE),
     paste0(
@@ -61,7 +67,8 @@ test_that("zero predictor warns", {
   test_data <- data.frame(
     y = rnorm(6),
     x = c(NA, rnorm(2), NA, rnorm(2)),
-    z = factor(1:3))
+    z = factor(1:3)
+  )
   expect_warning(
     full_model.matrix(f, test_data, TRUE),
     paste0(
@@ -130,10 +137,11 @@ test_that("gaps in newdata with exogenous predictors and no impute warns", {
     dplyr::filter(time < 3 | time > 10)
   expect_warning(
     predict(multichannel_example_fit, newdata = newdata, n_draws = 4),
-    paste0("Time index variable `time` of `newdata` has gaps:\n",
-     "i Filling the `newdata` to regular time points\\. This will lead to ",
-     "propagation of NA values if the model contains exogenous predictors ",
-     "and `impute` is \"none\"\\."
+    paste0(
+      "Time index variable `time` of `newdata` has gaps:\n",
+      "i Filling the `newdata` to regular time points\\. This will lead to ",
+      "propagation of NA values if the model contains exogenous predictors ",
+      "and `impute` is \"none\"\\."
     )
   )
 })

@@ -14,7 +14,7 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
   sd_gamma <- signif(sd_gamma, 2)
   priors <- list()
   if (channel$has_random_intercept) {
-    channel$sigma_nu_prior_distr <-  paste0("normal(", 0, ", ", sd_y, ")")
+    channel$sigma_nu_prior_distr <- paste0("normal(", 0, ", ", sd_y, ")")
     priors$sigma_nu <- data.frame(
       parameter = paste0("sigma_nu_", y),
       response = y,
@@ -203,7 +203,7 @@ check_priors <- function(priors, defaults) {
     dplyr::arrange(match(.data$parameter, defaults$parameter))
   unconstrained_dists <- c(
     "normal", "student_t", "double_exponential", "cauchy", "exp_mod_normal",
-    "skew_normal", "logistic","gumbel", "skew_double_exponential"
+    "skew_normal", "logistic", "gumbel", "skew_double_exponential"
   )
   positive_dists <- c(
     "gamma", "exponential", "lognormal", "chi_square", "inv_chi_square",

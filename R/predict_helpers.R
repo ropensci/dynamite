@@ -115,7 +115,8 @@ parse_newdata <- function(dformula, newdata, data, type,
         all(l_new %in% l_orig),
         c("{.cls factor} variable {.var {i}} in {.arg newdata} has new levels:",
           `x` = "Level{?s} {.val {setdiff(l_new, l_orig)}} {?is/are}
-                 not present in the original data.")
+                 not present in the original data."
+        )
       )
       newdata[[i]] <- factor(newdata[[i]], levels = l_orig)
     }
@@ -232,8 +233,10 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
 #' @noRd
 impute_newdata <- function(newdata, impute, predictors, group_var) {
   if (identical(impute, "locf")) {
-    newdata[, (predictors) := lapply(.SD, locf), .SDcols = predictors,
-            by = group_var]
+    newdata[, (predictors) := lapply(.SD, locf),
+      .SDcols = predictors,
+      by = group_var
+    ]
   }
 }
 
@@ -250,14 +253,14 @@ impute_newdata <- function(newdata, impute, predictors, group_var) {
 clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
                            group_var, time_var, clear_names,
                            fixed, global_fixed = TRUE) {
-
   if (newdata_null && identical(eval_type, "predict")) {
     if (global_fixed) {
       clear_idx <- newdata[, .I[seq.int(..fixed + 1L, .N)], by = group_var]$V1
     } else {
       clear_idx <-
         newdata[, .I[seq.int(which(!is.na(.SD))[1L] + ..fixed + 1L, .N)],
-                .SDcols = time_var, by = group_var]$V1
+          .SDcols = time_var, by = group_var
+        ]$V1
     }
     newdata[clear_idx, c(resp_stoch) := NA]
     # use c to force a copy, otherwise newdata_names changes inside the loop
@@ -311,7 +314,7 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
     out[, which(!is_new), ] <- nu[, is_orig, , drop = FALSE]
     if (any(is_new)) {
       n_new <- sum(is_new)
-      out[ , which(is_new), ] <- switch(new_levels,
+      out[, which(is_new), ] <- switch(new_levels,
         `bootstrap` = {
           idx <- sample.int(n_draws * n_group, n_draws * n_new, TRUE)
           array(matrix(nu, ncol = M)[idx, ], c(n_draws, n_new, M))
@@ -321,7 +324,7 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
           zeros <- rep(0.0, M)
           if (is.null(corr_matrix_nu)) {
             # easy to optimise...
-            for(i in seq_len(n_draws)) {
+            for (i in seq_len(n_draws)) {
               s <- diag(sigma_nu[, i]^2, M)
               x[, , i] <- MASS::mvrnorm(n_new, zeros, s)
             }
@@ -329,10 +332,10 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
             # Could also keep the Cholesky L from the sampling phase if this is
             # too slow, or switch algorithm. But probably no need as this is
             # only done once
-            for(i in seq_len(n_draws)) {
+            for (i in seq_len(n_draws)) {
               s <- diag(sigma_nu[, i])
               x[, , i] <- MASS::mvrnorm(
-                n_new, zeros, s %*% corr_matrix_nu[, ,i] %*% s
+                n_new, zeros, s %*% corr_matrix_nu[, , i] %*% s
               )
             }
           }
@@ -368,18 +371,21 @@ prepare_eval_envs <- function(object, newdata, type, eval_type,
   n_group <- ifelse_(has_groups, length(unique(newdata[[group_var]])), 1L)
   if (has_groups && M > 0L) {
     orig_ids <- unique(object$data[[group_var]])
-    new_ids <-  unique(newdata[[group_var]])
+    new_ids <- unique(newdata[[group_var]])
     n_all_draws <- ndraws(object)
     sigma_nus <- glue::glue("sigma_nu_{nu_channels}")
     sigma_nu <- t(
       do.call("cbind", samples[sigma_nus])[idx_draws, , drop = FALSE]
     )
     nus <- glue::glue("nu_{nu_channels}")
-    nu_samples <- array(unlist(samples[nus]),
-      c(n_all_draws, n_group, M))[idx_draws, , , drop = FALSE]
+    nu_samples <- array(
+      unlist(samples[nus]),
+      c(n_all_draws, n_group, M)
+    )[idx_draws, , , drop = FALSE]
     if (attr(object$dformulas$stoch, "random")$correlated) {
       corr_matrix_nu <- aperm(
-        samples[["corr_matrix_nu"]][idx_draws, , , drop = FALSE])
+        samples[["corr_matrix_nu"]][idx_draws, , , drop = FALSE]
+      )
     } else {
       corr_matrix_nu <- NULL
     }
@@ -498,8 +504,8 @@ generate_sim_call <- function(resp, resp_levels, family, eval_type,
         "{ifelse_(has_varying_intercept, 'alpha[, a_time, s]', '')}",
         "{ifelse_(has_fixed, ",
         "' + .rowSums(x = model_matrix[idx_draw, J_fixed, drop = FALSE] ",
-                        " * beta[, , s], ",
-                        " m = n_draws, n = K_fixed)', '')}",
+        " * beta[, , s], ",
+        " m = n_draws, n = K_fixed)', '')}",
         "{ifelse_(has_varying, ",
         "' + .rowSums(x = model_matrix[idx_draw, J_varying, drop = FALSE] ",
         " * delta[, time, , s],",
@@ -525,12 +531,13 @@ generate_sim_call <- function(resp, resp_levels, family, eval_type,
         "' + .rowSums(x = model_matrix[idx_draw, J_fixed, drop = FALSE] * beta,
                         m = n_draws, n = K_fixed)', '')}",
         "{ifelse_(has_varying, ",
-          "' + .rowSums(x = model_matrix[idx_draw, J_varying, drop = FALSE] ",
-                        " * delta[, time, ],",
-                        "m = n_draws, n = K_varying)', '')}",
+        "' + .rowSums(x = model_matrix[idx_draw, J_varying, drop = FALSE] ",
+        " * delta[, time, ],",
+        "m = n_draws, n = K_varying)', '')}",
         "}}\n"
       ),
-      ifelse_(identical(eval_type, "predict"),
+      ifelse_(
+        identical(eval_type, "predict"),
         paste0(
           "if (type == 'link') {{",
           "  data.table::set(x = newdata, i = idx_data, j = '{resp}_link',
