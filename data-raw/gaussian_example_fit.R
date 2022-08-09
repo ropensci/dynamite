@@ -27,6 +27,8 @@ gaussian_example_fit <- dynamite(
 
 usethis::use_data(gaussian_example_fit, overwrite = TRUE, compress = "xz")
 
+# Code to create `gaussian_example_single_fit` object
+
 # use only first id
 d <- gaussian_example |> dplyr::filter(id == 1)
 

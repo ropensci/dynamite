@@ -6,6 +6,22 @@ capture_all_output <- function(x) {
   )
 }
 
+test_that("dynamiteformula can be printed", {
+  f <- obs(y ~ x, family = "gaussian") +
+    lags(k = c(1, 3)) +
+    random(responses = "y")
+  expect_output(
+    print(f),
+    paste0(
+      "  Family   Formula\n",
+      "y gaussian y ~ x  \n",
+      "\n",
+      "Lagged responses added as predcitors with: k = 1, 3\n",
+      "Correlated random effects added for response\\(s\\): y"
+    )
+  )
+})
+
 test_that("conversion to data.frame works", {
   expect_error(
     as.data.frame(gaussian_example_fit),
@@ -104,6 +120,10 @@ test_that("formula can be extracted", {
   fit <- dynamite(f, d, time = "z", debug = list(no_compile = TRUE))
   expect_error(
     formula(fit),
+    NA
+  )
+  expect_error(
+    formula(multichannel_example_fit),
     NA
   )
 })

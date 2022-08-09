@@ -1,5 +1,24 @@
 # Data warnings -----------------------------------------------------------
 
+test_that("factor time conversion warns", {
+  test_data <- data.frame(
+    y = c(1, 2, 3),
+    x = c(1, 1, 2),
+    z = factor(c(1, 2, 3))
+  )
+  expect_warning(
+    dynamite(
+      dformula = obs(y ~ x, family = "negbin"),
+      data = test_data, group = "x", time = "z",
+      debug = list(no_compile = TRUE)
+    ),
+    paste0(
+      "Time index variable `z` is a <factor>:\n",
+      "i Converting the variable to <integer> based on its levels\\."
+    )
+  )
+})
+
 test_that("ordered factor conversion to factor warns", {
   test_data <- data.frame(
     y = factor(c(1, 2, 2), ordered = TRUE),
@@ -142,6 +161,23 @@ test_that("gaps in newdata with exogenous predictors and no impute warns", {
       "i Filling the `newdata` to regular time points\\. This will lead to ",
       "propagation of NA values if the model contains exogenous predictors ",
       "and `impute` is \"none\"\\."
+    )
+  )
+  newdata <- gaussian_example |>
+    dplyr::filter(id == 1) |>
+    dplyr::mutate(y = ifelse(time > 5, NA, y)) |>
+    dplyr::filter(time < 3 | time > 10)
+  # capture due to multiple warnings
+  w <- capture_warnings(
+    predict(gaussian_example_single_fit, newdata = newdata, ndraws = 1)
+  )
+  expect_match(
+    w[1],
+    paste0(
+      "Time index variable `time` of `newdata` has gaps:\n",
+      "i Filling the `newdata` to regular time points\\. This will lead to ",
+      "propagation of NA values if the model contains exogenous predictors ",
+      "and `impute` is \"none\"\\.|NAs produced"
     )
   )
 })

@@ -269,16 +269,17 @@ print.dynamiteformula <- function(x, ...) {
   print.data.frame(out, right = FALSE)
   if (!is.null(attr(x, "lags"))) {
     k <- attr(x, "lags")$k
-    cat("\nLagged responses added as predcitors with: k =", cs(k), "")
+    cat("\nLagged responses added as predcitors with: k = ", cs(k), sep = "")
   }
   if (!is.null(attr(x, "random"))) {
     resp <- attr(x, "random")$responses
     co <- attr(x, "random")$correlated
     cat(
-      ifelse_(co, "\nCorrelated random", "\nRandom"),
-      "effects added for response(s):",
+      ifelse_(co, "\nCorrelated random ", "\nRandom "),
+      "effects added for response(s): ",
       cs(resp),
-      "\n"
+      "\n",
+      sep = ""
     )
   }
   invisible(x)

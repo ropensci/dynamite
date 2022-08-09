@@ -219,16 +219,38 @@ test_that("permuting newdata for predict does not alter results", {
   newdata <- gaussian_example_fit$data
   newdata$y[newdata$time > 1] <- NA
   set.seed(1)
-  pred1 <- predict(gaussian_example_fit,
-    type = "mean", n_draws = 2,
+  pred1 <- predict(
+    gaussian_example_fit,
+    type = "mean",
+    n_draws = 2,
     newdata = newdata
   )
-
   newdata2 <- newdata[sample(seq_len(nrow(newdata))), ]
   set.seed(1)
   expect_error(pred2 <- predict(gaussian_example_fit,
     type = "mean",
     n_draws = 2, newdata = newdata2
+  ), NA)
+  expect_equal(pred1, pred2)
+})
+
+test_that("factor time and integer time for predict give equal results", {
+  newdata <- gaussian_example_fit$data
+  newdata$time <- factor(newdata$time)
+  set.seed(1)
+  pred1 <- predict(
+    gaussian_example_fit,
+    type = "mean",
+    n_draws = 2,
+    newdata = newdata
+  )
+  newdata2 <- gaussian_example_fit$data
+  set.seed(1)
+  expect_error(pred2 <- predict(
+    gaussian_example_fit,
+    type = "mean",
+    n_draws = 2,
+    newdata = newdata2
   ), NA)
   expect_equal(pred1, pred2)
 })

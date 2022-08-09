@@ -405,7 +405,6 @@ test_that("no groups data preparation works", {
   )
 })
 
-
 # Deterministic edgecases -------------------------------------------------
 
 test_that("deterministic channels are parsed", {

@@ -264,30 +264,27 @@ formula.dynamitefit <- function(x, ...) {
   )
   lag_defs <- attr(x$dformulas$all, "lags")
   spline_defs <- attr(x$dformulas$stoch, "splines")
-  obs_str <- ifelse_(
+  obs_str <- onlyif(
     length(ch_stoch) > 0L,
     obs_str <- paste0(
       glue::glue(
         "obs({formula_str[ch_stoch]}, family = {family_str[ch_stoch]}())"
       ),
       collapse = " +\n"
-    ),
-    ""
+    )
   )
-  aux_str <- ifelse_(
+  aux_str <- onlyif(
     length(ch_det) > 0L,
     aux_str <- paste0(
       glue::glue("aux({formula_str[ch_det]})"),
       collapse = " +\n"
-    ),
-    ""
+    )
   )
-  lags_str <- ifelse_(
+  lags_str <- onlyif(
     !is.null(lag_defs),
-    glue::glue("lags(k = {lag_defs$k}, type = {lag_defs$type})"),
-    ""
+    glue::glue("lags(k = {lag_defs$k}, type = {lag_defs$type})")
   )
-  spline_str <- ifelse_(
+  spline_str <- onlyif(
     !is.null(spline_defs),
     paste0(
       "splines(",
@@ -297,13 +294,12 @@ formula.dynamitefit <- function(x, ...) {
       "degree = ", spline_defs$bs_opts$degree, ", ",
       "lb_tau = ", spline_defs$lb_tau, ", ",
       "noncentered = ", spline_defs$noncentered, ")"
-    ),
-    ""
+    )
   )
   str2lang(
     paste0(
       "{\n",
-      paste(obs_str, aux_str, lags_str, spline_str, sep = " +\n"),
+      paste_rows(obs_str, aux_str, lags_str, spline_str),
       "\n}"
     )
   )
