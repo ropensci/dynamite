@@ -1,4 +1,7 @@
-#' Extract Samples From the `dynamitefit` Object as a Data Frame
+#' Extract Samples From a `dynamitefit` Object as a Data Frame
+#'
+#' Provides a `data.frame` representation of the posterior samples of the model
+#' parameters.
 #'
 #' The arguments `responses` and `types` can be used to extract only a subset
 #' of the model parameters (i.e., only certain types of parameters related to a
@@ -21,7 +24,7 @@
 #'  * `omega` Spline coefficients of the regression coefficients `delta`.
 #'  * `omega_alpha` Spline coefficients of time-varying `alpha`.
 #'
-#' @param x  \[`dynamitefit`]\cr The model fit object.
+#' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param row.names Ignored.
 #' @param optional Ignored.
 #' @param responses  \[`character()`]\cr Response(s) for which the samples

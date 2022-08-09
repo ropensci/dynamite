@@ -1,14 +1,22 @@
 #' Estimate a Bayesian Dynamic Multivariate Panel Model
 #'
+#' Fit a Bayesian dynamic multivariate panel model using Stan for Bayesian
+#' inference. The \pkg{dynamite} package supports a wide range of distributions
+#' and allows the user to flexibly customize the priors for the model
+#' parameters. The dynamite model is specified using standard \R formula syntax
+#' via [dynamite::dynamiteformula()]. For more information and examples,
+#' see 'Details' and the package vignette.
+#'
 #' Any univariate unbounded continuous distributions supported by Stan can be
 #' used as a prior for model parameters (the distribution is automatically
 #' truncated to positive side for constrained parameters). In addition, any
-#' univariate distribution bounded to positive real line can be used as a prior
-#' for parameters constrained to be positive. See Stan function reference at
+#' univariate distribution bounded to the positive real line can be used as a
+#' prior for parameters constrained to be positive.
+#' See Stan function reference at
 #' \url{https://mc-stan.org/users/documentation/} for details. For custom
-#' priors, you should first get the default priors with `get_priors` function,
-#' and then modify the `priors` column of the obtained data frame before
-#' supplying it to the `dynamite`.
+#' priors, you should first get the default priors with [dynamite::get_priors()]
+#' function, and then modify the `priors` column of the obtained data frame
+#' before supplying it to the `dynamite` function.
 #'
 #' The default priors for regression coefficients are based on the standard
 #' deviation of the covariates at the first non-fixed time point. In case this
@@ -22,32 +30,31 @@
 #' cholesky-lkj-correlation-distribution.html}
 #' for details.
 #'
-#' See more details in the package vignette on how to define a dynamite model.
-#'
-#' The best-case scalability of the dynamite in terms of data size should be
+#' The best-case scalability of `dynamite` in terms of data size should be
 #' approximately linear in terms of number of time points and and number of
 #' groups, but as wall-clock time of the MCMC algorithms provided by Stan can
 #' depend on the discrepancy of the data and the model (and the subsequent
 #' shape of the posterior), this can vary greatly.
 #'
-#' @param dformula \[`dynamiteformula`]\cr The model formula. See 'Details'.
+#' @param dformula \[`dynamiteformula`]\cr The model formula.
+#'   See [dynamiteformula()] and 'Details'.
 #' @param data
 #'   \[`data.frame`, `tibble::tibble`, or `data.table::data.table`]\cr
-#'   The data frame, tibble or a data.table containing the variables in the
-#'   model. Supported column types are `integer`, `logical`, `double`,
-#'   `factor`. `character` columns will be converted to factors.
+#'   The data that contains the variables in the
+#'   model. Supported column types are `integer`, `logical`, `double`, and
+#'   `factor`. Columns of type `character` will be converted to factors.
 #'   Unused factor levels will be dropped. The `data` can contain missing
 #'   values which will simply be ignored in the estimation in a case-wise
 #'   fashion (per time-point and per channel). Input `data` is converted to
-#'   channel specific matrix representations via [stats::model.matrix.lm].
+#'   channel specific matrix representations via [stats::model.matrix.lm()].
 #' @param group \[`character(1)`]\cr A column name of `data` that denotes the
-#'   unique groups, or `NULL` corresponding to a scenario without any groups.
+#'   unique groups or `NULL` corresponding to a scenario without any groups.
 #' @param time \[`character(1)`]\cr A column name of `data` that denotes the
 #'   time index of observations. If this variable is a factor, the integer
 #'   representation of its levels are used internally for defining the time
 #'   indexing.
 #' @param priors \[`data.frame`]\cr An optional data frame with prior
-#'   definitions. See 'Details'.
+#'   definitions. See [dynamite::get_priors()] and 'Details'.
 #' @param verbose \[`logical(1)`]\cr All warnings and messages are suppressed
 #'   if set to `FALSE`. Defaults to `TRUE`.
 #' @param debug \[`list()`]\cr A named list of form `name = TRUE` indicating
@@ -232,7 +239,7 @@ dynamite <- function(dformula, data, group = NULL, time,
   out
 }
 
-#' Access The Model Formula of a Dynamite Model
+#' Access the Model Formula of a Dynamite Model
 #'
 #' Returns the model definition as a quoted expression.
 #'
@@ -785,11 +792,13 @@ parse_present_lags <- function(dformula, lag_map, y, i, lhs) {
   k <- y$lag_idx[i]
   if (lag_map$present[k]) {
     for (j in seq_along(dformula)) {
-      dformula[[j]]$formula <- gsub_formula(
-        pattern = lag_map$src[k],
-        replacement = lhs,
-        formula = dformula[[j]]$formula,
-        fixed = TRUE
+      dformula[[j]]$formula <- as.formula(
+        gsub(
+          pattern = lag_map$src[k],
+          replacement = lhs,
+          x = deparse1(dformula[[j]]$formula),
+          fixed = TRUE
+        )
       )
     }
   }

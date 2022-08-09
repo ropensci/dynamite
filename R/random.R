@@ -1,7 +1,7 @@
 #' Define Random Intercepts for the Dynamite Model.
 #'
-#' This function can be used as part of `dynamiteformula` to define random
-#' intercepts for each group.
+#' This function can be used as part of [dynamiteformula()] to define
+#' (correlated) random intercepts for each group.
 #'
 #' @param responses \[`character()`]\cr Names of the responses for which the
 #'   random intercepts should be defined. Default is all responses defined with
@@ -34,12 +34,4 @@ random <- function(responses = NULL, correlated = TRUE) {
     ),
     class = "random"
   )
-}
-
-#' Is The Argument a `random` Definition?
-#'
-#' @param x An \R object.
-#' @noRd
-is.random <- function(x) {
-  inherits(x, "random")
 }

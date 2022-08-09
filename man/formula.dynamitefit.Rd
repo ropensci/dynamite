@@ -2,7 +2,7 @@
 % Please edit documentation in R/dynamite.R
 \name{formula.dynamitefit}
 \alias{formula.dynamitefit}
-\title{Access The Model Formula of a Dynamite Model}
+\title{Access the Model Formula of a Dynamite Model}
 \usage{
 \method{formula}{dynamitefit}(x, ...)
 }

@@ -22,7 +22,10 @@ should be drawn. See details of possible values.}
 The output object from \link[bayesplot:MCMC-combos]{bayesplot::mcmc_combo}.
 }
 \description{
-Produces the traceplots and the density plots of of the model parameters.
+Produces the traceplots and the density plots of the model parameters.
+See 'Details' for the available parameter types.
+}
+\details{
 Possible parameter types are:
 \itemize{
 \item \code{alpha} Intercept terms (time-invariant or time-varying).
@@ -38,9 +41,8 @@ time-varying \code{alpha}.
 \item \code{omega} Spline coefficients of the regression coefficients \code{delta}.
 \item \code{omega_alpha} Spline coefficients of time-varying \code{alpha}.
 }
-}
-\details{
-Note however that typically drawing these plots for the time-varying
+
+Note however, that typically drawing these plots for the time-varying
 parameters \code{delta} (and \code{alpha}), spline coefficients, or random
 intercepts leads to too many plots.
 }

@@ -20,10 +20,21 @@ added lag terms should vary in time or not.}
 An object of class \code{lags}.
 }
 \description{
-Add Lagged Responses as Predictors to Each Channel of a Dynamite Model
+Adds the lagged value of the response of each channel specified via
+\code{\link[=dynamiteformula]{dynamiteformula()}} as a predictor to each channel. The added predictors
+can be either time-varying or time-invariant.
 }
 \examples{
 obs(y ~ -1 + varying(~x), family = "gaussian") +
   lags(type = "varying") + splines(df = 20)
+
+# A two-channel categorical model with time-invariant predictors
+# here, lag terms are specified manually
+obs(x ~ z + lag(x) + lag(y), family = "categorical") +
+
+# The same categorical model as above, but with the lag terms
+# added using 'lags'
+obs(x ~ z, family = "categorical") +
+  lags(type = "fixed")
 
 }

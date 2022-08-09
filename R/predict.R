@@ -1,5 +1,9 @@
 #' Predict Method for a Dynamite Model
 #'
+#' Obtain counterfactual predictions for a `dynamitefit` object. Note that
+#' forecasting (i.e., predictions for time indices beyond the last time index
+#' in the original data) is not supported by the \pkg{dynamite} package.
+#'
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param newdata \[`data.frame`]\cr Data used in predictions. Predictions are
 #'   computed for missing (`NA`) values in the response variable columns, and

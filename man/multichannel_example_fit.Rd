@@ -16,7 +16,7 @@ multichannel_example_fit.R}
 multichannel_example_fit
 }
 \description{
-A \code{dynamitefit} object obtained by running a \code{dynamite} on the
+A \code{dynamitefit} object obtained by running \code{dynamite} on the
 \code{multichannel_example} dataset as
 \preformatted{
 set.seed(1)

@@ -1,11 +1,23 @@
-#' The 'dynamite' package.
+#' The `dynamite` package.
 #'
 #' @description Easy-to-use and efficient interface for Bayesian inference of
 #' complex panel data consisting of multiple individuals with multiple
 #' measurements over time. Supports several observational distributions,
 #' time-varying effects and realistic counterfactual predictions which take into
-#' account the dynamic structure of the model. See the README and the package
-#' vignette for details.
+#' account the dynamic structure of the model.
+#'
+#' # See Also
+#'
+#' * The package vignette.
+#' * [dynamite::dynamiteformula()] for information on defining models.
+#' * [dynamite::dynamite()] for information on fitting models.
+#' * \url{https://github.com/santikka/dynamite/issues/} to submit a bug report
+#'   or a feature request.
+#'
+#' # Authors
+#' | Santtu Tikka (author) | <santtuth@@gmail.com>  |
+#' | --------------------- | ---------------------- |
+#' | Jouni Helske (author) | <jouni.helske@@iki.fi> |
 #'
 #' @docType package
 #' @name dynamite-package
@@ -63,7 +75,7 @@ NULL
 
 #' Model Fit for the Simulated Data of Gaussian Responses
 #'
-#' A `dynamitefit` object obtained by running a `dynamite` on the
+#' A `dynamitefit` object obtained by running `dynamite` on the
 #' `gaussian_example` dataset as
 #' \preformatted{
 #' set.seed(1)
@@ -103,7 +115,7 @@ NULL
 
 #' Model Fit for the Simulated Multivariate Panel Data
 #'
-#' A `dynamitefit` object obtained by running a `dynamite` on the
+#' A `dynamitefit` object obtained by running `dynamite` on the
 #' `multichannel_example` dataset as
 #' \preformatted{
 #' set.seed(1)
@@ -144,7 +156,7 @@ NULL
 
 #' Model Fit for the Simulated Categorical Multivariate Panel Data
 #'
-#' A `dynamitefit` object obtained by running a `dynamite` on the
+#' A `dynamitefit` object obtained by running `dynamite` on the
 #' `categorical_example` dataset as
 #' \preformatted{
 #' set.seed(1)

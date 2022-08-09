@@ -1,9 +1,11 @@
 #' Model formula for \pkg{dynamite}
 #'
-#' Defines a new observational or a new auxiliary channel for the model.
-#' See 'Details' or the package vignette for more information.
+#' Defines a new observational or a new auxiliary channel for the model using
+#' standard \R formula syntax. Formulas of individual response variables can be
+#' joined together via `+`. See 'Details' and the package vignette for more
+#' information.
 #'
-#' @details Currently the `dynamite` package supports the following
+#' Currently the \pkg{dynamite} package supports the following
 #' distributions for the observations:
 #'
 #' * Categorical: `categorical` (with a softmax link using the first category
@@ -22,7 +24,7 @@
 #' * Beta: `beta` (logit-link, using mean and precision parameterization).
 #'
 #' The models in the \pkg{dynamite} package are defined by combining the
-#' channel-specific formulas defined via  \R formula syntax.
+#' channel-specific formulas defined via \R formula syntax.
 #' Each channel is defined via the `obs` function, and the channels are
 #' combined with `+`. For example a formula
 #' `obs(y ~ lag(x), family = "gaussian") + obs(x ~ z, family = "poisson")`
@@ -71,11 +73,16 @@
 #' coefficients, same spline basis is used for all coefficients, with unique
 #' spline coefficients and their standard deviation.
 #'
+#' If the desired model contains lagged predictors of each response in each
+#' channel, these can be quickly added to the model as either time-invariant
+#' or time-varying predictors via [lags()] instead of writing them manually
+#' for each channel.
+#'
 #' It is also possible to define a random intercept term for each group by
-#' using component `random` where the first argument defines for which channels
-#' the intercept should be added, and second argument defines whether or not
-#' these intercepts should be correlated between channels. This leads to a
-#' model where the in addition to the common intercept each individual/group
+#' using the component [random()] where the first argument defines for which
+#' channels the intercept should be added, and second argument defines whether
+#' or not these intercepts should be correlated between channels. This leads
+#' to a model where in addition to the common intercept, each individual/group
 #' has their own intercept with zero-mean normal prior and unknown standard
 #' deviation (or multivariate gaussian in case `correlated = TRUE`),
 #' analogously with the typical mixed models. Note however that if the channel
@@ -95,8 +102,30 @@
 #' @return An object of class `dynamiteformula`.
 #' @export
 #' @examples
+#' # A single gaussian response channel with a time-varying effect of 'x',
+#' # and a time-varying effect of the lag of 'y' using B-splines with
+#' # 20 degrees of freedom for the coefficients of the time-varying terms.
 #' obs(y ~ -1 + varying(~x), family = "gaussian") +
-#'   lags(type = "varying") + splines(df = 20)
+#'   lags(type = "varying") +
+#'   splines(df = 20)
+#'
+#' # A two-channel categorical model with time-invariant predictors
+#' # here, lag terms are specified manually
+#' obs(x ~ z + lag(x) + lag(y), family = "categorical") +
+# '  obs(y ~ z + lag(x) + lag(y), family = "categorical")
+#'
+#' # The same categorical model as above, but with the lag terms
+#' # added using 'lags'
+#' obs(x ~ z, family = "categorical") +
+# '  obs(y ~ z, family = "categorical") +
+#'   lags(type = "fixed")
+#'
+#' # A multichannel model with a gaussian, Poisson and a Bernoulli response and
+#' # an auxiliary channel for the logarithm of 'p' plus one
+#' obs(g ~ lag(g) + lag(logp), family = "gaussian") +
+#'   obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
+#'   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
+#'   aux(numeric(logp) ~ log(p + 1))
 #'
 #' @srrstats {G2.3b} Uses tolower.
 #' @srrstats {RE1.0} Uses a formula interface.
@@ -129,7 +158,7 @@ dynamiteformula <- function(formula, family) {
   )
   family <- do.call(paste0(family, "_"), args = list())
   stopifnot_(
-    !has_as_is(deparse1(formula)),
+    !"I" %in% all.names(formula),
     "{.code I(.)} is not supported by {.fun dynamiteformula}."
   )
   x <- dynamiteformula_(formula, formula, family)
@@ -276,7 +305,7 @@ print.dynamiteformula <- function(x, ...) {
     co <- attr(x, "random")$correlated
     cat(
       ifelse_(co, "\nCorrelated random ", "\nRandom "),
-      "effects added for response(s): ",
+      "intercepts added for response(s): ",
       cs(resp),
       "\n",
       sep = ""
@@ -390,11 +419,11 @@ has_past <- function(x) {
 add_dynamiteformula <- function(e1, e2) {
   if (is.dynamiteformula(e2)) {
     out <- join_dynamiteformulas(e1, e2)
-  } else if (is.lags(e2)) {
+  } else if (inherits(e2, "lags")) {
     out <- set_lags(e1, e2)
-  } else if (is.splines(e2)) {
+  } else if (inherits(e2, "splines")) {
     out <- set_splines(e1, e2)
-  } else if (is.random(e2)) {
+  } else if (inherits(e2, "random")) {
     out <- set_random(e1, e2)
   } else {
     stop_(

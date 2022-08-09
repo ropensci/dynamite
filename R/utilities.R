@@ -36,17 +36,6 @@ formula_terms <- function(x) {
   attr(terms(x), "term.labels")
 }
 
-#' Replace terms in a formula based on a regular expression
-#'
-#' @param pattern See [base::gsub()].
-#' @param replacement See [base::gsub()].
-#' @param formula A `formula` object
-#' @param ... Additional arguments passed to [base::gsub()]
-#' @noRd
-gsub_formula <- function(pattern, replacement, formula, ...) {
-  as.formula(gsub(pattern, replacement, deparse1(formula), ...))
-}
-
 #' Wrapper of `drop.terms` with Formula Output And Empty RHS Support
 #'
 #' @inheritParams drop.terms
@@ -216,14 +205,6 @@ indenter_ <- function(m = 2L) {
   function(v) {
     unlist(idts[v + 1L])
   }
-}
-
-#' Check If Argument Contains a String of the Form I(.)
-#'
-#' @param x A `character` vector.
-#' @noRd
-has_as_is <- function(x) {
-  grepl("I\\(.+\\)", x, perl = TRUE)
 }
 
 #' Fill Gaps (NAs) in a Vector with the Last Non-NA Observation

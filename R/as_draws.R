@@ -1,8 +1,8 @@
 #' Convert `dynamite` Output to `draws_df` Format
 #'
 #' Converts the output from [dynamite::dynamite()] call to a
-#' `draws_df` format of the `posterior` package, enabling the use
-#' of diagnostics and plotting methods of `posterior` and `bayesplot`
+#' `draws_df` format of the \pkg{posterior} package, enabling the use
+#' of diagnostics and plotting methods of \pkg{posterior} and \pkg{bayesplot}
 #' packages. Note that this function returns all variables in a wide format,
 #' whereas [dynamite::as.data.frame()] uses the long format.
 #'

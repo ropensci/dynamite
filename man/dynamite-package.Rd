@@ -3,12 +3,28 @@
 \docType{package}
 \name{dynamite-package}
 \alias{dynamite-package}
-\title{The 'dynamite' package.}
+\title{The \code{dynamite} package.}
 \description{
 Easy-to-use and efficient interface for Bayesian inference of
 complex panel data consisting of multiple individuals with multiple
 measurements over time. Supports several observational distributions,
 time-varying effects and realistic counterfactual predictions which take into
-account the dynamic structure of the model. See the README and the package
-vignette for details.
+account the dynamic structure of the model.
 }
+\section{See Also}{
+\itemize{
+\item The package vignette.
+\item \code{\link[=dynamiteformula]{dynamiteformula()}} for information on defining models.
+\item \code{\link[=dynamite]{dynamite()}} for information on fitting models.
+\item \url{https://github.com/santikka/dynamite/issues/} to submit a bug report
+or a feature request.
+}
+}
+
+\section{Authors}{
+\tabular{ll}{
+   Santtu Tikka (author) \tab \href{mailto:santtuth@gmail.com}{santtuth@gmail.com} \cr
+   Jouni Helske (author) \tab \href{mailto:jouni.helske@iki.fi}{jouni.helske@iki.fi} \cr
+}
+}
+

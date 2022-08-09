@@ -60,7 +60,9 @@ default is \code{NULL} which uses all samples.}
 \item{...}{Ignored.}
 }
 \description{
-Predict Method for a Dynamite Model
+Obtain counterfactual predictions for a \code{dynamitefit} object. Note that
+forecasting (i.e., predictions for time indices beyond the last time index
+in the original data) is not supported by the \pkg{dynamite} package.
 }
 \examples{
 predict(gaussian_example_fit, type = "response", n_draws = 2L)

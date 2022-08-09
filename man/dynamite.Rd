@@ -16,19 +16,20 @@ dynamite(
 )
 }
 \arguments{
-\item{dformula}{[\code{dynamiteformula}]\cr The model formula. See 'Details'.}
+\item{dformula}{[\code{dynamiteformula}]\cr The model formula.
+See \code{\link[=dynamiteformula]{dynamiteformula()}} and 'Details'.}
 
 \item{data}{[\code{data.frame}, \code{tibble::tibble}, or \code{data.table::data.table}]\cr
-The data frame, tibble or a data.table containing the variables in the
-model. Supported column types are \code{integer}, \code{logical}, \code{double},
-\code{factor}. \code{character} columns will be converted to factors.
+The data that contains the variables in the
+model. Supported column types are \code{integer}, \code{logical}, \code{double}, and
+\code{factor}. Columns of type \code{character} will be converted to factors.
 Unused factor levels will be dropped. The \code{data} can contain missing
 values which will simply be ignored in the estimation in a case-wise
 fashion (per time-point and per channel). Input \code{data} is converted to
-channel specific matrix representations via \link[stats:model.matrix]{stats::model.matrix.lm}.}
+channel specific matrix representations via \code{\link[stats:model.matrix]{stats::model.matrix.lm()}}.}
 
 \item{group}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
-unique groups, or \code{NULL} corresponding to a scenario without any groups.}
+unique groups or \code{NULL} corresponding to a scenario without any groups.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time index of observations. If this variable is a factor, the integer
@@ -36,7 +37,7 @@ representation of its levels are used internally for defining the time
 indexing.}
 
 \item{priors}{[\code{data.frame}]\cr An optional data frame with prior
-definitions. See 'Details'.}
+definitions. See \code{\link[=get_priors]{get_priors()}} and 'Details'.}
 
 \item{verbose}{[\code{logical(1)}]\cr All warnings and messages are suppressed
 if set to \code{FALSE}. Defaults to \code{TRUE}.}
@@ -52,17 +53,25 @@ return object.}
 \item{...}{Additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}.}
 }
 \description{
+Fit a Bayesian dynamic multivariate panel model using Stan for Bayesian
+inference. The \pkg{dynamite} package supports a wide range of distributions
+and allows the user to flexibly customize the priors for the model
+parameters. The dynamite model is specified using standard \R formula syntax
+via \code{\link[=dynamiteformula]{dynamiteformula()}}. For more information and examples,
+see 'Details' and the package vignette.
+}
+\details{
 Any univariate unbounded continuous distributions supported by Stan can be
 used as a prior for model parameters (the distribution is automatically
 truncated to positive side for constrained parameters). In addition, any
-univariate distribution bounded to positive real line can be used as a prior
-for parameters constrained to be positive. See Stan function reference at
+univariate distribution bounded to the positive real line can be used as a
+prior for parameters constrained to be positive.
+See Stan function reference at
 \url{https://mc-stan.org/users/documentation/} for details. For custom
-priors, you should first get the default priors with \code{get_priors} function,
-and then modify the \code{priors} column of the obtained data frame before
-supplying it to the \code{dynamite}.
-}
-\details{
+priors, you should first get the default priors with \code{\link[=get_priors]{get_priors()}}
+function, and then modify the \code{priors} column of the obtained data frame
+before supplying it to the \code{dynamite} function.
+
 The default priors for regression coefficients are based on the standard
 deviation of the covariates at the first non-fixed time point. In case this
 is 0 or NA, it is transformed to (arbitrary) 0.5. The final prior is then
@@ -75,9 +84,7 @@ via the Cholesky decomposition of the correlation matrix, as
 cholesky-lkj-correlation-distribution.html}
 for details.
 
-See more details in the package vignette on how to define a dynamite model.
-
-The best-case scalability of the dynamite in terms of data size should be
+The best-case scalability of \code{dynamite} in terms of data size should be
 approximately linear in terms of number of time points and and number of
 groups, but as wall-clock time of the MCMC algorithms provided by Stan can
 depend on the discrepancy of the data and the model (and the subsequent

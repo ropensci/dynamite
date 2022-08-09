@@ -19,8 +19,8 @@ the intercepts follow a multivariate normal distribution.}
 An object of class \code{random}.
 }
 \description{
-This function can be used as part of \code{dynamiteformula} to define random
-intercepts for each group.
+This function can be used as part of \code{\link[=dynamiteformula]{dynamiteformula()}} to define
+(correlated) random intercepts for each group.
 }
 \examples{
 # three channel model with correlated random effects for responses x and y

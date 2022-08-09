@@ -1,5 +1,9 @@
 #' Add Lagged Responses as Predictors to Each Channel of a Dynamite Model
 #'
+#' Adds the lagged value of the response of each channel specified via
+#' [dynamiteformula()] as a predictor to each channel. The added predictors
+#' can be either time-varying or time-invariant.
+#'
 #' @param k \[`integer()`]\cr
 #'   Values lagged by `k` units of time of each observed response variable
 #'   will be added as a predictor for each channel. Should be a positive
@@ -12,6 +16,17 @@
 #' @examples
 #' obs(y ~ -1 + varying(~x), family = "gaussian") +
 #'   lags(type = "varying") + splines(df = 20)
+#'
+#' # A two-channel categorical model with time-invariant predictors
+#' # here, lag terms are specified manually
+#' obs(x ~ z + lag(x) + lag(y), family = "categorical") +
+# '  obs(y ~ z + lag(x) + lag(y), family = "categorical")
+#'
+#' # The same categorical model as above, but with the lag terms
+#' # added using 'lags'
+#' obs(x ~ z, family = "categorical") +
+# '  obs(y ~ z, family = "categorical") +
+#'   lags(type = "fixed")
 #'
 #' @srrstats {G2.3a} Uses match.arg
 lags <- function(k = 1L, type = c("fixed", "varying")) {
@@ -37,14 +52,6 @@ lags <- function(k = 1L, type = c("fixed", "varying")) {
   )
 }
 
-#' Is the Argument a `lags` Definition
-#'
-#' @param x An R object
-#' @noRd
-is.lags <- function(x) {
-  inherits(x, "lags")
-}
-
 #' Create a Lagged Version of a Vector
 #'
 #' @param x \[`vector()`]\cr A vector of values.
@@ -66,7 +73,7 @@ complete_lags <- function(x) {
   if (identical(length(x), 1L)) {
     return(x)
   }
-  if (identical(deparse1(x[[1]]), "lag")) {
+  if (identical(deparse1(x[[1L]]), "lag")) {
     xlen <- length(x)
     if (identical(xlen, 2L)) {
       x <- str2lang(

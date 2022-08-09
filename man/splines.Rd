@@ -52,8 +52,8 @@ definition for the splines will not be overridden by another call to
 An object of class \code{splines}.
 }
 \description{
-This function can be used as part of \code{dynamiteformula} to define the splines
-for the time-varying coefficients \eqn{\delta}.
+This function can be used as part of \code{\link[=dynamiteformula]{dynamiteformula()}} to define the
+splines used for the time-varying coefficients \eqn{\delta}.
 }
 \examples{
 # Two channel model with varying effects, with explicit lower bounds for the

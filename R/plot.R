@@ -1,6 +1,8 @@
 #' Traceplots and Density Plots of a `dynamitefit` Object
 #'
-#' Produces the traceplots and the density plots of of the model parameters.
+#' Produces the traceplots and the density plots of the model parameters.
+#' See 'Details' for the available parameter types.
+#'
 #' Possible parameter types are:
 #'  * `alpha` Intercept terms (time-invariant or time-varying).
 #'  * `beta` Time-invariant regression coefficients.
@@ -15,7 +17,7 @@
 #'  * `omega` Spline coefficients of the regression coefficients `delta`.
 #'  * `omega_alpha` Spline coefficients of time-varying `alpha`.
 #'
-#' Note however that typically drawing these plots for the time-varying
+#' Note however, that typically drawing these plots for the time-varying
 #' parameters `delta` (and `alpha`), spline coefficients, or random
 #' intercepts leads to too many plots.
 #'

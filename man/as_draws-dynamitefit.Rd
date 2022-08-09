@@ -30,8 +30,8 @@ A \code{draws_df} object.
 }
 \description{
 Converts the output from \code{\link[=dynamite]{dynamite()}} call to a
-\code{draws_df} format of the \code{posterior} package, enabling the use
-of diagnostics and plotting methods of \code{posterior} and \code{bayesplot}
+\code{draws_df} format of the \pkg{posterior} package, enabling the use
+of diagnostics and plotting methods of \pkg{posterior} and \pkg{bayesplot}
 packages. Note that this function returns all variables in a wide format,
 whereas \code{\link[=as.data.frame]{as.data.frame()}} uses the long format.
 }

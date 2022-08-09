@@ -21,9 +21,10 @@ default is \code{NULL} which uses all samples.}
 \item{...}{Ignored.}
 }
 \description{
-Note that these are conditional on the observed data in \code{newdata},
-i.e., these are one-step estimates E(y_t|y_t-1,...,y_1). Often
-\link{predict.dynamitefit} is what you want.
+Fitted values for a \code{dynamitefit} object.Note that these are conditional on
+the observed data in \code{newdata},i.e., these are one-step estimates
+E(y_t|y_t-1,...,y_1). Often \code{\link[=predict.dynamitefit]{predict.dynamitefit()}} is what you
+want.
 }
 \examples{
 fitted(gaussian_example_fit, n_draws = 2L)

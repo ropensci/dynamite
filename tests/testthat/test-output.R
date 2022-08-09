@@ -17,7 +17,7 @@ test_that("dynamiteformula can be printed", {
       "y gaussian y ~ x  \n",
       "\n",
       "Lagged responses added as predcitors with: k = 1, 3\n",
-      "Correlated random effects added for response\\(s\\): y"
+      "Correlated random intercepts added for response\\(s\\): y"
     )
   )
 })

@@ -1,13 +1,13 @@
 #' Define the B-splines Used for the Time-varying Coefficients of the Model.
 #'
-#' This function can be used as part of `dynamiteformula` to define the splines
-#' for the time-varying coefficients \eqn{\delta}.
+#' This function can be used as part of [dynamiteformula()] to define the
+#' splines used for the time-varying coefficients \eqn{\delta}.
 #'
 #' @param df \[`integer(1)`]\cr Degrees of freedom, i.e., the total number of
 #'   spline coefficients. See [splines::bs()]. Note that the knots are always
 #'   defined as an equidistant sequence on the interval starting from the first
 #'   non-fixed time point to the last time point in the data. See
-#'   [dynamite::dynamiteformula()] for more information on fixed time points.
+#'   [dynamiteformula()] for more information on fixed time points.
 #'   Should be an (unrestricted) positive integer.
 #' @param degree \[`integer(1)`]\cr See [splines::bs()]. Should be an
 #'   (unrestricted) positive integer.
@@ -100,12 +100,4 @@ splines <- function(df = NULL, degree = 3L, lb_tau = 0,
     override = override,
     class = "splines"
   )
-}
-
-#' Is The Argument a Splines Definition?
-#'
-#' @param x An \R object
-#' @noRd
-is.splines <- function(x) {
-  inherits(x, "splines")
 }
