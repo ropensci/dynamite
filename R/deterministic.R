@@ -88,6 +88,7 @@ assign_initial_values <- function(data, dd, dlp, dld, dls,
   lhs_stoch <- get_responses(dls)
   rhs_stoch <- get_predictors(dls)
   cl <- get_quoted(dd)
+  ..k <- NULL # avoid NSE note in R CMD check
   for (k in ro_pred) {
     data[, (dlp[[k]]$response) := lapply(.SD, lag_, ..k),
       .SDcols = resp_pred[k], by = group_var

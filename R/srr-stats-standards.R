@@ -41,7 +41,7 @@ NULL
 #' @srrstatsNA {RE4.15, RE6.3, RE4.14, RE7.4} Forecasting is not supported
 #' @srrstatsNA {RE7.0, RE7.0a, RE7.1, RE7.1a} Not relevant to the package.
 #' @srrstatsNA {RE6.2} Such a plot as a default could be s misleading due to the
-#'   lagged dependency structures and and overly complicated because there are
+#'   lagged dependency structures and overly complicated because there are
 #'   multiple channels with various distributional assumptions
 #'   (i.e., discrete vs continuous).
 #' @srrstatsNA {G5.11, G5.11a} No large data sets are used in the extended

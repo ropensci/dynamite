@@ -1,7 +1,8 @@
 #' Print a Summary of a Dynamite Model Fit Object
 #'
-#' Prints the summary information of the estimated dynamite model: The smallest
-#' effective sample sizes, largest Rhat and summary statistics of the
+#' Prints the summary information of the estimated dynamite model: The model
+#' formula, the data,  the smallest effective sample sizes,
+#' largest Rhat and summary statistics of the
 #' time-invariant model parameters.
 #'
 #' @param x \[`dynamitefit`] The model fit object.

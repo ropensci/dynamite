@@ -98,7 +98,7 @@
 #'
 #' @param formula \[`formula`]\cr An \R formula describing the model.
 #' @param family \[`character(1)`]\cr The family name. See 'Details' for the
-#' supported families.
+#'   supported families.
 #' @return An object of class `dynamiteformula`.
 #' @export
 #' @examples
@@ -112,12 +112,12 @@
 #' # A two-channel categorical model with time-invariant predictors
 #' # here, lag terms are specified manually
 #' obs(x ~ z + lag(x) + lag(y), family = "categorical") +
-# '  obs(y ~ z + lag(x) + lag(y), family = "categorical")
+#'   obs(y ~ z + lag(x) + lag(y), family = "categorical")
 #'
 #' # The same categorical model as above, but with the lag terms
 #' # added using 'lags'
 #' obs(x ~ z, family = "categorical") +
-# '  obs(y ~ z, family = "categorical") +
+#'   obs(y ~ z, family = "categorical") +
 #'   lags(type = "fixed")
 #'
 #' # A multichannel model with a gaussian, Poisson and a Bernoulli response and

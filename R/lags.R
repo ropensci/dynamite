@@ -20,12 +20,12 @@
 #' # A two-channel categorical model with time-invariant predictors
 #' # here, lag terms are specified manually
 #' obs(x ~ z + lag(x) + lag(y), family = "categorical") +
-# '  obs(y ~ z + lag(x) + lag(y), family = "categorical")
+#'   obs(y ~ z + lag(x) + lag(y), family = "categorical")
 #'
 #' # The same categorical model as above, but with the lag terms
 #' # added using 'lags'
 #' obs(x ~ z, family = "categorical") +
-# '  obs(y ~ z, family = "categorical") +
+#'   obs(y ~ z, family = "categorical") +
 #'   lags(type = "fixed")
 #'
 #' @srrstats {G2.3a} Uses match.arg

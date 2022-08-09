@@ -254,6 +254,7 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
                            group_var, time_var, clear_names,
                            fixed, global_fixed = TRUE) {
   if (newdata_null && identical(eval_type, "predict")) {
+    ..fixed <- NULL # avoid NSE note in R CMD check
     if (global_fixed) {
       clear_idx <- newdata[, .I[seq.int(..fixed + 1L, .N)], by = group_var]$V1
     } else {

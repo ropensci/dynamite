@@ -13,8 +13,9 @@
 See \link[tibble:formatting]{tibble::formatting}.}
 }
 \description{
-Prints the summary information of the estimated dynamite model: The smallest
-effective sample sizes, largest Rhat and summary statistics of the
+Prints the summary information of the estimated dynamite model: The model
+formula, the data,  the smallest effective sample sizes,
+largest Rhat and summary statistics of the
 time-invariant model parameters.
 }
 \examples{

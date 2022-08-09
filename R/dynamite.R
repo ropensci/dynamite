@@ -676,6 +676,7 @@ parse_singleton_lags <- function(dformula, data, group_var,
       if (y$is_resp && !is.null(y$past_val)) {
         if (identical(y$past_type, "past")) {
           past_out <- lag_(y$past_val, i)
+          ..i <- NULL # avoid NSE note in R CMD check
           past_out[data[, .I[seq_len(..i)], by = group_var]$V1] <- NA
           spec <- list(
             past = past_out,
