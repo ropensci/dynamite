@@ -48,3 +48,6 @@ Roxygen: list(markdown = TRUE, roclets = c ("namespace", "rd",
 RoxygenNote: 7.2.1
 LazyData: true
 LazyDataCompression: xz
+Remotes:
+    stan-dev/rstan,
+    Rdatatable/data.table
