@@ -252,16 +252,17 @@ impute_newdata <- function(newdata, impute, predictors, group_var) {
 #' @noRd
 clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
                            group_var, time_var, clear_names,
-                           fixed, global_fixed = TRUE) {
+                           fixed, global_fixed) {
   if (newdata_null && identical(eval_type, "predict")) {
     ..fixed <- NULL # avoid NSE note in R CMD check
     if (global_fixed) {
       clear_idx <- newdata[, .I[seq.int(..fixed + 1L, .N)], by = group_var]$V1
     } else {
-      clear_idx <-
-        newdata[, .I[seq.int(which(!is.na(.SD))[1L] + ..fixed + 1L, .N)],
-          .SDcols = time_var, by = group_var
-        ]$V1
+      clear_idx <- newdata[,
+        .I[seq.int(..fixed + which(apply(!is.na(.SD), 1L, any))[1L], .N)],
+        .SDcols = resp_stoch,
+        by = group_var
+      ]$V1
     }
     newdata[clear_idx, c(resp_stoch) := NA]
     # use c to force a copy, otherwise newdata_names changes inside the loop

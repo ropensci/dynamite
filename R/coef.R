@@ -21,18 +21,10 @@ coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
                              responses = NULL, summary = TRUE,
                              probs = c(0.05, 0.95),
                              include_alpha = TRUE, ...) {
-  stopifnot_(
-    !missing(object),
-    "Argument {.arg object} is missing."
-  )
-  stopifnot_(
-    is.dynamitefit(object),
-    "Argument {.arg object} must be a {.cls dynamitefit} object."
-  )
   type <- onlyif(is.character(type), tolower(type))
   type <- try(match.arg(type, c("beta", "delta", "nu")), silent = TRUE)
   stopifnot_(
-    !"try-error" %in% class(type),
+    !inherits(type, "try-error"),
     "Argument {.arg type} must be either \"beta\", \"delta\", or \"nu\"."
   )
   stopifnot_(
@@ -41,7 +33,7 @@ coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
   )
   if (include_alpha && !identical(type, "nu")) {
     types <- c("alpha", type)
-    out <- as.data.frame(
+    out <- as.data.frame.dynamitefit(
       object,
       types = types,
       responses = responses,
@@ -55,7 +47,7 @@ coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
       out <- out |> dplyr::filter(is.na(.data$time))
     }
   } else {
-    out <- as.data.frame(
+    out <- as.data.frame.dynamitefit(
       object,
       types = type,
       responses = responses,

@@ -18,12 +18,12 @@ ndraws.dynamitefit <- function(x) {
     is.dynamitefit(x),
     "Argument {.arg x} must be a {.cls dynamitefit} object."
   )
-  if (!is.null(x$stanfit)) {
-    as.integer(
-      (x$stanfit@sim$n_save[1L] - x$stanfit@sim$warmup2[1L]) *
-        x$stanfit@sim$chains
-    )
-  } else {
-    message_("No Stan model fit is available.")
-  }
+  stopifnot_(
+    !is.null(x$stanfit),
+    "No Stan model fit is available."
+  )
+  as.integer(
+    (x$stanfit@sim$n_save[1L] - x$stanfit@sim$warmup2[1L]) *
+      x$stanfit@sim$chains
+  )
 }

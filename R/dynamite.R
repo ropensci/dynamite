@@ -233,7 +233,7 @@ dynamite <- function(dformula, data, group = NULL, time,
   for (opt in names(debug)) {
     if (debug[[opt]]) {
       got <- try(get(x = opt), silent = TRUE)
-      out[[opt]] <- onlyif(!"try-error" %in% class(got), got)
+      out[[opt]] <- onlyif(!inherits(got, "try-error"), got)
     }
   }
   out
@@ -421,7 +421,7 @@ parse_past <- function(dformula, data, group_var, time_var) {
       y <- dformula[[i]]$response
       past_eval <- try(data[, eval(dformula[[i]]$specials$past)], silent = TRUE)
       stopifnot_(
-        !"try-error" %in% class(past_eval),
+        !inherits(past_eval, "try-error"),
         c(
           "Unable to evaluate past definition of
           deterministic channel {.var {y}}:",

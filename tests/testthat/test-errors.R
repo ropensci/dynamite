@@ -592,93 +592,59 @@ test_that("too many arguments to lag fails", {
 # Output errors -----------------------------------------------------------
 
 test_that("output for missing argument fails", {
-  expect_error(
-    as.data.frame.dynamitefit(),
-    "Argument `x` is missing\\."
+  methods <- c(
+    "as.data.frame",
+    "as_draws_df",
+    "formula",
+    "print",
+    "mcmc_diagnostics",
+    "ndraws",
+    "nobs"
   )
-  expect_error(
-    as_draws_df.dynamitefit(),
-    "Argument `x` is missing\\."
-  )
-  expect_error(
-    formula.dynamitefit(),
-    "Argument `x` is missing\\."
-  )
-  expect_error(
-    plot.dynamitefit(),
-    "Argument `x` is missing\\."
-  )
-  expect_error(
-    plot_deltas(),
-    "Argument `x` is missing\\."
-  )
-  expect_error(
-    plot_betas(),
-    "Argument `x` is missing\\."
-  )
-  expect_error(
-    plot_nus(),
-    "Argument `x` is missing\\."
-  )
-  expect_error(
-    print.dynamitefit(),
-    "Argument `x` is missing\\."
-  )
-  expect_error(
-    print.dynamiteformula(),
-    "Argument `x` is missing\\."
-  )
-  expect_error(
-    mcmc_diagnostics(),
-    "Argument `x` is missing\\."
-  )
-  expect_error(
-    nobs.dynamitefit(),
-    "Argument `object` is missing\\."
-  )
+  for (m in methods) {
+    expect_error(
+      do.call(paste0(!!m, ".dynamitefit"), args = list()),
+      "Argument `.+` is missing"
+    )
+  }
 })
 
 test_that("output for non dynamitefit objects fails", {
-  expect_error(
-    as.data.frame.dynamitefit(x = 1L),
-    "Argument `x` must be a <dynamitefit> object\\."
+  methods <- c(
+    "as.data.frame",
+    "as_draws_df",
+    "formula",
+    "print",
+    "mcmc_diagnostics",
+    "ndraws",
+    "nobs"
   )
-  expect_error(
-    as_draws_df.dynamitefit(x = 1L),
-    "Argument `x` must be a <dynamitefit> object\\."
+  args <- list(x = 1L)
+  for (m in methods) {
+    if (identical(m, "nobs")) {
+      args <- list(object = 1L)
+    }
+    expect_error(
+      do.call(paste0(!!m, ".dynamitefit"), args = args),
+      "Argument `.+` must be a <dynamitefit> object"
+    )
+  }
+})
+
+test_that("output without Stan fit fails", {
+  methods <- c(
+    "as.data.frame",
+    "as_draws_df",
+    "ndraws"
   )
-  expect_error(
-    formula.dynamitefit(x = 1L),
-    "Argument `x` must be a <dynamitefit> object\\."
-  )
-  expect_error(
-    plot.dynamitefit(x = 1L),
-    "Argument `x` must be a <dynamitefit> object\\."
-  )
-  expect_error(
-    plot_deltas(x = 1L),
-    "Argument `x` must be a <dynamitefit> object\\."
-  )
-  expect_error(
-    plot_betas(x = 1L),
-    "Argument `x` must be a <dynamitefit> object\\."
-  )
-  expect_error(
-    plot_nus(x = 1L),
-    "Argument `x` must be a <dynamitefit> object\\."
-  )
-  expect_error(
-    print.dynamitefit(x = 1L),
-    "Argument `x` must be a <dynamitefit> object\\."
-  )
-  expect_error(
-    mcmc_diagnostics(x = 1L),
-    "Argument `x` must be a <dynamitefit> object\\."
-  )
-  expect_error(
-    nobs.dynamitefit(object = 1L),
-    "Argument `object` must be a <dynamitefit> object\\."
-  )
+  args <- list(x = gaussian_example_fit)
+  args$x$stanfit <- NULL
+  for (m in methods) {
+    expect_error(
+      do.call(paste0(!!m, ".dynamitefit"), args = args),
+      "No Stan model fit is available"
+    )
+  }
 })
 
 test_that("non dynamiteformula print fails", {
@@ -897,7 +863,7 @@ test_that("constrained prior for unconstrained parameter fails", {
 
 test_that("plot errors when the input is not a dynamitefit object", {
   expect_error(
-    plot.dynamitefit(1),
+    plot.dynamitefit(1, type = "beta"),
     "Argument `x` must be a <dynamitefit> object."
   )
 })

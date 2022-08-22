@@ -49,7 +49,7 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
     cl <- get_quoted(dd)
     res <- try(assign_deterministic(data, cl, 1L), silent = TRUE)
     stopifnot_(
-      !"try-error" %in% class(res),
+      !inherits(res, "try-error"),
       c(
         "Unable to evaluate definitions of deterministic channels:",
         `x` = attr(res, "condition")$message

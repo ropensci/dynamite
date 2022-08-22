@@ -102,6 +102,10 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     "Argument {.arg x} must be a {.cls dynamitefit} object."
   )
   stopifnot_(
+    !is.null(x$stanfit),
+    "No Stan model fit is available."
+  )
+  stopifnot_(
     checkmate::test_character(
       x = responses,
       any.missing = FALSE,
@@ -157,7 +161,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     types <- onlyif(is.character(types), tolower(types))
     types <- try(match.arg(types, all_types, TRUE), silent = TRUE)
     stopifnot_(
-      !"try-error" %in% class(types),
+      !inherits(types, "try-error"),
       "Argument {.arg type} contains unknown types."
     )
   }

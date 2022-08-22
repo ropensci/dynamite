@@ -10,6 +10,7 @@
   type = c("response", "mean", "link"),
   impute = c("none", "locf"),
   new_levels = c("none", "bootstrap", "gaussian", "original"),
+  global_fixed = FALSE,
   n_draws = NULL,
   ...
 )
@@ -53,6 +54,12 @@ standard deviation.
 the original levels. The posterior samples of the random intercept of
 the matched levels will then be used for the new levels.
 This argument is ignored if model does not contain random intercepts.}
+
+\item{global_fixed}{[\code{logical(1)}]\cr If \code{FALSE} (the default),
+the first non-fixed time point is counted from the the first non-NA
+observation for each group member separately. Otherwise, the first
+non-fixed time point is counted from the first time point globally.
+If there are no groups, then the options are equivalent.}
 
 \item{n_draws}{[\code{integer(1)}]\cr Number of posterior samples to use,
 default is \code{NULL} which uses all samples.}

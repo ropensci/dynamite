@@ -331,3 +331,11 @@ test_that("imputation works", {
     NA
   )
 })
+
+test_that("global_fixed options produce equal results with balanced data", {
+  set.seed(0)
+  pred_t <- predict(gaussian_example_fit, n_draws = 2, global_fixed = TRUE)
+  set.seed(0)
+  pred_f <- predict(gaussian_example_fit, n_draws = 2, global_fixed = FALSE)
+  expect_equal(pred_t, pred_f)
+})

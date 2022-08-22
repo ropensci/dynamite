@@ -38,6 +38,11 @@
 #'       the original levels. The posterior samples of the random intercept of
 #'       the matched levels will then be used for the new levels.
 #'   This argument is ignored if model does not contain random intercepts.
+#' @param global_fixed \[`logical(1)`]\cr If `FALSE` (the default),
+#'   the first non-fixed time point is counted from the the first non-NA
+#'   observation for each group member separately. Otherwise, the first
+#'   non-fixed time point is counted from the first time point globally.
+#'   If there are no groups, then the options are equivalent.
 #' @param n_draws \[`integer(1)`]\cr Number of posterior samples to use,
 #'   default is `NULL` which uses all samples.
 #' @param ... Ignored.
@@ -58,17 +63,22 @@ predict.dynamitefit <- function(object, newdata = NULL,
                                 new_levels = c(
                                   "none", "bootstrap", "gaussian", "original"
                                 ),
+                                global_fixed = FALSE,
                                 n_draws = NULL, ...) {
+  stopifnot_(
+    !is.null(object$stanfit),
+    "No Stan model fit is available."
+  )
   type <- onlyif(is.character(type), tolower(type))
   type <- try(match.arg(type, c("response", "mean", "link")), silent = TRUE)
   stopifnot_(
-    !"try-error" %in% class(type),
+    !inherits(type, "try-error"),
     "Argument {.arg type} must be either \"response\", \"mean\", or \"link\"."
   )
   impute <- onlyif(is.character(impute), tolower(impute))
   impute <- try(match.arg(impute, c("none", "locf")), silent = TRUE)
   stopifnot_(
-    !"try-error" %in% class(impute),
+    !inherits(impute, "try-error"),
     "Argument {.arg type} must be either \"none\", or \"locf\"."
   )
   new_levels <- onlyif(is.character(new_levels), tolower(new_levels))
@@ -80,9 +90,13 @@ predict.dynamitefit <- function(object, newdata = NULL,
     silent = TRUE
   )
   stopifnot_(
-    !"try-error" %in% class(new_levels),
+    !inherits(new_levels, "try-error"),
     "Argument {.arg type} must be either \"none\", \"bootstrap\",
      \"gaussian\" or \"original\"."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = global_fixed),
+    "Argument {.arg global_fixed} must be a single {.cls logical} value."
   )
   predict_dynamitefit(
     object,
@@ -91,6 +105,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
     eval_type = "predict",
     impute,
     new_levels,
+    global_fixed,
     n_draws
   )
 }
@@ -101,7 +116,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
 #' @param eval_type \[`character(1)`]\cr Either `"predict"` or `"fitted"`.
 #' @noRd
 predict_dynamitefit <- function(object, newdata, type, eval_type,
-                                impute, new_levels, n_draws) {
+                                impute, new_levels, global_fixed, n_draws) {
   n_draws <- check_ndraws(n_draws, ndraws(object))
   newdata_null <- is.null(newdata)
   newdata <- check_newdata(object, newdata)
@@ -165,7 +180,8 @@ predict_dynamitefit <- function(object, newdata, type, eval_type,
     group_var,
     time_var,
     clear_names = c(resp_det, lhs_det, lhs_stoch),
-    fixed
+    fixed,
+    global_fixed
   )
   initialize_deterministic(newdata, dd, dlp, dld, dls)
   idx <- seq.int(1L, n_new, by = n_time) - 1L
@@ -183,8 +199,7 @@ predict_dynamitefit <- function(object, newdata, type, eval_type,
     group_var
   )
   specials <- evaluate_specials(object$dformulas$stoch, newdata)
-  newdata_time_idx <- newdata[, .I[newdata[[time_var]]]]
-  idx <- which(newdata_time_idx == time[1L]) + (fixed - 1L) * n_draws
+  idx <- which(newdata[[time_var]] == time[1L]) + (fixed - 1L) * n_draws
   time_offset <- which(unique(object$data[[time_var]]) == time[1L]) - 1L
   skip <- TRUE
   for (i in seq.int(fixed + 1L, n_time)) {

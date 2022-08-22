@@ -47,6 +47,10 @@
 #' }
 #' @srrstats {RE4.9} Returns the fitted values.
 fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, ...) {
+  stopifnot_(
+    !is.null(object$stanfit),
+    "No Stan model fit is available."
+  )
   predict_dynamitefit(
     object,
     newdata,
@@ -54,6 +58,7 @@ fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, ...) {
     eval_type = "fitted",
     impute = "none",
     new_levels = "none",
+    global_fixed = FALSE,
     n_draws
   )
 }

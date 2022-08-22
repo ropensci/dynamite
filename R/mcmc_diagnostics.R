@@ -12,7 +12,14 @@
 #' @export
 #' @examples
 #' mcmc_diagnostics(gaussian_example_fit)
-mcmc_diagnostics <- function(x, n = 1L) {
+mcmc_diagnostics <- function(x, ...) {
+  UseMethod("mcmc_diagnostics", x)
+}
+
+#' @method mcmc_diagnostics dynamitefit
+#' @rdname mcmc_diagnostics
+#' @export
+mcmc_diagnostics.dynamitefit <- function(x, n = 1L) {
   stopifnot_(
     !missing(x),
     "Argument {.arg x} is missing."
@@ -73,7 +80,7 @@ mcmc_diagnostics <- function(x, n = 1L) {
       ) |>
       print()
   } else {
-    message_("No Stan model fit is available.")
+    cat("No Stan model fit is available.")
   }
   invisible(x)
 }

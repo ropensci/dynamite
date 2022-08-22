@@ -19,14 +19,6 @@
 #' @srrstats {RE4.3} Provides credible intervals.
 confint.dynamitefit <- function(object, parm, level = 0.95, ...) {
   stopifnot_(
-    !missing(object),
-    "Argument {.arg object} is missing."
-  )
-  stopifnot_(
-    is.dynamitefit(object),
-    "Argument {.arg object} must be a {.cls dynamitefit} object."
-  )
-  stopifnot_(
     checkmate::test_number(
       x = level,
       lower = 0.0,

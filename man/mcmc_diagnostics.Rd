@@ -2,9 +2,12 @@
 % Please edit documentation in R/mcmc_diagnostics.R
 \name{mcmc_diagnostics}
 \alias{mcmc_diagnostics}
+\alias{mcmc_diagnostics.dynamitefit}
 \title{Diagnostic Values of a Dynamite Model}
 \usage{
-mcmc_diagnostics(x, n = 1L)
+mcmc_diagnostics(x, ...)
+
+\method{mcmc_diagnostics}{dynamitefit}(x, n = 1L)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}

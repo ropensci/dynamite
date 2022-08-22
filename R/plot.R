@@ -37,14 +37,6 @@
 #' combined with `ggplot2` and `bayesplot`, for example.
 plot.dynamitefit <- function(x, responses = NULL, type, ...) {
   stopifnot_(
-    !missing(x),
-    "Argument {.arg x} is missing."
-  )
-  stopifnot_(
-    is.dynamitefit(x),
-    "Argument {.arg x} must be a {.cls dynamitefit} object."
-  )
-  stopifnot_(
     !missing(type),
     "Argument {.arg type} is missing while it should be a single
     {.cls character} string."
@@ -53,7 +45,9 @@ plot.dynamitefit <- function(x, responses = NULL, type, ...) {
     checkmate::test_string(x = type, na.ok = FALSE),
     "Argument {.arg type} must be a single {.cls character} string."
   )
-  out <- suppressWarnings(as_draws(x, responses = responses, types = type))
+  out <- suppressWarnings(
+    as_draws_df.dynamitefit(x, responses = responses, types = type)
+  )
   bayesplot::mcmc_combo(out, ...)
 }
 
@@ -82,14 +76,6 @@ plot.dynamitefit <- function(x, responses = NULL, type, ...) {
 plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
                         scales = c("fixed", "free"), include_alpha = TRUE) {
   stopifnot_(
-    !missing(x),
-    "Argument {.arg x} is missing."
-  )
-  stopifnot_(
-    is.dynamitefit(x),
-    "Argument {.var x} must be a {.cls dynamitefit} object."
-  )
-  stopifnot_(
     checkmate::test_number(
       x = level,
       lower = 0.0,
@@ -109,7 +95,7 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
     "Argument {.arg alpha} must be a single
      {.cls numeric} value between 0 and 1."
   )
-  coefs <- coef(
+  coefs <- coef.dynamitefit(
     x,
     "delta",
     responses = responses,
@@ -123,7 +109,7 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
   scales <- onlyif(is.character(scales), tolower(scales))
   scales <- try(match.arg(scales, c("fixed", "free")), silent = TRUE)
   stopifnot_(
-    !"try-error" %in% class(scales),
+    !inherits(scales, "try-error"),
     "Argument {.arg scales} must be either \"fixed\" or \"free\"."
   )
   title <- paste0(
@@ -141,12 +127,14 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
     p <- coefs |>
       ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean))
   }
-  p + ggplot2::geom_ribbon(ggplot2::aes_string(
-    ymin = paste0("q", 100 * level),
-    ymax = paste0("q", 100 * (1 - level))
-  ),
-  alpha = alpha
-  ) +
+  p +
+    ggplot2::geom_ribbon(
+      ggplot2::aes_string(
+        ymin = paste0("q", 100 * level),
+        ymax = paste0("q", 100 * (1 - level))
+      ),
+      alpha = alpha
+    ) +
     ggplot2::geom_line() +
     ggplot2::facet_wrap(~ .data$parameter, scales = scales) +
     ggplot2::labs(title = title, x = "Time", y = "Value")
@@ -166,14 +154,6 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
 plot_betas <- function(x, responses = NULL, level = 0.05,
                        include_alpha = TRUE) {
   stopifnot_(
-    !missing(x),
-    "Argument {.arg x} is missing."
-  )
-  stopifnot_(
-    is.dynamitefit(x),
-    "Argument {.var x} must be a {.cls dynamitefit} object."
-  )
-  stopifnot_(
     checkmate::test_number(
       x = level,
       lower = 0.0,
@@ -183,7 +163,7 @@ plot_betas <- function(x, responses = NULL, level = 0.05,
     "Argument {.arg level} must be a single
      {.cls numeric} value between 0 and 1."
   )
-  coefs <- coef(
+  coefs <- coef.dynamitefit(
     x,
     "beta",
     responses = responses,
@@ -229,14 +209,6 @@ plot_betas <- function(x, responses = NULL, level = 0.05,
 #' @export
 plot_nus <- function(x, responses = NULL, level = 0.05) {
   stopifnot_(
-    !missing(x),
-    "Argument {.arg x} is missing."
-  )
-  stopifnot_(
-    is.dynamitefit(x),
-    "Argument {.var x} must be a {.cls dynamitefit} object."
-  )
-  stopifnot_(
     checkmate::test_number(
       x = level,
       lower = 0.0,
@@ -246,14 +218,17 @@ plot_nus <- function(x, responses = NULL, level = 0.05) {
     "Argument {.arg level} must be a single
      {.cls numeric} value between 0 and 1."
   )
-  coefs <- try(coef(
-    x,
-    "nu",
-    responses = responses,
-    probs = c(level, 1 - level)
-  ), silent = TRUE)
+  coefs <- try(
+    coef.dynamitefit(
+      x,
+      "nu",
+      responses = responses,
+      probs = c(level, 1 - level)
+    ),
+    silent = TRUE
+  )
   stopifnot_(
-    !"try-error" %in% class(coefs),
+    !inherits(coefs, "try-error"),
     "The model does not contain random intercepts nu."
   )
   coefs <- coefs |>
@@ -261,7 +236,6 @@ plot_nus <- function(x, responses = NULL, level = 0.05) {
     dplyr::mutate(parameter = factor(.data$parameter,
       levels = .data$parameter
     ))
-
   title <- paste0(
     "Posterior mean and ",
     100 * (1 - 2 * level),

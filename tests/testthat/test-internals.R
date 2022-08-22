@@ -58,8 +58,8 @@ test_that("formula incrementation logic is correct", {
         o$has_varying_intercept, o$has_fixed_intercept
       )
     )
-    expect_equal(form_list[[1]], out_list[[i]][[1]], ignore_attr = TRUE)
-    expect_equal(form_list[[2]], out_list[[i]][[2]], ignore_attr = TRUE)
+    expect_equal(form_list[[1]], out_list[[!!i]][[1]], ignore_attr = TRUE)
+    expect_equal(form_list[[2]], out_list[[!!i]][[2]], ignore_attr = TRUE)
   }
 })
 
@@ -87,4 +87,8 @@ test_that("paste_rows works correctly", {
     paste_rows(c("a", "b", "c"), c("d", "e"), "f", .parse = FALSE),
     out
   )
+})
+
+test_that("message_ outputs", {
+  expect_message(message_("This is a message"), "This is a message")
 })
