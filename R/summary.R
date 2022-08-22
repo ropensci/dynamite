@@ -10,4 +10,6 @@
 #' summary(gaussian_example_fit, types = "beta")
 #'
 #' @srrstats {BS6.4, RE4.18} Implements `summary` method.
-summary.dynamitefit <- as.data.frame.dynamitefit
+summary.dynamitefit <- function(object, ...) {
+  as.data.frame.dynamitefit(object, ...)
+}

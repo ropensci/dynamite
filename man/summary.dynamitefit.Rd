@@ -4,22 +4,12 @@
 \alias{summary.dynamitefit}
 \title{Summary for a Dynamite Model Fit}
 \usage{
-\method{summary}{dynamitefit}(
-  x,
-  row.names = NULL,
-  optional = FALSE,
-  responses = NULL,
-  types = NULL,
-  summary = TRUE,
-  probs = c(0.05, 0.95),
-  include_fixed = TRUE,
-  ...
-)
+\method{summary}{dynamitefit}(object, ...)
 }
 \arguments{
-\item{...}{Further arguments to the \code{as.data.frame.dynamitefit}.}
-
 \item{object}{[\code{dynamitefit}]\cr The model fit object.}
+
+\item{...}{Further arguments to the \code{as.data.frame.dynamitefit}.}
 }
 \description{
 Returns the summary statistics of the posterior samples of the model; this

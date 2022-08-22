@@ -12,7 +12,7 @@
 #' @export
 #' @examples
 #' mcmc_diagnostics(gaussian_example_fit)
-mcmc_diagnostics <- function(x, ...) {
+mcmc_diagnostics <- function(x, n) {
   UseMethod("mcmc_diagnostics", x)
 }
 

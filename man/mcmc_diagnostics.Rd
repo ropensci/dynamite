@@ -5,7 +5,7 @@
 \alias{mcmc_diagnostics.dynamitefit}
 \title{Diagnostic Values of a Dynamite Model}
 \usage{
-mcmc_diagnostics(x, ...)
+mcmc_diagnostics(x, n)
 
 \method{mcmc_diagnostics}{dynamitefit}(x, n = 1L)
 }
