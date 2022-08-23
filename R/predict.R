@@ -20,6 +20,12 @@
 #'   in terms of memory usage to first remove redundant columns from `newdata`.
 #' @param type \[`character(1)`]\cr Type of prediction,
 #'   `"response"` (default), `"mean"`, or `"link"`.
+#' @param funs \[`list()`]\cr A list containing a summary function for each
+#'   channel of the model that should be applied to the predicted responses
+#'   for each combination of the posterior draws and the time points.
+#'   If empty, the full individual level predictions are retunred. Otherwise,
+#'   this argument will be recycled if fewer functions are provided than
+#'   the number of channels.
 #' @param impute \[`character(1)`]\cr Which imputation scheme to use for
 #'   missing predictor values. Currently supported options are
 #'   no imputation: `"none"` (default), and
@@ -59,6 +65,7 @@
 #' predict(gaussian_example_fit, type = "response", n_draws = 2L)
 predict.dynamitefit <- function(object, newdata = NULL,
                                 type = c("response", "mean", "link"),
+                                funs = list(),
                                 impute = c("none", "locf"),
                                 new_levels = c(
                                   "none", "bootstrap", "gaussian", "original"
@@ -74,6 +81,10 @@ predict.dynamitefit <- function(object, newdata = NULL,
   stopifnot_(
     !inherits(type, "try-error"),
     "Argument {.arg type} must be either \"response\", \"mean\", or \"link\"."
+  )
+  stopifnot_(
+    identical(length(funs), 0L) || all(vapply(funs, is.function, logical(1L))),
+    "Argument {.arg funs} must be a list of functions."
   )
   impute <- onlyif(is.character(impute), tolower(impute))
   impute <- try(match.arg(impute, c("none", "locf")), silent = TRUE)
@@ -98,11 +109,12 @@ predict.dynamitefit <- function(object, newdata = NULL,
     checkmate::test_flag(x = global_fixed),
     "Argument {.arg global_fixed} must be a single {.cls logical} value."
   )
-  predict_dynamitefit(
+  initialize_predict(
     object,
     newdata,
     type,
-    eval_type = "predict",
+    eval_type = "predicted",
+    funs,
     impute,
     new_levels,
     global_fixed,
@@ -113,84 +125,145 @@ predict.dynamitefit <- function(object, newdata = NULL,
 #' Internal Function for Both Predict and Fitted Methods
 #'
 #' @inheritParams predict.dynamitefit
-#' @param eval_type \[`character(1)`]\cr Either `"predict"` or `"fitted"`.
+#' @param eval_type \[`character(1)`]\cr Either `"predicted"` or `"fitted"`.
 #' @noRd
-predict_dynamitefit <- function(object, newdata, type, eval_type,
-                                impute, new_levels, global_fixed, n_draws) {
+initialize_predict <- function(object, newdata, type, eval_type, funs,
+                               impute, new_levels, global_fixed, n_draws) {
   n_draws <- check_ndraws(n_draws, ndraws(object))
   newdata_null <- is.null(newdata)
   newdata <- check_newdata(object, newdata)
   fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
   group_var <- object$group_var
   time_var <- object$time_var
-  dd <- object$dformulas$det
-  ds <- object$dformulas$stoch
-  dlp <- object$dformulas$lag_pred
-  dld <- object$dformulas$lag_det
-  dls <- object$dformulas$lag_stoch
-  formulas_stoch <- get_formulas(ds)
-  families_stoch <- get_families(ds)
-  categories <- lapply(
-    attr(object$stan$responses, "resp_class"),
-    "attr", "levels"
-  )
-  resp_stoch <- get_responses(ds)
-  resp_det <- get_responses(dd)
-  lhs_det <- get_responses(dld)
-  rhs_det <- get_predictors(dld)
-  lhs_stoch <- get_responses(dls)
-  rhs_stoch <- get_predictors(dls)
-  predictors <- setdiff(
-    colnames(newdata),
-    c(resp_stoch, lhs_stoch, group_var, time_var)
-  )
+  resp_stoch <- get_responses(object$dformulas$stoch)
   new_levels <- ifelse_(
     identical(length(attr(object$dformulas$stoch, "random")$responses), 0L),
     "ignore",
     new_levels
   )
   newdata <- parse_newdata(
-    object$dformulas$all,
-    newdata,
-    object$data,
-    type,
-    eval_type,
-    families_stoch,
-    resp_stoch,
-    categories,
-    new_levels,
-    group_var,
-    time_var
+    dformula = object$dformulas$all,
+    newdata = newdata,
+    data = object$data,
+    type = type,
+    eval_type = eval_type,
+    families_stoch = get_families(object$dformulas$stoch),
+    resp_stoch = resp_stoch,
+    categories = lapply(
+      attr(object$stan$responses, "resp_class"),
+      "attr", "levels"
+    ),
+    clear_names = c(
+      get_responses(object$dformulas$det),
+      get_responses(object$dformulas$lag_det),
+      get_responses(object$dformulas$lag_stoch)
+    ),
+    new_levels = new_levels,
+    group_var = group_var,
+    time_var = time_var
   )
-  impute_newdata(newdata, impute, predictors, group_var)
-  time <- unique(newdata[[time_var]])
-  cl <- get_quoted(object$dformulas$det)
-  n_time <- length(time)
-  n_new <- nrow(newdata)
-  ro_det <- onlyif(
-    length(lhs_det) > 0L,
+  impute_newdata(
+    newdata = newdata,
+    impute = impute,
+    predictors = setdiff(
+      colnames(newdata),
+      c(
+        resp_stoch,
+        get_responses(object$dformulas$lag_stoch),
+        group_var,
+        time_var
+      )
+    ),
+    group_var = group_var
+  )
+  clear_nonfixed(
+    newdata = newdata,
+    newdata_null = newdata_null,
+    resp_stoch = resp_stoch,
+    eval_type = eval_type,
+    group_var = group_var,
+    time_var = time_var,
+    fixed = fixed,
+    global_fixed = global_fixed
+  )
+  initialize_deterministic(
+    data = newdata,
+    dd = object$dformulas$det,
+    dlp = object$dformulas$lag_pred,
+    dld = object$dformulas$lag_det,
+    dls = object$dformulas$lag_stoch
+  )
+  assign_initial_values(
+    data = newdata,
+    idx = seq.int(1L, nrow(newdata), by = n_unique(newdata[[time_var]])) - 1L,
+    dd = object$dformulas$det,
+    dlp = object$dformulas$lag_pred,
+    dld = object$dformulas$lag_det,
+    dls = object$dformulas$lag_stoch,
+    fixed = fixed,
+    group_var = group_var
+  )
+  newdata_names <- names(newdata)
+  resp_draw <- c(
+    grep("_mean", newdata_names, value = TRUE),
+    grep("_link", newdata_names, value = TRUE),
+    grep("_fitted", newdata_names, value = TRUE),
+    setdiff(
+      c(
+        resp_stoch,
+        get_responses(object$dformulas$det),
+        get_responses(object$dformulas$lag_det),
+        get_responses(object$dformulas$lag_stoch)
+      ),
+      get_responses(object$dformulas$lag_pred)
+    )
+  )
+  simulated <- newdata[, .SD, .SDcols = resp_draw]
+  observed <- newdata[, .SD, .SDcols = setdiff(names(newdata), resp_draw)]
+  if (length(funs) > 0L) {
+    predict_summary()
+  } else {
+    predict_full(
+      object,
+      simulated,
+      observed,
+      type,
+      eval_type,
+      new_levels,
+      n_draws,
+      fixed,
+      group_var,
+      time_var
+    )
+  }
+}
+
+#' Obtain Individual Level Predictions Or Fitted Values
+#'
+#' @inheritParams initialize_predict
+#' @noRd
+predict_full <- function(object, simulated, observed,
+                         type, eval_type, new_levels, n_draws, fixed,
+                         group_var, time_var) {
+  formulas_stoch <- get_formulas(object$dformulas$stoch)
+  resp_stoch <- get_responses(object$dformulas$stoch)
+  resp_det <- get_responses(object$dformulas$det)
+  lhs_ld <- get_responses(object$dformulas$lag_det)
+  rhs_ld <- get_predictors(object$dformulas$lag_det)
+  lhs_ls <- get_responses(object$dformulas$lag_stoch)
+  rhs_ls <- get_predictors(object$dformulas$lag_stoch)
+  ro_ld <- onlyif(
+    length(lhs_ld) > 0L,
     attr(object$dformulas$lag_det, "rank_order")
   )
-  ro_stoch <- seq_len(length(lhs_stoch))
-  clear_nonfixed(
-    newdata,
-    newdata_null,
-    resp_stoch,
-    eval_type,
-    group_var,
-    time_var,
-    clear_names = c(resp_det, lhs_det, lhs_stoch),
-    fixed,
-    global_fixed
-  )
-  initialize_deterministic(newdata, dd, dlp, dld, dls)
-  idx <- seq.int(1L, n_new, by = n_time) - 1L
-  assign_initial_values(newdata, dd, dlp, dld, dls, idx, fixed, group_var)
-  newdata <- newdata[rep(seq_len(n_new), each = n_draws), ]
-  newdata[, (".draw") := rep(seq.int(1L, n_draws), n_new)]
+  ro_ls <- seq_along(lhs_ls)
+  n_new <- nrow(simulated)
+  simulated <- simulated[rep(seq_len(n_new), each = n_draws), ]
+  simulated[, (".draw") := rep(seq.int(1L, n_draws), n_new)]
   eval_envs <- prepare_eval_envs(
     object,
-    newdata,
+    simulated,
+    observed,
     type,
     eval_type,
     resp_stoch,
@@ -198,19 +271,31 @@ predict_dynamitefit <- function(object, newdata, type, eval_type,
     new_levels,
     group_var
   )
-  specials <- evaluate_specials(object$dformulas$stoch, newdata)
-  idx <- which(newdata[[time_var]] == time[1L]) + (fixed - 1L) * n_draws
-  time_offset <- which(unique(object$data[[time_var]]) == time[1L]) - 1L
+  cl <- get_quoted(object$dformulas$det)
+  specials <- evaluate_specials(object$dformulas$stoch, observed)
+  time <- observed[[time_var]]
+  u_time <- unique(time)
+  n_time <- length(u_time)
+  draw_time <- rep(time, each = n_draws)
+  time_offset <- which(unique(object$data[[time_var]]) == u_time[1L]) - 1L
+  idx <- which(draw_time == u_time[1L]) + (fixed - 1L) * n_draws
+  idx_obs <- rep(
+    which(time == u_time[1L]) + (fixed - 1L),
+    each = n_draws
+  )
   skip <- TRUE
   for (i in seq.int(fixed + 1L, n_time)) {
     time_i <- time_offset + i - fixed
     idx <- idx + n_draws
-    assign_lags(newdata, ro_det, idx, lhs_det, rhs_det, skip, n_draws)
-    assign_lags(newdata, ro_stoch, idx, lhs_stoch, rhs_stoch, skip, n_draws)
+    idx_obs <- idx_obs + 1L
+    assign_lags(simulated, idx, ro_ld, lhs_ld, rhs_ld, skip, n_draws)
+    assign_lags(simulated, idx, ro_ls, lhs_ls, rhs_ls, skip, n_draws)
     model_matrix <- full_model.matrix_predict(
       formulas_stoch,
-      newdata,
+      simulated,
+      observed,
       idx,
+      idx_obs,
       object$stan$u_names
     )
     for (j in seq_along(resp_stoch)) {
@@ -218,13 +303,13 @@ predict_dynamitefit <- function(object, newdata, type, eval_type,
       e$idx <- idx
       e$time <- time_i
       e$model_matrix <- model_matrix
-      e$offset <- specials[[j]]$offset[idx]
-      e$trials <- specials[[j]]$trials[idx]
+      e$offset <- specials[[j]]$offset[idx_obs]
+      e$trials <- specials[[j]]$trials[idx_obs]
       e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
-      if (identical(eval_type, "predict")) {
-        idx_na <- is.na(newdata[idx, .SD, .SDcols = resp_stoch[j]])
-        e$idx_pred <- which(idx_na)
-        e$idx_data <- idx[e$idx_pred]
+      if (identical(eval_type, "predicted")) {
+        idx_na <- is.na(simulated[idx, .SD, .SDcols = resp_stoch[j]])
+        e$idx_out <- which(idx_na)
+        e$idx_data <- idx[e$idx_out]
         if (any(idx_na)) {
           eval(e$call, envir = e)
         }
@@ -232,22 +317,29 @@ predict_dynamitefit <- function(object, newdata, type, eval_type,
         eval(e$call, envir = e)
       }
     }
-    assign_deterministic(newdata, cl, idx)
+    assign_deterministic(simulated, idx, cl)
     skip <- FALSE
   }
-  if (identical(eval_type, "predict")) {
-    for (i in seq_along(resp_stoch)) {
-      resp <- resp_stoch[i]
-      store <- glue::glue("{resp}_store")
-      if (identical(type, "response")) {
-        newdata[, glue::glue("{resp}_new") := newdata[[resp]]]
-      }
-      newdata[, c(resp) := newdata[[store]]]
-      newdata[, c(store) := NULL]
+  finalize_predict(type, eval_type, resp_stoch, simulated, observed)
+  simulated[, c(lhs_ld, lhs_ls) := NULL]
+  data.table::setDF(simulated)
+  data.table::setDF(observed)
+  list(simulated = simulated, observed = observed)
+}
+
+#' Clean Up Prediction Data Tables
+#'
+#' @inheritParams predict_full
+#' @param resp_stoch \[character()]\cr Vector of response variable names.
+#' @noRd
+finalize_predict <- function(type, eval_type, resp_stoch, simulated, observed) {
+  for (resp in resp_stoch) {
+    store <- glue::glue("{resp}_store")
+    if (identical(type, "response")) {
+      simulated[, glue::glue("{resp}_new") := simulated[[resp]]]
     }
+    observed[, c(resp) := observed[[store]]]
+    observed[, c(store) := NULL]
+    simulated[, c(resp) := NULL]
   }
-  newdata[, c(lhs_det, lhs_stoch) := NULL]
-  data.table::setkeyv(newdata, cols = c(".draw", group_var, time_var))
-  data.table::setDF(newdata)
-  newdata
 }

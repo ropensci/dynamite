@@ -50,15 +50,17 @@ check_newdata <- function(object, newdata) {
 #' @param resp_stoch \[`character`]\cr A vector of response variables
 #' @param categories \[`list`]\cr Response variable categories
 #'   for categorical families.
+#' @param clear_names \[character()]\cr Vector of column names to remove
+#'   from `newdata`.
 #' @param new_levels \[`character(1)`]\cr Either `"none"`, `"bootstrap"`,
 #'  `"gaussian"`, or `"original"`.
 #' @param group_var \[`character(1)`,`NULL`]\cr Group variable name or `NULL`
 #'   if there is only one group.
 #' @param time_var \[`character(1)`]\cr Time index variable name.
 #' @noRd
-parse_newdata <- function(dformula, newdata, data, type,
-                          eval_type, families_stoch, resp_stoch,
-                          categories, new_levels, group_var, time_var) {
+parse_newdata <- function(dformula, newdata, data, type, eval_type,
+                          families_stoch, resp_stoch, categories,
+                          clear_names, new_levels, group_var, time_var) {
   if (!is.null(group_var)) {
     stopifnot_(
       group_var %in% names(newdata),
@@ -128,6 +130,10 @@ parse_newdata <- function(dformula, newdata, data, type,
     time_scale = original_times[2L] - original_times[1L]
   )
   data.table::setDT(newdata, key = c(group_var, time_var))
+  clear_names <- intersect(names(newdata), clear_names)
+  if (length(clear_names) > 0) {
+    newdata[, (clear_names) := NULL]
+  }
   drop_unused(dformula, newdata, group_var, time_var)
   type <- ifelse_(identical(eval_type, "fitted"), "fitted", type)
   # create separate column for each level of categorical response variables
@@ -141,9 +147,7 @@ parse_newdata <- function(dformula, newdata, data, type,
       )
       newdata[, (pred_col) := NA_real_]
     }
-    if (!identical(type, "fitted")) {
-      newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
-    }
+    newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
   }
   newdata
 }
@@ -246,14 +250,12 @@ impute_newdata <- function(newdata, impute, predictors, group_var) {
 #' @param newdata_null \[logical(1)]\cr
 #'   Was `newdata` `NULL` when `predict` was called?
 #' @param resp_stoch \[character()]\cr Vector of response variable names.
-#' @param clear_names \[character()]\cr
-#'   Vector of column names to remove from `newdata`.
 #' @param fixed \[integer(1)]\cr The number of fixed time points.
 #' @noRd
 clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
                            group_var, time_var, clear_names,
                            fixed, global_fixed) {
-  if (newdata_null && identical(eval_type, "predict")) {
+  if (newdata_null && identical(eval_type, "predicted")) {
     ..fixed <- NULL # avoid NSE note in R CMD check
     if (global_fixed) {
       clear_idx <- newdata[, .I[seq.int(..fixed + 1L, .N)], by = group_var]$V1
@@ -265,14 +267,6 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
       ]$V1
     }
     newdata[clear_idx, c(resp_stoch) := NA]
-    # use c to force a copy, otherwise newdata_names changes inside the loop
-    # (possible issue with the data.table package)
-    newdata_names <- c(names(newdata))
-    for (name in newdata_names) {
-      if (name %in% clear_names) {
-        newdata[, (name) := NULL]
-      }
-    }
   }
 }
 
@@ -353,27 +347,38 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
   out
 }
 
+#' Expand the Prediction Data Frame to Include All Covariates
+#'
+#' @param x Object returned by `predict.dynamitefit`.
+#' @noRd
+expand_predict_output <- function(x) {
+  p <- x$simulated
+  o <- x$observed[rep(seq_len(nrow(x$observed)), each = n_unique(p$.draw)), ]
+  out <- cbind(o, p)
+  rownames(out) <- NULL
+  out
+}
+
 #' Prepare Environments to Evaluate Predictions or Fitted Values
 #'
 #' @inheritParams predict_dynamitefit
 #' @inheritParams clear_nonfixed
 #' @noRd
-prepare_eval_envs <- function(object, newdata, type, eval_type,
-                              resp_stoch, n_draws,
+prepare_eval_envs <- function(object, simulated, observed,
+                              type, eval_type, resp_stoch, n_draws,
                               new_levels, group_var) {
   samples <- rstan::extract(object$stanfit)
   model_vars <- object$stan$model_vars
-  newdata_names <- names(newdata)
   n_resp <- length(resp_stoch)
   eval_envs <- vector(mode = "list", length = n_resp)
   idx_draws <- seq_len(n_draws)
   nu_channels <- attr(object$dformulas$stoch, "random")$responses
   M <- length(nu_channels)
   has_groups <- !is.null(group_var)
-  n_group <- ifelse_(has_groups, length(unique(newdata[[group_var]])), 1L)
+  n_group <- ifelse_(has_groups, n_unique(observed[[group_var]]), 1L)
   if (has_groups && M > 0L) {
     orig_ids <- unique(object$data[[group_var]])
-    new_ids <- unique(newdata[[group_var]])
+    new_ids <- unique(observed[[group_var]])
     n_all_draws <- ndraws(object)
     sigma_nus <- glue::glue("sigma_nu_{nu_channels}")
     sigma_nu <- t(
@@ -412,11 +417,11 @@ prepare_eval_envs <- function(object, newdata, type, eval_type,
     phi <- paste0("phi_", resp)
     sigma <- paste0("sigma_", resp)
     e <- new.env()
+    e$out <- simulated
     e$type <- type
     e$n_group <- n_group
     e$n_draws <- n_draws
     e$k <- n_draws * n_group
-    e$newdata <- newdata
     e$J_fixed <- model_vars[[j]]$J_fixed
     e$K_fixed <- model_vars[[j]]$K_fixed
     e$J_varying <- model_vars[[j]]$J_varying
@@ -530,20 +535,32 @@ generate_sim_call <- function(resp, resp_levels, family, eval_type,
         "{ifelse_(has_varying_intercept, 'alpha[, a_time]', '')}",
         "{ifelse_(has_random_intercept, '+ nu[, j]', '')}",
         "{ifelse_(has_fixed, ",
-        "' + .rowSums(x = model_matrix[idx_draw, J_fixed, drop = FALSE] * beta,
-                        m = n_draws, n = K_fixed)', '')}",
+        "' + .rowSums(
+            x = model_matrix[idx_draw, J_fixed, drop = FALSE] * beta,
+            m = n_draws,
+            n = K_fixed
+          )',
+        '')}",
         "{ifelse_(has_varying, ",
-        "' + .rowSums(x = model_matrix[idx_draw, J_varying, drop = FALSE] ",
-        " * delta[, time, ],",
-        "m = n_draws, n = K_varying)', '')}",
+        "' + .rowSums(
+            x = model_matrix[idx_draw, J_varying, drop = FALSE] *
+                  delta[, time, ],
+            m = n_draws,
+            n = K_varying
+          )',
+        '')}",
         "}}\n"
       ),
       ifelse_(
-        identical(eval_type, "predict"),
+        identical(eval_type, "predicted"),
         paste0(
           "if (type == 'link') {{",
-          "  data.table::set(x = newdata, i = idx_data, j = '{resp}_link',
-                             value = xbeta[idx_pred])",
+          "  data.table::set(",
+          "    x = out,",
+          "    i = idx_data,",
+          "    j = '{resp}_link',",
+          "    value = xbeta[idx_out]",
+          "  )",
           "}}"
         ),
         ""
@@ -557,17 +574,18 @@ generate_sim_call <- function(resp, resp_levels, family, eval_type,
 # Fitted expressions ------------------------------------------------------
 
 fitted_gaussian <- "
-  data.table::set(x = newdata, i = idx, j = '{resp}_fitted', value = xbeta)
+  data.table::set(x = out, i = idx, j = '{resp}_fitted', value = xbeta)
 "
 
 fitted_categorical <- "
-  resp_cols <- c({paste0('\"', resp, '_fitted_', resp_levels, '\"',
-                  collapse = ', ')})
+  resp_cols <- c({
+    paste0('\"', resp, '_fitted_', resp_levels, '\"', collapse = ', ')
+  })
   maxs <- apply(xbeta, 1, max)
   mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
   for (s in 1:S) {{
     data.table::set(
-      x = newdata,
+      x = out,
       i = idx,
       j = resp_cols[s],
       value = mval[, s]
@@ -577,7 +595,7 @@ fitted_categorical <- "
 
 fitted_bernoulli <- "
   data.table::set(
-    x = newdata,
+    x = out,
     i = idx,
     j = '{resp}_fitted',
     value = plogis(xbeta)
@@ -586,7 +604,7 @@ fitted_bernoulli <- "
 
 fitted_binomial <- "
   data.table::set(
-    x = newdata,
+    x = out,
     i = idx,
     j = '{resp}_fitted',
     value = plogis(xbeta)
@@ -595,204 +613,201 @@ fitted_binomial <- "
 
 fitted_poisson <- "
   exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
-  data.table::set(x = newdata, i = idx, j = '{resp}_fitted', value = exp_xbeta)
+  data.table::set(x = out, i = idx, j = '{resp}_fitted', value = exp_xbeta)
 "
 
 fitted_negbin <- "
   exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
-  data.table::set(x = newdata, i = idx, j = '{resp}_fitted', value = exp_xbeta)
+  data.table::set(x = out, i = idx, j = '{resp}_fitted', value = exp_xbeta)
 "
 
 fitted_exponential <- "
-  data.table::set(x = newdata, i = idx, j = '{resp}_fitted', value = exp(xbeta))
+  data.table::set(x = out, i = idx, j = '{resp}_fitted', value = exp(xbeta))
 "
 
 fitted_gamma <- "
-  data.table::set(x = newdata, i = idx, j = '{resp}_fitted', value = exp(xbeta))
+  data.table::set(x = out, i = idx, j = '{resp}_fitted', value = exp(xbeta))
 "
 
 fitted_beta <- "
-  data.table::set(
-    x = newdata,
-    i = idx,
-    j = '{resp}_fitted',
-    value = plogis(xbeta)
-  )
+  data.table::set(x = out, i = idx, j = '{resp}_fitted', value = plogis(xbeta))
 "
-# Predict expressions -----------------------------------------------------
+# Predicted expressions ---------------------------------------------------
 
-predict_gaussian <- "
+predicted_gaussian <- "
   if (type == 'mean') {{
     data.table::set(
-      x = newdata,
+      x = out,
       i = idx_data,
       j = '{resp}_mean',
-      value = xbeta[idx_pred]
+      value = xbeta[idx_out]
     )
   }}
   data.table::set(
-    x = newdata,
+    x = out,
     i = idx_data,
     j = '{resp}',
-    value = rnorm(k, xbeta, sigma)[idx_pred]
+    value = rnorm(k, xbeta, sigma)[idx_out]
   )
 "
 
-predict_categorical <- "
+predicted_categorical <- "
   if (type == 'link') {{
-    resp_cols <- c({paste0('\"', resp, '_link_', resp_levels, '\"',
-                           collapse = ', ')})
+    resp_cols <- c({
+      paste0('\"', resp, '_link_', resp_levels, '\"', collapse = ', ')
+    })
     for (s in 1:S) {{
       data.table::set(
-        x = newdata,
+        x = out,
         i = idx_data,
         j = resp_cols[s],
-        value = xbeta[idx_pred, s]
+        value = xbeta[idx_out, s]
       )
     }}
   }}
   if (type == 'mean') {{
-    resp_cols <- c({paste0('\"', resp, '_mean_', resp_levels, '\"',
-                           collapse = ', ')})
+    resp_cols <- c({
+      paste0('\"', resp, '_mean_', resp_levels, '\"', collapse = ', ')
+    })
     maxs <- apply(xbeta, 1, max)
     mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
     for (s in 1:S) {{
       data.table::set(
-        x = newdata,
+        x = out,
         i = idx_data,
         j = resp_cols[s],
-        value = mval[idx_pred, s]
+        value = mval[idx_out, s]
       )
     }}
   }}
   data.table::set(
-    x = newdata,
+    x = out,
     i = idx_data,
     j = '{resp}',
-    value = max.col(xbeta - log(-log(runif(S * k))))[idx_pred]
+    value = max.col(xbeta - log(-log(runif(S * k))))[idx_out]
   )
 "
 
-predict_binomial <- "
+predicted_binomial <- "
   prob <- plogis(xbeta)
   if (type == 'mean') {{
     data.table::set(
-      x = newdata,
+      x = out,
       i = idx_data,
       j = '{resp}_mean',
-      value = prob[idx_pred]
+      value = prob[idx_out]
     )
   }}
   data.table::set(
-    x = newdata,
+    x = out,
     i = idx_data,
     j = '{resp}',
-    value = rbinom(k, trials, prob)[idx_pred]
+    value = rbinom(k, trials, prob)[idx_out]
   )
 "
 
-predict_bernoulli <- "
+predicted_bernoulli <- "
   prob <- plogis(xbeta)
   if (type == 'mean') {{
     data.table::set(
-      x = newdata,
+      x = out,
       i = idx_data,
       j = '{resp}_mean',
-      value = prob[idx_pred]
+      value = prob[idx_out]
     )
   }}
   data.table::set(
-    x = newdata,
+    x = out,
     i = idx_data,
     j = '{resp}',
-    value = rbinom(k, 1, prob)[idx_pred]
+    value = rbinom(k, 1, prob)[idx_out]
   )
 "
 
-predict_poisson <- "
+predicted_poisson <- "
   exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
   if (type == 'mean') {{
     data.table::set(
-      x = newdata,
+      x = out,
       i = idx_data,
       j = '{resp}_mean',
-      value = exp_xbeta[idx_pred]
+      value = exp_xbeta[idx_out]
     )
   }}
   data.table::set(
-    x = newdata,
+    x = out,
     i = idx_data,
     j = '{resp}',
-    value = rpois(k, exp_xbeta)[idx_pred]
+    value = rpois(k, exp_xbeta)[idx_out]
   )
 "
 
-predict_negbin <- "
+predicted_negbin <- "
   exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
   if (type == 'mean') {{
     data.table::set(
-      x = newdata,
+      x = out,
       i = idx_data,
       j = '{resp}_mean',
-      value = exp_xbeta[idx_pred]
+      value = exp_xbeta[idx_out]
     )
   }
   data.table::set(
-    x = newdata,
+    x = out,
     i = idx_data,
     j = '{resp}',
-    value = rnbinom(k, size = phi, mu = exp_xbeta)[idx_pred]
+    value = rnbinom(k, size = phi, mu = exp_xbeta)[idx_out]
   )
 "
 
-predict_exponential <- "
+predicted_exponential <- "
   if (type == 'mean') {{
     data.table::set(
-      x = newdata,
+      x = out,
       i = idx_data,
       j = '{resp}_mean',
-      value = exp(xbeta[idx_pred])
+      value = exp(xbeta[idx_out])
     )
   }
   data.table::set(
-    x = newdata,
+    x = out,
     i = idx_data,
     j = '{resp}',
-    value = rexp(k, rate = exp(-xbeta))[idx_pred]
+    value = rexp(k, rate = exp(-xbeta))[idx_out]
   )
 "
 
-predict_gamma <- "
+predicted_gamma <- "
   if (type == 'mean') {{
     data.table::set(
-      x = newdata,
+      x = out,
       i = idx_data,
       j = '{resp}_mean',
-      value = exp(xbeta[idx_pred])
+      value = exp(xbeta[idx_out])
     )
   }
   data.table::set(
-    x = newdata,
+    x = out,
     i = idx_data,
     j = '{resp}',
-    value = rgamma(k, shape = phi, rate = phi * exp(-xbeta))[idx_pred]
+    value = rgamma(k, shape = phi, rate = phi * exp(-xbeta))[idx_out]
   )
 "
 
-predict_beta <- "
+predicted_beta <- "
   mu <- plogis(xbeta)
   if (type == 'mean') {{
     data.table::set(
-      x = newdata,
+      x = out,
       i = idx_data,
       j = '{resp}_mean',
-      value = mu[idx_pred])
+      value = mu[idx_out])
     )
   }
   data.table::set(
-    x = newdata,
+    x = out,
     i = idx_data,
     j = '{resp}',
-    value = rbeta(k,  mu * phi, (1 - mu) * phi)[idx_pred]
+    value = rbeta(k,  mu * phi, (1 - mu) * phi)[idx_out]
   )
 "

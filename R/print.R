@@ -30,12 +30,12 @@ print.dynamitefit <- function(x, ...) {
   )
   if (!is.null(x$group_var)) {
     cat("\nGrouping variable: ", x$group_var, " (Number of groups: ",
-      length(unique(x$data[[x$group_var]])), ")",
+      n_unique(x$data[[x$group_var]]), ")",
       sep = ""
     )
   }
   cat("\nTime index variable: ", x$time_var, " (Number of time points: ",
-    length(unique(x$data[[x$time_var]])), ")\n",
+    n_unique(x$data[[x$time_var]]), ")\n",
     sep = ""
   )
   if (!is.null(x$stanfit)) {

@@ -4,48 +4,66 @@
 #'   "manual" computation based on the same posterior samples.
 #'
 test_that("predictions are on the same scale as input data", {
-  expect_error(pred <- predict(gaussian_example_fit,
-    type = "response", n_draws = 1
-  ), NA)
-  expect_equal(sd(pred$y), sd(pred$y_new), tolerance = 0.5)
-  expect_equal(mean(pred$y), mean(pred$y_new), tolerance = 0.5)
+  expect_error(
+    out <- predict(gaussian_example_fit, type = "response", n_draws = 1),
+    NA
+  )
+  pred <- out$simulated
+  obs <- out$observed
+  expect_equal(sd(obs$y), sd(pred$y_new), tolerance = 0.5)
+  expect_equal(mean(obs$y), mean(pred$y_new), tolerance = 0.5)
 
-  expect_error(pred <- fitted(gaussian_example_fit, n_draws = 1), NA)
-  expect_equal(sd(pred$y), sd(pred$y_fitted, na.rm = TRUE), tolerance = 0.5)
-  expect_equal(mean(pred$y), mean(pred$y_fitted, na.rm = TRUE),
+  expect_error(
+    out <- fitted(gaussian_example_fit, n_draws = 1),
+    NA
+  )
+  fit <- out$simulated
+  obs <- out$observed
+  expect_equal(sd(obs$y), sd(fit$y_fitted, na.rm = TRUE), tolerance = 0.5)
+  expect_equal(
+    mean(obs$y),
+    mean(fit$y_fitted, na.rm = TRUE),
     tolerance = 0.5
   )
-
-  expect_error(pred <- predict(multichannel_example_fit,
-    type = "response", n_draws = 1
-  ), NA)
-  expect_equal(sd(pred$g), sd(pred$g_new), tolerance = 0.5)
-  expect_equal(mean(pred$g), mean(pred$g_new), tolerance = 0.5)
-  expect_equal(sd(pred$p), sd(pred$p_new), tolerance = 0.5)
-  expect_equal(mean(pred$p), mean(pred$p_new), tolerance = 0.5)
-  expect_equal(sd(pred$b), sd(pred$b_new), tolerance = 0.1)
-  expect_equal(mean(pred$b), mean(pred$b_new), tolerance = 0.1)
+  expect_error(
+    out <- predict(multichannel_example_fit, type = "response", n_draws = 1),
+    NA
+  )
+  pred <- out$simulated
+  obs <- out$observed
+  expect_equal(mean(obs$g), mean(pred$g_new), tolerance = 0.5)
+  expect_equal(mean(obs$p), mean(pred$p_new), tolerance = 0.5)
+  expect_equal(mean(obs$b), mean(pred$b_new), tolerance = 0.1)
+  expect_equal(sd(obs$g), sd(pred$g_new), tolerance = 0.5)
+  expect_equal(sd(obs$p), sd(pred$p_new), tolerance = 0.5)
+  expect_equal(sd(obs$b), sd(pred$b_new), tolerance = 0.1)
 })
 
 test_that("prediction works", {
-  expect_error(predict(gaussian_example_fit,
-    type = "response", n_draws = 2
-  ), NA)
-  expect_error(predict(gaussian_example_fit,
-    type = "mean", n_draws = 2
-  ), NA)
-  expect_error(predict(gaussian_example_fit,
-    type = "link", n_draws = 2
-  ), NA)
-  expect_error(predict(categorical_example_fit,
-    type = "response", n_draws = 2
-  ), NA)
-  expect_error(predict(categorical_example_fit,
-    type = "mean", n_draws = 2
-  ), NA)
-  expect_error(predict(categorical_example_fit,
-    type = "link", n_draws = 2
-  ), NA)
+  expect_error(
+    predict(gaussian_example_fit, type = "response", n_draws = 2),
+    NA
+  )
+  expect_error(
+    predict(gaussian_example_fit, type = "mean", n_draws = 2),
+    NA
+  )
+  expect_error(
+    predict(gaussian_example_fit, type = "link", n_draws = 2),
+    NA
+  )
+  expect_error(
+    predict(categorical_example_fit, type = "response", n_draws = 2),
+    NA
+  )
+  expect_error(
+    predict(categorical_example_fit, type = "mean", n_draws = 2),
+    NA
+  )
+  expect_error(
+    predict(categorical_example_fit, type = "link", n_draws = 2),
+    NA
+  )
 })
 
 test_that("prediction works when starting from an arbitrary time point", {
@@ -54,20 +72,19 @@ test_that("prediction works when starting from an arbitrary time point", {
 
   set.seed(1)
   expect_error(
-    pred1 <- predict(gaussian_example_fit,
-      newdata = newdata,
-      n_draws = 4
-    ),
+    out1 <- predict(gaussian_example_fit, newdata = newdata, n_draws = 4),
     NA
   )
   set.seed(1)
   expect_error(
-    pred2 <- predict(gaussian_example_fit,
+    out2 <- predict(gaussian_example_fit,
       newdata = newdata |> dplyr::filter(time > 5),
       n_draws = 4
     ),
     NA
   )
+  pred1 <- expand_predict_output(out1)
+  pred2 <- expand_predict_output(out2)
   expect_equal(pred1 |> dplyr::filter(time > 5), pred2)
   fit <- gaussian_example_fit
   fit$data <- fit$data |>
@@ -77,42 +94,46 @@ test_that("prediction works when starting from an arbitrary time point", {
     dplyr::mutate(y = ifelse(time > 20, NA, y))
   set.seed(1)
   expect_error(
-    pred1 <- predict(fit,
-      newdata = newdata,
-      n_draws = 4
-    ),
+    out1 <- predict(fit, newdata = newdata, n_draws = 4),
     NA
   )
   set.seed(1)
   expect_error(
-    pred2 <- predict(fit,
+    out2 <- predict(fit,
       newdata = newdata |> dplyr::filter(time > 15),
       n_draws = 4
     ),
     NA
   )
+  pred1 <- expand_predict_output(out1)
+  pred2 <- expand_predict_output(out2)
   expect_equal(pred1 |> dplyr::filter(time > 15), pred2)
 })
 
 
-gaussian_example_single_fit <- get0("gaussian_example_single_fit",
+gaussian_example_single_fit <- get0(
+  x = "gaussian_example_single_fit",
   envir = asNamespace("dynamite")
 )
 
 test_that("no groups prediction works", {
-  expect_error(predict(gaussian_example_single_fit,
-    type = "response", n_draws = 2
-  ), NA)
-  expect_error(predict(gaussian_example_single_fit,
-    type = "mean", n_draws = 2
-  ), NA)
-  expect_error(predict(gaussian_example_single_fit,
-    type = "link", n_draws = 2
-  ), NA)
+  expect_error(
+    predict(gaussian_example_single_fit, type = "response", n_draws = 2),
+    NA
+  )
+  expect_error(
+    predict(gaussian_example_single_fit, type = "mean", n_draws = 2),
+    NA
+  )
+  expect_error(
+    predict(gaussian_example_single_fit, type = "link", n_draws = 2),
+    NA
+  )
 })
 
 test_that("fitted works", {
   expect_error(fitg <- fitted(gaussian_example_fit, n_draws = 2), NA)
+  fitg <- expand_predict_output(fitg)
 
   # first chain, second draw (permuted)
   iter <- gaussian_example_fit$stanfit@sim$permutation[[1]][2]
@@ -128,6 +149,7 @@ test_that("fitted works", {
   expect_equal(automatic[2], manual)
 
   expect_error(fitc <- fitted(categorical_example_fit, n_draws = 2), NA)
+  fitc <- expand_predict_output(fitc)
   # first chain, second draw (permuted)
   iter <- categorical_example_fit$stanfit@sim$permutation[[1]][2]
   xzy <- categorical_example_fit$data |> dplyr::filter(id == 5 & time == 20)
@@ -148,8 +170,11 @@ test_that("fitted works", {
 })
 
 test_that("categorical predict with type = link works", {
-  expect_error(fitc <-
-    predict(categorical_example_fit, type = "link", n_draws = 2), NA)
+  expect_error(
+    fitc <- predict(categorical_example_fit, type = "link", n_draws = 2),
+    NA
+  )
+  fitc <- expand_predict_output(fitc)
 
   # first chain, second draw (permuted)
   iter <- categorical_example_fit$stanfit@sim$permutation[[1]][2]
@@ -167,17 +192,21 @@ test_that("categorical predict with type = link works", {
 test_that("fitted and predict give equal results for the first time point", {
   expect_equal(
     predict(gaussian_example_fit, type = "mean", n_draws = 2) |>
+      expand_predict_output() |>
       dplyr::filter(time == 2) |>
       dplyr::pull(.data$y_mean),
     fitted(gaussian_example_fit, n_draws = 2) |>
+      expand_predict_output() |>
       dplyr::filter(time == 2) |>
       dplyr::pull(.data$y_fitted)
   )
   expect_equal(
     predict(multichannel_example_fit, type = "mean", n_draws = 2) |>
+      expand_predict_output() |>
       dplyr::filter(time == 2) |>
       dplyr::select(.data$g_mean, .data$p_mean, .data$b_mean),
     fitted(multichannel_example_fit, n_draws = 2) |>
+      expand_predict_output() |>
       dplyr::filter(time == 2) |>
       dplyr::select(.data$g_fitted, .data$p_fitted, .data$b_fitted),
     ignore_attr = TRUE
@@ -185,33 +214,38 @@ test_that("fitted and predict give equal results for the first time point", {
 })
 
 test_that("predict with NA-imputed newdata works as default NULL", {
+  # gaussian example
   set.seed(1)
-  pred1 <- predict(gaussian_example_fit, type = "mean", n_draws = 2)
+  out1 <- predict(gaussian_example_fit, type = "mean", n_draws = 2)
   newdata <- gaussian_example_fit$data
   newdata$y[newdata$time > 1] <- NA
   set.seed(1)
-  pred2 <- predict(gaussian_example_fit,
+  out2 <- predict(gaussian_example_fit,
     type = "mean", n_draws = 2,
     newdata = newdata
   )
   expect_equal(
-    pred1 |> dplyr::pull(.data$y_mean),
-    pred2 |> dplyr::pull(.data$y_mean)
+    out1$simulated |> dplyr::pull(.data$y_mean),
+    out2$simulated |> dplyr::pull(.data$y_mean)
   )
-
+  # categorical example
   set.seed(1)
-  pred1 <- predict(categorical_example_fit, type = "mean", n_draws = 2)
+  out1 <- expand_predict_output(
+    predict(categorical_example_fit, type = "mean", n_draws = 2)
+  )
   newdata <- categorical_example_fit$data
   newdata$y[newdata$time > 1] <- NA
   newdata$x[newdata$time > 1] <- NA
   set.seed(1)
-  pred2 <- predict(categorical_example_fit,
-    type = "mean", n_draws = 2,
-    newdata = newdata
+  out2 <- expand_predict_output(
+    predict(categorical_example_fit,
+      type = "mean", n_draws = 2,
+      newdata = newdata
+    )
   )
   expect_equal(
-    pred1 |> dplyr::select(-c(y, x)),
-    pred2 |> dplyr::select(-c(y, x))
+    out1 |> dplyr::select(-c(y, x)),
+    out2 |> dplyr::select(-c(y, x))
   )
 })
 
@@ -219,7 +253,7 @@ test_that("permuting newdata for predict does not alter results", {
   newdata <- gaussian_example_fit$data
   newdata$y[newdata$time > 1] <- NA
   set.seed(1)
-  pred1 <- predict(
+  out1 <- predict(
     gaussian_example_fit,
     type = "mean",
     n_draws = 2,
@@ -227,18 +261,23 @@ test_that("permuting newdata for predict does not alter results", {
   )
   newdata2 <- newdata[sample(seq_len(nrow(newdata))), ]
   set.seed(1)
-  expect_error(pred2 <- predict(gaussian_example_fit,
-    type = "mean",
-    n_draws = 2, newdata = newdata2
-  ), NA)
-  expect_equal(pred1, pred2)
+  expect_error(
+    out2 <- predict(
+      gaussian_example_fit,
+      type = "mean",
+      n_draws = 2,
+      newdata = newdata2
+    ),
+    NA
+  )
+  expect_equal(out1$simulated, out2$simulated)
 })
 
 test_that("factor time and integer time for predict give equal results", {
   newdata <- gaussian_example_fit$data
   newdata$time <- factor(newdata$time)
   set.seed(1)
-  pred1 <- predict(
+  out1 <- predict(
     gaussian_example_fit,
     type = "mean",
     n_draws = 2,
@@ -246,13 +285,16 @@ test_that("factor time and integer time for predict give equal results", {
   )
   newdata2 <- gaussian_example_fit$data
   set.seed(1)
-  expect_error(pred2 <- predict(
-    gaussian_example_fit,
-    type = "mean",
-    n_draws = 2,
-    newdata = newdata2
-  ), NA)
-  expect_equal(pred1, pred2)
+  expect_error(
+    out2 <- predict(
+      gaussian_example_fit,
+      type = "mean",
+      n_draws = 2,
+      newdata = newdata2
+    ),
+    NA
+  )
+  expect_equal(out1$simulated, out2$simulated)
 })
 
 test_that("no groups fitted works", {
@@ -263,12 +305,12 @@ test_that("missing factor levels are restored", {
   categorical_example_noC <- categorical_example |>
     dplyr::mutate(x = dplyr::recode(x, "C" = "B")) |>
     dplyr::filter(time < 5)
-  pred <- predict(
+  out <- predict(
     categorical_example_fit,
     newdata = categorical_example_noC,
     ndraws = 2
   )
-  expect_equal(levels(pred$x), c("A", "B", "C"))
+  expect_equal(levels(out$simulated$x), c("A", "B", "C"))
 })
 
 test_that("new group levels can be included in newdata", {
@@ -334,8 +376,8 @@ test_that("imputation works", {
 
 test_that("global_fixed options produce equal results with balanced data", {
   set.seed(0)
-  pred_t <- predict(gaussian_example_fit, n_draws = 2, global_fixed = TRUE)
+  out_t <- predict(gaussian_example_fit, n_draws = 2, global_fixed = TRUE)
   set.seed(0)
-  pred_f <- predict(gaussian_example_fit, n_draws = 2, global_fixed = FALSE)
-  expect_equal(pred_t, pred_f)
+  out_f <- predict(gaussian_example_fit, n_draws = 2, global_fixed = FALSE)
+  expect_equal(out_t$simulated, out_f$simulated)
 })

@@ -282,6 +282,12 @@ onlyif <- function(test, yes) {
   }
 }
 
+#' Number of Unique Values
+#'
+#' @inheritParams data.table::uniqueN
+#' @noRd
+n_unique <- data.table::uniqueN
+
 # Placeholder for future
 # Startup message for the package
 # .onAttach <- function(libname, pkgname) {

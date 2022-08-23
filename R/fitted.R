@@ -51,11 +51,12 @@ fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, ...) {
     !is.null(object$stanfit),
     "No Stan model fit is available."
   )
-  predict_dynamitefit(
+  initialize_predict(
     object,
     newdata,
     type = "mean",
     eval_type = "fitted",
+    funs = list(),
     impute = "none",
     new_levels = "none",
     global_fixed = FALSE,

@@ -413,8 +413,8 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
 #' @inheritParams parse_data
 #' @noRd
 parse_past <- function(dformula, data, group_var, time_var) {
-  n_time <- length(unique(data[[time_var]]))
-  n_group <- ifelse_(is.null(group_var), 1L, length(unique(data[[group_var]])))
+  n_time <- n_unique(data[[time_var]])
+  n_group <- ifelse_(is.null(group_var), 1L, n_unique(data[[group_var]]))
   past <- has_past(dformula)
   for (i in seq_along(dformula)) {
     if (past[i]) {

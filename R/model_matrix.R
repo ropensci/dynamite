@@ -97,13 +97,20 @@ test_collinearity <- function(y, mm, data) {
 #' @param u_names \[`character()`]\cr A vector of unique column names of
 #'   the resulting matrix.
 #' @noRd
-full_model.matrix_predict <- function(formula_list, newdata, idx, u_names) {
-  newdata_sub <- newdata[idx, ]
+full_model.matrix_predict <- function(formula_list, newdata_resp, newdata_pred,
+                                      idx_resp, idx_pred, n_draws, u_names) {
+  sub_resp <- newdata_resp[idx_resp, ]
+  sub_pred <- newdata_pred[idx_pred, ]
+  sub <- cbind(sub_resp, sub_pred)
   model_matrices <- lapply(formula_list, function(x) {
-    stats::model.matrix.lm(x, newdata_sub, na.action = na.pass)
+    stats::model.matrix.lm(x, sub, na.action = na.pass)
   })
   model_matrices <- lapply(model_matrices, remove_intercept)
   model_matrix <- do.call(cbind, model_matrices)
+  model_matrix <- model_matrix[,
+    !duplicated(colnames(model_matrix)),
+    drop = FALSE
+  ]
   model_matrix[, u_names, drop = FALSE]
 }
 
