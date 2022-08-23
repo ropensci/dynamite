@@ -132,7 +132,9 @@ assign_deterministic <- function(data, idx, cl) {
 assign_lags <- function(data, idx, ro, lhs, rhs, skip = FALSE, offset = 1L) {
   if (!skip) {
     for (k in ro) {
-      set(data, i = idx, j = lhs[k], value = data[[rhs[k]]][idx - offset])
+      data.table::set(
+        data, i = idx, j = lhs[k], value = data[[rhs[k]]][idx - offset]
+      )
     }
   }
 }
@@ -149,7 +151,9 @@ assign_lags_predict <- function(from, to, idx_from, idx_to, ro, lhs, rhs,
                                 skip = FALSE, offset = 1L) {
   if (!skip) {
     for (k in ro) {
-      set(to, i = idx_to, j = lhs[k], value = from[[rhs[k]]][idx_from - offset])
+      data.table::set(
+        to, i = idx_to, j = lhs[k], value = from[[rhs[k]]][idx_from - offset]
+      )
     }
   }
 }
@@ -163,7 +167,7 @@ assign_lags_init <- function(data, idx, ro, lhs, rhs, offset = 1L) {
     val <- data[[rhs[k]]][idx - offset]
     na_val <- is.na(val)
     val[na_val] <- data[[lhs[k]]][idx][na_val]
-    set(data, i = idx, j = lhs[k], value = val)
+    data.table::set(data, i = idx, j = lhs[k], value = val)
   }
 }
 

@@ -353,7 +353,9 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
 #' @noRd
 expand_predict_output <- function(x) {
   p <- x$simulated
-  o <- x$observed[rep(seq_len(nrow(x$observed)), each = n_unique(p$.draw)), ]
+  o <- x$observed[
+    rep(seq_len(nrow(x$observed)), each = n_unique(p$.draw)), , drop = FALSE
+  ]
   out <- cbind(o, p)
   rownames(out) <- NULL
   out
