@@ -62,7 +62,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   sampling_vars$D <- spline_defs$D
   sampling_vars$Bs <- spline_defs$Bs
   has_random <- attr(dformula, "random")$responses
-  N <- ifelse_(has_groups, length(unique(group)), 1L)
+  N <- ifelse_(has_groups, n_unique(group), 1L)
   K <- ncol(model_matrix)
   X <- aperm(
     array(as.numeric(unlist(split(model_matrix, gl(T_full, 1, N * T_full)))),
@@ -259,7 +259,7 @@ prepare_prior <- function(ptype, priors, channel) {
   pdef <- priors |> dplyr::filter(.data$type == ptype)
   channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
   dists <- sub("\\(.*", "", pdef$prior)
-  if (nrow(pdef) > 0L && identical(length(unique(dists)), 1L)) {
+  if (nrow(pdef) > 0L && identical(n_unique(dists), 1L)) {
     pars <- strsplit(sub(".*\\((.*)\\).*", "\\1", pdef$prior), ",")
     pars <- do.call("rbind", lapply(pars, as.numeric))
     channel[[paste0(ptype, "_prior_npars")]] <- ncol(pars)

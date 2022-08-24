@@ -4,7 +4,7 @@
 \alias{fitted.dynamitefit}
 \title{Extract Fitted Values of a Dynamite Model}
 \usage{
-\method{fitted}{dynamitefit}(object, newdata = NULL, n_draws = NULL, ...)
+\method{fitted}{dynamitefit}(object, newdata = NULL, n_draws = NULL, expand = TRUE, ...)
 }
 \arguments{
 \item{object}{[\code{dynamitefit}]\cr The model fit object.}
@@ -17,6 +17,15 @@ were used to fit the model, and no new group levels can be included.}
 
 \item{n_draws}{[\code{integer(1)}]\cr Number of posterior samples to use,
 default is \code{NULL} which uses all samples.}
+
+\item{expand}{[\code{logical(1)}]\cr If \code{TRUE} (the default), the output
+is a single \code{data.frame} containing the original \code{newdata} and the
+predicted values. Otherwise, a \code{list} is returned with two components,
+\code{simulated} and \code{observed}, where the first contains only the
+predicted values, and the second contains the original \code{newdata}.
+Setting \code{expand} to \code{FALSE} can help conserve memory because \code{newdata}
+is not replicated \code{n_draws} times in the output.
+This argument is ignored if \code{funs} are provided.}
 
 \item{...}{Ignored.}
 }

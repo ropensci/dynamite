@@ -48,19 +48,26 @@
 #'   theme_bw()
 #' }
 #'
-fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, ...) {
+fitted.dynamitefit <- function(object, newdata = NULL,
+                               n_draws = NULL, expand = TRUE, ...) {
   stopifnot_(
     !is.null(object$stanfit),
     "No Stan model fit is available."
   )
-  predict_dynamitefit(
+  stopifnot_(
+    checkmate::test_flag(x = expand),
+    "Argument {.arg expand} must be a single {.cls logical} value."
+  )
+  initialize_predict(
     object,
     newdata,
     type = "mean",
     eval_type = "fitted",
+    funs = list(),
     impute = "none",
     new_levels = "none",
     global_fixed = FALSE,
-    n_draws
+    n_draws,
+    expand
   )
 }

@@ -16,13 +16,13 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
     data[, (dlp[[i]]$response) := data[[resp_pred[i]]]]
     data[, (dlp[[i]]$response) := NA]
   }
-  rhs_stoch <- get_predictors(dls)
+  rhs_ls <- get_predictors(dls)
   for (i in seq_along(dls)) {
     stopifnot_(
-      rhs_stoch[i] %in% names(data),
-      "Can't find variable{?s} {.var {rhs_stoch[i]}} in {.arg data}."
+      rhs_ls[i] %in% names(data),
+      "Can't find variable{?s} {.var {rhs_ls[i]}} in {.arg data}."
     )
-    data[, (dls[[i]]$response) := data[[rhs_stoch[i]]]]
+    data[, (dls[[i]]$response) := data[[rhs_ls[i]]]]
     data[, (dls[[i]]$response) := NA]
   }
   for (i in seq_along(dd)) {
@@ -31,23 +31,23 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
     data[, dd[[i]]$response := past]
     data[, dd[[i]]$response := NA]
   }
-  rhs_det <- get_predictors(dld)
-  ro_det <- attr(dld, "rank_order")
+  rhs_ld <- get_predictors(dld)
+  ro_ld <- attr(dld, "rank_order")
   init <- has_past(dld)
-  for (k in ro_det) {
+  for (k in ro_ld) {
     if (init[k]) {
       as_fun <- paste0("as.", dld[[k]]$specials$resp_type)
       past <- do.call(as_fun, args = list(dld[[k]]$specials$past[1L]))
       data[, (dld[[k]]$response) := past]
       data[, (dld[[k]]$response) := NA]
     } else {
-      data[, (dld[[k]]$response) := data[[rhs_det[k]]]]
+      data[, (dld[[k]]$response) := data[[rhs_ld[k]]]]
       data[, (dld[[k]]$response) := NA]
     }
   }
   if (length(dd) > 0L) {
     cl <- get_quoted(dd)
-    res <- try(assign_deterministic(data, cl, 1L), silent = TRUE)
+    res <- try(assign_deterministic(data, 1L, cl), silent = TRUE)
     stopifnot_(
       !inherits(res, "try-error"),
       c(
@@ -65,59 +65,55 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
 #' @param fixed \[`integer(1)`] Number of fixed time points.
 #' @param group_var \[`character(1)`] Grouping variable name.
 #' @noRd
-assign_initial_values <- function(data, dd, dlp, dld, dls,
-                                  idx, fixed, group_var) {
-  n_det <- length(dd)
-  n_lag_pred <- length(dlp)
-  n_lag_det <- length(dld)
-  n_lag_stoch <- length(dls)
-  ro_pred <- ifelse_(
+assign_initial_values <- function(data, idx, dd, dlp, dld, dls,
+                                  fixed, group_var) {
+  ro_lp <- ifelse_(
     is.null(attr(dlp, "rank_order")),
     integer(0L),
     attr(dlp, "rank_order")
   )
-  ro_det <- ifelse_(
+  ro_ld <- ifelse_(
     is.null(attr(dld, "rank_order")),
     integer(0L),
     attr(dld, "rank_order")
   )
-  ro_stoch <- seq_len(n_lag_stoch)
-  resp_pred <- attr(dlp, "original_response")
-  lhs_det <- get_responses(dld)
-  rhs_det <- get_predictors(dld)
-  lhs_stoch <- get_responses(dls)
-  rhs_stoch <- get_predictors(dls)
+  ro_ls <- seq_along(dls)
+  resp_lp <- attr(dlp, "original_response")
+  lhs_ld <- get_responses(dld)
+  rhs_ld <- get_predictors(dld)
+  lhs_ls <- get_responses(dls)
+  rhs_ls <- get_predictors(dls)
   cl <- get_quoted(dd)
   ..k <- NULL # avoid NSE note in R CMD check
-  for (k in ro_pred) {
+  for (k in ro_lp) {
     data[, (dlp[[k]]$response) := lapply(.SD, lag_, ..k),
-      .SDcols = resp_pred[k], by = group_var
+      .SDcols = resp_lp[k], by = group_var
     ]
   }
   init <- which(has_past(dld))
   for (i in init) {
     as_fun <- paste0("as.", dld[[i]]$specials$resp_type)
     past <- do.call(as_fun, args = list(dld[[i]]$specials$past))
-    data[, (lhs_det[i]) := past]
+    data[, (lhs_ld[i]) := past]
   }
   idx <- idx + 1L
-  assign_deterministic(data, cl, idx)
+  assign_deterministic(data, idx, cl)
   for (i in seq_len(fixed)) {
     idx <- idx + 1L
-    assign_lags_init(data, ro_det, idx, lhs_det, rhs_det)
-    assign_lags_init(data, ro_stoch, idx, lhs_stoch, rhs_stoch)
-    assign_deterministic(data, cl, idx)
+    assign_lags_init(data, idx, ro_ld, lhs_ld, rhs_ld)
+    assign_lags_init(data, idx, ro_ls, lhs_ls, rhs_ls)
+    assign_deterministic(data, idx, cl)
   }
-  assign_deterministic(data, cl, idx)
+  assign_deterministic(data, idx, cl)
 }
 
 #' Evaluate Definitions and Assign Values of Deterministic Channels
 #'
 #' @param data \[`data.table`]\cr Data table to assign the values into.
-#' @param cl \[`language`]\cr A quoted expression defining the channels.
 #' @param idx \[`integer()`]\cr A vector of indices to assign values into.
+#' @param cl \[`language`]\cr A quoted expression defining the channels.
 #' @noRd
-assign_deterministic <- function(data, cl, idx) {
+assign_deterministic <- function(data, idx, cl) {
   # Requires data.table version 1.14.3 or higher
   data[idx, cl, env = list(cl = cl)]
 }
@@ -125,18 +121,39 @@ assign_deterministic <- function(data, cl, idx) {
 #' Assign Values of Lagged Channels
 #'
 #' @param data \[`data.table`]\cr Data to assign the values into.
-#' @param ro \[`integer`]\cr Rank order of the channels (the evaluation order).
 #' @param idx \[`integer()`]\cr A vector of indices.
+#' @param ro \[`integer`]\cr Rank order of the channels (the evaluation order).
 #' @param lhs \[`character()`]\cr The lagged outcome variable names.
 #' @param rhs \[`character()`]\cr The names of the variables being lagged.
 #' @param skip \[`logical(1)`]\cr Skip evaluation on this iteration.
 #' @param offset \[`integer(1)`]\cr The distance between consequent
 #'   observations in `data`.
 #' @noRd
-assign_lags <- function(data, ro, idx, lhs, rhs, skip = FALSE, offset = 1L) {
+assign_lags <- function(data, idx, ro, lhs, rhs, skip = FALSE, offset = 1L) {
   if (!skip) {
     for (k in ro) {
-      set(data, i = idx, j = lhs[k], value = data[[rhs[k]]][idx - offset])
+      data.table::set(
+        data, i = idx, j = lhs[k], value = data[[rhs[k]]][idx - offset]
+      )
+    }
+  }
+}
+
+#' Assign Values of Lagged Channels for Prediction
+#'
+#' @inheritParams assign_lags
+#' @param from \[`data.table`]\cr Data that contains the values to be assigned.
+#' @param to \[`data.table`]\cr Data to assign the values into.
+#' @param idx_from \[`integer()`]\cr A vector of indices.
+#' @param idx_to \[`integer()`]\cr A vector of indices.
+#' @noRd
+assign_lags_predict <- function(from, to, idx_from, idx_to, ro, lhs, rhs,
+                                skip = FALSE, offset = 1L) {
+  if (!skip) {
+    for (k in ro) {
+      data.table::set(
+        to, i = idx_to, j = lhs[k], value = from[[rhs[k]]][idx_from - offset]
+      )
     }
   }
 }
@@ -145,12 +162,12 @@ assign_lags <- function(data, ro, idx, lhs, rhs, skip = FALSE, offset = 1L) {
 #'
 #' @inheritParams assign_lags
 #' @noRd
-assign_lags_init <- function(data, ro, idx, lhs, rhs, offset = 1L) {
+assign_lags_init <- function(data, idx, ro, lhs, rhs, offset = 1L) {
   for (k in ro) {
     val <- data[[rhs[k]]][idx - offset]
     na_val <- is.na(val)
     val[na_val] <- data[[lhs[k]]][idx][na_val]
-    set(data, i = idx, j = lhs[k], value = val)
+    data.table::set(data, i = idx, j = lhs[k], value = val)
   }
 }
 
@@ -161,7 +178,7 @@ assign_lags_init <- function(data, ro, idx, lhs, rhs, offset = 1L) {
 #' @noRd
 evaluate_deterministic <- function(dformulas, data, group_var, time_var) {
   fixed <- as.integer(attr(dformulas$all, "max_lag"))
-  n_time <- length(unique(data[[time_var]]))
+  n_time <- n_unique(data[[time_var]])
   dd <- dformulas$det
   dlp <- dformulas$lag_pred
   dld <- dformulas$lag_det
@@ -169,24 +186,24 @@ evaluate_deterministic <- function(dformulas, data, group_var, time_var) {
   cl <- get_quoted(dd)
   initialize_deterministic(data, dd, dlp, dld, dls)
   idx <- seq.int(1L, nrow(data), by = n_time) - 1L
-  assign_initial_values(data, dd, dlp, dld, dls, idx, fixed, group_var)
+  assign_initial_values(data, idx, dd, dlp, dld, dls, fixed, group_var)
   if (n_time > fixed + 1L) {
-    ro_stoch <- seq_len(length(dls))
-    ro_det <- ifelse_(
+    ro_ld <- ifelse_(
       is.null(attr(dld, "rank_order")),
       integer(0L),
       attr(dld, "rank_order")
     )
-    lhs_det <- get_responses(dld)
-    rhs_det <- get_predictors(dld)
-    lhs_stoch <- get_responses(dls)
-    rhs_stoch <- get_predictors(dls)
+    ro_ls <- seq_along(dls)
+    lhs_ld <- get_responses(dld)
+    rhs_ld <- get_predictors(dld)
+    lhs_ls <- get_responses(dls)
+    rhs_ls <- get_predictors(dls)
     idx <- idx + fixed + 1L
     for (i in seq.int(fixed + 2L, n_time)) {
       idx <- idx + 1L
-      assign_lags(data, ro_det, idx, lhs_det, rhs_det)
-      assign_lags(data, ro_stoch, idx, lhs_stoch, rhs_stoch)
-      assign_deterministic(data, cl, idx)
+      assign_lags(data, idx, ro_ld, lhs_ld, rhs_ld)
+      assign_lags(data, idx, ro_ls, lhs_ls, rhs_ls)
+      assign_deterministic(data, idx, cl)
     }
   }
 }
