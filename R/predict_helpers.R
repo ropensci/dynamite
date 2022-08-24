@@ -25,7 +25,7 @@ check_ndraws <- function(n_draws, full_draws) {
   as.integer(n_draws)
 }
 
-#' Check Validity of `newdata` for Prediction
+#' Check Validity of `newdata` Argument for Prediction
 #'
 #' @inheritParams predict.dynamitefit
 #' @noRd
@@ -150,6 +150,56 @@ parse_newdata <- function(dformula, newdata, data, type, eval_type,
     newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
   }
   newdata
+}
+
+#' Parse `funs` Argument for Prediction
+#'
+#' @inheritParams predict.dynamitefit
+#' @noRd
+parse_funs <- function(object, funs) {
+  stopifnot_(
+    !is.null(object$group_var),
+    "Argument {.arg funs} requires data with multiple individuals."
+  )
+  funs_names <- names(funs)
+  stopifnot_(
+    !is.null(funs_names),
+    "Argument {.arg funs} must be a named {.cls list}."
+  )
+  stopifnot_(
+    all(funs_names %in% get_responses(object$dformulas$all)),
+    "The names of {.arg funs} must be response variables of the model."
+  )
+  err <- paste0(
+    "Each element of {.arg funs} must either be a ",
+    "{.cls function} or a list where each elements is a {.cls function}."
+  )
+  out <- list()
+  idx <- 1L
+  for (i in seq_along(funs)) {
+    if (is.list(funs[[i]])) {
+      fun_names <- names(funs[[i]])
+      for (j in seq_along(funs[[i]])) {
+        stopifnot_(is.function(funs[[i]][[j]]), err)
+        fun_name <- ifelse_(is.null(fun_names), j, fun_names[j])
+        out[[idx]] <- list(
+          fun = funs[[i]][[j]],
+          name = paste0(funs_names[i], "_", fun_name),
+          target = funs_names[i]
+        )
+        idx <- idx + 1L
+      }
+    } else {
+      stopifnot_(is.function(f), err)
+      out[[idx]] <- list(
+        fun = funs[[i]],
+        name = funs_names[i],
+        target = funs_names[i]
+      )
+      idx <- idx + 1L
+    }
+  }
+  out
 }
 
 #' Adds NA Gaps to Fill Missing Time Points in a Data Frame For Predictions

@@ -21,12 +21,18 @@
 #'   in terms of memory usage to first remove redundant columns from `newdata`.
 #' @param type \[`character(1)`]\cr Type of prediction,
 #'   `"response"` (default), `"mean"`, or `"link"`.
-#' @param funs \[`list()`]\cr A list containing a summary function for each
-#'   channel of the model that should be applied to the predicted responses
-#'   for each combination of the posterior draws and the time points.
-#'   If empty, the full individual level predictions are returned. Otherwise,
-#'   this argument will be recycled if fewer functions are provided than
-#'   the number of channels.
+#' @param funs \[`list()`]\cr A named list whose names should correspond to the
+#'   response variables of the model. Each element of `funs` should be a
+#'   function or a `list` of functions that will be applied to the
+#'   corresponding predicted responses of the channel over the individuals
+#'   for each combination of the posterior draws and time points.
+#'   In other words, the resulting predictions will be averages
+#'   over the individuals. The functions should take the corresponding
+#'   response variable values as their only argument.
+#'   If `funs` is empty, the full individual level predictions are returned
+#'   instead. Note that this argument can only be used
+#'   if there are multiple individuals (i.e., `group` was not `NULL` in the
+#'   `dynamite` call).
 #' @param impute \[`character(1)`]\cr Which imputation scheme to use for
 #'   missing predictor values. Currently supported options are
 #'   no imputation: `"none"` (default), and
@@ -83,10 +89,6 @@ predict.dynamitefit <- function(object, newdata = NULL,
   stopifnot_(
     !inherits(type, "try-error"),
     "Argument {.arg type} must be either \"response\", \"mean\", or \"link\"."
-  )
-  stopifnot_(
-    identical(length(funs), 0L) || all(vapply(funs, is.function, logical(1L))),
-    "Argument {.arg funs} must be a list of functions."
   )
   impute <- onlyif(is.character(impute), tolower(impute))
   impute <- try(match.arg(impute, c("none", "locf")), silent = TRUE)
@@ -220,9 +222,10 @@ initialize_predict <- function(object, newdata, type, eval_type, funs,
       get_responses(object$dformulas$lag_pred)
     )
   )
-  draw_dep <- newdata[, .SD, .SDcols = resp_draw]
+  draw_dep <- newdata[, .SD, .SDcols = c(resp_draw, group_var, time_var)]
   draw_indep <- newdata[, .SD, .SDcols = setdiff(names(newdata), resp_draw)]
   if (length(funs) > 0L) {
+    funs <- parse_funs(object, funs)
     predict_summary(
       object = object,
       storage = draw_dep,
@@ -332,8 +335,9 @@ predict_full <- function(object, simulated, observed,
     assign_deterministic(simulated, idx, cl)
     skip <- FALSE
   }
-  finalize_predict(type, eval_type, resp_stoch, simulated, observed)
+  finalize_predict(type, resp_stoch, simulated, observed)
   simulated[, c(lhs_ld, lhs_ls) := NULL]
+  data.table::setkeyv(simulated, cols = c(".draw", group_var, time_var))
   data.table::setDF(simulated)
   data.table::setDF(observed)
   list(simulated = simulated, observed = observed)
@@ -345,6 +349,16 @@ predict_full <- function(object, simulated, observed,
 #' @noRd
 predict_summary <- function(object, storage, observed, funs, new_levels,
                             n_draws, fixed, group_var, time_var) {
+  # avoid NSE notes in R CMD check
+  ..group_var <- NULL
+  ..observed <- NULL
+  ..idx_obs <- NULL
+  ..u_time <- NULL
+  ..n_draws <- NULL
+  ..n_time <- NULL
+  ..storage <- NULL
+  ..f <- NULL
+
   formulas_stoch <- get_formulas(object$dformulas$stoch)
   resp_stoch <- get_responses(object$dformulas$stoch)
   resp_det <- get_responses(object$dformulas$det)
@@ -372,13 +386,24 @@ predict_summary <- function(object, storage, observed, funs, new_levels,
   simulated <- storage[1L, ]
   simulated[, (names(simulated)) := .SD[NA]]
   simulated <- simulated[rep(1L, 2L * n_sim), ]
-  summaries <- NULL
+  simulated[, (".draw") := rep(seq.int(1L, n_draws), 2 * n_group)]
+  #simulated[, (group_var) := rep(..observed[[..group_var]][..idx_obs], 2L)]
   assign_from_storage(
     storage,
     simulated,
-    idx_obs,
-    idx
+    idx,
+    idx_obs
   )
+  summaries <- storage[1L, ]
+  for (f in funs) {
+    summaries[, (f$name) := ..f$fun(..storage[[..f$target]][1L])]
+  }
+  summaries[, (names(storage)) := NULL]
+  summaries[, (names(summaries)) := .SD[NA]]
+  summaries <- summaries[rep(1L, n_time * n_draws)]
+  summaries[, (time_var) := rep(..u_time, ..n_draws)]
+  summaries[, ("draw") := rep(seq_len(n_draws), each = ..n_time)]
+  idx_summ <- which(summaries[[time_var]] == u_time[1L]) + (fixed - 1L)
   eval_envs <- prepare_eval_envs(
     object,
     simulated,
@@ -392,14 +417,14 @@ predict_summary <- function(object, storage, observed, funs, new_levels,
   )
   cl <- get_quoted(object$dformulas$det)
   specials <- evaluate_specials(object$dformulas$stoch, observed)
-  #idx_summ <-
   time_offset <- which(unique(object$data[[time_var]]) == u_time[1L]) - 1L
   skip <- TRUE
   for (i in seq.int(fixed + 1L, n_time)) {
     time_i <- time_offset + i - fixed
     idx_obs <- idx_obs + 1L
+    idx_summ <- idx_summ + 1L
     shift_simulated_values(simulated, idx_prev, idx)
-    assign_from_storage(storage, simulated, idx_obs, idx)
+    assign_from_storage(storage, simulated, idx, idx_obs)
     assign_lags(simulated, idx, ro_ld, lhs_ld, rhs_ld, skip, n_sim)
     assign_lags(simulated, idx, ro_ls, lhs_ls, rhs_ls, skip, n_sim)
     model_matrix <- full_model.matrix_predict(
@@ -426,18 +451,35 @@ predict_summary <- function(object, storage, observed, funs, new_levels,
       }
     }
     assign_deterministic(simulated, idx, cl)
-    assign_summaries(summaries, simulated, funs)
+    assign_summaries(summaries, simulated, funs, idx, idx_summ)
     skip <- FALSE
   }
-  finalize_predict(type, eval_type, resp_stoch, simulated, observed)
+  finalize_predict(type = NULL, resp_stoch, simulated, observed)
+  data.table::setDF(summaries)
   data.table::setDF(observed)
   list(simulated = summaries, observed = observed)
 }
 
-assign_from_storage <- function(storage, simulated, idx_obs, idx) {
+assign_from_storage <- function(storage, simulated, idx, idx_obs) {
   for (n in names(storage)) {
     data.table::set(
       simulated, i = idx, j = n, value = storage[[n]][idx_obs]
+    )
+  }
+}
+
+assign_summaries <- function(summaries, simulated, funs, idx,
+                             idx_summ, group_var) {
+  # avoid NSE note in R CMD check
+  ..f <- NULL
+  for (f in funs) {
+    data.table::set(
+      summaries,
+      i = idx_summ,
+      j = f$name,
+      value = simulated[
+        idx, lapply(.SD, ..f$fun), by = .draw, .SDcols = f$target
+      ][[f$target]]
     )
   }
 }
@@ -450,16 +492,12 @@ shift_simulated_values <- function(simulated, idx_prev, idx) {
   }
 }
 
-assign_summaries <- function(summaries, simulated, funs) {
-  invisible(NULL)
-}
-
 #' Clean Up Prediction Data Tables
 #'
 #' @inheritParams predict_full
 #' @param resp_stoch \[character()]\cr Vector of response variable names.
 #' @noRd
-finalize_predict <- function(type, eval_type, resp_stoch, simulated, observed) {
+finalize_predict <- function(type, resp_stoch, simulated, observed) {
   for (resp in resp_stoch) {
     store <- glue::glue("{resp}_store")
     if (identical(type, "response")) {
