@@ -402,9 +402,10 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
 #' @param x Object returned by `predict.dynamitefit`.
 #' @noRd
 expand_predict_output <- function(x) {
-  p <- x$simulated
+  common <- intersect(names(x$simulated), names(x$observed))
+  p <- x$simulated |> dplyr::select(!dplyr::matches(common))
   o <- x$observed[
-    rep(seq_len(nrow(x$observed)), each = n_unique(p$.draw)), , drop = FALSE
+    rep(seq_len(nrow(x$observed)), n_unique(p$.draw)), , drop = FALSE
   ]
   out <- cbind(o, p)
   rownames(out) <- NULL

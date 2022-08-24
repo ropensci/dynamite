@@ -368,7 +368,7 @@ test_that("imputation works", {
   expect_error(
     predict(gaussian_example_fit,
       newdata = gaussian_example_impute,
-      type = "response", n_draws = 2, impute = "locf"
+      type = "response", n_draws = 2L, impute = "locf"
     ),
     NA
   )
@@ -376,8 +376,25 @@ test_that("imputation works", {
 
 test_that("global_fixed options produce equal results with balanced data", {
   set.seed(0)
-  out_t <- predict(gaussian_example_fit, n_draws = 2, global_fixed = TRUE)
+  out_t <- predict(gaussian_example_fit, n_draws = 2L, global_fixed = TRUE)
   set.seed(0)
-  out_f <- predict(gaussian_example_fit, n_draws = 2, global_fixed = FALSE)
+  out_f <- predict(gaussian_example_fit, n_draws = 2L, global_fixed = FALSE)
   expect_equal(out_t$simulated, out_f$simulated)
+})
+
+test_that("summarising via funs is equivalent to manual summary", {
+  set.seed(0)
+  pred1 <- predict(
+    gaussian_example_fit,
+    funs = list(y = list(mean = mean, sd = sd)),
+    n_draws = 2L
+  )$simulated |> dplyr::filter(time > 1)
+  set.seed(0)
+  pred2 <- predict(gaussian_example_fit, n_draws = 2L)$simulated |>
+    dplyr::group_by(time, .draw) |>
+    dplyr::summarise(y_mean = mean(y_new), y_sd = sd(y_new)) |>
+    dplyr::filter(time > 1) |>
+    dplyr::arrange(.draw)
+  expect_equal(pred1$y_mean, pred2$y_mean)
+  expect_equal(pred1$y_sd, pred2$y_sd)
 })
