@@ -130,7 +130,7 @@ assign_deterministic <- function(data, cl, idx) {
 #' @param lhs \[`character()`]\cr The lagged outcome variable names.
 #' @param rhs \[`character()`]\cr The names of the variables being lagged.
 #' @param skip \[`logical(1)`]\cr Skip evaluation on this iteration.
-#' @param offset \[`integer(1)`: \sQuote{1L}] The distance between consequent
+#' @param offset \[`integer(1)`]\cr The distance between consequent
 #'   observations in `data`.
 #' @noRd
 assign_lags <- function(data, ro, idx, lhs, rhs, skip = FALSE, offset = 1L) {

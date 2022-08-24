@@ -20,6 +20,9 @@ default is \code{NULL} which uses all samples.}
 
 \item{...}{Ignored.}
 }
+\value{
+A \code{data.frame} containing the fitted values.
+}
 \description{
 Fitted values for a \code{dynamitefit} object.Note that these are conditional on
 the observed data in \code{newdata},i.e., these are one-step estimates
@@ -59,4 +62,5 @@ predict(fit, type = "mean") |>
   geom_line(aes(y = LakeHuron), colour = "tomato") +
   theme_bw()
 }
+
 }

@@ -4,21 +4,22 @@
 #' sizes and largest Rhat values. See [rstan::check_hmc_diagnostics()] and
 #' [posterior::default_convergence_measures()] for details.
 #'
+#' @export
 #' @param x \[`dynamitefit`]\cr The model fit object.
-#' @param n \[`integer(1)`: \sQuote{1L}]\cr How many rows to print in
+#' @param n \[`integer(1)`]\cr How many rows to print in
 #'   parameter-specific convergence measures. The default is 1. Should be a
 #'   positive (unrestricted) integer.
-#' @return The original `dynamitefit` object (invisibly).
-#' @export
+#' @return Returns `x` (invisibly).
 #' @examples
 #' mcmc_diagnostics(gaussian_example_fit)
+#'
 mcmc_diagnostics <- function(x, n) {
   UseMethod("mcmc_diagnostics", x)
 }
 
+#' @export
 #' @method mcmc_diagnostics dynamitefit
 #' @rdname mcmc_diagnostics
-#' @export
 mcmc_diagnostics.dynamitefit <- function(x, n = 1L) {
   stopifnot_(
     !missing(x),

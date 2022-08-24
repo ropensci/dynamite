@@ -3,7 +3,9 @@
 #' Defines a new observational or a new auxiliary channel for the model using
 #' standard \R formula syntax. Formulas of individual response variables can be
 #' joined together via `+`. See 'Details' and the package vignette for more
-#' information.
+#' information. The function `obs` is a shorthand alias for `dynamiteformula`,
+#' and `aux` is a shorthand alias for
+#' `dynamiteformula(formula, family = "deterministic")`.
 #'
 #' Currently the \pkg{dynamite} package supports the following
 #' distributions for the observations:
@@ -96,11 +98,13 @@
 #' effects, i.e. to include the grouping variable to the model instead of
 #' random intercept (this way the one group is included in the intercept).
 #'
+#' @export
 #' @param formula \[`formula`]\cr An \R formula describing the model.
 #' @param family \[`character(1)`]\cr The family name. See 'Details' for the
 #'   supported families.
-#' @return An object of class `dynamiteformula`.
-#' @export
+#' @return A `dynamiteformula` object.
+#' @srrstats {G2.3b} Uses tolower.
+#' @srrstats {RE1.0} Uses a formula interface.
 #' @examples
 #' # A single gaussian response channel with a time-varying effect of 'x',
 #' # and a time-varying effect of the lag of 'y' using B-splines with
@@ -127,8 +131,6 @@
 #'   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
 #'   aux(numeric(logp) ~ log(p + 1))
 #'
-#' @srrstats {G2.3b} Uses tolower.
-#' @srrstats {RE1.0} Uses a formula interface.
 dynamiteformula <- function(formula, family) {
   stopifnot_(
     !missing(formula),
@@ -180,7 +182,10 @@ dynamiteformula <- function(formula, family) {
   )
 }
 
-#' @describeIn dynamiteformula Internal Version of `dynamiteformula`
+#' Internal Version of `dynamiteformula`
+#'
+#' @inheritParams dynamiteformula
+#' @param original The original `formula` definition.
 #' @noRd
 dynamiteformula_ <- function(formula, original, family) {
   if (is_deterministic(family)) {
@@ -246,19 +251,20 @@ is.dynamiteformula <- function(x) {
   inherits(x, "dynamiteformula")
 }
 
-#' @describeIn dynamiteformula Prepare a Deterministic Auxiliary Channel
+#' @rdname dynamiteformula
 #' @export
 aux <- function(formula) {
   dynamiteformula(formula, family = "deterministic")
 }
 
-#' Join Two `dynamiteformula` Objects
-#'
-#' @param e1 An \R object.
-#' @param e2 An \R object.
+#' @method + dynamiteformula
+#' @rdname dynamiteformula
+#' @param e1 \[`dynamiteformula`]\cr A model formula specification.
+#' @param e2 \[`dynamiteformula`]\cr A model formula specification.
 #' @export
 #' @examples
 #' obs(y ~ x, family = "gaussian") + obs(z ~ w, family = "exponential")
+#'
 `+.dynamiteformula` <- function(e1, e2) {
   stopifnot_(
     is.dynamiteformula(e1),
@@ -268,19 +274,20 @@ aux <- function(formula) {
   add_dynamiteformula(e1, e2)
 }
 
-#' Print a Dynamite Model Formula
-#'
-#' @param x \[`dynamiteformula`] The model formula.
+#' @method print dynamiteformula
+#' @rdname dynamiteformula
+#' @param x \[`dynamiteformula`]\cr The model formula.
 #' @param ... Ignored.
 #' @export
 #' @examples
-#' x <-  obs(y ~ x, family = "gaussian") +
+#' x <- obs(y ~ x, family = "gaussian") +
 #'   obs(z ~ w, family = "exponential") +
 #'   aux(d ~ log(y) | init(c(0, 1))) +
 #'   lags(k = 2) +
 #'   splines(df = 5) +
 #'   random(responses = c("y", "z"), correlated = TRUE)
 #' print(x)
+#'
 print.dynamiteformula <- function(x, ...) {
   stopifnot_(
     !missing(x),

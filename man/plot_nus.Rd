@@ -16,6 +16,9 @@ should be drawn. Possible options are elements of
 \item{level}{[\code{numeric(1)}]\cr Level for posterior intervals.
 Default is 0.05, leading to 90\% intervals.}
 }
+\value{
+A \code{ggplot} object.
+}
 \description{
 Plot Random Intercepts of a Dynamite Model
 }

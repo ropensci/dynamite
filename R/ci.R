@@ -1,5 +1,6 @@
 #' Credible Intervals for Dynamite Model Parameters
 #'
+#' @export
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param parm Ignored.
 #' @param level \[`numeric(1)`]\cr Credible interval width.
@@ -12,11 +13,10 @@
 #'   is related to if the response is categorical, and `group` determines which
 #'   group of observations the parameter is related to in the case of random
 #'   intercepts. Non-applicable fields in the this syntax are set to `NA`.
-#' @export
+#' @srrstats {RE4.3} Provides credible intervals.
 #' @examples
 #' confint(gaussian_example_fit, level = 0.9)
 #'
-#' @srrstats {RE4.3} Provides credible intervals.
 confint.dynamitefit <- function(object, parm, level = 0.95, ...) {
   stopifnot_(
     checkmate::test_number(

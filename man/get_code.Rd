@@ -29,14 +29,13 @@ unique groups.}
 time axis.}
 }
 \value{
-A Stan model code as an object of type \code{character}.
+A Stan model code as a \code{character} string.
 }
 \description{
 Returns the Stan code of the model. Mostly useful for debugging or for
 building a customized version of the model.
 }
 \examples{
-
 d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
 cat(get_code(obs(y ~ x, family = "gaussian"),
   data = d, time = "time", group = "id"
@@ -46,4 +45,5 @@ cat(dynamite(obs(y ~ x, family = "gaussian"),
   data = d, time = "time", group = "id",
   debug = list(model_code = TRUE, no_compile = TRUE)
 )$model_code)
+
 }

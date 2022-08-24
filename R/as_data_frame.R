@@ -24,6 +24,7 @@
 #'  * `omega` Spline coefficients of the regression coefficients `delta`.
 #'  * `omega_alpha` Spline coefficients of time-varying `alpha`.
 #'
+#' @export
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param row.names Ignored.
 #' @param optional Ignored.
@@ -48,7 +49,6 @@
 #' @return A `tibble` containing either samples or summary statistics of the
 #'   model parameters in a long format. For a wide format, see
 #'   [dynamite::as_draws()].
-#' @export
 #' @examples
 #' results <- as.data.frame(gaussian_example_fit,
 #'   responses = "y", types = "beta", summary = FALSE

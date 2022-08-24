@@ -12,12 +12,12 @@ mcmc_diagnostics(x, n)
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
-\item{n}{[\code{integer(1)}: \sQuote{1L}]\cr How many rows to print in
+\item{n}{[\code{integer(1)}]\cr How many rows to print in
 parameter-specific convergence measures. The default is 1. Should be a
 positive (unrestricted) integer.}
 }
 \value{
-The original \code{dynamitefit} object (invisibly).
+Returns \code{x} (invisibly).
 }
 \description{
 Prints HMC diagnostics, and lists parameters with smallest effective sample
@@ -26,4 +26,5 @@ sizes and largest Rhat values. See \code{\link[rstan:check_hmc_diagnostics]{rsta
 }
 \examples{
 mcmc_diagnostics(gaussian_example_fit)
+
 }

@@ -21,6 +21,7 @@
 #' parameters `delta` (and `alpha`), spline coefficients, or random
 #' intercepts leads to too many plots.
 #'
+#' @export
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param responses \[`character()`]\cr Response(s) for which the plots should
 #'   be drawn. Possible options are `unique(x$priors$response)`. Default is
@@ -29,12 +30,12 @@
 #'   should be drawn. See details of possible values.
 #' @param ... Further arguments to [bayesplot::mcmc_combo].
 #' @return The output object from [bayesplot::mcmc_combo].
-#' @export
-#' @examples
-#' plot(gaussian_example_fit, type = "beta")
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.2, BS6.3, BS6.5} Implements the `plot`
 #' method. Further plots can be easily constructed with the help of `as_draws`
 #' combined with `ggplot2` and `bayesplot`, for example.
+#' @examples
+#' plot(gaussian_example_fit, type = "beta")
+#'
 plot.dynamitefit <- function(x, responses = NULL, type, ...) {
   stopifnot_(
     !missing(type),
@@ -53,6 +54,7 @@ plot.dynamitefit <- function(x, responses = NULL, type, ...) {
 
 #' Plot Time-varying Regression Coefficients of a Dynamite Model
 #'
+#' @export
 #' @param x \[`dynamitefit`]\cr The model fit object
 #' @param responses  \[`character()`]\cr Response(s) for which the coefficients
 #'   should be drawn. Possible options are elements of
@@ -66,13 +68,12 @@ plot.dynamitefit <- function(x, responses = NULL, type, ...) {
 #' @param include_alpha \[`logical(1)`]\cr If `TRUE` (default), plots also
 #'   the time-varying alphas if such parameters exists in the model.
 #' @return A `ggplot` object.
+#' @srrstats {G2.3a} Uses match.arg.
+#' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @examples
 #' plot_deltas(gaussian_example_fit, level = 0.025, scales = "free") +
 #'   ggplot2::theme_minimal()
 #'
-#' @srrstats {G2.3a} Uses match.arg.
-#' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
-#' @export
 plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
                         scales = c("fixed", "free"), include_alpha = TRUE) {
   stopifnot_(
@@ -142,15 +143,15 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
 
 #' Plot Time-invariant Regression Coefficients of a Dynamite Model
 #'
+#' @export
 #' @inheritParams plot_deltas
 #' @param include_alpha \[`logical(1)`]\cr If `TRUE` (default), plots also
 #'   the time-invariant alphas if such parameters exists in the model.
 #' @return A `ggplot` object.
+#' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @examples
 #' plot_betas(gaussian_example_fit, level = 0.1)
 #'
-#' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
-#' @export
 plot_betas <- function(x, responses = NULL, level = 0.05,
                        include_alpha = TRUE) {
   stopifnot_(
@@ -201,12 +202,13 @@ plot_betas <- function(x, responses = NULL, level = 0.05,
 
 #' Plot Random Intercepts of a Dynamite Model
 #'
+#' @export
 #' @inheritParams plot_deltas
+#' @return A `ggplot` object.
+#' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @examples
 #' plot_nus(gaussian_example_fit)
 #'
-#' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
-#' @export
 plot_nus <- function(x, responses = NULL, level = 0.05) {
   stopifnot_(
     checkmate::test_number(

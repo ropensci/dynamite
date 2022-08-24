@@ -12,6 +12,8 @@
 #'   predictions as well,
 #'   There should be no new time points that were not present in the data that
 #'   were used to fit the model, and no new group levels can be included.
+#' @return A `data.frame` containing the fitted values.
+#' @srrstats {RE4.9} Returns the fitted values.
 #' @examples
 #' fitted(gaussian_example_fit, n_draws = 2L)
 #' \dontrun{
@@ -45,7 +47,7 @@
 #'   geom_line(aes(y = LakeHuron), colour = "tomato") +
 #'   theme_bw()
 #' }
-#' @srrstats {RE4.9} Returns the fitted values.
+#'
 fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, ...) {
   stopifnot_(
     !is.null(object$stanfit),

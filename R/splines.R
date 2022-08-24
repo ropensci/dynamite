@@ -3,6 +3,7 @@
 #' This function can be used as part of [dynamiteformula()] to define the
 #' splines used for the time-varying coefficients \eqn{\delta}.
 #'
+#' @export
 #' @param df \[`integer(1)`]\cr Degrees of freedom, i.e., the total number of
 #'   spline coefficients. See [splines::bs()]. Note that the knots are always
 #'   defined as an equidistant sequence on the interval starting from the first
@@ -32,7 +33,6 @@
 #'    definition for the splines will not be overridden by another call to
 #'    `splines()`. If `TRUE`, any existing definitions will be replaced.
 #' @return An object of class `splines`.
-#' @export
 #' @examples
 #' # Two channel model with varying effects, with explicit lower bounds for the
 #' # random walk prior standard deviations, with noncentered parameterization

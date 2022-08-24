@@ -1,18 +1,22 @@
 #' Print a Summary of a Dynamite Model Fit Object
 #'
-#' Prints the summary information of the estimated dynamite model: The model
-#' formula, the data,  the smallest effective sample sizes,
-#' largest Rhat and summary statistics of the
+#' Information on the estimated dynamite model can be obtained via
+#'  `print` including the following: The model formula, the data, the smallest
+#' effective sample sizes, largest Rhat and summary statistics of the
 #' time-invariant model parameters.
 #'
-#' @param x \[`dynamitefit`] The model fit object.
+#' @export
+#' @rdname dynamite
+#' @method print dynamitefit
+#' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param ... Further arguments to the print method for tibbles.
 #'   See [tibble::formatting].
-#' @export
+#' @return `print` returns `x` invisibly.
 #' @srrstats {BS6.0, RE4.17} Implements the `print` method for the model fit.
 #' @srrstats {BS5.3, BS5.5} Contains convergence statistics in the output.
 #' @examples
 #' print(gaussian_example_fit)
+#'
 print.dynamitefit <- function(x, ...) {
   stopifnot_(
     !missing(x),

@@ -4,6 +4,8 @@
 \alias{dynamiteformula}
 \alias{obs}
 \alias{aux}
+\alias{+.dynamiteformula}
+\alias{print.dynamiteformula}
 \title{Model formula for \pkg{dynamite}}
 \usage{
 dynamiteformula(formula, family)
@@ -11,21 +13,35 @@ dynamiteformula(formula, family)
 obs(formula, family)
 
 aux(formula)
+
+\method{+}{dynamiteformula}(e1, e2)
+
+\method{print}{dynamiteformula}(x, ...)
 }
 \arguments{
 \item{formula}{[\code{formula}]\cr An \R formula describing the model.}
 
 \item{family}{[\code{character(1)}]\cr The family name. See 'Details' for the
 supported families.}
+
+\item{e1}{[\code{dynamiteformula}]\cr A model formula specification.}
+
+\item{e2}{[\code{dynamiteformula}]\cr A model formula specification.}
+
+\item{x}{[\code{dynamiteformula}]\cr The model formula.}
+
+\item{...}{Ignored.}
 }
 \value{
-An object of class \code{dynamiteformula}.
+A \code{dynamiteformula} object.
 }
 \description{
 Defines a new observational or a new auxiliary channel for the model using
 standard \R formula syntax. Formulas of individual response variables can be
 joined together via \code{+}. See 'Details' and the package vignette for more
-information.
+information. The function \code{obs} is a shorthand alias for \code{dynamiteformula},
+and \code{aux} is a shorthand alias for
+\code{dynamiteformula(formula, family = "deterministic")}.
 }
 \details{
 Currently the \pkg{dynamite} package supports the following
@@ -120,11 +136,6 @@ intercept term. In these cases, a better option might be to use fixed group
 effects, i.e. to include the grouping variable to the model instead of
 random intercept (this way the one group is included in the intercept).
 }
-\section{Functions}{
-\itemize{
-\item \code{aux()}: Prepare a Deterministic Auxiliary Channel
-
-}}
 \examples{
 # A single gaussian response channel with a time-varying effect of 'x',
 # and a time-varying effect of the lag of 'y' using B-splines with
@@ -150,5 +161,15 @@ obs(g ~ lag(g) + lag(logp), family = "gaussian") +
   obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
   aux(numeric(logp) ~ log(p + 1))
+
+obs(y ~ x, family = "gaussian") + obs(z ~ w, family = "exponential")
+
+x <- obs(y ~ x, family = "gaussian") +
+  obs(z ~ w, family = "exponential") +
+  aux(d ~ log(y) | init(c(0, 1))) +
+  lags(k = 2) +
+  splines(df = 5) +
+  random(responses = c("y", "z"), correlated = TRUE)
+print(x)
 
 }

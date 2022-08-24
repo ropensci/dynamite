@@ -36,6 +36,7 @@
 #' depend on the discrepancy of the data and the model (and the subsequent
 #' shape of the posterior), this can vary greatly.
 #'
+#' @export
 #' @param dformula \[`dynamiteformula`]\cr The model formula.
 #'   See [dynamiteformula()] and 'Details'.
 #' @param data
@@ -65,35 +66,25 @@
 #'   combined with `model_code = TRUE`, which adds the Stan model code to the
 #'   return object.
 #' @param ... Additional arguments to [rstan::sampling()].
-#' @export
-#' @examples
-#' \dontrun{
-#' fit <- dynamite(
-#'   dformula = obs(y ~ -1 + varying(~x), family = "gaussian") +
-#'     lags(type = "varying") +
-#'     splines(df = 20), gaussian_example, "id", "time",
-#'   chains = 1,
-#'   refresh = 0
-#' )
-#'
-#' library(dplyr)
-#' library(ggplot2)
-#' cf <- coef(fit) %>%
-#'   group_by(time, variable) %>%
-#'   summarise(
-#'     mean = mean(value),
-#'     lwr = quantile(value, 0.025),
-#'     upr = quantile(value, 0.975)
-#'   )
-#'
-#' cf %>%
-#'   ggplot(aes(time, mean)) +
-#'   theme_bw() +
-#'   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
-#'   geom_line() +
-#'   facet_wrap(~variable, scales = "free_y")
-#' }
-#'
+#' @return `dynamite` returns a `dynamitefit` object which is a list containing
+#'   the following components:
+#'   \tabular{lccl}{
+#'    `stanfit` \tab\tab\tab
+#'      A `stanfit` object, see [rstan::sampling()] for details.\cr
+#'    `dformulas` \tab\tab\tab
+#'      A list of `dynamiteformula` objects for internal use.\cr
+#'    `data` \tab\tab\tab
+#'      A processed version of the input `data`.\cr
+#'    `data_name` \tab\tab\tab
+#'      Name of the input data object.\cr
+#'    `stan` \tab\tab\tab
+#'      A `list` containing various elements related to Stan model
+#'      construction and sampling.\cr
+#'    `group_var` \tab\tab\tab
+#'      Name of the variable defining the groups.\cr
+#'    `time_var` \tab\tab\tab
+#'      Name of the variable defining the time index.\cr
+#'   }
 #' @srrstats {G2.9} Potential loss of information is reported by `dynamite`.
 #' @srrstats {RE1.1} Documented in `dformula` parameter.
 #' @srrstats {RE1.4} Documented in `data` parameter.
@@ -125,6 +116,34 @@
 #'   extent in the tests and noted here. As the computational algorithms are
 #'   based on Stan, the  scalability of the package depends directly on the
 #'   scalability of Stan.
+#' @examples
+#' \dontrun{
+#' fit <- dynamite(
+#'   dformula = obs(y ~ -1 + varying(~x), family = "gaussian") +
+#'     lags(type = "varying") +
+#'     splines(df = 20), gaussian_example, "id", "time",
+#'   chains = 1,
+#'   refresh = 0
+#' )
+#'
+#' library(dplyr)
+#' library(ggplot2)
+#' cf <- coef(fit) %>%
+#'   group_by(time, variable) %>%
+#'   summarise(
+#'     mean = mean(value),
+#'     lwr = quantile(value, 0.025),
+#'     upr = quantile(value, 0.975)
+#'   )
+#'
+#' cf %>%
+#'   ggplot(aes(time, mean)) +
+#'   theme_bw() +
+#'   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
+#'   geom_line() +
+#'   facet_wrap(~variable, scales = "free_y")
+#' }
+#'
 dynamite <- function(dformula, data, group = NULL, time,
                      priors = NULL, verbose = TRUE, debug = NULL, ...) {
   stopifnot_(
@@ -223,8 +242,7 @@ dynamite <- function(dformula, data, group = NULL, time,
       stan = stan,
       group_var = group,
       time_var = time,
-      priors = dplyr::bind_rows(stan$priors),
-      verbose
+      priors = dplyr::bind_rows(stan$priors)
     ),
     class = "dynamitefit"
   )
@@ -241,13 +259,17 @@ dynamite <- function(dformula, data, group = NULL, time,
 
 #' Access the Model Formula of a Dynamite Model
 #'
-#' Returns the model definition as a quoted expression.
+#' The `formula` method returns the model definition as a quoted expression.
 #'
+#' @method formula dynamitefit
+#' @rdname dynamite
 #' @param x \[`dynamitefit`\]\cr The model fit object.
 #' @param ... Not used.
+#' @return `formula` returns a quoted expression.
 #' @export
 #' @examples
 #' formula(gaussian_example_fit)
+#'
 formula.dynamitefit <- function(x, ...) {
   stopifnot_(
     !missing(x),

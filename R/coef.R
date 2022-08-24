@@ -12,11 +12,13 @@
 #'   extracted, and time-varying alpha if time-varying delta are extracted.
 #' @inheritParams as.data.frame.dynamitefit
 #' @param ... Ignored.
+#' @return A `tibble` containing either samples or summary statistics of the
+#'   model parameters in a long format.
+#' @srrstats {G2.3a, RE4.2} Provides model coefficients.
 #' @examples
 #' betas <- coef(gaussian_example_fit, type = "beta")
 #' deltas <- coef(gaussian_example_fit, type = "delta")
 #'
-#' @srrstats {G2.3a, RE4.2} Provides model coefficients.
 coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
                              responses = NULL, summary = TRUE,
                              probs = c(0.05, 0.95),
