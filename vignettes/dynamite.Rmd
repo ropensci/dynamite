@@ -511,14 +511,16 @@ newdata1 <- d |>
 pred1 <- predict(multichannel_example_fit, newdata = newdata1)
 ```
 
-The output from `predict` contains now the original `newdata` and additional 
-columns `g_new`, `p_new`, and `b_new` where the NA values of `newdata` are 
+The output from `predict` is a `list` with two components, simulate: the first contains
+the predicted values in a data frame with the columns `g_new`, `p_new`, and 
+`b_new` where the NA values of `newdata` are 
 replaced with the posterior samples from the model (the output also contains 
 additional column corresponding to the auxiliary channel 
-`logp` and index variable `.draw`:
+`logp` and index variable `.draw`), the second components contains 
+the original predictors of `newdata` :
 
 ```{r}
-head(pred0)
+head(pred0$simulated)
 ```
 
 We can now compute summary statistics over the individuals and then over the 

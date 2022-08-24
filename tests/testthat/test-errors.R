@@ -747,6 +747,30 @@ test_that("newdata with duplicated time points fails", {
   )
 })
 
+test_that("new group levels can't be included if new_levels is 'none'", {
+  gaussian_example_new_levels <- rbind(
+    gaussian_example,
+    data.frame(
+      y = c(0.5, rep(NA, 29L)),
+      x = rnorm(30),
+      z = rbinom(30, 1, 0.7),
+      id = 226L, time = seq.int(1, 30)
+    )
+  )
+  expect_error(
+    predict(
+      gaussian_example_fit,
+      newdata = gaussian_example_new_levels,
+      type = "response", n_draws = 2, new_levels = "none"
+    ),
+    paste(
+      "Grouping variable `id` contains unknown levels:\nx Level \"226\"",
+      "is not present in the original data\\.\ni Note: argument `new_levels`",
+      "is \"none\" which disallows new levels\\."
+    )
+  )
+})
+
 test_that("newdata with unknown factor levels fails", {
   categorical_example_newlevel <- categorical_example |>
     dplyr::mutate(x = dplyr::recode(x, "C" = "D"))

@@ -8,10 +8,12 @@
   object,
   newdata = NULL,
   type = c("response", "mean", "link"),
+  funs = list(),
   impute = c("none", "locf"),
   new_levels = c("none", "bootstrap", "gaussian", "original"),
   global_fixed = FALSE,
   n_draws = NULL,
+  expand = TRUE,
   ...
 )
 }
@@ -34,6 +36,19 @@ in terms of memory usage to first remove redundant columns from \code{newdata}.}
 
 \item{type}{[\code{character(1)}]\cr Type of prediction,
 \code{"response"} (default), \code{"mean"}, or \code{"link"}.}
+
+\item{funs}{[\code{list()}]\cr A named list whose names should correspond to the
+response variables of the model. Each element of \code{funs} should be a
+function or a \code{list} of functions that will be applied to the
+corresponding predicted responses of the channel over the individuals
+for each combination of the posterior draws and time points.
+In other words, the resulting predictions will be averages
+over the individuals. The functions should take the corresponding
+response variable values as their only argument.
+If \code{funs} is empty, the full individual level predictions are returned
+instead. Note that this argument can only be used
+if there are multiple individuals (i.e., \code{group} was not \code{NULL} in the
+\code{dynamite} call).}
 
 \item{impute}{[\code{character(1)}]\cr Which imputation scheme to use for
 missing predictor values. Currently supported options are
@@ -64,10 +79,20 @@ If there are no groups, then the options are equivalent.}
 \item{n_draws}{[\code{integer(1)}]\cr Number of posterior samples to use,
 default is \code{NULL} which uses all samples.}
 
+\item{expand}{[\code{logical(1)}]\cr If \code{TRUE} (the default), the output
+is a single \code{data.frame} containing the original \code{newdata} and the
+predicted values. Otherwise, a \code{list} is returned with two components,
+\code{simulated} and \code{observed}, where the first contains only the
+predicted values, and the second contains the original \code{newdata}.
+Setting \code{expand} to \code{FALSE} can help conserve memory because \code{newdata}
+is not replicated \code{n_draws} times in the output.
+This argument is ignored if \code{funs} are provided.}
+
 \item{...}{Ignored.}
 }
 \value{
-A \code{data.frame} containing the predicted values.
+A \code{data.frame} containing the predicted values or a \code{list} of two
+\code{data.frames}. See the \code{expand} argument for details.
 }
 \description{
 Obtain counterfactual predictions for a \code{dynamitefit} object. Note that

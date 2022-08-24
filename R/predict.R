@@ -58,8 +58,17 @@
 #'   If there are no groups, then the options are equivalent.
 #' @param n_draws \[`integer(1)`]\cr Number of posterior samples to use,
 #'   default is `NULL` which uses all samples.
+#' @param expand \[`logical(1)`]\cr If `TRUE` (the default), the output
+#'   is a single `data.frame` containing the original `newdata` and the
+#'   predicted values. Otherwise, a `list` is returned with two components,
+#'   `simulated` and `observed`, where the first contains only the
+#'   predicted values, and the second contains the original `newdata`.
+#'   Setting `expand` to `FALSE` can help conserve memory because `newdata`
+#'   is not replicated `n_draws` times in the output.
+#'   This argument is ignored if `funs` are provided.
 #' @param ... Ignored.
-#' @return A `data.frame` containing the predicted values.
+#' @return A `data.frame` containing the predicted values or a `list` of two
+#'   `data.frames`. See the `expand` argument for details.
 #' @srrstats {G2.3a} Uses match.arg.
 #' @srrstats {RE2.2} Missing responses can be predicted.
 #' @srrstats {G2.13, G2.14, G2.14a, G2.14b, G2.14c, G2.15}
@@ -73,13 +82,12 @@
 #'
 predict.dynamitefit <- function(object, newdata = NULL,
                                 type = c("response", "mean", "link"),
-                                funs = list(),
-                                impute = c("none", "locf"),
+                                funs = list(), impute = c("none", "locf"),
                                 new_levels = c(
                                   "none", "bootstrap", "gaussian", "original"
                                 ),
-                                global_fixed = FALSE,
-                                n_draws = NULL, ...) {
+                                global_fixed = FALSE, n_draws = NULL,
+                                expand = TRUE, ...) {
   stopifnot_(
     !is.null(object$stanfit),
     "No Stan model fit is available."
@@ -113,6 +121,10 @@ predict.dynamitefit <- function(object, newdata = NULL,
     checkmate::test_flag(x = global_fixed),
     "Argument {.arg global_fixed} must be a single {.cls logical} value."
   )
+  stopifnot_(
+    checkmate::test_flag(x = expand),
+    "Argument {.arg expand} must be a single {.cls logical} value."
+  )
   initialize_predict(
     object,
     newdata,
@@ -122,7 +134,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
     impute,
     new_levels,
     global_fixed,
-    n_draws
+    n_draws,
+    expand
   )
 }
 
@@ -131,8 +144,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
 #' @inheritParams predict.dynamitefit
 #' @param eval_type \[`character(1)`]\cr Either `"predicted"` or `"fitted"`.
 #' @noRd
-initialize_predict <- function(object, newdata, type, eval_type, funs,
-                               impute, new_levels, global_fixed, n_draws) {
+initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
+                               new_levels, global_fixed, n_draws, expand) {
   n_draws <- check_ndraws(n_draws, ndraws(object))
   newdata_null <- is.null(newdata)
   newdata <- check_newdata(object, newdata)
@@ -248,18 +261,22 @@ initialize_predict <- function(object, newdata, type, eval_type, funs,
       n_draws = n_draws,
       fixed = fixed,
       group_var = group_var,
-      time_var = time_var
+      time_var = time_var,
+      expand = expand
     )
   }
 }
 
-#' Obtain Individual Level Predictions Or Fitted Values
+#' Obtain Full Individual Level Predictions Or Fitted Values
 #'
 #' @inheritParams initialize_predict
+#' @param simulated A `data.table` containing the simulated values
+#' @param observed A `data.table` containing fixed predictors (values
+#'   independent of the posterior draw)
 #' @noRd
-predict_full <- function(object, simulated, observed,
-                         type, eval_type, new_levels, n_draws, fixed,
-                         group_var, time_var) {
+predict_full <- function(object, simulated, observed, type, eval_type,
+                         new_levels, n_draws, fixed,
+                         group_var, time_var, expand) {
   formulas_stoch <- get_formulas(object$dformulas$stoch)
   resp_stoch <- get_responses(object$dformulas$stoch)
   resp_det <- get_responses(object$dformulas$det)
@@ -340,12 +357,22 @@ predict_full <- function(object, simulated, observed,
   data.table::setkeyv(simulated, cols = c(".draw", group_var, time_var))
   data.table::setDF(simulated)
   data.table::setDF(observed)
-  list(simulated = simulated, observed = observed)
+  out <- list(simulated = simulated, observed = observed)
+  ifelse_(
+    expand,
+    expand_predict_output(out),
+    out
+  )
 }
 
 #' Obtain Summarized Predictions
 #'
 #' @inheritParams initialize_predict
+#' @param storage A `data.table` container for storing the temporary
+#'   individual level predictions (current and previous time point at each index
+#'   only.)
+#' @param observed A `data.table` containing fixed predictors (values
+#'   independent of the posterior draw)
 #' @noRd
 predict_summary <- function(object, storage, observed, funs, new_levels,
                             n_draws, fixed, group_var, time_var) {
@@ -386,8 +413,7 @@ predict_summary <- function(object, storage, observed, funs, new_levels,
   simulated <- storage[1L, ]
   simulated[, (names(simulated)) := .SD[NA]]
   simulated <- simulated[rep(1L, 2L * n_sim), ]
-  simulated[, (".draw") := rep(seq.int(1L, n_draws), 2 * n_group)]
-  #simulated[, (group_var) := rep(..observed[[..group_var]][..idx_obs], 2L)]
+  simulated[, (".draw") := rep(seq.int(1L, n_draws), 2L * n_group)]
   assign_from_storage(
     storage,
     simulated,
@@ -423,7 +449,7 @@ predict_summary <- function(object, storage, observed, funs, new_levels,
     time_i <- time_offset + i - fixed
     idx_obs <- idx_obs + 1L
     idx_summ <- idx_summ + 1L
-    shift_simulated_values(simulated, idx_prev, idx)
+    shift_simulated_values(simulated, idx, idx_prev)
     assign_from_storage(storage, simulated, idx, idx_obs)
     assign_lags(simulated, idx, ro_ld, lhs_ld, rhs_ld, skip, n_sim)
     assign_lags(simulated, idx, ro_ls, lhs_ls, rhs_ls, skip, n_sim)
@@ -460,6 +486,13 @@ predict_summary <- function(object, storage, observed, funs, new_levels,
   list(simulated = summaries, observed = observed)
 }
 
+#' Get And Assign Stored Values as Simulation Template
+#'
+#' @inheritParams predict_summary
+#' @inheritParams predict_full
+#' @param idx Indices of the simulated values of the current time point.
+#' @param idx_obs Indices of the stored values of which to assign.
+#' @noRd
 assign_from_storage <- function(storage, simulated, idx, idx_obs) {
   for (n in names(storage)) {
     data.table::set(
@@ -468,8 +501,14 @@ assign_from_storage <- function(storage, simulated, idx, idx_obs) {
   }
 }
 
-assign_summaries <- function(summaries, simulated, funs, idx,
-                             idx_summ, group_var) {
+#' Compute And Assing Summary Predictions
+#'
+#' @inheritParams predict_summary
+#' @inheritParams predict_full
+#' @param idx Indices of the simulated values of the current time point.
+#' @param idx_summ Indices of the summarized predictions to be assigned.
+#' @noRd
+assign_summaries <- function(summaries, simulated, funs, idx, idx_summ) {
   # avoid NSE note in R CMD check
   ..f <- NULL
   for (f in funs) {
@@ -484,7 +523,13 @@ assign_summaries <- function(summaries, simulated, funs, idx,
   }
 }
 
-shift_simulated_values <- function(simulated, idx_prev, idx) {
+#' Shift Current Individuals Level Predictions Back
+#'
+#' @inheritParams predict_full
+#' @param idx_prev Indices of the simulated values of the previous time point.
+#' @param idx Indices of the simulated values of the current time point.
+#' @noRd
+shift_simulated_values <- function(simulated, idx, idx_prev) {
   for (n in names(simulated)) {
     data.table::set(
       simulated, i = idx_prev, j = n, value = simulated[[n]][idx]
