@@ -161,39 +161,39 @@ parse_funs <- function(object, funs) {
     !is.null(object$group_var),
     "Argument {.arg funs} requires data with multiple individuals."
   )
+  stopifnot_(
+    is.list(funs),
+    "Argument {.arg funs} must be a {.cls list}."
+  )
   funs_names <- names(funs)
   stopifnot_(
     !is.null(funs_names),
-    "Argument {.arg funs} must be a named {.cls list}."
+    "Argument {.arg funs} must be named."
   )
   stopifnot_(
     all(funs_names %in% get_responses(object$dformulas$all)),
     "The names of {.arg funs} must be response variables of the model."
   )
-  err <- paste0(
-    "Each element of {.arg funs} must either be a ",
-    "{.cls function} or a list where each elements is a {.cls function}."
-  )
   out <- list()
   idx <- 1L
   for (i in seq_along(funs)) {
-    if (is.list(funs[[i]])) {
-      fun_names <- names(funs[[i]])
-      for (j in seq_along(funs[[i]])) {
-        stopifnot_(is.function(funs[[i]][[j]]), err)
-        fun_name <- ifelse_(is.null(fun_names), j, fun_names[j])
-        out[[idx]] <- list(
-          fun = funs[[i]][[j]],
-          name = paste0(funs_names[i], "_", fun_name),
-          target = funs_names[i]
-        )
-        idx <- idx + 1L
-      }
-    } else {
-      stopifnot_(is.function(f), err)
+    stopifnot_(
+      is.list(funs[[i]]),
+      "Each element of {.arg funs} must be a {.cls list}."
+    )
+    fun_names <- names(funs[[i]])
+    stopifnot_(
+      !is.null(fun_names),
+      "Each element of {.arg funs} must be named."
+    )
+    for (j in seq_along(funs[[i]])) {
+      stopifnot_(
+        is.function(funs[[i]][[j]]),
+        "Each element of {.arg funs} must contain only functions."
+      )
       out[[idx]] <- list(
-        fun = funs[[i]],
-        name = funs_names[i],
+        fun = funs[[i]][[j]],
+        name = paste0(funs_names[i], "_", fun_names[j]),
         target = funs_names[i]
       )
       idx <- idx + 1L

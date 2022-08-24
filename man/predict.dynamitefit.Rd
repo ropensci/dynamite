@@ -39,7 +39,7 @@ in terms of memory usage to first remove redundant columns from \code{newdata}.}
 
 \item{funs}{[\code{list()}]\cr A named list whose names should correspond to the
 response variables of the model. Each element of \code{funs} should be a
-function or a \code{list} of functions that will be applied to the
+a named \code{list} of functions that will be applied to the
 corresponding predicted responses of the channel over the individuals
 for each combination of the posterior draws and time points.
 In other words, the resulting predictions will be averages

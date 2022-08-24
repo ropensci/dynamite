@@ -23,7 +23,7 @@
 #'   `"response"` (default), `"mean"`, or `"link"`.
 #' @param funs \[`list()`]\cr A named list whose names should correspond to the
 #'   response variables of the model. Each element of `funs` should be a
-#'   function or a `list` of functions that will be applied to the
+#'   a named `list` of functions that will be applied to the
 #'   corresponding predicted responses of the channel over the individuals
 #'   for each combination of the posterior draws and time points.
 #'   In other words, the resulting predictions will be averages
@@ -517,7 +517,7 @@ assign_summaries <- function(summaries, simulated, funs, idx, idx_summ) {
       i = idx_summ,
       j = f$name,
       value = simulated[
-        idx, lapply(.SD, ..f$fun), by = .draw, .SDcols = f$target
+        idx, lapply(.SD, ..f$fun), by = ".draw", .SDcols = f$target
       ][[f$target]]
     )
   }

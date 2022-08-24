@@ -812,6 +812,40 @@ test_that("negative n_draws fails", {
   )
 })
 
+test_that("non-logical expand fails", {
+  expect_error(
+    predict(gaussian_example_fit, expand = data.frame()),
+    "Argument `expand` must be a single <logical> value\\."
+  )
+})
+
+test_that("invalid funs fails", {
+  expect_error(
+    predict(gaussian_example_fit, funs = 1L),
+    "Argument `funs` must be a <list>\\."
+  )
+  expect_error(
+    predict(gaussian_example_fit, funs = list(1L)),
+    "Argument `funs` must be named\\."
+  )
+  expect_error(
+    predict(gaussian_example_fit, funs = list(w = 1L)),
+    "The names of `funs` must be response variables of the model\\."
+  )
+  expect_error(
+    predict(gaussian_example_fit, funs = list(y = 1L)),
+    "Each element of `funs` must be a <list>\\."
+  )
+  expect_error(
+    predict(gaussian_example_fit, funs = list(y = list(1L))),
+    "Each element of `funs` must be named\\."
+  )
+  expect_error(
+    predict(gaussian_example_fit, funs = list(y = list(fun = 1L))),
+    "Each element of `funs` must contain only functions\\."
+  )
+})
+
 # Prior errors ------------------------------------------------------------
 
 p <- get_priors(gaussian_example_fit)
