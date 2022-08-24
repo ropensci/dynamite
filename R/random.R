@@ -3,6 +3,7 @@
 #' This function can be used as part of [dynamiteformula()] to define
 #' (correlated) random intercepts for each group.
 #'
+#' @export
 #' @param responses \[`character()`]\cr Names of the responses for which the
 #'   random intercepts should be defined. Default is all responses defined with
 #'   `obs`.
@@ -10,7 +11,6 @@
 #'   intercepts within a group (i.e., between responses) are modeled so that
 #'   the intercepts follow a multivariate normal distribution.
 #' @return An object of class `random`.
-#' @export
 #' @examples
 #' # three channel model with correlated random effects for responses x and y
 #' obs(y ~ 1, family = "gaussian") +

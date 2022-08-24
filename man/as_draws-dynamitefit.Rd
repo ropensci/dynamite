@@ -27,6 +27,8 @@ all values listed in details except spline coefficients \code{omega} and
 }
 \value{
 A \code{draws_df} object.
+
+A \code{draws_df} object.
 }
 \description{
 Converts the output from \code{\link[=dynamite]{dynamite()}} call to a

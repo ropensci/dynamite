@@ -39,6 +39,10 @@ extracted, and time-varying alpha if time-varying delta are extracted.}
 
 \item{...}{Ignored.}
 }
+\value{
+A \code{tibble} containing either samples or summary statistics of the
+model parameters in a long format.
+}
 \description{
 Extracts either time-varying or time-invariant parameters of the model.
 }

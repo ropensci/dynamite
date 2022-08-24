@@ -4,6 +4,7 @@
 #' forecasting (i.e., predictions for time indices beyond the last time index
 #' in the original data) is not supported by the \pkg{dynamite} package.
 #'
+#' @export
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param newdata \[`data.frame`]\cr Data used in predictions. Predictions are
 #'   computed for missing (`NA`) values in the response variable columns, and
@@ -30,7 +31,7 @@
 #'   missing predictor values. Currently supported options are
 #'   no imputation: `"none"` (default), and
 #'   last observation carried forward: `"locf"`.
-#' @param new_levels \[`character(1)`: \sQuote{NULL}]\cr
+#' @param new_levels \[`character(1)`]\cr
 #'   Defines if and how to sample the random intercepts for observations whose
 #'   group level was not present in the original data. The options are
 #'     * `"none"` (the default) which will signal an error if new levels
@@ -52,7 +53,7 @@
 #' @param n_draws \[`integer(1)`]\cr Number of posterior samples to use,
 #'   default is `NULL` which uses all samples.
 #' @param ... Ignored.
-#' @export
+#' @return A `data.frame` containing the predicted values.
 #' @srrstats {G2.3a} Uses match.arg.
 #' @srrstats {RE2.2} Missing responses can be predicted.
 #' @srrstats {G2.13, G2.14, G2.14a, G2.14b, G2.14c, G2.15}
@@ -63,6 +64,7 @@
 #'   `new_levels` parameter.
 #' @examples
 #' predict(gaussian_example_fit, type = "response", n_draws = 2L)
+#'
 predict.dynamitefit <- function(object, newdata = NULL,
                                 type = c("response", "mean", "link"),
                                 funs = list(),

@@ -24,11 +24,11 @@
 #'  * `omega` Spline coefficients of the regression coefficients `delta`.
 #'  * `omega_alpha` Spline coefficients of time-varying `alpha`.
 #'
+#' @export
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @inheritParams as.data.frame.dynamitefit
 #' @return A `draws_df` object.
 #' @aliases as_draws as_draws_df
-#' @export
 #' @export as_draws_df
 #' @rdname as_draws-dynamitefit
 #' @method as_draws_df dynamitefit
@@ -72,6 +72,7 @@ as_draws_df.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
 #' @export as_draws
 #' @rdname as_draws-dynamitefit
 #' @method as_draws dynamitefit
+#' @return A `draws_df` object.
 #' @inheritParams as_draws_df.dynamitefit
 as_draws.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
   as_draws_df.dynamitefit(x, responses, types, ...)

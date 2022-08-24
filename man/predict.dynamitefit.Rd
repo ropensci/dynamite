@@ -40,7 +40,7 @@ missing predictor values. Currently supported options are
 no imputation: \code{"none"} (default), and
 last observation carried forward: \code{"locf"}.}
 
-\item{new_levels}{[\code{character(1)}: \sQuote{NULL}]\cr
+\item{new_levels}{[\code{character(1)}]\cr
 Defines if and how to sample the random intercepts for observations whose
 group level was not present in the original data. The options are
 * \code{"none"} (the default) which will signal an error if new levels
@@ -66,6 +66,9 @@ default is \code{NULL} which uses all samples.}
 
 \item{...}{Ignored.}
 }
+\value{
+A \code{data.frame} containing the predicted values.
+}
 \description{
 Obtain counterfactual predictions for a \code{dynamitefit} object. Note that
 forecasting (i.e., predictions for time indices beyond the last time index
@@ -73,4 +76,5 @@ in the original data) is not supported by the \pkg{dynamite} package.
 }
 \examples{
 predict(gaussian_example_fit, type = "response", n_draws = 2L)
+
 }

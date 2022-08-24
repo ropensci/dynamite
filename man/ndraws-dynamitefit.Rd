@@ -18,4 +18,5 @@ Return the Number of Posterior Draws of a \code{dynamitefit} Object
 }
 \examples{
 ndraws(gaussian_example_fit)
+
 }

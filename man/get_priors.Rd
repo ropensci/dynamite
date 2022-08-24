@@ -51,10 +51,8 @@ Only the \code{prior} column of the output should be altered when defining
 the user-defined priors for the \code{dynamite}.
 }
 \examples{
-
 d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
 get_priors(obs(y ~ x, family = "gaussian"),
   data = d, time = "time", group = "id"
 )
-
 }

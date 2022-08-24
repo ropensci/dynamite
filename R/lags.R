@@ -4,6 +4,7 @@
 #' [dynamiteformula()] as a predictor to each channel. The added predictors
 #' can be either time-varying or time-invariant.
 #'
+#' @export
 #' @param k \[`integer()`]\cr
 #'   Values lagged by `k` units of time of each observed response variable
 #'   will be added as a predictor for each channel. Should be a positive
@@ -12,7 +13,7 @@
 #'   `"fixed"` or `"varying"` which indicates whether the coefficients of the
 #'   added lag terms should vary in time or not.
 #' @return An object of class `lags`.
-#' @export
+#' @srrstats {G2.3a} Uses match.arg
 #' @examples
 #' obs(y ~ -1 + varying(~x), family = "gaussian") +
 #'   lags(type = "varying") + splines(df = 20)
@@ -28,7 +29,6 @@
 #'   obs(y ~ z, family = "categorical") +
 #'   lags(type = "fixed")
 #'
-#' @srrstats {G2.3a} Uses match.arg
 lags <- function(k = 1L, type = c("fixed", "varying")) {
   type <- onlyif(is.character(type), tolower(type))
   type <- try(match.arg(type, c("fixed", "varying")), silent = TRUE)

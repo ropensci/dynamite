@@ -16,6 +16,8 @@
 #' @note Only the `prior` column of the output should be altered when defining
 #' the user-defined priors for the `dynamite`.
 #'
+#' @export
+#' @rdname get_priors
 #' @param x \[`dynamiteformula` or `dynamitefit`]\cr The model formula or an
 #'   existing `dynamitefit` object. See [dynamiteformula()] and [dynamite()].
 #' @param data
@@ -28,16 +30,12 @@
 #'   time axis.
 #' @param ... Ignored.
 #' @return A `data.frame` containing the prior definitions.
-#' @rdname get_priors
-#' @export
+#' @srrstats {BS5.2} Provides access to the prior definitions of the model.
 #' @examples
-#'
 #' d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
 #' get_priors(obs(y ~ x, family = "gaussian"),
 #'   data = d, time = "time", group = "id"
 #' )
-#'
-#' @srrstats {BS5.2} Provides access to the prior definitions of the model.
 get_priors <- function(x, ...) {
   UseMethod("get_priors", x)
 }
@@ -72,12 +70,11 @@ get_priors.dynamitefit <- function(x, ...) {
 #' Returns the Stan code of the model. Mostly useful for debugging or for
 #' building a customized version of the model.
 #'
-#' @inheritParams get_priors.dynamiteformula
-#' @return A Stan model code as an object of type `character`.
-#' @rdname get_code
 #' @export
+#' @rdname get_code
+#' @inheritParams get_priors.dynamiteformula
+#' @return A Stan model code as a `character` string.
 #' @examples
-#'
 #' d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
 #' cat(get_code(obs(y ~ x, family = "gaussian"),
 #'   data = d, time = "time", group = "id"
@@ -87,6 +84,7 @@ get_priors.dynamitefit <- function(x, ...) {
 #'   data = d, time = "time", group = "id",
 #'   debug = list(model_code = TRUE, no_compile = TRUE)
 #' )$model_code)
+#'
 get_code <- function(x, ...) {
   UseMethod("get_code", x)
 }
@@ -118,15 +116,16 @@ get_code.dynamitefit <- function(x, ...) {
 #'
 #' Returns the input data to the Stan model. Mostly useful for debugging.
 #'
+#' @export
+#' @rdname get_data
 #' @inheritParams get_priors.dynamiteformula
 #' @return A `list` containing the input data to Stan.
-#' @rdname get_data
-#' @export
 #' @examples
 #' d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
 #' str(get_data(obs(y ~ x, family = "gaussian"),
 #'   data = d, time = "time", group = "id"
 #' ))
+#'
 get_data <- function(x, ...) {
   UseMethod("get_data", x)
 }

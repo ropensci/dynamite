@@ -48,4 +48,5 @@ intercepts leads to too many plots.
 }
 \examples{
 plot(gaussian_example_fit, type = "beta")
+
 }
