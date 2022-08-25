@@ -139,25 +139,6 @@ assign_lags <- function(data, idx, ro, lhs, rhs, skip = FALSE, offset = 1L) {
   }
 }
 
-#' Assign Values of Lagged Channels for Prediction
-#'
-#' @inheritParams assign_lags
-#' @param from \[`data.table`]\cr Data that contains the values to be assigned.
-#' @param to \[`data.table`]\cr Data to assign the values into.
-#' @param idx_from \[`integer()`]\cr A vector of indices.
-#' @param idx_to \[`integer()`]\cr A vector of indices.
-#' @noRd
-assign_lags_predict <- function(from, to, idx_from, idx_to, ro, lhs, rhs,
-                                skip = FALSE, offset = 1L) {
-  if (!skip) {
-    for (k in ro) {
-      data.table::set(
-        to, i = idx_to, j = lhs[k], value = from[[rhs[k]]][idx_from - offset]
-      )
-    }
-  }
-}
-
 #' Assign Values of Lagged Channels Without Overriding Initial Values
 #'
 #' @inheritParams assign_lags

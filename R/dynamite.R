@@ -435,8 +435,6 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
 #' @inheritParams parse_data
 #' @noRd
 parse_past <- function(dformula, data, group_var, time_var) {
-  n_time <- n_unique(data[[time_var]])
-  n_group <- ifelse_(is.null(group_var), 1L, n_unique(data[[group_var]]))
   past <- has_past(dformula)
   for (i in seq_along(dformula)) {
     if (past[i]) {
@@ -479,7 +477,6 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
   channels_stoch <- which_stochastic(dformula)
   resp_all <- get_responses(dformula)
   resp_stoch <- resp_all[channels_stoch]
-  n_rows <- data[, .N]
   n_channels <- length(resp_all)
   max_lag <- 0L
   for (i in seq_len(n_channels)) {
@@ -612,7 +609,6 @@ parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
   idx <- 0L
   k <- lags_def$k
   type <- lags_def$type
-  resp_all <- get_responses(dformula)
   max_lag <- ifelse_(is.null(lags_def), 0L, max(k))
   n_stoch <- length(resp_stoch)
   n_lag <- max_lag * n_stoch
@@ -665,7 +661,6 @@ parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
 parse_singleton_lags <- function(dformula, data, group_var,
                                  lag_map, valid_resp, verbose) {
   n_lag <- nrow(lag_map)
-  n_resp <- length(dformula)
   resp_all <- get_responses(dformula)
   channels <- vector(mode = "list", length = n_lag)
   resp_lag <- character(n_lag)
@@ -738,10 +733,7 @@ parse_singleton_lags <- function(dformula, data, group_var,
 #' @noRd
 prepare_lagged_response <- function(dformula, lag_map,
                                     resp, resp_all, verbose) {
-  n_resp <- length(dformula)
   y <- list()
-  y_obs <- NULL
-  y_self <- NULL
   y$resp <- resp
   y$lag_idx <- which(lag_map$var == resp)
   y$src <- lag_map$src[y$lag_idx]

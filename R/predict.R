@@ -279,7 +279,6 @@ predict_full <- function(object, simulated, observed, type, eval_type,
                          group_var, time_var, expand) {
   formulas_stoch <- get_formulas(object$dformulas$stoch)
   resp_stoch <- get_responses(object$dformulas$stoch)
-  resp_det <- get_responses(object$dformulas$det)
   lhs_ld <- get_responses(object$dformulas$lag_det)
   rhs_ld <- get_predictors(object$dformulas$lag_det)
   lhs_ls <- get_responses(object$dformulas$lag_stoch)
@@ -388,7 +387,6 @@ predict_summary <- function(object, storage, observed, funs, new_levels,
 
   formulas_stoch <- get_formulas(object$dformulas$stoch)
   resp_stoch <- get_responses(object$dformulas$stoch)
-  resp_det <- get_responses(object$dformulas$det)
   lhs_ld <- get_responses(object$dformulas$lag_det)
   rhs_ld <- get_predictors(object$dformulas$lag_det)
   lhs_ls <- get_responses(object$dformulas$lag_stoch)
@@ -398,7 +396,6 @@ predict_summary <- function(object, storage, observed, funs, new_levels,
     attr(object$dformulas$lag_det, "rank_order")
   )
   ro_ls <- seq_along(lhs_ls)
-  n_new <- nrow(storage)
   n_group <- ifelse_(is.null(group_var), 1L, n_unique(observed[[group_var]]))
   time <- observed[[time_var]]
   u_time <- unique(time)

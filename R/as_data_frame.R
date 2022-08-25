@@ -236,8 +236,8 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     pars <- unique(out$parameter)
     out <- out |>
       dplyr::group_by(
-        # create ordered factor so the order of parameters is not changed by
-        # group_by + summarise
+        # create ordered factor so the order of parameters is not changed
+        # by group_by and summarise
         parameter = factor(.data$parameter, levels = pars, ordered = TRUE),
         .data$time, .data$category, .data$group,
         .data$response, .data$type
@@ -478,7 +478,7 @@ as_data_frame_sigma_nu <- function(draws, response, ...) {
   as_data_frame_default("sigma_nu", draws, response)
 }
 
-#' @describeIn as_data_frame_default Data Frame for a "phi" Pparameter
+#' @describeIn as_data_frame_default Data Frame for a "phi" Parameter
 #' @noRd
 as_data_frame_phi <- function(draws, response, ...) {
   as_data_frame_default("phi", draws, response)
