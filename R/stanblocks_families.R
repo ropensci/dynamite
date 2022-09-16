@@ -730,11 +730,12 @@ model_lines_default <- function(y, idt, noncentered, shrinkage, has_varying,
       .parse = FALSE
     )
   } else {
+    lambda_term1 <- ifelse_(shrinkage, " * lambda[1]", "")
     lambda_term <- ifelse_(shrinkage, " * lambda[i - 1]", "")
     mtext_omega <- paste_rows(
       paste0(
         "omega_raw_alpha_{y}[1] ~ normal(omega_alpha_1_{y}, ",
-        "tau_alpha_{y}{lambda_term});"
+        "tau_alpha_{y}{lambda_term1});"
       ),
       "for (i in 2:(D - 1)) {{",
       paste0(
@@ -842,6 +843,7 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
   }
   mtext_fixed_intercept <- mtext_alpha
 
+  lambda_term1 <- ifelse_(shrinkage, " * lambda[1]", "")
   lambda_term <- ifelse_(shrinkage, " * lambda[i - 1]", "")
   mtext_omega <- ifelse_(
     noncentered,
@@ -856,7 +858,7 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
       "for (s in 1:{S - 1}) {{",
       paste0(
         "omega_raw_alpha_{y}[s, 1] ~ normal(omega_alpha_1_{y}[s], ",
-        "tau_alpha_{y}{lambda_term});"
+        "tau_alpha_{y}{lambda_term1});"
       ),
       "for (i in 2:(D - 1)) {{",
       paste0(
