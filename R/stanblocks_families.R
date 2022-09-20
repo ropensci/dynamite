@@ -491,7 +491,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
 
   paste_rows(
     onlyif(has_varying && noncentered, mtext_varying_noncentered),
-    onlyif(has_varying && !noncentered, mtext_varying),
+    onlyif(has_varying, mtext_varying),
     onlyif(has_fixed_intercept, mtext_fixed_intercept),
     onlyif(has_varying_intercept, mtext_varying_intercept),
     .indent = idt(c(1, 0, 0, 0))
@@ -630,7 +630,7 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
 
   paste_rows(
     onlyif(has_varying && noncentered, mtext_varying_noncentered),
-    onlyif(has_varying && !noncentered, mtext_varying),
+    onlyif(has_varying, mtext_varying),
     onlyif(has_fixed_intercept, mtext_fixed_intercept),
     onlyif(has_varying_intercept, mtext_varying_intercept),
     .indent = idt(c(1, 0, 0, 0))
