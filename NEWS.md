@@ -4,6 +4,8 @@
     argument, as per issue #48.
   * Fixed some typos and other issues in the vignette raised by @nicholasjclark 
     during the rOpenSci review process.
+  * Added an example of simulating from prior predictive distribution to the 
+    documentation of `predict`.
   
 # dynamite 0.0.2
 
