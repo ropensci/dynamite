@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 #' @srrstats {BS1.2b} The package contains a vignette.
 ```
 
-```{r setup}
+```{r setup, echo = FALSE}
 library(dynamite)
 ```
 
@@ -375,12 +375,12 @@ which then uses to parallel Markov chains in the the Markov chain Monte Carlo
 As an example, we consider the famous Grunfeld dataset, available in the 
 package `plm`:
 
-```{r, eval = FALSE}
+```{r}
 library(dynamite)
 library(dplyr)
 data(Grunfeld, package = "plm")
 d <- Grunfeld |> 
-  mutate(invest = inv, firm = factor(firm) |> 
+  mutate(invest = inv, firm = factor(firm)) |> 
   select(-inv)
 head(d)
 ```
@@ -396,12 +396,17 @@ capital on the investment, but with a firm-specific random intercept
 
 ```{r, eval = FALSE}
 fit_grunfeld <- dynamite(obs(invest ~ value + capital,
-  family = "gaussian", random_intercept = TRUE),
+  family = "gaussian") + random(),
   d, "firm", "year",
   chains = 1, cores = 1, refresh = 500, iter = 2000, 
   save_warmup = FALSE)
 fit_grunfeld
 ```
+```{r, echo = FALSE}
+fit_grunfeld <- readRDS("fit_grunfeld.rds")
+fit_grunfeld
+```
+
 
 Instead of random intercept terms for each firm, an fixed effect approach would 
 have been possible by using the formula 
@@ -411,7 +416,7 @@ As we used weakly informative default priors, the coefficient estimates are
 close to the ones obtained with the `plm` package which is based on  
 ordinary least squares:
 
-```{r, eval = FALSE}
+```{r}
 fit_plm <- plm::plm(invest ~ value + capital, data = d, 
                     index = c("firm", "year"), 
                     effect = "individual", model = "within")
@@ -457,8 +462,8 @@ Note that this produces a warning message related to the
 deterministic channel `logp`:
 
 ```{r, eval = TRUE, echo = FALSE}
-  fit <- dynamite(f, multichannel_example, "id", "time", 
-                  debug = list(no_compile = TRUE))
+fit <- dynamite(f, multichannel_example, "id", "time", 
+                debug = list(no_compile = TRUE))
 ```
 
 This happens because the formulas of the other channels have `lag(logp)` as a 
@@ -511,16 +516,16 @@ newdata1 <- d |>
 pred1 <- predict(multichannel_example_fit, newdata = newdata1)
 ```
 
-The output from `predict` is a `list` with two components, simulate: the first contains
-the predicted values in a data frame with the columns `g_new`, `p_new`, and 
-`b_new` where the NA values of `newdata` are 
-replaced with the posterior samples from the model (the output also contains 
-additional column corresponding to the auxiliary channel 
-`logp` and index variable `.draw`), the second components contains 
-the original predictors of `newdata` :
+By default, the output from `predict` is a single data frame containing the 
+original new data and the samples from the posterior predictive distribution. 
+In this case the the predicted values in a data frame are in the columns `g_new`, `p_new`, and `b_new` where the NA values of `newdata` are replaced with the 
+posterior samples from the model (the output also contains additional column corresponding to the auxiliary channel `logp` and index variable `.draw`). For 
+more memory efficient format, by using argument `expand = FALSE` the output is 
+returned as a `list` with two components, `simulated` and `observed`, with 
+new samples and original `newdata` respectively.
 
 ```{r}
-head(pred0$simulated)
+head(pred0)
 ```
 
 We can now compute summary statistics over the individuals and then over the 

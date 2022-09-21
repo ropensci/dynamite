@@ -95,9 +95,13 @@ A \code{data.frame} containing the predicted values or a \code{list} of two
 \code{data.frames}. See the \code{expand} argument for details.
 }
 \description{
-Obtain counterfactual predictions for a \code{dynamitefit} object. Note that
-forecasting (i.e., predictions for time indices beyond the last time index
-in the original data) is not supported by the \pkg{dynamite} package.
+Obtain counterfactual predictions for a \code{dynamitefit} object.
+}
+\details{
+Note that forecasting (i.e., predictions for time indices beyond the last
+time index in the original data) is not supported by the \pkg{dynamite}
+package. However, such predictions can be obtained by augmenting the
+original data with NA values before model estimation.
 }
 \examples{
 predict(gaussian_example_fit, type = "response", n_draws = 2L)
