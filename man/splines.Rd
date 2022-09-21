@@ -33,7 +33,8 @@ varying effects.}
 
 \item{noncentered}{[\code{logical()}]\cr If \code{TRUE}, use a noncentered
 parameterization for the spline coefficients. Default is \code{FALSE}. Try
-changing this if you encounter divergences or other problems in sampling.
+changing this if you encounter divergences or other problems in sampling
+for example when simulating from prior predictive distribution.
 Can be a single logical value, or vector of logical values, defining the
 parameterization separately for each channel, even for channels without
 varying effects.}
