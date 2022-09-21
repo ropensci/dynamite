@@ -17,7 +17,83 @@ vectorizable_prior <- function(x) {
   length(x) == 1 && !grepl("\\(", x)
 }
 
-# TODO document all *_lines_* function arguments once
+#' Parameters for Stan Code Generation
+#'
+#' Each of the following functions of the form `(stan_block)_lines_(family)`
+#' uses a subset from a  common set of arguments that are documented here.
+#'
+#' @param y \[`character(1)`]\cr The name of the response of the channel.
+#' @param idt \[`function`]\cr An indentation function, see [indenter_()].
+#' @param obs \[`integer()`]\cr A vector of indices indicating non-missing
+#'   values of the channel.
+#' @param has_missing \[`logical(1)`]\cr Does the channel contain missing
+#'   observations?
+#' @param has_offset \[`logical(1)`]\cr Does the channel contain an offset term
+#' @param has_fixed \[`logical(1)`]\cr Does the channel have time-invariant
+#'   predictors?
+#' @param has_varying \[`logical(1)`]\cr Does the channel have time-varying
+#'   predictors?
+#' @param has_fixed_intercept \[`logical(1)`]\cr Does the channel have a
+#'   time-invariant intercept?
+#' @param has_varying_intercept \[`logical(1)`]\cr Does the channel have a
+#'   time-varying intercept?
+#' @param has_random_intercept \[`logical(1)`]\cr Does the channel have a
+#'   random intercept?
+#' @param noncentered \[`logical(1)`]\cr Should the noncentered parametrization
+#'   be used?
+#' @param shrinkage \[`logical(1)`]\cr Should the common global shrinkage
+#'   parameter be used?
+#' @param lb \[`double(1)`]\cr Lower bound for the `tau` parameter.
+#' @param J \[`integer()`]\cr Model matrix column indices of the predictors
+#'   of the channel
+#' @param J_fixed \[`integer()`]\cr Model matrix column indices of the
+#'   time-invariant predictors of the channel
+#' @param J_varying \[`integer()`]\cr Model matrix column indices of the
+#'   time-varying predictors of the channel
+#' @param K \[`integer(1)`]\cr Total number of predictors of the channel
+#' @param K_fixed \[`integer(1)`]\cr Number of time-invariant predictors of
+#'   the channel.
+#' @param K_varying \[`integer(1)`]\cr Number of time-varying predictors of
+#'   the channel.
+#' @param L_fixed \[`integer(1)`]\cr Indices of the time-invariant predictors
+#'   of the channel in the joint parameter vector `gamma`.
+#' @param L_varying \[`integer(1)`]\cr Indices of the time-varying predictors
+#'   of the channel in the joint parameter vector `gamma`.
+#' @param S \[`integer(1)`]\cr Number of categories for a categorical channel.
+#' @param write_alpha \[`logical(1)`]\cr Should the `alpha` parameters of the
+#'   model be written to the model code?
+#' @param write_beta \[`logical(1)`]\cr Should the `beta` parameters of
+#'   time-invariant predictors be written to the model code?
+#' @param write_delta \[`logical(1)`]\cr Should the `delta` parameters of
+#'   time-varying predictors be written to the model code?
+#' @param write_tau \[`logical(1)`]\cr Should the `tau` parameters be written
+#'   to the model code?
+#' @param sigma_prior_distr \[`character(1)`]\cr `sigma` parameter prior
+#'   specification.
+#' @param sigma_nu_prior_distr \[`character(1)`]\cr `sigma_nu` parameter prior
+#'   specification.
+#' @param alpha_prior_distr \[`character(1)`]\cr `alpha` parameter prior
+#'   specification.
+#' @param alpha_prior_npars \[`integer(1)`]\cr Number of parameters for the
+#'   prior of `alpha`.
+#' @param tau_alpha_prior_distr \[`character(1)`]\cr `tau_alpha` parameter
+#'   prior specification.
+#' @param beta_prior_distr \[`character(1)`]\cr `beta` parameter prior
+#'   specification.
+#' @param beta_prior_npars \[`integer(1)`]\cr Number of parameters for the
+#'   prior of `beta`.
+#' @param delta_prior_distr \[`character(1)`]\cr `delta` parameter prior
+#'   specification.
+#' @param delta_prior_npars \[`integer(1)`]\cr Number of parameters for the
+#'   prior of `delta`.
+#' @param tau_prior_distr \[`character(1)`]\cr `tau` parameter prior
+#'   specification.
+#' @param tau_prior_npars \[`integer(1)`]\cr Number of parameters for the
+#'   prior of `tau`.
+#' @param phi_prior_distr \[`character(1)`]\cr `phi` parameter prior
+#'   specification.
+#' @noRd
+NULL
 
 # Data block --------------------------------------------------------------
 
@@ -32,7 +108,6 @@ data_lines_default <- function(y, idt, has_missing, ...) {
 
 data_lines_categorical <- function(y, idt, has_missing, ...) {
   dtext_def <- data_lines_default(y, idt, has_missing)
-  # allow zero as a placeholder for NAs
   dtext <- paste_rows(
     "int<lower=0> {y}[T, N];",
     .indent = idt(1)
