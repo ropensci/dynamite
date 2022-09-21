@@ -2,18 +2,18 @@
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
   "identifier": "dynamite",
-  "description": "What the package does (one paragraph).",
-  "name": "dynamite: Bayesian Modelling and Causal Inference for Multivariate Longitudinal Data",
+  "description": "Easy-to-use and efficient interface for Bayesian inference of complex panel (time series) data. The package supports joint modeling of multiple measurements per individual, time-varying and time-invariant effects, and a wide range of discrete and continuous distributions. Estimation of the models is carried out via 'Stan'.",
+  "name": "dynamite: Bayesian Modeling and Causal Inference for Multivariate\n    Longitudinal Data",
   "codeRepository": "https://github.com/santikka/dynamite",
   "issueTracker": "https://github.com/santikka/dynamite/issues",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.1.2 (2021-11-01)",
+  "runtimePlatform": "R version 4.2.1 (2022-06-23 ucrt)",
   "author": [
     {
       "@type": "Person",
@@ -66,6 +66,18 @@
     },
     {
       "@type": "SoftwareApplication",
+      "identifier": "plm",
+      "name": "plm",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=plm"
+    },
+    {
+      "@type": "SoftwareApplication",
       "identifier": "rmarkdown",
       "name": "rmarkdown",
       "provider": {
@@ -75,6 +87,19 @@
         "url": "https://cran.r-project.org"
       },
       "sameAs": "https://CRAN.R-project.org/package=rmarkdown"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "testthat",
+      "name": "testthat",
+      "version": ">= 3.0.0",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=testthat"
     }
   ],
   "softwareRequirements": {
@@ -82,9 +107,58 @@
       "@type": "SoftwareApplication",
       "identifier": "R",
       "name": "R",
-      "version": ">= 3.5.0"
+      "version": ">= 4.1.0"
     },
     "2": {
+      "@type": "SoftwareApplication",
+      "identifier": "bayesplot",
+      "name": "bayesplot",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=bayesplot"
+    },
+    "3": {
+      "@type": "SoftwareApplication",
+      "identifier": "checkmate",
+      "name": "checkmate",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=checkmate"
+    },
+    "4": {
+      "@type": "SoftwareApplication",
+      "identifier": "cli",
+      "name": "cli",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=cli"
+    },
+    "5": {
+      "@type": "SoftwareApplication",
+      "identifier": "data.table",
+      "name": "data.table",
+      "version": ">= 1.14.3",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=data.table"
+    },
+    "6": {
       "@type": "SoftwareApplication",
       "identifier": "dplyr",
       "name": "dplyr",
@@ -96,7 +170,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=dplyr"
     },
-    "3": {
+    "7": {
       "@type": "SoftwareApplication",
       "identifier": "glue",
       "name": "glue",
@@ -108,12 +182,31 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=glue"
     },
-    "4": {
+    "8": {
       "@type": "SoftwareApplication",
-      "identifier": "methods",
-      "name": "methods"
+      "identifier": "ggplot2",
+      "name": "ggplot2",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=ggplot2"
     },
-    "5": {
+    "9": {
+      "@type": "SoftwareApplication",
+      "identifier": "MASS",
+      "name": "MASS",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=MASS"
+    },
+    "10": {
       "@type": "SoftwareApplication",
       "identifier": "posterior",
       "name": "posterior",
@@ -125,7 +218,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=posterior"
     },
-    "6": {
+    "11": {
       "@type": "SoftwareApplication",
       "identifier": "rlang",
       "name": "rlang",
@@ -137,11 +230,11 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=rlang"
     },
-    "7": {
+    "12": {
       "@type": "SoftwareApplication",
       "identifier": "rstan",
       "name": "rstan",
-      "version": ">= 2.18.1",
+      "version": ">= 2.26.11",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
@@ -150,32 +243,60 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=rstan"
     },
+    "13": {
+      "@type": "SoftwareApplication",
+      "identifier": "stats",
+      "name": "stats"
+    },
+    "14": {
+      "@type": "SoftwareApplication",
+      "identifier": "tidyr",
+      "name": "tidyr",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=tidyr"
+    },
+    "15": {
+      "@type": "SoftwareApplication",
+      "identifier": "utils",
+      "name": "utils"
+    },
     "SystemRequirements": null
   },
-  "fileSize": "142.15KB",
+  "fileSize": "256978.704KB",
   "citation": [
     {
-      "@type": "ScholarlyArticle",
-      "datePublished": "todo",
+      "@type": "SoftwareSourceCode",
+      "datePublished": "2022",
       "author": [
         {
-          "@type": "Organization",
-          "name": "todo"
+          "@type": "Person",
+          "givenName": "Santtu",
+          "familyName": "Tikka"
+        },
+        {
+          "@type": "Person",
+          "givenName": "Jouni",
+          "familyName": "Helske"
         }
       ],
-      "name": "todo",
-      "url": "todo",
-      "isPartOf": {
-        "@type": "PublicationIssue",
-        "datePublished": "todo",
-        "isPartOf": {
-          "@type": ["PublicationVolume", "Periodical"],
-          "name": "todo"
-        }
-      }
+      "name": "Bayesian Modeling and Causal Inference for Multivariate\n    Longitudinal Data",
+      "url": "https://github.com/santikka/dynamite",
+      "description": "R package version 0.0.1"
     }
   ],
+  "releaseNotes": "https://github.com/santikka/dynamite/blob/master/NEWS.md",
   "readme": "https://github.com/santikka/dynamite/blob/main/README.md",
   "contIntegration": ["https://github.com/santikka/dynamite/actions", "https://app.codecov.io/gh/santikka/dynamite?branch=main"],
-  "developmentStatus": "https://www.repostatus.org/#wip"
+  "developmentStatus": "https://www.repostatus.org/#active",
+  "review": {
+    "@type": "Review",
+    "url": "https://github.com/ropensci/software-review/issues/554",
+    "provider": "https://ropensci.org"
+  },
+  "keywords": ["bayesian-inference", "panel-data", "r", "r-package", "rstats", "stan"]
 }
