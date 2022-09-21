@@ -8,7 +8,7 @@
 \usage{
 get_data(x, ...)
 
-\method{get_data}{dynamiteformula}(x, data, group, time, ...)
+\method{get_data}{dynamiteformula}(x, data, group = NULL, time, ...)
 
 \method{get_data}{dynamitefit}(x, ...)
 }
@@ -19,14 +19,21 @@ existing \code{dynamitefit} object. See \code{\link[=dynamiteformula]{dynamitefo
 \item{...}{Ignored.}
 
 \item{data}{[\code{data.frame}, \code{tibble::tibble}, or \code{data.table::data.table}]\cr
-A data frame, a tibble or a data.table containing the variables in the
-model.}
+The data that contains the variables in the
+model. Supported column types are \code{integer}, \code{logical}, \code{double}, and
+\code{factor}. Columns of type \code{character} will be converted to factors.
+Unused factor levels will be dropped. The \code{data} can contain missing
+values which will simply be ignored in the estimation in a case-wise
+fashion (per time-point and per channel). Input \code{data} is converted to
+channel specific matrix representations via \code{\link[stats:model.matrix]{stats::model.matrix.lm()}}.}
 
 \item{group}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
-unique groups.}
+unique groups or \code{NULL} corresponding to a scenario without any groups.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
-time axis.}
+time index of observations. If this variable is a factor, the integer
+representation of its levels are used internally for defining the time
+indexing.}
 }
 \value{
 A \code{list} containing the input data to Stan.
