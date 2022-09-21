@@ -20,14 +20,7 @@
 #' @rdname get_priors
 #' @param x \[`dynamiteformula` or `dynamitefit`]\cr The model formula or an
 #'   existing `dynamitefit` object. See [dynamiteformula()] and [dynamite()].
-#' @param data
-#'   \[`data.frame`, `tibble::tibble`, or `data.table::data.table`]\cr
-#'   A data frame, a tibble or a data.table containing the variables in the
-#'   model.
-#' @param group \[`character(1)`]\cr A column name of `data` that denotes the
-#'   unique groups.
-#' @param time \[`character(1)`]\cr A column name of `data` that denotes the
-#'   time axis.
+#' @inheritParams dynamite
 #' @param ... Ignored.
 #' @return A `data.frame` containing the prior definitions.
 #' @srrstats {BS5.2} Provides access to the prior definitions of the model.
@@ -43,7 +36,7 @@ get_priors <- function(x, ...) {
 #' @method get_priors dynamiteformula
 #' @rdname get_priors
 #' @export
-get_priors.dynamiteformula <- function(x, data, group, time, ...) {
+get_priors.dynamiteformula <- function(x, data, group = NULL, time, ...) {
   out <- do.call(
     "dynamite",
     list(
@@ -91,7 +84,7 @@ get_code <- function(x, ...) {
 
 #' @rdname get_code
 #' @export
-get_code.dynamiteformula <- function(x, data, group, time, ...) {
+get_code.dynamiteformula <- function(x, data, group = NULL, time, ...) {
   out <- do.call(
     "dynamite",
     list(
@@ -132,7 +125,7 @@ get_data <- function(x, ...) {
 
 #' @rdname get_data
 #' @export
-get_data.dynamiteformula <- function(x, data, group, time, ...) {
+get_data.dynamiteformula <- function(x, data, group = NULL, time, ...) {
   out <- do.call(
     "dynamite",
     list(
