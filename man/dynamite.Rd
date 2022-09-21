@@ -152,15 +152,14 @@ fit <- dynamite(
 
 library(dplyr)
 library(ggplot2)
-cf <- coef(fit) \%>\%
-  group_by(time, variable) \%>\%
+  group_by(time, variable) |>
   summarise(
     mean = mean(value),
     lwr = quantile(value, 0.025),
     upr = quantile(value, 0.975)
   )
 
-cf \%>\%
+cf |>
   ggplot(aes(time, mean)) +
   theme_bw() +
   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
