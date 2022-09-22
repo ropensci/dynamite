@@ -7,6 +7,7 @@
   * Added an example on simulating from the prior predictive distribution to the 
     documentation of `predict`.
   * Declarations now occur before statements in the generated Stan code.
+  * Added support for `cmdstanr` via argument `backend` in `dynamite`.
 
 # dynamite 0.0.2
 
