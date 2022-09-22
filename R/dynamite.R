@@ -244,7 +244,7 @@ dynamite <- function(dformula, data, group = NULL, time,
     dots$pars <- c("nu_raw", "nu", "L")
     dots$include <- FALSE
   }
-  if (isFALSE(debug$no_compile) && isFALSE(debug$no_sampling)) {
+  if (!isTRUE(debug$no_compile) && !isTRUE(debug$no_sampling)) {
     if (backend == "rstan") {
       stanfit <- do.call(
         rstan::sampling,
