@@ -45,23 +45,19 @@ Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)).
 `dynamite` uses R’s native pipe operator, so R version 4.1.0 or newer is
 required.
 
-`dynamite` also relies on some of the features of
-[Stan](https://mc-stan.org/)’s which are not yet available on the
-[CRAN](https://cran.r-project.org/) version of
-[rstan](https://CRAN.R-project.org/package=rstan) package. Therefore you
-need to install the latest `rstan` and `StanHeaders` packages:
+<!-- `dynamite` also relies on some of the features of [Stan](https://mc-stan.org/)'s  -->
+<!-- which are not yet available on the [CRAN](https://cran.r-project.org/) version  -->
+<!-- of [rstan](https://CRAN.R-project.org/package=rstan) package. Therefore you  -->
+<!-- need to install the latest `rstan` and `StanHeaders` packages: -->
+<!-- ```{r, eval = FALSE} -->
+<!-- # run the next line if you already have rstan installed: -->
+<!-- # remove.packages(c("StanHeaders", "rstan")) -->
+<!-- install.packages("rstan", repos = c("https://mc-stan.org/r-packages/",  -->
+<!--   getOption("repos"))) -->
+<!-- ``` -->
+<!-- (See more help on [RStan wiki](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started)) -->
 
-``` r
-# run the next line if you already have rstan installed:
-# remove.packages(c("StanHeaders", "rstan"))
-install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", 
-  getOption("repos")))
-```
-
-(See more help on [RStan
-wiki](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started))
-
-Finally, a version `1.14.3` or newer of the
+Also, version `1.14.3` or newer of the
 [data.table](https://github.com/Rdatatable/data.table) package is
 required, which can be installed via:
 
@@ -105,7 +101,7 @@ Posterior estimates of the fixed effects:
 plot_betas(gaussian_example_fit)
 ```
 
-<img src="man/figures/README-unnamed-chunk-7-1.png" width="80%" />
+<img src="man/figures/README-unnamed-chunk-6-1.png" width="80%" />
 
 Posterior estimates of time-varying effects
 
@@ -114,7 +110,7 @@ plot_deltas(gaussian_example_fit, scales = "free")
 #> Warning: Removed 1 row(s) containing missing values (geom_path).
 ```
 
-<img src="man/figures/README-unnamed-chunk-8-1.png" width="80%" />
+<img src="man/figures/README-unnamed-chunk-7-1.png" width="80%" />
 
 And group-specific intercepts:
 
@@ -122,7 +118,7 @@ And group-specific intercepts:
 plot_nus(gaussian_example_fit)
 ```
 
-<img src="man/figures/README-unnamed-chunk-9-1.png" width="80%" />
+<img src="man/figures/README-unnamed-chunk-8-1.png" width="80%" />
 
 Traceplots and density plots:
 
@@ -130,7 +126,7 @@ Traceplots and density plots:
 plot(gaussian_example_fit, type = "beta")
 ```
 
-<img src="man/figures/README-unnamed-chunk-10-1.png" width="80%" />
+<img src="man/figures/README-unnamed-chunk-9-1.png" width="80%" />
 
 Posterior predictive samples for the first 4 groups (samples based on
 the posterior distribution of model parameters and observed data on
@@ -148,7 +144,7 @@ pred |> dplyr::filter(id < 5) |>
   theme_bw()
 ```
 
-<img src="man/figures/README-unnamed-chunk-11-1.png" width="80%" />
+<img src="man/figures/README-unnamed-chunk-10-1.png" width="80%" />
 
 For more examples, see the package vignette.
 
