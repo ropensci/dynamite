@@ -22,6 +22,7 @@ vectorizable_prior <- function(x) {
 #' Each of the following functions of the form `(stan_block)_lines_(family)`
 #' uses a subset from a  common set of arguments that are documented here.
 #'
+#' @param backend \[`character(1)`]\cr `"rstan"` or `"cmdstanr"`.
 #' @param y \[`character(1)`]\cr The name of the response of the channel.
 #' @param idt \[`function`]\cr An indentation function, see [indenter_()].
 #' @param obs \[`integer()`]\cr A vector of indices indicating non-missing
@@ -224,15 +225,21 @@ transformed_data_lines_default <- function(y, idt, write_beta, write_delta,
   )
   state_tau <- glue::glue("tau_prior_pars_{y}[{i},{j}] = {tau_prior_pars};")
 
-  paste_rows(
-    onlyif(write_beta, declare_beta),
-    onlyif(write_delta, declare_delta),
-    onlyif(write_tau, declare_tau),
-    onlyif(write_beta, state_beta),
-    onlyif(write_delta, state_delta),
-    onlyif(write_tau, state_tau),
-    .indent = idt(1),
-    .parse = FALSE
+  list(
+    declarations = paste_rows(
+      onlyif(write_beta, declare_beta),
+      onlyif(write_delta, declare_delta),
+      onlyif(write_tau, declare_tau),
+      .indent = idt(1),
+      .parse = FALSE
+    ),
+    statements = paste_rows(
+      onlyif(write_beta, state_beta),
+      onlyif(write_delta, state_delta),
+      onlyif(write_tau, state_tau),
+      .indent = idt(1),
+      .parse = FALSE
+    )
   )
 }
 
@@ -292,18 +299,24 @@ transformed_data_lines_categorical <- function(y, idt, write_alpha, write_beta,
     "tau_prior_pars_{y}[{i},{j}] = {tau_prior_pars};"
   )
 
-  paste_rows(
-    mtext,
-    onlyif(write_alpha, declare_alpha),
-    onlyif(write_beta, declare_beta),
-    onlyif(write_delta, declare_delta),
-    onlyif(write_tau, declare_tau),
-    onlyif(write_alpha, state_alpha),
-    onlyif(write_beta, state_beta),
-    onlyif(write_delta, state_delta),
-    onlyif(write_tau, state_tau),
-    .indent = idt(c(0, rep(1, 8))),
-    .parse = FALSE
+  list(
+    declarations = paste_rows(
+      mtext,
+      onlyif(write_alpha, declare_alpha),
+      onlyif(write_beta, declare_beta),
+      onlyif(write_delta, declare_delta),
+      onlyif(write_tau, declare_tau),
+      .indent = idt(c(0, rep(1, 4))),
+      .parse = FALSE
+    ),
+    statements = paste_rows(
+      onlyif(write_alpha, state_alpha),
+      onlyif(write_beta, state_beta),
+      onlyif(write_delta, state_delta),
+      onlyif(write_tau, state_tau),
+      .indent = idt(1),
+      .parse = FALSE
+    )
   )
 }
 
@@ -522,20 +535,18 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
       .indent = idt(c(1, 2, 2, 2, 2, 1)),
       .parse = FALSE
     )
-    declare_fixed_intercept <- paste_rows(
-      "real alpha_{y};",
-      "vector[{K}] gamma_{y};",
-      .indent = idt(1),
-      .parse = FALSE
-    )
+    declare_fixed_intercept <- "real alpha_{y};"
     state_fixed_intercept <- paste_rows(
+      "{{",
+      "vector[{K}] gamma_{y};",
       onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
       onlyif(
         has_varying,
         "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1];"
       ),
       "alpha_{y} = a_{y} - X_m[{{{cs(J)}}}] * gamma_{y};",
-      .indent = idt(1),
+      "}}",
+      .indent = idt(c(1, 2, 2, 2, 2, 1)),
       .parse = FALSE
     )
   } else {
@@ -588,16 +599,21 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
     .parse = FALSE
   )
 
-  paste_rows(
-    onlyif(has_varying && noncentered, declare_omega),
-    onlyif(has_varying, declare_delta),
-    onlyif(has_fixed_intercept, declare_fixed_intercept),
-    onlyif(has_varying_intercept, declare_varying_intercept),
-    onlyif(has_varying && noncentered, state_omega),
-    onlyif(has_varying, state_delta),
-    onlyif(has_fixed_intercept, state_fixed_intercept),
-    onlyif(has_varying_intercept, state_varying_intercept),
-    .indent = idt(c(1, 1, rep(0, 6)))
+  list(
+    declarations = paste_rows(
+      onlyif(has_varying && noncentered, declare_omega),
+      onlyif(has_varying, declare_delta),
+      onlyif(has_fixed_intercept, declare_fixed_intercept),
+      onlyif(has_varying_intercept, declare_varying_intercept),
+      .indent = idt(c(1, 1, 1, 0))
+    ),
+    statements =   paste_rows(
+      onlyif(has_varying && noncentered, state_omega),
+      onlyif(has_varying, state_delta),
+      onlyif(has_fixed_intercept, state_fixed_intercept),
+      onlyif(has_varying_intercept, state_varying_intercept),
+      .indent = idt(0)
+    )
   )
 }
 
@@ -745,16 +761,21 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
     .parse = FALSE
   )
 
-  paste_rows(
-    onlyif(has_varying && noncentered, declare_omega),
-    onlyif(has_varying, declare_delta),
-    onlyif(has_fixed_intercept, declare_fixed_intercept),
-    onlyif(has_varying_intercept, declare_varying_intercept),
-    onlyif(has_varying && noncentered, state_omega),
-    onlyif(has_varying, state_delta),
-    onlyif(has_fixed_intercept, state_fixed_intercept),
-    onlyif(has_varying_intercept, state_varying_intercept),
-    .indent = idt(c(1, 1, rep(0, 6)))
+  list(
+    declarations = paste_rows(
+      onlyif(has_varying && noncentered, declare_omega),
+      onlyif(has_varying, declare_delta),
+      onlyif(has_fixed_intercept, declare_fixed_intercept),
+      onlyif(has_varying_intercept, declare_varying_intercept),
+      .indent = idt(c(1, 1, 0, 0))
+    ),
+    statements = paste_rows(
+      onlyif(has_varying && noncentered, state_omega),
+      onlyif(has_varying, state_delta),
+      onlyif(has_fixed_intercept, state_fixed_intercept),
+      onlyif(has_varying_intercept, state_varying_intercept),
+      .indent = idt(0)
+    )
   )
 }
 
@@ -827,7 +848,8 @@ model_lines_default <- function(y, idt, noncentered, shrinkage, has_varying,
                                 delta_prior_distr = "",
                                 delta_prior_npars = 1L,
                                 tau_prior_distr = "",
-                                tau_prior_npars = 1L, K_fixed, K_varying) {
+                                tau_prior_npars = 1L,
+                                K_fixed, K_varying, ...) {
   mtext_u <- "sigma_nu_{y} ~ {sigma_nu_prior_distr};"
   mtext_alpha <- "a_{y} ~ {alpha_prior_distr};"
 
@@ -950,7 +972,7 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
                                     tau_prior_distr = "",
                                     tau_prior_npars = 1L,
                                     J, K, K_fixed, K_varying, L_fixed,
-                                    L_varying, S, ...) {
+                                    L_varying, S, backend, ...) {
   if (vectorizable_prior(alpha_prior_distr)) {
     np <- alpha_prior_npars
     dpars_alpha <- paste0(
@@ -1095,12 +1117,30 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
     "Categorical family does not support random intercepts."
   )
   likelihood_term <- ifelse_(
-    has_fixed || has_varying,
-    paste0(
-      "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], ",
-      "{intercept}, append_col(zeros_K_{y}, gamma_{y}));"
+    stan_supports_categorical_logit_glm(backend),
+    ifelse_(
+      has_fixed || has_varying,
+      paste0(
+        "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], ",
+        "{intercept}, append_col(zeros_K_{y}, gamma_{y}));"
+      ),
+      "{y}[t, {obs}] ~ categorical_logit({intercept});"
     ),
-    "{y}[t, {obs}] ~ categorical_logit({intercept});"
+    ifelse_(
+      has_fixed || has_varying,
+      paste_rows(
+        ifelse_(nzchar(obs), "for (i in {obs}) {{", "for (i in 1:N) {{"),
+        paste0(
+          "{y}[t, i] ~ categorical_logit({intercept} + ",
+          "to_vector(X[t][i, {{{cs(J)}}}] * ",
+          "append_col(zeros_K_{y}, gamma_{y})));"
+        ),
+        "}}",
+        .indent = idt(c(0, 1, 0)),
+        .parse = FALSE
+      ),
+      "{y}[t, {obs}] ~ categorical_logit({intercept});"
+    )
   )
   paste_rows(
     onlyif(has_fixed_intercept, mtext_fixed_intercept),

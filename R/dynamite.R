@@ -223,19 +223,37 @@ dynamite <- function(dformula, data, group = NULL, time,
   model_code <- create_blocks(
     dformula = dformulas$stoch,
     indent = 2L,
-    vars = stan$model_vars
+    vars = stan$model_vars,
+    backend = backend
+  )
+  onlyif(
+    verbose && is.null(debug) && !isTRUE(debug$no_compile),
+    {
+      message_("Compiling Stan model.")
+      onlyif(
+        !stan_supports_categorical_logit_glm(backend) &&
+          "categorical" %in% get_families(dformulas$all),
+        warning_(
+          c(
+            "Efficient glm-variant of the categorical likelihood is not
+             available in this version of {.pkg rstan} or {.pkg cmdstanr}.",
+            `i` = "For more efficient sampling, please install a newer version
+                   of {.pkg rstan} or {.pkg cmdstanr}."
+          )
+        )
+      )
+    }
   )
   model <- onlyif(
     is.null(debug) || !isTRUE(debug$no_compile),
-    {
-      if (backend == "rstan") {
-        onlyif(verbose, message_("Compiling Stan model."))
-        rstan::stan_model(model_code = model_code)
-      } else {
+    ifelse_(
+      backend == "rstan",
+      rstan::stan_model(model_code = model_code),
+      {
         file <- cmdstanr::write_stan_file(model_code)
         cmdstanr::cmdstan_model(file)
       }
-    }
+    )
   )
   # don't save redundant parameters by default
   # could also remove omega_raw

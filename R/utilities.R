@@ -288,6 +288,23 @@ onlyif <- function(test, yes) {
 #' @noRd
 n_unique <- data.table::uniqueN
 
+#' Is Categorical Logit GLM Supported By Current Stan Version
+#'
+#' @noRd
+stan_supports_categorical_logit_glm <- function(backend) {
+  backend_version <- ifelse_(
+    backend == "rstan",
+    as.character(packageVersion("rstan")),
+    as.character(cmdstanr::cmdstan_version())
+  )
+  required_version <- ifelse_(
+    backend == "rstan",
+    "2.26.11",
+    "2.23.1"
+  )
+  utils::compareVersion(backend_version, required_version) >= 0
+}
+
 # Placeholder for future
 # Startup message for the package
 # .onAttach <- function(libname, pkgname) {

@@ -10,13 +10,14 @@ create_blocks <- function(dformula, ...) {
 #' Default Stan Blocks
 #'
 #' @inheritParams create_blocks
+#' @inheritParams dynamite
 #' @param indent \[`integer(1)`] How many units of indentation to use for the
 #'   code generation. One unit is equal to one space.
 #' @param vars \[`list()`]\cr The `model_vars` component of
 #'   [prepare_stan_input()] output.
 #' @param ... Not used.
 #' @noRd
-create_blocks.default <- function(dformula, indent = 2L, vars, ...) {
+create_blocks.default <- function(dformula, indent = 2L, vars, backend, ...) {
   idt <- indenter_(indent)
   paste_rows(
     create_functions(dformula, idt, vars),
@@ -24,7 +25,7 @@ create_blocks.default <- function(dformula, indent = 2L, vars, ...) {
     create_transformed_data(dformula, idt, vars),
     create_parameters(dformula, idt, vars),
     create_transformed_parameters(dformula, idt, vars),
-    create_model(dformula, idt, vars),
+    create_model(dformula, idt, vars, backend),
     create_generated_quantities(dformula, idt, vars),
     .parse = FALSE
   )
@@ -71,13 +72,23 @@ create_data <- function(dformula, idt, vars) {
 #'   Block of the Stan Model Code
 #' @noRd
 create_transformed_data <- function(dformula, idt, vars) {
-  tr_data <- character(length(dformula))
-  for (i in seq_along(dformula)) {
+  n <- length(dformula)
+  declarations <- character(n)
+  statements <- character(n)
+  for (i in seq_len(n)) {
     family <- dformula[[i]]$family$name
     line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
-    tr_data[i] <- lines_wrap("transformed_data", family, line_args)
+    tr_data <- lines_wrap("transformed_data", family, line_args)
+    declarations[i] <- tr_data$declarations
+    statements[i] <- tr_data$statements
   }
-  paste_rows("transformed data {", tr_data, "}", .parse = FALSE)
+  paste_rows(
+    "transformed data {",
+    declarations,
+    statements,
+    "}",
+    .parse = FALSE
+  )
 }
 
 #' @describeIn create_function Create the 'Parameters'
@@ -140,16 +151,21 @@ create_transformed_parameters <- function(dformula, idt, vars) {
       )
     )
   }
-  tr_pars <- character(length(dformula))
-  for (i in seq_along(dformula)) {
+  n <- length(dformula)
+  declarations <- character(n)
+  statements <- character(n)
+  for (i in seq_len(n)) {
     family <- dformula[[i]]$family$name
     line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
-    tr_pars[i] <- lines_wrap("transformed_parameters", family, line_args)
+    tr_pars <- lines_wrap("transformed_parameters", family, line_args)
+    declarations[i] <- tr_pars$declarations
+    statements[i] <- tr_pars$statements
   }
   paste_rows(
     "transformed parameters {",
     randomtext,
-    tr_pars,
+    declarations,
+    statements,
     "}",
     .parse = FALSE
   )
@@ -157,7 +173,7 @@ create_transformed_parameters <- function(dformula, idt, vars) {
 
 #' @describeIn create_function Create the 'Model' Block of the Stan Model Code
 #' @noRd
-create_model <- function(dformula, idt, vars) {
+create_model <- function(dformula, idt, vars, backend) {
   spline_defs <- attr(dformula, "splines")
   splinetext <- ""
   if (!is.null(spline_defs) && spline_defs$shrinkage) {
@@ -183,7 +199,10 @@ create_model <- function(dformula, idt, vars) {
   mod <- character(length(dformula))
   for (i in seq_along(dformula)) {
     family <- dformula[[i]]$family$name
-    line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
+    line_args <- c(
+      list(y = vars[[i]]$resp, idt = idt, backend = backend),
+      vars[[i]]
+    )
     mod[i] <- lines_wrap("model", family, line_args)
   }
   paste_rows("model {", splinetext, randomtext, mod, "}", .parse = FALSE)
