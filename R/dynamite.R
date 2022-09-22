@@ -244,8 +244,7 @@ dynamite <- function(dformula, data, group = NULL, time,
     dots$pars <- c("nu_raw", "nu", "L")
     dots$include <- FALSE
   }
-  onlyif(
-    !isTRUE(debug$no_compile) && !isTRUE(debug$no_sampling),
+  if (isFALSE(debug$no_compile) && isFALSE(debug$no_sampling)) {
     if (backend == "rstan") {
       stanfit <- do.call(
         rstan::sampling,
@@ -259,7 +258,9 @@ dynamite <- function(dformula, data, group = NULL, time,
       stanfit <- rstan::read_stan_csv(out$output_files())
       stanfit@stanmodel <-  new("stanmodel", model_code = model_code)
     }
-  )
+  } else {
+    stanfit <- NULL
+  }
   out <- structure(
     list(
       stanfit = stanfit,
