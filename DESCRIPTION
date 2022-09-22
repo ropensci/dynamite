@@ -27,6 +27,7 @@ Imports:
     glue,
     ggplot2,
     MASS,
+    methods,
     posterior,
     rlang,
     rstan (>= 2.26.11),

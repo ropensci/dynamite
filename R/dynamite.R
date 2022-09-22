@@ -256,7 +256,7 @@ dynamite <- function(dformula, data, group = NULL, time,
         c(list(data = stan$sampling_vars), dots)
       )
       stanfit <- rstan::read_stan_csv(out$output_files())
-      stanfit@stanmodel <-  new("stanmodel", model_code = model_code)
+      stanfit@stanmodel <-  methods::new("stanmodel", model_code = model_code)
     }
   } else {
     stanfit <- NULL

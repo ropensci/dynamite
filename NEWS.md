@@ -8,6 +8,7 @@
     documentation of `predict`.
   * Declarations now occur before statements in the generated Stan code.
   * Added support for `cmdstanr` via argument `backend` in `dynamite`.
+  * Added a link to the contributing guidelines to README.
 
 # dynamite 0.0.2
 

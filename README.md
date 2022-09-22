@@ -176,3 +176,9 @@ For more examples, see the package vignette.
 -   [`lavaan`](https://CRAN.R-project.org/package=lavaan) provides tools
     for structural equation modelling, and as such can be used to model
     various panel data models as well.
+
+## Contributing
+
+Contributions are very welcome, see
+[CONTRIBUTING.md](https://github.com/santikka/dynamite/blob/main/.github/CONTRIBUTING.md)
+for general guidelines.
