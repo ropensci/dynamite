@@ -291,7 +291,7 @@ print.dynamiteformula <- function(x, ...) {
     "Argument {.arg x} must be a {.cls dynamiteformula} object."
   )
   out <- data.frame(
-    Family = vapply(get_families(x), function(y) y$name, character(1L)),
+    Family = get_family_names(x),
     Formula = vapply(get_originals(x), function(y) deparse1(y), character(1L))
   )
   rownames(out) <- get_responses(x)
@@ -366,6 +366,14 @@ get_originals <- function(x) {
 #' @noRd
 get_families <- function(x) {
   lapply(x, "[[", "family")
+}
+
+#' Get All Family Names of a `dynamiteformula` Object
+#'
+#' @param x A `dynamiteformula` object.
+#' @noRd
+get_family_names <- function(x) {
+  vapply(x, function(x) x$family$name, character(1L))
 }
 
 #' Get a Quoted Expression of Deterministic Channel Definitions

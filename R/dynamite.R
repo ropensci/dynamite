@@ -232,7 +232,7 @@ dynamite <- function(dformula, data, group = NULL, time,
       message_("Compiling Stan model.")
       onlyif(
         !stan_supports_categorical_logit_glm(backend) &&
-          "categorical" %in% get_families(dformulas$all),
+          "categorical" %in% get_family_names(dformulas$all),
         warning_(
           c(
             "Efficient glm-variant of the categorical likelihood is not

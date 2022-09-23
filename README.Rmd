@@ -51,19 +51,19 @@ grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)).
 
 `dynamite` uses R's native pipe operator, so R version 4.1.0 or newer is required.
 
-`dynamite` also relies on some of the features of [Stan](https://mc-stan.org/)'s 
-which are not yet available on the [CRAN](https://cran.r-project.org/) version 
-of [rstan](https://CRAN.R-project.org/package=rstan) package. Therefore you 
-need to install the latest `rstan` and `StanHeaders` packages:
-```{r, eval = FALSE}
-# run the next line if you already have rstan installed:
-# remove.packages(c("StanHeaders", "rstan"))
-install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", 
-  getOption("repos")))
-```
-(See more help on [RStan wiki](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started))
+<!-- `dynamite` also relies on some of the features of [Stan](https://mc-stan.org/)'s  -->
+<!-- which are not yet available on the [CRAN](https://cran.r-project.org/) version  -->
+<!-- of [rstan](https://CRAN.R-project.org/package=rstan) package. Therefore you  -->
+<!-- need to install the latest `rstan` and `StanHeaders` packages: -->
+<!-- ```{r, eval = FALSE} -->
+<!-- # run the next line if you already have rstan installed: -->
+<!-- # remove.packages(c("StanHeaders", "rstan")) -->
+<!-- install.packages("rstan", repos = c("https://mc-stan.org/r-packages/",  -->
+<!--   getOption("repos"))) -->
+<!-- ``` -->
+<!-- (See more help on [RStan wiki](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started)) -->
 
-Finally, a version `1.14.3` or newer of the 
+Also, version `1.14.3` or newer of the 
 [data.table](https://github.com/Rdatatable/data.table) package is required, 
 which can be installed via:
 
