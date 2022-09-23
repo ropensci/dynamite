@@ -85,8 +85,9 @@ assign_initial_values <- function(data, idx, dd, dlp, dld, dls,
   rhs_ls <- get_predictors(dls)
   cl <- get_quoted(dd)
   ..k <- NULL # avoid NSE note in R CMD check
-  for (k in ro_lp) {
-    data[, (dlp[[k]]$response) := lapply(.SD, lag_, ..k),
+  ..ro_lp <- NULL
+  for (k in seq_along(ro_lp)) {
+    data[, (dlp[[k]]$response) := lapply(.SD, lag_, ..ro_lp[..k]),
       .SDcols = resp_lp[k], by = group_var
     ]
   }
