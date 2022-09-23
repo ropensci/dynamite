@@ -887,8 +887,8 @@ fill_time <- function(data, group_var, time_var) {
       all(time_count$unique),
       c(
         "Each time index must correspond to a single observation per group:",
-        `x` = "{cli::qty(d)}Group{?s} {.var {d}} of {.var {group_var}}
-               {cli::qty(d)}{?has/have} duplicate observations."
+        `x` = "{cli::qty(length(d))}Group{?s} {.var {d}} of {.var {group_var}}
+               {cli::qty(length(d))}{?has/have} duplicate observations."
       )
     )
   } else {
