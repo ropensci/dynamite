@@ -582,10 +582,12 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
     gl$channels[!gl$stoch],
     sl$channels[!sl$stoch & !sl$pred]
   )
-  attr(dformula_lag_pred, "rank_order") <- sl$rank[sl$pred]
+  ro_lp <- sl$rank[sl$pred]
+  attr(dformula_lag_pred, "rank_order") <- order(ro_lp)
+  attr(dformula_lag_pred, "original_response") <- sl$resp[sl$pred]
+  attr(dformula_lag_pred, "original_shift") <- ro_lp
   attr(dformula_lag_det, "rank_order") <-
     order(c(gl$rank[!gl$stoch], sl$rank[!sl$stoch & !sl$pred]))
-  attr(dformula_lag_pred, "original_response") <- sl$resp[sl$pred]
   attr(dformula, "max_lag") <- max_lag
   random_defs <- attr(dformula, "random")
   if (!is.null(random_defs)) {

@@ -79,16 +79,18 @@ assign_initial_values <- function(data, idx, dd, dlp, dld, dls,
   )
   ro_ls <- seq_along(dls)
   resp_lp <- attr(dlp, "original_response")
+  k_lp <- attr(dlp, "original_shift")
   lhs_ld <- get_responses(dld)
   rhs_ld <- get_predictors(dld)
   lhs_ls <- get_responses(dls)
   rhs_ls <- get_predictors(dls)
   cl <- get_quoted(dd)
-  ..k <- NULL # avoid NSE note in R CMD check
-  ..ro_lp <- NULL
-  for (k in seq_along(ro_lp)) {
-    data[, (dlp[[k]]$response) := lapply(.SD, lag_, ..ro_lp[..k]),
-      .SDcols = resp_lp[k], by = group_var
+  # avoid NSE notes in R CMD check
+  ..i <- NULL
+  ..k_lp <- NULL
+  for (i in ro_lp) {
+    data[, (dlp[[i]]$response) := lapply(.SD, lag_, ..k_lp[..i]),
+      .SDcols = resp_lp[i], by = group_var
     ]
   }
   init <- which(has_past(dld))
