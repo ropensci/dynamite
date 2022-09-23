@@ -110,7 +110,7 @@ data_lines_default <- function(y, idt, has_missing, ...) {
 data_lines_categorical <- function(y, idt, has_missing, ...) {
   dtext_def <- data_lines_default(y, idt, has_missing)
   dtext <- paste_rows(
-    "int<lower=0> {y}[T, N];",
+    "int<lower=0> y_{y}[T, N];",
     .indent = idt(1)
   )
   paste_rows(dtext_def, dtext, .parse = FALSE)
@@ -119,7 +119,7 @@ data_lines_categorical <- function(y, idt, has_missing, ...) {
 data_lines_gaussian <- function(y, idt, has_missing, ...) {
   dtext_def <- data_lines_default(y, idt, has_missing)
   dtext <- paste_rows(
-    "matrix[N, T] {y};",
+    "matrix[N, T] y_{y};",
     .indent = idt(1)
   )
   paste_rows(dtext_def, dtext, .parse = FALSE)
@@ -128,7 +128,7 @@ data_lines_gaussian <- function(y, idt, has_missing, ...) {
 data_lines_binomial <- function(y, idt, has_missing, ...) {
   dtext_def <- data_lines_default(y, idt, has_missing)
   dtext <- paste_rows(
-    "int<lower=0> {y}[T, N];",
+    "int<lower=0> y_{y}[T, N];",
     "int<lower=1> trials_{y}[T, N];",
     .indent = idt(1)
   )
@@ -138,7 +138,7 @@ data_lines_binomial <- function(y, idt, has_missing, ...) {
 data_lines_bernoulli <- function(y, idt, has_missing, ...) {
   dtext_def <- data_lines_default(y, idt, has_missing)
   dtext <- paste_rows(
-    "int<lower=0,upper=1> {y}[T, N];",
+    "int<lower=0,upper=1> y_{y}[T, N];",
     .indent = idt(1)
   )
   paste_rows(dtext_def, dtext, .parse = FALSE)
@@ -147,7 +147,7 @@ data_lines_bernoulli <- function(y, idt, has_missing, ...) {
 data_lines_poisson <- function(y, idt, has_missing, has_offset, ...) {
   dtext_def <- data_lines_default(y, idt, has_missing)
   dtext <- paste_rows(
-    "int<lower=0> {y}[T, N];",
+    "int<lower=0> y_{y}[T, N];",
     onlyif(has_offset, "real offset_{y}[T, N];"),
     .indent = idt(1)
   )
@@ -157,7 +157,7 @@ data_lines_poisson <- function(y, idt, has_missing, has_offset, ...) {
 data_lines_negbin <- function(y, idt, has_missing, ...) {
   dtext_def <- data_lines_default(y, idt, has_missing)
   dtext <- paste_rows(
-    "int<lower=0> {y}[T, N];",
+    "int<lower=0> y_{y}[T, N];",
     .indent = idt(1)
   )
   paste_rows(dtext_def, dtext, .parse = FALSE)
@@ -166,7 +166,7 @@ data_lines_negbin <- function(y, idt, has_missing, ...) {
 data_lines_exponential <- function(y, idt, has_missing, ...) {
   dtext_def <- data_lines_default(y, idt, has_missing)
   dtext <- paste_rows(
-    "matrix<lower=0>[N, T] {y};",
+    "matrix<lower=0>[N, T] y_{y};",
     .indent = idt(1)
   )
   paste_rows(dtext_def, dtext, .parse = FALSE)
@@ -175,7 +175,7 @@ data_lines_exponential <- function(y, idt, has_missing, ...) {
 data_lines_gamma <- function(y, idt, has_missing, ...) {
   dtext_def <- data_lines_default(y, idt, has_missing)
   dtext <- paste_rows(
-    "matrix<lower=0>[N, T] {y};",
+    "matrix<lower=0>[N, T] y_{y};",
     .indent = idt(1)
   )
   paste_rows(dtext_def, dtext, .parse = FALSE)
@@ -184,7 +184,7 @@ data_lines_gamma <- function(y, idt, has_missing, ...) {
 data_lines_beta <- function(y, idt, has_missing, ...) {
   dtext_def <- data_lines_default(y, idt, has_missing)
   dtext <- paste_rows(
-    "matrix<lower=0, upper=1>[N, T] {y};",
+    "matrix<lower=0, upper=1>[N, T] y_{y};",
     .indent = idt(1)
   )
   paste_rows(dtext_def, dtext, .parse = FALSE)
@@ -1121,17 +1121,17 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
     ifelse_(
       has_fixed || has_varying,
       paste0(
-        "{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], ",
+        "y_{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], ",
         "{intercept}, append_col(zeros_K_{y}, gamma_{y}));"
       ),
-      "{y}[t, {obs}] ~ categorical_logit({intercept});"
+      "y_{y}[t, {obs}] ~ categorical_logit({intercept});"
     ),
     ifelse_(
       has_fixed || has_varying,
       paste_rows(
         ifelse_(nzchar(obs), "for (i in {obs}) {{", "for (i in 1:N) {{"),
         paste0(
-          "{y}[t, i] ~ categorical_logit({intercept} + ",
+          "y_{y}[t, i] ~ categorical_logit({intercept} + ",
           "to_vector(X[t][i, {{{cs(J)}}}] * ",
           "append_col(zeros_K_{y}, gamma_{y})));"
         ),
@@ -1139,7 +1139,7 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
         .indent = idt(c(0, 1, 0)),
         .parse = FALSE
       ),
-      "{y}[t, {obs}] ~ categorical_logit({intercept});"
+      "y_{y}[t, {obs}] ~ categorical_logit({intercept});"
     )
   )
   paste_rows(
@@ -1195,10 +1195,10 @@ model_lines_gaussian <- function(y, idt, obs, has_fixed, has_varying,
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
-      "{y}[{obs}, t] ~ normal_id_glm(X[t][{obs}, {{{cs(J)}}}], ",
+      "y_{y}[{obs}, t] ~ normal_id_glm(X[t][{obs}, {{{cs(J)}}}], ",
       "{intercept}, gamma_{y}, sigma_{y});"
     ),
-    "{y}[{obs}, t] ~ normal({intercept}, sigma_{y});"
+    "y_{y}[{obs}, t] ~ normal({intercept}, sigma_{y});"
   )
   mtext <- paste_rows(
     "sigma_{y} ~ {sigma_prior_distr};",
@@ -1263,7 +1263,7 @@ model_lines_binomial <- function(y, idt, obs, has_varying, has_fixed,
     ""
   )
   likelihood_term <- paste0(
-    "{y}[t, {obs}] ~ binomial_logit(trials_{y}[t, {obs}], ",
+    "y_{y}[t, {obs}] ~ binomial_logit(trials_{y}[t, {obs}], ",
     "{intercept}{plus_ic}{fixed_term}{plus_c}{varying_term});"
   )
   mtext <- paste_rows(
@@ -1309,10 +1309,10 @@ model_lines_bernoulli <- function(y, idt, obs, has_varying, has_fixed,
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
-      "{y}[t, {obs}] ~ bernoulli_logit_glm(X[t][{obs}, ",
+      "y_{y}[t, {obs}] ~ bernoulli_logit_glm(X[t][{obs}, ",
       "{{{cs(J)}}}], {intercept}, gamma_{y});"
     ),
-    "{y}[t, {obs}] ~ bernoulli_logit({intercept});"
+    "y_{y}[t, {obs}] ~ bernoulli_logit({intercept});"
   )
   mtext <- paste_rows(
     "{{",
@@ -1370,12 +1370,12 @@ model_lines_poisson <- function(y, idt, obs, has_varying, has_fixed, has_offset,
   }
   if (has_fixed || has_varying) {
     likelihood_term <- paste0(
-      "{y}[t, {obs}] ~ poisson_log_glm(X[t][{obs}, {{{cs(J)}}}], ",
+      "y_{y}[t, {obs}] ~ poisson_log_glm(X[t][{obs}, {{{cs(J)}}}], ",
       "{intercept}{plus2}{offset_term}, gamma_{y});"
     )
   } else {
     likelihood_term <- paste0(
-      "{y}[t, {obs}] ~ poisson_log(",
+      "y_{y}[t, {obs}] ~ poisson_log(",
       "{intercept}{plus2}{offset_term});"
     )
   }
@@ -1436,11 +1436,11 @@ model_lines_negbin <- function(y, idt, obs, has_varying, has_fixed, has_offset,
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
-      "{y}[t, {obs}] ~ neg_binomial_2_log_glm(X[t][{obs}, {{{cs(J)}}}], ",
+      "y_{y}[t, {obs}] ~ neg_binomial_2_log_glm(X[t][{obs}, {{{cs(J)}}}], ",
       "{intercept}{plus2}{offset_term}, gamma_{y}, phi_{y});"
     ),
     paste0(
-      "{y}[t, {obs}] ~ neg_binomial_2_log(",
+      "y_{y}[t, {obs}] ~ neg_binomial_2_log(",
       "{intercept}{plus2}{offset_term}, phi_{y});"
     )
   )
@@ -1507,7 +1507,7 @@ model_lines_exponential <- function(y, idt, obs, has_varying, has_fixed,
     ""
   )
   likelihood_term <- paste0(
-    "{y}[{obs}, t] ~ exponential(exp(-({intercept}{plus_ic}",
+    "y_{y}[{obs}, t] ~ exponential(exp(-({intercept}{plus_ic}",
     "{fixed_term}{plus_c}{varying_term})));"
   )
   mtext <- paste_rows(
@@ -1568,7 +1568,7 @@ model_lines_gamma <- function(y, idt, obs, has_varying, has_fixed,
     ""
   )
   likelihood_term <- paste0(
-    "{y}[{obs}, t] ~ gamma(phi_{y}, phi_{y} * ",
+    "y_{y}[{obs}, t] ~ gamma(phi_{y}, phi_{y} * ",
     "exp(-({intercept}{plus_ic}{fixed_term}{plus_c}{varying_term})));"
   )
   mtext <- paste_rows(
@@ -1629,7 +1629,7 @@ model_lines_beta <- function(y, idt, obs, has_varying, has_fixed,
     ""
   )
   likelihood_term <- paste0(
-    "{y}[{obs}, t] ~ beta_proportion(",
+    "y_{y}[{obs}, t] ~ beta_proportion(",
     "inv_logit(({intercept}{plus_ic}{fixed_term}{plus_c}{varying_term})), ",
     "phi_{y});"
   )
