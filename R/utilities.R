@@ -297,12 +297,7 @@ stan_supports_categorical_logit_glm <- function(backend) {
     as.character(rstan::stan_version()),
     as.character(cmdstanr::cmdstan_version())
   )
-  required_version <- ifelse_(
-    backend == "rstan",
-    "2.23",
-    "2.23"
-  )
-  utils::compareVersion(backend_version, required_version) >= 0
+  utils::compareVersion(backend_version, "2.23") >= 0
 }
 
 # Placeholder for future
