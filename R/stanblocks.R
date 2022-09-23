@@ -117,7 +117,8 @@ create_parameters <- function(dformula, idt, vars) {
         attr(dformula, "random")$correlated,
         "cholesky_factor_corr[M] L; // Cholesky for correlated intercepts"
       ),
-      "matrix[N, M] nu_raw;",
+      ifelse_(attr(dformula, "random")$noncentered,
+        "matrix[N, M] nu_raw;", "vector[M] nu_raw[N];"),
       .indent = idt(c(1, 1, 1))
     )
   )
@@ -138,6 +139,7 @@ create_transformed_parameters <- function(dformula, idt, vars) {
   nus <- attr(dformula, "random")$responses
   M <- length(nus)
   if (M > 0) {
+    if (attr(dformula, "random")$noncentered) {
     randomtext <- ifelse_(
       attr(dformula, "random")$correlated,
       paste_rows(
@@ -150,6 +152,13 @@ create_transformed_parameters <- function(dformula, idt, vars) {
         .indent = idt(1)
       )
     )
+    } else {
+      randomtext <-
+        paste_rows(
+          glue::glue("vector[N] nu_{nus} = to_vector(nu_raw[, {1:M}]);"),
+          .indent = idt(1)
+        )
+    }
   }
   n <- length(dformula)
   declarations <- character(n)
@@ -189,12 +198,35 @@ create_model <- function(dformula, idt, vars, backend) {
       L_prior <- attr(vars, "common_priors") |>
         dplyr::filter(.data$parameter == "L") |>
         dplyr::pull(.data$prior)
+      if (attr(dformula, "random")$noncentered) {
+        randomtext <- paste_rows(
+          "to_vector(nu_raw) ~ std_normal();",
+          "L ~ {L_prior};",
+          .indent = idt(c(1, 1))
+        )
+      } else {
+        randomtext <- paste_rows(
+          "nu_raw ~ multi_normal_cholesky(0, diag_pre_multiply(sigma_nu, L));",
+          onlyif(attr(dformula, "random")$correlated, "L ~ {L_prior};"),
+          .indent = idt(c(1, 1))
+        )
+      }
+    } else {
+      if (attr(dformula, "random")$noncentered) {
+        randomtext <- paste_rows(
+          "to_vector(nu_raw) ~ std_normal();",
+          .indent = idt(1)
+        )
+      } else {
+        nus <- attr(dformula, "random")$responses
+        M <- length(nus)
+        randomtext <- paste_rows(
+          glue::glue("nu_raw[, {1:M}] ~ normal(0, sigma_nu_{nus});"),
+          .indent = idt(1)
+        )
+      }
     }
-    randomtext <- paste_rows(
-      "to_vector(nu_raw) ~ std_normal();",
-      onlyif(attr(dformula, "random")$correlated, "L ~ {L_prior};"),
-      .indent = idt(c(1, 1))
-    )
+
   }
   mod <- character(length(dformula))
   for (i in seq_along(dformula)) {

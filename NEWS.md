@@ -12,6 +12,7 @@
   * The package no longer depends on the development version of `rstan`.
   * `categorical_logit` is now used instead of `categorical_logit_glm` on older
     `rstan` and `cmdstanr` versions.
+  * Random intercepts with `random` now also support centered parameterization.
 
 # dynamite 0.0.2
 
