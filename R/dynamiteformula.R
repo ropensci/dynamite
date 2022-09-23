@@ -90,13 +90,6 @@
 #' analogously with the typical mixed models. Note however that if the channel
 #' already contains the lagged response variable, the "intercept" is actually a
 #' slope of (linear) trend as dynamite does not do any centering of variables.
-#' With a large number of time points these intercepts can become challenging
-#' sample with default priors. This is because with large group sizes the
-#' group-level intercepts tend to be behave similarly to fixed group-factor
-#' variable so the model becomes overparameterized given these and the common
-#' intercept term. In these cases, a better option might be to use fixed group
-#' effects, i.e. to include the grouping variable to the model instead of
-#' random intercept (this way the one group is included in the intercept).
 #'
 #' @export
 #' @param formula \[`formula`]\cr An \R formula describing the model.
@@ -298,7 +291,7 @@ print.dynamiteformula <- function(x, ...) {
     "Argument {.arg x} must be a {.cls dynamiteformula} object."
   )
   out <- data.frame(
-    Family = vapply(get_families(x), function(y) y$name, character(1L)),
+    Family = get_family_names(x),
     Formula = vapply(get_originals(x), function(y) deparse1(y), character(1L))
   )
   rownames(out) <- get_responses(x)
@@ -373,6 +366,14 @@ get_originals <- function(x) {
 #' @noRd
 get_families <- function(x) {
   lapply(x, "[[", "family")
+}
+
+#' Get All Family Names of a `dynamiteformula` Object
+#'
+#' @param x A `dynamiteformula` object.
+#' @noRd
+get_family_names <- function(x) {
+  vapply(x, function(x) x$family$name, character(1L))
 }
 
 #' Get a Quoted Expression of Deterministic Channel Definitions

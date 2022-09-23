@@ -15,6 +15,7 @@ dynamite(
   priors = NULL,
   verbose = TRUE,
   debug = NULL,
+  backend = "rstan",
   ...
 )
 
@@ -58,6 +59,12 @@ added to the return object. Additionally, values \code{no_compile = TRUE} and
 and sampling steps respectively. This can be useful for debugging when
 combined with \code{model_code = TRUE}, which adds the Stan model code to the
 return object.}
+
+\item{backend}{[\code{character(1)}]\cr Defines the backend interface to Stan,
+should be  either \code{"rstan"} (the default) or \code{"cmdstanr"}. Note that
+\code{cmdstanr} needs to be installed separately as it is not on CRAN. It also
+needs the actual \code{CmdStan} software. See https://mc-stan.org/cmdstanr/ for
+details.}
 
 \item{...}{Further arguments to \code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}}.}
 

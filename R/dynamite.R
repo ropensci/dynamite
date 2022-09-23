@@ -65,7 +65,14 @@
 #'   and sampling steps respectively. This can be useful for debugging when
 #'   combined with `model_code = TRUE`, which adds the Stan model code to the
 #'   return object.
-#' @param ... Additional arguments to [rstan::sampling()].
+#' @param backend \[`character(1)`]\cr Defines the backend interface to Stan,
+#'   should be  either `"rstan"` (the default) or `"cmdstanr"`. Note that
+#'   `cmdstanr` needs to be installed separately as it is not on CRAN. It also
+#'   needs the actual `CmdStan` software. See https://mc-stan.org/cmdstanr/ for
+#'   details.
+#' @param ... Additional arguments to [rstan::sampling()] or
+#'  [cmdstanr::sample()], such as `chains` and `cores` (`parallel_chains` in
+#'  `cmdstanr`).
 #' @return `dynamite` returns a `dynamitefit` object which is a list containing
 #'   the following components:
 #'   \tabular{lccl}{
@@ -145,7 +152,8 @@
 #' }
 #'
 dynamite <- function(dformula, data, group = NULL, time,
-                     priors = NULL, verbose = TRUE, debug = NULL, ...) {
+                     priors = NULL, verbose = TRUE, debug = NULL,
+                     backend = "rstan", ...) {
   stopifnot_(
     !missing(dformula),
     "Argument {.arg dformula} is missing."
@@ -193,6 +201,11 @@ dynamite <- function(dformula, data, group = NULL, time,
     checkmate::test_flag(x = verbose),
     "Argument {.arg verbose} must be a single {.cls logical} value."
   )
+  backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
+  stopifnot_(
+    !inherits(backend, "try-error"),
+    "Argument {.arg backend} must be \"rstan\" or \"cmdstanr\"."
+  )
   data_name <- deparse1(substitute(data))
   data <- parse_data(dformula, data, group, time, verbose)
   dformula <- parse_past(dformula, data, group, time)
@@ -210,14 +223,37 @@ dynamite <- function(dformula, data, group = NULL, time,
   model_code <- create_blocks(
     dformula = dformulas$stoch,
     indent = 2L,
-    vars = stan$model_vars
+    vars = stan$model_vars,
+    backend = backend
+  )
+  onlyif(
+    verbose && is.null(debug) && !isTRUE(debug$no_compile),
+    {
+      message_("Compiling Stan model.")
+      onlyif(
+        !stan_supports_categorical_logit_glm(backend) &&
+          "categorical" %in% get_family_names(dformulas$all),
+        warning_(
+          c(
+            "Efficient glm-variant of the categorical likelihood is not
+             available in this version of {.pkg rstan} or {.pkg cmdstanr}.",
+            `i` = "For more efficient sampling, please install a newer version
+                   of {.pkg rstan} or {.pkg cmdstanr}."
+          )
+        )
+      )
+    }
   )
   model <- onlyif(
     is.null(debug) || !isTRUE(debug$no_compile),
-    {
-      onlyif(verbose, message_("Compiling Stan model."))
-      rstan::stan_model(model_code = model_code)
-    }
+    ifelse_(
+      backend == "rstan",
+      rstan::stan_model(model_code = model_code),
+      {
+        file <- cmdstanr::write_stan_file(model_code)
+        cmdstanr::cmdstan_model(file)
+      }
+    )
   )
   # don't save redundant parameters by default
   # could also remove omega_raw
@@ -226,13 +262,23 @@ dynamite <- function(dformula, data, group = NULL, time,
     dots$pars <- c("nu_raw", "nu", "L")
     dots$include <- FALSE
   }
-  stanfit <- onlyif(
-    !isTRUE(debug$no_compile) && !isTRUE(debug$no_sampling),
-    do.call(
-      rstan::sampling,
-      c(list(object = model, data = stan$sampling_vars), dots)
-    )
-  )
+  if (!isTRUE(debug$no_compile) && !isTRUE(debug$no_sampling)) {
+    if (backend == "rstan") {
+      stanfit <- do.call(
+        rstan::sampling,
+        c(list(object = model, data = stan$sampling_vars), dots)
+      )
+    } else {
+      out <- do.call(
+        model$sample,
+        c(list(data = stan$sampling_vars), dots)
+      )
+      stanfit <- rstan::read_stan_csv(out$output_files())
+      stanfit@stanmodel <-  methods::new("stanmodel", model_code = model_code)
+    }
+  } else {
+    stanfit <- NULL
+  }
   out <- structure(
     list(
       stanfit = stanfit,

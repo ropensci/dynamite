@@ -4,7 +4,7 @@
 \alias{random}
 \title{Define Random Intercepts for the Dynamite Model.}
 \usage{
-random(responses = NULL, correlated = TRUE)
+random(responses = NULL, correlated = TRUE, noncentered = TRUE)
 }
 \arguments{
 \item{responses}{[\code{character()}]\cr Names of the responses for which the
@@ -14,6 +14,10 @@ random intercepts should be defined. Default is all responses defined with
 \item{correlated}{[\code{logical(1)}]\cr If \code{TRUE} (the default), correlations of
 intercepts within a group (i.e., between responses) are modeled so that
 the intercepts follow a multivariate normal distribution.}
+
+\item{noncentered}{[\code{logical(1)}]\cr If \code{TRUE} (the default), use a
+noncentered parameterization for random intercepts. Try changing this if
+you encounter divergences or other problems in sampling.}
 }
 \value{
 An object of class \code{random}.
@@ -21,6 +25,15 @@ An object of class \code{random}.
 \description{
 This function can be used as part of \code{\link[=dynamiteformula]{dynamiteformula()}} to define
 (correlated) random intercepts for each group.
+}
+\details{
+With a large number of time points these intercepts can become challenging
+sample with default priors. This is because with large group sizes the
+group-level intercepts tend to be behave similarly to fixed group-factor
+variable so the model becomes overparameterized given these and the common
+intercept term. Another potential cause for sampling problems is relatively
+large variation in the intercepts (large sigma_nu) compared to the sampling
+variation (sigma) in the Gaussian case.
 }
 \examples{
 # three channel model with correlated random effects for responses x and y

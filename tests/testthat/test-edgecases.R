@@ -148,6 +148,25 @@ test_that("random intercepts are handled correctly", {
       splines(df = 5) + random(correlated = FALSE),
     NA
   )
+  expect_error(
+    obs_all_alpha <- obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
+      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = "binomial") +
+      obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
+      splines(df = 5) + random(correlated = FALSE, noncentered = FALSE),
+    NA
+  )
+  expect_error(
+    obs_all_alpha <- obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
+      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = "binomial") +
+      obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
+      splines(df = 5) + random(correlated = TRUE, noncentered = FALSE),
+    NA
+  )
+  expect_error(
+    obs_all_alpha <- obs(y2 ~ x2, family = "gaussian") +
+      random(noncentered = FALSE),
+    NA
+  )
   expect_false(
     "L" %in% get_priors(obs_all_alpha, test_data, "group", "time")$parameter
   )
