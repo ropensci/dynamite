@@ -294,13 +294,13 @@ n_unique <- data.table::uniqueN
 stan_supports_categorical_logit_glm <- function(backend) {
   backend_version <- ifelse_(
     backend == "rstan",
-    as.character(packageVersion("rstan")),
+    as.character(rstan::stan_version()),
     as.character(cmdstanr::cmdstan_version())
   )
   required_version <- ifelse_(
     backend == "rstan",
-    "2.26.11",
-    "2.23.1"
+    "2.23",
+    "2.23"
   )
   utils::compareVersion(backend_version, required_version) >= 0
 }
