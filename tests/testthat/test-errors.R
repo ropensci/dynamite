@@ -203,10 +203,7 @@ test_that("noncentered definition throws error if not of correct length", {
     NA
   )
   expect_error(
-    dynamite(obs_all_alpha, test_data,
-      "group", "time",
-      debug = debug
-    ),
+    dynamite(obs_all_alpha, test_data, "group", "time"),
     paste(
       "Length of the `noncentered` argument of `splines\\(\\)` function",
       "is not equal to 1 or 6, the number of the channels\\."
@@ -226,10 +223,7 @@ test_that("lb_tau definition throws error if not of correct length", {
     NA
   )
   expect_error(
-    dynamite(obs_all_alpha, test_data,
-      "group", "time",
-      debug = debug
-    ),
+    dynamite(obs_all_alpha, test_data, "group", "time"),
     paste(
       "Length of the `lb_tau` argument of `splines\\(\\)` function is not",
       "equal to 1 or 6, the number of the channels\\."

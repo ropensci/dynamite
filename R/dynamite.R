@@ -201,6 +201,10 @@ dynamite <- function(dformula, data, group = NULL, time,
     checkmate::test_flag(x = verbose),
     "Argument {.arg verbose} must be a single {.cls logical} value."
   )
+  stopifnot_(
+    is.null(debug) || is.list(debug),
+    "Argument {.arg debug} must be a {.cls list} or NULL."
+  )
   backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
   stopifnot_(
     !inherits(backend, "try-error"),
@@ -244,16 +248,10 @@ dynamite <- function(dformula, data, group = NULL, time,
       )
     }
   )
-  model <- onlyif(
-    is.null(debug) || !isTRUE(debug$no_compile),
-    ifelse_(
-      backend == "rstan",
-      rstan::stan_model(model_code = model_code),
-      {
-        file <- cmdstanr::write_stan_file(model_code)
-        cmdstanr::cmdstan_model(file)
-      }
-    )
+  model <- dynamite_model(
+    compile = is.null(debug) || !isTRUE(debug$no_compile),
+    backend = backend,
+    model_code = model_code
   )
   # don't save redundant parameters by default
   # could also remove omega_raw
@@ -262,23 +260,14 @@ dynamite <- function(dformula, data, group = NULL, time,
     dots$pars <- c("nu_raw", "nu", "L")
     dots$include <- FALSE
   }
-  if (!isTRUE(debug$no_compile) && !isTRUE(debug$no_sampling)) {
-    if (backend == "rstan") {
-      stanfit <- do.call(
-        rstan::sampling,
-        c(list(object = model, data = stan$sampling_vars), dots)
-      )
-    } else {
-      out <- do.call(
-        model$sample,
-        c(list(data = stan$sampling_vars), dots)
-      )
-      stanfit <- rstan::read_stan_csv(out$output_files())
-      stanfit@stanmodel <-  methods::new("stanmodel", model_code = model_code)
-    }
-  } else {
-    stanfit <- NULL
-  }
+  stanfit <- dynamite_sampling(
+    sampling = !isTRUE(debug$no_compile) && !isTRUE(debug$no_sampling),
+    backend = backend,
+    model_code = model_code,
+    model = model,
+    sampling_vars = stan$sampling_vars,
+    dots = dots
+  )
   out <- structure(
     list(
       stanfit = stanfit,
@@ -293,11 +282,60 @@ dynamite <- function(dformula, data, group = NULL, time,
     class = "dynamitefit"
   )
   # Adds any object in the environment of this function to the return object
-  # if its name is included in the debug argument in the form `name = TRUE`
-  for (opt in names(debug)) {
-    if (debug[[opt]]) {
-      got <- try(get(x = opt), silent = TRUE)
-      out[[opt]] <- onlyif(!inherits(got, "try-error"), got)
+  # if its name is included in the debug argument.
+  for (opt in setdiff(names(debug), names(out))) {
+    got <- try(get(x = opt), silent = TRUE)
+    out[[opt]] <- onlyif(!inherits(got, "try-error"), got)
+  }
+  out
+}
+
+#' Compile Stan Model for `dynamite`
+#'
+#' @param compile \[`logical(1)`]\cr Should the model be compiled?
+#' @param backend \[`character(1)`]\cr `"rstan"` or `"cmdstanr"`.
+#' @param model_code \[`logical(1)`]\cr The model code as a string.
+#'
+#' @noRd
+dynamite_model <- function(compile, backend, model_code) {
+  if (compile) {
+    if (backend == "rstan") {
+      rstan::stan_model(model_code = model_code)
+    } else {
+      file <- cmdstanr::write_stan_file(model_code)
+      cmdstanr::cmdstan_model(file)
+    }
+  } else {
+    NULL
+  }
+}
+
+#' Sample from the Stan Model for `dynamite`
+#'
+#' @param sampling \[`logical(1)`]\cr Should sampling be carried out
+#' @param backend \[`character(1)`]\cr `"rstan"` or `"cmdstanr"`.
+#' @param model_code \[`logical(1)`]\cr The model code as a string.
+#' @param model \[`stanmodel`]\cr The compiled Stan model.
+#' @param sampling_vars \[`list()`]\cr Data for Stan sampling.
+#' @param dots \[`list()`]\cr Additional arguments for `rstan` or `cmdstanr`.
+#'
+#' @noRd
+dynamite_sampling <- function(sampling, backend, model_code, model,
+                              sampling_vars, dots) {
+  out <- NULL
+  if (sampling) {
+    if (backend == "rstan") {
+      out <- do.call(
+        rstan::sampling,
+        c(list(object = model, data = sampling_vars), dots)
+      )
+    } else {
+      sampling_out <- do.call(
+        model$sample,
+        c(list(data = sampling_vars), dots)
+      )
+      out <- rstan::read_stan_csv(sampling_out$output_files())
+      out@stanmodel <- methods::new("stanmodel", model_code = model_code)
     }
   }
   out
@@ -515,6 +553,15 @@ parse_past <- function(dformula, data, group_var, time_var) {
 #' Parse Lag and Lags Definitions of a `dynamiteformula` Object
 #'
 #' Also processes the checks on random component and adds it to dformulas.
+#'
+#' @return A `list` with the following components:
+#'   * `all` A complete `dynamiteformula` for all channels of the model.
+#'   * `det` A `dynamiteformula` for all deterministic channels.
+#'   * `stoch` A `dynamiteformula` for all stochastic channels.
+#'   * `lag_pred` A `dynamiteformula` for lagged predictors, meaning those
+#'     variables that are not response variables of any channel
+#'   * `lag_det` A `dynamiteformula` for lags of deterministic channels.
+#'   * `lag_stoch` A `dynamiteformula` for lags of stochastic channels.
 #'
 #' @inheritParams parse_data
 #' @noRd

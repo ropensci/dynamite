@@ -123,6 +123,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     channel$has_missing <- any(obs_len < N)
     sampling_vars[[paste0("obs_", resp)]] <- obs_idx
     sampling_vars[[paste0("n_obs_", resp)]] <- obs_len
+    # obs selects complete cases if there are missing observations
     channel$obs <- ifelse_(
       channel$has_missing,
       glue::glue("obs_{resp}[1:n_obs_{resp}[t], t]"),
@@ -141,6 +142,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       "Model for response variable {.var {resp}} contains time-varying
        definitions but splines have not been defined."
     )
+    # evaluate specials such as offset and trials
     for (spec in formula_special_funs) {
       if (!is.null(form_specials[[spec]])) {
         spec_split <- ifelse_(
@@ -157,7 +159,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       }
     }
     family <- dformula[[i]]$family
-    sampling_vars[[resp]] <- ifelse_(
+    sampling_vars[[paste0("y_", resp)]] <- ifelse_(
       family %in% c("gaussian", "gamma", "exponential", "beta"),
       t(Y_out),
       Y_out
