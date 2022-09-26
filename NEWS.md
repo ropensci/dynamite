@@ -13,6 +13,7 @@
   * `categorical_logit` is now used instead of `categorical_logit_glm` on older
     `rstan` and `cmdstanr` versions.
   * Random intercepts with `random` now also support centered parameterization.
+  * Added more comments to the generated Stan code.
 
 # dynamite 0.0.2
 
