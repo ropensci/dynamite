@@ -100,9 +100,10 @@ NULL
 
 data_lines_default <- function(y, idt, has_missing, ...) {
   paste_rows(
-    "// Data for response {y}",
+    onlyif(has_missing, "// Missing data indicators"),
     onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
     onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
+    "// Data",
     .indent = idt(1)
   )
 }
@@ -129,6 +130,7 @@ data_lines_binomial <- function(y, idt, has_missing, ...) {
   dtext_def <- data_lines_default(y, idt, has_missing)
   dtext <- paste_rows(
     "int<lower=0> y_{y}[T, N];",
+    "// Trials for binomial response {y}",
     "int<lower=1> trials_{y}[T, N];",
     .indent = idt(1)
   )
@@ -148,6 +150,7 @@ data_lines_poisson <- function(y, idt, has_missing, has_offset, ...) {
   dtext_def <- data_lines_default(y, idt, has_missing)
   dtext <- paste_rows(
     "int<lower=0> y_{y}[T, N];",
+    "// Offset term",
     onlyif(has_offset, "real offset_{y}[T, N];"),
     .indent = idt(1)
   )
@@ -377,17 +380,22 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
                                      K_fixed, K_varying) {
   oname <- ifelse_(noncentered, "omega_raw_", "omega_")
   paste_rows(
-    onlyif(has_random_intercept, "real<lower=0> sigma_nu_{y};"),
-    onlyif(has_fixed, "vector[{K_fixed}] beta_{y};"),
-    onlyif(has_varying, "matrix[{K_varying}, D] {oname}{y};"),
-    onlyif(has_varying, "vector<lower={lb}>[{K_varying}] tau_{y};"),
+    onlyif(has_random_intercept,
+      "real<lower=0> sigma_nu_{y}; // SD of random intercepts"),
+    onlyif(has_fixed, "vector[{K_fixed}] beta_{y}; // Fixed coefficients"),
+    onlyif(has_varying,
+      "matrix[{K_varying}, D] {oname}{y}; // Spline coefficients"),
+    onlyif(has_varying,
+      "vector<lower={lb}>[{K_varying}] tau_{y}; // SDs for the random walks"),
     ifelse_(
       has_fixed_intercept || has_varying_intercept,
-      "real a_{y};",
+      "real a_{y}; // Mean of the first time point",
       ""
     ),
-    onlyif(has_varying_intercept, "row_vector[D - 1] omega_raw_alpha_{y};"),
-    onlyif(has_varying_intercept, "real<lower={lb}> tau_alpha_{y};"),
+    onlyif(has_varying_intercept,
+      "row_vector[D - 1] omega_raw_alpha_{y}; // Coefficients for alpha"),
+    onlyif(has_varying_intercept,
+      "real<lower={lb}> tau_alpha_{y}; // SD for the random walk"),
     .indent = idt(1)
   )
 }
@@ -398,21 +406,24 @@ parameters_lines_categorical <- function(y, idt, noncentered, lb, has_fixed,
                                          K_fixed, K_varying, S, ...) {
   oname <- ifelse_(noncentered, "omega_raw_", "omega_")
   paste_rows(
-    onlyif(has_fixed, "matrix[{K_fixed}, {S - 1}] beta_{y};"),
-    onlyif(has_varying, "matrix[{K_varying}, D] {oname}{y}[{S - 1}];"),
-    onlyif(has_varying, "vector<lower={lb}>[{K_varying}] tau_{y};"),
+    onlyif(has_fixed,
+      "matrix[{K_fixed}, {S - 1}] beta_{y}; // Fixed coefficients"),
+    onlyif(has_varying,
+      "matrix[{K_varying}, D] {oname}{y}[{S - 1}]; // Spline coefficients"),
+    onlyif(has_varying,
+      "vector<lower={lb}>[{K_varying}] tau_{y};  // SDs for the random walks"),
     ifelse_(
       has_fixed_intercept || has_varying_intercept,
-      "vector[{S - 1}] a_{y};",
+      "vector[{S - 1}] a_{y}; // Mean of the first time point",
       ""
     ),
     onlyif(
       has_varying_intercept,
-      "row_vector[D - 1] omega_raw_alpha_{y}[{S - 1}];"
+      "row_vector[D - 1] omega_raw_alpha_{y}[{S - 1}]; // Coefficiens for alpha"
     ),
     onlyif(
       has_varying_intercept,
-      "real<lower={lb}> tau_alpha_{y};"
+      "real<lower={lb}> tau_alpha_{y}; // SD for the random walk"
     ),
     .indent = idt(1)
   )
@@ -423,7 +434,7 @@ parameters_lines_gaussian <- function(y, idt, ...) {
   args <- args[names(args) %in% names(formals(parameters_lines_default))]
   paste_rows(
     do.call(what = parameters_lines_default, args = args),
-    "real<lower=0> sigma_{y};",
+    "real<lower=0> sigma_{y}; // SD of the normal distribution",
     .indent = idt(c(0, 1))
   )
 }
@@ -451,7 +462,7 @@ parameters_lines_negbin <- function(y, idt, ...) {
   args <- args[names(args) %in% names(formals(parameters_lines_default))]
   paste_rows(
     do.call(what = parameters_lines_default, args = args),
-    "real<lower=0> phi_{y};",
+    "real<lower=0> phi_{y}; // Dispersion parameter of the NB distribution",
     .indent = idt(c(0, 1))
   )
 }
@@ -467,7 +478,7 @@ parameters_lines_gamma <- function(y, idt, ...) {
   args <- args[names(args) %in% names(formals(parameters_lines_default))]
   paste_rows(
     do.call(what = parameters_lines_default, args = args),
-    "real<lower=0> phi_{y};",
+    "real<lower=0> phi_{y}; // Shape parameter of the Gamma distribution",
     .indent = idt(c(0, 1))
   )
 }
@@ -477,7 +488,7 @@ parameters_lines_beta <- function(y, idt, ...) {
   args <- args[names(args) %in% names(formals(parameters_lines_default))]
   paste_rows(
     do.call(what = parameters_lines_default, args = args),
-    "real<lower=0> phi_{y};",
+    "real<lower=0> phi_{y}; // Precision parameter of the Beta distribution",
     .indent = idt(c(0, 1))
   )
 }
@@ -492,7 +503,12 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
                                                  L_fixed, L_varying) {
   if (noncentered) {
     lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
-    declare_omega <- "matrix[{K_varying}, D] omega_{y};"
+    declare_omega <-  paste_rows(
+      "// Spline coefficients",
+      "matrix[{K_varying}, D] omega_{y};",
+      .indent = idt(c(0, 1)),
+      .parse = FALSE
+    )
     state_omega <- paste_rows(
       "omega_{y}[, 1] = omega_raw_{y}[, 1];",
       "for (i in 2:D) {{",
@@ -506,7 +522,12 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
     )
   }
 
-  declare_delta <- "vector[{K_varying}] delta_{y}[T];"
+  declare_delta <- paste_rows(
+    "// Fixed coefficients",
+    "vector[{K_varying}] delta_{y}[T];",
+    .indent = idt(c(0, 1)),
+    .parse = FALSE
+  )
   state_delta <- paste_rows(
     "for (t in 1:T) {{",
     "delta_{y}[t] = omega_{y} * Bs[, t];",
@@ -517,12 +538,14 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
 
   if (has_fixed || has_varying) {
     declare_omega_alpha_1 <- paste_rows(
+      "// Fixed intercept",
       "real alpha_{y}[T];",
       "real omega_alpha_1_{y};",
       .indent = idt(1),
       .parse = FALSE
     )
     state_omega_alpha_1 <- paste_rows(
+      "// Define the first alpha using mean a_{y}",
       "{{",
       "vector[{K}] gamma_{y};",
       onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
@@ -532,11 +555,17 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
       ),
       "omega_alpha_1_{y} = a_{y} - X_m[{{{cs(J)}}}] * gamma_{y};",
       "}}",
-      .indent = idt(c(1, 2, 2, 2, 2, 1)),
+      .indent = idt(c(1, 1, 2, 2, 2, 2, 1)),
       .parse = FALSE
     )
-    declare_fixed_intercept <- "real alpha_{y};"
+    declare_fixed_intercept <- paste_rows(
+      "// Time-invariant intercept",
+      "real alpha_{y};",
+      .indent = idt(c(0, 1)),
+      .parse = FALSE
+      )
     state_fixed_intercept <- paste_rows(
+      "// Define the first alpha using mean a_{y}",
       "{{",
       "vector[{K}] gamma_{y};",
       onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
@@ -546,14 +575,15 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
       ),
       "alpha_{y} = a_{y} - X_m[{{{cs(J)}}}] * gamma_{y};",
       "}}",
-      .indent = idt(c(1, 2, 2, 2, 2, 1)),
+      .indent = idt(c(1, 1, 2, 2, 2, 2, 1)),
       .parse = FALSE
     )
   } else {
     declare_omega_alpha_1 <- paste_rows(
+      "// Time-invariant intercept",
       "real alpha_{y}[T];",
       "real omega_alpha_1_{y} = a_{y};",
-      .indent = idt(1),
+      .indent = idt(c(0, 1, 1)),
       .parse = FALSE
     )
     state_omega_alpha_1 <- character(0L)
@@ -562,7 +592,12 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
   }
   if (noncentered) {
     lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
-    declare_omega_alpha <- "row_vector[D] omega_alpha_{y};"
+    declare_omega_alpha <-  paste_rows(
+      "// Spline coefficients",
+      "row_vector[D] omega_alpha_{y};",
+      .indent = idt(c(0, 1)),
+      .parse = FALSE
+    )
     state_omega_alpha <- paste_rows(
       "omega_alpha_{y}[1] = omega_alpha_1_{y};",
       "for (i in 2:D) {{",
@@ -575,7 +610,12 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
       .parse = FALSE
     )
   } else {
-    declare_omega_alpha <- "row_vector[D] omega_alpha_{y};"
+    declare_omega_alpha <-  paste_rows(
+      "// Spline coefficients",
+      "row_vector[D] omega_alpha_{y};",
+      .indent = idt(c(0, 1)),
+      .parse = FALSE
+    )
     state_omega_alpha <- paste_rows(
       "omega_alpha_{y}[1] = omega_alpha_1_{y};",
       "omega_alpha_{y}[2:D] = omega_raw_alpha_{y};",
@@ -627,7 +667,12 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
                                                      S, ...) {
   if (noncentered) {
     lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
-    declare_omega <- "matrix[{K_varying}, D] omega_{y}[{S - 1}];"
+    declare_omega <- paste_rows(
+      "// Spline coefficients",
+      "matrix[{K_varying}, D] omega_{y}[{S - 1}];",
+      .indent = idt(1),
+      .parse = FALSE
+    )
     state_omega <- paste_rows(
       "for (s in 1:{S - 1}) {{",
       "omega_{y}[s, , 1] = omega_raw_{y}[s, , 1];",
@@ -642,7 +687,12 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
       .parse = FALSE
     )
   }
-  declare_delta <- "matrix[{K_varying}, {S - 1}] delta_{y}[T];"
+  declare_delta <- paste_rows(
+    "// Fixed coefficients",
+    "matrix[{K_varying}, {S - 1}] delta_{y}[T];",
+    .indent = idt(1),
+    .parse = FALSE
+  )
   state_delta <- paste_rows(
     "for (s in 1:{S - 1}) {{",
     "for (t in 1:T) {{",
@@ -655,12 +705,14 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
 
   if (has_fixed || has_varying) {
     declare_omega_alpha_1 <- paste_rows(
+      "// Fixed intercept",
       "vector[{S - 1}] alpha_{y}[T];",
       "real omega_alpha_1_{y}[{S - 1}];",
       .indent = idt(1),
       .parse = FALSE
     )
     state_omega_alpha_1 <- paste_rows(
+      "// Define the first alpha using mean a_{y}",
       "for (s in 1:{S - 1}) {{",
       "vector[{K}] gamma_{y};",
       onlyif(
@@ -673,10 +725,15 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
       ),
       "omega_alpha_1_{y}[s] = a_{y}[s] - X_m[{{{cs(J)}}}] * gamma_{y};",
       "}}",
-      .indent = idt(c(1, 2, 2, 2, 2, 1)),
+      .indent = idt(c(1, 1, 2, 2, 2, 2, 1)),
       .parse = FALSE
     )
-    declare_fixed_intercept <- "vector[{S - 1}] alpha_{y};"
+    declare_fixed_intercept <-  paste_rows(
+      "// Time-invariant intercept",
+      "vector[{S - 1}] alpha_{y};",
+      .indent = idt(1),
+      .parse = FALSE
+    )
     state_fixed_intercept <- paste_rows(
       "for (s in 1:{S - 1}) {{",
       "vector[{K}] gamma_{y};",
@@ -695,6 +752,7 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
     )
   } else {
     declare_omega_alpha_1 <- paste_rows(
+      "// Fixed intercept",
       "vector[{S - 1}] alpha_{y}[T];",
       "real omega_alpha_1_{y}[{S - 1}];",
       .indent = idt(1),
@@ -707,7 +765,12 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
       .indent = idt(c(1, 2, 1)),
       .parse = FALSE
     )
-    declare_fixed_intercept <- "vector[{S - 1}] alpha_{y};"
+    declare_fixed_intercept <-  paste_rows(
+      "// Time-invariant intercept",
+      "vector[{S - 1}] alpha_{y};",
+      .indent = idt(1),
+      .parse = FALSE
+    )
     state_fixed_intercept <- paste_rows(
       "for (s in 1:{S - 1}) {{",
       "alpha_{y}[s] = a_{y}[s];",
@@ -718,7 +781,12 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
   }
   if (noncentered) {
     lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
-    declare_omega_alpha <- "row_vector[D] omega_alpha_{y}[{S - 1}];"
+    declare_omega_alpha <-  paste_rows(
+      "// Spline coefficients",
+      "row_vector[D] omega_alpha_{y}[{S - 1}];",
+      .indent = idt(1),
+      .parse = FALSE
+    )
     state_omega_alpha <- paste_rows(
       "for (s in 1:{S - 1}) {{",
       "omega_alpha_{y}[s, 1] = omega_alpha_1_{y}[s];",
@@ -733,7 +801,12 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
       .parse = FALSE
     )
   } else {
-    declare_omega_alpha <- "row_vector[D] omega_alpha_{y}[{S - 1}];"
+    declare_omega_alpha <-  paste_rows(
+      "// Spline coefficients",
+      "row_vector[D] omega_alpha_{y}[{S - 1}];",
+      .indent = idt(1),
+      .parse = FALSE
+    )
     state_omega_alpha <- paste_rows(
       "for (s in 1:{S - 1}) {{",
       "omega_alpha_{y}[s, 1] = omega_alpha_1_{y}[s];",
@@ -886,7 +959,7 @@ model_lines_default <- function(y, idt, noncentered, shrinkage, has_varying,
         "tau_alpha_{y}{lambda_term});"
       ),
       "}}",
-      .indent = idt(c(1, 1, 2, 1)),
+      .indent = idt(c(0, 1, 2, 1)),
       .parse = FALSE
     )
     if (vectorizable_prior(delta_prior_distr)) {
@@ -921,7 +994,7 @@ model_lines_default <- function(y, idt, noncentered, shrinkage, has_varying,
     mtext_alpha,
     mtext_omega,
     "tau_alpha_{y} ~ {tau_alpha_prior_distr};",
-    .indent = idt(c(0, 0, 1)),
+    .indent = idt(c(0, 1, 1)),
     .parse = FALSE
   )
 

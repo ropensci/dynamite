@@ -84,6 +84,7 @@ create_transformed_data <- function(dformula, idt, vars) {
   }
   paste_rows(
     "transformed data {",
+    "  // Parameters for vectorized priors",
     declarations,
     statements,
     "}",
@@ -100,12 +101,11 @@ create_parameters <- function(dformula, idt, vars) {
     is.null(spline_defs),
     "",
     paste_rows(
-      "// Spline parameters",
       onlyif(
         spline_defs$shrinkage,
-        "vector<lower=0>[D - 1] lambda; // shrinkage parameter"
+        "vector<lower=0>[D - 1] lambda; // Common shrinkage for splines"
       ),
-      .indent = idt(c(1, 1))
+      .indent = idt(1)
     )
   )
   randomtext <- ifelse_(
