@@ -175,9 +175,9 @@ test_that("parameters of a time-varying gaussian model are recovered", {
   expect_lt(mean(diffs^2), 0.005)
 
   # test with a single large dataset
-  d <- create_data(T_ = 1000, N = 500, D = 500)
+  d <- create_data(T_ = 500, N = 500, D = 100)
   data <- get_data(obs(y ~ -1 + z + varying(~x), family = "gaussian") +
-    splines(df = 500), group = "id", time = "time", data = d$data)
+    splines(df = 100), group = "id", time = "time", data = d$data)
   fit_long <- rstan::sampling(model,
     data = data,
     refresh = 0, chains = 1, iter = 2000,
