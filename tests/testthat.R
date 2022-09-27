@@ -8,4 +8,4 @@
 library(testthat)
 library(dynamite)
 
-test_check("dynamite", reporter = ProgressReporter)
+test_check("dynamite", reporter = ParallelProgressReporter)
