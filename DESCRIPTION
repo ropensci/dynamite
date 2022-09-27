@@ -30,7 +30,7 @@ Imports:
     methods,
     posterior,
     rlang,
-    rstan,
+    rstan (>= 2.26.11),
     stats,
     tidyr,
     utils
