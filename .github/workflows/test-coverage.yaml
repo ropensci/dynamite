@@ -27,13 +27,22 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          cache-version: 2
+          cache-version: 3
           extra-packages: |
             covr
             BH
             RcppParallel
             RcppEigen
             Rcpp
+            rstan
+            StanHeaders
+
+# To be added when we have tests for cmdstanr backend
+# - name: Build CmdStan
+#   run: |
+#     cmdstanr::check_cmdstan_toolchain(fix = TRUE)
+#     cmdstanr::install_cmdstan()
+#   shell: Rscript {0}
 
       - name: Test coverage
         run: covr::codecov()
