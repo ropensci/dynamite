@@ -63,7 +63,7 @@ jobs:
             RcppParallel
             RcppEigen
             Rcpp
-            any::StanHeaders
-            any::rstan
+            cran::StanHeaders
+            cran::rstan
 
       - uses: r-lib/actions/check-r-package@v2
