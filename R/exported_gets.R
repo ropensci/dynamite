@@ -102,7 +102,7 @@ get_code.dynamiteformula <- function(x, data, group = NULL, time, ...) {
 #' @rdname get_code
 #' @export
 get_code.dynamitefit <- function(x, ...) {
-  x$stanfit@stanmodel
+  x$stanfit@stanmodel@model_code
 }
 
 #' Extract the Model Data of the Dynamite Model
