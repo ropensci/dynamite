@@ -16,7 +16,7 @@
   * Added more comments to the generated Stan code.
   * `get_code` applied to fitted model now correctly returns only the model 
     code and not the stanmodel object.
-  * Fixed the `.draw` column of the `as_data_frame` output.
+  * Fixed the `.draw` column of the `as.data.frame` output.
 
 # dynamite 0.0.2
 
