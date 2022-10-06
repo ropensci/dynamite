@@ -45,7 +45,8 @@ check_newdata <- function(object, newdata) {
 #' @param newdata \[`data.frame`]\cr The data to be used for prediction.
 #' @param data \[`data.frame`]\cr The original data used to fit the model.
 #' @param type \[`character`]\cr Either `"response"`, `"mean"`, `"link"`.
-#' @param eval_type \[`character(1)`]\cr Either `"predict"` or `"fitted"`
+#' @param eval_type \[`character(1)`]\cr Either `"predict"`, `"fitted"`, or
+#'   `loglik.`
 #' @param families_stoch \[`list`]\cr of `dynamitefamily` object.
 #' @param resp_stoch \[`character`]\cr A vector of response variables
 #' @param categories \[`list`]\cr Response variable categories
@@ -135,17 +136,21 @@ parse_newdata <- function(dformula, newdata, data, type, eval_type,
     newdata[, (clear_names) := NULL]
   }
   drop_unused(dformula, newdata, group_var, time_var)
-  type <- ifelse_(identical(eval_type, "fitted"), "fitted", type)
+  type <- ifelse_(eval_type %in% c("fitted", "loglik"), eval_type, type)
   # create separate column for each level of categorical response variables
   for (i in seq_along(resp_stoch)) {
     resp <- resp_stoch[i]
-    if (type %in% c("mean", "link", "fitted")) {
-      pred_col <- ifelse_(
-        is_categorical(families_stoch[[i]]),
-        glue::glue("{resp}_{type}_{categories[[resp]]}"),
-        glue::glue("{resp}_{type}")
-      )
-      newdata[, (pred_col) := NA_real_]
+    if (identical(type, "loglik")) {
+      newdata[, (glue::glue("{resp}_loglik")) := NA_real_]
+    } else {
+      if (type %in% c("mean", "link", "fitted")) {
+        pred_col <- ifelse_(
+          is_categorical(families_stoch[[i]]),
+          glue::glue("{resp}_{type}_{categories[[resp]]}"),
+          glue::glue("{resp}_{type}")
+        )
+        newdata[, (pred_col) := NA_real_]
+      }
     }
     newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
   }
@@ -533,7 +538,8 @@ prepare_eval_envs <- function(object, simulated, observed,
 #' @param resp \[`character(1)`]\cr Name of the response.
 #' @param resp_levels \[`character()`]\cr Levels of a categorical response.
 #' @param family \[`dynamitefamily`]\cr Family of the response.
-#' @param eval_type  \[`character(1)`]\cr Either `"predict"` or `"fitted"`.
+#' @param eval_type  \[`character(1)`]\cr Either `"predict"`, `"fitted"` or
+#'   `"loglik"`.
 #' @param has_fixed \[logical(1)]\cr
 #'   Does the channel have time-invariant predictors?
 #' @param has_varying \[logical(1)]\cr
@@ -634,8 +640,9 @@ fitted_categorical <- "
   resp_cols <- c({
     paste0('\"', resp, '_fitted_', resp_levels, '\"', collapse = ', ')
   })
-  maxs <- apply(xbeta, 1, max)
-  mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+  # maxs <- apply(xbeta, 1, max)
+  # mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+  mval <- exp(xbeta - log_sum_exp(xbeta))
   for (s in 1:S) {{
     data.table::set(
       x = out,
@@ -862,5 +869,94 @@ predicted_beta <- "
     i = idx_data,
     j = '{resp}',
     value = rbeta(k,  mu * phi, (1 - mu) * phi)[idx_out]
+  )
+"
+
+
+# Log-likelihood expressions ---------------------------------------------------
+
+loglik_gaussian <- "
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dnorm(y, xbeta, sigma, log = TRUE)
+  )
+"
+
+loglik_categorical <- "
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = xbeta[cbind(seq_along(y), y)] - log_sum_exp(xbeta)
+  )
+"
+
+loglik_binomial <- "
+  prob <- plogis(xbeta)
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dbinom(y, trials, prob, log = TRUE)
+  )
+"
+
+loglik_bernoulli <- "
+  prob <- plogis(xbeta)
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dbinom(y, 1, prob, log = TRUE)
+  )
+"
+
+loglik_poisson <- "
+  exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dpois(y, exp_xbeta, log = TRUE)
+  )
+"
+
+loglik_negbin <- "
+  exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dnbinom(y, size = phi, mu = exp_xbeta, log = TRUE)
+  )
+"
+
+loglik_exponential <- "
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dexp(y, rate = exp(-xbeta), log = TRUE)
+  )
+"
+
+loglik_gamma <- "
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dgamma(y, shape = phi, rate = phi * exp(-xbeta), log = TRUE)
+  )
+"
+
+loglik_beta <- "
+  mu <- plogis(xbeta)
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dbeta(y,  mu * phi, (1 - mu) * phi, log = TRUE)
   )
 "

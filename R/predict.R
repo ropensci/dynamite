@@ -71,7 +71,11 @@
 #'   This argument is ignored if `funs` are provided.
 #' @param ... Ignored.
 #' @return A `data.frame` containing the predicted values or a `list` of two
-#'   `data.frames`. See the `expand` argument for details.
+#'   `data.frames`. See the `expand` argument for details. Note that the
+#'   `.draw` column is not the same as `.draw` from `as.data.frame` and
+#'   `as_draws` methods as `predict` uses permuted samples. A mapping between
+#'   these variables can be done using information in
+#'   `object$stanfit@sim$permutation`.
 #' @srrstats {G2.3a} Uses match.arg.
 #' @srrstats {RE2.2} Missing responses can be predicted.
 #' @srrstats {G2.13, G2.14, G2.14a, G2.14b, G2.14c, G2.15}
@@ -180,7 +184,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
 #' Internal Function for Both Predict and Fitted Methods
 #'
 #' @inheritParams predict.dynamitefit
-#' @param eval_type \[`character(1)`]\cr Either `"predicted"` or `"fitted"`.
+#' @param eval_type \[`character(1)`]\cr Either `"predicted"`, `"fitted"`, or
+#'   `"loglik"`.
 #' @noRd
 initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
                                new_levels, global_fixed, n_draws, expand) {
@@ -263,6 +268,7 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
     grep("_mean", newdata_names, value = TRUE),
     grep("_link", newdata_names, value = TRUE),
     grep("_fitted", newdata_names, value = TRUE),
+    grep("_loglik", newdata_names, value = TRUE),
     setdiff(
       c(
         resp_stoch,
@@ -374,6 +380,10 @@ predict_full <- function(object, simulated, observed, type, eval_type,
       e$model_matrix <- model_matrix
       e$offset <- specials[[j]]$offset[idx_obs]
       e$trials <- specials[[j]]$trials[idx_obs]
+      e$y <- object$data[[resp_stoch[j]]][idx_obs]
+      if (is_categorical(object$dformulas$stoch[[j]]$family)) {
+        e$y <- as.integer(e$y)
+      }
       e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
       if (identical(eval_type, "predicted")) {
         idx_na <- is.na(simulated[idx, .SD, .SDcols = resp_stoch[j]])

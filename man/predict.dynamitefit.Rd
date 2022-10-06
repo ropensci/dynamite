@@ -92,7 +92,11 @@ This argument is ignored if \code{funs} are provided.}
 }
 \value{
 A \code{data.frame} containing the predicted values or a \code{list} of two
-\code{data.frames}. See the \code{expand} argument for details.
+\code{data.frames}. See the \code{expand} argument for details. Note that the
+\code{.draw} column is not the same as \code{.draw} from \code{as.data.frame} and
+\code{as_draws} methods as \code{predict} uses permuted samples. A mapping between
+these variables can be done using information in
+\code{object$stanfit@sim$permutation}.
 }
 \description{
 Obtain counterfactual predictions for a \code{dynamitefit} object.

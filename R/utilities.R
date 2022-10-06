@@ -299,6 +299,13 @@ stan_supports_categorical_logit_glm <- function(backend) {
   )
   utils::compareVersion(backend_version, "2.23") >= 0
 }
+#' Row-wise log-sum-exp
+#'
+#' @noRd
+log_sum_exp <- function(x) {
+  maxs <- apply(x, 1, max)
+  maxs + log(rowSums(exp(x - maxs)))
+}
 
 # Placeholder for future
 # Startup message for the package

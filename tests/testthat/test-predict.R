@@ -369,3 +369,34 @@ test_that("summarising via funs is equivalent to manual summary", {
   expect_equal(pred1$y_mean, pred2$y_mean)
   expect_equal(pred1$y_sd, pred2$y_sd)
 })
+
+test_that("predict with loglik works", {
+  out <- expect_error(initialize_predict(
+    gaussian_example_fit,
+    newdata = NULL,
+    type = "mean",
+    eval_type = "loglik",
+    funs = list(),
+    impute = "none",
+    new_levels = "none",
+    global_fixed = FALSE,
+    n_draws = NULL,
+    expand = FALSE
+  )$simulated, NA)
+
+  iter <- gaussian_example_fit$stanfit@sim$permutation[[1]][2]
+  xzy <- gaussian_example_fit$data |> dplyr::filter(id == 5 & time == 20)
+
+  manual <- as_draws(gaussian_example_fit) |>
+    dplyr::filter(.iteration == iter & .chain == 1) |>
+    dplyr::summarise(loglik = dnorm(xzy$y, `alpha_y[20]` +
+        nu_y_id5 + `delta_y_x[20]` * xzy$x +
+        beta_y_z * xzy$z + `delta_y_y_lag1[20]` * xzy$y_lag1, sigma_y,
+      log = TRUE)) |>
+    dplyr::pull(loglik)
+
+  automatic <- out |>
+    dplyr::filter(id == 5 & time == 20 & .draw == 2) |>
+    dplyr::pull(y_loglik)
+  expect_equal(manual, automatic)
+})
