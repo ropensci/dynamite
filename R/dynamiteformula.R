@@ -298,7 +298,7 @@ print.dynamiteformula <- function(x, ...) {
   print.data.frame(out, right = FALSE)
   if (!is.null(attr(x, "lags"))) {
     k <- attr(x, "lags")$k
-    cat("\nLagged responses added as predcitors with: k = ", cs(k), sep = "")
+    cat("\nLagged responses added as predictors with: k = ", cs(k), sep = "")
   }
   if (!is.null(attr(x, "random"))) {
     resp <- attr(x, "random")$responses
