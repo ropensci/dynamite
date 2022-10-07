@@ -91,6 +91,13 @@
 #'      Name of the variable defining the groups.\cr
 #'    `time_var` \tab\tab\tab
 #'      Name of the variable defining the time index.\cr
+#'    `priors` \tab\tab\tab
+#'      Data frame containing the used priors.\cr
+#'    `backend` \tab\tab\tab
+#'      Either a `rstan` or `cmdstanr` indicating which package was used in
+#'      sampling.\cr
+#'    `call` \tab\tab\tab
+#'      Original function call as an object of class `call`.
 #'   }
 #' @srrstats {G2.9} Potential loss of information is reported by `dynamite`.
 #' @srrstats {RE1.1} Documented in `dformula` parameter.
@@ -277,7 +284,9 @@ dynamite <- function(dformula, data, group = NULL, time,
       stan = stan,
       group_var = group,
       time_var = time,
-      priors = dplyr::bind_rows(stan$priors)
+      priors = dplyr::bind_rows(stan$priors),
+      backend = backend,
+      call = match.call()
     ),
     class = "dynamitefit"
   )
@@ -409,13 +418,7 @@ formula.dynamitefit <- function(x, ...) {
       "noncentered = ", spline_defs$noncentered, ")"
     )
   )
-  str2lang(
-    paste0(
-      "{\n",
-      paste_rows(obs_str, aux_str, lags_str, spline_str),
-      "\n}"
-    )
-  )
+  str2lang(paste(c(obs_str, aux_str, lags_str, spline_str), collapse = " + "))
 }
 
 #' Is The Argument a `dynamitefit` Object
