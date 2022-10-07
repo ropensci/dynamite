@@ -14,6 +14,10 @@
     `rstan` and `cmdstanr` versions.
   * Random intercepts with `random` now also support centered parameterization.
   * Added more comments to the generated Stan code.
+  * Fixed the output of `formula.dynamitefit` so that it is now compatible with 
+    the `stats::update.default`. Also added the required `call` object to the 
+    `dynamitefit` object.
+  * Added a `loo` method for the dynamite models.
 
 # dynamite 0.0.2
 
