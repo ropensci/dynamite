@@ -264,9 +264,9 @@ prepare_prior <- function(ptype, priors, channel) {
   if (nrow(pdef) > 0L && identical(n_unique(dists), 1L)) {
     pars <- strsplit(sub(".*\\((.*)\\).*", "\\1", pdef$prior), ",")
     pars <- do.call("rbind", lapply(pars, as.numeric))
+    channel[[paste0(ptype, "_prior_distr")]] <- dists[1L]
     channel[[paste0(ptype, "_prior_npars")]] <- ncol(pars)
     channel[[paste0(ptype, "_prior_pars")]] <- pars
-    channel[[paste0(ptype, "_prior_distr")]] <- dists[1L]
   }
   channel
 }
@@ -345,11 +345,12 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
     priors <- out$priors
   } else {
     priors <- priors |> dplyr::filter(.data$response == y)
-    for (ptype in c("alpha", "tau_alpha", "sigma_nu")) {
+    types <- priors$type
+    for (ptype in intersect(types, c("alpha", "tau_alpha", "sigma_nu"))) {
       pdef <- priors |> dplyr::filter(.data$type == ptype)
       channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
     }
-    for (ptype in c("beta", "delta", "tau")) {
+    for (ptype in intersect(types, c("beta", "delta", "tau"))) {
       channel <- prepare_prior(ptype, priors, channel)
     }
   }
@@ -381,11 +382,14 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
     priors <- out$priors
   } else {
     priors <- priors |> dplyr::filter(.data$response == y)
-    for (ptype in c("alpha", "beta", "delta", "tau")) {
+    types <- priors$type
+    for (ptype in intersect(types, c("alpha", "beta", "delta", "tau"))) {
       channel <- prepare_prior(ptype, priors, channel)
     }
-    pdef <- priors |> dplyr::filter(.data$type == "tau_alpha")
-    channel[["tau_alpha_prior_distr"]] <- pdef$prior
+    if ("tau_alpha" %in% types) {
+      pdef <- priors |> dplyr::filter(.data$type == "tau_alpha")
+      channel[["tau_alpha_prior_distr"]] <- pdef$prior
+    }
     priors <- check_priors(
       priors, default_priors_categorical(y, channel, sd_x, resp_class)$priors
     )
