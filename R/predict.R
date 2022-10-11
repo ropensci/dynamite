@@ -380,7 +380,7 @@ predict_full <- function(object, simulated, observed, type, eval_type,
       e$model_matrix <- model_matrix
       e$offset <- specials[[j]]$offset[idx_obs]
       e$trials <- specials[[j]]$trials[idx_obs]
-      e$y <- object$data[[resp_stoch[j]]][idx_obs]
+      e$y <- observed[[paste0(resp_stoch[j], "_store")]][idx_obs]
       if (is_categorical(object$dformulas$stoch[[j]]$family)) {
         e$y <- as.integer(e$y)
       }
