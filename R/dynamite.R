@@ -255,11 +255,16 @@ dynamite <- function(dformula, data, group = NULL, time,
       )
     }
   )
-  model <- dynamite_model(
-    compile = is.null(debug) || !isTRUE(debug$no_compile),
-    backend = backend,
-    model_code = model_code
-  )
+  # if debug$stanfit exists (from the update method) then don't recompile
+  if (is.null(debug) || is.null(debug$stanfit)) {
+    model <- dynamite_model(
+      compile = is.null(debug) || !isTRUE(debug$no_compile),
+      backend = backend,
+      model_code = model_code
+    )
+  } else {
+    model <- debug$stanfit
+  }
   # don't save redundant parameters by default
   # could also remove omega_raw
   dots <- list(...)
@@ -390,7 +395,7 @@ formula.dynamitefit <- function(x, ...) {
     length(ch_stoch) > 0L,
     obs_str <- paste0(
       glue::glue(
-        "obs({formula_str[ch_stoch]}, family = {family_str[ch_stoch]}())"
+        "obs({formula_str[ch_stoch]}, family = '{family_str[ch_stoch]}')"
       ),
       collapse = " +\n"
     )
