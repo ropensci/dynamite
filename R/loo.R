@@ -9,7 +9,8 @@
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param separate_channels \[`logical(1)`]\cr If `TRUE`, computes LOO
 #'   separately for each channel. This can be useful in diagnosing where the
-#'   model fails. Default is `FALSE`
+#'   model fails. Default is `FALSE`, in which case the likelihoods of
+#'   different channels are combined, i.e. all channels of are left out.
 #' @param ... Ignored.
 #' @return An output from [loo::loo()] or a list of such outputs (if
 #'   `separate_channels` was `TRUE`).
@@ -57,11 +58,10 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, ...) {
       split(f = ~name)
     lapply(ll, function(x) loo_(x$value, n_draws, n_chains))
   } else {
-    ll <- out |>
-      tidyr::pivot_longer(
-        dplyr::ends_with("_loglik"), values_drop_na = TRUE
-      ) |>
-      dplyr::pull(.data$value)
+    ll <- out |> tidyr::drop_na() |>
+      dplyr::mutate(loglik = rowSums(dplyr::across(
+        dplyr::ends_with("_loglik")))) |>
+      dplyr::pull(.data$loglik)
     loo_(ll, n_draws, n_chains)
   }
 
