@@ -642,7 +642,7 @@ fitted_categorical <- "
   })
   # maxs <- apply(xbeta, 1, max)
   # mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
-  mval <- exp(xbeta - log_sum_exp(xbeta))
+  mval <- exp(xbeta - log_sum_exp_rows(xbeta))
   for (s in 1:S) {{
     data.table::set(
       x = out,
@@ -889,7 +889,7 @@ loglik_categorical <- "
     x = out,
     i = idx,
     j = '{resp}_loglik',
-    value = xbeta[cbind(seq_along(y), y)] - log_sum_exp(xbeta)
+    value = xbeta[cbind(seq_along(y), y)] - log_sum_exp_rows(xbeta)
   )
 "
 

@@ -302,7 +302,7 @@ stan_supports_categorical_logit_glm <- function(backend) {
 #' Row-wise log-sum-exp
 #'
 #' @noRd
-log_sum_exp <- function(x) {
+log_sum_exp_rows <- function(x) {
   maxs <- apply(x, 1, max)
   maxs + log(rowSums(exp(x - maxs)))
 }
