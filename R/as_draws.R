@@ -25,13 +25,12 @@
 #'  * `omega_alpha` Spline coefficients of time-varying `alpha`.
 #'
 #' @export
+#' @aliases as_draws_df
+#' @export as_draws_df
+#' @rdname as_draws-dynamitefit
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @inheritParams as.data.frame.dynamitefit
 #' @return A `draws_df` object.
-#' @aliases as_draws as_draws_df
-#' @export as_draws_df
-#' @rdname as_draws-dynamitefit
-#' @method as_draws_df dynamitefit
 #' @examples
 #' as_draws(gaussian_example_fit, types = c("sigma", "beta"))
 #'
@@ -70,8 +69,8 @@ as_draws_df.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
 
 #' @export
 #' @export as_draws
+#' @aliases as_draws
 #' @rdname as_draws-dynamitefit
-#' @method as_draws dynamitefit
 #' @return A `draws_df` object.
 #' @inheritParams as_draws_df.dynamitefit
 as_draws.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {

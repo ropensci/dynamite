@@ -250,7 +250,6 @@ aux <- function(formula) {
   dynamiteformula(formula, family = "deterministic")
 }
 
-#' @method + dynamiteformula
 #' @rdname dynamiteformula
 #' @param e1 \[`dynamiteformula`]\cr A model formula specification.
 #' @param e2 \[`dynamiteformula`]\cr A model formula specification.
@@ -267,7 +266,6 @@ aux <- function(formula) {
   add_dynamiteformula(e1, e2)
 }
 
-#' @method print dynamiteformula
 #' @rdname dynamiteformula
 #' @param x \[`dynamiteformula`]\cr The model formula.
 #' @param ... Ignored.

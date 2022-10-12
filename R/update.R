@@ -17,7 +17,6 @@
 #' @param ... Additional parameters to `dynamite`.
 #' @return Updated `dynamitefit` object.
 #' @export
-#' @method update dynamitefit
 #' @examples
 #' # re-estimate the example fit without thinning:
 #' fit <- update(gaussian_example_fit, thin = 1)
@@ -45,7 +44,6 @@ update.dynamitefit <- function(object, dformula = NULL, data = NULL, priors = NU
   if (object$backend == "cmdstanr") {
     recompile <- TRUE
   }
-
 
   extras <- match.call(expand.dots = FALSE)$...
   if (length(extras)) {

@@ -18,7 +18,6 @@ mcmc_diagnostics <- function(x, n) {
 }
 
 #' @export
-#' @method mcmc_diagnostics dynamitefit
 #' @rdname mcmc_diagnostics
 mcmc_diagnostics.dynamitefit <- function(x, n = 1L) {
   stopifnot_(

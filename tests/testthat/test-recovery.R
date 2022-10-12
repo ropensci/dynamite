@@ -121,7 +121,7 @@ test_that("LOO works for AR(1) model", {
       7.36848739076899, 0.561813071004331, 14.736974781538),
       dim = 3:2,
       dimnames = list(c("elpd_loo", "p_loo", "looic"), c("Estimate", "SE"))),
-    tolerance = 0.5
+    tolerance = 1
   )
 })
 

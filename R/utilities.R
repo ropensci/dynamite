@@ -47,7 +47,7 @@ drop_terms <- function(termobj, dropx) {
   } else {
     labs <- attr(termobj, "term.labels")
     if (length(labs) > dropx_len) {
-      formula(drop.terms(termobj, dropx, keep.response = TRUE))
+      formula(stats::drop.terms(termobj, dropx, keep.response = TRUE))
     } else {
       icpt <- attr(termobj, "intercept")
       resp <- attr(termobj, "variables")[[attr(termobj, "response") + 1L]]
@@ -94,7 +94,7 @@ increment_formula <- function(formula, x, type = c("fixed", "varying"),
   formula_str <- ""
   if (n_varying > 0L) {
     if (n_varying < length(tr)) {
-      formula <- drop.terms(ft, dropx = varying_idx, keep.response = TRUE)
+      formula <- stats::drop.terms(ft, dropx = varying_idx, keep.response = TRUE)
       ft <- terms(formula)
       tr <- attr(ft, "term.labels")
     } else {

@@ -21,20 +21,14 @@
 #'
 #' @docType package
 #' @name dynamite-package
-#' @importFrom bayesplot mcmc_combo
-#' @importFrom checkmate test_int test_integer test_string test_numeric
-#' @importFrom checkmate test_number test_flag test_logical test_character
-#' @importFrom cli cli_abort cli_warn cli_inform
-#' @importFrom data.table data.table as.data.table is.data.table
-#' @importFrom data.table set setDT setDF setkey setkeyv :=
-#' @importFrom rstan sampling
-#' @importFrom posterior as_draws as_draws_df ndraws
+#' @importFrom data.table :=
 #' @importFrom loo loo
-#' @importFrom rlang .data caller_env
-#' @importFrom stats drop.terms formula model.matrix model.matrix.lm na.exclude
+#' @importFrom posterior as_draws as_draws_df ndraws
+#' @importFrom rlang .data
+#' @importFrom stats formula model.matrix model.matrix.lm na.exclude
 #' @importFrom stats quantile coef setNames as.formula fitted na.pass terms
 #' @importFrom stats plogis rbinom reformulate rnbinom rnorm rpois runif sd
-#' @importFrom stats nobs
+#' @importFrom stats nobs update
 #'
 #' @srrstats {G2.0, G2.0a, G2.1, G2.1a, G2.2, G2.3, G2.3a, G2.3b}
 #'   Input types are asserted and appropriately restricted and tested

@@ -15,9 +15,11 @@
   * Random intercepts with `random` now also support centered parameterization.
   * Added more comments to the generated Stan code.
   * Fixed the output of `formula.dynamitefit` so that it is now compatible with 
-    the `stats::update.default`. Also added the required `call` object to the 
+    the `update` method. Also added the required `call` object to the 
     `dynamitefit` object.
-  * Added a `loo` method for the dynamite models.
+  * Added a `loo` and `lfo` method for the dynamite models which can be used 
+    for approximate leave-one-out and leave-future-out cross validation.
+  * Cleaned up NAMESPACE.
 
 # dynamite 0.0.2
 

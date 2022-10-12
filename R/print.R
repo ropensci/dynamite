@@ -7,7 +7,6 @@
 #'
 #' @export
 #' @rdname dynamite
-#' @method print dynamitefit
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param ... Further arguments to the print method for tibbles.
 #'   See [tibble::formatting].

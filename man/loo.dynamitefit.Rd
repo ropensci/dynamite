@@ -12,7 +12,8 @@
 
 \item{separate_channels}{[\code{logical(1)}]\cr If \code{TRUE}, computes LOO
 separately for each channel. This can be useful in diagnosing where the
-model fails. Default is \code{FALSE}}
+model fails. Default is \code{FALSE}, in which case the likelihoods of
+different channels are combined, i.e. all channels of are left out.}
 
 \item{...}{Ignored.}
 }

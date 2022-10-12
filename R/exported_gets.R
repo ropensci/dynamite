@@ -33,7 +33,6 @@ get_priors <- function(x, ...) {
   UseMethod("get_priors", x)
 }
 
-#' @method get_priors dynamiteformula
 #' @rdname get_priors
 #' @export
 get_priors.dynamiteformula <- function(x, data, group = NULL, time, ...) {
@@ -51,7 +50,6 @@ get_priors.dynamiteformula <- function(x, data, group = NULL, time, ...) {
   out$priors
 }
 
-#' @method get_priors dynamitefit
 #' @rdname get_priors
 #' @export
 get_priors.dynamitefit <- function(x, ...) {
@@ -102,7 +100,7 @@ get_code.dynamiteformula <- function(x, data, group = NULL, time, ...) {
 #' @rdname get_code
 #' @export
 get_code.dynamitefit <- function(x, ...) {
-  x$stanfit@stanmodel
+  x$stanfit@stanmodel@model_code
 }
 
 #' Extract the Model Data of the Dynamite Model

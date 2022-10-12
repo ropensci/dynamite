@@ -2,9 +2,9 @@
 % Please edit documentation in R/as_draws.R
 \name{as_draws_df.dynamitefit}
 \alias{as_draws_df.dynamitefit}
-\alias{as_draws}
 \alias{as_draws_df}
 \alias{as_draws.dynamitefit}
+\alias{as_draws}
 \title{Convert \code{dynamite} Output to \code{draws_df} Format}
 \usage{
 \method{as_draws_df}{dynamitefit}(x, responses = NULL, types = NULL, ...)

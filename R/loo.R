@@ -14,7 +14,6 @@
 #' @param ... Ignored.
 #' @return An output from [loo::loo()] or a list of such outputs (if
 #'   `separate_channels` was `TRUE`).
-#' @method loo dynamitefit
 #' @examples
 #' \dontrun{
 #' # this gives warnings due to the small number of iterations

@@ -91,6 +91,13 @@ construction and sampling.\cr
 Name of the variable defining the groups.\cr
 \code{time_var} \tab\tab\tab
 Name of the variable defining the time index.\cr
+\code{priors} \tab\tab\tab
+Data frame containing the used priors.\cr
+\code{backend} \tab\tab\tab
+Either a \code{rstan} or \code{cmdstanr} indicating which package was used in
+sampling.\cr
+\code{call} \tab\tab\tab
+Original function call as an object of class \code{call}.
 }
 
 \code{formula} returns a quoted expression.
