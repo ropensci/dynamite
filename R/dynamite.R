@@ -217,7 +217,10 @@ dynamite <- function(dformula, data, group = NULL, time,
     !inherits(backend, "try-error"),
     "Argument {.arg backend} must be \"rstan\" or \"cmdstanr\"."
   )
-  data_name <- deparse1(substitute(data))
+  data_name <- attr(data, "data_name")
+  if (is.null(data_name)) {
+    data_name <- deparse1(substitute(data))
+  }
   data <- parse_data(dformula, data, group, time, verbose)
   dformula <- parse_past(dformula, data, group, time)
   dformulas <- parse_lags(dformula, data, group, time, verbose)
