@@ -243,7 +243,7 @@ dynamite <- function(dformula, data, group = NULL, time,
   onlyif(
     verbose && is.null(debug) && !isTRUE(debug$no_compile),
     {
-      message_("Compiling Stan model.")
+      onlyif(backend == "rstan", message_("Compiling Stan model."))
       onlyif(
         !stan_supports_categorical_logit_glm(backend) &&
           "categorical" %in% get_family_names(dformulas$all),
@@ -271,7 +271,7 @@ dynamite <- function(dformula, data, group = NULL, time,
   # don't save redundant parameters by default
   # could also remove omega_raw
   dots <- list(...)
-  if (is.null(dots$pars) && stan$sampling_vars$M > 0) {
+  if (is.null(dots$pars) && stan$sampling_vars$M > 0 && backend == "rstan") {
     dots$pars <- c("nu_raw", "nu", "L")
     dots$include <- FALSE
   }
@@ -320,7 +320,7 @@ dynamite_model <- function(compile, backend, model_code) {
       rstan::stan_model(model_code = model_code)
     } else {
       file <- cmdstanr::write_stan_file(model_code)
-      cmdstanr::cmdstan_model(file)
+      cmdstanr::cmdstan_model(file, stanc_options = list("O1"))
     }
   } else {
     NULL
@@ -362,7 +362,6 @@ dynamite_sampling <- function(sampling, backend, model_code, model,
 #'
 #' The `formula` method returns the model definition as a quoted expression.
 #'
-#' @method formula dynamitefit
 #' @rdname dynamite
 #' @param x \[`dynamitefit`\]\cr The model fit object.
 #' @param ... Not used.
