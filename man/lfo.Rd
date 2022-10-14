@@ -9,30 +9,44 @@ lfo(x, L, verbose = TRUE, k_threshold = 0.7, ...)
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
-\item{L}{Positive integer defining how many observations should be used for
-the initial fit.}
+\item{L}{[\code{integer(1)}]\cr Positive integer defining how many time points
+should be used for the initial fit.}
 
-\item{verbose}{If \code{TRUE} (default), print the progress of the LFO
-computations to the console.}
+\item{verbose}{[\code{logical(1)}]\cr If \code{TRUE} (default), print the progress of
+the LFO computations to the console.}
 
-\item{k_threshold}{Threshold for the pareto k estimate triggering refit. Default
-is 0.7.}
+\item{k_threshold}{[\code{numeric(1)}]\cr Threshold for the pareto k estimate
+triggering refit. Default is 0.7.}
 
 \item{...}{Additional parameters to \code{dynamite}.}
 }
 \value{
-List with components \code{ELPD} (Expected log predictive density),
-\code{ELPDs} (observation-specific ELPDs for each time point),
-\code{ks} (Pareto k values), and \code{refits} (time points where model
-was re-estimated).
+An \code{lfo} object which is a \code{list} with the following components:
+\itemize{
+\item \code{ELPD} Expected log predictive density estimate.
+\item \code{ELPD_SE} Standard error of ELPD. This is a crude approximation which
+does not take into account potential serial correlations.
+\item \code{pareto_k} Pareto k values.
+\item \code{refits} Time points where model was re-estimated.
+\item \code{L} L value used in the LFO estimation.
+\item \code{k_threshold} Threshold used in the LFO estimation.
+}
 }
 \description{
 Estimates the leave-future-out (LFO) information criterion for \code{dynamite}
 models using Pareto smoothed importance sampling.
 }
+\details{
+For multichannel models, the log-likelihoods of all channels are combined.
+For models with groups, expected log predictive densities (ELPDs) are
+computed independently for each group, but the re-estimation of the model
+is triggered if pareto k values of any group exceeds the threshold.
+}
 \examples{
 \dontrun{
 # this gives warnings due to the small number of iterations
-lfo(gaussian_example_fit, L = 20)
+out <- lfo(gaussian_example_fit, L = 20)
+out$ELPD
+out$ELPD_SE
 }
 }

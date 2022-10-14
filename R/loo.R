@@ -25,7 +25,10 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, ...) {
     !is.null(x$stanfit),
     "No Stan model fit is available."
   )
-
+  stopifnot_(
+    checkmate::test_flag(x = separate_channels),
+    "Argument {.arg separate_channels} must be a single {.cls logical} value."
+  )
   out <- initialize_predict(
     x,
     newdata = NULL,
