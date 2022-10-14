@@ -110,7 +110,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     dplyr::filter(.data[[time]] == timepoints[L + 1]) |>
     dplyr::group_by(.data[[time]], onlyif(!is.null(id), .data[[id]])) |>
     dplyr::summarise(elpd = log_mean_exp(.data$loglik), .groups = "keep") |>
-    dplyr::pull(elpd)
+    dplyr::pull(.data$elpd)
 
   i_refit <- L
   refits <- timepoints[L]
@@ -163,7 +163,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           dplyr::filter(.data[[time]] == timepoints[i + 1]) |>
           dplyr::group_by(.data[[time]], onlyif(!is.null(id), .data[[id]])) |>
           dplyr::summarise(elpd = log_mean_exp(.data$loglik), .groups = "keep") |>
-          dplyr::pull(elpd)
+          dplyr::pull(.data$elpd)
 
       } else {
         lw <- loo::weights.importance_sampling(psis_obj, normalize = TRUE)
@@ -223,8 +223,8 @@ plot.lfo <- function(x, ...) {
   d <- data.frame(k = unlist(x$pareto_k),
     time = rep(x$L + 1:length(x$pareto_k),
       times = lengths(x$pareto_k)))
-  ggplot2::ggplot(d, ggplot2::aes(x = time, y = k)) +
-    ggplot2::geom_point(ggplot2::aes(color = k > x$k_threshold),
+  ggplot2::ggplot(d, ggplot2::aes(x = .data$time, y = .data$k)) +
+    ggplot2::geom_point(ggplot2::aes(color = .data$k > x$k_threshold),
       shape = 3, show.legend = FALSE, alpha = 0.5) +
     ggplot2::geom_hline(yintercept = x$k_threshold,
       linetype = 2, color = "red2") +
