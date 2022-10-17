@@ -17,9 +17,11 @@
   * Fixed the output of `formula.dynamitefit` so that it is now compatible with 
     the `update` method. Also added the required `call` object to the 
     `dynamitefit` object.
-  * Added a `loo` and `lfo` method for the dynamite models which can be used 
+  * Added `loo` and `lfo` methods for the dynamite models which can be used 
     for approximate leave-one-out and leave-future-out cross validation.
   * Cleaned up NAMESPACE.
+  * The `env` argument of `data.table` is now used to avoid possible variable
+    name conflicts.
 
 # dynamite 0.0.2
 

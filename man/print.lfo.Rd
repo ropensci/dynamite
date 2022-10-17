@@ -21,4 +21,5 @@ Prints the summary of the leave-future-out cross-validation.
 \dontrun{
 lfo(gaussian_example_fit, L = 20)
 }
+
 }

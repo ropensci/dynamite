@@ -7,7 +7,7 @@
 \method{plot}{lfo}(x, ...)
 }
 \arguments{
-\item{x}{x [\code{lfo}]\cr Output from \code{lfo} function.}
+\item{x}{[\code{lfo}]\cr Output from the \code{lfo} function.}
 
 \item{...}{Ignored.}
 }
@@ -22,4 +22,5 @@ together with the horizontal line representing the used threshold.
 \dontrun{
 plot(lfo(gaussian_example_fit, L = 20))
 }
+
 }

@@ -51,33 +51,24 @@ mcmc_diagnostics.dynamitefit <- function(x, n = 1L) {
 
     cat("\nSmallest bulk-ESS values: \n")
     sumr |>
-      dplyr::select(.data$variable, .data$ess_bulk) |>
+      dplyr::select("variable", "ess_bulk") |>
       dplyr::arrange(.data$ess_bulk) |>
       utils::head(n) |>
-      tidyr::pivot_wider(
-        names_from = .data$variable,
-        values_from = .data$ess_bulk
-      ) |>
+      tidyr::pivot_wider(names_from = "variable", values_from = "ess_bulk") |>
       print()
     cat("\nSmallest tail-ESS values: \n")
     sumr |>
-      dplyr::select(.data$variable, .data$ess_tail) |>
+      dplyr::select("variable", "ess_tail") |>
       dplyr::arrange(.data$ess_tail) |>
       utils::head(n) |>
-      tidyr::pivot_wider(
-        names_from = .data$variable,
-        values_from = .data$ess_tail
-      ) |>
+      tidyr::pivot_wider(names_from = "variable", values_from = "ess_tail") |>
       print()
     cat("\nLargest Rhat values: \n")
     sumr |>
-      dplyr::select(.data$variable, .data$rhat) |>
+      dplyr::select("variable", "rhat") |>
       dplyr::arrange(dplyr::desc(.data$rhat)) |>
       utils::head(n) |>
-      tidyr::pivot_wider(
-        names_from = .data$variable,
-        values_from = .data$rhat
-      ) |>
+      tidyr::pivot_wider(names_from = "variable", values_from = "rhat") |>
       print()
   } else {
     cat("No Stan model fit is available.")

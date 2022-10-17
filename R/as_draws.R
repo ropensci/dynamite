@@ -11,18 +11,19 @@
 #' certain response variable).
 #'
 #' Potential values for the types argument are:
-#'  * `alpha` Intercept terms (time-invariant or time-varying).
-#'  * `beta` Time-invariant regression coefficients.
-#'  * `delta` Time-varying regression coefficients.
-#'  * `nu` Random intercepts.
-#'  * `tau` Standard deviations of the spline coefficients of `delta`.
-#'  * `tau_alpha` Standard deviations of the spline coefficients of
+#'
+#'  * `alpha`\cr Intercept terms (time-invariant or time-varying).
+#'  * `beta`\cr Time-invariant regression coefficients.
+#'  * `delta`\cr Time-varying regression coefficients.
+#'  * `nu`\cr Random intercepts.
+#'  * `tau`\cr Standard deviations of the spline coefficients of `delta`.
+#'  * `tau_alpha`\cr Standard deviations of the spline coefficients of
 #'    time-varying `alpha`.
-#'  * `sigma_nu` Standard deviation of the random intercepts `nu`.
-#'  * `sigma` Standard deviations of gaussian responses.
-#'  * `phi` Dispersion parameters of negative binomial responses.
-#'  * `omega` Spline coefficients of the regression coefficients `delta`.
-#'  * `omega_alpha` Spline coefficients of time-varying `alpha`.
+#'  * `sigma_nu`\cr Standard deviation of the random intercepts `nu`.
+#'  * `sigma`\cr Standard deviations of gaussian responses.
+#'  * `phi`\cr Dispersion parameters of negative binomial responses.
+#'  * `omega`\cr Spline coefficients of the regression coefficients `delta`.
+#'  * `omega_alpha`\cr Spline coefficients of time-varying `alpha`.
 #'
 #' @export
 #' @aliases as_draws_df
@@ -43,19 +44,16 @@ as_draws_df.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
     include_fixed = FALSE
   ) |>
     dplyr::select(
-      .data$parameter, .data$value, .data$time, .data$category,
-      .data$group, .data$.iteration, .data$.chain
+      "parameter", "value", "time", "category",
+      "group", ".iteration", ".chain"
     ) |>
     dplyr::arrange(
       .data$parameter, .data$time, .data$category, .data$group,
       .data$.chain, .data$.iteration
     ) |>
     tidyr::pivot_wider(
-      values_from = .data$value,
-      names_from = c(
-        .data$parameter, .data$time, .data$category,
-        .data$group
-      ),
+      values_from = "value",
+      names_from = c("parameter", "time", "category", "group"),
       names_glue = "{parameter}[{time}]_{category}_id{group}"
     )
   # remove NAs from time-invariant parameter names

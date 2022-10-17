@@ -44,18 +44,18 @@ certain response variable).
 
 Potential values for the types argument are:
 \itemize{
-\item \code{alpha} Intercept terms (time-invariant or time-varying).
-\item \code{beta} Time-invariant regression coefficients.
-\item \code{delta} Time-varying regression coefficients.
-\item \code{nu} Random intercepts.
-\item \code{tau} Standard deviations of the spline coefficients of \code{delta}.
-\item \code{tau_alpha} Standard deviations of the spline coefficients of
+\item \code{alpha}\cr Intercept terms (time-invariant or time-varying).
+\item \code{beta}\cr Time-invariant regression coefficients.
+\item \code{delta}\cr Time-varying regression coefficients.
+\item \code{nu}\cr Random intercepts.
+\item \code{tau}\cr Standard deviations of the spline coefficients of \code{delta}.
+\item \code{tau_alpha}\cr Standard deviations of the spline coefficients of
 time-varying \code{alpha}.
-\item \code{sigma_nu} Standard deviation of the random intercepts \code{nu}.
-\item \code{sigma} Standard deviations of gaussian responses.
-\item \code{phi} Dispersion parameters of negative binomial responses.
-\item \code{omega} Spline coefficients of the regression coefficients \code{delta}.
-\item \code{omega_alpha} Spline coefficients of time-varying \code{alpha}.
+\item \code{sigma_nu}\cr Standard deviation of the random intercepts \code{nu}.
+\item \code{sigma}\cr Standard deviations of gaussian responses.
+\item \code{phi}\cr Dispersion parameters of negative binomial responses.
+\item \code{omega}\cr Spline coefficients of the regression coefficients \code{delta}.
+\item \code{omega_alpha}\cr Spline coefficients of time-varying \code{alpha}.
 }
 }
 \examples{

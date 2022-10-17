@@ -29,6 +29,7 @@
 #' get_priors(obs(y ~ x, family = "gaussian"),
 #'   data = d, time = "time", group = "id"
 #' )
+#'
 get_priors <- function(x, ...) {
   UseMethod("get_priors", x)
 }

@@ -43,4 +43,5 @@ Update Dynamite Model
 \examples{
 # re-estimate the example fit without thinning:
 fit <- update(gaussian_example_fit, thin = 1)
+
 }

@@ -409,7 +409,7 @@ test_that("data expansion to full time scale works", {
 test_that("no groups data preparation works", {
   test_data_single <- test_data |>
     dplyr::filter(.data$group == 1) |>
-    dplyr::select(!.data$group)
+    dplyr::select(!"group")
   obs_all <- obs(y1 ~ x2 + lag(y1), family = "categorical") +
     obs(y2 ~ x2, family = "gaussian") +
     obs(y3 ~ x3 + trials(trials), family = "binomial") +

@@ -75,30 +75,20 @@
 #'  `cmdstanr`).
 #' @return `dynamite` returns a `dynamitefit` object which is a list containing
 #'   the following components:
-#'   \tabular{lccl}{
-#'    `stanfit` \tab\tab\tab
-#'      A `stanfit` object, see [rstan::sampling()] for details.\cr
-#'    `dformulas` \tab\tab\tab
-#'      A list of `dynamiteformula` objects for internal use.\cr
-#'    `data` \tab\tab\tab
-#'      A processed version of the input `data`.\cr
-#'    `data_name` \tab\tab\tab
-#'      Name of the input data object.\cr
-#'    `stan` \tab\tab\tab
-#'      A `list` containing various elements related to Stan model
-#'      construction and sampling.\cr
-#'    `group_var` \tab\tab\tab
-#'      Name of the variable defining the groups.\cr
-#'    `time_var` \tab\tab\tab
-#'      Name of the variable defining the time index.\cr
-#'    `priors` \tab\tab\tab
-#'      Data frame containing the used priors.\cr
-#'    `backend` \tab\tab\tab
-#'      Either a `rstan` or `cmdstanr` indicating which package was used in
-#'      sampling.\cr
-#'    `call` \tab\tab\tab
-#'      Original function call as an object of class `call`.
-#'   }
+#'
+#'   * `stanfit`\cr A `stanfit` object, see [rstan::sampling()] for details.
+#'   * `dformulas`\cr A list of `dynamiteformula` objects for internal use.
+#'   * `data`\cr A processed version of the input `data`.
+#'   * `data_name`\cr Name of the input data object.
+#'   * `stan`\cr A `list` containing various elements related to Stan model
+#'     construction and sampling.
+#'   * `group_var`\cr Name of the variable defining the groups.
+#'   * `time_var`\cr Name of the variable defining the time index.
+#'   * `priors`\cr Data frame containing the used priors.
+#'   * `backend`\cr Either `"rstan"` or `"cmdstanr"` indicating which
+#'     package was used in sampling.
+#'   * `call`\cr Original function call as an object of class `call`.
+#'
 #' @srrstats {G2.9} Potential loss of information is reported by `dynamite`.
 #' @srrstats {RE1.1} Documented in `dformula` parameter.
 #' @srrstats {RE1.4} Documented in `data` parameter.
@@ -143,7 +133,7 @@
 #' library(dplyr)
 #' library(ggplot2)
 #  cf <- coef(fit) |>
-#'   group_by(time, variable) |>
+#' group_by(time, variable) |>
 #'   summarise(
 #'     mean = mean(value),
 #'     lwr = quantile(value, 0.025),
@@ -218,81 +208,41 @@ dynamite <- function(dformula, data, group = NULL, time,
     "Argument {.arg backend} must be \"rstan\" or \"cmdstanr\"."
   )
   data_name <- attr(data, "data_name")
-  if (is.null(data_name)) {
-    data_name <- deparse1(substitute(data))
-  }
+  data_name <- ifelse_(
+    is.null(data_name),
+    deparse1(substitute(data)),
+    data_name
+  )
   data <- parse_data(dformula, data, group, time, verbose)
   dformula <- parse_past(dformula, data, group, time)
   dformulas <- parse_lags(dformula, data, group, time, verbose)
   evaluate_deterministic(dformulas, data, group, time)
-  stan <- prepare_stan_input(
-    dformulas$stoch,
+  stan_out <- dynamite_stan(
+    dformulas,
     data,
+    data_name,
     group,
     time,
     priors,
-    fixed = attr(dformulas$all, "max_lag"),
-    verbose
+    verbose,
+    debug,
+    backend,
+    ...
   )
-  model_code <- create_blocks(
-    dformula = dformulas$stoch,
-    indent = 2L,
-    vars = stan$model_vars,
-    backend = backend
-  )
-  onlyif(
-    verbose && is.null(debug) && !isTRUE(debug$no_compile),
-    {
-      onlyif(backend == "rstan", message_("Compiling Stan model."))
-      onlyif(
-        !stan_supports_categorical_logit_glm(backend) &&
-          "categorical" %in% get_family_names(dformulas$all),
-        warning_(
-          c(
-            "Efficient glm-variant of the categorical likelihood is not
-             available in this version of {.pkg rstan} or {.pkg cmdstanr}.",
-            `i` = "For more efficient sampling, please install a newer version
-                   of {.pkg rstan} or {.pkg cmdstanr}."
-          )
-        )
-      )
-    }
-  )
-  # if debug$stanfit exists (from the update method) then don't recompile
-  if (is.null(debug) || is.null(debug$stanfit)) {
-    model <- dynamite_model(
-      compile = is.null(debug) || !isTRUE(debug$no_compile),
-      backend = backend,
-      model_code = model_code
-    )
-  } else {
-    model <- debug$stanfit
-  }
-  # don't save redundant parameters by default
-  # could also remove omega_raw
-  dots <- list(...)
-  if (is.null(dots$pars) && stan$sampling_vars$M > 0 && backend == "rstan") {
-    dots$pars <- c("nu_raw", "nu", "L")
-    dots$include <- FALSE
-  }
-  stanfit <- dynamite_sampling(
-    sampling = !isTRUE(debug$no_compile) && !isTRUE(debug$no_sampling),
-    backend = backend,
-    model_code = model_code,
-    model = model,
-    sampling_vars = stan$sampling_vars,
-    dots = dots
-  )
+  # extract elements for debug argument
+  stan_input <- stan_out$stan_input
+  model_code <- stan_out$model_code
+  stanfit <- stan_out$stanfit
   out <- structure(
     list(
       stanfit = stanfit,
       dformulas = dformulas,
       data = data,
       data_name = data_name,
-      stan = stan,
+      stan = stan_input,
       group_var = group,
       time_var = time,
-      priors = dplyr::bind_rows(stan$priors),
+      priors = dplyr::bind_rows(stan_input$priors),
       backend = backend,
       call = match.call()
     ),
@@ -307,12 +257,60 @@ dynamite <- function(dformula, data, group = NULL, time,
   out
 }
 
-#' Compile Stan Model for `dynamite`
+#' Prepare Data for Stan and Construct a Stan Model for `dynamite`
+#'
+#' @inheritParams dynamite
+#' @param dformulas \[`list()`]\cr Output of `parse_lags`.
+#' @param data_name Name of the `data` object.
+#' @noRd
+dynamite_stan <- function(dformulas, data, data_name, group, time,
+                          priors, verbose, debug, backend, ...) {
+  stan_input <- prepare_stan_input(
+    dformulas$stoch,
+    data,
+    group,
+    time,
+    priors,
+    fixed = attr(dformulas$all, "max_lag"),
+    verbose
+  )
+  model_code <- create_blocks(
+    dformula = dformulas$stoch,
+    indent = 2L,
+    vars = stan_input$model_vars,
+    backend = backend
+  )
+  sampling_info(dformulas, verbose, debug, backend)
+  # if debug$stanfit exists (from the update method) then don't recompile
+  model <- ifelse_(
+    is.null(debug) || is.null(debug$stanfit),
+    dynamite_model(
+      compile = is.null(debug) || !isTRUE(debug$no_compile),
+      backend = backend,
+      model_code = model_code
+    ),
+    debug$stanfit
+  )
+  stanfit <- dynamite_sampling(
+    sampling = !isTRUE(debug$no_compile) && !isTRUE(debug$no_sampling),
+    backend = backend,
+    model_code = model_code,
+    model = model,
+    sampling_vars = stan_input$sampling_vars,
+    dots = remove_redundant_parameters(stan_input, backend, ...)
+  )
+  list(
+    stan_input = stan_input,
+    model_code = model_code,
+    stanfit = stanfit
+  )
+}
+
+#' Compile a Stan Model for `dynamite`
 #'
 #' @param compile \[`logical(1)`]\cr Should the model be compiled?
 #' @param backend \[`character(1)`]\cr `"rstan"` or `"cmdstanr"`.
 #' @param model_code \[`logical(1)`]\cr The model code as a string.
-#'
 #' @noRd
 dynamite_model <- function(compile, backend, model_code) {
   if (compile) {
@@ -329,13 +327,12 @@ dynamite_model <- function(compile, backend, model_code) {
 
 #' Sample from the Stan Model for `dynamite`
 #'
-#' @param sampling \[`logical(1)`]\cr Should sampling be carried out
+#' @param sampling \[`logical(1)`]\cr Should sampling be carried out?
 #' @param backend \[`character(1)`]\cr `"rstan"` or `"cmdstanr"`.
 #' @param model_code \[`logical(1)`]\cr The model code as a string.
 #' @param model \[`stanmodel`]\cr The compiled Stan model.
 #' @param sampling_vars \[`list()`]\cr Data for Stan sampling.
 #' @param dots \[`list()`]\cr Additional arguments for `rstan` or `cmdstanr`.
-#'
 #' @noRd
 dynamite_sampling <- function(sampling, backend, model_code, model,
                               sampling_vars, dots) {
@@ -356,6 +353,48 @@ dynamite_sampling <- function(sampling, backend, model_code, model,
     }
   }
   out
+}
+
+#' Print an Informative Message Related to Stan Model Compilation/Sampling
+#'
+#' @inheritParams dynamite_stan
+#' @noRd
+sampling_info <- function(dformulas, verbose, debug, backend) {
+  if (!verbose || !is.null(debug) || isTRUE(debug$no_compile)) {
+    return()
+  }
+  if (backend == "rstan") {
+    message_("Compiling Stan model.")
+  }
+  if (!stan_supports_categorical_logit_glm(backend) &&
+    "categorical" %in% get_family_names(dformulas$all)) {
+    warning_(
+      c(
+        "Efficient glm-variant of the categorical likelihood is not
+         available in this version of {.pkg rstan} or {.pkg cmdstanr}.",
+        `i` = "For more efficient sampling, please install a newer version
+               of {.pkg rstan} or {.pkg cmdstanr}."
+      )
+    )
+  }
+}
+
+#' Remove Redundant Parameters When Using `rstan`
+#'
+#' @param stan_input Output from `prepare_stan_input`.
+#' @inheritParams dynamite
+#' @noRd
+remove_redundant_parameters <- function(stan_input, backend, ...) {
+  # don't save redundant parameters by default
+  # could also remove omega_raw
+  dots <- list(...)
+  if (is.null(dots$pars) &&
+    stan_input$sampling_vars$M > 0 &&
+    backend == "rstan") {
+    dots$pars <- c("nu_raw", "nu", "L")
+    dots$include <- FALSE
+  }
+  dots
 }
 
 #' Access the Model Formula of a Dynamite Model
@@ -614,7 +653,7 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
   )
   stoch_k <- lag_map |>
     dplyr::filter(.data$var %in% resp_stoch) |>
-    dplyr::pull(.data$k)
+    dplyr::pull("k")
   max_lag <- ifelse_(
     length(stoch_k) > 0L,
     max(max_lag, stoch_k),
@@ -798,8 +837,8 @@ parse_singleton_lags <- function(dformula, data, group_var,
       if (y$is_resp && !is.null(y$past_val)) {
         if (identical(y$past_type, "past")) {
           past_out <- lag_(y$past_val, i)
-          ..i <- NULL # avoid NSE note in R CMD check
-          past_out[data[, .I[seq_len(..i)], by = group_var]$V1] <- NA
+          na_idx <- data[, .I[seq_len(i)], by = group_var, env = list(i = i)]$V1
+          past_out[na_idx] <- NA
           spec <- list(
             past = past_out,
             resp_type = y$type

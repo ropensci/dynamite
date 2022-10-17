@@ -671,7 +671,7 @@ gaussian_example_small <- gaussian_example |> dplyr::filter(.data$time < 6)
 
 test_that("newdata without group variable fails when there are groups", {
   gaussian_example_nogroup <- gaussian_example_small |>
-    dplyr::select(!.data$id)
+    dplyr::select(!"id")
   expect_error(
     predict(gaussian_example_fit, newdata = gaussian_example_nogroup),
     "Can't find grouping variable `id` in `newdata`\\."
@@ -694,7 +694,7 @@ test_that("newdata with new groups fails when there are groups", {
 
 test_that("newdata without time variable fails", {
   gaussian_example_notime <- gaussian_example_small |>
-    dplyr::select(!.data$time)
+    dplyr::select(!"time")
   expect_error(
     predict(gaussian_example_fit, newdata = gaussian_example_notime),
     "Can't find time index variable `time` in `newdata`\\."
@@ -732,7 +732,7 @@ test_that("newdata with duplicated time points fails", {
   gaussian_example_duplicated <- rbind(
     gaussian_example_small |>
       dplyr::filter(.data$id == 1) |>
-      dplyr::select(!.data$id),
+      dplyr::select(!"id"),
     data.frame(y = 1, x = 1, z = 0, time = 1)
   )
   expect_error(
@@ -778,7 +778,7 @@ test_that("newdata with unknown factor levels fails", {
 })
 
 test_that("newdata with missing response fails", {
-  gaussian_example_misresp <- gaussian_example_small |> dplyr::select(!.data$y)
+  gaussian_example_misresp <- gaussian_example_small |> dplyr::select(!"y")
   expect_error(
     predict(gaussian_example_fit, newdata = gaussian_example_misresp),
     "Can't find response variable `y` in `newdata`."

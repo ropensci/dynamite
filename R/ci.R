@@ -39,9 +39,9 @@ confint.dynamitefit <- function(object, parm, level = 0.95, ...) {
   out <- d |>
     dplyr::select(
       !c(
-        .data$parameter, .data$time, .data$category,
-        .data$group, .data$response, .data$type,
-        .data$mean, .data$sd
+        "parameter", "time", "category",
+        "group", "response", "type",
+        "mean", "sd"
       )
     ) |>
     as.matrix()

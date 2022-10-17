@@ -10,7 +10,7 @@ utils::globalVariables(c(".", ".I", ".N", ".SD", "where"))
 #' @noRd
 formula_lhs <- function(x) {
   if (identical(length(x), 3L)) {
-    x[[2]]
+    x[[2L]]
   } else {
     NULL
   }
@@ -22,9 +22,9 @@ formula_lhs <- function(x) {
 #' @noRd
 formula_rhs <- function(x) {
   if (identical(length(x), 3L)) {
-    x[[3]]
+    x[[3L]]
   } else {
-    x[[2]]
+    x[[2L]]
   }
 }
 
@@ -76,7 +76,7 @@ drop_unused <- function(dformula, data, group_var, time_var) {
 #' @param formula \[`formula`]\cr A formula object.
 #' @param x \[`character()`]\cr A vector of terms to add.
 #' @param type \[`character(1)`]\cr Either `"fixed"` or `"varying"`
-#'   indicatingthe  type of terms to add.
+#'   indicating the type of terms to add.
 #' @param varying_idx \[`integer()`] Indices of left-hand side terms that have
 #'   time-varying coefficients
 #' @param varying_icpt \[`logical(1)`] Does the formula have a varying
@@ -94,7 +94,11 @@ increment_formula <- function(formula, x, type = c("fixed", "varying"),
   formula_str <- ""
   if (n_varying > 0L) {
     if (n_varying < length(tr)) {
-      formula <- stats::drop.terms(ft, dropx = varying_idx, keep.response = TRUE)
+      formula <- stats::drop.terms(
+        ft,
+        dropx = varying_idx,
+        keep.response = TRUE
+      )
       ft <- terms(formula)
       tr <- attr(ft, "term.labels")
     } else {
@@ -141,7 +145,7 @@ cs <- function(x) {
 #'
 #' @param ... Any number of `character` vectors of arbitrary length.
 #' @param .indent \[`character(1)`]\cr A string to prefix each row with
-#' @param .parse \[`logical(1)`]\cr Should `glue` syntaxbe parsed
+#' @param .parse \[`logical(1)`]\cr Should `glue` syntax be parsed
 #'   by [glue::glue()].
 #' @noRd
 paste_rows <- function(..., .indent = "", .parse = TRUE) {
@@ -198,9 +202,11 @@ paste_rows <- function(..., .indent = "", .parse = TRUE) {
 #' @noRd
 indenter_ <- function(m = 2L) {
   x <- rep(" ", m)
-  idts <- vapply(0L:10L, function(y) {
-    paste0(rep(x, y), collapse = "")
-  }, character(1L))
+  idts <- vapply(
+    seq.int(0L, 10L),
+    function(y) paste0(rep(x, y), collapse = ""),
+    character(1L)
+  )
   force(idts)
   function(v) {
     unlist(idts[v + 1L])
@@ -228,6 +234,7 @@ stop_ <- function(message, ..., call = rlang::caller_env()) {
 }
 
 #' Stop Function Execution Unless Condition Is True
+#'
 #' @inheritParams stop_
 #' @param cond \[`logical(1)`] Condition to evaluate.
 #' @noRd
@@ -299,11 +306,12 @@ stan_supports_categorical_logit_glm <- function(backend) {
   )
   utils::compareVersion(backend_version, "2.23") >= 0
 }
+
 #' Row-wise log-sum-exp
 #'
 #' @noRd
 log_sum_exp_rows <- function(x) {
-  maxs <- apply(x, 1, max)
+  maxs <- apply(x, 1L, max)
   maxs + log(rowSums(exp(x - maxs)))
 }
 

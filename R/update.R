@@ -20,9 +20,9 @@
 #' @examples
 #' # re-estimate the example fit without thinning:
 #' fit <- update(gaussian_example_fit, thin = 1)
-update.dynamitefit <- function(object, dformula = NULL, data = NULL, priors = NULL,
-  recompile = NULL, ...) {
-
+#'
+update.dynamitefit <- function(object, dformula = NULL, data = NULL,
+                               priors = NULL, recompile = NULL, ...) {
   call <- object$call
   if (!is.null(dformula)) {
     call$dformula <- dformula
@@ -46,9 +46,11 @@ update.dynamitefit <- function(object, dformula = NULL, data = NULL, priors = NU
   }
 
   extras <- match.call(expand.dots = FALSE)$...
-  if (length(extras)) {
+  if (length(extras) > 0L) {
     existing <- !is.na(match(names(extras), names(call)))
-    for (a in names(extras)[existing]) call[[a]] <- extras[[a]]
+    for (a in names(extras)[existing]) {
+      call[[a]] <- extras[[a]]
+    }
     if (any(!existing)) {
       call <- c(as.list(call), extras[!existing])
       call <- as.call(call)

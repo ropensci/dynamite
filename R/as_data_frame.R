@@ -8,21 +8,22 @@
 #' certain response variable).
 #'
 #' Potential values for the `types` argument are:
-#'  * `alpha` Intercept terms (time-invariant or time-varying).
-#'  * `beta` Time-invariant regression coefficients.
-#'  * `delta` Time-varying regression coefficients.
-#'  * `nu` Random intercepts.
-#'  * `tau` Standard deviations of the spline coefficients of `delta`.
-#'  * `tau_alpha` Standard deviations of the spline coefficients of
+#'
+#'  * `alpha`\cr Intercept terms (time-invariant or time-varying).
+#'  * `beta`\cr Time-invariant regression coefficients.
+#'  * `delta`\cr Time-varying regression coefficients.
+#'  * `nu`\cr Random intercepts.
+#'  * `tau`\cr Standard deviations of the spline coefficients of `delta`.
+#'  * `tau_alpha`\cr Standard deviations of the spline coefficients of
 #'    time-varying `alpha`.
-#'  * `sigma_nu` Standard deviation of the random intercepts `nu`.
-#'  * `corr_nu` Pairwise within-group correlations of random intercepts `nu`.
+#'  * `sigma_nu`\cr Standard deviation of the random intercepts `nu`.
+#'  * `corr_nu`\cr Pairwise within-group correlations of random intercepts `nu`.
 #'     Samples of the full correlation matrix can be extracted manually as
 #'     `rstan::extract(fit$stanfit, pars = "corr_matrix_nu")` if necessary.
-#'  * `sigma` Standard deviations of gaussian responses.
-#'  * `phi` Dispersion parameters of negative binomial responses.
-#'  * `omega` Spline coefficients of the regression coefficients `delta`.
-#'  * `omega_alpha` Spline coefficients of time-varying `alpha`.
+#'  * `sigma`\cr Standard deviations of gaussian responses.
+#'  * `phi`\cr Dispersion parameters of negative binomial responses.
+#'  * `omega`\cr Spline coefficients of the regression coefficients `delta`.
+#'  * `omega_alpha`\cr Spline coefficients of time-varying `alpha`.
 #'
 #' @export
 #' @param x \[`dynamitefit`]\cr The model fit object.
@@ -219,7 +220,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       paste0("^", .data$parameter),
       x$stanfit@sim$pars_oi
     ))) |>
-    dplyr::select(.data$response, .data$type)
+    dplyr::select("response", "type")
   stopifnot_(
     nrow(out) > 0L,
     paste0(
@@ -231,7 +232,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
   )
   out <- out |>
     dplyr::mutate(value = list(values(.data$type, .data$response))) |>
-    tidyr::unnest(cols = .data$value)
+    tidyr::unnest(cols = "value")
   if (summary) {
     pars <- unique(out$parameter)
     out <- out |>

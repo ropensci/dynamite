@@ -23,13 +23,13 @@ triggering refit. Default is 0.7.}
 \value{
 An \code{lfo} object which is a \code{list} with the following components:
 \itemize{
-\item \code{ELPD} Expected log predictive density estimate.
-\item \code{ELPD_SE} Standard error of ELPD. This is a crude approximation which
+\item \code{ELPD}\cr Expected log predictive density estimate.
+\item \code{ELPD_SE}\cr Standard error of ELPD. This is a crude approximation which
 does not take into account potential serial correlations.
-\item \code{pareto_k} Pareto k values.
-\item \code{refits} Time points where model was re-estimated.
-\item \code{L} L value used in the LFO estimation.
-\item \code{k_threshold} Threshold used in the LFO estimation.
+\item \code{pareto_k}\cr Pareto k values.
+\item \code{refits}\cr Time points where model was re-estimated.
+\item \code{L}\cr L value used in the LFO estimation.
+\item \code{k_threshold}\cr Threshold used in the LFO estimation.
 }
 }
 \description{
@@ -49,4 +49,5 @@ out <- lfo(gaussian_example_fit, L = 20)
 out$ELPD
 out$ELPD_SE
 }
+
 }

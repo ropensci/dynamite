@@ -10,7 +10,7 @@
 #' @param separate_channels \[`logical(1)`]\cr If `TRUE`, computes LOO
 #'   separately for each channel. This can be useful in diagnosing where the
 #'   model fails. Default is `FALSE`, in which case the likelihoods of
-#'   different channels are combined, i.e. all channels of are left out.
+#'   different channels are combined, i.e., all channels of are left out.
 #' @param ... Ignored.
 #' @return An output from [loo::loo()] or a list of such outputs (if
 #'   `separate_channels` was `TRUE`).
@@ -20,6 +20,7 @@
 #' loo(gaussian_example_fit)
 #' loo(gaussian_example_fit, separate_channels = TRUE)
 #' }
+#'
 loo.dynamitefit <- function(x, separate_channels = FALSE, ...) {
   stopifnot_(
     !is.null(x$stanfit),
@@ -47,24 +48,29 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, ...) {
 
   loo_ <- function(ll, n_draws, n_chains) {
     ll <- t(matrix(ll, ncol = n_draws * n_chains))
-    reff <- loo::relative_eff(exp(ll), chain_id = rep(1:n_chains, each = n_draws))
+    reff <- loo::relative_eff(
+      exp(ll),
+      chain_id = rep(seq_len(n_chains), each = n_draws)
+    )
     loo::loo(ll, r_eff = reff)
   }
 
   if (separate_channels) {
     ll <- out |>
       tidyr::pivot_longer(
-        dplyr::ends_with("_loglik"), names_pattern  = "(.*)_loglik",
+        dplyr::ends_with("_loglik"),
+        names_pattern = "(.*)_loglik",
         values_drop_na = TRUE
       ) |>
       split(f = ~name)
     lapply(ll, function(x) loo_(x$value, n_draws, n_chains))
   } else {
-    ll <- out |> tidyr::drop_na() |>
-      dplyr::mutate(loglik = rowSums(dplyr::across(
-        dplyr::ends_with("_loglik")))) |>
-      dplyr::pull(.data$loglik)
+    ll <- out |>
+      tidyr::drop_na() |>
+      dplyr::mutate(
+        loglik = rowSums(dplyr::across(dplyr::ends_with("_loglik")))
+      ) |>
+      dplyr::pull("loglik")
     loo_(ll, n_draws, n_chains)
   }
-
 }

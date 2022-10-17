@@ -117,8 +117,10 @@ create_parameters <- function(dformula, idt, vars) {
         attr(dformula, "random")$correlated,
         "cholesky_factor_corr[M] L; // Cholesky for correlated intercepts"
       ),
-      ifelse_(attr(dformula, "random")$noncentered,
-        "matrix[N, M] nu_raw;", "vector[M] nu_raw[N];"),
+      ifelse_(
+        attr(dformula, "random")$noncentered,
+        "matrix[N, M] nu_raw;", "vector[M] nu_raw[N];"
+      ),
       .indent = idt(c(1, 1, 1))
     )
   )
@@ -140,18 +142,18 @@ create_transformed_parameters <- function(dformula, idt, vars) {
   M <- length(nus)
   if (M > 0) {
     if (attr(dformula, "random")$noncentered) {
-    randomtext <- ifelse_(
-      attr(dformula, "random")$correlated,
-      paste_rows(
-        "matrix[N, M] nu = nu_raw * L';",
-        glue::glue("vector[N] nu_{nus} = sigma_nu_{nus} * nu[, {1:M}];"),
-        .indent = idt(1)
-      ),
-      paste_rows(
-        glue::glue("vector[N] nu_{nus} = sigma_nu_{nus} * nu_raw[, {1:M}];"),
-        .indent = idt(1)
+      randomtext <- ifelse_(
+        attr(dformula, "random")$correlated,
+        paste_rows(
+          "matrix[N, M] nu = nu_raw * L';",
+          glue::glue("vector[N] nu_{nus} = sigma_nu_{nus} * nu[, {1:M}];"),
+          .indent = idt(1)
+        ),
+        paste_rows(
+          glue::glue("vector[N] nu_{nus} = sigma_nu_{nus} * nu_raw[, {1:M}];"),
+          .indent = idt(1)
+        )
       )
-    )
     } else {
       randomtext <-
         paste_rows(
@@ -188,7 +190,7 @@ create_model <- function(dformula, idt, vars, backend) {
   if (!is.null(spline_defs) && spline_defs$shrinkage) {
     lambda_prior <- attr(vars, "common_priors") |>
       dplyr::filter(.data$parameter == "lambda") |>
-      dplyr::pull(.data$prior)
+      dplyr::pull("prior")
     splinetext <- paste_rows("lambda ~ {lambda_prior};", .indent = idt(1))
   }
   randomtext <- ""
@@ -197,7 +199,7 @@ create_model <- function(dformula, idt, vars, backend) {
     if (attr(dformula, "random")$correlated) {
       L_prior <- attr(vars, "common_priors") |>
         dplyr::filter(.data$parameter == "L") |>
-        dplyr::pull(.data$prior)
+        dplyr::pull("prior")
       if (attr(dformula, "random")$noncentered) {
         randomtext <- paste_rows(
           "to_vector(nu_raw) ~ std_normal();",
@@ -226,7 +228,6 @@ create_model <- function(dformula, idt, vars, backend) {
         )
       }
     }
-
   }
   mod <- character(length(dformula))
   for (i in seq_along(dformula)) {

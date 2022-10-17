@@ -90,7 +90,7 @@
 #' \dontrun{
 #' # Simulate from the prior predictive distribution
 #'
-#' f <-  obs(y ~ lag(y) + varying(~ -1 + x), "gaussian") +
+#' f <- obs(y ~ lag(y) + varying(~ -1 + x), "gaussian") +
 #'   splines(df = 10, noncentered = TRUE)
 #'
 #' # Create data with missing observations
@@ -100,7 +100,8 @@
 #'
 #' # suppress warnings due to the lack of data
 #' suppressWarnings(priors <- get_priors(f,
-#'   data = d, time = "time"))
+#'   data = d, time = "time"
+#' ))
 #'
 #' # modify default priors which can produce exploding behaviour when used
 #' # without data
@@ -109,19 +110,24 @@
 #'   "normal(0.6, 0.1)",
 #'   "normal(-0.2, 0.5)",
 #'   "normal(0.2, 0.1)",
-#'   "normal(0.5, 0.1)")
+#'   "normal(0.5, 0.1)"
+#' )
 #'
 #' # samples from the prior conditional on the first time point and x
-#' fit <- dynamite(f, data = d, time = "time",
-#'   priors = priors, chains = 1)
+#' fit <- dynamite(f,
+#'   data = d, time = "time",
+#'   priors = priors, chains = 1
+#' )
 #'
 #' # simulate new data
 #' pp <- predict(fit)
 #'
 #' library(ggplot2)
 #' ggplot(pp, aes(time, y_new, group = .draw)) +
-#'   geom_line(alpha = 0.1) + theme_bw()
+#'   geom_line(alpha = 0.1) +
+#'   theme_bw()
 #' }
+#'
 predict.dynamitefit <- function(object, newdata = NULL,
                                 type = c("response", "mean", "link"),
                                 funs = list(), impute = c("none", "locf"),
@@ -314,9 +320,9 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
 #' Obtain Full Individual Level Predictions Or Fitted Values
 #'
 #' @inheritParams initialize_predict
-#' @param simulated A `data.table` containing the simulated values
+#' @param simulated A `data.table` containing the simulated values.
 #' @param observed A `data.table` containing fixed predictors (values
-#'   independent of the posterior draw)
+#'   independent of the posterior draw).
 #' @noRd
 predict_full <- function(object, simulated, observed, type, eval_type,
                          new_levels, n_draws, fixed,
@@ -423,16 +429,6 @@ predict_full <- function(object, simulated, observed, type, eval_type,
 #' @noRd
 predict_summary <- function(object, storage, observed, funs, new_levels,
                             n_draws, fixed, group_var, time_var) {
-  # avoid NSE notes in R CMD check
-  ..group_var <- NULL
-  ..observed <- NULL
-  ..idx_obs <- NULL
-  ..u_time <- NULL
-  ..n_draws <- NULL
-  ..n_time <- NULL
-  ..storage <- NULL
-  ..f <- NULL
-
   formulas_stoch <- get_formulas(object$dformulas$stoch)
   resp_stoch <- get_responses(object$dformulas$stoch)
   lhs_ld <- get_responses(object$dformulas$lag_det)
@@ -457,8 +453,11 @@ predict_summary <- function(object, storage, observed, funs, new_levels,
   idx <- seq.int(n_sim + 1L, 2L * n_sim)
   simulated <- storage[1L, ]
   simulated[, (names(simulated)) := .SD[NA]]
-  simulated <- simulated[rep(1L, 2L * n_sim), ]
-  simulated[, (".draw") := rep(seq.int(1L, n_draws), 2L * n_group)]
+  simulated <- simulated[rep(1L, 2L * n_sim), , env = list(n_sim = n_sim)]
+  simulated[,
+    (".draw") := rep(seq.int(1L, n_draws), 2L * n_group),
+    env = list(n_draws = n_draws, n_group = n_group)
+  ]
   assign_from_storage(
     storage,
     simulated,
@@ -467,13 +466,23 @@ predict_summary <- function(object, storage, observed, funs, new_levels,
   )
   summaries <- storage[1L, ]
   for (f in funs) {
-    summaries[, (f$name) := ..f$fun(..storage[[..f$target]][1L])]
+    target <- f$fun(storage[[f$target]][1L])
+    summaries[, (f$name) := target, env = list(target = target)]
   }
   summaries[, (names(storage)) := NULL]
   summaries[, (names(summaries)) := .SD[NA]]
-  summaries <- summaries[rep(1L, n_time * n_draws)]
-  summaries[, (time_var) := rep(..u_time, ..n_draws)]
-  summaries[, ("draw") := rep(seq_len(n_draws), each = ..n_time)]
+  summaries <- summaries[
+    rep(1L, n_time * n_draws),
+    env = list(n_time = n_time, n_draws = n_draws)
+  ]
+  summaries[,
+    (time_var) := rep(u_time, n_draws),
+    env = list(u_time = u_time, n_draws = n_draws)
+  ]
+  summaries[,
+    ("draw") := rep(seq_len(n_draws), each = n_time),
+    env = list(n_draws = n_draws, n_time = n_time)
+  ]
   idx_summ <- which(summaries[[time_var]] == u_time[1L]) + (fixed - 1L)
   eval_envs <- prepare_eval_envs(
     object,
@@ -514,7 +523,9 @@ predict_summary <- function(object, storage, observed, funs, new_levels,
       e$offset <- specials[[j]]$offset[idx_obs]
       e$trials <- specials[[j]]$trials[idx_obs]
       e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
-      idx_na <- is.na(simulated[idx, .SD, .SDcols = resp_stoch[j]])
+      idx_na <- is.na(
+        simulated[idx, .SD, .SDcols = resp_stoch[j], env = list(idx = idx)]
+      )
       e$idx_out <- which(idx_na)
       e$idx_data <- idx[e$idx_out]
       if (any(idx_na)) {
@@ -554,16 +565,19 @@ assign_from_storage <- function(storage, simulated, idx, idx_obs) {
 #' @param idx_summ Indices of the summarized predictions to be assigned.
 #' @noRd
 assign_summaries <- function(summaries, simulated, funs, idx, idx_summ) {
-  # avoid NSE note in R CMD check
-  ..f <- NULL
   for (f in funs) {
+    fun <- f$fun
+    target <- f$target
     data.table::set(
       summaries,
       i = idx_summ,
       j = f$name,
       value = simulated[
-        idx, lapply(.SD, ..f$fun), by = ".draw", .SDcols = f$target
-      ][[f$target]]
+        idx, lapply(.SD, fun),
+        by = ".draw",
+        .SDcols = target,
+        env = list(fun = fun, target = target)
+      ][[target]]
     )
   }
 }
@@ -591,9 +605,11 @@ finalize_predict <- function(type, resp_stoch, simulated, observed) {
   for (resp in resp_stoch) {
     store <- glue::glue("{resp}_store")
     if (identical(type, "response")) {
-      simulated[, glue::glue("{resp}_new") := simulated[[resp]]]
+      data.table::set(
+        simulated, j = glue::glue("{resp}_new"), value = simulated[[resp]]
+      )
     }
-    observed[, c(resp) := observed[[store]]]
+    data.table::set(observed, j = resp, value = observed[[store]])
     observed[, c(store) := NULL]
     simulated[, c(resp) := NULL]
   }

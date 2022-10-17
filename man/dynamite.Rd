@@ -75,29 +75,19 @@ details.}
 \value{
 \code{dynamite} returns a \code{dynamitefit} object which is a list containing
 the following components:
-\tabular{lccl}{
-\code{stanfit} \tab\tab\tab
-A \code{stanfit} object, see \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} for details.\cr
-\code{dformulas} \tab\tab\tab
-A list of \code{dynamiteformula} objects for internal use.\cr
-\code{data} \tab\tab\tab
-A processed version of the input \code{data}.\cr
-\code{data_name} \tab\tab\tab
-Name of the input data object.\cr
-\code{stan} \tab\tab\tab
-A \code{list} containing various elements related to Stan model
-construction and sampling.\cr
-\code{group_var} \tab\tab\tab
-Name of the variable defining the groups.\cr
-\code{time_var} \tab\tab\tab
-Name of the variable defining the time index.\cr
-\code{priors} \tab\tab\tab
-Data frame containing the used priors.\cr
-\code{backend} \tab\tab\tab
-Either a \code{rstan} or \code{cmdstanr} indicating which package was used in
-sampling.\cr
-\code{call} \tab\tab\tab
-Original function call as an object of class \code{call}.
+\itemize{
+\item \code{stanfit}\cr A \code{stanfit} object, see \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} for details.
+\item \code{dformulas}\cr A list of \code{dynamiteformula} objects for internal use.
+\item \code{data}\cr A processed version of the input \code{data}.
+\item \code{data_name}\cr Name of the input data object.
+\item \code{stan}\cr A \code{list} containing various elements related to Stan model
+construction and sampling.
+\item \code{group_var}\cr Name of the variable defining the groups.
+\item \code{time_var}\cr Name of the variable defining the time index.
+\item \code{priors}\cr Data frame containing the used priors.
+\item \code{backend}\cr Either \code{"rstan"} or \code{"cmdstanr"} indicating which
+package was used in sampling.
+\item \code{call}\cr Original function call as an object of class \code{call}.
 }
 
 \code{formula} returns a quoted expression.
@@ -166,7 +156,7 @@ fit <- dynamite(
 
 library(dplyr)
 library(ggplot2)
-  group_by(time, variable) |>
+group_by(time, variable) |>
   summarise(
     mean = mean(value),
     lwr = quantile(value, 0.025),

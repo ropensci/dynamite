@@ -132,7 +132,7 @@ parse_newdata <- function(dformula, newdata, data, type, eval_type,
   )
   data.table::setDT(newdata, key = c(group_var, time_var))
   clear_names <- intersect(names(newdata), clear_names)
-  if (length(clear_names) > 0) {
+  if (length(clear_names) > 0L) {
     newdata[, (clear_names) := NULL]
   }
   drop_unused(dformula, newdata, group_var, time_var)
@@ -152,7 +152,9 @@ parse_newdata <- function(dformula, newdata, data, type, eval_type,
         newdata[, (pred_col) := NA_real_]
       }
     }
-    newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
+    data.table::set(
+      newdata, j = glue::glue("{resp}_store"), value = newdata[[resp]]
+    )
   }
   newdata
 }
@@ -292,9 +294,11 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
 #' @noRd
 impute_newdata <- function(newdata, impute, predictors, group_var) {
   if (identical(impute, "locf")) {
-    newdata[, (predictors) := lapply(.SD, locf),
+    newdata[,
+      (predictors) := lapply(.SD, locf),
       .SDcols = predictors,
-      by = group_var
+      by = group_var,
+      env = list(locf = locf)
     ]
   }
 }
@@ -311,17 +315,21 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
                            group_var, time_var, clear_names,
                            fixed, global_fixed) {
   if (newdata_null && identical(eval_type, "predicted")) {
-    ..fixed <- NULL # avoid NSE note in R CMD check
     if (global_fixed) {
-      clear_idx <- newdata[, .I[seq.int(..fixed + 1L, .N)], by = group_var]$V1
+      clear_idx <- newdata[,
+        .I[seq.int(fixed + 1L, .N)],
+        by = group_var,
+        env = list(fixed = fixed)
+      ]$V1
     } else {
       clear_idx <- newdata[,
-        .I[seq.int(..fixed + which(apply(!is.na(.SD), 1L, any))[1L], .N)],
+        .I[seq.int(fixed + which(apply(!is.na(.SD), 1L, any))[1L], .N)],
         .SDcols = resp_stoch,
-        by = group_var
+        by = group_var,
+        env = list(fixed = fixed, any = any)
       ]$V1
     }
-    newdata[clear_idx, c(resp_stoch) := NA]
+    newdata[clear_idx, c(resp_stoch) := NA, env = list(clear_idx = clear_idx)]
   }
 }
 
@@ -410,7 +418,8 @@ expand_predict_output <- function(x) {
   common <- intersect(names(x$simulated), names(x$observed))
   p <- x$simulated |> dplyr::select(!dplyr::matches(common))
   o <- x$observed[
-    rep(seq_len(nrow(x$observed)), n_unique(p$.draw)), , drop = FALSE
+    rep(seq_len(nrow(x$observed)), n_unique(p$.draw)), ,
+    drop = FALSE
   ]
   out <- cbind(o, p)
   rownames(out) <- NULL
@@ -872,8 +881,7 @@ predicted_beta <- "
   )
 "
 
-
-# Log-likelihood expressions ---------------------------------------------------
+# Log-likelihood expressions ----------------------------------------------
 
 loglik_gaussian <- "
   data.table::set(

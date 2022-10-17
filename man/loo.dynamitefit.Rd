@@ -13,7 +13,7 @@
 \item{separate_channels}{[\code{logical(1)}]\cr If \code{TRUE}, computes LOO
 separately for each channel. This can be useful in diagnosing where the
 model fails. Default is \code{FALSE}, in which case the likelihoods of
-different channels are combined, i.e. all channels of are left out.}
+different channels are combined, i.e., all channels of are left out.}
 
 \item{...}{Ignored.}
 }
@@ -31,4 +31,5 @@ models using Pareto smoothed importance sampling with the \code{loo} package.
 loo(gaussian_example_fit)
 loo(gaussian_example_fit, separate_channels = TRUE)
 }
+
 }

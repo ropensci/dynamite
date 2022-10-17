@@ -14,7 +14,7 @@ lines_wrap <- function(prefix, family, args) {
 #' @param x A `character` vector of length one.
 #' @noRd
 vectorizable_prior <- function(x) {
-  length(x) == 1 && !grepl("\\(", x)
+  length(x) == 1L && !grepl("\\(", x)
 }
 
 #' Parameters for Stan Code Generation
@@ -380,22 +380,32 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
                                      K_fixed, K_varying) {
   oname <- ifelse_(noncentered, "omega_raw_", "omega_")
   paste_rows(
-    onlyif(has_random_intercept,
-      "real<lower=0> sigma_nu_{y}; // SD of random intercepts"),
+    onlyif(
+      has_random_intercept,
+      "real<lower=0> sigma_nu_{y}; // SD of random intercepts"
+    ),
     onlyif(has_fixed, "vector[{K_fixed}] beta_{y}; // Fixed coefficients"),
-    onlyif(has_varying,
-      "matrix[{K_varying}, D] {oname}{y}; // Spline coefficients"),
-    onlyif(has_varying,
-      "vector<lower={lb}>[{K_varying}] tau_{y}; // SDs for the random walks"),
+    onlyif(
+      has_varying,
+      "matrix[{K_varying}, D] {oname}{y}; // Spline coefficients"
+    ),
+    onlyif(
+      has_varying,
+      "vector<lower={lb}>[{K_varying}] tau_{y}; // SDs for the random walks"
+    ),
     ifelse_(
       has_fixed_intercept || has_varying_intercept,
       "real a_{y}; // Mean of the first time point",
       ""
     ),
-    onlyif(has_varying_intercept,
-      "row_vector[D - 1] omega_raw_alpha_{y}; // Coefficients for alpha"),
-    onlyif(has_varying_intercept,
-      "real<lower={lb}> tau_alpha_{y}; // SD for the random walk"),
+    onlyif(
+      has_varying_intercept,
+      "row_vector[D - 1] omega_raw_alpha_{y}; // Coefficients for alpha"
+    ),
+    onlyif(
+      has_varying_intercept,
+      "real<lower={lb}> tau_alpha_{y}; // SD for the random walk"
+    ),
     .indent = idt(1)
   )
 }
@@ -406,12 +416,18 @@ parameters_lines_categorical <- function(y, idt, noncentered, lb, has_fixed,
                                          K_fixed, K_varying, S, ...) {
   oname <- ifelse_(noncentered, "omega_raw_", "omega_")
   paste_rows(
-    onlyif(has_fixed,
-      "matrix[{K_fixed}, {S - 1}] beta_{y}; // Fixed coefficients"),
-    onlyif(has_varying,
-      "matrix[{K_varying}, D] {oname}{y}[{S - 1}]; // Spline coefficients"),
-    onlyif(has_varying,
-      "vector<lower={lb}>[{K_varying}] tau_{y};  // SDs for the random walks"),
+    onlyif(
+      has_fixed,
+      "matrix[{K_fixed}, {S - 1}] beta_{y}; // Fixed coefficients"
+    ),
+    onlyif(
+      has_varying,
+      "matrix[{K_varying}, D] {oname}{y}[{S - 1}]; // Spline coefficients"
+    ),
+    onlyif(
+      has_varying,
+      "vector<lower={lb}>[{K_varying}] tau_{y};  // SDs for the random walks"
+    ),
     ifelse_(
       has_fixed_intercept || has_varying_intercept,
       "vector[{S - 1}] a_{y}; // Mean of the first time point",
@@ -503,7 +519,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
                                                  L_fixed, L_varying) {
   if (noncentered) {
     lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
-    declare_omega <-  paste_rows(
+    declare_omega <- paste_rows(
       "// Spline coefficients",
       "matrix[{K_varying}, D] omega_{y};",
       .indent = idt(c(0, 1)),
@@ -563,7 +579,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
       "real alpha_{y};",
       .indent = idt(c(0, 1)),
       .parse = FALSE
-      )
+    )
     state_fixed_intercept <- paste_rows(
       "// Define the first alpha using mean a_{y}",
       "{{",
@@ -592,7 +608,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
   }
   if (noncentered) {
     lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
-    declare_omega_alpha <-  paste_rows(
+    declare_omega_alpha <- paste_rows(
       "// Spline coefficients",
       "row_vector[D] omega_alpha_{y};",
       .indent = idt(c(0, 1)),
@@ -610,7 +626,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
       .parse = FALSE
     )
   } else {
-    declare_omega_alpha <-  paste_rows(
+    declare_omega_alpha <- paste_rows(
       "// Spline coefficients",
       "row_vector[D] omega_alpha_{y};",
       .indent = idt(c(0, 1)),
@@ -647,7 +663,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
       onlyif(has_varying_intercept, declare_varying_intercept),
       .indent = idt(c(1, 1, 1, 0))
     ),
-    statements =   paste_rows(
+    statements = paste_rows(
       onlyif(has_varying && noncentered, state_omega),
       onlyif(has_varying, state_delta),
       onlyif(has_fixed_intercept, state_fixed_intercept),
@@ -728,7 +744,7 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
       .indent = idt(c(1, 1, 2, 2, 2, 2, 1)),
       .parse = FALSE
     )
-    declare_fixed_intercept <-  paste_rows(
+    declare_fixed_intercept <- paste_rows(
       "// Time-invariant intercept",
       "vector[{S - 1}] alpha_{y};",
       .indent = idt(1),
@@ -765,7 +781,7 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
       .indent = idt(c(1, 2, 1)),
       .parse = FALSE
     )
-    declare_fixed_intercept <-  paste_rows(
+    declare_fixed_intercept <- paste_rows(
       "// Time-invariant intercept",
       "vector[{S - 1}] alpha_{y};",
       .indent = idt(1),
@@ -781,7 +797,7 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
   }
   if (noncentered) {
     lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
-    declare_omega_alpha <-  paste_rows(
+    declare_omega_alpha <- paste_rows(
       "// Spline coefficients",
       "row_vector[D] omega_alpha_{y}[{S - 1}];",
       .indent = idt(1),
@@ -801,7 +817,7 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
       .parse = FALSE
     )
   } else {
-    declare_omega_alpha <-  paste_rows(
+    declare_omega_alpha <- paste_rows(
       "// Spline coefficients",
       "row_vector[D] omega_alpha_{y}[{S - 1}];",
       .indent = idt(1),

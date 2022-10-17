@@ -120,10 +120,14 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
   )
   if (any(!is.na(coefs$category))) {
     p <- coefs |>
-      ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean,
-        colour = .data$category,
-        fill = .data$category
-      ))
+      ggplot2::ggplot(
+        ggplot2::aes(
+          .data$time,
+          .data$mean,
+          colour = .data$category,
+          fill = .data$category
+        )
+      )
   } else {
     p <- coefs |>
       ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean))
@@ -190,14 +194,15 @@ plot_betas <- function(x, responses = NULL, level = 0.05,
     p <- coefs |>
       ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter))
   }
-  p + ggplot2::geom_pointrange(
-    ggplot2::aes_string(
-      xmin = paste0("q", 100 * level),
-      xmax = paste0("q", 100 * (1 - level))
-    ),
-    position = ggplot2::position_dodge(0.5)
-  ) +
-  ggplot2::labs(title = title, x = "Value", y = "Parameter")
+  p +
+    ggplot2::geom_pointrange(
+      ggplot2::aes_string(
+        xmin = paste0("q", 100 * level),
+        xmax = paste0("q", 100 * (1 - level))
+      ),
+      position = ggplot2::position_dodge(0.5)
+    ) +
+    ggplot2::labs(title = title, x = "Value", y = "Parameter")
 }
 
 #' Plot Random Intercepts of a Dynamite Model
