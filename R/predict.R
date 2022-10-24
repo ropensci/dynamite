@@ -408,14 +408,13 @@ predict_full <- function(object, simulated, observed, type, eval_type,
   finalize_predict(type, resp_stoch, simulated, observed)
   simulated[, c(lhs_ld, lhs_ls) := NULL]
   data.table::setkeyv(simulated, cols = c(".draw", group_var, time_var))
-  data.table::setDF(simulated)
-  data.table::setDF(observed)
-  out <- list(simulated = simulated, observed = observed)
-  ifelse_(
-    expand,
-    expand_predict_output(out),
-    out
-  )
+  if (expand) {
+    expand_predict_output(simulated, observed)
+  } else {
+    data.table::setDF(simulated)
+    data.table::setDF(observed)
+    list(simulated = simulated, observed = observed)
+  }
 }
 
 #' Obtain Summarized Predictions

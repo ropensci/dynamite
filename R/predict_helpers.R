@@ -414,16 +414,16 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
 #'
 #' @param x Object returned by `predict.dynamitefit`.
 #' @noRd
-expand_predict_output <- function(x) {
-  common <- intersect(names(x$simulated), names(x$observed))
-  p <- x$simulated |> dplyr::select(!dplyr::matches(common))
-  o <- x$observed[
-    rep(seq_len(nrow(x$observed)), n_unique(p$.draw)), ,
-    drop = FALSE
+expand_predict_output <- function(simulated, observed) {
+  add_cols <- setdiff(names(observed), names(simulated))
+  observed <- observed[
+    rep(seq_len(nrow(observed)), n_unique(simulated$.draw)),
   ]
-  out <- cbind(o, p)
-  rownames(out) <- NULL
-  out
+  for (col in add_cols) {
+    data.table::set(simulated, j = col, value = observed[[col]])
+  }
+  data.table::setDF(simulated)
+  simulated
 }
 
 #' Prepare Environments to Evaluate Predictions or Fitted Values
