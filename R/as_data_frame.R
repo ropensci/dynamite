@@ -51,44 +51,56 @@
 #'   model parameters in a long format. For a wide format, see
 #'   [dynamite::as_draws()].
 #' @examples
-#' results <- as.data.frame(gaussian_example_fit,
-#'   responses = "y", types = "beta", summary = FALSE
+#' results <- as.data.frame(
+#'   gaussian_example_fit,
+#'   responses = "y",
+#'   types = "beta",
+#'   summary = FALSE
 #' )
 #'
-#' results |>
-#'   dplyr::group_by(parameter) |>
-#'   dplyr::summarise(mean = mean(value), sd = sd(value))
+#' if (requireNamespace("dplyr")) {
+#'   results %>%
+#'     dplyr::group_by(parameter) %>%
+#'     dplyr::summarise(mean = mean(value), sd = sd(value))
+#' }
 #'
 #' # basic summaries can be obtained automatically with summary = TRUE:
-#' as.data.frame(gaussian_example_fit,
-#'   responses = "y", types = "beta", summary = TRUE
+#' as.data.frame(
+#'   gaussian_example_fit,
+#'   responses = "y",
+#'   types = "beta",
+#'   summary = TRUE
 #' )
 #'
 #' # Compute MCMC diagnostics via posterior package
 #' # For this we need to first convert to wide format
 #' # and then to draws_df object
-#' results |>
-#'   dplyr::select(parameter, value, .iteration, .chain) |>
-#'   tidyr::pivot_wider(values_from = value, names_from = parameter) |>
-#'   posterior::as_draws() |>
-#'   posterior::summarise_draws()
+#' if (requireNamespace("dplyr) && requireNamespace("tidyr")) {
+#'   results %>%
+#'     dplyr::select(parameter, value, .iteration, .chain) %>%
+#'     tidyr::pivot_wider(values_from = value, names_from = parameter) %>%
+#'     posterior::as_draws() %>%
+#'     posterior::summarise_draws()
+#' }
 #'
 #' # Time-varying coefficients delta
 #' as.data.frame(gaussian_example_fit,
 #'   responses = "y", types = "delta", summary = TRUE
 #' )
 #'
-#' as.data.frame(gaussian_example_fit,
-#'   responses = "y", types = "delta", summary = FALSE
-#' ) |>
-#'   dplyr::select(parameter, value, time, .iteration, .chain) |>
-#'   tidyr::pivot_wider(
-#'     values_from = value,
-#'     names_from = c(parameter, time),
-#'     names_sep = "_t="
-#'   ) |>
-#'   posterior::as_draws() |>
-#'   posterior::summarise_draws()
+#' if (requireNamespace("dplyr) && requireNamespace("tidyr")) {
+#'   as.data.frame(gaussian_example_fit,
+#'     responses = "y", types = "delta", summary = FALSE
+#'   ) %>%
+#'     dplyr::select(parameter, value, time, .iteration, .chain) %>%
+#'     tidyr::pivot_wider(
+#'       values_from = value,
+#'       names_from = c(parameter, time),
+#'       names_sep = "_t="
+#'     ) %>%
+#'     posterior::as_draws() %>%
+#'     posterior::summarise_draws()
+#' }
 #'
 as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
                                       responses = NULL, types = NULL,
@@ -185,7 +197,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       category <- NA
     }
     d <- do.call(
-      what = paste0("as_data_frame_", type),
+      what = paste0("as_data_table_", type),
       args = list(
         x = x,
         draws = draws,
@@ -195,24 +207,41 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         include_fixed = include_fixed
       )
     )
-    d$.draw <- seq_len(nrow(draws) * ncol(draws))
-    d$.iteration <- seq_len(nrow(draws))
-    d$.chain <- rep(seq_len(ncol(draws)), each = nrow(draws))
+    n_d <- d[, .N]
+    d[, response := rep(response, n_d)]
+    d[, type := rep(type, n_d)]
+    d[, .draw := rep_len(seq_len(nrow(draws) * ncol(draws)), n_d)]
+    d[, .iteration := rep_len(seq_len(nrow(draws)), n_d)]
+    d[, .chain := rep_len(rep(seq_len(ncol(draws)), each = nrow(draws)), n_d)]
     d
   }
   out_all <- NULL
   if ("lambda" %in% types) {
-    out_all <- data.frame(type = "lambda", response = "", parameter = "lambda")
+    out_all <- data.table::data.table(
+      type = "lambda",
+      response = "",
+      parameter = "lambda"
+    )
   }
   if ("corr_nu" %in% types) {
     out_all <- rbind(
       out_all,
-      data.frame(type = "corr_nu", response = "", parameter = "corr_nu")
+      data.table::data.table(
+        type = "corr_nu",
+        response = "",
+        parameter = "corr_nu"
+      )
     )
   }
-  tmp <- expand.grid(type = types, response = responses)
-  tmp$parameter <- glue::glue("{tmp$type}_{tmp$response}")
-  out <- rbind(out_all, tmp)
+  tmp <- data.table::as.data.table(
+    expand.grid(
+      type = types,
+      response = responses,
+      stringsAsFactors = FALSE
+    )
+  )
+  tmp[, parameter := as.character(glue::glue("{tmp$type}_{tmp$response}"))]
+  out <- data.table::rbindlist(list(out_all, tmp))
   rows <- apply(out, 1L, function(y) {
     any(
       grepl(
@@ -222,18 +251,9 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     )
   })
   out <- out[rows, c("response", "type")]
-  #  out_all,
-  #  tidyr::expand_grid(type = types, response = responses) |>
-  #    dplyr::mutate(parameter = glue::glue("{type}_{response}"))
-  #) |>
-  #  dplyr::rowwise() |>
-  #  dplyr::filter(any(grepl(
-  #    paste0("^", .data$parameter),
-  #    x$stanfit@sim$pars_oi
-  #  ))) |>
-  #  dplyr::select("response", "type")
+  n_pars <- nrow(out)
   stopifnot_(
-    nrow(out) > 0L,
+    n_pars > 0L,
     paste0(
       "No parameters of type {.var ",
       paste(types, collapse = "}, {.var "),
@@ -241,34 +261,48 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       paste(responses, collapse = "}, {.var "), "}."
     )
   )
-  out <- out |>
-    dplyr::mutate(value = list(values(.data$type, .data$response))) |>
-    tidyr::unnest(cols = "value")
+  all_values <- vector(mode = "list", length = n_pars + 1L)
+  # template for rbindlist
+  all_values[[1L]] <- data.table::data.table(
+    parameter = character(0L),
+    value = numeric(0L),
+    time = x$data[[x$time_var]][0L],
+    category = character(0L),
+    group = x$data[[x$group_var]][0L],
+    response = character(0L),
+    type = character(0L),
+    .draw = integer(0L),
+    .iteration = integer(0L),
+    .chain = integer(0L)
+  )
+  all_values[seq.int(2L, n_pars + 1L)] <- .mapply(
+    values,
+    dots = list(type = out$type, response = out$response),
+    MoreArgs = NULL
+  )
+  out <- data.table::rbindlist(all_values, fill = TRUE)
   if (summary) {
     pars <- unique(out$parameter)
-    out <- out |>
-      dplyr::group_by(
-        # create ordered factor so the order of parameters is not changed
-        # by group_by and summarise
-        parameter = factor(.data$parameter, levels = pars, ordered = TRUE),
-        .data$time, .data$category, .data$group,
-        .data$response, .data$type
-      ) |>
-      dplyr::summarise(
-        mean = mean(.data$value),
-        sd = sd(.data$value),
-        # use quantile2 from posterior for simpler (more R-friendly) names
-        dplyr::as_tibble(
-          as.list(posterior::quantile2(.data$value, probs = probs))
-        )
-      ) |>
-      dplyr::ungroup() |>
-      dplyr::mutate(parameter = as.character(.data$parameter))
+    out <- out[,
+      parameter := factor(parameter, levels = pars, ordered = TRUE)
+    ][,
+      {
+        mean = mean(value)
+        sd = sd(value)
+        tmp = quantile(value, na.rm = TRUE)
+        q5 = tmp[1L]
+        q95 = tmp[2L]
+        list(mean = mean, sd = sd, q5 = q5, q95 = q95)
+      },
+      by = list(parameter, time, category, group, response, type)
+    ][,
+      parameter := as.character(parameter)
+    ]
   }
-  out
+  tibble::tibble(data.table::setDF(out))
 }
 
-#' Construct a Data Frame for a Parameter Type from a `dynamitefit` Object
+#' Construct a Data Table for a Parameter Type from a `dynamitefit` Object
 #'
 #' Arguments for all as_data_frame_type functions are documented here.
 #'
@@ -278,58 +312,50 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
 #' @param response \[`character(1)`]\cr Response variable name.
 #' @param categories \[`character()`]\cr Levels of categorical responses.
 #' @noRd
-as_data_frame_default <- function(type, draws, response) {
-  data.frame(
+as_data_table_default <- function(type, draws, response) {
+  data.table::data.table(
     parameter = paste0(type, "_", response),
-    value = c(draws),
-    time = NA,
-    category = NA,
-    group = NA
+    value = c(draws)#,
+    #time = NA,
+    #category = NA,
+    #group = NA
   )
 }
 
-#' @describeIn as_data_frame_default Data Frame for a "lambda" Parameter
+#' @describeIn as_data_table_default Data Table for a "lambda" Parameter
 #' @noRd
-as_data_frame_lambda <- function(x, draws, ...) {
-  data.frame(
+as_data_table_lambda <- function(x, draws, ...) {
+  data.table::data.table(
     parameter = "lambda",
-    value = c(draws),
-    time = NA,
-    category = NA,
-    group = NA
+    value = c(draws)
   )
 }
 
-#' @describeIn as_data_frame_default Data Frame for a "corr_nu" Parameter
+#' @describeIn as_data_table_default Data Table for a "corr_nu" Parameter
 #' @noRd
-as_data_frame_corr_nu <- function(x, draws, ...) {
+as_data_table_corr_nu <- function(x, draws, ...) {
   resp <- get_responses(x$dformulas$stoch)
   pairs <- apply(utils::combn(resp, 2L), 2L, paste, collapse = "_")
-  data.frame(
+  data.table::data.table(
     parameter = paste0("corr_nu_", pairs),
-    value = c(draws),
-    time = NA,
-    category = NA,
-    group = NA
+    value = c(draws)
   )
 }
 
-#' @describeIn as_data_frame_default Data Frame for a "nu" Parameter
+#' @describeIn as_data_table_default Data Table for a "nu" Parameter
 #' @noRd
-as_data_frame_nu <- function(x, draws, n_draws, response, ...) {
+as_data_table_nu <- function(x, draws, n_draws, response, ...) {
   n_group <- dim(draws)[3L]
-  data.frame(
+  data.table::data.table(
     parameter = paste0("nu_", response),
     value = c(draws),
-    time = NA,
-    category = NA,
-    group = rep(seq_len(n_group), each = n_draws)
+    group = rep(sort(unique(x$data[[x$group_var]])), each = n_draws)
   )
 }
 
-#' @describeIn as_data_frame_default Data Frame for a "alpha" Parameter
+#' @describeIn as_data_table_default Data Table for a "alpha" Parameter
 #' @noRd
-as_data_frame_alpha <- function(x, draws, n_draws,
+as_data_table_alpha <- function(x, draws, n_draws,
                                 response, category, include_fixed) {
   n_cat <- length(category)
   fixed <- x$stan$fixed
@@ -343,49 +369,46 @@ as_data_frame_alpha <- function(x, draws, n_draws,
     n_na <- include_fixed * fixed * n_draws
     n_time <- length(time_points)
     n_time2 <- n_time - include_fixed * fixed
-    do.call(dplyr::bind_rows, lapply(seq_len(n_cat), function(i) {
-      data.frame(
-        parameter = paste0("alpha_", response),
-        value = c(
-          rep(NA, n_na),
-          c(draws[, , (i - 1L) * n_time2 + seq_len(n_time2)])
-        ),
-        time = rep(time_points, each = n_draws),
-        category = category[i],
-        group = NA
-      )
-    }))
+    data.table::rbindlist(
+      lapply(seq_len(n_cat), function(i) {
+        data.table::data.table(
+          parameter = paste0("alpha_", response),
+          value = c(
+            rep(NA, n_na),
+            c(draws[, , (i - 1L) * n_time2 + seq_len(n_time2)])
+          ),
+          time = rep(time_points, each = n_draws),
+          category = category[i]
+        )
+      })
+    )
   } else {
-    data.frame(
+    data.table::data.table(
       parameter = paste0("alpha_", response),
       value = c(draws),
-      time = NA,
-      category = rep(category, each = n_draws),
-      group = NA
+      category = rep(category, each = n_draws)
     )
   }
 }
 
-#' @describeIn as_data_frame_default Data Frame for a "beta" Parameter
+#' @describeIn as_data_table_default Data Table for a "beta" Parameter
 #' @noRd
-as_data_frame_beta <- function(x, draws, n_draws, response, category, ...) {
+as_data_table_beta <- function(x, draws, n_draws, response, category, ...) {
   var_names <- paste0(
     "beta_", response, "_",
     names(x$stan$model_vars[[response]]$J_fixed)
   )
   n_vars <- length(var_names)
-  data.frame(
+  data.table::data.table(
     parameter = rep(var_names, each = n_draws),
     value = c(draws),
-    time = NA,
-    category = rep(category, each = n_vars * n_draws),
-    group = NA
+    category = rep(category, each = n_vars * n_draws)
   )
 }
 
-#' @describeIn as_data_frame_default Data Frame for a "delta" Parameter
+#' @describeIn as_data_table_default Data Table for a "delta" Parameter
 #' @noRd
-as_data_frame_delta <- function(x, draws, n_draws,
+as_data_table_delta <- function(x, draws, n_draws,
                                 response, category, include_fixed) {
   n_cat <- length(category)
   fixed <- x$stan$fixed
@@ -403,47 +426,43 @@ as_data_frame_delta <- function(x, draws, n_draws,
   n_na <- include_fixed * fixed * n_draws
   n_time <- length(time_points)
   n_time2 <- n_time - include_fixed * fixed
-  do.call(dplyr::bind_rows, lapply(seq_len(n_cat), function(j) {
-    do.call(dplyr::bind_rows, lapply(seq_len(n_vars), function(i) {
+  data.table::rbindlist(lapply(seq_len(n_cat), function(j) {
+    data.table::rbindlist(lapply(seq_len(n_vars), function(i) {
       idx <- (j - 1L) * n_time2 * n_vars + (i - 1L) * n_time2 + seq_len(n_time2)
-      data.frame(
+      data.table::data.table(
         parameter = var_names[i],
         value = c(
           rep(NA, n_na),
           c(draws[, , idx])
         ),
         time = rep(time_points, each = n_draws),
-        category = rep(category[j], each = n_time * n_draws),
-        group = NA
+        category = rep(category[j], each = n_time * n_draws)
       )
     }))
   }))
 }
 
-#' @describeIn as_data_frame_default Data Frame for a "tau" Parameter
+#' @describeIn as_data_table_default Data Table for a "tau" Parameter
 #' @noRd
-as_data_frame_tau <- function(x, draws, n_draws, response, ...) {
+as_data_table_tau <- function(x, draws, n_draws, response, ...) {
   var_names <- paste0(
     "tau_", response, "_",
     names(x$stan$model_vars[[response]]$J_varying)
   )
-  data.frame(
+  data.table::data.table(
     parameter = rep(var_names, each = n_draws),
-    value = c(draws),
-    time = NA,
-    category = NA,
-    group = NA
+    value = c(draws)
   )
 }
 
-#' @describeIn as_data_frame_default Data Frame for a "omega" Parameter
+#' @describeIn as_data_table_default Data Table for a "omega" Parameter
 #' @noRd
-as_data_frame_omega <- function(x, draws, n_draws, response, category, ...) {
+as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
   n_cat <- length(category)
   D <- x$stan$sampling_vars$D
   var_names <- names(x$stan$model_vars[[response]]$J_varying)
   k <- length(var_names)
-  data.frame(
+  data.table::data.table(
     parameter = rep(
       paste0(
         "omega_", rep(seq_len(D), each = n_cat * k), "_",
@@ -452,46 +471,45 @@ as_data_frame_omega <- function(x, draws, n_draws, response, category, ...) {
       each = n_draws
     ),
     value = c(draws),
-    time = NA,
-    category = rep(category, each = n_draws),
-    group = NA
+    category = rep(category, each = n_draws)
   )
 }
 
-#' @describeIn as_data_frame_default Data Frame for a "omega_alpha" Parameter
+#' @describeIn as_data_table_default Data Table for a "omega_alpha" Parameter
 #' @noRd
-as_data_frame_omega_alpha <- function(x, draws, n_draws, category, ...) {
+as_data_table_omega_alpha <- function(x, draws, n_draws, category, ...) {
   n_cat <- length(category)
   D <- x$stan$sampling_vars$D
-  data.frame(
-    parameter = rep(paste0("omega_alpha_", seq_len(D)), each = n_cat * n_draws),
+  data.table::data.table(
+    parameter = rep(
+      paste0("omega_alpha_", seq_len(D)),
+      each = n_cat * n_draws
+    ),
     value = c(draws),
-    time = NA,
-    category = rep(category, each = n_draws),
-    group = NA
+    category = rep(category, each = n_draws)
   )
 }
 
-#' @describeIn as_data_frame_default Data Frame for a "tau_alpha" Parameter
+#' @describeIn as_data_table_default Data Table for a "tau_alpha" Parameter
 #' @noRd
-as_data_frame_tau_alpha <- function(draws, response, ...) {
-  as_data_frame_default("tau_alpha", draws, response)
+as_data_table_tau_alpha <- function(draws, response, ...) {
+  as_data_table_default("tau_alpha", draws, response)
 }
 
-#' @describeIn as_data_frame_default Data Frame for a "sigma" Parameter
+#' @describeIn as_data_table_default Data Table for a "sigma" Parameter
 #' @noRd
-as_data_frame_sigma <- function(draws, response, ...) {
-  as_data_frame_default("sigma", draws, response)
+as_data_table_sigma <- function(draws, response, ...) {
+  as_data_table_default("sigma", draws, response)
 }
 
-#' @describeIn as_data_frame_default Data Frame for a "sigma_nu" Parameter
+#' @describeIn as_data_table_default Data Table for a "sigma_nu" Parameter
 #' @noRd
-as_data_frame_sigma_nu <- function(draws, response, ...) {
-  as_data_frame_default("sigma_nu", draws, response)
+as_data_table_sigma_nu <- function(draws, response, ...) {
+  as_data_table_default("sigma_nu", draws, response)
 }
 
-#' @describeIn as_data_frame_default Data Frame for a "phi" Parameter
+#' @describeIn as_data_table_default Data Table for a "phi" Parameter
 #' @noRd
-as_data_frame_phi <- function(draws, response, ...) {
-  as_data_frame_default("phi", draws, response)
+as_data_table_phi <- function(draws, response, ...) {
+  as_data_table_default("phi", draws, response)
 }
