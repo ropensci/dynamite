@@ -382,7 +382,7 @@ test_that("data expansion to full time scale works", {
   data.table::setDT(expected_data, key = c("group", "time"))
   expect_equal(fit$data, expected_data, ignore_attr = TRUE)
   # no groups
-  test_data_single <- test_data |> dplyr::filter(group == 1)
+  test_data_single <- test_data[test_data[["group"]] == 1L, ]
   test_data_single$group <- NULL
   mis_rows_single <- c(3, 5, 6, 9)
   test_data_single_mis <- test_data_single[-mis_rows_single, ]

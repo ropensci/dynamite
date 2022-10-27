@@ -258,7 +258,7 @@ prepare_splines <- function(spline_defs, n_channels, T_idx) {
 #' @param channel \[`list()`]\cr Channel-specific variables for Stan sampling
 #' @noRd
 prepare_prior <- function(ptype, priors, channel) {
-  pdef <- priors |> dplyr::filter(.data$type == ptype)
+  pdef <- priors[priors$type == ptype, ]
   channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
   dists <- sub("\\(.*", "", pdef$prior)
   if (nrow(pdef) > 0L && identical(n_unique(dists), 1L)) {
@@ -289,13 +289,13 @@ prepare_common_priors <- function(priors, M, shrinkage, correlated) {
         type = "lambda",
         category = ""
       ),
-      priors |> dplyr::filter(.data$type == "lambda")
+      priors[priors$type == "lambda", ]
     )
   }
   if (M > 1L && correlated) {
     common_priors <- ifelse_(
       is.null(priors),
-      dplyr::bind_rows(
+      rbind(
         common_priors,
         data.frame(
           parameter = "L",
@@ -305,9 +305,9 @@ prepare_common_priors <- function(priors, M, shrinkage, correlated) {
           category = ""
         )
       ),
-      dplyr::bind_rows(
+      rbind(
         common_priors,
-        priors |> dplyr::filter(.data$type == "L")
+        priors[priors$type == "L", ]
       )
     )
   }
@@ -344,10 +344,10 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
     channel <- out$channel
     priors <- out$priors
   } else {
-    priors <- priors |> dplyr::filter(.data$response == y)
+    priors <- priors[priors$response == y, ]
     types <- priors$type
     for (ptype in intersect(types, c("alpha", "tau_alpha", "sigma_nu"))) {
-      pdef <- priors |> dplyr::filter(.data$type == ptype)
+      pdef <- priors[priors$type == ptype, ]
       channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
     }
     for (ptype in intersect(types, c("beta", "delta", "tau"))) {
@@ -381,13 +381,13 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
     channel <- out$channel
     priors <- out$priors
   } else {
-    priors <- priors |> dplyr::filter(.data$response == y)
+    priors <- priors[priors$response == y, ]
     types <- priors$type
     for (ptype in intersect(types, c("alpha", "beta", "delta", "tau"))) {
       channel <- prepare_prior(ptype, priors, channel)
     }
     if ("tau_alpha" %in% types) {
-      pdef <- priors |> dplyr::filter(.data$type == "tau_alpha")
+      pdef <- priors[priors$type == "tau_alpha", ]
       channel[["tau_alpha_prior_distr"]] <- pdef$prior
     }
     priors <- check_priors(
@@ -447,14 +447,14 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   )
   if (is.null(priors)) {
     out$channel$sigma_prior_distr <- sigma_prior$prior
-    out$priors <- dplyr::bind_rows(out$priors, sigma_prior)
+    out$priors <- rbind(out$priors, sigma_prior)
   } else {
-    priors <- priors |> dplyr::filter(.data$response == y)
-    pdef <- priors |> dplyr::filter(.data$type == "sigma")
+    priors <- priors[priors$response == y, ]
+    pdef <- priors[priors$type == "sigma", ]
     if (identical(nrow(pdef), 1L)) {
       out$channel$sigma_prior_distr <- pdef$prior
     }
-    defaults <- dplyr::bind_rows(
+    defaults <- rbind(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       sigma_prior
     )
@@ -603,14 +603,14 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
 
   if (is.null(priors)) {
     out$channel$phi_prior_distr <- phi_prior$prior
-    out$priors <- dplyr::bind_rows(out$priors, phi_prior)
+    out$priors <- rbind(out$priors, phi_prior)
   } else {
-    priors <- priors |> dplyr::filter(.data$response == y)
-    pdef <- priors |> dplyr::filter(.data$type == "phi")
+    priors <- priors[priors$response == y, ]
+    pdef <- priors[priors$type == "phi", ]
     if (identical(nrow(pdef), 1L)) {
       out$channel$phi_prior_distr <- pdef$prior
     }
-    defaults <- dplyr::bind_rows(
+    defaults <- rbind(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       phi_prior
     )
@@ -706,14 +706,14 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
 
   if (is.null(priors)) {
     out$channel$phi_prior_distr <- phi_prior$prior
-    out$priors <- dplyr::bind_rows(out$priors, phi_prior)
+    out$priors <- rbind(out$priors, phi_prior)
   } else {
-    priors <- priors |> dplyr::filter(.data$response == y)
-    pdef <- priors |> dplyr::filter(.data$type == "phi")
+    priors <- priors[priors$response == y, ]
+    pdef <- priors[priors$type == "phi", ]
     if (identical(nrow(pdef), 1L)) {
       out$channel$phi_prior_distr <- pdef$prior
     }
-    defaults <- dplyr::bind_rows(
+    defaults <- rbind(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       phi_prior
     )
@@ -764,14 +764,14 @@ prepare_channel_beta <- function(y, Y, channel, sd_x, resp_class, priors) {
 
   if (is.null(priors)) {
     out$channel$phi_prior_distr <- phi_prior$prior
-    out$priors <- dplyr::bind_rows(out$priors, phi_prior)
+    out$priors <- rbind(out$priors, phi_prior)
   } else {
-    priors <- priors |> dplyr::filter(.data$response == y)
-    pdef <- priors |> dplyr::filter(.data$type == "phi")
+    priors <- priors[priors$response == y, ]
+    pdef <- priors[priors$type == "phi", ]
     if (identical(nrow(pdef), 1L)) {
       out$channel$phi_prior_distr <- pdef$prior
     }
-    defaults <- dplyr::bind_rows(
+    defaults <- rbind(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       phi_prior
     )

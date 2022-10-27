@@ -157,7 +157,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     "sigma_nu", "corr_nu", "sigma", "phi", "nu", "omega", "omega_alpha"
   )
   if (is.null(types)) {
-    types <- all_types[1L:11L]
+    types <- all_types[seq_len(11L)]
   } else {
     types <- onlyif(is.character(types), tolower(types))
     types <- try(match.arg(types, all_types, TRUE), silent = TRUE)
@@ -210,17 +210,28 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       data.frame(type = "corr_nu", response = "", parameter = "corr_nu")
     )
   }
-  out <- dplyr::bind_rows(
-    out_all,
-    tidyr::expand_grid(type = types, response = responses) |>
-      dplyr::mutate(parameter = glue::glue("{type}_{response}"))
-  ) |>
-    dplyr::rowwise() |>
-    dplyr::filter(any(grepl(
-      paste0("^", .data$parameter),
-      x$stanfit@sim$pars_oi
-    ))) |>
-    dplyr::select("response", "type")
+  tmp <- expand.grid(type = types, response = responses)
+  tmp$parameter <- glue::glue("{tmp$type}_{tmp$response}")
+  out <- rbind(out_all, tmp)
+  rows <- apply(out, 1L, function(y) {
+    any(
+      grepl(
+        paste0("^", y["parameter"]),
+        x$stanfit@sim$pars_oi
+      )
+    )
+  })
+  out <- out[rows, c("response", "type")]
+  #  out_all,
+  #  tidyr::expand_grid(type = types, response = responses) |>
+  #    dplyr::mutate(parameter = glue::glue("{type}_{response}"))
+  #) |>
+  #  dplyr::rowwise() |>
+  #  dplyr::filter(any(grepl(
+  #    paste0("^", .data$parameter),
+  #    x$stanfit@sim$pars_oi
+  #  ))) |>
+  #  dplyr::select("response", "type")
   stopifnot_(
     nrow(out) > 0L,
     paste0(

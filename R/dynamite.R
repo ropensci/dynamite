@@ -130,22 +130,23 @@
 #'   refresh = 0
 #' )
 #'
-#' library(dplyr)
-#' library(ggplot2)
-#  cf <- coef(fit) |>
-#' group_by(time, variable) |>
-#'   summarise(
-#'     mean = mean(value),
-#'     lwr = quantile(value, 0.025),
-#'     upr = quantile(value, 0.975)
-#'   )
-#'
-#' cf |>
-#'   ggplot(aes(time, mean)) +
-#'   theme_bw() +
-#'   geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
-#'   geom_line() +
-#'   facet_wrap(~variable, scales = "free_y")
+#' if (requireNamespace("dplyr") && requireNamespace("ggplot2")) {
+#'   library(dplyr)
+#'   library(ggplot2)
+#    cf <- coef(fit) %>%
+#'   group_by(time, variable) %>%
+#'     summarise(
+#'       mean = mean(value),
+#'       lwr = quantile(value, 0.025),
+#'       upr = quantile(value, 0.975)
+#'     )
+#'   cf %>%
+#'     ggplot(aes(time, mean)) +
+#'     theme_bw() +
+#'     geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
+#'     geom_line() +
+#'     facet_wrap(~variable, scales = "free_y")
+#'   }
 #' }
 #'
 dynamite <- function(dformula, data, group = NULL, time,
@@ -488,6 +489,8 @@ is.dynamitefit <- function(x) {
 #' @noRd
 parse_data <- function(dformula, data, group_var, time_var, verbose) {
   data <- droplevels(data)
+  # droplevels creates a copy already so we can just convert
+  data <- data.table::as.data.table(data)
   data_names <- names(data)
   stopifnot_(
     !is.character(data[[time_var]]),
@@ -505,7 +508,8 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
     }
     data[[time_var]] <- as.integer(data[[time_var]])
   }
-  data <- data |> dplyr::mutate(dplyr::across(where(is.character), as.factor))
+  chr_cols <- names(data)[vapply(data, is.character, logical(1L))]
+  data[, (chr_cols) := lapply(.SD, as.factor), .SDcols = chr_cols]
   valid_types <- c("integer", "logical", "double")
   col_types <- vapply(data, typeof, character(1L))
   factor_cols <- vapply(data, is.factor, logical(1L))
@@ -519,17 +523,18 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
              {?is/are} not supported."
     )
   )
-  for (i in which(valid_cols & !factor_cols)) {
-    data[, i] <- do.call(
-      paste0("as.", typeof(data[[i]])),
-      args = list(data[[i]])
+  for (j in which(valid_cols & !factor_cols)) {
+    data.table::set(
+      data,
+      j = j,
+      value = do.call(paste0("as.", typeof(data[[j]])), args = list(data[[j]]))
     )
   }
   resp <- get_responses(dformula)
   ordered_factor_resp <- vapply(
     seq_along(resp),
     function(i) {
-      is_categorical(dformula[[i]]$family) && is.ordered(data[, resp[i]])
+      is_categorical(dformula[[i]]$family) && is.ordered(data[[resp[i]]])
     },
     logical(1L)
   )
@@ -543,7 +548,7 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
       ))
     }
     for (i in seq_along(rof)) {
-      class(data[, rof[i]]) <- "factor"
+      class(data[[rof[i]]]) <- "factor"
     }
   }
   finite_cols <- vapply(
@@ -557,7 +562,6 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
     {.var {data_names[!finite_cols]}} of {.arg data}."
   )
   data <- fill_time(data, group_var, time_var)
-  data <- data.table::as.data.table(data)
   drop_unused(dformula, data, group_var, time_var)
   data.table::setkeyv(data, c(group_var, time_var))
   data
@@ -651,9 +655,7 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
       `x` = "Can't find such variables in {.var data}."
     )
   )
-  stoch_k <- lag_map |>
-    dplyr::filter(.data$var %in% resp_stoch) |>
-    dplyr::pull("k")
+  stoch_k <- lag_map[lag_map$var %in% resp_stoch, "k"]
   max_lag <- ifelse_(
     length(stoch_k) > 0L,
     max(max_lag, stoch_k),
@@ -976,13 +978,14 @@ fill_time <- function(data, group_var, time_var) {
     "There must be at least two time points in the data."
   )
   if (has_groups) {
-    time_count <- data |>
-      dplyr::group_by(.data[[group_var]]) |>
-      dplyr::count(.data[[time_var]]) |>
-      dplyr::summarise(unique = all(.data[["n"]] == 1L))
-    d <- time_count[[group_var]][!time_count$unique]
+    time_duplicated <- data[,
+      any(duplicated(time_var)),
+      by = group_var,
+      env = list(time_var = time_var)
+    ]$V1
+    d <- which(time_duplicated)
     stopifnot_(
-      all(time_count$unique),
+      all(!time_duplicated),
       c(
         "Each time index must correspond to a single observation per group:",
         `x` = "{cli::qty(length(d))}Group{?s} {.var {d}} of {.var {group_var}}
@@ -1002,24 +1005,34 @@ fill_time <- function(data, group_var, time_var) {
   } else {
     full_time <- seq(time[1L], time[length(time)], by = time_scale)
     if (has_groups) {
-      time_groups <- data |>
-        dplyr::group_by(.data[[group_var]]) |>
-        dplyr::summarise(has_missing = !identical(.data[[time_var]], full_time))
-      if (any(time_groups$has_missing)) {
-        full_data_template <- expand.grid(
+      time_missing <- data[,
+        !identical(time_var, full_time),
+        by = group_var,
+        env = list(time_var = time_var, full_time = full_time)
+      ]$V1
+      if (any(time_missing)) {
+        full_data_template <- data.table::as.data.table(expand.grid(
           time = full_time,
           group = unique(data[[group_var]])
-        )
+        ))
         names(full_data_template) <- c(time_var, group_var)
-        data <- full_data_template |>
-          dplyr::left_join(data, by = c(group_var, time_var))
+        data <- data.table::merge.data.table(
+          full_data_template,
+          data,
+          by = c(time_var, group_var),
+          all.x = TRUE
+        )
       }
     } else {
       if (!identical(data[[time_var]], full_time)) {
-        full_data_template <- data.frame(time = full_time)
+        full_data_template <- data.table::data.table(time = full_time)
         names(full_data_template) <- time_var
-        data <- full_data_template |>
-          dplyr::left_join(data, by = time_var)
+        data <- data.table::merge.data.table(
+          full_data_template,
+          data,
+          by = time_var,
+          all.x = TRUE
+        )
       }
     }
   }

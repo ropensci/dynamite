@@ -119,18 +119,17 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
     "% intervals of the time-varying coefficients"
   )
   if (any(!is.na(coefs$category))) {
-    p <- coefs |>
-      ggplot2::ggplot(
-        ggplot2::aes(
-          .data$time,
-          .data$mean,
-          colour = .data$category,
-          fill = .data$category
-        )
+    p <- ggplot2::ggplot(
+      coefs,
+      ggplot2::aes_string(
+        "time",
+        "mean",
+        colour = "category",
+        fill = "category"
       )
+    )
   } else {
-    p <- coefs |>
-      ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean))
+    p <- ggplot2::ggplot(coefs, ggplot2::aes_string("time", "mean"))
   }
   p +
     ggplot2::geom_ribbon(
@@ -141,7 +140,7 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
       alpha = alpha
     ) +
     ggplot2::geom_line() +
-    ggplot2::facet_wrap(~ .data$parameter, scales = scales) +
+    ggplot2::facet_wrap("parameter", scales = scales) +
     ggplot2::labs(title = title, x = "Time", y = "Value")
 }
 
@@ -185,14 +184,17 @@ plot_betas <- function(x, responses = NULL, level = 0.05,
     "% intervals of the time-invariant coefficients"
   )
   if (any(!is.na(coefs$category))) {
-    p <- coefs |>
-      ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter,
-        colour = .data$category,
-        group = .data$category
-      ))
+    p <- ggplot2::ggplot(
+      coefs,
+      ggplot2::aes_string(
+        "mean",
+        "parameter",
+        colour = "category",
+        group = "category"
+      )
+    )
   } else {
-    p <- coefs |>
-      ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter))
+    p <- ggplot2::ggplot(coefs, ggplot2::aes_string("mean", "parameter"))
   }
   p +
     ggplot2::geom_pointrange(
@@ -238,21 +240,17 @@ plot_nus <- function(x, responses = NULL, level = 0.05) {
     !inherits(coefs, "try-error"),
     "The model does not contain random intercepts nu."
   )
-  coefs <- coefs |>
-    dplyr::mutate(parameter = glue::glue("{parameter}_{group}")) |>
-    dplyr::mutate(parameter = factor(.data$parameter,
-      levels = .data$parameter
-    ))
+  coefs$parameter <- glue::glue("{coefs$parameter}_{coefs$group}")
+  coefs$parameter <- factor(coefs$parameter, levels = coefs$parameter)
   title <- paste0(
     "Posterior mean and ",
     100 * (1 - 2 * level),
     "% intervals of the random intercepts"
   )
-  coefs |>
-    ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter)) +
-    ggplot2::geom_pointrange(ggplot2::aes_string(
-      xmin = paste0("q", 100 * level),
-      xmax = paste0("q", 100 * (1 - level))
-    )) +
-    ggplot2::labs(title = title, x = "Value", y = "Parameter")
+  ggplot2::ggplot(coefs, ggplot2::aes_string("mean", "parameter")) +
+  ggplot2::geom_pointrange(ggplot2::aes_string(
+    xmin = paste0("q", 100 * level),
+    xmax = paste0("q", 100 * (1 - level))
+  )) +
+  ggplot2::labs(title = title, x = "Value", y = "Parameter")
 }
