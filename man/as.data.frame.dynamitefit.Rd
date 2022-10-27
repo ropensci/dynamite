@@ -81,43 +81,55 @@ Samples of the full correlation matrix can be extracted manually as
 }
 }
 \examples{
-results <- as.data.frame(gaussian_example_fit,
-  responses = "y", types = "beta", summary = FALSE
+results <- as.data.frame(
+  gaussian_example_fit,
+  responses = "y",
+  types = "beta",
+  summary = FALSE
 )
 
-results |>
-  dplyr::group_by(parameter) |>
-  dplyr::summarise(mean = mean(value), sd = sd(value))
+if (requireNamespace("dplyr")) {
+  results \%>\%
+    dplyr::group_by(parameter) \%>\%
+    dplyr::summarise(mean = mean(value), sd = sd(value))
+}
 
 # basic summaries can be obtained automatically with summary = TRUE:
-as.data.frame(gaussian_example_fit,
-  responses = "y", types = "beta", summary = TRUE
+as.data.frame(
+  gaussian_example_fit,
+  responses = "y",
+  types = "beta",
+  summary = TRUE
 )
 
 # Compute MCMC diagnostics via posterior package
 # For this we need to first convert to wide format
 # and then to draws_df object
-results |>
-  dplyr::select(parameter, value, .iteration, .chain) |>
-  tidyr::pivot_wider(values_from = value, names_from = parameter) |>
-  posterior::as_draws() |>
-  posterior::summarise_draws()
+if (requireNamespace("dplyr) && requireNamespace("tidyr")) {
+  results \%>\%
+    dplyr::select(parameter, value, .iteration, .chain) \%>\%
+    tidyr::pivot_wider(values_from = value, names_from = parameter) \%>\%
+    posterior::as_draws() \%>\%
+    posterior::summarise_draws()
+}
 
 # Time-varying coefficients delta
 as.data.frame(gaussian_example_fit,
   responses = "y", types = "delta", summary = TRUE
 )
 
-as.data.frame(gaussian_example_fit,
-  responses = "y", types = "delta", summary = FALSE
-) |>
-  dplyr::select(parameter, value, time, .iteration, .chain) |>
-  tidyr::pivot_wider(
-    values_from = value,
-    names_from = c(parameter, time),
-    names_sep = "_t="
-  ) |>
-  posterior::as_draws() |>
-  posterior::summarise_draws()
+if (requireNamespace("dplyr) && requireNamespace("tidyr")) {
+  as.data.frame(gaussian_example_fit,
+    responses = "y", types = "delta", summary = FALSE
+  ) \%>\%
+    dplyr::select(parameter, value, time, .iteration, .chain) \%>\%
+    tidyr::pivot_wider(
+      values_from = value,
+      names_from = c(parameter, time),
+      names_sep = "_t="
+    ) \%>\%
+    posterior::as_draws() \%>\%
+    posterior::summarise_draws()
+}
 
 }

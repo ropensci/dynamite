@@ -154,21 +154,22 @@ fit <- dynamite(
   refresh = 0
 )
 
-library(dplyr)
-library(ggplot2)
-group_by(time, variable) |>
-  summarise(
-    mean = mean(value),
-    lwr = quantile(value, 0.025),
-    upr = quantile(value, 0.975)
-  )
-
-cf |>
-  ggplot(aes(time, mean)) +
-  theme_bw() +
-  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
-  geom_line() +
-  facet_wrap(~variable, scales = "free_y")
+if (requireNamespace("dplyr") && requireNamespace("ggplot2")) {
+  library(dplyr)
+  library(ggplot2)
+  group_by(time, variable) \%>\%
+    summarise(
+      mean = mean(value),
+      lwr = quantile(value, 0.025),
+      upr = quantile(value, 0.975)
+    )
+  cf \%>\%
+    ggplot(aes(time, mean)) +
+    theme_bw() +
+    geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
+    geom_line() +
+    facet_wrap(~variable, scales = "free_y")
+  }
 }
 
 formula(gaussian_example_fit)
