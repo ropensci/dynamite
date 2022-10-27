@@ -155,20 +155,18 @@ fit <- dynamite(
 )
 
 if (requireNamespace("dplyr") && requireNamespace("ggplot2")) {
-  library(dplyr)
-  library(ggplot2)
-  group_by(time, variable) \%>\%
-    summarise(
+  dplyr::group_by(time, variable) \%>\%
+    dplyr::summarise(
       mean = mean(value),
       lwr = quantile(value, 0.025),
       upr = quantile(value, 0.975)
     )
   cf \%>\%
-    ggplot(aes(time, mean)) +
-    theme_bw() +
-    geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
-    geom_line() +
-    facet_wrap(~variable, scales = "free_y")
+    ggplot2::ggplot(aes(time, mean)) +
+    ggplot2::theme_bw() +
+    ggplot2::geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
+    ggplot2::geom_line() +
+    ggplot2::facet_wrap(~variable, scales = "free_y")
   }
 }
 

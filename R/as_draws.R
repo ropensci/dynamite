@@ -36,6 +36,9 @@
 #' as_draws(gaussian_example_fit, types = c("sigma", "beta"))
 #'
 as_draws_df.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
+  # avoid NSE notes from R CMD check
+  .chain <- .draw <- .iteration <- NULL
+  category <- group <- parameter <- response <- time <- type <- value <- NULL
   d <- as.data.table.dynamitefit(
     x,
     responses = responses,

@@ -36,15 +36,12 @@ confint.dynamitefit <- function(object, parm, level = 0.95, ...) {
     d$category, "_",
     d$group
   )
-  out <- d |>
-    dplyr::select(
-      !c(
-        "parameter", "time", "category",
-        "group", "response", "type",
-        "mean", "sd"
-      )
-    ) |>
-    as.matrix()
+  drop_cols <- c(
+    "parameter", "time", "category",
+    "group", "response", "type",
+    "mean", "sd"
+  )
+  out <- as.matrix(d[, !colnames(d) %in% drop_cols])
   colnames(out) <- paste0(100.0 * c(a, 1.0 - a), "%")
   rownames(out) <- row_names
   out

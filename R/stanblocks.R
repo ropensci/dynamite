@@ -188,18 +188,16 @@ create_model <- function(dformula, idt, vars, backend) {
   spline_defs <- attr(dformula, "splines")
   splinetext <- ""
   if (!is.null(spline_defs) && spline_defs$shrinkage) {
-    lambda_prior <- attr(vars, "common_priors") |>
-      dplyr::filter(.data$parameter == "lambda") |>
-      dplyr::pull("prior")
+    lambda_prior <- attr(vars, "common_priors")
+    lambda_prior <- lambda_prior[lambda_prior$parameter == "lambda", "prior"]
     splinetext <- paste_rows("lambda ~ {lambda_prior};", .indent = idt(1))
   }
   randomtext <- ""
   has_nu <- length(attr(dformula, "random")$responses) > 0
   if (has_nu) {
     if (attr(dformula, "random")$correlated) {
-      L_prior <- attr(vars, "common_priors") |>
-        dplyr::filter(.data$parameter == "L") |>
-        dplyr::pull("prior")
+      L_prior <- attr(vars, "common_priors")
+      L_prior <- L_prior[L_prior$parameter == "L", "prior"]
       if (attr(dformula, "random")$noncentered) {
         randomtext <- paste_rows(
           "to_vector(nu_raw) ~ std_normal();",

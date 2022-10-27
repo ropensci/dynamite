@@ -16,14 +16,13 @@ Description: Easy-to-use and efficient interface for
 License: GPL (>= 3)
 URL: https://github.com/santikka/dynamite
 BugReports: https://github.com/santikka/dynamite/issues
-Depends: 
-    R (>= 4.1.0)
+Depends:
+    R (>= 3.5.0)
 Imports: 
     bayesplot,
     checkmate,
     cli,
     data.table (>= 1.14.3),
-    dplyr,
     glue,
     ggplot2,
     loo,
@@ -33,15 +32,17 @@ Imports:
     rlang,
     rstan,
     stats,
-    tidyr,
+    tibble (>= 2.0.0),
     utils
 Suggests: 
     cmdstanr,
     covr,
+    dplyr,
     knitr,
     plm,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    tidyr
 VignetteBuilder: 
     knitr
 Config/testthat/edition: 3

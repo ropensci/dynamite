@@ -44,9 +44,9 @@ coef.dynamitefit <- function(object, type = c("beta", "delta", "nu"),
     )
     # remove extra alphas
     if (identical(type, "delta")) {
-      out <- out |> dplyr::filter(!is.na(.data$time))
+      out <- out[!is.na(out$time), ]
     } else {
-      out <- out |> dplyr::filter(is.na(.data$time))
+      out <- out[is.na(out$time), ]
     }
   } else {
     out <- as.data.frame.dynamitefit(

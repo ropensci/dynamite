@@ -31,9 +31,9 @@ check_ndraws <- function(n_draws, full_draws) {
 #' @noRd
 check_newdata <- function(object, newdata) {
   if (is.null(newdata)) {
-    data.table::setDF(data.table::copy(object$data))
+    data.table::copy(object$data)
   } else if (data.table::is.data.table(newdata) || is.data.frame(newdata)) {
-    data.table::setDF(data.table::copy(newdata))
+    data.table::as.data.table(data.table::copy(newdata))
   } else if (!is.data.frame(newdata)) {
     stop_("Argument {.arg newdata} must be a {.cls data.frame} object.")
   }
@@ -219,13 +219,14 @@ parse_funs <- function(object, funs) {
 fill_time_predict <- function(data, group_var, time_var, time_scale) {
   has_groups <- !is.null(group_var)
   if (has_groups) {
-    time_count <- data |>
-      dplyr::group_by(.data[[group_var]]) |>
-      dplyr::count(.data[[time_var]]) |>
-      dplyr::summarise(unique = all(.data[["n"]] == 1L))
-    d <- time_count[[group_var]][!time_count$unique]
+    time_duplicated <- data[,
+      any(duplicated(time_var)),
+      by = group_var,
+      env = list(time_var = time_var)
+    ]$V1
+    d <- which(time_duplicated)
     stopifnot_(
-      all(time_count$unique),
+      all(!time_duplicated),
       c(
         "Each time index must correspond to a single observation per group:",
         `x` = "{cli::qty(d)}Group{?s} {.var {d}} of {.var {group_var}}
@@ -243,13 +244,19 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
     original_order <- colnames(data)
     full_time <- seq(time[1L], time[length(time)], by = time_scale)
     if (has_groups) {
-      time_groups <- data |>
-        dplyr::group_by(.data[[group_var]]) |>
-        dplyr::summarise(
-          has_missing = !identical(sort(.data[[time_var]]), full_time),
-          has_gaps =
-            dplyr::n() != (diff(range(.data[[time_var]])) + 1L) * time_scale
+      time_groups <- data[,
+        {
+          has_missing = !identical(time_var, full_time)
+          has_gaps = .N != (diff(range(time_var)) + 1L) * time_scale
+          list(has_missing, has_gaps)
+        },
+        by = group_var,
+        env = list(
+          time_var = time_var,
+          group_var = group_var,
+          time_scale = time_scale
         )
+      ]
       if (any(time_groups$has_missing)) {
         if (any(time_groups$has_gaps)) {
           warning_(c(
@@ -259,14 +266,17 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
                    exogenous predictors and {.arg impute} is {.val none}."
           ))
         }
-        full_data_template <- expand.grid(
+        full_data_template <- data.table::as.data.table(expand.grid(
           time = full_time,
           group = unique(data[[group_var]])
-        )
+        ))
         names(full_data_template) <- c(time_var, group_var)
-        data <- full_data_template |>
-          dplyr::left_join(data, by = c(group_var, time_var)) |>
-          dplyr::select(dplyr::all_of(original_order))
+        data <- data.table::merge.data.table(
+          full_data_template,
+          data,
+          by = c(time_var, group_var),
+          all.x = TRUE
+        )
       }
     } else {
       if (!identical(sort(data[[time_var]]), full_time)) {
@@ -276,16 +286,20 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
                  lead to propagation of NA values if the model contains
                  exogenous predictors and {.arg impute} is {.val none}."
         ))
-        full_data_template <- data.frame(time = full_time)
+        full_data_template <- data.table::data.table(time = full_time)
         names(full_data_template) <- time_var
-        data <- full_data_template |>
-          dplyr::left_join(data, by = time_var) |>
-          dplyr::select(dplyr::all_of(original_order))
+        data <- data.table::merge.data.table(
+          full_data_template,
+          data,
+          by = time_var,
+          all.x = TRUE
+        )
       }
     }
   }
   data
 }
+
 #' Impute Predictor Values in `newdata`
 #'
 #' @inheritParams predict

@@ -81,7 +81,10 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
       category = ""
     )
   }
-  list(channel = channel, priors = dplyr::bind_rows(priors))
+  list(
+    channel = channel,
+    priors = data.table::setDF(data.table::rbindlist(priors))
+  )
 }
 
 #' Create Default Priors for Categorical Data
@@ -160,7 +163,10 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
       category = ""
     )
   }
-  list(channel = channel, priors = dplyr::bind_rows(priors))
+  list(
+    channel = channel,
+    priors = data.table::setDF(data.table::rbindlist(priors))
+  )
 }
 
 #' Check and Correct the User-defined Priors
@@ -199,8 +205,8 @@ check_priors <- function(priors, defaults) {
     )
   )
   # order to match the code generation
-  priors <- priors |>
-    dplyr::arrange(match(.data$parameter, defaults$parameter))
+  prior_order <- match(priors$parameter, defaults$parameter)
+  priors <- priors[order(prior_order), ]
   unconstrained_dists <- c(
     "normal", "student_t", "double_exponential", "cauchy", "exp_mod_normal",
     "skew_normal", "logistic", "gumbel", "skew_double_exponential"

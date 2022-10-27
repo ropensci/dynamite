@@ -64,7 +64,7 @@
 #'     dplyr::summarise(mean = mean(value), sd = sd(value))
 #' }
 #'
-#' # basic summaries can be obtained automatically with summary = TRUE:
+#' # Basic summaries can be obtained automatically with summary = TRUE:
 #' as.data.frame(
 #'   gaussian_example_fit,
 #'   responses = "y",
@@ -75,7 +75,7 @@
 #' # Compute MCMC diagnostics via posterior package
 #' # For this we need to first convert to wide format
 #' # and then to draws_df object
-#' if (requireNamespace("dplyr) && requireNamespace("tidyr")) {
+#' if (requireNamespace("dplyr") && requireNamespace("tidyr")) {
 #'   results %>%
 #'     dplyr::select(parameter, value, .iteration, .chain) %>%
 #'     tidyr::pivot_wider(values_from = value, names_from = parameter) %>%

@@ -94,7 +94,7 @@ if (requireNamespace("dplyr")) {
     dplyr::summarise(mean = mean(value), sd = sd(value))
 }
 
-# basic summaries can be obtained automatically with summary = TRUE:
+# Basic summaries can be obtained automatically with summary = TRUE:
 as.data.frame(
   gaussian_example_fit,
   responses = "y",

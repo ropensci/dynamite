@@ -10,6 +10,8 @@
   * Added support for `cmdstanr` via argument `backend` in `dynamite`.
   * Added a link to the contributing guidelines to README.
   * The package no longer depends on the development version of `rstan`.
+  * Dropped R version dependency from 4.1.0 to 3.5.0.
+  * Moved `dplyr` and `tidyr` to 'Suggests'.
   * `categorical_logit` is now used instead of `categorical_logit_glm` on older
     `rstan` and `cmdstanr` versions.
   * Random intercepts with `random` now also support centered parameterization.

@@ -119,13 +119,18 @@ as.data.table.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       )
     )
     n_d <- d[, .N]
+    n_r <- nrow(draws)
+    n_c <- ncol(draws)
     d[, response := rep(response, n_d)]
     d[, type := rep(type, n_d)]
-    d[, .draw := rep_len(seq_len(nrow(draws) * ncol(draws)), n_d)]
-    d[, .iteration := rep_len(seq_len(nrow(draws)), n_d)]
-    d[, .chain := rep_len(rep(seq_len(ncol(draws)), each = nrow(draws)), n_d)]
+    d[, .draw := rep_len(seq_len(n_r * n_c), n_d)]
+    d[, .iteration := rep_len(seq_len(n_r), n_d)]
+    d[, .chain := rep_len(rep(seq_len(n_r), each = n_r), n_d)]
     d
   }
+  # avoid NSE notes from R CMD check
+  .chain <- .draw <- .iteration <- NULL
+  category <- group <- parameter <- response <- time <- type <- value <- NULL
   out_all <- NULL
   if ("lambda" %in% types) {
     out_all <- data.table::data.table(
@@ -195,7 +200,8 @@ as.data.table.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
   if (summary) {
     pars <- unique(out$parameter)
     out <- out[,
-      parameter := factor(parameter, levels = pars, ordered = TRUE)
+      parameter := factor(parameter, levels = pars, ordered = TRUE),
+      env = list(parameter = "parameter")
     ][,
       {
         mean = mean(value)
@@ -226,10 +232,7 @@ as.data.table.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
 as_data_table_default <- function(type, draws, response) {
   data.table::data.table(
     parameter = paste0(type, "_", response),
-    value = c(draws)#,
-    #time = NA,
-    #category = NA,
-    #group = NA
+    value = c(draws)
   )
 }
 
