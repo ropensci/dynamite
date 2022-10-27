@@ -36,33 +36,42 @@
 #' as_draws(gaussian_example_fit, types = c("sigma", "beta"))
 #'
 as_draws_df.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
-  d <- as.data.frame.dynamitefit(
+  d <- as.data.table.dynamitefit(
     x,
     responses = responses,
     types = types,
     summary = FALSE,
     include_fixed = FALSE
-  ) |>
-    dplyr::select(
-      "parameter", "value", "time", "category",
-      "group", ".iteration", ".chain"
-    ) |>
-    dplyr::arrange(
-      .data$parameter, .data$time, .data$category, .data$group,
-      .data$.chain, .data$.iteration
-    ) |>
-    tidyr::pivot_wider(
-      values_from = "value",
-      names_from = c("parameter", "time", "category", "group"),
-      names_glue = "{parameter}[{time}]_{category}_id{group}"
+  )[,
+    .SD,
+    .SDcols = c(
+      "parameter",
+      "value",
+      "time",
+      "category",
+      "group",
+      ".iteration",
+      ".chain"
     )
+  ][
+    order(parameter, time, category, group, .chain, .iteration),
+  ]
+  dn <- unique(glue::glue("{d$parameter}[{d$time}]_{d$category}_id{d$group}"))
+  d <- data.table::dcast(
+    data = d,
+    formula = .chain + .iteration ~ parameter + time + category + group,
+    value.var = "value"
+  )
   # remove NAs from time-invariant parameter names
-  colnames(d) <- gsub("\\[NA\\]", "", colnames(d))
+  dn <- gsub("\\[NA\\]", "", dn)
   # remove NAs from parameters which are not category specific
-  colnames(d) <- gsub("_NA", "", colnames(d))
+  dn <- gsub("_NA", "", dn)
   # remove NAs from parameters which are not group specific
-  colnames(d) <- gsub("_idNA", "", colnames(d))
-  d |> posterior::as_draws()
+  dn <- gsub("_idNA", "", dn)
+  colnames(d) <- c(".chain", ".iteration", dn)
+  posterior::as_draws(
+    data.table::setDF(d)
+  )
 }
 
 #' @export
