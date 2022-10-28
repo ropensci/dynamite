@@ -69,6 +69,8 @@
 #'   Setting `expand` to `FALSE` can help conserve memory because `newdata`
 #'   is not replicated `n_draws` times in the output.
 #'   This argument is ignored if `funs` are provided.
+#' @param df \[`logical(1)`]\cr If `TRUE` (default) the output
+#'   consists of `data.frame` objects, and `data.table` objects otherwise.
 #' @param ... Ignored.
 #' @return A `data.frame` containing the predicted values or a `list` of two
 #'   `data.frames`. See the `expand` argument for details. Note that the
@@ -135,7 +137,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
                                   "none", "bootstrap", "gaussian", "original"
                                 ),
                                 global_fixed = FALSE, n_draws = NULL,
-                                expand = TRUE, ...) {
+                                expand = TRUE, df = TRUE, ...) {
   stopifnot_(
     !is.null(object$stanfit),
     "No Stan model fit is available."
@@ -173,6 +175,10 @@ predict.dynamitefit <- function(object, newdata = NULL,
     checkmate::test_flag(x = expand),
     "Argument {.arg expand} must be a single {.cls logical} value."
   )
+  stopifnot_(
+    checkmate::test_flag(x = df),
+    "Argument {.arg df} must be a single {.cls logical} value."
+  )
   initialize_predict(
     object,
     newdata,
@@ -183,7 +189,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
     new_levels,
     global_fixed,
     n_draws,
-    expand
+    expand,
+    df
   )
 }
 
@@ -194,7 +201,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
 #'   `"loglik"`.
 #' @noRd
 initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
-                               new_levels, global_fixed, n_draws, expand) {
+                               new_levels, global_fixed, n_draws, expand, df) {
   n_draws <- check_ndraws(n_draws, ndraws(object))
   newdata_null <- is.null(newdata)
   newdata <- check_newdata(object, newdata)
@@ -298,7 +305,8 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
       n_draws = n_draws,
       fixed = fixed,
       group_var = group_var,
-      time_var = time_var
+      time_var = time_var,
+      df = df
     )
   } else {
     predict_full(
@@ -312,7 +320,8 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
       fixed = fixed,
       group_var = group_var,
       time_var = time_var,
-      expand = expand
+      expand = expand,
+      df = df
     )
   }
 }
@@ -326,7 +335,7 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
 #' @noRd
 predict_full <- function(object, simulated, observed, type, eval_type,
                          new_levels, n_draws, fixed,
-                         group_var, time_var, expand) {
+                         group_var, time_var, expand, df) {
   formulas_stoch <- get_formulas(object$dformulas$stoch)
   resp_stoch <- get_responses(object$dformulas$stoch)
   lhs_ld <- get_responses(object$dformulas$lag_det)
@@ -409,10 +418,12 @@ predict_full <- function(object, simulated, observed, type, eval_type,
   simulated[, c(lhs_ld, lhs_ls) := NULL]
   data.table::setkeyv(simulated, cols = c(".draw", group_var, time_var))
   if (expand) {
-    expand_predict_output(simulated, observed)
+    expand_predict_output(simulated, observed, df)
   } else {
-    data.table::setDF(simulated)
-    data.table::setDF(observed)
+    if (df) {
+      data.table::setDF(simulated)
+      data.table::setDF(observed)
+    }
     list(simulated = simulated, observed = observed)
   }
 }
@@ -427,7 +438,7 @@ predict_full <- function(object, simulated, observed, type, eval_type,
 #'   independent of the posterior draw)
 #' @noRd
 predict_summary <- function(object, storage, observed, funs, new_levels,
-                            n_draws, fixed, group_var, time_var) {
+                            n_draws, fixed, group_var, time_var, df) {
   formulas_stoch <- get_formulas(object$dformulas$stoch)
   resp_stoch <- get_responses(object$dformulas$stoch)
   lhs_ld <- get_responses(object$dformulas$lag_det)
@@ -536,8 +547,10 @@ predict_summary <- function(object, storage, observed, funs, new_levels,
     skip <- FALSE
   }
   finalize_predict(type = NULL, resp_stoch, simulated, observed)
-  data.table::setDF(summaries)
-  data.table::setDF(observed)
+  if (df) {
+    data.table::setDF(summaries)
+    data.table::setDF(observed)
+  }
   list(simulated = summaries, observed = observed)
 }
 

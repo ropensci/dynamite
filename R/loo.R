@@ -40,11 +40,12 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, ...) {
     new_levels = "none",
     global_fixed = FALSE,
     n_draws = NULL,
-    expand = FALSE
+    expand = FALSE,
+    df = FALSE
   )$simulated
 
   n_chains <- x$stanfit@sim$chains
-  n_draws <- ndraws(x) / n_chains
+  n_draws <- ndraws(x) %/% n_chains
 
   loo_ <- function(ll, n_draws, n_chains) {
     ll <- t(matrix(ll, ncol = n_draws * n_chains))
@@ -56,21 +57,15 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, ...) {
   }
 
   if (separate_channels) {
-    ll <- out |>
-      tidyr::pivot_longer(
-        dplyr::ends_with("_loglik"),
-        names_pattern = "(.*)_loglik",
-        values_drop_na = TRUE
-      ) |>
-      split(f = ~name)
+    ll <- split(
+      x = melt(out, measure.vars = patterns("_loglik$"), na.rm = TRUE),
+      by = "variable"
+    )
     lapply(ll, function(x) loo_(x$value, n_draws, n_chains))
   } else {
-    ll <- out |>
-      tidyr::drop_na() |>
-      dplyr::mutate(
-        loglik = rowSums(dplyr::across(dplyr::ends_with("_loglik")))
-      ) |>
-      dplyr::pull("loglik")
+    ll <- out[is.finite(rowSums(out))][,
+      rowSums(.SD), .SDcols = patterns("_loglik$")
+    ]
     loo_(ll, n_draws, n_chains)
   }
 }
