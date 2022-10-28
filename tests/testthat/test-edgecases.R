@@ -196,7 +196,7 @@ test_that("shrinkage is handled correctly", {
   expect_equal(get_priors(
     obs_all_alpha, test_data,
     "group", "time"
-  )$parameter[58], "lambda")
+  )$parameter[58], "xi")
 })
 
 test_that("noncentered splines are handled correctly", {
