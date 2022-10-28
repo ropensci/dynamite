@@ -24,6 +24,9 @@
   * Cleaned up NAMESPACE.
   * The `env` argument of `data.table` is now used to avoid possible variable
     name conflicts.
+  * Breaking change: The shrinkage parameter which was previously named as 
+    `lambda` is now `xi` in order to free `lambda` for factor loadings parameter 
+     as is customary in factor analysis.
 
 # dynamite 0.0.2
 

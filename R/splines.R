@@ -26,9 +26,9 @@
 #'   parameterization separately for each channel, even for channels without
 #'   varying effects.
 #' @param shrinkage \[`logical(1)`]\cr If `TRUE`, a common global shrinkage
-#'   parameter \eqn{\lambda} is used for the splines so that the standard
+#'   parameter \eqn{\xi} is used for the splines so that the standard
 #'   deviation of the random walk prior is of the spline coefficients is
-#'   \eqn{\lambda\tau}. Default is `FALSE`. This is an experimental feature and
+#'   \eqn{\xi\tau}. Default is `FALSE`. This is an experimental feature and
 #'   not tested comprehensively.
 #' @param override \[`logical(1)`]\cr If `FALSE` (the default), an existing
 #'    definition for the splines will not be overridden by another call to

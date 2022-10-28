@@ -518,7 +518,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
                                                  J, K, K_fixed, K_varying,
                                                  L_fixed, L_varying) {
   if (noncentered) {
-    lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
+    xi_term <- ifelse_(shrinkage, " * xi[i - 1];", ";")
     declare_omega <- paste_rows(
       "// Spline coefficients",
       "matrix[{K_varying}, D] omega_{y};",
@@ -530,7 +530,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
       "for (i in 2:D) {{",
       paste0(
         "omega_{y}[, i] = omega_{y}[, i - 1] + ",
-        "omega_raw_{y}[, i] .* tau_{y}{lambda_term}"
+        "omega_raw_{y}[, i] .* tau_{y}{xi_term}"
       ),
       "}}",
       .indent = idt(c(1, 1, 2, 1)),
@@ -607,7 +607,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
     state_fixed_intercept <- character(0L)
   }
   if (noncentered) {
-    lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
+    xi_term <- ifelse_(shrinkage, " * xi[i - 1];", ";")
     declare_omega_alpha <- paste_rows(
       "// Spline coefficients",
       "row_vector[D] omega_alpha_{y};",
@@ -619,7 +619,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
       "for (i in 2:D) {{",
       paste0(
         "omega_alpha_{y}[i] = omega_alpha_{y}[i - 1] + ",
-        "omega_raw_alpha_{y}[i - 1] * tau_alpha_{y}{lambda_term}"
+        "omega_raw_alpha_{y}[i - 1] * tau_alpha_{y}{xi_term}"
       ),
       "}}",
       .indent = idt(c(1, 1, 2, 1)),
@@ -682,7 +682,7 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
                                                      L_fixed, L_varying,
                                                      S, ...) {
   if (noncentered) {
-    lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
+    xi_term <- ifelse_(shrinkage, " * xi[i - 1];", ";")
     declare_omega <- paste_rows(
       "// Spline coefficients",
       "matrix[{K_varying}, D] omega_{y}[{S - 1}];",
@@ -695,7 +695,7 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
       "for (i in 2:D) {{",
       paste0(
         "omega_{y}[s, , i] = omega_{y}[s, , i - 1] + ",
-        "omega_raw_{y}[s, , i] .* tau_{y}{lambda_term}"
+        "omega_raw_{y}[s, , i] .* tau_{y}{xi_term}"
       ),
       "}}",
       "}}",
@@ -796,7 +796,7 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
     )
   }
   if (noncentered) {
-    lambda_term <- ifelse_(shrinkage, " * lambda[i - 1];", ";")
+    xi_term <- ifelse_(shrinkage, " * xi[i - 1];", ";")
     declare_omega_alpha <- paste_rows(
       "// Spline coefficients",
       "row_vector[D] omega_alpha_{y}[{S - 1}];",
@@ -809,7 +809,7 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
       "for (i in 2:D) {{",
       paste0(
         "omega_alpha_{y}[s, i] = omega_alpha_{y}[s, i - 1] + ",
-        "omega_raw_alpha_{y}[s, i - 1] * tau_alpha_{y}{lambda_term}"
+        "omega_raw_alpha_{y}[s, i - 1] * tau_alpha_{y}{xi_term}"
       ),
       "}}",
       "}}",
@@ -933,7 +933,7 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage, has_varying
                                 sigma_nu_prior_distr = "",
                                 alpha_prior_distr = "",
                                 tau_alpha_prior_distr = "",
-                               # lambda_prior_distr = "",
+                               #lambda_prior_distr = "",
                                 beta_prior_distr = "",
                                 beta_prior_npars = 1L,
                                 delta_prior_distr = "",
@@ -965,17 +965,17 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage, has_varying
       .parse = FALSE
     )
   } else {
-    lambda_term1 <- ifelse_(shrinkage, " * lambda[1]", "")
-    lambda_term <- ifelse_(shrinkage, " * lambda[i - 1]", "")
+    xi_term1 <- ifelse_(shrinkage, " * xi[1]", "")
+    xi_term <- ifelse_(shrinkage, " * xi[i - 1]", "")
     mtext_omega <- paste_rows(
       paste0(
         "omega_raw_alpha_{y}[1] ~ normal(omega_alpha_1_{y}, ",
-        "tau_alpha_{y}{lambda_term1});"
+        "tau_alpha_{y}{xi_term1});"
       ),
       "for (i in 2:(D - 1)) {{",
       paste0(
         "omega_raw_alpha_{y}[i] ~ normal(omega_raw_alpha_{y}[i - 1], ",
-        "tau_alpha_{y}{lambda_term});"
+        "tau_alpha_{y}{xi_term});"
       ),
       "}}",
       .indent = idt(c(0, 1, 2, 1)),
@@ -999,7 +999,7 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage, has_varying
         shrinkage,
         paste0(
           "omega_{y}[, i] ~ normal(omega_{y}[, i- 1], ",
-          "lambda[i - 1] * tau_{y});"
+          "xi[i - 1] * tau_{y});"
         ),
         "omega_{y}[, i] ~ normal(omega_{y}[, i- 1], tau_{y});"
       ),
@@ -1104,8 +1104,8 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
   }
   mtext_fixed_intercept <- mtext_alpha
 
-  lambda_term1 <- ifelse_(shrinkage, " * lambda[1]", "")
-  lambda_term <- ifelse_(shrinkage, " * lambda[i - 1]", "")
+  xi_term1 <- ifelse_(shrinkage, " * xi[1]", "")
+  xi_term <- ifelse_(shrinkage, " * xi[i - 1]", "")
   mtext_omega <- ifelse_(
     noncentered,
     paste_rows(
@@ -1119,13 +1119,13 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
       "for (s in 1:{S - 1}) {{",
       paste0(
         "omega_raw_alpha_{y}[s, 1] ~ normal(omega_alpha_1_{y}[s], ",
-        "tau_alpha_{y}{lambda_term1});"
+        "tau_alpha_{y}{xi_term1});"
       ),
       "for (i in 2:(D - 1)) {{",
       paste0(
         "omega_raw_alpha_{y}[s, i] ~ ",
         "normal(omega_raw_alpha_{y}[s, i - 1], ",
-        "tau_alpha_{y}{lambda_term});"
+        "tau_alpha_{y}{xi_term});"
       ),
       "}}",
       "}}",
@@ -1198,7 +1198,7 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
         shrinkage,
         paste0(
           "omega_{y}[s, , i] ~ normal(omega_{y}[s, , i - 1], ",
-          "lambda[i - 1] * tau_{y});"
+          "xi[i - 1] * tau_{y});"
         ),
         "omega_{y}[s, , i] ~ normal(omega_{y}[s, , i - 1], tau_{y});"
       ),

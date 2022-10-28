@@ -76,7 +76,7 @@ as.data.table.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     )
   }
   all_types <- c(
-    "alpha", "beta", "delta", "tau", "tau_alpha", "lambda",
+    "alpha", "beta", "delta", "tau", "tau_alpha", "xi",
     "sigma_nu", "corr_nu", "sigma", "phi", "nu", "omega", "omega_alpha"
   )
   if (is.null(types)) {
@@ -90,7 +90,7 @@ as.data.table.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     )
   }
   values <- function(type, response) {
-    if (type %in% c("lambda", "corr_nu")) {
+    if (type %in% c("xi", "corr_nu")) {
       draws <- rstan::extract(
         x$stanfit,
         pars = type,
@@ -132,11 +132,11 @@ as.data.table.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
   .chain <- .draw <- .iteration <- NULL
   category <- group <- parameter <- response <- time <- type <- value <- NULL
   out_all <- NULL
-  if ("lambda" %in% types) {
+  if ("xi" %in% types) {
     out_all <- data.table::data.table(
-      type = "lambda",
+      type = "xi",
       response = "",
-      parameter = "lambda"
+      parameter = "xi"
     )
   }
   if ("corr_nu" %in% types) {
@@ -236,11 +236,11 @@ as_data_table_default <- function(type, draws, response) {
   )
 }
 
-#' @describeIn as_data_table_default Data Table for a "lambda" Parameter
+#' @describeIn as_data_table_default Data Table for a "xi" Parameter
 #' @noRd
-as_data_table_lambda <- function(x, draws, ...) {
+as_data_table_xi <- function(x, draws, ...) {
   data.table::data.table(
-    parameter = "lambda",
+    parameter = "xi",
     value = c(draws)
   )
 }

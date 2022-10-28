@@ -103,7 +103,7 @@ create_parameters <- function(dformula, idt, vars) {
     paste_rows(
       onlyif(
         spline_defs$shrinkage,
-        "vector<lower=0>[D - 1] lambda; // Common shrinkage for splines"
+        "vector<lower=0>[D - 1] xi; // Common shrinkage for splines"
       ),
       .indent = idt(1)
     )
@@ -188,9 +188,9 @@ create_model <- function(dformula, idt, vars, backend) {
   spline_defs <- attr(dformula, "splines")
   splinetext <- ""
   if (!is.null(spline_defs) && spline_defs$shrinkage) {
-    lambda_prior <- attr(vars, "common_priors")
-    lambda_prior <- lambda_prior[lambda_prior$parameter == "lambda", "prior"]
-    splinetext <- paste_rows("lambda ~ {lambda_prior};", .indent = idt(1))
+    xi_prior <- attr(vars, "common_priors")
+    xi_prior <- xi_prior[xi_prior$parameter == "xi", "prior"]
+    splinetext <- paste_rows("xi ~ {xi_prior};", .indent = idt(1))
   }
   randomtext <- ""
   has_nu <- length(attr(dformula, "random")$responses) > 0

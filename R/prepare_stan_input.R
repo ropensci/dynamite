@@ -283,13 +283,13 @@ prepare_common_priors <- function(priors, M, shrinkage, correlated) {
     common_priors <- ifelse_(
       is.null(priors),
       data.frame(
-        parameter = "lambda",
+        parameter = "xi",
         response = "",
         prior = "normal(0, 1)",
-        type = "lambda",
+        type = "xi",
         category = ""
       ),
-      priors[priors$type == "lambda", ]
+      priors[priors$type == "xi", ]
     )
   }
   if (M > 1L && correlated) {
