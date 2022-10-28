@@ -926,12 +926,14 @@ transformed_parameters_lines_beta <- function(...) {
 
 # Model block -------------------------------------------------------------
 
-model_lines_default <- function(y, idt, noncentered, shrinkage, has_varying,
+model_lines_default <- function(y, idt, obs, noncentered, shrinkage, has_varying,
                                 has_fixed, has_fixed_intercept,
                                 has_varying_intercept, has_random_intercept,
+                                #has_factor,
                                 sigma_nu_prior_distr = "",
                                 alpha_prior_distr = "",
                                 tau_alpha_prior_distr = "",
+                               # lambda_prior_distr = "",
                                 beta_prior_distr = "",
                                 beta_prior_npars = 1L,
                                 delta_prior_distr = "",
@@ -941,6 +943,7 @@ model_lines_default <- function(y, idt, noncentered, shrinkage, has_varying,
                                 K_fixed, K_varying, ...) {
   mtext_u <- "sigma_nu_{y} ~ {sigma_nu_prior_distr};"
   mtext_alpha <- "a_{y} ~ {alpha_prior_distr};"
+  #mtext_lambda <- "lambda_{y} ~ {lambda_prior_distr};"
 
   if (noncentered) {
     mtext_omega <- "omega_raw_alpha_{y} ~ std_normal();"
@@ -1036,7 +1039,33 @@ model_lines_default <- function(y, idt, noncentered, shrinkage, has_varying,
     mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {tau_prior_distr};"
   }
 
-  paste_rows(
+  intercept_alpha <- ifelse_(
+    has_fixed_intercept,
+    glue::glue("alpha_{y}"),
+    ifelse_(
+      has_varying_intercept,
+      glue::glue("alpha_{y}[t]"),
+      ""
+    )
+  )
+  intercept_nu <- ifelse_(
+    has_random_intercept,
+    ifelse(
+      nzchar(obs),
+      glue::glue("nu_{y}[{obs}]"),
+      glue::glue("nu_{y}")
+    ),
+    ""
+  )
+  plus <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
+  intercept <- ifelse_(
+    nzchar(intercept_alpha) || has_random_intercept,
+    glue::glue("{intercept_alpha}{plus}{intercept_nu}"),
+    "0"
+  )
+
+  list(text = paste_rows(
+    #onlyif(has_factor, mtext_lambda),
     onlyif(has_random_intercept, mtext_u),
     onlyif(has_fixed_intercept, mtext_fixed_intercept),
     onlyif(has_varying_intercept, mtext_varying_intercept),
@@ -1044,7 +1073,7 @@ model_lines_default <- function(y, idt, noncentered, shrinkage, has_varying,
     onlyif(has_varying, mtext_varying),
     onlyif(has_varying, mtext_tau),
     .indent = idt(c(1, 1, 1, 1, 1, 1))
-  )
+  ), intercept = intercept)
 }
 
 model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
@@ -1257,30 +1286,7 @@ model_lines_gaussian <- function(y, idt, obs, has_fixed, has_varying,
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(model_lines_default))]
   mtext_def <- do.call(model_lines_default, args = args)
-  intercept_alpha <- ifelse_(
-    has_fixed_intercept,
-    glue::glue("alpha_{y}"),
-    ifelse_(
-      has_varying_intercept,
-      glue::glue("alpha_{y}[t]"),
-      ""
-    )
-  )
-  intercept_nu <- ifelse_(
-    has_random_intercept,
-    ifelse(
-      nzchar(obs),
-      glue::glue("nu_{y}[{obs}]"),
-      glue::glue("nu_{y}")
-    ),
-    ""
-  )
-  plus <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
-  intercept <- ifelse_(
-    nzchar(intercept_alpha) || has_random_intercept,
-    glue::glue("{intercept_alpha}{plus}{intercept_nu}"),
-    "0"
-  )
+  intercept <- mtext_def$intercept
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
@@ -1301,7 +1307,7 @@ model_lines_gaussian <- function(y, idt, obs, has_fixed, has_varying,
     "}}",
     .indent = idt(c(1, 1, 2, 2, 2, 3, 3, 2, 1))
   )
-  paste_rows(mtext_def, mtext, .parse = FALSE)
+  paste_rows(mtext_def$text, mtext, .parse = FALSE)
 }
 
 model_lines_binomial <- function(y, idt, obs, has_varying, has_fixed,
@@ -1311,6 +1317,7 @@ model_lines_binomial <- function(y, idt, obs, has_varying, has_fixed,
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(model_lines_default))]
   mtext_def <- do.call(model_lines_default, args = args)
+  intercept <- mtext_def$intercept
   fixed_term <- ifelse_(
     has_fixed,
     glue::glue("X[t][{obs}, {{{cs(J_fixed)}}}] * beta_{y}"),
@@ -1321,33 +1328,9 @@ model_lines_binomial <- function(y, idt, obs, has_varying, has_fixed,
     glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"),
     ""
   )
-  intercept_alpha <- ifelse_(
-    has_fixed_intercept,
-    glue::glue("alpha_{y}"),
-    ifelse_(
-      has_varying_intercept,
-      glue::glue("alpha_{y}[t]"),
-      ""
-    )
-  )
-  intercept_nu <- ifelse_(
-    has_random_intercept,
-    ifelse(
-      nzchar(obs),
-      glue::glue("nu_{y}[{obs}]"),
-      glue::glue("nu_{y}")
-    ),
-    ""
-  )
-  plus_i <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
   plus_c <- ifelse_(has_fixed && has_varying, " + ", "")
-  intercept <- ifelse_(
-    nzchar(intercept_alpha) || has_random_intercept,
-    glue::glue("{intercept_alpha}{plus_i}{intercept_nu}"),
-    ""
-  )
   plus_ic <- ifelse_(
-    nzchar(intercept_alpha) && (has_fixed || has_varying),
+    nzchar(intercept) && (has_fixed || has_varying),
     " + ",
     ""
   )
@@ -1355,13 +1338,14 @@ model_lines_binomial <- function(y, idt, obs, has_varying, has_fixed,
     "y_{y}[t, {obs}] ~ binomial_logit(trials_{y}[t, {obs}], ",
     "{intercept}{plus_ic}{fixed_term}{plus_c}{varying_term});"
   )
+
   mtext <- paste_rows(
     "for (t in 1:T) {{",
     likelihood_term,
     "}}",
     .indent = idt(c(1, 2, 1))
   )
-  paste_rows(mtext_def, mtext, .parse = FALSE)
+  paste_rows(mtext_def$text, mtext, .parse = FALSE)
 }
 
 model_lines_bernoulli <- function(y, idt, obs, has_varying, has_fixed,
@@ -1371,30 +1355,7 @@ model_lines_bernoulli <- function(y, idt, obs, has_varying, has_fixed,
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(model_lines_default))]
   mtext_def <- do.call(model_lines_default, args = args)
-  intercept_alpha <- ifelse_(
-    has_fixed_intercept,
-    glue::glue("alpha_{y}"),
-    ifelse_(
-      has_varying_intercept,
-      glue::glue("alpha_{y}[t]"),
-      ""
-    )
-  )
-  intercept_nu <- ifelse_(
-    has_random_intercept,
-    ifelse(
-      nzchar(obs),
-      glue::glue("nu_{y}[{obs}]"),
-      glue::glue("nu_{y}")
-    ),
-    ""
-  )
-  plus <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
-  intercept <- ifelse_(
-    nzchar(intercept_alpha) || has_random_intercept,
-    glue::glue("{intercept_alpha}{plus}{intercept_nu}"),
-    "0"
-  )
+  intercept <- mtext_def$intercept
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
@@ -1414,7 +1375,7 @@ model_lines_bernoulli <- function(y, idt, obs, has_varying, has_fixed,
     "}}",
     .indent = idt(c(1, 2, 2, 2, 3, 3, 2, 1))
   )
-  paste_rows(mtext_def, mtext, .parse = FALSE)
+  paste_rows(mtext_def$text, mtext, .parse = FALSE)
 }
 
 model_lines_poisson <- function(y, idt, obs, has_varying, has_fixed, has_offset,
@@ -1424,48 +1385,29 @@ model_lines_poisson <- function(y, idt, obs, has_varying, has_fixed, has_offset,
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(model_lines_default))]
   mtext_def <- do.call(model_lines_default, args = args)
-  offset_term <- ifelse_(
-    has_offset,
-    glue::glue("to_vector(offset_{y}[t, {obs}])"),
-    ""
-  )
-  intercept_alpha <- ifelse_(
-    has_fixed_intercept,
-    glue::glue("alpha_{y}"),
-    ifelse_(
-      has_varying_intercept,
-      glue::glue("alpha_{y}[t]"),
-      ""
-    )
-  )
-  intercept_nu <- ifelse_(
-    has_random_intercept,
-    ifelse(
-      nzchar(obs),
-      glue::glue("nu_{y}[{obs}]"),
-      glue::glue("nu_{y}")
-    ),
-    ""
-  )
-  plus1 <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
+  intercept <- mtext_def$intercept
+  # offset_term <- ifelse_(
+  #   has_offset,
+  #   glue::glue("to_vector(offset_{y}[t, {obs}])"),
+  #   ""
+  # )
   intercept <- ifelse_(
-    nzchar(intercept_alpha) || has_random_intercept,
-    glue::glue("{intercept_alpha}{plus1}{intercept_nu}"),
-    ""
+    has_offset,
+    ifelse_(
+      intercept == "0",
+      glue::glue("to_vector(offset_{y}[t, {obs}])"),
+      glue::glue("{intercept} + to_vector(offset_{y}[t, {obs}])")
+    ),
+    intercept
   )
-  plus2 <- ifelse_(has_offset && nzchar(intercept), "+", "")
-  if (!has_offset && !nzchar(intercept)) {
-    intercept <- "0"
-  }
   if (has_fixed || has_varying) {
     likelihood_term <- paste0(
       "y_{y}[t, {obs}] ~ poisson_log_glm(X[t][{obs}, {{{cs(J)}}}], ",
-      "{intercept}{plus2}{offset_term}, gamma_{y});"
+      "{intercept}, gamma_{y});"
     )
   } else {
     likelihood_term <- paste0(
-      "y_{y}[t, {obs}] ~ poisson_log(",
-      "{intercept}{plus2}{offset_term});"
+      "y_{y}[t, {obs}] ~ poisson_log({intercept});"
     )
   }
   mtext <- paste_rows(
@@ -1479,7 +1421,7 @@ model_lines_poisson <- function(y, idt, obs, has_varying, has_fixed, has_offset,
     "}}",
     .indent = idt(c(1, 2, 2, 2, 3, 3, 2, 1))
   )
-  paste_rows(mtext_def, mtext, .parse = FALSE)
+  paste_rows(mtext_def$text, mtext, .parse = FALSE)
 }
 
 model_lines_negbin <- function(y, idt, obs, has_varying, has_fixed, has_offset,
@@ -1489,48 +1431,25 @@ model_lines_negbin <- function(y, idt, obs, has_varying, has_fixed, has_offset,
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(model_lines_default))]
   mtext_def <- do.call(model_lines_default, args = args)
-  offset_term <- ifelse_(
-    has_offset,
-    glue::glue("to_vector(offset_{y}[t, {obs}])"),
-    ""
-  )
-  intercept_alpha <- ifelse_(
-    has_fixed_intercept,
-    glue::glue("alpha_{y}"),
-    ifelse_(
-      has_varying_intercept,
-      glue::glue("alpha_{y}[t]"),
-      ""
-    )
-  )
-  intercept_nu <- ifelse_(
-    has_random_intercept,
-    ifelse(
-      nzchar(obs),
-      glue::glue("nu_{y}[{obs}]"),
-      glue::glue("nu_{y}")
-    ),
-    ""
-  )
-  plus1 <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
+  intercept <- mtext_def$intercept
   intercept <- ifelse_(
-    nzchar(intercept_alpha) || has_random_intercept,
-    glue::glue("{intercept_alpha}{plus1}{intercept_nu}"),
-    ""
+    has_offset,
+    ifelse_(
+      intercept == "0",
+      glue::glue("to_vector(offset_{y}[t, {obs}])"),
+      glue::glue("{intercept} + to_vector(offset_{y}[t, {obs}])")
+    ),
+    intercept
   )
-  plus2 <- ifelse_(has_offset && nzchar(intercept), "+", "")
-  if (!has_offset && !nzchar(intercept)) {
-    intercept <- "0"
-  }
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
       "y_{y}[t, {obs}] ~ neg_binomial_2_log_glm(X[t][{obs}, {{{cs(J)}}}], ",
-      "{intercept}{plus2}{offset_term}, gamma_{y}, phi_{y});"
+      "{intercept}, gamma_{y}, phi_{y});"
     ),
     paste0(
       "y_{y}[t, {obs}] ~ neg_binomial_2_log(",
-      "{intercept}{plus2}{offset_term}, phi_{y});"
+      "{intercept}, phi_{y});"
     )
   )
   mtext <- paste_rows(
@@ -1545,7 +1464,7 @@ model_lines_negbin <- function(y, idt, obs, has_varying, has_fixed, has_offset,
     "}}",
     .indent = idt(c(1, 1, 2, 2, 2, 3, 3, 2, 1))
   )
-  paste_rows(mtext_def, mtext, .parse = FALSE)
+  paste_rows(mtext_def$text, mtext, .parse = FALSE)
 }
 
 model_lines_exponential <- function(y, idt, obs, has_varying, has_fixed,
@@ -1555,6 +1474,7 @@ model_lines_exponential <- function(y, idt, obs, has_varying, has_fixed,
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(model_lines_default))]
   mtext_def <- do.call(model_lines_default, args = args)
+  intercept <- mtext_def$intercept
   fixed_term <- ifelse_(
     has_fixed,
     glue::glue("X[t][{obs}, {{{cs(J_fixed)}}}] * beta_{y}"),
@@ -1565,33 +1485,9 @@ model_lines_exponential <- function(y, idt, obs, has_varying, has_fixed,
     glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"),
     ""
   )
-  intercept_alpha <- ifelse_(
-    has_fixed_intercept,
-    glue::glue("alpha_{y}"),
-    ifelse_(
-      has_varying_intercept,
-      glue::glue("alpha_{y}[t]"),
-      ""
-    )
-  )
-  intercept_nu <- ifelse_(
-    has_random_intercept,
-    ifelse(
-      nzchar(obs),
-      glue::glue("nu_{y}[{obs}]"),
-      glue::glue("nu_{y}")
-    ),
-    ""
-  )
-  plus_i <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
   plus_c <- ifelse_(has_fixed && has_varying, " + ", "")
-  intercept <- ifelse_(
-    nzchar(intercept_alpha) || has_random_intercept,
-    glue::glue("{intercept_alpha}{plus_i}{intercept_nu}"),
-    ""
-  )
   plus_ic <- ifelse_(
-    nzchar(intercept_alpha) && (has_fixed || has_varying),
+    nzchar(intercept) && (has_fixed || has_varying),
     " + ",
     ""
   )
@@ -1605,7 +1501,7 @@ model_lines_exponential <- function(y, idt, obs, has_varying, has_fixed,
     "}}",
     .indent = idt(c(1, 2, 1))
   )
-  paste_rows(mtext_def, mtext, .parse = FALSE)
+  paste_rows(mtext_def$text, mtext, .parse = FALSE)
 }
 
 model_lines_gamma <- function(y, idt, obs, has_varying, has_fixed,
@@ -1615,6 +1511,7 @@ model_lines_gamma <- function(y, idt, obs, has_varying, has_fixed,
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(model_lines_default))]
   mtext_def <- do.call(model_lines_default, args = args)
+  intercept <- mtext_def$intercept
   phi_term <- "phi_{y} ~ {phi_prior_distr};"
   fixed_term <- ifelse_(
     has_fixed,
@@ -1626,33 +1523,10 @@ model_lines_gamma <- function(y, idt, obs, has_varying, has_fixed,
     glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"),
     ""
   )
-  intercept_alpha <- ifelse_(
-    has_fixed_intercept,
-    glue::glue("alpha_{y}"),
-    ifelse_(
-      has_varying_intercept,
-      glue::glue("alpha_{y}[t]"),
-      ""
-    )
-  )
-  intercept_nu <- ifelse_(
-    has_random_intercept,
-    ifelse(
-      nzchar(obs),
-      glue::glue("nu_{y}[{obs}]"),
-      glue::glue("nu_{y}")
-    ),
-    ""
-  )
-  plus_i <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
+
   plus_c <- ifelse_(has_fixed && has_varying, " + ", "")
-  intercept <- ifelse_(
-    nzchar(intercept_alpha) || has_random_intercept,
-    glue::glue("{intercept_alpha}{plus_i}{intercept_nu}"),
-    ""
-  )
   plus_ic <- ifelse_(
-    nzchar(intercept_alpha) && (has_fixed || has_varying),
+    nzchar(intercept) && (has_fixed || has_varying),
     " + ",
     ""
   )
@@ -1667,7 +1541,7 @@ model_lines_gamma <- function(y, idt, obs, has_varying, has_fixed,
     "}}",
     .indent = idt(c(1, 1, 2, 1))
   )
-  paste_rows(mtext_def, mtext, .parse = FALSE)
+  paste_rows(mtext_def$text, mtext, .parse = FALSE)
 }
 
 model_lines_beta <- function(y, idt, obs, has_varying, has_fixed,
@@ -1677,6 +1551,7 @@ model_lines_beta <- function(y, idt, obs, has_varying, has_fixed,
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(model_lines_default))]
   mtext_def <- do.call(model_lines_default, args = args)
+  intercept <- mtext_def$intercept
   fixed_term <- ifelse_(
     has_fixed,
     glue::glue("X[t][{obs}, {{{cs(J_fixed)}}}] * beta_{y}"),
@@ -1687,33 +1562,9 @@ model_lines_beta <- function(y, idt, obs, has_varying, has_fixed,
     glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"),
     ""
   )
-  intercept_alpha <- ifelse_(
-    has_fixed_intercept,
-    glue::glue("alpha_{y}"),
-    ifelse_(
-      has_varying_intercept,
-      glue::glue("alpha_{y}[t]"),
-      ""
-    )
-  )
-  intercept_nu <- ifelse_(
-    has_random_intercept,
-    ifelse(
-      nzchar(obs),
-      glue::glue("nu_{y}[{obs}]"),
-      glue::glue("nu_{y}")
-    ),
-    ""
-  )
-  plus_i <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
   plus_c <- ifelse_(has_fixed && has_varying, " + ", "")
-  intercept <- ifelse_(
-    nzchar(intercept_alpha) || has_random_intercept,
-    glue::glue("{intercept_alpha}{plus_i}{intercept_nu}"),
-    ""
-  )
   plus_ic <- ifelse_(
-    nzchar(intercept_alpha) && (has_fixed || has_varying),
+    nzchar(intercept) && (has_fixed || has_varying),
     " + ",
     ""
   )
@@ -1729,7 +1580,7 @@ model_lines_beta <- function(y, idt, obs, has_varying, has_fixed,
     "}}",
     .indent = idt(c(1, 1, 2, 1))
   )
-  paste_rows(mtext_def, mtext, .parse = FALSE)
+  paste_rows(mtext_def$text, mtext, .parse = FALSE)
 }
 
 # Generated quantities block ----------------------------------------------
