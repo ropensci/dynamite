@@ -116,7 +116,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     time == timepoints[L + 1L], ,
     env = list(time = time, timepoints = timepoints, L = L)
   ][,
-    elpd := log_mean_exp(loglik),
+    list(elpd = log_mean_exp(loglik)),
     by = list(time, id),
     env = list(log_mean_exp = "log_mean_exp")
   ][["elpd"]]
@@ -136,7 +136,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           i_refit = i_refit
         )
       ][,
-        logratio := sum(loglik),
+        list(logratio = sum(loglik)),
         by = list(id, .draw)
       ]
 
@@ -177,7 +177,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
         lls <- na.omit(out[
           time > timepoints[L], ,
           env = list(time = time, timepoint = timepoints, L = L)
-        ])[
+        ])[,
           loglik := rowSums(.SD),
           .SDcols = patterns("_loglik$")
         ][,
@@ -189,7 +189,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           time == timepoints[i + 1L],
           env = list(time = time, timepoints = timepoints, i = i)
         ][,
-          elpd := log_mean_exp(loglik),
+          list(elpd = log_mean_exp(loglik)),
           by = list(time, id),
           env = list(log_mean_exp = "log_mean_exp")
         ][["elpd"]]
