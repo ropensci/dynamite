@@ -40,9 +40,9 @@ parameterization separately for each channel, even for channels without
 varying effects.}
 
 \item{shrinkage}{[\code{logical(1)}]\cr If \code{TRUE}, a common global shrinkage
-parameter \eqn{\lambda} is used for the splines so that the standard
+parameter \eqn{\xi} is used for the splines so that the standard
 deviation of the random walk prior is of the spline coefficients is
-\eqn{\lambda\tau}. Default is \code{FALSE}. This is an experimental feature and
+\eqn{\xi\tau}. Default is \code{FALSE}. This is an experimental feature and
 not tested comprehensively.}
 
 \item{override}{[\code{logical(1)}]\cr If \code{FALSE} (the default), an existing

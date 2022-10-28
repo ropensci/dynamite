@@ -14,6 +14,7 @@
   global_fixed = FALSE,
   n_draws = NULL,
   expand = TRUE,
+  df = TRUE,
   ...
 )
 }
@@ -87,6 +88,9 @@ predicted values, and the second contains the original \code{newdata}.
 Setting \code{expand} to \code{FALSE} can help conserve memory because \code{newdata}
 is not replicated \code{n_draws} times in the output.
 This argument is ignored if \code{funs} are provided.}
+
+\item{df}{[\code{logical(1)}]\cr If \code{TRUE} (default) the output
+consists of \code{data.frame} objects, and \code{data.table} objects otherwise.}
 
 \item{...}{Ignored.}
 }
