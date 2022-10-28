@@ -92,46 +92,60 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     new_levels = "none",
     global_fixed = FALSE,
     n_draws = NULL,
-    expand = FALSE
+    expand = FALSE,
+    df = FALSE
   )$simulated
 
   n_draws <- ndraws(x)
   # sum the log-likelihood over the channels and non-missing time points
   # for each group, time, and draw
   # drop those id&time pairs which contain NA
-  lls <- out |>
-    dplyr::filter(.data[[time]] > timepoints[L]) |>
-    dplyr::mutate(loglik = rowSums(dplyr::across(
-      dplyr::ends_with("_loglik")
-    ))) |>
-    dplyr::select(-dplyr::ends_with("_loglik")) |>
-    tidyr::drop_na()
+  lls <- na.omit(out[
+    time > timepoints[L], ,
+    env = list(time = time, timepoints = timepoints, L = L)
+  ][,
+    loglik := rowSums(.SD),
+    .SDcols = patterns("_loglik$")
+  ][,
+    .SD,
+    .SDcols = !patterns("_loglik$")
+  ])
 
   elpds <- vector("list", T_ - L)
-  elpds[[1L]] <- lls |>
-    dplyr::filter(.data[[time]] == timepoints[L + 1L]) |>
-    dplyr::group_by(.data[[time]], onlyif(!is.null(id), .data[[id]])) |>
-    dplyr::summarise(elpd = log_mean_exp(.data$loglik), .groups = "keep") |>
-    dplyr::pull("elpd")
+  elpds[[1L]] <- lls[
+    time == timepoints[L + 1L], ,
+    env = list(time = time, timepoints = timepoints, L = L)
+  ][,
+    list(elpd = log_mean_exp(loglik)),
+    by = list(time, id),
+    env = list(log_mean_exp = "log_mean_exp")
+  ][["elpd"]]
 
   i_refit <- L
   refits <- timepoints[L]
   ks <- vector("list", T_ - L - 1L)
 
   for (i in seq.int(L + 1L, T_ - 1L)) {
-    if (nrow(lls |> dplyr::filter(.data[[time]] == i + 1L)) > 0L) {
-      logratio <- lls |>
-        dplyr::filter(
-          .data[[time]] > timepoints[i_refit] &
-            .data[[time]] <= timepoints[i]
-        ) |>
-        dplyr::group_by(onlyif(!is.null(id), .data[[id]]), .data$.draw) |>
-        dplyr::summarise(logratio = sum(.data$loglik), .groups = "keep")
+    if (lls[time == i + 1L, .N, env = list(time = time, i = i)] > 0L) {
+      logratio <- lls[
+        time > timepoints[i_refit] & time <= timepoints[i], ,
+        env = list(
+          time = time,
+          timepoints = timepoints,
+          i = i,
+          i_refit = i_refit
+        )
+      ][,
+        list(logratio = sum(loglik)),
+        by = list(id, .draw)
+      ]
 
-      psis_obj <- suppressWarnings(loo::psis(
-        matrix(logratio$logratio, nrow = n_draws),
-        r_eff = NA
-      ))
+      psis_obj <- suppressWarnings(
+        loo::psis(
+          matrix(logratio$logratio, nrow = n_draws),
+          r_eff = NA
+        )
+      )
       k <- loo::pareto_k_values(psis_obj)
       ks[[i - L]] <- k
       if (any(k > k_threshold)) {
@@ -143,7 +157,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
         refits <- c(refits, timepoints[i])
         d <- data.table::copy(x$data)
         set_na <- d[[x$time_var]] > timepoints[i]
-        d[set_na, (responses) := NA]
+        d[set_na, (responses) := NA, env = list(set_na = set_na)]
         fit <- update(fit, data = d, refresh = 0, ...)
 
         out <- initialize_predict(
@@ -156,30 +170,37 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           new_levels = "none",
           global_fixed = FALSE,
           n_draws = NULL,
-          expand = FALSE
+          expand = FALSE,
+          df = FALSE
         )$simulated
 
-        lls <- out |>
-          dplyr::filter(.data[[time]] > timepoints[L]) |>
-          tidyr::drop_na() |>
-          dplyr::mutate(loglik = rowSums(dplyr::across(
-            dplyr::ends_with("_loglik")
-          ))) |>
-          dplyr::select(-dplyr::ends_with("_loglik"))
+        lls <- na.omit(out[
+          time > timepoints[L], ,
+          env = list(time = time, timepoint = timepoints, L = L)
+        ])[,
+          loglik := rowSums(.SD),
+          .SDcols = patterns("_loglik$")
+        ][,
+          .SD,
+          .SDcols = !patterns("_loglik$")
+        ]
 
-        elpds[[i - L + 1L]] <- lls |>
-          dplyr::filter(.data[[time]] == timepoints[i + 1]) |>
-          dplyr::group_by(.data[[time]], onlyif(!is.null(id), .data[[id]])) |>
-          dplyr::summarise(
-            elpd = log_mean_exp(.data$loglik),
-            .groups = "keep"
-          ) |>
-          dplyr::pull("elpd")
+        elpds[[i - L + 1L]] <- lls[
+          time == timepoints[i + 1L],
+          env = list(time = time, timepoints = timepoints, i = i)
+        ][,
+          list(elpd = log_mean_exp(loglik)),
+          by = list(time, id),
+          env = list(log_mean_exp = "log_mean_exp")
+        ][["elpd"]]
+
       } else {
         lw <- loo::weights.importance_sampling(psis_obj, normalize = TRUE)
-        ll <- lls |>
-          dplyr::filter(.data[[time]] == timepoints[i + 1]) |>
-          dplyr::pull("loglik")
+        ll <- lls[
+          time == timepoints[i + 1],
+          loglik,
+          env = list(time = time, timepoints = timepoints, i = i)
+        ]
         elpds[[i - L + 1L]] <-
           log_sum_exp_rows(t(lw) + matrix(ll, ncol = n_draws))
       }
@@ -248,9 +269,10 @@ plot.lfo <- function(x, ...) {
       times = lengths(x$pareto_k)
     )
   )
-  ggplot2::ggplot(d, ggplot2::aes(x = .data$time, y = .data$k)) +
+  d$threshold <- d$k > x$k_threshold
+  ggplot2::ggplot(d, ggplot2::aes_string(x = "time", y = "k")) +
     ggplot2::geom_point(
-      ggplot2::aes(color = .data$k > x$k_threshold),
+      ggplot2::aes_string(color = "threshold"),
       shape = 3,
       show.legend = FALSE,
       alpha = 0.5

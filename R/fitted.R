@@ -48,8 +48,8 @@
 #'     ggplot2::theme_bw()
 #'   }
 #'
-fitted.dynamitefit <- function(object, newdata = NULL,
-                               n_draws = NULL, expand = TRUE, ...) {
+fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL,
+                               expand = TRUE, df = TRUE, ...) {
   stopifnot_(
     !is.null(object$stanfit),
     "No Stan model fit is available."
@@ -57,6 +57,10 @@ fitted.dynamitefit <- function(object, newdata = NULL,
   stopifnot_(
     checkmate::test_flag(x = expand),
     "Argument {.arg expand} must be a single {.cls logical} value."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = df),
+    "Argument {.arg df} must be a single {.cls logical} value."
   )
   initialize_predict(
     object,
@@ -68,6 +72,7 @@ fitted.dynamitefit <- function(object, newdata = NULL,
     new_levels = "none",
     global_fixed = FALSE,
     n_draws,
-    expand
+    expand,
+    df
   )
 }

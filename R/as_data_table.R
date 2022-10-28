@@ -125,7 +125,7 @@ as.data.table.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     d[, type := rep(type, n_d)]
     d[, .draw := rep_len(seq_len(n_r * n_c), n_d)]
     d[, .iteration := rep_len(seq_len(n_r), n_d)]
-    d[, .chain := rep_len(rep(seq_len(n_r), each = n_r), n_d)]
+    d[, .chain := rep_len(rep(seq_len(n_c), each = n_r), n_d)]
     d
   }
   # avoid NSE notes from R CMD check

@@ -428,7 +428,7 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
 #'
 #' @param x Object returned by `predict.dynamitefit`.
 #' @noRd
-expand_predict_output <- function(simulated, observed) {
+expand_predict_output <- function(simulated, observed, df) {
   add_cols <- setdiff(names(observed), names(simulated))
   observed <- observed[
     rep(seq_len(nrow(observed)), n_unique(simulated$.draw)),
@@ -436,7 +436,9 @@ expand_predict_output <- function(simulated, observed) {
   for (col in add_cols) {
     data.table::set(simulated, j = col, value = observed[[col]])
   }
-  data.table::setDF(simulated)
+  if (df) {
+    data.table::setDF(simulated)
+  }
   simulated
 }
 

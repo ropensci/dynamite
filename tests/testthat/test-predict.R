@@ -383,7 +383,8 @@ test_that("predict with loglik works", {
     new_levels = "none",
     global_fixed = FALSE,
     n_draws = NULL,
-    expand = FALSE
+    expand = FALSE,
+    df = TRUE
   )$simulated, NA)
 
   iter <- gaussian_example_fit$stanfit@sim$permutation[[1]][2]
