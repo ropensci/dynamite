@@ -50,6 +50,10 @@
 #'   channel specific matrix representations via [stats::model.matrix.lm()].
 #' @param group \[`character(1)`]\cr A column name of `data` that denotes the
 #'   unique groups or `NULL` corresponding to a scenario without any groups.
+#'   If `group` is `NULL`, a new column `.group` is created with constant
+#'   value `1L` is created indicating that all observations belong to the same
+#'   group. In case of name conflicts with `data`, see the `group_var` element
+#'   of the return object to get the column name of the new variable.
 #' @param time \[`character(1)`]\cr A column name of `data` that denotes the
 #'   time index of observations. If this variable is a factor, the integer
 #'   representation of its levels are used internally for defining the time
@@ -582,15 +586,23 @@ parse_past <- function(dformula, data, group_var, time_var) {
   for (i in seq_along(dformula)) {
     if (past[i]) {
       y <- dformula[[i]]$response
-      past_eval <- try(data[, eval(dformula[[i]]$specials$past)], silent = TRUE)
-      stopifnot_(
-        !inherits(past_eval, "try-error"),
-        c(
-          "Unable to evaluate past definition of
-          deterministic channel {.var {y}}:",
-          `x` = attr(past_eval, "condition")$message
-        )
-      )
+      cl <- dformula[[i]]$specials$past
+      if (identical(typeof(cl), "language")) {
+        past_eval <- try(eval(cl), silent = TRUE)
+        if (inherits(past_eval, "try-error")) {
+          past_eval <- try(data[, cl, env = list(cl = cl)], silent = TRUE)
+          stopifnot_(
+            !inherits(past_eval, "try-error"),
+            c(
+              "Unable to evaluate past definition of
+              deterministic channel {.var {y}}:",
+              `x` = attr(past_eval, "condition")$message
+            )
+          )
+        }
+      } else {
+        past_eval <- cl
+      }
       past_type <- dformula[[i]]$specials$past_type
       past_len <- length(past_eval)
       stopifnot_(

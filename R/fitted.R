@@ -46,7 +46,7 @@
 #'     # observed values
 #'     ggplot2::geom_line(aes(y = LakeHuron), colour = "tomato") +
 #'     ggplot2::theme_bw()
-#'   }
+#' }
 #'
 fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL,
                                expand = TRUE, df = TRUE, ...) {

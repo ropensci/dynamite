@@ -22,6 +22,9 @@
 #'   effects for the new levels must be chosen (argument `new_levels`). Note
 #'   that as `newdata` is expanded with predictions, it can be beneficial
 #'   in terms of memory usage to first remove redundant columns from `newdata`.
+#'   If the grouping variable of the original data is missing, it is assumed
+#'   that all observations in `newdata` belong to the first group in the
+#'   original data.
 #' @param type \[`character(1)`]\cr Type of prediction,
 #'   `"response"` (default), `"mean"`, or `"link"`.
 #' @param funs \[`list()`]\cr A named list whose names should correspond to the
@@ -101,11 +104,11 @@
 #' d <- data.frame(y = c(0, rep(NA, 49)), x = rnorm(50), time = 1:50)
 #'
 #' # suppress warnings due to the lack of data
-#' suppressWarnings(priors <- get_priors(f,
-#'   data = d, time = "time"
-#' ))
+#' suppressWarnings(
+#'   priors <- get_priors(f, data = d, time = "time")
+#' )
 #'
-#' # modify default priors which can produce exploding behaviour when used
+#' # modify default priors which can produce exploding behavior when used
 #' # without data
 #' priors$prior <- c(
 #'   "normal(0, 1)",
@@ -124,10 +127,11 @@
 #' # simulate new data
 #' pp <- predict(fit)
 #'
-#' library(ggplot2)
-#' ggplot(pp, aes(time, y_new, group = .draw)) +
-#'   geom_line(alpha = 0.1) +
-#'   theme_bw()
+#' if (requireNamespace("ggplot2")) {
+#'   ggplot2::ggplot(pp, aes(time, y_new, group = .draw)) +
+#'     geom_line(alpha = 0.1) +
+#'     theme_bw()
+#'   }
 #' }
 #'
 predict.dynamitefit <- function(object, newdata = NULL,

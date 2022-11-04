@@ -12,10 +12,7 @@
 \item{...}{Not used.}
 }
 \value{
-Total number of observations as an integer.
-Missing values are not accounted for as the
-number of complete cases may vary across
-channels, time points, and groups.
+Total number of non-missing observations as an integer.
 }
 \description{
 Extract the Number of Observations Used to Fit a Dynamite Model

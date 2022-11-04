@@ -85,10 +85,12 @@
 #'
 #' # Time-varying coefficients delta
 #' as.data.frame(gaussian_example_fit,
-#'   responses = "y", types = "delta", summary = TRUE
+#'   responses = "y",
+#'   types = "delta",
+#'   summary = TRUE
 #' )
 #'
-#' if (requireNamespace("dplyr) && requireNamespace("tidyr")) {
+#' if (requireNamespace("dplyr") && requireNamespace("tidyr")) {
 #'   as.data.frame(gaussian_example_fit,
 #'     responses = "y", types = "delta", summary = FALSE
 #'   ) %>%

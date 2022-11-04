@@ -39,7 +39,11 @@ fashion (per time-point and per channel). Input \code{data} is converted to
 channel specific matrix representations via \code{\link[stats:model.matrix]{stats::model.matrix.lm()}}.}
 
 \item{group}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
-unique groups or \code{NULL} corresponding to a scenario without any groups.}
+unique groups or \code{NULL} corresponding to a scenario without any groups.
+If \code{group} is \code{NULL}, a new column \code{.group} is created with constant
+value \code{1L} is created indicating that all observations belong to the same
+group. In case of name conflicts with \code{data}, see the \code{group_var} element
+of the return object to get the column name of the new variable.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time index of observations. If this variable is a factor, the integer

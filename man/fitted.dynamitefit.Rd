@@ -72,6 +72,6 @@ fit <- dynamite(
     # observed values
     ggplot2::geom_line(aes(y = LakeHuron), colour = "tomato") +
     ggplot2::theme_bw()
-  }
+}
 
 }

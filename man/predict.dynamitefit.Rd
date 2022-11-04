@@ -33,7 +33,10 @@ were used to fit the model. New group levels can be included, but if the
 model contains random intercepts, an options for the random
 effects for the new levels must be chosen (argument \code{new_levels}). Note
 that as \code{newdata} is expanded with predictions, it can be beneficial
-in terms of memory usage to first remove redundant columns from \code{newdata}.}
+in terms of memory usage to first remove redundant columns from \code{newdata}.
+If the grouping variable of the original data is missing, it is assumed
+that all observations in \code{newdata} belong to the first group in the
+original data.}
 
 \item{type}{[\code{character(1)}]\cr Type of prediction,
 \code{"response"} (default), \code{"mean"}, or \code{"link"}.}
@@ -126,11 +129,11 @@ f <- obs(y ~ lag(y) + varying(~ -1 + x), "gaussian") +
 d <- data.frame(y = c(0, rep(NA, 49)), x = rnorm(50), time = 1:50)
 
 # suppress warnings due to the lack of data
-suppressWarnings(priors <- get_priors(f,
-  data = d, time = "time"
-))
+suppressWarnings(
+  priors <- get_priors(f, data = d, time = "time")
+)
 
-# modify default priors which can produce exploding behaviour when used
+# modify default priors which can produce exploding behavior when used
 # without data
 priors$prior <- c(
   "normal(0, 1)",
@@ -149,10 +152,11 @@ fit <- dynamite(f,
 # simulate new data
 pp <- predict(fit)
 
-library(ggplot2)
-ggplot(pp, aes(time, y_new, group = .draw)) +
-  geom_line(alpha = 0.1) +
-  theme_bw()
+if (requireNamespace("ggplot2")) {
+  ggplot2::ggplot(pp, aes(time, y_new, group = .draw)) +
+    geom_line(alpha = 0.1) +
+    theme_bw()
+  }
 }
 
 }

@@ -3,7 +3,7 @@
 #' @param n_draws \[`integer(1)`]\cr
 #'   Number of draws to use for `fitted` or `predict`.
 #' @param full_draws \[`integer(1)`]\cr
-#'   Number of draws avaiable in the `dynamitefit` object.
+#'   Number of draws available in the `dynamitefit` object.
 #' @noRd
 check_ndraws <- function(n_draws, full_draws) {
   n_draws <- ifelse_(is.null(n_draws), full_draws, n_draws)
