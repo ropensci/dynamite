@@ -450,7 +450,7 @@ predict_summary <- function(object, storage, observed, funs, new_levels,
     attr(object$dformulas$lag_det, "rank_order")
   )
   ro_ls <- seq_along(lhs_ls)
-  n_group <- ifelse_(is.null(group_var), 1L, n_unique(observed[[group_var]]))
+  n_group <- n_unique(observed[[group_var]])
   time <- observed[[time_var]]
   u_time <- unique(time)
   n_time <- length(u_time)

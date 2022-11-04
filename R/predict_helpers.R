@@ -62,25 +62,23 @@ check_newdata <- function(object, newdata) {
 parse_newdata <- function(dformula, newdata, data, type, eval_type,
                           families_stoch, resp_stoch, categories,
                           clear_names, new_levels, group_var, time_var) {
-  if (!is.null(group_var)) {
-    stopifnot_(
-      group_var %in% names(newdata),
-      "Can't find grouping variable {.var {group_var}} in {.var newdata}."
-    )
-    group <- newdata[[group_var]]
-    group <- unique(group)
-    extra_levels <- unique(group[!group %in% data[[group_var]]])
-    stopifnot_(
-      all(group %in% data[[group_var]]) || !identical(new_levels, "none"),
-      c(
-        "Grouping variable {.var {group_var}} contains unknown levels:",
-        `x` = "Level{?s} {.val {as.character(extra_levels)}}
-               {?is/are} not present in the original data.",
-        `i` = "{.strong Note:} argument {.var new_levels} is {.val none}
-               which disallows new levels."
-      )
-    )
+  if (!group_var %in% names(newdata)) {
+    orig <- sort(data[[group_var]])[1L]
+    data.table::set(newdata, j = group_var, value = orig)
   }
+  group <- newdata[[group_var]]
+  group <- unique(group)
+  extra_levels <- unique(group[!group %in% data[[group_var]]])
+  stopifnot_(
+    all(group %in% data[[group_var]]) || !identical(new_levels, "none"),
+    c(
+      "Grouping variable {.var {group_var}} contains unknown levels:",
+      `x` = "Level{?s} {.val {as.character(extra_levels)}}
+             {?is/are} not present in the original data.",
+      `i` = "{.strong Note:} argument {.var new_levels} is {.val none}
+             which disallows new levels."
+    )
+  )
   stopifnot_(
     time_var %in% names(newdata),
     "Can't find time index variable {.var {time_var}} in {.var newdata}."
@@ -217,84 +215,57 @@ parse_funs <- function(object, funs) {
 #' @inheritParams dynamite
 #' @noRd
 fill_time_predict <- function(data, group_var, time_var, time_scale) {
-  has_groups <- !is.null(group_var)
-  if (has_groups) {
-    time_duplicated <- data[,
-      any(duplicated(time_var)),
-      by = group_var,
-      env = list(time_var = time_var)
-    ]$V1
-    d <- which(time_duplicated)
-    stopifnot_(
-      all(!time_duplicated),
-      c(
-        "Each time index must correspond to a single observation per group:",
-        `x` = "{cli::qty(d)}Group{?s} {.var {d}} of {.var {group_var}}
-               {cli::qty(d)}{?has/have} duplicate observations."
-      )
+  time_duplicated <- data[,
+    any(duplicated(time_var)),
+    by = group_var,
+    env = list(time_var = time_var)
+  ]$V1
+  d <- which(time_duplicated)
+  stopifnot_(
+    all(!time_duplicated),
+    c(
+      "Each time index must correspond to a single observation per group:",
+      `x` = "{cli::qty(d)}Group{?s} {.var {d}} of {.var {group_var}}
+             {cli::qty(d)}{?has/have} duplicate observations."
     )
-  } else {
-    stopifnot_(
-      all(!duplicated(data[[time_var]])),
-      "Each time index must correspond to a single observation."
-    )
-  }
+  )
   time <- sort(unique(data[[time_var]]))
   if (length(time) > 1L) {
     original_order <- colnames(data)
     full_time <- seq(time[1L], time[length(time)], by = time_scale)
-    if (has_groups) {
-      time_groups <- data[,
-        {
-          has_missing = !identical(time_var, full_time)
-          has_gaps = .N != (diff(range(time_var)) + 1L) * time_scale
-          list(has_missing, has_gaps)
-        },
-        by = group_var,
-        env = list(
-          time_var = time_var,
-          group_var = group_var,
-          time_scale = time_scale
-        )
-      ]
-      if (any(time_groups$has_missing)) {
-        if (any(time_groups$has_gaps)) {
-          warning_(c(
-            "Time index variable {.var {time_var}} of {.arg newdata} has gaps:",
-            `i` = "Filling the {.arg newdata} to regular time points. This will
-                   lead to propagation of NA values if the model contains
-                   exogenous predictors and {.arg impute} is {.val none}."
-          ))
-        }
-        full_data_template <- data.table::as.data.table(expand.grid(
-          time = full_time,
-          group = unique(data[[group_var]])
-        ))
-        names(full_data_template) <- c(time_var, group_var)
-        data <- data.table::merge.data.table(
-          full_data_template,
-          data,
-          by = c(time_var, group_var),
-          all.x = TRUE
-        )
-      }
-    } else {
-      if (!identical(sort(data[[time_var]]), full_time)) {
+    time_groups <- data[,
+      {
+        has_missing = !identical(time_var, full_time)
+        has_gaps = .N != (diff(range(time_var)) + 1L) * time_scale
+        list(has_missing, has_gaps)
+      },
+      by = group_var,
+      env = list(
+        time_var = time_var,
+        group_var = group_var,
+        time_scale = time_scale
+      )
+    ]
+    if (any(time_groups$has_missing)) {
+      if (any(time_groups$has_gaps)) {
         warning_(c(
           "Time index variable {.var {time_var}} of {.arg newdata} has gaps:",
           `i` = "Filling the {.arg newdata} to regular time points. This will
                  lead to propagation of NA values if the model contains
                  exogenous predictors and {.arg impute} is {.val none}."
         ))
-        full_data_template <- data.table::data.table(time = full_time)
-        names(full_data_template) <- time_var
-        data <- data.table::merge.data.table(
-          full_data_template,
-          data,
-          by = time_var,
-          all.x = TRUE
-        )
       }
+      full_data_template <- data.table::as.data.table(expand.grid(
+        time = full_time,
+        group = unique(data[[group_var]])
+      ))
+      names(full_data_template) <- c(time_var, group_var)
+      data <- data.table::merge.data.table(
+        full_data_template,
+        data,
+        by = c(time_var, group_var),
+        all.x = TRUE
+      )
     }
   }
   data
@@ -457,9 +428,8 @@ prepare_eval_envs <- function(object, simulated, observed,
   idx_draws <- seq_len(n_draws)
   nu_channels <- attr(object$dformulas$stoch, "random")$responses
   M <- length(nu_channels)
-  has_groups <- !is.null(group_var)
-  n_group <- ifelse_(has_groups, n_unique(observed[[group_var]]), 1L)
-  if (has_groups && M > 0L) {
+  n_group <- n_unique(observed[[group_var]])
+  if (M > 0L) {
     orig_ids <- unique(object$data[[group_var]])
     new_ids <- unique(observed[[group_var]])
     n_all_draws <- ndraws(object)

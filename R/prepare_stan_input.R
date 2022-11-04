@@ -52,7 +52,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   T_full <- length(time)
   T_idx <- seq.int(fixed + 1L, T_full)
   has_groups <- !is.null(group_var)
-  group <- onlyif(has_groups, data[[group_var]])
+  group <- data[[group_var]]
   has_splines <- !is.null(attr(dformula, "splines"))
   spline_defs <- prepare_splines(
     attr(dformula, "splines"),
@@ -62,7 +62,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   sampling_vars$D <- spline_defs$D
   sampling_vars$Bs <- spline_defs$Bs
   has_random <- attr(dformula, "random")$responses
-  N <- ifelse_(has_groups, n_unique(group), 1L)
+  N <- n_unique(group)
   K <- ncol(model_matrix)
   X <- aperm(
     array(as.numeric(unlist(split(model_matrix, gl(T_full, 1, N * T_full)))),
@@ -86,11 +86,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   for (i in seq_len(n_channels)) {
     channel <- list()
     resp <- resp_names[i]
-    resp_split <- ifelse_(
-      has_groups,
-      split(responses[, resp], group),
-      responses[, resp]
-    )
+    resp_split <- split(responses[, resp], group)
     Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))
     Y <- Y[T_idx, , drop = FALSE]
     Y_na <- is.na(Y)
@@ -145,11 +141,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     # evaluate specials such as offset and trials
     for (spec in formula_special_funs) {
       if (!is.null(form_specials[[spec]])) {
-        spec_split <- ifelse_(
-          has_groups,
-          split(form_specials[[spec]], group),
-          form_specials[[spec]]
-        )
+        spec_split <- split(form_specials[[spec]], group)
         spec_array <- array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
         sampling_vars[[paste0(spec, "_", resp)]] <-
           spec_array[seq.int(fixed + 1L, T_full), , drop = FALSE]

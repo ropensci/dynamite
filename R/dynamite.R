@@ -206,6 +206,14 @@ dynamite <- function(dformula, data, group = NULL, time,
     !inherits(backend, "try-error"),
     "Argument {.arg backend} must be \"rstan\" or \"cmdstanr\"."
   )
+  if (is.null(group)) {
+    group <- ".group"
+    data_names <- names(data)
+    while (group %in% data_names) {
+      group <- paste0(".", group)
+    }
+    data[[group]] <- 1L
+  }
   data_name <- attr(data, "data_name")
   data_name <- ifelse_(
     is.null(data_name),
@@ -969,69 +977,50 @@ parse_present_lags <- function(dformula, lag_map, y, i, lhs) {
 #' @inheritParams dynamite
 #' @noRd
 fill_time <- function(data, group_var, time_var) {
-  has_groups <- !is.null(group_var)
   time <- sort(unique(data[[time_var]]))
   stopifnot_(
     length(time) > 1L,
     "There must be at least two time points in the data."
   )
-  if (has_groups) {
-    time_duplicated <- data[,
-      any(duplicated(time_var)),
-      by = group_var,
-      env = list(time_var = time_var)
-    ]$V1
-    d <- which(time_duplicated)
-    stopifnot_(
-      all(!time_duplicated),
-      c(
-        "Each time index must correspond to a single observation per group:",
-        `x` = "{cli::qty(length(d))}Group{?s} {.var {d}} of {.var {group_var}}
-               {cli::qty(length(d))}{?has/have} duplicate observations."
-      )
+  time_duplicated <- data[,
+    any(duplicated(time_var)),
+    by = group_var,
+    env = list(time_var = time_var)
+  ]$V1
+  d <- which(time_duplicated)
+  stopifnot_(
+    all(!time_duplicated),
+    c(
+      "Each time index must correspond to a single observation per group:",
+      `x` = "{cli::qty(length(d))}Group{?s} {.var {d}} of {.var {group_var}}
+             {cli::qty(length(d))}{?has/have} duplicate observations."
     )
-  } else {
-    stopifnot_(
-      all(!duplicated(data[[time_var]])),
-      "Each time index must correspond to a single observation."
-    )
-  }
+  )
   time_ivals <- diff(time)
   time_scale <- min(diff(time))
   if (any(time_ivals[!is.na(time_ivals)] %% time_scale > 0)) {
     stop_("Observations must occur at regular time intervals.")
   } else {
     full_time <- seq(time[1L], time[length(time)], by = time_scale)
-    if (has_groups) {
-      time_missing <- data[,
-        !identical(time_var, full_time),
-        by = group_var,
-        env = list(time_var = time_var, full_time = full_time)
-      ]$V1
-      if (any(time_missing)) {
-        full_data_template <- data.table::as.data.table(expand.grid(
+    time_missing <- data[,
+      !identical(time_var, full_time),
+      by = group_var,
+      env = list(time_var = time_var, full_time = full_time)
+    ]$V1
+    if (any(time_missing)) {
+      full_data_template <- data.table::as.data.table(
+        expand.grid(
           time = full_time,
           group = unique(data[[group_var]])
-        ))
-        names(full_data_template) <- c(time_var, group_var)
-        data <- data.table::merge.data.table(
-          full_data_template,
-          data,
-          by = c(time_var, group_var),
-          all.x = TRUE
         )
-      }
-    } else {
-      if (!identical(data[[time_var]], full_time)) {
-        full_data_template <- data.table::data.table(time = full_time)
-        names(full_data_template) <- time_var
-        data <- data.table::merge.data.table(
-          full_data_template,
-          data,
-          by = time_var,
-          all.x = TRUE
-        )
-      }
+      )
+      names(full_data_template) <- c(time_var, group_var)
+      data <- data.table::merge.data.table(
+        full_data_template,
+        data,
+        by = c(time_var, group_var),
+        all.x = TRUE
+      )
     }
   }
   data

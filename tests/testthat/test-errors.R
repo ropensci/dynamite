@@ -367,7 +367,10 @@ test_that("duplicated time points fail", {
       ),
       time = "z"
     ),
-    "Each time index must correspond to a single observation\\."
+    paste0(
+      "Each time index must correspond to a single observation per group:\n",
+      "x Group `1` of `.group` has duplicate observations\\."
+    )
   )
 })
 
@@ -669,14 +672,14 @@ test_that("Invalid confint level fails", {
 
 gaussian_example_small <- gaussian_example |> dplyr::filter(.data$time < 6)
 
-test_that("newdata without group variable fails when there are groups", {
-  gaussian_example_nogroup <- gaussian_example_small |>
-    dplyr::select(!"id")
-  expect_error(
-    predict(gaussian_example_fit, newdata = gaussian_example_nogroup),
-    "Can't find grouping variable `id` in `newdata`\\."
-  )
-})
+#test_that("newdata without group variable fails when there are groups", {
+#  gaussian_example_nogroup <- gaussian_example_small |>
+#    dplyr::select(!"id")
+#  expect_error(
+#    predict(gaussian_example_fit, newdata = gaussian_example_nogroup),
+#    "Can't find grouping variable `id` in `newdata`\\."
+#  )
+#})
 
 test_that("newdata with new groups fails when there are groups", {
   gaussian_example_newgroup <- rbind(
@@ -737,7 +740,10 @@ test_that("newdata with duplicated time points fails", {
   )
   expect_error(
     predict(gaussian_example_single_fit, newdata = gaussian_example_duplicated),
-    "Each time index must correspond to a single observation\\."
+    paste0(
+      "Each time index must correspond to a single observation per group:\n",
+      "x Group `1` of `.group` has duplicate observations\\."
+    )
   )
 })
 
