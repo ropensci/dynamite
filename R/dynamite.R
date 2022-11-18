@@ -405,6 +405,13 @@ remove_redundant_parameters <- function(stan_input, backend, ...) {
     dots$pars <- c("nu_raw", "nu", "L")
     dots$include <- FALSE
   }
+  if (is.null(dots$pars) &&
+      stan_input$sampling_vars$P > 0 &&
+      backend == "rstan") {
+    #many more, but depends on the channel names
+    dots$pars <- c("omega_raw_psi", "L_lf")
+    dots$include <- FALSE
+  }
   dots
 }
 
@@ -623,7 +630,8 @@ parse_past <- function(dformula, data, group_var, time_var) {
 
 #' Parse Lag and Lags Definitions of a `dynamiteformula` Object
 #'
-#' Also processes the checks on random component and adds it to dformulas.
+#' Also processes the checks on random and latent factor components and adds
+#' them to dformulas.
 #'
 #' @return A `list` with the following components:
 #'   * `all` A complete `dynamiteformula` for all channels of the model.
@@ -744,13 +752,53 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
       random_defs$correlated <- FALSE
     }
   }
+  lfactor_defs <- attr(dformula, "lfactor")
+  if (!is.null(lfactor_defs)) {
+    families <- unlist(get_families(dformula[channels_stoch]))
+    valid_channels <- resp_stoch[!(families %in% "categorical")]
+    # default, use all channels except categorical
+    if (is.null(lfactor_defs$responses)) {
+      lfactor_defs$responses <- valid_channels
+      stopifnot_(
+        length(valid_channels) > 0L,
+        c(
+          "No valid responses for latent factor component:",
+          `x` = "Latent factors are not supported for the categorical
+                family."
+        )
+      )
+    } else {
+      psi_channels <- lfactor_defs$responses %in% resp_stoch
+      stopifnot_(
+        all(psi_channels),
+        c(
+          "Argument {.arg responses} of {.fun lfactor} contains variables
+          {.var {cs(resp_stoch[psi_channels])}}:",
+          `x` = "No such response variables in the model."
+        )
+      )
+      psi_channels <- lfactor_defs$responses %in% valid_channels
+      stopifnot_(
+        all(psi_channels),
+        c(
+          "Latent factors are not supported for the categorical family:",
+          `x` = "Found latent factor declaration for categorical variable{?s}
+                {.var {cs(valid_channels[psi_channels])}}."
+        )
+      )
+    }
+    if (length(lfactor_defs$responses) < 2L) {
+      lfactor_defs$correlated <- FALSE
+    }
+  }
   list(
     all = dformula,
     det = dformula_det,
     stoch = structure(
       dformula[channels_stoch],
       splines = attr(dformula, "splines"),
-      random = random_defs
+      random = random_defs,
+      lfactor = lfactor_defs
     ),
     lag_pred = dformula_lag_pred,
     lag_det = dformula_lag_det,

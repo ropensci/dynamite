@@ -41,7 +41,7 @@ vectorizable_prior <- function(x) {
 #' @param has_random_intercept \[`logical(1)`]\cr Does the channel have a
 #'   random intercept?
 #' @param noncentered \[`logical(1)`]\cr Should the noncentered parametrization
-#'   be used?
+#'   be used for splines?
 #' @param shrinkage \[`logical(1)`]\cr Should the common global shrinkage
 #'   parameter be used?
 #' @param lb \[`double(1)`]\cr Lower bound for the `tau` parameter.
@@ -377,7 +377,10 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
                                      has_varying, has_fixed_intercept,
                                      has_varying_intercept,
                                      has_random_intercept,
-                                     K_fixed, K_varying) {
+                                     K_fixed, K_varying,
+                                     has_lfactor, noncentered_psi,
+                                     noncentered_lambda,
+                                     nonzero_lambda) {
   oname <- ifelse_(noncentered, "omega_raw_", "omega_")
   paste_rows(
     onlyif(
@@ -405,6 +408,22 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
     onlyif(
       has_varying_intercept,
       "real<lower={lb}> tau_alpha_{y}; // SD for the random walk"
+    ),
+    onlyif(
+      has_lfactor && nonzero_lambda,
+      "real<lower=0> tau_psi_{y}; // SD for for the random walk"
+    ),
+    onlyif(
+      has_lfactor,
+      "real<lower=0> sigma_lambda_{y}; // SD of factor loadings"
+    ),
+    onlyif(
+      has_lfactor,
+      "vector[N - 1] lambda_raw_{y}; // raw factor loadings"
+    ),
+    onlyif(
+      has_lfactor  && noncentered_psi,
+      "real omega_raw_psi_1_{y}; // factor spline coef for first time point"
     ),
     .indent = idt(1)
   )
@@ -516,7 +535,11 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
                                                  has_fixed_intercept,
                                                  has_varying_intercept,
                                                  J, K, K_fixed, K_varying,
-                                                 L_fixed, L_varying) {
+                                                 L_fixed, L_varying,
+                                                 has_lfactor,
+                                                 noncentered_psi,
+                                                 noncentered_lambda,
+                                                 nonzero_lambda) {
   if (noncentered) {
     xi_term <- ifelse_(shrinkage, " * xi[i - 1];", ";")
     declare_omega <- paste_rows(
@@ -539,7 +562,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
   }
 
   declare_delta <- paste_rows(
-    "// Fixed coefficients",
+    "// Varying coefficients",
     "vector[{K_varying}] delta_{y}[T];",
     .indent = idt(c(0, 1)),
     .parse = FALSE
@@ -655,19 +678,67 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
     .parse = FALSE
   )
 
+  m <- ifelse_(nonzero_lambda, "1 + ", "")
+  if (noncentered_lambda) {
+    declare_lambda <- paste_rows(
+      "// hard sum-to-zero constraint",
+      "vector[N] lambda_std_{y} = A_qr * lambda_raw_{y};",
+      "vector[N] lambda_{y} = {m}sigma_lambda_{y} * lambda_std_{y};",
+      .indent = idt(c(0, 1, 1)),
+      .parse = FALSE
+    )
+  } else {
+    declare_lambda <- paste_rows(
+      "// hard sum-to-zero constraint",
+      "vector[N] lambda_{y} = {m}sigma_lambda_{y} * A_qr * lambda_raw_{y};",
+      .indent = idt(c(0, 1)),
+      .parse = FALSE
+    )
+  }
+  if (noncentered_psi) {
+    state_omega_psi <- paste_rows(
+      "omega_psi_{y}[1] = omega_raw_psi_1_{y};",
+      "omega_psi_{y} = cumulative_sum(omega_psi_{y});",
+      .indent = idt(c(1, 1)),
+      .parse = FALSE
+    )
+  }
+  # else {
+  #   state_omega_psi <- paste_rows(
+  #     "omega_psi_{y} = append_col(omega_raw_psi_1_{y}, omega_psi_{y});",
+  #     .indent = idt(1))
+  # }
+  declare_psi <- paste_rows(
+    "// Latent factor",
+    "vector[T] psi_{y};",
+    .indent = idt(c(0, 1)),
+    .parse = FALSE
+  )
+  state_psi <- paste_rows(
+    "for (t in 1:T) {{",
+    "psi_{y}[t] = omega_psi_{y} * Bs[, t];",
+    "}}",
+    .indent = idt(c(1, 2, 1)),
+    .parse = FALSE
+  )
+
   list(
     declarations = paste_rows(
       onlyif(has_varying && noncentered, declare_omega),
       onlyif(has_varying, declare_delta),
       onlyif(has_fixed_intercept, declare_fixed_intercept),
       onlyif(has_varying_intercept, declare_varying_intercept),
-      .indent = idt(c(1, 1, 1, 0))
+      onlyif(has_lfactor, declare_psi),
+      onlyif(has_lfactor, declare_lambda),
+      .indent = idt(c(1, 1, 1, 1, 1, 1))
     ),
     statements = paste_rows(
       onlyif(has_varying && noncentered, state_omega),
       onlyif(has_varying, state_delta),
       onlyif(has_fixed_intercept, state_fixed_intercept),
       onlyif(has_varying_intercept, state_varying_intercept),
+      onlyif(has_lfactor && noncentered_psi, state_omega_psi),
+      onlyif(has_lfactor, state_psi),
       .indent = idt(0)
     )
   )
@@ -704,7 +775,7 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
     )
   }
   declare_delta <- paste_rows(
-    "// Fixed coefficients",
+    "// Varying coefficients",
     "matrix[{K_varying}, {S - 1}] delta_{y}[T];",
     .indent = idt(1),
     .parse = FALSE
@@ -868,14 +939,14 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
   )
 }
 
-transformed_parameters_lines_binomial <- function(...) {
+transformed_parameters_lines_gaussian <- function(...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in%
-    names(formals(transformed_parameters_lines_default))]
+      names(formals(transformed_parameters_lines_default))]
   do.call(what = transformed_parameters_lines_default, args = args)
 }
 
-transformed_parameters_lines_gaussian <- function(...) {
+transformed_parameters_lines_binomial <- function(...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in%
     names(formals(transformed_parameters_lines_default))]
@@ -926,24 +997,44 @@ transformed_parameters_lines_beta <- function(...) {
 
 # Model block -------------------------------------------------------------
 
-model_lines_default <- function(y, idt, obs, noncentered, shrinkage, has_varying,
-                                has_fixed, has_fixed_intercept,
+model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
+                                has_varying, has_fixed, has_fixed_intercept,
                                 has_varying_intercept, has_random_intercept,
-                                #has_factor,
+                                has_lfactor, noncentered_psi,
+                                noncentered_lambda, nonzero_lambda,
                                 sigma_nu_prior_distr = "",
                                 alpha_prior_distr = "",
                                 tau_alpha_prior_distr = "",
-                               #lambda_prior_distr = "",
+                                lambda_prior_distr = "",
                                 beta_prior_distr = "",
                                 beta_prior_npars = 1L,
                                 delta_prior_distr = "",
                                 delta_prior_npars = 1L,
                                 tau_prior_distr = "",
                                 tau_prior_npars = 1L,
+                                sigma_lambda_prior_distr = "",
+                                psi_prior_distr = "",
+                                tau_psi_prior_distr = "",
                                 K_fixed, K_varying, ...) {
   mtext_u <- "sigma_nu_{y} ~ {sigma_nu_prior_distr};"
   mtext_alpha <- "a_{y} ~ {alpha_prior_distr};"
-  #mtext_lambda <- "lambda_{y} ~ {lambda_prior_distr};"
+
+  if (has_lfactor) {
+    m <- ifelse_(nonzero_lambda, "1", "0")
+    mtext_lambda <- paste_rows(
+      ifelse_(noncentered_lambda,
+        "lambda_std_{y} ~ normal(0, inv(sqrt(1 - inv(N))));",
+        "lambda_{y} ~ normal({m}, sigma_lambda_{y} * inv(sqrt(1 - inv(N))));"
+      ),
+      "sigma_lambda_{y} ~ {sigma_lambda_prior_distr};",
+      onlyif(nonzero_lambda, "tau_psi_{y} ~ {tau_psi_prior_distr};"),
+      ifelse_(noncentered_psi,
+        "omega_raw_psi_1_{y} ~ {psi_prior_distr};",
+        "omega_psi_{y}[1] ~ {psi_prior_distr};"
+        ),
+      .indent = idt(c(0, 1, 1, 1)),
+      .parse = TRUE)
+  }
 
   if (noncentered) {
     mtext_omega <- "omega_raw_alpha_{y} ~ std_normal();"
@@ -1057,22 +1148,36 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage, has_varying
     ),
     ""
   )
+  lfactor <- ifelse_(
+    has_lfactor,
+    ifelse(
+      nzchar(obs),
+      glue::glue("lambda_{y}[{obs}] * psi_{y}[t]"),
+      glue::glue("lambda_{y} * psi_{y}[t]")
+    ),
+    ""
+  )
   plus <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
   intercept <- ifelse_(
     nzchar(intercept_alpha) || has_random_intercept,
     glue::glue("{intercept_alpha}{plus}{intercept_nu}"),
     "0"
   )
-
+  plus <- ifelse_(nzchar(intercept) && has_lfactor, " + ", "")
+  intercept <- ifelse_(
+    nzchar(intercept) || has_lfactor,
+    glue::glue("{intercept}{plus}{lfactor}"),
+    ""
+  )
   list(text = paste_rows(
-    #onlyif(has_factor, mtext_lambda),
+    onlyif(has_lfactor, mtext_lambda),
     onlyif(has_random_intercept, mtext_u),
     onlyif(has_fixed_intercept, mtext_fixed_intercept),
     onlyif(has_varying_intercept, mtext_varying_intercept),
     onlyif(has_fixed, mtext_fixed),
     onlyif(has_varying, mtext_varying),
     onlyif(has_varying, mtext_tau),
-    .indent = idt(c(1, 1, 1, 1, 1, 1))
+    .indent = idt(c(1, 1, 1, 1, 1, 1, 1))
   ), intercept = intercept)
 }
 
@@ -1080,9 +1185,11 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
                                     has_varying, has_fixed,
                                     has_fixed_intercept, has_varying_intercept,
                                     has_random_intercept,
+                                    has_lfactor,
                                     alpha_prior_distr = "",
                                     alpha_prior_npars = 1L,
                                     tau_alpha_prior_distr = "",
+                                    lambda_prior_distr = "",
                                     beta_prior_distr = "",
                                     beta_prior_npars = 1L,
                                     delta_prior_distr = "",
@@ -1232,7 +1339,11 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
   # and categorical distribution is very slow without it
   stopifnot_(
     !has_random_intercept,
-    "Categorical family does not support random intercepts."
+    "Categorical family does not yet support random intercepts."
+  )
+  stopifnot_(
+    !has_lfactor,
+    "Categorical family does not yet support latent factors."
   )
   likelihood_term <- ifelse_(
     stan_supports_categorical_logit_glm(backend),
@@ -1279,8 +1390,6 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
 }
 
 model_lines_gaussian <- function(y, idt, obs, has_fixed, has_varying,
-                                 has_fixed_intercept, has_varying_intercept,
-                                 has_random_intercept,
                                  sigma_prior_distr = "", J, K,
                                  L_fixed, L_varying, ...) {
   args <- as.list(match.call()[-1L])
@@ -1311,8 +1420,6 @@ model_lines_gaussian <- function(y, idt, obs, has_fixed, has_varying,
 }
 
 model_lines_binomial <- function(y, idt, obs, has_varying, has_fixed,
-                                 has_fixed_intercept, has_varying_intercept,
-                                 has_random_intercept,
                                  J_fixed, J_varying, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(model_lines_default))]
@@ -1349,8 +1456,6 @@ model_lines_binomial <- function(y, idt, obs, has_varying, has_fixed,
 }
 
 model_lines_bernoulli <- function(y, idt, obs, has_varying, has_fixed,
-                                  has_fixed_intercept, has_varying_intercept,
-                                  has_random_intercept,
                                   J, K, L_fixed, L_varying, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(model_lines_default))]
@@ -1379,8 +1484,6 @@ model_lines_bernoulli <- function(y, idt, obs, has_varying, has_fixed,
 }
 
 model_lines_poisson <- function(y, idt, obs, has_varying, has_fixed, has_offset,
-                                has_fixed_intercept, has_varying_intercept,
-                                has_random_intercept,
                                 J, K, L_fixed, L_varying, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(model_lines_default))]
@@ -1425,9 +1528,7 @@ model_lines_poisson <- function(y, idt, obs, has_varying, has_fixed, has_offset,
 }
 
 model_lines_negbin <- function(y, idt, obs, has_varying, has_fixed, has_offset,
-                               has_fixed_intercept, has_varying_intercept,
-                               has_random_intercept, phi_prior_distr,
-                               J, K, L_fixed, L_varying, ...) {
+                               phi_prior_distr, J, K, L_fixed, L_varying, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(model_lines_default))]
   mtext_def <- do.call(model_lines_default, args = args)
@@ -1468,8 +1569,6 @@ model_lines_negbin <- function(y, idt, obs, has_varying, has_fixed, has_offset,
 }
 
 model_lines_exponential <- function(y, idt, obs, has_varying, has_fixed,
-                                    has_fixed_intercept, has_varying_intercept,
-                                    has_random_intercept,
                                     J_fixed, J_varying, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(model_lines_default))]
@@ -1505,9 +1604,7 @@ model_lines_exponential <- function(y, idt, obs, has_varying, has_fixed,
 }
 
 model_lines_gamma <- function(y, idt, obs, has_varying, has_fixed,
-                              has_fixed_intercept, has_varying_intercept,
-                              has_random_intercept, phi_prior_distr,
-                              J_fixed, J_varying, ...) {
+                              phi_prior_distr, J_fixed, J_varying, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(model_lines_default))]
   mtext_def <- do.call(model_lines_default, args = args)
@@ -1545,9 +1642,7 @@ model_lines_gamma <- function(y, idt, obs, has_varying, has_fixed,
 }
 
 model_lines_beta <- function(y, idt, obs, has_varying, has_fixed,
-                             has_fixed_intercept, has_varying_intercept,
-                             has_random_intercept, phi_prior_distr,
-                             J_fixed, J_varying, ...) {
+                             phi_prior_distr, J_fixed, J_varying, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(model_lines_default))]
   mtext_def <- do.call(model_lines_default, args = args)

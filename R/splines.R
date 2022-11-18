@@ -17,7 +17,8 @@
 #'   useful in avoiding divergences in some cases. See also `noncentered`
 #'   argument. Can be a single positive value, or vector defining the
 #'   lower bound separately for each channel, even for channels without
-#'   varying effects.
+#'   varying effects. The ordering is based on the order of channel definitions
+#'   in the `dynamiteformula`.
 #' @param noncentered \[`logical()`]\cr If `TRUE`, use a noncentered
 #'   parameterization for the spline coefficients. Default is `FALSE`. Try
 #'   changing this if you encounter divergences or other problems in sampling
@@ -62,11 +63,6 @@ splines <- function(df = NULL, degree = 3L, lb_tau = 0,
   stopifnot_(
     checkmate::test_int(x = degree, lower = 1L),
     "Argument {.arg degree} must be a single positive {.cls integer}."
-  )
-  stopifnot_(
-    checkmate::test_numeric(x = lb_tau, lower = 0L),
-    "Argument {.arg lb_tau} must be a {.cls numeric} vector
-     of non-negative values."
   )
   stopifnot_(
     checkmate::test_logical(

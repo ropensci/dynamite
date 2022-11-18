@@ -62,6 +62,17 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   sampling_vars$D <- spline_defs$D
   sampling_vars$Bs <- spline_defs$Bs
   has_random <- attr(dformula, "random")$responses
+  lfactor_defs <- attr(dformula, "lfactor")
+  has_lfactor <- !is.null(lfactor_defs)
+  lfactor_defs <- prepare_lfactors(
+    attr(dformula, "lfactor"),
+    resp_names
+  )
+  stopifnot_(
+    !has_lfactor || has_splines,
+    "Model contains time-varying latent factor(s) but splines have not been
+    defined."
+  )
   N <- n_unique(group)
   K <- ncol(model_matrix)
   X <- aperm(
@@ -133,6 +144,10 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     channel$lb <- spline_defs$lb[i]
     channel$shrinkage <- spline_defs$shrinkage
     channel$noncentered <- spline_defs$noncentered[i]
+    channel$has_lfactor <- resp %in% lfactor_defs$responses
+    channel$noncentered_psi <- lfactor_defs$noncentered_psi
+    channel$noncentered_lambda <- lfactor_defs$noncentered_lambda
+    channel$nonzero_lambda <- lfactor_defs$nonzero_lambda
     stopifnot_(
       has_splines || !(channel$has_varying || channel$has_varying_intercept),
       "Model for response variable {.var {resp}} contains time-varying
@@ -175,8 +190,9 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   sampling_vars$K <- K
   sampling_vars$X <- X
   sampling_vars$M <- sum(unlist(
-    lapply(model_vars, "[[", "has_random_intercept")
-  ))
+    lapply(model_vars, "[[", "has_random_intercept")))
+  sampling_vars$P <- sum(unlist(
+    lapply(model_vars, "[[", "has_lfactor")))
   # avoid goodpractice warning, T is a Stan variable, not an R variable
   sampling_vars[["T"]] <- T_full - fixed
   sampling_vars$X_m <- as.array(x_means)
@@ -184,7 +200,9 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     priors = priors,
     M = sampling_vars$M,
     shrinkage = spline_defs$shrinkage,
-    correlated = attr(dformula, "random")$correlated
+    correlated = attr(dformula, "random")$correlated,
+    P = sampling_vars$P,
+    correlated_lf = lfactor_defs$correlated
   )
   # for stanblocks
   attr(model_vars, "common_priors") <- prior_list[["common_priors"]]
@@ -242,10 +260,63 @@ prepare_splines <- function(spline_defs, n_channels, T_idx) {
   }
   out
 }
-
-#' Construct a Prior Definition for a Time-varying Parameter
+#' Prepare Latent Factor Definitions for Stan
 #'
-#' @param ptype \[chararcter(1L)]\cr Type of the parameter.
+#' @param lfactor_defs An `lfactor` object.
+#' @param responses Names of the response variables.
+#' @noRd
+prepare_lfactors <- function(lfactor_defs, responses) {
+  # TODO: There is repetition here with the checks in parse_lags function! Remove this?
+  out <- list()
+  if (!is.null(lfactor_defs)) {
+    out$responses <- lfactor_defs$responses
+    if (!is.null(out$responses)) {
+      out$responses <- responses
+    } else {
+      if (!all(out$responses %in% responses)) {
+        stop_("Found response variable names in {.arg responses} of
+          {.fun lfactor} function without corresponding channel definition in
+          dynamiteformula.")
+      }
+    }
+    out$noncentered_psi <- lfactor_defs$noncentered_psi
+    n_channels <- length(responses)
+    out$noncentered_lambda <- lfactor_defs$noncentered_lambda
+    if (length(out$noncentered_lambda) %in% c(1L, n_channels)) {
+      out$noncentered_lambda <- rep(out$noncentered_lambda, length = n_channels)
+    } else {
+      stop_(
+        "Length of the {.arg noncentered_lambda} argument of {.fun lfactor}
+        function is not equal to 1 or {n_channels}, the number of the channels
+        with latent factor."
+      )
+    }
+    out$nonzero_lambda <- lfactor_defs$nonzero_lambda
+    if (length(out$nonzero_lambda) %in% c(1L, n_channels)) {
+      out$nonzero_lambda <- rep(out$nonzero_lambda, length = n_channels)
+    } else {
+      stop_(
+        "Length of the {.arg nonzero_lambda} argument of {.fun lfactor} function
+         is not equal to 1 or {n_channels}, the number of the channels with
+         latent factor."
+      )
+    }
+    out$correlated <- lfactor_defs$correlated
+  } else {
+    n_channels <- length(responses)
+    out <- list(
+      responses = character(0),
+      noncentered_psi = FALSE,
+      noncentered_lambda = logical(n_channels),
+      nonzero_lambda = logical(n_channels),
+      correlated = FALSE
+    )
+  }
+  out
+}
+#' Construct a Prior Definition for a Regression Parameters
+#'
+#' @param ptype \[character(1L)]\cr Type of the parameter.
 #' @param priors \[`data.frame`]\cr Prior definitions.
 #' @param channel \[`list()`]\cr Channel-specific variables for Stan sampling
 #' @noRd
@@ -266,10 +337,15 @@ prepare_prior <- function(ptype, priors, channel) {
 #' Construct Common Priors among Channels
 #'
 #' @inheritParams splines
-#' @param priors Custom prior definitions or `NULL` if not specified
-#' @param M Number of channels with random intercept
+#' @param priors Custom prior definitions or `NULL` if not specified.
+#' @param M Number of channels with random intercept.
+#' @param shrinkage Does the model contain shrinkage parameter?
+#' @param correlated Does the model contain correlated random intercepts?
+#' @param P Number of channels with latent factor.
+#' @param correlated Does the model contain correlated latent factors?
 #' @noRd
-prepare_common_priors <- function(priors, M, shrinkage, correlated) {
+prepare_common_priors <- function(priors, M, shrinkage, P, correlated,
+  correlated_lf) {
   common_priors <- NULL
   if (shrinkage) {
     common_priors <- ifelse_(
@@ -299,7 +375,26 @@ prepare_common_priors <- function(priors, M, shrinkage, correlated) {
       ),
       rbind(
         common_priors,
-        priors[priors$type == "L", ]
+        priors[priors$parameter == "L", ]
+      )
+    )
+  }
+  if (P > 1L && correlated_lf) {
+    common_priors <- ifelse_(
+      is.null(priors),
+      rbind(
+        common_priors,
+        data.frame(
+          parameter = "L_lf",
+          response = "",
+          prior = "lkj_corr_cholesky(1)",
+          type = "L",
+          category = ""
+        )
+      ),
+      rbind(
+        common_priors,
+        priors[priors$parameter == "L_lf", ]
       )
     )
   }
@@ -338,7 +433,8 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
   } else {
     priors <- priors[priors$response == y, ]
     types <- priors$type
-    for (ptype in intersect(types, c("alpha", "tau_alpha", "sigma_nu"))) {
+    for (ptype in intersect(types,
+      c("alpha", "tau_alpha", "sigma_nu", "sigma_lambda", "tau_psi"))) {
       pdef <- priors[priors$type == ptype, ]
       channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
     }
@@ -380,7 +476,7 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
     }
     if ("tau_alpha" %in% types) {
       pdef <- priors[priors$type == "tau_alpha", ]
-      channel[["tau_alpha_prior_distr"]] <- pdef$prior
+      channel$tau_alpha_prior_distr <- pdef$prior
     }
     priors <- check_priors(
       priors, default_priors_categorical(y, channel, sd_x, resp_class)$priors

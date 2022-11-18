@@ -6,7 +6,7 @@
 \usage{
 \method{coef}{dynamitefit}(
   object,
-  type = c("beta", "delta", "nu"),
+  type = c("beta", "delta", "nu", "lambda", "psi"),
   responses = NULL,
   summary = TRUE,
   probs = c(0.05, 0.95),
@@ -18,8 +18,9 @@
 \item{object}{[\code{dynamitefit}]\cr The model fit object.}
 
 \item{type}{[\code{character(1)}]\cr Either \code{beta} (the default) for
-time-invariant coefficients, \code{delta} for time-varying coefficients, or
-\code{nu} for random intercepts.}
+time-invariant coefficients, \code{delta} for time-varying coefficients,
+\code{nu} for random intercepts, \code{lambda} for factor loadings, or \code{psi} for
+latent factor.}
 
 \item{responses}{[\code{character()}]\cr Response(s) for which the samples
 should be extracted. Possible options are elements of

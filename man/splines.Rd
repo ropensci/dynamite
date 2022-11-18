@@ -29,7 +29,8 @@ standard deviation parameters \eqn{\tau} of the random walk priors. Can be
 useful in avoiding divergences in some cases. See also \code{noncentered}
 argument. Can be a single positive value, or vector defining the
 lower bound separately for each channel, even for channels without
-varying effects.}
+varying effects. The ordering is based on the order of channel definitions
+in the \code{dynamiteformula}.}
 
 \item{noncentered}{[\code{logical()}]\cr If \code{TRUE}, use a noncentered
 parameterization for the spline coefficients. Default is \code{FALSE}. Try

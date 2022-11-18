@@ -23,6 +23,34 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
       category = ""
     )
   }
+  if (channel$has_lfactor) {
+    channel$sigma_lambda_prior_distr <- "normal(0, 1)"
+    priors$sigma_lambda <- data.frame(
+      parameter = paste0("sigma_lambda_", y),
+      response = y,
+      prior = channel$sigma_lambda_prior_distr,
+      type = "sigma_lambda",
+      category = ""
+    )
+    if (channel$nonzero_lambda) {
+      channel$tau_psi_prior_distr <- "normal(0, 1)"
+      priors$tau_psi <- data.frame(
+        parameter = paste0("tau_psi_", y),
+        response = y,
+        prior = channel$tau_psi_prior_distr,
+        type = "tau_psi",
+        category = ""
+      )
+    }
+    channel$psi_prior_distr <- "normal(0, 1)"
+    priors$psi <- data.frame(
+      parameter = paste0("psi_", y),
+      response = y,
+      prior = channel$psi_prior_distr,
+      type = "psi",
+      category = ""
+    )
+  }
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {
     channel$alpha_prior_distr <- paste0("normal(", mean_y, ", ", 2 * sd_y, ")")
     priors$alpha <- data.frame(

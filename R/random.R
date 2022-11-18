@@ -14,7 +14,8 @@
 #' @export
 #' @param responses \[`character()`]\cr Names of the responses for which the
 #'   random intercepts should be defined. Default is all responses defined with
-#'   `obs`.
+#'   `obs`, except categorical response, which does not (yet) support random
+#'   intercepts.
 #' @param correlated \[`logical(1)`]\cr If `TRUE` (the default), correlations of
 #'   intercepts within a group (i.e., between responses) are modeled so that
 #'   the intercepts follow a multivariate normal distribution.

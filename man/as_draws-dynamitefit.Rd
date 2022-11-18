@@ -48,9 +48,13 @@ Potential values for the types argument are:
 \item \code{beta}\cr Time-invariant regression coefficients.
 \item \code{delta}\cr Time-varying regression coefficients.
 \item \code{nu}\cr Random intercepts.
+\item \code{psi}\cr Latent factor.
+\item \code{lambda}\cr Factor loadings.
 \item \code{tau}\cr Standard deviations of the spline coefficients of \code{delta}.
 \item \code{tau_alpha}\cr Standard deviations of the spline coefficients of
 time-varying \code{alpha}.
+\item \code{tau_psi}\cr Standard deviations of the spline coefficients of
+latent factor \code{psi}.
 \item \code{sigma_nu}\cr Standard deviation of the random intercepts \code{nu}.
 \item \code{sigma}\cr Standard deviations of gaussian responses.
 \item \code{phi}\cr Dispersion parameters of negative binomial responses.
