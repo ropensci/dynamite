@@ -206,10 +206,9 @@ as.data.table.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
       {
         mean = mean(value)
         sd = sd(value)
-        tmp = quantile(value, na.rm = TRUE)
-        q5 = tmp[1L]
-        q95 = tmp[2L]
-        list(mean = mean, sd = sd, q5 = q5, q95 = q95)
+        tmp = quantile(value, probs = probs, na.rm = TRUE)
+        names(tmp) <- paste0("q", 100 * probs)
+        c(list(mean = mean, sd = sd), tmp)
       },
       by = list(parameter, time, category, group, response, type)
     ][,
