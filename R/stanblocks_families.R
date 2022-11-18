@@ -1212,7 +1212,7 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
   mtext_fixed_intercept <- mtext_alpha
 
   xi_term1 <- ifelse_(shrinkage, " * xi[1]", "")
-  xi_term <- ifelse_(shrinkage, " * xi[i - 1]", "")
+  xi_term <- ifelse_(shrinkage, " * xi[i]", "")
   mtext_omega <- ifelse_(
     noncentered,
     paste_rows(

@@ -264,7 +264,7 @@ create_model <- function(dformula, idt, vars, backend) {
   if (!is.null(spline_defs) && spline_defs$shrinkage) {
     xi_prior <- attr(vars, "common_priors")
     xi_prior <- xi_prior[xi_prior$parameter == "xi", "prior"]
-    splinetext <- paste_rows("xi ~ {xi_prior};", .indent = idt(1))
+    splinetext <- paste_rows("xi[1] ~ {xi_prior};", .indent = idt(1))
   }
   randomtext <- ""
   has_nu <- length(attr(dformula, "random")$responses) > 0
