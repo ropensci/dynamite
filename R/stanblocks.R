@@ -89,8 +89,8 @@ create_transformed_data <- function(dformula, idt, vars) {
   state_AQR <- paste_rows(
     "{",
     "matrix[N, N] A = diag_matrix(rep_vector(1, N));",
-    "for (i in 1:K - 1) A[K, i] = -1;",
-    "A[K, K] = 0;",
+    "for (i in 1:N - 1) A[N, i] = -1;",
+    "A[N, N] = 0;",
     "A_qr = qr_Q(A)[ , 1:(N - 1)];",
     "}",
     .indent = idt(c(0, 2, 2, 2, 2, 1)),
