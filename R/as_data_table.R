@@ -77,10 +77,11 @@ as.data.table.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
   }
   all_types <- c(
     "alpha", "beta", "delta", "tau", "tau_alpha", "xi",
-    "sigma_nu", "corr_nu", "sigma", "phi", "nu", "omega", "omega_alpha"
+    "sigma_nu", "corr_nu", "sigma", "phi", "nu", "lambda", "sigma_lambda",
+    "psi", "tau_psi", "corr_psi", "omega", "omega_alpha", "omega_psi"
   )
   if (is.null(types)) {
-    types <- all_types[seq_len(11L)]
+    types <- all_types[seq_len(16L)]
   } else {
     types <- onlyif(is.character(types), tolower(types))
     types <- try(match.arg(types, all_types, TRUE), silent = TRUE)
@@ -90,7 +91,7 @@ as.data.table.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     )
   }
   values <- function(type, response) {
-    if (type %in% c("xi", "corr_nu")) {
+    if (type %in% c("xi", "corr_nu", "corr_psi")) {
       draws <- rstan::extract(
         x$stanfit,
         pars = type,
@@ -146,6 +147,16 @@ as.data.table.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
         type = "corr_nu",
         response = "",
         parameter = "corr_nu"
+      )
+    )
+  }
+  if ("corr_psi" %in% types) {
+    out_all <- rbind(
+      out_all,
+      data.table::data.table(
+        type = "corr_psi",
+        response = "",
+        parameter = "corr_psi"
       )
     )
   }
@@ -425,4 +436,78 @@ as_data_table_sigma_nu <- function(draws, response, ...) {
 #' @noRd
 as_data_table_phi <- function(draws, response, ...) {
   as_data_table_default("phi", draws, response)
+}
+
+#' @describeIn as_data_table_default Data Table for a "lambda" Parameter
+#' @noRd
+as_data_table_lambda <- function(x, draws, n_draws, response, ...) {
+  n_group <- dim(draws)[3L]
+  data.table::data.table(
+    parameter = paste0("lambda_", response),
+    value = c(draws),
+    group = rep(sort(unique(x$data[[x$group_var]])), each = n_draws)
+  )
+}
+#' @describeIn as_data_table_default Data Table for a "sigma_lambda" Parameter
+#' @noRd
+as_data_table_sigma_lambda <- function(draws, response, ...) {
+  as_data_table_default("sigma_lambda", draws, response)
+}
+#' @describeIn as_data_table_default Data Table for a "psi" Parameter
+#' @noRd
+as_data_table_psi <- function(x, draws, n_draws,
+  response, category, include_fixed) {
+  n_cat <- length(category)
+  fixed <- x$stan$fixed
+  all_time_points <- sort(unique(x$data[[x$time_var]]))
+  time_points <- ifelse_(
+    include_fixed,
+    all_time_points,
+    all_time_points[seq.int(fixed + 1L, length(all_time_points))]
+  )
+  n_na <- include_fixed * fixed * n_draws
+  n_time <- length(time_points)
+  n_time2 <- n_time - include_fixed * fixed
+  data.table::rbindlist(
+    lapply(seq_len(n_cat), function(i) {
+      data.table::data.table(
+        parameter = paste0("psi_", response),
+        value = c(
+          rep(NA, n_na),
+          c(draws[, , (i - 1L) * n_time2 + seq_len(n_time2)])
+        ),
+        time = rep(time_points, each = n_draws),
+        category = category[i]
+      )
+    })
+  )
+}
+#' @describeIn as_data_table_default Data Table for a "tau_psi" Parameter
+#' @noRd
+as_data_table_tau_psi <- function(draws, response, ...) {
+  as_data_table_default("tau_psi", draws, response)
+}
+#' @describeIn as_data_table_default Data Table for a "omega_psi" Parameter
+#' @noRd
+as_data_table_omega_psi <- function(x, draws, n_draws, category, ...) {
+  n_cat <- length(category)
+  D <- x$stan$sampling_vars$D
+  data.table::data.table(
+    parameter = rep(
+      paste0("omega_psi_", seq_len(D)),
+      each = n_cat * n_draws
+    ),
+    value = c(draws),
+    category = rep(category, each = n_draws)
+  )
+}
+#' @describeIn as_data_table_default Data Table for a "corr_psi" Parameter
+#' @noRd
+as_data_table_corr_psi <- function(x, draws, ...) {
+  resp <- get_responses(x$dformulas$stoch)
+  pairs <- apply(utils::combn(resp, 2L), 2L, paste, collapse = "_")
+  data.table::data.table(
+    parameter = paste0("corr_psi_", pairs),
+    value = c(draws)
+  )
 }

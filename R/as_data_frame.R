@@ -13,17 +13,27 @@
 #'  * `beta`\cr Time-invariant regression coefficients.
 #'  * `delta`\cr Time-varying regression coefficients.
 #'  * `nu`\cr Random intercepts.
+#'  * `lambda`\cr Factor loadings.
+#'  * `psi`\cr Latent factors.
 #'  * `tau`\cr Standard deviations of the spline coefficients of `delta`.
 #'  * `tau_alpha`\cr Standard deviations of the spline coefficients of
 #'    time-varying `alpha`.
+#'  * `xi`\cr Common time-varying shrinkage factor for splines.
 #'  * `sigma_nu`\cr Standard deviation of the random intercepts `nu`.
 #'  * `corr_nu`\cr Pairwise within-group correlations of random intercepts `nu`.
 #'     Samples of the full correlation matrix can be extracted manually as
 #'     `rstan::extract(fit$stanfit, pars = "corr_matrix_nu")` if necessary.
+#'  * `sigma_lambda`\cr Standard deviations of the latent factor loadings
+#'    `lambda`.
+#'  * `tau_psi`\cr Standard deviations of the the spline coeffients of `psi`.
+#'  * `corr_psi`\cr Pairwise correlations of the latent factors.
+#'     Samples of the full correlation matrix can be extracted manually as
+#'     `rstan::extract(fit$stanfit, pars = "corr_matrix_psi")` if necessary.
 #'  * `sigma`\cr Standard deviations of gaussian responses.
 #'  * `phi`\cr Dispersion parameters of negative binomial responses.
 #'  * `omega`\cr Spline coefficients of the regression coefficients `delta`.
 #'  * `omega_alpha`\cr Spline coefficients of time-varying `alpha`.
+#'  * `omega_psi`\cr Spline coefficients of the latent factors `psi`.
 #'
 #' @export
 #' @param x \[`dynamitefit`]\cr The model fit object.

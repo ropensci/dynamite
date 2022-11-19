@@ -10,25 +10,8 @@
 #' of the model parameters (i.e., only certain types of parameters related to a
 #' certain response variable).
 #'
-#' Potential values for the types argument are:
-#'
-#'  * `alpha`\cr Intercept terms (time-invariant or time-varying).
-#'  * `beta`\cr Time-invariant regression coefficients.
-#'  * `delta`\cr Time-varying regression coefficients.
-#'  * `nu`\cr Random intercepts.
-#'  * `psi`\cr Latent factor.
-#'  * `lambda`\cr Factor loadings.
-#'  * `tau`\cr Standard deviations of the spline coefficients of `delta`.
-#'  * `tau_alpha`\cr Standard deviations of the spline coefficients of
-#'    time-varying `alpha`.
-#'  * `tau_psi`\cr Standard deviations of the spline coefficients of
-#'     latent factor `psi`.
-#'  * `sigma_nu`\cr Standard deviation of the random intercepts `nu`.
-#'  * `sigma`\cr Standard deviations of gaussian responses.
-#'  * `phi`\cr Dispersion parameters of negative binomial responses.
-#'  * `omega`\cr Spline coefficients of the regression coefficients `delta`.
-#'  * `omega_alpha`\cr Spline coefficients of time-varying `alpha`.
-#'
+#' See potential values for the types argument in
+#' [dynamite::as.data.frame.dynamitefit()]
 #' @export
 #' @aliases as_draws_df
 #' @export as_draws_df
