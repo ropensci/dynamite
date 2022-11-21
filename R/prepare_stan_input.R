@@ -146,8 +146,8 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     channel$noncentered <- spline_defs$noncentered[i]
     channel$has_lfactor <- resp %in% lfactor_defs$responses
     channel$noncentered_psi <- lfactor_defs$noncentered_psi
-    channel$noncentered_lambda <- lfactor_defs$noncentered_lambda
-    channel$nonzero_lambda <- lfactor_defs$nonzero_lambda
+    channel$noncentered_lambda <- lfactor_defs$noncentered_lambda[i]
+    channel$nonzero_lambda <- lfactor_defs$nonzero_lambda[i]
     stopifnot_(
       has_splines || !(channel$has_varying || channel$has_varying_intercept),
       "Model for response variable {.var {resp}} contains time-varying
