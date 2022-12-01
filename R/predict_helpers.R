@@ -161,7 +161,7 @@ parse_newdata <- function(dformula, newdata, data, type, eval_type,
 #'
 #' @inheritParams predict.dynamitefit
 #' @noRd
-parse_funs <- function(object, funs) {
+parse_funs <- function(object, type, funs) {
   stopifnot_(
     !is.null(object$group_var),
     "Argument {.arg funs} requires data with multiple individuals."
@@ -175,10 +175,22 @@ parse_funs <- function(object, funs) {
     !is.null(funs_names),
     "Argument {.arg funs} must be named."
   )
-  stopifnot_(
-    all(funs_names %in% get_responses(object$dformulas$all)),
-    "The names of {.arg funs} must be response variables of the model."
-  )
+  valid_names <- get_responses(object$dformulas$all)
+  if (identical(type, "response")) {
+    stopifnot_(
+      all(funs_names %in% get_responses(object$dformulas$all)),
+      "The names of {.arg funs} must be response variables of the model."
+    )
+  } else {
+    valid_names <- c(valid_names, paste0(valid_names, "_", type))
+    stopifnot_(
+      all(funs_names %in% valid_names),
+      paste0(
+        "The names of {.arg funs} must be response variables of the model, or ",
+        "response variable names with the suffix _", type, "."
+      )
+    )
+  }
   out <- list()
   idx <- 1L
   for (i in seq_along(funs)) {
@@ -198,7 +210,7 @@ parse_funs <- function(object, funs) {
       )
       out[[idx]] <- list(
         fun = funs[[i]][[j]],
-        name = paste0(funs_names[i], "_", fun_names[j]),
+        name = paste0(fun_names[j], "_", funs_names[i]),
         target = funs_names[i]
       )
       idx <- idx + 1L

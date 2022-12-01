@@ -30,12 +30,12 @@
 #' @param funs \[`list()`]\cr A named list whose names should correspond to the
 #'   response variables of the model. Each element of `funs` should be a
 #'   a named `list` of functions that will be applied to the
-#'   corresponding predicted responses of the channel over the individuals
+#'   corresponding predicted `type` of the channel over the individuals
 #'   for each combination of the posterior draws and time points.
 #'   In other words, the resulting predictions will be averages
 #'   over the individuals. The functions should take the corresponding
-#'   response variable values as their only argument.
-#'   If `funs` is empty, the full individual level predictions are returned
+#'   `type` variable values as their only argument.
+#'   If `funs` is empty, the full individual level values are returned
 #'   instead. Note that this argument can only be used
 #'   if there are multiple individuals (i.e., `group` was not `NULL` in the
 #'   `dynamite` call).
@@ -299,11 +299,16 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
   draw_dep <- newdata[, .SD, .SDcols = c(resp_draw, group_var, time_var)]
   draw_indep <- newdata[, .SD, .SDcols = setdiff(names(newdata), resp_draw)]
   if (length(funs) > 0L) {
-    funs <- parse_funs(object, funs)
+    funs <- parse_funs(object, type, funs)
+    data.table::setcolorder(
+      x = draw_dep,
+      neworder = c(group_var, time_var, resp_draw)
+    )
     predict_summary(
       object = object,
       storage = draw_dep,
       observed = draw_indep,
+      type = type,
       funs = funs,
       new_levels = new_levels,
       n_draws = n_draws,
@@ -441,7 +446,7 @@ predict_full <- function(object, simulated, observed, type, eval_type,
 #' @param observed A `data.table` containing fixed predictors (values
 #'   independent of the posterior draw)
 #' @noRd
-predict_summary <- function(object, storage, observed, funs, new_levels,
+predict_summary <- function(object, storage, observed, type, funs, new_levels,
                             n_draws, fixed, group_var, time_var, df) {
   formulas_stoch <- get_formulas(object$dformulas$stoch)
   resp_stoch <- get_responses(object$dformulas$stoch)
@@ -502,7 +507,7 @@ predict_summary <- function(object, storage, observed, funs, new_levels,
     object,
     simulated,
     observed,
-    type = "response",
+    type,
     eval_type = "predicted",
     resp_stoch,
     n_draws,
