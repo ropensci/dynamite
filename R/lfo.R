@@ -118,7 +118,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   ][,
     list(elpd = log_mean_exp(loglik)),
     by = list(time, id),
-    env = list(log_mean_exp = "log_mean_exp")
+    env = list(log_mean_exp = "log_mean_exp", time = time, id = id)
   ][["elpd"]]
 
   i_refit <- L
@@ -191,7 +191,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
         ][,
           list(elpd = log_mean_exp(loglik)),
           by = list(time, id),
-          env = list(log_mean_exp = "log_mean_exp")
+          env = list(log_mean_exp = "log_mean_exp", time = time, id = id)
         ][["elpd"]]
 
       } else {
