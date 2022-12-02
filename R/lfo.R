@@ -217,7 +217,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
       ELPD_SE = sd(elpds) * sqrt(length(elpds)),
       pareto_k = ks,
       ELPDs = elpds,
-      refit_times = timepoints[refits],
+      refit_times = refits,
       L = L,
       k_threshold = k_threshold
     ),
