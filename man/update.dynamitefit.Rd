@@ -41,7 +41,9 @@ Updated \code{dynamitefit} object.
 Update Dynamite Model
 }
 \examples{
+\dontrun{
 # re-estimate the example fit without thinning:
 fit <- update(gaussian_example_fit, thin = 1)
+}
 
 }

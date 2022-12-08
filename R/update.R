@@ -18,8 +18,10 @@
 #' @return Updated `dynamitefit` object.
 #' @export
 #' @examples
+#' \dontrun{
 #' # re-estimate the example fit without thinning:
 #' fit <- update(gaussian_example_fit, thin = 1)
+#' }
 #'
 update.dynamitefit <- function(object, dformula = NULL, data = NULL,
                                priors = NULL, recompile = NULL, ...) {
