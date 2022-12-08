@@ -131,7 +131,7 @@
 #'   ggplot2::ggplot(pp, aes(time, y_new, group = .draw)) +
 #'     geom_line(alpha = 0.1) +
 #'     theme_bw()
-#'   }
+#' }
 #' }
 #'
 predict.dynamitefit <- function(object, newdata = NULL,

@@ -44,12 +44,12 @@ original data.}
 \item{funs}{[\code{list()}]\cr A named list whose names should correspond to the
 response variables of the model. Each element of \code{funs} should be a
 a named \code{list} of functions that will be applied to the
-corresponding predicted responses of the channel over the individuals
+corresponding predicted \code{type} of the channel over the individuals
 for each combination of the posterior draws and time points.
 In other words, the resulting predictions will be averages
 over the individuals. The functions should take the corresponding
-response variable values as their only argument.
-If \code{funs} is empty, the full individual level predictions are returned
+\code{type} variable values as their only argument.
+If \code{funs} is empty, the full individual level values are returned
 instead. Note that this argument can only be used
 if there are multiple individuals (i.e., \code{group} was not \code{NULL} in the
 \code{dynamite} call).}
@@ -156,7 +156,7 @@ if (requireNamespace("ggplot2")) {
   ggplot2::ggplot(pp, aes(time, y_new, group = .draw)) +
     geom_line(alpha = 0.1) +
     theme_bw()
-  }
+}
 }
 
 }

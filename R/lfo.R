@@ -95,12 +95,14 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     expand = FALSE,
     df = FALSE
   )$simulated
+  # avoid NSE notes from R CMD check
+  loglik <- patterns <- .draw <- NULL
 
   n_draws <- ndraws(x)
   # sum the log-likelihood over the channels and non-missing time points
   # for each group, time, and draw
   # drop those id&time pairs which contain NA
-  lls <- na.omit(out[
+  lls <- stats::na.omit(out[
     time > timepoints[L], ,
     env = list(time = time, timepoints = timepoints, L = L)
   ][,
@@ -174,7 +176,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           df = FALSE
         )$simulated
 
-        lls <- na.omit(out[
+        lls <- stats::na.omit(out[
           time > timepoints[L], ,
           env = list(time = time, timepoint = timepoints, L = L)
         ])[,
@@ -270,9 +272,11 @@ plot.lfo <- function(x, ...) {
     )
   )
   d$threshold <- d$k > x$k_threshold
-  ggplot2::ggplot(d, ggplot2::aes_string(x = "time", y = "k")) +
+  # avoid NSE notes from R CMD check
+  time <- k <- threshold <- NULL
+  ggplot2::ggplot(d, ggplot2::aes(x = time, y = k)) +
     ggplot2::geom_point(
-      ggplot2::aes_string(color = "threshold"),
+      ggplot2::aes(color = threshold),
       shape = 3,
       show.legend = FALSE,
       alpha = 0.5

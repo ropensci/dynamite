@@ -325,7 +325,10 @@ create_model <- function(dformula, idt, vars, backend) {
             "vector[P] tau_psi = [{tau}]';",
             "matrix[P, P] Ltau = diag_pre_multiply(tau_psi, L_lf);",
             "for (i in 2:D) {{",
-            "omega_raw_psi[, i] ~ multi_normal_cholesky(omega_raw_psi[, i - 1], Ltau);",
+            paste0(
+              "omega_raw_psi[, i] ~ ",
+              "multi_normal_cholesky(omega_raw_psi[, i - 1], Ltau);"
+            ),
             "}}",
             "}}",
             .indent = idt(c(1, 1, 2, 2, 2, 3, 2, 1))
@@ -334,7 +337,10 @@ create_model <- function(dformula, idt, vars, backend) {
           lfactortext <- paste_rows(
             "L_lf ~ {L_prior};",
             "for (i in 2:D) {{",
-            "omega_raw_psi[, i] ~ multi_normal_cholesky(omega_raw_psi[, i - 1], L_lf);",
+            paste0(
+              "omega_raw_psi[, i] ~ ",
+              "multi_normal_cholesky(omega_raw_psi[, i - 1], L_lf);"
+            ),
             "}}",
             .indent = idt(c(1, 1, 2, 1))
           )
@@ -381,7 +387,15 @@ create_model <- function(dformula, idt, vars, backend) {
     )
     mod[i] <- lines_wrap("model", family, line_args)
   }
-  paste_rows("model {", splinetext, randomtext, lfactortext, mod, "}", .parse = FALSE)
+  paste_rows(
+    "model {",
+    splinetext,
+    randomtext,
+    lfactortext,
+    mod,
+    "}",
+    .parse = FALSE
+  )
 }
 
 #' @describeIn create_function Create the 'Generated Quantities'
@@ -404,7 +418,8 @@ create_generated_quantities <- function(dformula, idt, vars) {
     )
   }
   gen_psi <- ""
-  P <- length(attr(dformula, "lfactor")$responses)
+  psis <- attr(dformula, "lfactor")$responses
+  P <- length(psis)
   if (P > 0 && attr(dformula, "lfactor")$correlated) {
     # evaluate number of corrs to avoid Stan warning about integer division
     tau <- paste0(ifelse(attr(dformula, "lfactor")$nonzero_lambda,

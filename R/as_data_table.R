@@ -3,8 +3,12 @@
 #' Provides a `data.table` representation of the posterior samples of the model
 #' parameters. See [dynamite::as.data.frame.dynamitefit()] for details.
 #'
-#' @inheritParams as.data.frame.dynamitefit
 #' @export
+#' @export as.data.table
+#' @aliases as.data.table
+#' @importFrom data.table as.data.table
+#' @param keep.rownames \[`logical(1)`]\cr Not used.
+#' @inheritParams as.data.frame.dynamitefit
 #' @examples
 #' as.data.table(
 #'   gaussian_example_fit,
@@ -13,7 +17,8 @@
 #'   summary = FALSE
 #' )
 #'
-as.data.table.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
+as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
+                                      row.names = NULL, optional = FALSE,
                                       responses = NULL, types = NULL,
                                       summary = TRUE, probs = c(0.05, 0.95),
                                       include_fixed = TRUE, ...) {

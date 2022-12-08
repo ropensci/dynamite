@@ -26,7 +26,11 @@ knitr::opts_chunk$set(
 [![Status at rOpenSci Software Peer Review](https://badges.ropensci.org/554_status.svg)](https://github.com/ropensci/software-review/issues/554)
 <!-- badges: end -->
 
-The `dynamite` [R](https://www.r-project.org/) package provides easy-to-use interface for Bayesian inference of complex panel (time series) data comprising of multiple measurements per multiple individuals measured in time. The main features distinguishing the package and the underlying methodology from many other approaches are:
+The `dynamite` [R](https://www.r-project.org/) package provides easy-to-use 
+interface for Bayesian inference of complex panel (time series) data comprising 
+of multiple measurements per multiple individuals measured in time. 
+The main features distinguishing the package and the underlying methodology 
+from many other approaches are:
 
 * Support for both time-invariant and time-varying effects modeled via 
   B-splines.
@@ -42,7 +46,7 @@ The `dynamite` [R](https://www.r-project.org/) package provides easy-to-use inte
 * Transparent quantification of parameter and predictive uncertainty due to a 
   fully Bayesian approach.
 * User-friendly and efficient R interface with state-of-the-art estimation via 
-  Stan.
+  Stan. Both `rstan` and `cmdstanr` backend are supported.
 
 The `dynamite` package is developed with the support of Academy of Finland 
 grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)). 
@@ -128,7 +132,7 @@ For more examples, see the package vignette.
 
 ## Related packages
 
-- The `dynamite` package uses Stan via [`rstan`](https://CRAN.R-project.org/package=rstan) (see also https://mc-stan.org), which is a probabilistic programming language for general Bayesian modelling.
+- The `dynamite` package uses Stan via [`rstan`](https://CRAN.R-project.org/package=rstan) and [`cmdstanr`](https://CRAN.R-project.org/package=cmdstanr) (see also https://mc-stan.org), which is a probabilistic programming language for general Bayesian modelling.
 
 - The [`brms`](https://CRAN.R-project.org/package=brms) package also uses Stan, and can be used to fit various complex multilevel models.
 

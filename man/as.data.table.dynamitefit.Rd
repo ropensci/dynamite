@@ -2,10 +2,12 @@
 % Please edit documentation in R/as_data_table.R
 \name{as.data.table.dynamitefit}
 \alias{as.data.table.dynamitefit}
+\alias{as.data.table}
 \title{Extract Samples From a \code{dynamitefit} Object as a Data Table}
 \usage{
-as.data.table.dynamitefit(
+\method{as.data.table}{dynamitefit}(
   x,
+  keep.rownames = FALSE,
   row.names = NULL,
   optional = FALSE,
   responses = NULL,
@@ -18,6 +20,8 @@ as.data.table.dynamitefit(
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
+
+\item{keep.rownames}{[\code{logical(1)}]\cr Not used.}
 
 \item{row.names}{Ignored.}
 

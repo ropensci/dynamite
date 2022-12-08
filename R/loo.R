@@ -43,6 +43,8 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, ...) {
     expand = FALSE,
     df = FALSE
   )$simulated
+  # avoid NSE notes from R CMD check
+  patterns <- NULL
 
   n_chains <- x$stanfit@sim$chains
   n_draws <- ndraws(x) %/% n_chains
@@ -58,7 +60,11 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, ...) {
 
   if (separate_channels) {
     ll <- split(
-      x = melt(out, measure.vars = patterns("_loglik$"), na.rm = TRUE),
+      x = data.table::melt(
+        out,
+        measure.vars = patterns("_loglik$"),
+        na.rm = TRUE
+      ),
       by = "variable"
     )
     lapply(ll, function(x) loo_(x$value, n_draws, n_chains))

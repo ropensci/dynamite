@@ -454,7 +454,10 @@ parameters_lines_categorical <- function(y, idt, noncentered, lb, has_fixed,
     ),
     onlyif(
       has_varying_intercept,
-      "row_vector[D - 1] omega_raw_alpha_{y}[{S - 1}]; // Coefficiens for alpha"
+      paste0(
+        "row_vector[D - 1] omega_raw_alpha_{y}[{S - 1}]; ",
+        "// Coefficients for alpha"
+      )
     ),
     onlyif(
       has_varying_intercept,
@@ -530,7 +533,8 @@ parameters_lines_beta <- function(y, idt, ...) {
 
 # Transformed parameters block --------------------------------------------
 
-transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
+transformed_parameters_lines_default <- function(y, idt, noncentered,
+                                                 shrinkage,
                                                  has_fixed, has_varying,
                                                  has_fixed_intercept,
                                                  has_varying_intercept,
@@ -543,9 +547,8 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
   if (noncentered) {
     xi_term <- ifelse_(shrinkage, " * xi[i - 1];", ";")
     declare_omega <- paste_rows(
-      "// Spline coefficients",
       "matrix[{K_varying}, D] omega_{y};",
-      .indent = idt(c(0, 1)),
+      .indent = idt(1),
       .parse = FALSE
     )
     state_omega <- paste_rows(
@@ -559,12 +562,40 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
       .indent = idt(c(1, 1, 2, 1)),
       .parse = FALSE
     )
+    declare_omega_alpha <- paste_rows(
+      "row_vector[D] omega_alpha_{y};",
+      .indent = idt(1),
+      .parse = FALSE
+    )
+    state_omega_alpha <- paste_rows(
+      "omega_alpha_{y}[1] = omega_alpha_1_{y};",
+      "for (i in 2:D) {{",
+      paste0(
+        "omega_alpha_{y}[i] = omega_alpha_{y}[i - 1] + ",
+        "omega_raw_alpha_{y}[i - 1] * tau_alpha_{y}{xi_term}"
+      ),
+      "}}",
+      .indent = idt(c(1, 1, 2, 1)),
+      .parse = FALSE
+    )
+  } else {
+    declare_omega_alpha <- paste_rows(
+      "row_vector[D] omega_alpha_{y};",
+      .indent = idt(1),
+      .parse = FALSE
+    )
+    state_omega_alpha <- paste_rows(
+      "omega_alpha_{y}[1] = omega_alpha_1_{y};",
+      "omega_alpha_{y}[2:D] = omega_raw_alpha_{y};",
+      .indent = idt(1),
+      .parse = FALSE
+    )
   }
 
   declare_delta <- paste_rows(
-    "// Varying coefficients",
+    "// Time-varying coefficients",
     "vector[{K_varying}] delta_{y}[T];",
-    .indent = idt(c(0, 1)),
+    .indent = idt(1),
     .parse = FALSE
   )
   state_delta <- paste_rows(
@@ -577,8 +608,9 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
 
   if (has_fixed || has_varying) {
     declare_omega_alpha_1 <- paste_rows(
-      "// Fixed intercept",
+      "// Time-varying intercept",
       "real alpha_{y}[T];",
+      "// Spline coefficients",
       "real omega_alpha_1_{y};",
       .indent = idt(1),
       .parse = FALSE
@@ -600,7 +632,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
     declare_fixed_intercept <- paste_rows(
       "// Time-invariant intercept",
       "real alpha_{y};",
-      .indent = idt(c(0, 1)),
+      .indent = idt(1),
       .parse = FALSE
     )
     state_fixed_intercept <- paste_rows(
@@ -622,50 +654,17 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
       "// Time-invariant intercept",
       "real alpha_{y}[T];",
       "real omega_alpha_1_{y} = a_{y};",
-      .indent = idt(c(0, 1, 1)),
+      .indent = idt(1),
       .parse = FALSE
     )
     state_omega_alpha_1 <- character(0L)
     declare_fixed_intercept <- "real alpha_{y} = a_{y};"
     state_fixed_intercept <- character(0L)
   }
-  if (noncentered) {
-    xi_term <- ifelse_(shrinkage, " * xi[i - 1];", ";")
-    declare_omega_alpha <- paste_rows(
-      "// Spline coefficients",
-      "row_vector[D] omega_alpha_{y};",
-      .indent = idt(c(0, 1)),
-      .parse = FALSE
-    )
-    state_omega_alpha <- paste_rows(
-      "omega_alpha_{y}[1] = omega_alpha_1_{y};",
-      "for (i in 2:D) {{",
-      paste0(
-        "omega_alpha_{y}[i] = omega_alpha_{y}[i - 1] + ",
-        "omega_raw_alpha_{y}[i - 1] * tau_alpha_{y}{xi_term}"
-      ),
-      "}}",
-      .indent = idt(c(1, 1, 2, 1)),
-      .parse = FALSE
-    )
-  } else {
-    declare_omega_alpha <- paste_rows(
-      "// Spline coefficients",
-      "row_vector[D] omega_alpha_{y};",
-      .indent = idt(c(0, 1)),
-      .parse = FALSE
-    )
-    state_omega_alpha <- paste_rows(
-      "omega_alpha_{y}[1] = omega_alpha_1_{y};",
-      "omega_alpha_{y}[2:D] = omega_raw_alpha_{y};",
-      .indent = idt(1),
-      .parse = FALSE
-    )
-  }
   declare_varying_intercept <- paste_rows(
     declare_omega_alpha_1,
     declare_omega_alpha,
-    .indent = idt(c(0, 1)),
+    .indent = idt(0),
     .parse = FALSE
   )
   state_varying_intercept <- paste_rows(
@@ -684,14 +683,14 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
       "// hard sum-to-zero constraint",
       "vector[N] lambda_std_{y} = A_qr * lambda_raw_{y};",
       "vector[N] lambda_{y} = {m}sigma_lambda_{y} * lambda_std_{y};",
-      .indent = idt(c(0, 1, 1)),
+      .indent = idt(1),
       .parse = FALSE
     )
   } else {
     declare_lambda <- paste_rows(
       "// hard sum-to-zero constraint",
       "vector[N] lambda_{y} = {m}sigma_lambda_{y} * A_qr * lambda_raw_{y};",
-      .indent = idt(c(0, 1)),
+      .indent = idt(1),
       .parse = FALSE
     )
   }
@@ -699,7 +698,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
     state_omega_psi <- paste_rows(
       "omega_psi_{y}[1] = omega_raw_psi_1_{y};",
       "omega_psi_{y} = cumulative_sum(omega_psi_{y});",
-      .indent = idt(c(1, 1)),
+      .indent = idt(1),
       .parse = FALSE
     )
   }
@@ -711,7 +710,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
   declare_psi <- paste_rows(
     "// Latent factor",
     "vector[T] psi_{y};",
-    .indent = idt(c(0, 1)),
+    .indent = idt(1),
     .parse = FALSE
   )
   state_psi <- paste_rows(
@@ -730,7 +729,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered, shrinkage,
       onlyif(has_varying_intercept, declare_varying_intercept),
       onlyif(has_lfactor, declare_psi),
       onlyif(has_lfactor, declare_lambda),
-      .indent = idt(c(1, 1, 1, 1, 1, 1))
+      .indent = idt(0)
     ),
     statements = paste_rows(
       onlyif(has_varying && noncentered, state_omega),

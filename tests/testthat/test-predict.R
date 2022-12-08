@@ -368,8 +368,8 @@ test_that("summarising via funs is equivalent to manual summary", {
     dplyr::summarise(y_mean = mean(y_new), y_sd = sd(y_new)) |>
     dplyr::filter(time > 1) |>
     dplyr::arrange(.draw)
-  expect_equal(pred1$y_mean, pred2$y_mean)
-  expect_equal(pred1$y_sd, pred2$y_sd)
+  expect_equal(pred1$mean_y, pred2$y_mean)
+  expect_equal(pred1$sd_y, pred2$y_sd)
 })
 
 test_that("predict with loglik works", {

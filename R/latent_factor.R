@@ -1,9 +1,7 @@
-#' Define Common Latent Factor for the Dynamite Model.
+#' Define a Common Latent Factor for the Dynamite Model.
 #'
 #' This function can be used as part of [dynamiteformula()] to define
 #' a common latent factor component. #TODO definition and constraint on lambdas
-#'
-#'
 #'
 #' @export
 #' @param responses \[`character()`]\cr Names of the responses for which the
@@ -11,19 +9,21 @@
 #'   `obs` except categorical response, which does not (yet) support factor
 #'   component.
 #' @param noncentered_lambda \[`logical()`]\cr If `TRUE` (the default), use a
-#'   noncentered parameterization for factor loadings. Should be a logical
+#'   noncentered parametrization for factor loadings. Should be a logical
 #'   vector matching the length of `responses` or a single logical value in case
 #'   `responses` is `NULL`. Try
 #'   changing this if you encounter divergences or other problems in sampling.
 #'   Use `splines()` to define whether the spline coefficients of the the
 #'   factors are should be centered or not.
 #' @param noncentered_psi \[`logical(1)`]\cr If `TRUE`, uses a
-#'   noncentered parameterization for spline coefficients of all the factors.
+#'   noncentered parametrization for spline coefficients of all the factors.
 #'   The number of knots is based `splines()` call.
-#' @param nonzero_lambda  \[`logical()`]\cr If `TRUE` (the default), assumes
+#' @param nonzero_lambda \[`logical()`]\cr If `TRUE` (the default), assumes
 #'   that the mean of factor loadings is nonzero or not. Should be a logical
-#'   vector matching the length of `responses` or a single logical value in case
-#'   `responses` is `NULL`. See details.
+#'   vector matching the length of `responses` or a single logical value in
+#'   case `responses` is `NULL`. See details.
+#' @param correlated \[`logical()`]\cr If `TRUE` (the default), the latent
+#'   factors are assumed to be correlated between channels.
 #' @return An object of class `latent_factor`.
 #' @examples
 #' # three channel model with common factor affecting for responses x and y

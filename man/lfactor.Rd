@@ -2,7 +2,7 @@
 % Please edit documentation in R/latent_factor.R
 \name{lfactor}
 \alias{lfactor}
-\title{Define Common Latent Factor for the Dynamite Model.}
+\title{Define a Common Latent Factor for the Dynamite Model.}
 \usage{
 lfactor(
   responses = NULL,
@@ -19,7 +19,7 @@ factor should affect. Default is all responses defined with
 component.}
 
 \item{noncentered_lambda}{[\code{logical()}]\cr If \code{TRUE} (the default), use a
-noncentered parameterization for factor loadings. Should be a logical
+noncentered parametrization for factor loadings. Should be a logical
 vector matching the length of \code{responses} or a single logical value in case
 \code{responses} is \code{NULL}. Try
 changing this if you encounter divergences or other problems in sampling.
@@ -27,13 +27,16 @@ Use \code{splines()} to define whether the spline coefficients of the the
 factors are should be centered or not.}
 
 \item{noncentered_psi}{[\code{logical(1)}]\cr If \code{TRUE}, uses a
-noncentered parameterization for spline coefficients of all the factors.
+noncentered parametrization for spline coefficients of all the factors.
 The number of knots is based \code{splines()} call.}
 
 \item{nonzero_lambda}{[\code{logical()}]\cr If \code{TRUE} (the default), assumes
 that the mean of factor loadings is nonzero or not. Should be a logical
-vector matching the length of \code{responses} or a single logical value in case
-\code{responses} is \code{NULL}. See details.}
+vector matching the length of \code{responses} or a single logical value in
+case \code{responses} is \code{NULL}. See details.}
+
+\item{correlated}{[\code{logical()}]\cr If \code{TRUE} (the default), the latent
+factors are assumed to be correlated between channels.}
 }
 \value{
 An object of class \code{latent_factor}.

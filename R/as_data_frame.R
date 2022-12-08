@@ -68,13 +68,7 @@
 #'   summary = FALSE
 #' )
 #'
-#' if (requireNamespace("dplyr")) {
-#'   results %>%
-#'     dplyr::group_by(parameter) %>%
-#'     dplyr::summarise(mean = mean(value), sd = sd(value))
-#' }
-#'
-#' # Basic summaries can be obtained automatically with summary = TRUE:
+#' #' # Basic summaries can be obtained automatically with summary = TRUE:
 #' as.data.frame(
 #'   gaussian_example_fit,
 #'   responses = "y",
@@ -82,35 +76,39 @@
 #'   summary = TRUE
 #' )
 #'
-#' # Compute MCMC diagnostics via posterior package
-#' # For this we need to first convert to wide format
-#' # and then to draws_df object
-#' if (requireNamespace("dplyr") && requireNamespace("tidyr")) {
-#'   results %>%
-#'     dplyr::select(parameter, value, .iteration, .chain) %>%
-#'     tidyr::pivot_wider(values_from = value, names_from = parameter) %>%
-#'     posterior::as_draws() %>%
-#'     posterior::summarise_draws()
-#' }
-#'
-#' # Time-varying coefficients delta
+#' #' # Time-varying coefficients delta
 #' as.data.frame(gaussian_example_fit,
 #'   responses = "y",
 #'   types = "delta",
 #'   summary = TRUE
 #' )
 #'
-#' if (requireNamespace("dplyr") && requireNamespace("tidyr")) {
+#' if (requireNamespace("dplyr") &&
+#'     requireNamespace("tidyr") &&
+#'     base::getRversion() >= "4.1.0") {
+#'   results |>
+#'     dplyr::group_by(parameter) |>
+#'     dplyr::summarise(mean = mean(value), sd = sd(value))
+#'
+#'   # Compute MCMC diagnostics via posterior package
+#'   # For this we need to first convert to wide format
+#'   # and then to draws_df object
+#'   results |>
+#'     dplyr::select(parameter, value, .iteration, .chain) |>
+#'     tidyr::pivot_wider(values_from = value, names_from = parameter) |>
+#'     posterior::as_draws() |>
+#'     posterior::summarise_draws()
+#'
 #'   as.data.frame(gaussian_example_fit,
 #'     responses = "y", types = "delta", summary = FALSE
-#'   ) %>%
-#'     dplyr::select(parameter, value, time, .iteration, .chain) %>%
+#'   ) |>
+#'     dplyr::select(parameter, value, time, .iteration, .chain) |>
 #'     tidyr::pivot_wider(
 #'       values_from = value,
 #'       names_from = c(parameter, time),
 #'       names_sep = "_t="
-#'     ) %>%
-#'     posterior::as_draws() %>%
+#'     ) |>
+#'     posterior::as_draws() |>
 #'     posterior::summarise_draws()
 #' }
 #'
@@ -120,6 +118,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
                                       include_fixed = TRUE, ...) {
   out <- as.data.table.dynamitefit(
     x,
+    keep.rownames = FALSE,
     row.names,
     optional,
     responses,

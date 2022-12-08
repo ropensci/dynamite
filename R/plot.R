@@ -118,24 +118,26 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
     100 * (1 - 2 * level),
     "% intervals of the time-varying coefficients"
   )
+  # avoid NSE notes from R CMD check
+  time <- mean <- category <- parameter <- NULL
   if (any(!is.na(coefs$category))) {
     p <- ggplot2::ggplot(
       coefs,
-      ggplot2::aes_string(
-        "time",
-        "mean",
-        colour = "category",
-        fill = "category"
+      ggplot2::aes(
+        time,
+        mean,
+        colour = category,
+        fill = category
       )
     )
   } else {
-    p <- ggplot2::ggplot(coefs, ggplot2::aes_string("time", "mean"))
+    p <- ggplot2::ggplot(coefs, ggplot2::aes(time, mean))
   }
   p +
     ggplot2::geom_ribbon(
-      ggplot2::aes_string(
-        ymin = paste0("q", 100 * level),
-        ymax = paste0("q", 100 * (1 - level))
+      ggplot2::aes(
+        ymin = !!rlang::sym(paste0("q", 100 * level)),
+        ymax = !!rlang::sym(paste0("q", 100 * (1 - level)))
       ),
       alpha = alpha
     ) +
@@ -183,24 +185,26 @@ plot_betas <- function(x, responses = NULL, level = 0.05,
     100 * (1 - 2 * level),
     "% intervals of the time-invariant coefficients"
   )
+  # avoid NSE notes from R CMD check
+  time <- mean <- category <- parameter <- NULL
   if (any(!is.na(coefs$category))) {
     p <- ggplot2::ggplot(
       coefs,
-      ggplot2::aes_string(
-        "mean",
-        "parameter",
-        colour = "category",
-        group = "category"
+      ggplot2::aes(
+        mean,
+        parameter,
+        colour = category,
+        group = category
       )
     )
   } else {
-    p <- ggplot2::ggplot(coefs, ggplot2::aes_string("mean", "parameter"))
+    p <- ggplot2::ggplot(coefs, ggplot2::aes(mean, parameter))
   }
   p +
     ggplot2::geom_pointrange(
-      ggplot2::aes_string(
-        xmin = paste0("q", 100 * level),
-        xmax = paste0("q", 100 * (1 - level))
+      ggplot2::aes(
+        xmin = !!rlang::sym(paste0("q", 100 * level)),
+        xmax = !!rlang::sym(paste0("q", 100 * (1 - level)))
       ),
       position = ggplot2::position_dodge(0.5)
     ) +
@@ -240,6 +244,8 @@ plot_nus <- function(x, responses = NULL, level = 0.05) {
     !inherits(coefs, "try-error"),
     "The model does not contain random intercepts nu."
   )
+  # avoid NSE notes from R CMD check
+  mean <- parameter <- NULL
   coefs$parameter <- glue::glue("{coefs$parameter}_{coefs$group}")
   coefs$parameter <- factor(coefs$parameter, levels = coefs$parameter)
   title <- paste0(
@@ -247,10 +253,10 @@ plot_nus <- function(x, responses = NULL, level = 0.05) {
     100 * (1 - 2 * level),
     "% intervals of the random intercepts"
   )
-  ggplot2::ggplot(coefs, ggplot2::aes_string("mean", "parameter")) +
-  ggplot2::geom_pointrange(ggplot2::aes_string(
-    xmin = paste0("q", 100 * level),
-    xmax = paste0("q", 100 * (1 - level))
+  ggplot2::ggplot(coefs, ggplot2::aes(mean, parameter)) +
+  ggplot2::geom_pointrange(ggplot2::aes(
+    xmin = !!rlang::sym(paste0("q", 100 * level)),
+    xmax = !!rlang::sym(paste0("q", 100 * (1 - level)))
   )) +
   ggplot2::labs(title = title, x = "Value", y = "Parameter")
 }
@@ -285,6 +291,8 @@ plot_lambdas <- function(x, responses = NULL, level = 0.05) {
     !inherits(coefs, "try-error"),
     "The model does not contain latent factor psi."
   )
+  # avoid NSE notes from R CMD check
+  time <- mean <- parameter <- NULL
   coefs$parameter <- glue::glue("{coefs$parameter}_{coefs$group}")
   coefs$parameter <- factor(coefs$parameter, levels = coefs$parameter)
   title <- paste0(
@@ -292,10 +300,10 @@ plot_lambdas <- function(x, responses = NULL, level = 0.05) {
     100 * (1 - 2 * level),
     "% intervals of the latent factor loadings"
   )
-  ggplot2::ggplot(coefs, ggplot2::aes_string("mean", "parameter")) +
-    ggplot2::geom_pointrange(ggplot2::aes_string(
-      xmin = paste0("q", 100 * level),
-      xmax = paste0("q", 100 * (1 - level))
+  ggplot2::ggplot(coefs, ggplot2::aes(mean, parameter)) +
+    ggplot2::geom_pointrange(ggplot2::aes(
+      xmin = !!rlang::sym(paste0("q", 100 * level)),
+      xmax = !!rlang::sym(paste0("q", 100 * (1 - level)))
     )) +
     ggplot2::labs(title = title, x = "Value", y = "Parameter")
 }
@@ -359,24 +367,26 @@ plot_psis <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
     100 * (1 - 2 * level),
     "% intervals of the latent factors"
   )
+  # avoid NSE notes from R CMD check
+  time <- mean <- category <- NULL
   if (any(!is.na(coefs$category))) {
     p <- ggplot2::ggplot(
       coefs,
-      ggplot2::aes_string(
-        "time",
-        "mean",
-        colour = "category",
-        fill = "category"
+      ggplot2::aes(
+        time,
+        mean,
+        colour = category,
+        fill = category
       )
     )
   } else {
-    p <- ggplot2::ggplot(coefs, ggplot2::aes_string("time", "mean"))
+    p <- ggplot2::ggplot(coefs, ggplot2::aes(time, mean))
   }
   p +
     ggplot2::geom_ribbon(
-      ggplot2::aes_string(
-        ymin = paste0("q", 100 * level),
-        ymax = paste0("q", 100 * (1 - level))
+      ggplot2::aes(
+        ymin = !!rlang::sym(paste0("q", 100 * level)),
+        ymax = !!rlang::sym(paste0("q", 100 * (1 - level)))
       ),
       alpha = alpha
     ) +
