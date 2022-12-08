@@ -39,7 +39,11 @@ fashion (per time-point and per channel). Input \code{data} is converted to
 channel specific matrix representations via \code{\link[stats:model.matrix]{stats::model.matrix.lm()}}.}
 
 \item{group}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
-unique groups or \code{NULL} corresponding to a scenario without any groups.}
+unique groups or \code{NULL} corresponding to a scenario without any groups.
+If \code{group} is \code{NULL}, a new column \code{.group} is created with constant
+value \code{1L} is created indicating that all observations belong to the same
+group. In case of name conflicts with \code{data}, see the \code{group_var} element
+of the return object to get the column name of the new variable.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time index of observations. If this variable is a factor, the integer
@@ -75,22 +79,19 @@ details.}
 \value{
 \code{dynamite} returns a \code{dynamitefit} object which is a list containing
 the following components:
-\tabular{lccl}{
-\code{stanfit} \tab\tab\tab
-A \code{stanfit} object, see \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} for details.\cr
-\code{dformulas} \tab\tab\tab
-A list of \code{dynamiteformula} objects for internal use.\cr
-\code{data} \tab\tab\tab
-A processed version of the input \code{data}.\cr
-\code{data_name} \tab\tab\tab
-Name of the input data object.\cr
-\code{stan} \tab\tab\tab
-A \code{list} containing various elements related to Stan model
-construction and sampling.\cr
-\code{group_var} \tab\tab\tab
-Name of the variable defining the groups.\cr
-\code{time_var} \tab\tab\tab
-Name of the variable defining the time index.\cr
+\itemize{
+\item \code{stanfit}\cr A \code{stanfit} object, see \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} for details.
+\item \code{dformulas}\cr A list of \code{dynamiteformula} objects for internal use.
+\item \code{data}\cr A processed version of the input \code{data}.
+\item \code{data_name}\cr Name of the input data object.
+\item \code{stan}\cr A \code{list} containing various elements related to Stan model
+construction and sampling.
+\item \code{group_var}\cr Name of the variable defining the groups.
+\item \code{time_var}\cr Name of the variable defining the time index.
+\item \code{priors}\cr Data frame containing the used priors.
+\item \code{backend}\cr Either \code{"rstan"} or \code{"cmdstanr"} indicating which
+package was used in sampling.
+\item \code{call}\cr Original function call as an object of class \code{call}.
 }
 
 \code{formula} returns a quoted expression.
@@ -157,21 +158,22 @@ fit <- dynamite(
   refresh = 0
 )
 
-library(dplyr)
-library(ggplot2)
-  group_by(time, variable) |>
-  summarise(
-    mean = mean(value),
-    lwr = quantile(value, 0.025),
-    upr = quantile(value, 0.975)
-  )
-
-cf |>
-  ggplot(aes(time, mean)) +
-  theme_bw() +
-  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
-  geom_line() +
-  facet_wrap(~variable, scales = "free_y")
+if (requireNamespace("dplyr") &&
+    requireNamespace("tidyr") &&
+    base::getRversion() >= "4.1.0") {
+  dplyr::group_by(time, variable) |>
+    dplyr::summarise(
+      mean = mean(value),
+      lwr = quantile(value, 0.025),
+      upr = quantile(value, 0.975)
+    )
+  cf |>
+    ggplot2::ggplot(aes(time, mean)) +
+    ggplot2::theme_bw() +
+    ggplot2::geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
+    ggplot2::geom_line() +
+    ggplot2::facet_wrap(~variable, scales = "free_y")
+}
 }
 
 formula(gaussian_example_fit)

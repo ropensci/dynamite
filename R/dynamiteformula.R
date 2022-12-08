@@ -250,7 +250,6 @@ aux <- function(formula) {
   dynamiteformula(formula, family = "deterministic")
 }
 
-#' @method + dynamiteformula
 #' @rdname dynamiteformula
 #' @param e1 \[`dynamiteformula`]\cr A model formula specification.
 #' @param e2 \[`dynamiteformula`]\cr A model formula specification.
@@ -267,7 +266,6 @@ aux <- function(formula) {
   add_dynamiteformula(e1, e2)
 }
 
-#' @method print dynamiteformula
 #' @rdname dynamiteformula
 #' @param x \[`dynamiteformula`]\cr The model formula.
 #' @param ... Ignored.
@@ -298,7 +296,7 @@ print.dynamiteformula <- function(x, ...) {
   print.data.frame(out, right = FALSE)
   if (!is.null(attr(x, "lags"))) {
     k <- attr(x, "lags")$k
-    cat("\nLagged responses added as predcitors with: k = ", cs(k), sep = "")
+    cat("\nLagged responses added as predictors with: k = ", cs(k), sep = "")
   }
   if (!is.null(attr(x, "random"))) {
     resp <- attr(x, "random")$responses
@@ -433,6 +431,8 @@ add_dynamiteformula <- function(e1, e2) {
     out <- set_splines(e1, e2)
   } else if (inherits(e2, "random")) {
     out <- set_random(e1, e2)
+  } else if (inherits(e2, "latent_factor")) {
+    out <- set_lfactor(e1, e2)
   } else {
     stop_(
       "Unable to add an object of class {.cls {class(e2)}}
@@ -543,5 +543,19 @@ set_random <- function(e1, e2) {
     "Multiple definitions for random intercepts."
   )
   attr(e1, "random") <- e2
+  e1
+}
+
+#' Set the Latent Factors of the Model
+#'
+#' @param e1 A `dynamiteformula` object.
+#' @param e2 A `latent_factor` object.
+#' @noRd
+set_lfactor <- function(e1, e2) {
+  stopifnot_(
+    is.null(attr(e1, "lfactor")) || attr(e2, "lfactor"),
+    "Multiple definitions for latent factors."
+  )
+  attr(e1, "lfactor") <- e2
   e1
 }

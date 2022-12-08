@@ -3,7 +3,7 @@
 #' @param n_draws \[`integer(1)`]\cr
 #'   Number of draws to use for `fitted` or `predict`.
 #' @param full_draws \[`integer(1)`]\cr
-#'   Number of draws avaiable in the `dynamitefit` object.
+#'   Number of draws available in the `dynamitefit` object.
 #' @noRd
 check_ndraws <- function(n_draws, full_draws) {
   n_draws <- ifelse_(is.null(n_draws), full_draws, n_draws)
@@ -31,9 +31,9 @@ check_ndraws <- function(n_draws, full_draws) {
 #' @noRd
 check_newdata <- function(object, newdata) {
   if (is.null(newdata)) {
-    data.table::setDF(data.table::copy(object$data))
+    data.table::copy(object$data)
   } else if (data.table::is.data.table(newdata) || is.data.frame(newdata)) {
-    data.table::setDF(data.table::copy(newdata))
+    data.table::as.data.table(data.table::copy(newdata))
   } else if (!is.data.frame(newdata)) {
     stop_("Argument {.arg newdata} must be a {.cls data.frame} object.")
   }
@@ -45,7 +45,8 @@ check_newdata <- function(object, newdata) {
 #' @param newdata \[`data.frame`]\cr The data to be used for prediction.
 #' @param data \[`data.frame`]\cr The original data used to fit the model.
 #' @param type \[`character`]\cr Either `"response"`, `"mean"`, `"link"`.
-#' @param eval_type \[`character(1)`]\cr Either `"predict"` or `"fitted"`
+#' @param eval_type \[`character(1)`]\cr Either `"predict"`, `"fitted"`, or
+#'   `loglik.`
 #' @param families_stoch \[`list`]\cr of `dynamitefamily` object.
 #' @param resp_stoch \[`character`]\cr A vector of response variables
 #' @param categories \[`list`]\cr Response variable categories
@@ -61,25 +62,23 @@ check_newdata <- function(object, newdata) {
 parse_newdata <- function(dformula, newdata, data, type, eval_type,
                           families_stoch, resp_stoch, categories,
                           clear_names, new_levels, group_var, time_var) {
-  if (!is.null(group_var)) {
-    stopifnot_(
-      group_var %in% names(newdata),
-      "Can't find grouping variable {.var {group_var}} in {.var newdata}."
-    )
-    group <- newdata[[group_var]]
-    group <- unique(group)
-    extra_levels <- unique(group[!group %in% data[[group_var]]])
-    stopifnot_(
-      all(group %in% data[[group_var]]) || !identical(new_levels, "none"),
-      c(
-        "Grouping variable {.var {group_var}} contains unknown levels:",
-        `x` = "Level{?s} {.val {as.character(extra_levels)}}
-               {?is/are} not present in the original data.",
-        `i` = "{.strong Note:} argument {.var new_levels} is {.val none}
-               which disallows new levels."
-      )
-    )
+  if (!group_var %in% names(newdata)) {
+    orig <- sort(data[[group_var]])[1L]
+    data.table::set(newdata, j = group_var, value = orig)
   }
+  group <- newdata[[group_var]]
+  group <- unique(group)
+  extra_levels <- unique(group[!group %in% data[[group_var]]])
+  stopifnot_(
+    all(group %in% data[[group_var]]) || !identical(new_levels, "none"),
+    c(
+      "Grouping variable {.var {group_var}} contains unknown levels:",
+      `x` = "Level{?s} {.val {as.character(extra_levels)}}
+             {?is/are} not present in the original data.",
+      `i` = "{.strong Note:} argument {.var new_levels} is {.val none}
+             which disallows new levels."
+    )
+  )
   stopifnot_(
     time_var %in% names(newdata),
     "Can't find time index variable {.var {time_var}} in {.var newdata}."
@@ -131,23 +130,29 @@ parse_newdata <- function(dformula, newdata, data, type, eval_type,
   )
   data.table::setDT(newdata, key = c(group_var, time_var))
   clear_names <- intersect(names(newdata), clear_names)
-  if (length(clear_names) > 0) {
+  if (length(clear_names) > 0L) {
     newdata[, (clear_names) := NULL]
   }
   drop_unused(dformula, newdata, group_var, time_var)
-  type <- ifelse_(identical(eval_type, "fitted"), "fitted", type)
+  type <- ifelse_(eval_type %in% c("fitted", "loglik"), eval_type, type)
   # create separate column for each level of categorical response variables
   for (i in seq_along(resp_stoch)) {
     resp <- resp_stoch[i]
-    if (type %in% c("mean", "link", "fitted")) {
-      pred_col <- ifelse_(
-        is_categorical(families_stoch[[i]]),
-        glue::glue("{resp}_{type}_{categories[[resp]]}"),
-        glue::glue("{resp}_{type}")
-      )
-      newdata[, (pred_col) := NA_real_]
+    if (identical(type, "loglik")) {
+      newdata[, (glue::glue("{resp}_loglik")) := NA_real_]
+    } else {
+      if (type %in% c("mean", "link", "fitted")) {
+        pred_col <- ifelse_(
+          is_categorical(families_stoch[[i]]),
+          glue::glue("{resp}_{type}_{categories[[resp]]}"),
+          glue::glue("{resp}_{type}")
+        )
+        newdata[, (pred_col) := NA_real_]
+      }
     }
-    newdata[, (glue::glue("{resp}_store")) := newdata[[resp]]]
+    data.table::set(
+      newdata, j = glue::glue("{resp}_store"), value = newdata[[resp]]
+    )
   }
   newdata
 }
@@ -156,7 +161,7 @@ parse_newdata <- function(dformula, newdata, data, type, eval_type,
 #'
 #' @inheritParams predict.dynamitefit
 #' @noRd
-parse_funs <- function(object, funs) {
+parse_funs <- function(object, type, funs) {
   stopifnot_(
     !is.null(object$group_var),
     "Argument {.arg funs} requires data with multiple individuals."
@@ -170,10 +175,22 @@ parse_funs <- function(object, funs) {
     !is.null(funs_names),
     "Argument {.arg funs} must be named."
   )
-  stopifnot_(
-    all(funs_names %in% get_responses(object$dformulas$all)),
-    "The names of {.arg funs} must be response variables of the model."
-  )
+  valid_names <- get_responses(object$dformulas$all)
+  if (identical(type, "response")) {
+    stopifnot_(
+      all(funs_names %in% get_responses(object$dformulas$all)),
+      "The names of {.arg funs} must be response variables of the model."
+    )
+  } else {
+    valid_names <- c(valid_names, paste0(valid_names, "_", type))
+    stopifnot_(
+      all(funs_names %in% valid_names),
+      paste0(
+        "The names of {.arg funs} must be response variables of the model, or ",
+        "response variable names with the suffix _", type, "."
+      )
+    )
+  }
   out <- list()
   idx <- 1L
   for (i in seq_along(funs)) {
@@ -193,7 +210,7 @@ parse_funs <- function(object, funs) {
       )
       out[[idx]] <- list(
         fun = funs[[i]][[j]],
-        name = paste0(funs_names[i], "_", fun_names[j]),
+        name = paste0(fun_names[j], "_", funs_names[i]),
         target = funs_names[i]
       )
       idx <- idx + 1L
@@ -210,75 +227,62 @@ parse_funs <- function(object, funs) {
 #' @inheritParams dynamite
 #' @noRd
 fill_time_predict <- function(data, group_var, time_var, time_scale) {
-  has_groups <- !is.null(group_var)
-  if (has_groups) {
-    time_count <- data |>
-      dplyr::group_by(.data[[group_var]]) |>
-      dplyr::count(.data[[time_var]]) |>
-      dplyr::summarise(unique = all(.data[["n"]] == 1L))
-    d <- time_count[[group_var]][!time_count$unique]
-    stopifnot_(
-      all(time_count$unique),
-      c(
-        "Each time index must correspond to a single observation per group:",
-        `x` = "{cli::qty(d)}Group{?s} {.var {d}} of {.var {group_var}}
-               {cli::qty(d)}{?has/have} duplicate observations."
-      )
+  time_duplicated <- data[,
+    any(duplicated(time_var)),
+    by = group_var,
+    env = list(time_var = time_var)
+  ]$V1
+  d <- which(time_duplicated)
+  stopifnot_(
+    all(!time_duplicated),
+    c(
+      "Each time index must correspond to a single observation per group:",
+      `x` = "{cli::qty(d)}Group{?s} {.var {d}} of {.var {group_var}}
+             {cli::qty(d)}{?has/have} duplicate observations."
     )
-  } else {
-    stopifnot_(
-      all(!duplicated(data[[time_var]])),
-      "Each time index must correspond to a single observation."
-    )
-  }
+  )
   time <- sort(unique(data[[time_var]]))
   if (length(time) > 1L) {
     original_order <- colnames(data)
     full_time <- seq(time[1L], time[length(time)], by = time_scale)
-    if (has_groups) {
-      time_groups <- data |>
-        dplyr::group_by(.data[[group_var]]) |>
-        dplyr::summarise(
-          has_missing = !identical(sort(.data[[time_var]]), full_time),
-          has_gaps =
-            dplyr::n() != (diff(range(.data[[time_var]])) + 1L) * time_scale
-        )
-      if (any(time_groups$has_missing)) {
-        if (any(time_groups$has_gaps)) {
-          warning_(c(
-            "Time index variable {.var {time_var}} of {.arg newdata} has gaps:",
-            `i` = "Filling the {.arg newdata} to regular time points. This will
-                   lead to propagation of NA values if the model contains
-                   exogenous predictors and {.arg impute} is {.val none}."
-          ))
-        }
-        full_data_template <- expand.grid(
-          time = full_time,
-          group = unique(data[[group_var]])
-        )
-        names(full_data_template) <- c(time_var, group_var)
-        data <- full_data_template |>
-          dplyr::left_join(data, by = c(group_var, time_var)) |>
-          dplyr::select(dplyr::all_of(original_order))
-      }
-    } else {
-      if (!identical(sort(data[[time_var]]), full_time)) {
+    time_groups <- data[,
+      {
+        has_missing = !identical(time_var, full_time)
+        has_gaps = .N != (diff(range(time_var)) + 1L) * time_scale
+        list(has_missing, has_gaps)
+      },
+      by = group_var,
+      env = list(
+        time_var = time_var,
+        group_var = group_var,
+        time_scale = time_scale
+      )
+    ]
+    if (any(time_groups$has_missing)) {
+      if (any(time_groups$has_gaps)) {
         warning_(c(
           "Time index variable {.var {time_var}} of {.arg newdata} has gaps:",
           `i` = "Filling the {.arg newdata} to regular time points. This will
                  lead to propagation of NA values if the model contains
                  exogenous predictors and {.arg impute} is {.val none}."
         ))
-        full_data_template <- data.frame(time = full_time)
-        names(full_data_template) <- time_var
-        data <- full_data_template |>
-          dplyr::left_join(data, by = time_var) |>
-          dplyr::select(dplyr::all_of(original_order))
       }
+      full_data_template <- data.table::as.data.table(expand.grid(
+        time = full_time,
+        group = unique(data[[group_var]])
+      ))
+      names(full_data_template) <- c(time_var, group_var)
+      data <- data.table::merge.data.table(
+        full_data_template,
+        data,
+        by = c(time_var, group_var),
+        all.x = TRUE
+      )
     }
   }
   data
 }
+
 #' Impute Predictor Values in `newdata`
 #'
 #' @inheritParams predict
@@ -287,9 +291,11 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
 #' @noRd
 impute_newdata <- function(newdata, impute, predictors, group_var) {
   if (identical(impute, "locf")) {
-    newdata[, (predictors) := lapply(.SD, locf),
+    newdata[,
+      (predictors) := lapply(.SD, locf),
       .SDcols = predictors,
-      by = group_var
+      by = group_var,
+      env = list(locf = locf)
     ]
   }
 }
@@ -306,17 +312,21 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
                            group_var, time_var, clear_names,
                            fixed, global_fixed) {
   if (newdata_null && identical(eval_type, "predicted")) {
-    ..fixed <- NULL # avoid NSE note in R CMD check
     if (global_fixed) {
-      clear_idx <- newdata[, .I[seq.int(..fixed + 1L, .N)], by = group_var]$V1
+      clear_idx <- newdata[,
+        .I[seq.int(fixed + 1L, .N)],
+        by = group_var,
+        env = list(fixed = fixed)
+      ]$V1
     } else {
       clear_idx <- newdata[,
-        .I[seq.int(..fixed + which(apply(!is.na(.SD), 1L, any))[1L], .N)],
+        .I[seq.int(fixed + which(apply(!is.na(.SD), 1L, any))[1L], .N)],
         .SDcols = resp_stoch,
-        by = group_var
+        by = group_var,
+        env = list(fixed = fixed, any = any)
       ]$V1
     }
-    newdata[clear_idx, c(resp_stoch) := NA]
+    newdata[clear_idx, c(resp_stoch) := NA, env = list(clear_idx = clear_idx)]
   }
 }
 
@@ -401,15 +411,18 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
 #'
 #' @param x Object returned by `predict.dynamitefit`.
 #' @noRd
-expand_predict_output <- function(x) {
-  common <- intersect(names(x$simulated), names(x$observed))
-  p <- x$simulated |> dplyr::select(!dplyr::matches(common))
-  o <- x$observed[
-    rep(seq_len(nrow(x$observed)), n_unique(p$.draw)), , drop = FALSE
+expand_predict_output <- function(simulated, observed, df) {
+  add_cols <- setdiff(names(observed), names(simulated))
+  observed <- observed[
+    rep(seq_len(nrow(observed)), n_unique(simulated$.draw)),
   ]
-  out <- cbind(o, p)
-  rownames(out) <- NULL
-  out
+  for (col in add_cols) {
+    data.table::set(simulated, j = col, value = observed[[col]])
+  }
+  if (df) {
+    data.table::setDF(simulated)
+  }
+  simulated
 }
 
 #' Prepare Environments to Evaluate Predictions or Fitted Values
@@ -427,9 +440,8 @@ prepare_eval_envs <- function(object, simulated, observed,
   idx_draws <- seq_len(n_draws)
   nu_channels <- attr(object$dformulas$stoch, "random")$responses
   M <- length(nu_channels)
-  has_groups <- !is.null(group_var)
-  n_group <- ifelse_(has_groups, n_unique(observed[[group_var]]), 1L)
-  if (has_groups && M > 0L) {
+  n_group <- n_unique(observed[[group_var]])
+  if (M > 0L) {
     orig_ids <- unique(object$data[[group_var]])
     new_ids <- unique(observed[[group_var]])
     n_all_draws <- ndraws(object)
@@ -533,7 +545,8 @@ prepare_eval_envs <- function(object, simulated, observed,
 #' @param resp \[`character(1)`]\cr Name of the response.
 #' @param resp_levels \[`character()`]\cr Levels of a categorical response.
 #' @param family \[`dynamitefamily`]\cr Family of the response.
-#' @param eval_type  \[`character(1)`]\cr Either `"predict"` or `"fitted"`.
+#' @param eval_type  \[`character(1)`]\cr Either `"predict"`, `"fitted"` or
+#'   `"loglik"`.
 #' @param has_fixed \[logical(1)]\cr
 #'   Does the channel have time-invariant predictors?
 #' @param has_varying \[logical(1)]\cr
@@ -634,8 +647,9 @@ fitted_categorical <- "
   resp_cols <- c({
     paste0('\"', resp, '_fitted_', resp_levels, '\"', collapse = ', ')
   })
-  maxs <- apply(xbeta, 1, max)
-  mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+  # maxs <- apply(xbeta, 1, max)
+  # mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+  mval <- exp(xbeta - log_sum_exp_rows(xbeta))
   for (s in 1:S) {{
     data.table::set(
       x = out,
@@ -862,5 +876,93 @@ predicted_beta <- "
     i = idx_data,
     j = '{resp}',
     value = rbeta(k,  mu * phi, (1 - mu) * phi)[idx_out]
+  )
+"
+
+# Log-likelihood expressions ----------------------------------------------
+
+loglik_gaussian <- "
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dnorm(y, xbeta, sigma, log = TRUE)
+  )
+"
+
+loglik_categorical <- "
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = xbeta[cbind(seq_along(y), y)] - log_sum_exp_rows(xbeta)
+  )
+"
+
+loglik_binomial <- "
+  prob <- plogis(xbeta)
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dbinom(y, trials, prob, log = TRUE)
+  )
+"
+
+loglik_bernoulli <- "
+  prob <- plogis(xbeta)
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dbinom(y, 1, prob, log = TRUE)
+  )
+"
+
+loglik_poisson <- "
+  exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dpois(y, exp_xbeta, log = TRUE)
+  )
+"
+
+loglik_negbin <- "
+  exp_xbeta <- {ifelse_(has_offset, 'exp(xbeta + offset)', 'exp(xbeta)')}
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dnbinom(y, size = phi, mu = exp_xbeta, log = TRUE)
+  )
+"
+
+loglik_exponential <- "
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dexp(y, rate = exp(-xbeta), log = TRUE)
+  )
+"
+
+loglik_gamma <- "
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dgamma(y, shape = phi, rate = phi * exp(-xbeta), log = TRUE)
+  )
+"
+
+loglik_beta <- "
+  mu <- plogis(xbeta)
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dbeta(y,  mu * phi, (1 - mu) * phi, log = TRUE)
   )
 "

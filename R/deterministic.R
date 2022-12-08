@@ -13,7 +13,7 @@
 initialize_deterministic <- function(data, dd, dlp, dld, dls) {
   resp_pred <- attr(dlp, "original_response")
   for (i in seq_along(dlp)) {
-    data[, (dlp[[i]]$response) := data[[resp_pred[i]]]]
+    data[, (dlp[[i]]$response) := v, env = list(v = data[[resp_pred[i]]])]
     data[, (dlp[[i]]$response) := NA]
   }
   rhs_ls <- get_predictors(dls)
@@ -22,13 +22,14 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
       rhs_ls[i] %in% names(data),
       "Can't find variable{?s} {.var {rhs_ls[i]}} in {.arg data}."
     )
-    data[, (dls[[i]]$response) := data[[rhs_ls[i]]]]
+    v <- data[[rhs_ls[i]]]
+    data[, (dls[[i]]$response) := v, env = list(v = v)]
     data[, (dls[[i]]$response) := NA]
   }
   for (i in seq_along(dd)) {
     as_fun <- paste0("as.", dd[[i]]$specials$resp_type)
     past <- do.call(as_fun, args = list(0))
-    data[, dd[[i]]$response := past]
+    data[, dd[[i]]$response := past, env = list(past = past)]
     data[, dd[[i]]$response := NA]
   }
   rhs_ld <- get_predictors(dld)
@@ -38,10 +39,11 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
     if (init[k]) {
       as_fun <- paste0("as.", dld[[k]]$specials$resp_type)
       past <- do.call(as_fun, args = list(dld[[k]]$specials$past[1L]))
-      data[, (dld[[k]]$response) := past]
+      data[, (dld[[k]]$response) := past, env = list(past = past)]
       data[, (dld[[k]]$response) := NA]
     } else {
-      data[, (dld[[k]]$response) := data[[rhs_ld[k]]]]
+      v <- data[[rhs_ld[k]]]
+      data[, (dld[[k]]$response) := v, env = list(v = v)]
       data[, (dld[[k]]$response) := NA]
     }
   }
@@ -85,19 +87,19 @@ assign_initial_values <- function(data, idx, dd, dlp, dld, dls,
   lhs_ls <- get_responses(dls)
   rhs_ls <- get_predictors(dls)
   cl <- get_quoted(dd)
-  # avoid NSE notes in R CMD check
-  ..i <- NULL
-  ..k_lp <- NULL
   for (i in ro_lp) {
-    data[, (dlp[[i]]$response) := lapply(.SD, lag_, ..k_lp[..i]),
-      .SDcols = resp_lp[i], by = group_var
+    k <- k_lp[i]
+    data[,
+      (dlp[[i]]$response) := lapply(.SD, lag_, k),
+      .SDcols = resp_lp[i], by = group_var,
+      env = list(k = k, lag_ = lag_)
     ]
   }
   init <- which(has_past(dld))
   for (i in init) {
     as_fun <- paste0("as.", dld[[i]]$specials$resp_type)
     past <- do.call(as_fun, args = list(dld[[i]]$specials$past))
-    data[, (lhs_ld[i]) := past]
+    data[, (lhs_ld[i]) := past, env = list(past = past)]
   }
   idx <- idx + 1L
   assign_deterministic(data, idx, cl)
@@ -117,7 +119,6 @@ assign_initial_values <- function(data, idx, dd, dlp, dld, dls,
 #' @param cl \[`language`]\cr A quoted expression defining the channels.
 #' @noRd
 assign_deterministic <- function(data, idx, cl) {
-  # Requires data.table version 1.14.3 or higher
   data[idx, cl, env = list(cl = cl)]
 }
 

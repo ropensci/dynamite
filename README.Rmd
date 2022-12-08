@@ -26,7 +26,11 @@ knitr::opts_chunk$set(
 [![Status at rOpenSci Software Peer Review](https://badges.ropensci.org/554_status.svg)](https://github.com/ropensci/software-review/issues/554)
 <!-- badges: end -->
 
-The `dynamite` [R](https://www.r-project.org/) package provides easy-to-use interface for Bayesian inference of complex panel (time series) data comprising of multiple measurements per multiple individuals measured in time. The main features distinguishing the package and the underlying methodology from many other approaches are:
+The `dynamite` [R](https://www.r-project.org/) package provides easy-to-use 
+interface for Bayesian inference of complex panel (time series) data comprising 
+of multiple measurements per multiple individuals measured in time. 
+The main features distinguishing the package and the underlying methodology 
+from many other approaches are:
 
 * Support for both time-invariant and time-varying effects modeled via 
   B-splines.
@@ -42,31 +46,16 @@ The `dynamite` [R](https://www.r-project.org/) package provides easy-to-use inte
 * Transparent quantification of parameter and predictive uncertainty due to a 
   fully Bayesian approach.
 * User-friendly and efficient R interface with state-of-the-art estimation via 
-  Stan.
+  Stan. Both `rstan` and `cmdstanr` backend are supported.
 
 The `dynamite` package is developed with the support of Academy of Finland 
 grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)). 
 
 ## Installation
 
-`dynamite` uses R's native pipe operator, so R version 4.1.0 or newer is required.
-
-<!-- `dynamite` also relies on some of the features of [Stan](https://mc-stan.org/)'s  -->
-<!-- which are not yet available on the [CRAN](https://cran.r-project.org/) version  -->
-<!-- of [rstan](https://CRAN.R-project.org/package=rstan) package. Therefore you  -->
-<!-- need to install the latest `rstan` and `StanHeaders` packages: -->
-<!-- ```{r, eval = FALSE} -->
-<!-- # run the next line if you already have rstan installed: -->
-<!-- # remove.packages(c("StanHeaders", "rstan")) -->
-<!-- install.packages("rstan", repos = c("https://mc-stan.org/r-packages/",  -->
-<!--   getOption("repos"))) -->
-<!-- ``` -->
-<!-- (See more help on [RStan wiki](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started)) -->
-
-Also, version `1.14.3` or newer of the 
-[data.table](https://github.com/Rdatatable/data.table) package is required, 
-which can be installed via:
-
+`dynamite` requires the development version of the 
+[data.table](https://github.com/Rdatatable/data.table) package 
+(version `1.14.3` or newer), which can be installed via:
 ```{r, eval = FALSE}
 # run the next line if you do not have any version of the data.table installed:
 # install.packages("data.table")
@@ -75,7 +64,7 @@ which can be installed via:
 data.table::update.dev.pkg()
 ```
 
-After these steps, you can install the development version of dynamite from 
+After these steps, you can install the development version of `dynamite` from 
 [GitHub](https://github.com/) with:
 
 ```{r, eval = FALSE}
@@ -143,7 +132,7 @@ For more examples, see the package vignette.
 
 ## Related packages
 
-- The `dynamite` package uses Stan via [`rstan`](https://CRAN.R-project.org/package=rstan) (see also https://mc-stan.org), which is a probabilistic programming language for general Bayesian modelling.
+- The `dynamite` package uses Stan via [`rstan`](https://CRAN.R-project.org/package=rstan) and [`cmdstanr`](https://CRAN.R-project.org/package=cmdstanr) (see also https://mc-stan.org), which is a probabilistic programming language for general Bayesian modelling.
 
 - The [`brms`](https://CRAN.R-project.org/package=brms) package also uses Stan, and can be used to fit various complex multilevel models.
 

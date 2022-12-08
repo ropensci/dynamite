@@ -14,6 +14,7 @@
   global_fixed = FALSE,
   n_draws = NULL,
   expand = TRUE,
+  df = TRUE,
   ...
 )
 }
@@ -32,7 +33,10 @@ were used to fit the model. New group levels can be included, but if the
 model contains random intercepts, an options for the random
 effects for the new levels must be chosen (argument \code{new_levels}). Note
 that as \code{newdata} is expanded with predictions, it can be beneficial
-in terms of memory usage to first remove redundant columns from \code{newdata}.}
+in terms of memory usage to first remove redundant columns from \code{newdata}.
+If the grouping variable of the original data is missing, it is assumed
+that all observations in \code{newdata} belong to the first group in the
+original data.}
 
 \item{type}{[\code{character(1)}]\cr Type of prediction,
 \code{"response"} (default), \code{"mean"}, or \code{"link"}.}
@@ -40,12 +44,12 @@ in terms of memory usage to first remove redundant columns from \code{newdata}.}
 \item{funs}{[\code{list()}]\cr A named list whose names should correspond to the
 response variables of the model. Each element of \code{funs} should be a
 a named \code{list} of functions that will be applied to the
-corresponding predicted responses of the channel over the individuals
+corresponding predicted \code{type} of the channel over the individuals
 for each combination of the posterior draws and time points.
 In other words, the resulting predictions will be averages
 over the individuals. The functions should take the corresponding
-response variable values as their only argument.
-If \code{funs} is empty, the full individual level predictions are returned
+\code{type} variable values as their only argument.
+If \code{funs} is empty, the full individual level values are returned
 instead. Note that this argument can only be used
 if there are multiple individuals (i.e., \code{group} was not \code{NULL} in the
 \code{dynamite} call).}
@@ -88,11 +92,18 @@ Setting \code{expand} to \code{FALSE} can help conserve memory because \code{new
 is not replicated \code{n_draws} times in the output.
 This argument is ignored if \code{funs} are provided.}
 
+\item{df}{[\code{logical(1)}]\cr If \code{TRUE} (default) the output
+consists of \code{data.frame} objects, and \code{data.table} objects otherwise.}
+
 \item{...}{Ignored.}
 }
 \value{
 A \code{data.frame} containing the predicted values or a \code{list} of two
-\code{data.frames}. See the \code{expand} argument for details.
+\code{data.frames}. See the \code{expand} argument for details. Note that the
+\code{.draw} column is not the same as \code{.draw} from \code{as.data.frame} and
+\code{as_draws} methods as \code{predict} uses permuted samples. A mapping between
+these variables can be done using information in
+\code{object$stanfit@sim$permutation}.
 }
 \description{
 Obtain counterfactual predictions for a \code{dynamitefit} object.
@@ -109,7 +120,7 @@ predict(gaussian_example_fit, type = "response", n_draws = 2L)
 \dontrun{
 # Simulate from the prior predictive distribution
 
-f <-  obs(y ~ lag(y) + varying(~ -1 + x), "gaussian") +
+f <- obs(y ~ lag(y) + varying(~ -1 + x), "gaussian") +
   splines(df = 10, noncentered = TRUE)
 
 # Create data with missing observations
@@ -118,27 +129,34 @@ f <-  obs(y ~ lag(y) + varying(~ -1 + x), "gaussian") +
 d <- data.frame(y = c(0, rep(NA, 49)), x = rnorm(50), time = 1:50)
 
 # suppress warnings due to the lack of data
-suppressWarnings(priors <- get_priors(f,
-  data = d, time = "time"))
+suppressWarnings(
+  priors <- get_priors(f, data = d, time = "time")
+)
 
-# modify default priors which can produce exploding behaviour when used
+# modify default priors which can produce exploding behavior when used
 # without data
 priors$prior <- c(
   "normal(0, 1)",
   "normal(0.6, 0.1)",
   "normal(-0.2, 0.5)",
   "normal(0.2, 0.1)",
-  "normal(0.5, 0.1)")
+  "normal(0.5, 0.1)"
+)
 
 # samples from the prior conditional on the first time point and x
-fit <- dynamite(f, data = d, time = "time",
-  priors = priors, chains = 1)
+fit <- dynamite(f,
+  data = d, time = "time",
+  priors = priors, chains = 1
+)
 
 # simulate new data
 pp <- predict(fit)
 
-library(ggplot2)
-ggplot(pp, aes(time, y_new, group = .draw)) +
-  geom_line(alpha = 0.1) + theme_bw()
+if (requireNamespace("ggplot2")) {
+  ggplot2::ggplot(pp, aes(time, y_new, group = .draw)) +
+    geom_line(alpha = 0.1) +
+    theme_bw()
 }
+}
+
 }

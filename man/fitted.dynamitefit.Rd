@@ -4,7 +4,7 @@
 \alias{fitted.dynamitefit}
 \title{Extract Fitted Values of a Dynamite Model}
 \usage{
-\method{fitted}{dynamitefit}(object, newdata = NULL, n_draws = NULL, expand = TRUE, ...)
+\method{fitted}{dynamitefit}(object, newdata = NULL, n_draws = NULL, expand = TRUE, df = TRUE, ...)
 }
 \arguments{
 \item{object}{[\code{dynamitefit}]\cr The model fit object.}
@@ -26,6 +26,9 @@ predicted values, and the second contains the original \code{newdata}.
 Setting \code{expand} to \code{FALSE} can help conserve memory because \code{newdata}
 is not replicated \code{n_draws} times in the output.
 This argument is ignored if \code{funs} are provided.}
+
+\item{df}{[\code{logical(1)}]\cr If \code{TRUE} (default) the output
+consists of \code{data.frame} objects, and \code{data.table} objects otherwise.}
 
 \item{...}{Ignored.}
 }
@@ -51,25 +54,28 @@ fit <- dynamite(
   refresh = 0
 )
 
-# One-step ahead samples (fitted values) from the posterior
-# (first time point is fixed due to lag in the model):
-library(ggplot2)
-fitted(fit) |>
-  dplyr::filter(time > 2) |>
-  ggplot(aes(time, LakeHuron_fitted, group = .draw)) +
-  geom_line(alpha = 0.5) +
-  # observed values
-  geom_line(aes(y = LakeHuron), colour = "tomato") +
-  theme_bw()
+if (requireNamespace("dplyr") &&
+    requireNamespace("tidyr") &&
+    base::getRversion() >= "4.1.0") {
+  # One-step ahead samples (fitted values) from the posterior
+  # (first time point is fixed due to lag in the model):
+  fitted(fit) |>
+    dplyr::filter(time > 2) |>
+    ggplot2::ggplot(aes(time, LakeHuron_fitted, group = .draw)) +
+    ggplot2::geom_line(alpha = 0.5) +
+    # observed values
+    ggplot2::geom_line(aes(y = LakeHuron), colour = "tomato") +
+    ggplot2::theme_bw()
 
-# Posterior predictive distribution given the first time point:
-predict(fit, type = "mean") |>
-  dplyr::filter(time > 2) |>
-  ggplot(aes(time, LakeHuron_mean, group = .draw)) +
-  geom_line(alpha = 0.5) +
-  # observed values
-  geom_line(aes(y = LakeHuron), colour = "tomato") +
-  theme_bw()
+  # Posterior predictive distribution given the first time point:
+  predict(fit, type = "mean") |>
+    dplyr::filter(time > 2) |>
+    ggplot2::ggplot(aes(time, LakeHuron_mean, group = .draw)) +
+    ggplot2::geom_line(alpha = 0.5) +
+    # observed values
+    ggplot2::geom_line(aes(y = LakeHuron), colour = "tomato") +
+    ggplot2::theme_bw()
+}
 }
 
 }

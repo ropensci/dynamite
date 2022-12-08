@@ -13,8 +13,7 @@
 
 \item{level}{[\code{numeric(1)}]\cr Credible interval width.}
 
-\item{...}{Additional arguments passed to
-\code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}}.}
+\item{...}{Ignored.}
 }
 \value{
 The rows of the resulting matrix will be named using the following
@@ -23,7 +22,8 @@ name of the parameter, \code{time} is the time index of the parameter,
 \code{category} specifies the level of the response the parameter
 is related to if the response is categorical, and \code{group} determines which
 group of observations the parameter is related to in the case of random
-intercepts. Non-applicable fields in the this syntax are set to \code{NA}.
+intercepts and loadings. Non-applicable fields in the this syntax are set
+to \code{NA}.
 }
 \description{
 Credible Intervals for Dynamite Model Parameters

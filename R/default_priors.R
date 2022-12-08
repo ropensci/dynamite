@@ -23,6 +23,34 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
       category = ""
     )
   }
+  if (channel$has_lfactor) {
+    channel$sigma_lambda_prior_distr <- "normal(0, 1)"
+    priors$sigma_lambda <- data.frame(
+      parameter = paste0("sigma_lambda_", y),
+      response = y,
+      prior = channel$sigma_lambda_prior_distr,
+      type = "sigma_lambda",
+      category = ""
+    )
+    if (channel$nonzero_lambda) {
+      channel$tau_psi_prior_distr <- "normal(0, 1)"
+      priors$tau_psi <- data.frame(
+        parameter = paste0("tau_psi_", y),
+        response = y,
+        prior = channel$tau_psi_prior_distr,
+        type = "tau_psi",
+        category = ""
+      )
+    }
+    channel$psi_prior_distr <- "normal(0, 1)"
+    priors$psi <- data.frame(
+      parameter = paste0("psi_", y),
+      response = y,
+      prior = channel$psi_prior_distr,
+      type = "psi",
+      category = ""
+    )
+  }
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {
     channel$alpha_prior_distr <- paste0("normal(", mean_y, ", ", 2 * sd_y, ")")
     priors$alpha <- data.frame(
@@ -46,9 +74,9 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
   if (channel$has_fixed) {
     m <- mean_gamma[channel$J_fixed]
     s <- sd_gamma[channel$J_fixed]
-    channel$beta_prior_npars <- 2L
-    channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
     channel$beta_prior_distr <- "normal"
+    channel$beta_prior_npars <- 2L
+    channel$beta_prior_pars <- unname(cbind(m, s))
     priors$beta <- data.frame(
       parameter = paste0("beta_", y, "_", names(s)),
       response = y,
@@ -60,9 +88,9 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
   if (channel$has_varying) {
     m <- mean_gamma[channel$J_varying]
     s <- sd_gamma[channel$J_varying]
-    channel$delta_prior_npars <- 2L
-    channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
     channel$delta_prior_distr <- "normal"
+    channel$delta_prior_npars <- 2L
+    channel$delta_prior_pars <- unname(cbind(m, s))
     priors$delta <- data.frame(
       parameter = paste0("delta_", y, "_", names(s)),
       response = y,
@@ -70,9 +98,9 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
       type = "delta",
       category = ""
     )
+    channel$tau_prior_distr <- "normal"
     channel$tau_prior_npars <- 2
     channel$tau_prior_pars <- cbind(0, rep(1, channel$K_varying))
-    channel$tau_prior_distr <- "normal"
     priors$tau <- data.frame(
       parameter = paste0("tau_", y, "_", names(s)),
       response = y,
@@ -81,7 +109,10 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
       category = ""
     )
   }
-  list(channel = channel, priors = dplyr::bind_rows(priors))
+  list(
+    channel = channel,
+    priors = data.table::setDF(data.table::rbindlist(priors))
+  )
 }
 
 #' Create Default Priors for Categorical Data
@@ -101,9 +132,9 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {
     m <- rep(0.0, S_y - 1L)
     s <- rep(2.0, S_y - 1L)
-    channel$alpha_prior_npars <- 2L
-    channel$alpha_prior_pars <- cbind(m, s, deparse.level = 0)
     channel$alpha_prior_distr <- "normal"
+    channel$alpha_prior_npars <- 2L
+    channel$alpha_prior_pars <- unname(cbind(m, s))
     priors$alpha <- data.frame(
       parameter = paste0("alpha_", y),
       response = y,
@@ -125,9 +156,9 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
   if (channel$has_fixed) {
     m <- rep(0.0, channel$K_fixed * (S_y - 1L))
     s <- rep(sd_gamma[channel$J_fixed], S_y - 1L)
-    channel$beta_prior_npars <- 2L
     channel$beta_prior_distr <- "normal"
-    channel$beta_prior_pars <- cbind(m, s, deparse.level = 0)
+    channel$beta_prior_npars <- 2L
+    channel$beta_prior_pars <- unname(cbind(m, s))
     priors$beta <- data.frame(
       parameter = paste0("beta_", y, "_", names(s)),
       response = y,
@@ -139,9 +170,9 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
   if (channel$has_varying) {
     m <- rep(0.0, channel$K_varying * (S_y - 1L))
     s <- rep(sd_gamma[channel$J_varying], S_y - 1L)
-    channel$delta_prior_npars <- 2L
-    channel$delta_prior_pars <- cbind(m, s, deparse.level = 0)
     channel$delta_prior_distr <- "normal"
+    channel$delta_prior_npars <- 2L
+    channel$delta_prior_pars <- unname(cbind(m, s))
     priors$delta <- data.frame(
       parameter = paste0("delta_", y, "_", names(s)),
       response = y,
@@ -149,9 +180,9 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
       type = "delta",
       category = rep(resp_levels, each = channel$K_varying)
     )
+    channel$tau_prior_distr <- "normal"
     channel$tau_prior_npars <- 2L
     channel$tau_prior_pars <- cbind(0.0, rep(1.0, channel$K_varying))
-    channel$tau_prior_distr <- "normal"
     priors$tau <- data.frame(
       parameter = paste0("tau_", y, "_", names(sd_gamma[channel$J_varying])),
       response = y,
@@ -160,7 +191,10 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
       category = ""
     )
   }
-  list(channel = channel, priors = dplyr::bind_rows(priors))
+  list(
+    channel = channel,
+    priors = data.table::setDF(data.table::rbindlist(priors))
+  )
 }
 
 #' Check and Correct the User-defined Priors
@@ -199,8 +233,8 @@ check_priors <- function(priors, defaults) {
     )
   )
   # order to match the code generation
-  priors <- priors |>
-    dplyr::arrange(match(.data$parameter, defaults$parameter))
+  prior_order <- match(priors$parameter, defaults$parameter)
+  priors <- priors[order(prior_order), ]
   unconstrained_dists <- c(
     "normal", "student_t", "double_exponential", "cauchy", "exp_mod_normal",
     "skew_normal", "logistic", "gumbel", "skew_double_exponential"

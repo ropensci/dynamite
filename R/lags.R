@@ -143,15 +143,22 @@ extract_lags <- function(x) {
     lag_map$k <- as.integer(lag_map$k)
     lag_map$k[is.na(lag_map$k)] <- 1L
     lag_map$present <- TRUE
-    lag_map |>
-      dplyr::distinct() |>
-      dplyr::group_by(.data$var) |>
-      tidyr::complete(
-        k = tidyr::full_seq(c(1L, .data$k), 1L),
-        fill = list(src = "", present = FALSE)
-      ) |>
-      dplyr::arrange(.data$var, .data$k) |>
-      dplyr::ungroup()
+    lag_map <- unique(lag_map)
+    lag_var <- sort(unique(lag_map$var))
+    expanded <- vector(mode = "list", length = length(lag_var))
+    for (i in seq_along(lag_var)) {
+      v <- lag_var[i]
+      tmp <- lag_map[lag_map$var == v, ]
+      tmp <- tmp[order(tmp$k), ]
+      full <- data.frame(
+        src = "",
+        var = v,
+        k = seq.int(1L, max(tmp$k)),
+        present  = FALSE
+      )
+      expanded[[i]] <- full[full$k %in% tmp$k, ] <- tmp
+    }
+    lag_map <- do.call("rbind", args = expanded)
   } else {
     data.frame(
       src = character(0L),

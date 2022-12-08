@@ -17,7 +17,8 @@
 #'   useful in avoiding divergences in some cases. See also `noncentered`
 #'   argument. Can be a single positive value, or vector defining the
 #'   lower bound separately for each channel, even for channels without
-#'   varying effects.
+#'   varying effects. The ordering is based on the order of channel definitions
+#'   in the `dynamiteformula`.
 #' @param noncentered \[`logical()`]\cr If `TRUE`, use a noncentered
 #'   parameterization for the spline coefficients. Default is `FALSE`. Try
 #'   changing this if you encounter divergences or other problems in sampling
@@ -26,9 +27,9 @@
 #'   parameterization separately for each channel, even for channels without
 #'   varying effects.
 #' @param shrinkage \[`logical(1)`]\cr If `TRUE`, a common global shrinkage
-#'   parameter \eqn{\lambda} is used for the splines so that the standard
+#'   parameter \eqn{\xi} is used for the splines so that the standard
 #'   deviation of the random walk prior is of the spline coefficients is
-#'   \eqn{\lambda\tau}. Default is `FALSE`. This is an experimental feature and
+#'   \eqn{\xi\tau}. Default is `FALSE`. This is an experimental feature and
 #'   not tested comprehensively.
 #' @param override \[`logical(1)`]\cr If `FALSE` (the default), an existing
 #'    definition for the splines will not be overridden by another call to
@@ -62,11 +63,6 @@ splines <- function(df = NULL, degree = 3L, lb_tau = 0,
   stopifnot_(
     checkmate::test_int(x = degree, lower = 1L),
     "Argument {.arg degree} must be a single positive {.cls integer}."
-  )
-  stopifnot_(
-    checkmate::test_numeric(x = lb_tau, lower = 0L),
-    "Argument {.arg lb_tau} must be a {.cls numeric} vector
-     of non-negative values."
   )
   stopifnot_(
     checkmate::test_logical(

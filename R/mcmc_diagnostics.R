@@ -18,7 +18,6 @@ mcmc_diagnostics <- function(x, n) {
 }
 
 #' @export
-#' @method mcmc_diagnostics dynamitefit
 #' @rdname mcmc_diagnostics
 mcmc_diagnostics.dynamitefit <- function(x, n = 1L) {
   stopifnot_(
@@ -45,41 +44,32 @@ mcmc_diagnostics.dynamitefit <- function(x, n = 1L) {
         )))
       cat(msg, sep = "\n")
     }
+    init <- seq_len(n)
     sumr <- posterior::summarise_draws(
       suppressWarnings(as_draws(x)),
       posterior::default_convergence_measures()
     )
-
     cat("\nSmallest bulk-ESS values: \n")
-    sumr |>
-      dplyr::select(.data$variable, .data$ess_bulk) |>
-      dplyr::arrange(.data$ess_bulk) |>
-      utils::head(n) |>
-      tidyr::pivot_wider(
-        names_from = .data$variable,
-        values_from = .data$ess_bulk
-      ) |>
-      print()
+    bulk <- sumr[order(sumr$ess_bulk), c("variable", "ess_bulk")][init, ]
+    var <- bulk$variable
+    out <- bulk$ess_bulk
+    names(out) <- var
+    print(tibble::as_tibble(t(out)))
     cat("\nSmallest tail-ESS values: \n")
-    sumr |>
-      dplyr::select(.data$variable, .data$ess_tail) |>
-      dplyr::arrange(.data$ess_tail) |>
-      utils::head(n) |>
-      tidyr::pivot_wider(
-        names_from = .data$variable,
-        values_from = .data$ess_tail
-      ) |>
-      print()
+    tail <- sumr[order(sumr$ess_tail), c("variable", "ess_tail")][init, ]
+    var <- tail$variable
+    out <- tail$ess_tail
+    names(out) <- var
+    print(tibble::as_tibble(t(out)))
     cat("\nLargest Rhat values: \n")
-    sumr |>
-      dplyr::select(.data$variable, .data$rhat) |>
-      dplyr::arrange(dplyr::desc(.data$rhat)) |>
-      utils::head(n) |>
-      tidyr::pivot_wider(
-        names_from = .data$variable,
-        values_from = .data$rhat
-      ) |>
-      print()
+    rhat <- sumr[
+      order(sumr$rhat, decreasing = TRUE),
+      c("variable", "rhat")
+    ][init, ]
+    var <- rhat$variable
+    out <- rhat$rhat
+    names(out) <- var
+    print(tibble::as_tibble(t(out)))
   } else {
     cat("No Stan model fit is available.")
   }

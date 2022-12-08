@@ -10,68 +10,64 @@
 #' of the model parameters (i.e., only certain types of parameters related to a
 #' certain response variable).
 #'
-#' Potential values for the types argument are:
-#'  * `alpha` Intercept terms (time-invariant or time-varying).
-#'  * `beta` Time-invariant regression coefficients.
-#'  * `delta` Time-varying regression coefficients.
-#'  * `nu` Random intercepts.
-#'  * `tau` Standard deviations of the spline coefficients of `delta`.
-#'  * `tau_alpha` Standard deviations of the spline coefficients of
-#'    time-varying `alpha`.
-#'  * `sigma_nu` Standard deviation of the random intercepts `nu`.
-#'  * `sigma` Standard deviations of gaussian responses.
-#'  * `phi` Dispersion parameters of negative binomial responses.
-#'  * `omega` Spline coefficients of the regression coefficients `delta`.
-#'  * `omega_alpha` Spline coefficients of time-varying `alpha`.
-#'
+#' See potential values for the types argument in
+#' [dynamite::as.data.frame.dynamitefit()]
 #' @export
+#' @aliases as_draws_df
+#' @export as_draws_df
+#' @rdname as_draws-dynamitefit
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @inheritParams as.data.frame.dynamitefit
 #' @return A `draws_df` object.
-#' @aliases as_draws as_draws_df
-#' @export as_draws_df
-#' @rdname as_draws-dynamitefit
-#' @method as_draws_df dynamitefit
 #' @examples
 #' as_draws(gaussian_example_fit, types = c("sigma", "beta"))
 #'
 as_draws_df.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
-  d <- as.data.frame.dynamitefit(
+  # avoid NSE notes from R CMD check
+  .chain <- .draw <- .iteration <- NULL
+  category <- group <- parameter <- response <- time <- type <- value <- NULL
+  d <- as.data.table.dynamitefit(
     x,
     responses = responses,
     types = types,
     summary = FALSE,
     include_fixed = FALSE
-  ) |>
-    dplyr::select(
-      .data$parameter, .data$value, .data$time, .data$category,
-      .data$group, .data$.iteration, .data$.chain
-    ) |>
-    dplyr::arrange(
-      .data$parameter, .data$time, .data$category, .data$group,
-      .data$.chain, .data$.iteration
-    ) |>
-    tidyr::pivot_wider(
-      values_from = .data$value,
-      names_from = c(
-        .data$parameter, .data$time, .data$category,
-        .data$group
-      ),
-      names_glue = "{parameter}[{time}]_{category}_id{group}"
+  )[,
+    .SD,
+    .SDcols = c(
+      "parameter",
+      "value",
+      "time",
+      "category",
+      "group",
+      ".iteration",
+      ".chain"
     )
+  ][
+    order(parameter, time, category, group, .chain, .iteration),
+  ]
+  dn <- unique(glue::glue("{d$parameter}[{d$time}]_{d$category}_id{d$group}"))
+  d <- data.table::dcast(
+    data = d,
+    formula = .chain + .iteration ~ parameter + time + category + group,
+    value.var = "value"
+  )
   # remove NAs from time-invariant parameter names
-  colnames(d) <- gsub("\\[NA\\]", "", colnames(d))
+  dn <- gsub("\\[NA\\]", "", dn)
   # remove NAs from parameters which are not category specific
-  colnames(d) <- gsub("_NA", "", colnames(d))
+  dn <- gsub("_NA", "", dn)
   # remove NAs from parameters which are not group specific
-  colnames(d) <- gsub("_idNA", "", colnames(d))
-  d |> posterior::as_draws()
+  dn <- gsub("_idNA", "", dn)
+  colnames(d) <- c(".chain", ".iteration", dn)
+  posterior::as_draws(
+    data.table::setDF(d)
+  )
 }
 
 #' @export
 #' @export as_draws
+#' @aliases as_draws
 #' @rdname as_draws-dynamitefit
-#' @method as_draws dynamitefit
 #' @return A `draws_df` object.
 #' @inheritParams as_draws_df.dynamitefit
 as_draws.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {

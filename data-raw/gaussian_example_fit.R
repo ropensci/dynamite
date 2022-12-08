@@ -25,7 +25,11 @@ gaussian_example_fit <- dynamite(
   save_warmup = FALSE
 )
 
-usethis::use_data(gaussian_example_fit, overwrite = TRUE, compress = "xz")
+usethis::use_data(
+  gaussian_example_fit,
+  overwrite = TRUE,
+  compress = "xz"
+)
 
 # Code to create `gaussian_example_single_fit` object
 
@@ -35,7 +39,7 @@ d <- gaussian_example |> dplyr::filter(id == 1)
 # convergence issues with the current setup but doesn't matter for tests
 set.seed(1)
 gaussian_example_single_fit <- dynamite(
-  obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
+  dformula = obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
     splines(df = 20),
   data = d,
   time = "time",
@@ -47,7 +51,8 @@ gaussian_example_single_fit <- dynamite(
   save_warmup = FALSE
 )
 
-usethis::use_data(gaussian_example_single_fit,
+usethis::use_data(
+  gaussian_example_single_fit,
   overwrite = TRUE,
   compress = "xz", internal = TRUE
 )

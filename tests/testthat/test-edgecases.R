@@ -196,7 +196,7 @@ test_that("shrinkage is handled correctly", {
   expect_equal(get_priors(
     obs_all_alpha, test_data,
     "group", "time"
-  )$parameter[58], "lambda")
+  )$parameter[58], "xi")
 })
 
 test_that("noncentered splines are handled correctly", {
@@ -382,8 +382,7 @@ test_that("data expansion to full time scale works", {
   data.table::setDT(expected_data, key = c("group", "time"))
   expect_equal(fit$data, expected_data, ignore_attr = TRUE)
   # no groups
-  test_data_single <- test_data |> dplyr::filter(group == 1)
-  test_data_single$group <- NULL
+  test_data_single <- test_data[test_data[["group"]] == 1L, ]
   mis_rows_single <- c(3, 5, 6, 9)
   test_data_single_mis <- test_data_single[-mis_rows_single, ]
   fit_single <- dynamite(
@@ -397,7 +396,7 @@ test_that("data expansion to full time scale works", {
     debug = debug
   )
   expected_data_single <- test_data_single
-  expected_data_single[mis_rows_single, seq(2, ncol(test_data_single))] <- NA
+  expected_data_single[mis_rows_single, seq(3, ncol(test_data_single))] <- NA
   expected_data_single$x1 <- factor(expected_data_single$x1)
   expected_data_single <- droplevels(expected_data_single)
   expected_data_single$trials <- NULL
@@ -409,7 +408,7 @@ test_that("data expansion to full time scale works", {
 test_that("no groups data preparation works", {
   test_data_single <- test_data |>
     dplyr::filter(.data$group == 1) |>
-    dplyr::select(!.data$group)
+    dplyr::select(!"group")
   obs_all <- obs(y1 ~ x2 + lag(y1), family = "categorical") +
     obs(y2 ~ x2, family = "gaussian") +
     obs(y3 ~ x3 + trials(trials), family = "binomial") +

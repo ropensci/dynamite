@@ -9,7 +9,8 @@ random(responses = NULL, correlated = TRUE, noncentered = TRUE)
 \arguments{
 \item{responses}{[\code{character()}]\cr Names of the responses for which the
 random intercepts should be defined. Default is all responses defined with
-\code{obs}.}
+\code{obs}, except categorical response, which does not (yet) support random
+intercepts.}
 
 \item{correlated}{[\code{logical(1)}]\cr If \code{TRUE} (the default), correlations of
 intercepts within a group (i.e., between responses) are modeled so that

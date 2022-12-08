@@ -52,7 +52,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   T_full <- length(time)
   T_idx <- seq.int(fixed + 1L, T_full)
   has_groups <- !is.null(group_var)
-  group <- onlyif(has_groups, data[[group_var]])
+  group <- data[[group_var]]
   has_splines <- !is.null(attr(dformula, "splines"))
   spline_defs <- prepare_splines(
     attr(dformula, "splines"),
@@ -62,7 +62,18 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   sampling_vars$D <- spline_defs$D
   sampling_vars$Bs <- spline_defs$Bs
   has_random <- attr(dformula, "random")$responses
-  N <- ifelse_(has_groups, n_unique(group), 1L)
+  lfactor_defs <- attr(dformula, "lfactor")
+  has_lfactor <- !is.null(lfactor_defs)
+  lfactor_defs <- prepare_lfactors(
+    attr(dformula, "lfactor"),
+    resp_names
+  )
+  stopifnot_(
+    !has_lfactor || has_splines,
+    "Model contains time-varying latent factor(s) but splines have not been
+    defined."
+  )
+  N <- n_unique(group)
   K <- ncol(model_matrix)
   X <- aperm(
     array(as.numeric(unlist(split(model_matrix, gl(T_full, 1, N * T_full)))),
@@ -86,11 +97,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   for (i in seq_len(n_channels)) {
     channel <- list()
     resp <- resp_names[i]
-    resp_split <- ifelse_(
-      has_groups,
-      split(responses[, resp], group),
-      responses[, resp]
-    )
+    resp_split <- split(responses[, resp], group)
     Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))
     Y <- Y[T_idx, , drop = FALSE]
     Y_na <- is.na(Y)
@@ -137,6 +144,10 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     channel$lb <- spline_defs$lb[i]
     channel$shrinkage <- spline_defs$shrinkage
     channel$noncentered <- spline_defs$noncentered[i]
+    channel$has_lfactor <- resp %in% lfactor_defs$responses
+    channel$noncentered_psi <- lfactor_defs$noncentered_psi
+    channel$noncentered_lambda <- lfactor_defs$noncentered_lambda[i]
+    channel$nonzero_lambda <- lfactor_defs$nonzero_lambda[i]
     stopifnot_(
       has_splines || !(channel$has_varying || channel$has_varying_intercept),
       "Model for response variable {.var {resp}} contains time-varying
@@ -145,11 +156,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     # evaluate specials such as offset and trials
     for (spec in formula_special_funs) {
       if (!is.null(form_specials[[spec]])) {
-        spec_split <- ifelse_(
-          has_groups,
-          split(form_specials[[spec]], group),
-          form_specials[[spec]]
-        )
+        spec_split <- split(form_specials[[spec]], group)
         spec_array <- array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
         sampling_vars[[paste0(spec, "_", resp)]] <-
           spec_array[seq.int(fixed + 1L, T_full), , drop = FALSE]
@@ -183,8 +190,9 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   sampling_vars$K <- K
   sampling_vars$X <- X
   sampling_vars$M <- sum(unlist(
-    lapply(model_vars, "[[", "has_random_intercept")
-  ))
+    lapply(model_vars, "[[", "has_random_intercept")))
+  sampling_vars$P <- sum(unlist(
+    lapply(model_vars, "[[", "has_lfactor")))
   # avoid goodpractice warning, T is a Stan variable, not an R variable
   sampling_vars[["T"]] <- T_full - fixed
   sampling_vars$X_m <- as.array(x_means)
@@ -192,7 +200,9 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     priors = priors,
     M = sampling_vars$M,
     shrinkage = spline_defs$shrinkage,
-    correlated = attr(dformula, "random")$correlated
+    correlated = attr(dformula, "random")$correlated,
+    P = sampling_vars$P,
+    correlated_lf = lfactor_defs$correlated
   )
   # for stanblocks
   attr(model_vars, "common_priors") <- prior_list[["common_priors"]]
@@ -250,23 +260,76 @@ prepare_splines <- function(spline_defs, n_channels, T_idx) {
   }
   out
 }
-
-#' Construct a Prior Definition for a Time-varying Parameter
+#' Prepare Latent Factor Definitions for Stan
 #'
-#' @param ptype \[chararcter(1L)]\cr Type of the parameter.
+#' @param lfactor_defs An `lfactor` object.
+#' @param responses Names of the response variables.
+#' @noRd
+prepare_lfactors <- function(lfactor_defs, responses) {
+  # TODO: There is repetition here with the checks in parse_lags function! Remove this?
+  out <- list()
+  if (!is.null(lfactor_defs)) {
+    out$responses <- lfactor_defs$responses
+    if (!is.null(out$responses)) {
+      out$responses <- responses
+    } else {
+      if (!all(out$responses %in% responses)) {
+        stop_("Found response variable names in {.arg responses} of
+          {.fun lfactor} function without corresponding channel definition in
+          dynamiteformula.")
+      }
+    }
+    out$noncentered_psi <- lfactor_defs$noncentered_psi
+    n_channels <- length(responses)
+    out$noncentered_lambda <- lfactor_defs$noncentered_lambda
+    if (length(out$noncentered_lambda) %in% c(1L, n_channels)) {
+      out$noncentered_lambda <- rep(out$noncentered_lambda, length = n_channels)
+    } else {
+      stop_(
+        "Length of the {.arg noncentered_lambda} argument of {.fun lfactor}
+        function is not equal to 1 or {n_channels}, the number of the channels
+        with latent factor."
+      )
+    }
+    out$nonzero_lambda <- lfactor_defs$nonzero_lambda
+    if (length(out$nonzero_lambda) %in% c(1L, n_channels)) {
+      out$nonzero_lambda <- rep(out$nonzero_lambda, length = n_channels)
+    } else {
+      stop_(
+        "Length of the {.arg nonzero_lambda} argument of {.fun lfactor} function
+         is not equal to 1 or {n_channels}, the number of the channels with
+         latent factor."
+      )
+    }
+    out$correlated <- lfactor_defs$correlated
+  } else {
+    n_channels <- length(responses)
+    out <- list(
+      responses = character(0),
+      noncentered_psi = FALSE,
+      noncentered_lambda = logical(n_channels),
+      nonzero_lambda = logical(n_channels),
+      correlated = FALSE
+    )
+  }
+  out
+}
+#' Construct a Prior Definition for a Regression Parameters
+#'
+#' @param ptype \[character(1L)]\cr Type of the parameter.
 #' @param priors \[`data.frame`]\cr Prior definitions.
 #' @param channel \[`list()`]\cr Channel-specific variables for Stan sampling
 #' @noRd
 prepare_prior <- function(ptype, priors, channel) {
-  pdef <- priors |> dplyr::filter(.data$type == ptype)
+  pdef <- priors[priors$type == ptype, ]
   channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
   dists <- sub("\\(.*", "", pdef$prior)
   if (nrow(pdef) > 0L && identical(n_unique(dists), 1L)) {
     pars <- strsplit(sub(".*\\((.*)\\).*", "\\1", pdef$prior), ",")
     pars <- do.call("rbind", lapply(pars, as.numeric))
+    channel[[paste0(ptype, "_prior_distr")]] <- dists[1L]
     channel[[paste0(ptype, "_prior_npars")]] <- ncol(pars)
     channel[[paste0(ptype, "_prior_pars")]] <- pars
-    channel[[paste0(ptype, "_prior_distr")]] <- dists[1L]
   }
   channel
 }
@@ -274,28 +337,33 @@ prepare_prior <- function(ptype, priors, channel) {
 #' Construct Common Priors among Channels
 #'
 #' @inheritParams splines
-#' @param priors Custom prior definitions or `NULL` if not specified
-#' @param M Number of channels with random intercept
+#' @param priors Custom prior definitions or `NULL` if not specified.
+#' @param M Number of channels with random intercept.
+#' @param shrinkage Does the model contain shrinkage parameter?
+#' @param correlated Does the model contain correlated random intercepts?
+#' @param P Number of channels with latent factor.
+#' @param correlated Does the model contain correlated latent factors?
 #' @noRd
-prepare_common_priors <- function(priors, M, shrinkage, correlated) {
+prepare_common_priors <- function(priors, M, shrinkage, P, correlated,
+  correlated_lf) {
   common_priors <- NULL
   if (shrinkage) {
     common_priors <- ifelse_(
       is.null(priors),
       data.frame(
-        parameter = "lambda",
+        parameter = "xi",
         response = "",
         prior = "normal(0, 1)",
-        type = "lambda",
+        type = "xi",
         category = ""
       ),
-      priors |> dplyr::filter(.data$type == "lambda")
+      priors[priors$type == "xi", ]
     )
   }
   if (M > 1L && correlated) {
     common_priors <- ifelse_(
       is.null(priors),
-      dplyr::bind_rows(
+      rbind(
         common_priors,
         data.frame(
           parameter = "L",
@@ -305,9 +373,28 @@ prepare_common_priors <- function(priors, M, shrinkage, correlated) {
           category = ""
         )
       ),
-      dplyr::bind_rows(
+      rbind(
         common_priors,
-        priors |> dplyr::filter(.data$type == "L")
+        priors[priors$parameter == "L", ]
+      )
+    )
+  }
+  if (P > 1L && correlated_lf) {
+    common_priors <- ifelse_(
+      is.null(priors),
+      rbind(
+        common_priors,
+        data.frame(
+          parameter = "L_lf",
+          response = "",
+          prior = "lkj_corr_cholesky(1)",
+          type = "L",
+          category = ""
+        )
+      ),
+      rbind(
+        common_priors,
+        priors[priors$parameter == "L_lf", ]
       )
     )
   }
@@ -344,12 +431,14 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
     channel <- out$channel
     priors <- out$priors
   } else {
-    priors <- priors |> dplyr::filter(.data$response == y)
-    for (ptype in c("alpha", "tau_alpha", "sigma_nu")) {
-      pdef <- priors |> dplyr::filter(.data$type == ptype)
+    priors <- priors[priors$response == y, ]
+    types <- priors$type
+    for (ptype in intersect(types,
+      c("alpha", "tau_alpha", "sigma_nu", "sigma_lambda", "tau_psi"))) {
+      pdef <- priors[priors$type == ptype, ]
       channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
     }
-    for (ptype in c("beta", "delta", "tau")) {
+    for (ptype in intersect(types, c("beta", "delta", "tau"))) {
       channel <- prepare_prior(ptype, priors, channel)
     }
   }
@@ -380,12 +469,15 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
     channel <- out$channel
     priors <- out$priors
   } else {
-    priors <- priors |> dplyr::filter(.data$response == y)
-    for (ptype in c("alpha", "beta", "delta", "tau")) {
+    priors <- priors[priors$response == y, ]
+    types <- priors$type
+    for (ptype in intersect(types, c("alpha", "beta", "delta", "tau"))) {
       channel <- prepare_prior(ptype, priors, channel)
     }
-    pdef <- priors |> dplyr::filter(.data$type == "tau_alpha")
-    channel[["tau_alpha_prior_distr"]] <- pdef$prior
+    if ("tau_alpha" %in% types) {
+      pdef <- priors[priors$type == "tau_alpha", ]
+      channel$tau_alpha_prior_distr <- pdef$prior
+    }
     priors <- check_priors(
       priors, default_priors_categorical(y, channel, sd_x, resp_class)$priors
     )
@@ -443,14 +535,14 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   )
   if (is.null(priors)) {
     out$channel$sigma_prior_distr <- sigma_prior$prior
-    out$priors <- dplyr::bind_rows(out$priors, sigma_prior)
+    out$priors <- rbind(out$priors, sigma_prior)
   } else {
-    priors <- priors |> dplyr::filter(.data$response == y)
-    pdef <- priors |> dplyr::filter(.data$type == "sigma")
+    priors <- priors[priors$response == y, ]
+    pdef <- priors[priors$type == "sigma", ]
     if (identical(nrow(pdef), 1L)) {
       out$channel$sigma_prior_distr <- pdef$prior
     }
-    defaults <- dplyr::bind_rows(
+    defaults <- rbind(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       sigma_prior
     )
@@ -599,14 +691,14 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
 
   if (is.null(priors)) {
     out$channel$phi_prior_distr <- phi_prior$prior
-    out$priors <- dplyr::bind_rows(out$priors, phi_prior)
+    out$priors <- rbind(out$priors, phi_prior)
   } else {
-    priors <- priors |> dplyr::filter(.data$response == y)
-    pdef <- priors |> dplyr::filter(.data$type == "phi")
+    priors <- priors[priors$response == y, ]
+    pdef <- priors[priors$type == "phi", ]
     if (identical(nrow(pdef), 1L)) {
       out$channel$phi_prior_distr <- pdef$prior
     }
-    defaults <- dplyr::bind_rows(
+    defaults <- rbind(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       phi_prior
     )
@@ -702,14 +794,14 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
 
   if (is.null(priors)) {
     out$channel$phi_prior_distr <- phi_prior$prior
-    out$priors <- dplyr::bind_rows(out$priors, phi_prior)
+    out$priors <- rbind(out$priors, phi_prior)
   } else {
-    priors <- priors |> dplyr::filter(.data$response == y)
-    pdef <- priors |> dplyr::filter(.data$type == "phi")
+    priors <- priors[priors$response == y, ]
+    pdef <- priors[priors$type == "phi", ]
     if (identical(nrow(pdef), 1L)) {
       out$channel$phi_prior_distr <- pdef$prior
     }
-    defaults <- dplyr::bind_rows(
+    defaults <- rbind(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       phi_prior
     )
@@ -760,14 +852,14 @@ prepare_channel_beta <- function(y, Y, channel, sd_x, resp_class, priors) {
 
   if (is.null(priors)) {
     out$channel$phi_prior_distr <- phi_prior$prior
-    out$priors <- dplyr::bind_rows(out$priors, phi_prior)
+    out$priors <- rbind(out$priors, phi_prior)
   } else {
-    priors <- priors |> dplyr::filter(.data$response == y)
-    pdef <- priors |> dplyr::filter(.data$type == "phi")
+    priors <- priors[priors$response == y, ]
+    pdef <- priors[priors$type == "phi", ]
     if (identical(nrow(pdef), 1L)) {
       out$channel$phi_prior_distr <- pdef$prior
     }
-    defaults <- dplyr::bind_rows(
+    defaults <- rbind(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       phi_prior
     )

@@ -4,15 +4,15 @@
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param parm Ignored.
 #' @param level \[`numeric(1)`]\cr Credible interval width.
-#' @param ... Additional arguments passed to
-#'   [dynamite::as.data.frame.dynamitefit()].
+#' @param ... Ignored.
 #' @return The rows of the resulting matrix will be named using the following
 #'   logic: `{parameter}_{time}_{category}_{group}` where `parameter` is the
 #'   name of the parameter, `time` is the time index of the parameter,
 #'    `category` specifies the level of the response the parameter
 #'   is related to if the response is categorical, and `group` determines which
 #'   group of observations the parameter is related to in the case of random
-#'   intercepts. Non-applicable fields in the this syntax are set to `NA`.
+#'   intercepts and loadings. Non-applicable fields in the this syntax are set
+#'   to `NA`.
 #' @srrstats {RE4.3} Provides credible intervals.
 #' @examples
 #' confint(gaussian_example_fit, level = 0.9)
@@ -36,15 +36,12 @@ confint.dynamitefit <- function(object, parm, level = 0.95, ...) {
     d$category, "_",
     d$group
   )
-  out <- d |>
-    dplyr::select(
-      !c(
-        .data$parameter, .data$time, .data$category,
-        .data$group, .data$response, .data$type,
-        .data$mean, .data$sd
-      )
-    ) |>
-    as.matrix()
+  drop_cols <- c(
+    "parameter", "time", "category",
+    "group", "response", "type",
+    "mean", "sd"
+  )
+  out <- as.matrix(d[, !colnames(d) %in% drop_cols])
   colnames(out) <- paste0(100.0 * c(a, 1.0 - a), "%")
   rownames(out) <- row_names
   out

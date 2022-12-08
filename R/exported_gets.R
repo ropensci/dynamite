@@ -29,11 +29,11 @@
 #' get_priors(obs(y ~ x, family = "gaussian"),
 #'   data = d, time = "time", group = "id"
 #' )
+#'
 get_priors <- function(x, ...) {
   UseMethod("get_priors", x)
 }
 
-#' @method get_priors dynamiteformula
 #' @rdname get_priors
 #' @export
 get_priors.dynamiteformula <- function(x, data, group = NULL, time, ...) {
@@ -51,7 +51,6 @@ get_priors.dynamiteformula <- function(x, data, group = NULL, time, ...) {
   out$priors
 }
 
-#' @method get_priors dynamitefit
 #' @rdname get_priors
 #' @export
 get_priors.dynamitefit <- function(x, ...) {

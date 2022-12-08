@@ -107,6 +107,26 @@ test_that("parameters for an AR(1) model are recovered as with arima", {
   )
 })
 
+test_that("LOO works for AR(1) model", {
+  skip_if_not(run_extended_tests)
+  set.seed(1)
+  fit <- dynamite(obs(LakeHuron ~ 1, "gaussian") + lags(),
+    data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
+    "id", "time", chains = 1, iter = 2000, refresh = 500
+  )
+  l <- loo(fit)
+  expect_equal(l$estimates,
+    structure(c(
+      -107.877842970846, 2.86041434691809, 215.755685941693,
+      7.36848739076899, 0.561813071004331, 14.736974781538
+    ),
+    dim = 3:2,
+    dimnames = list(c("elpd_loo", "p_loo", "looic"), c("Estimate", "SE"))
+    ),
+    tolerance = 1
+  )
+})
+
 test_that("parameters of a time-varying gaussian model are recovered", {
   skip_if_not(run_extended_tests)
   set.seed(1)

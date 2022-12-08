@@ -180,18 +180,18 @@ test_that("fitted and predict give equal results for the first time point", {
   expect_equal(
     predict(gaussian_example_fit, type = "mean", n_draws = 2) |>
       dplyr::filter(time == 2) |>
-      dplyr::pull(.data$y_mean),
+      dplyr::pull("y_mean"),
     fitted(gaussian_example_fit, n_draws = 2) |>
       dplyr::filter(time == 2) |>
-      dplyr::pull(.data$y_fitted)
+      dplyr::pull("y_fitted")
   )
   expect_equal(
     predict(multichannel_example_fit, type = "mean", n_draws = 2) |>
       dplyr::filter(time == 2) |>
-      dplyr::select(.data$g_mean, .data$p_mean, .data$b_mean),
+      dplyr::select("g_mean", "p_mean", "b_mean"),
     fitted(multichannel_example_fit, n_draws = 2) |>
       dplyr::filter(time == 2) |>
-      dplyr::select(.data$g_fitted, .data$p_fitted, .data$b_fitted),
+      dplyr::select("g_fitted", "p_fitted", "b_fitted"),
     ignore_attr = TRUE
   )
 })
@@ -203,13 +203,15 @@ test_that("predict with NA-imputed newdata works as default NULL", {
   newdata <- gaussian_example_fit$data
   newdata$y[newdata$time > 1] <- NA
   set.seed(1)
-  pred2 <- predict(gaussian_example_fit,
-    type = "mean", n_draws = 2,
+  pred2 <- predict(
+    gaussian_example_fit,
+    type = "mean",
+    n_draws = 2,
     newdata = newdata
   )
   expect_equal(
-    pred1 |> dplyr::pull(.data$y_mean),
-    pred2 |> dplyr::pull(.data$y_mean)
+    pred1 |> dplyr::pull("y_mean"),
+    pred2 |> dplyr::pull("y_mean")
   )
   # categorical example
   set.seed(1)
@@ -366,6 +368,39 @@ test_that("summarising via funs is equivalent to manual summary", {
     dplyr::summarise(y_mean = mean(y_new), y_sd = sd(y_new)) |>
     dplyr::filter(time > 1) |>
     dplyr::arrange(.draw)
-  expect_equal(pred1$y_mean, pred2$y_mean)
-  expect_equal(pred1$y_sd, pred2$y_sd)
+  expect_equal(pred1$mean_y, pred2$y_mean)
+  expect_equal(pred1$sd_y, pred2$y_sd)
+})
+
+test_that("predict with loglik works", {
+  out <- expect_error(initialize_predict(
+    gaussian_example_fit,
+    newdata = NULL,
+    type = "mean",
+    eval_type = "loglik",
+    funs = list(),
+    impute = "none",
+    new_levels = "none",
+    global_fixed = FALSE,
+    n_draws = NULL,
+    expand = FALSE,
+    df = TRUE
+  )$simulated, NA)
+
+  iter <- gaussian_example_fit$stanfit@sim$permutation[[1]][2]
+  xzy <- gaussian_example_fit$data |> dplyr::filter(id == 5 & time == 20)
+
+  manual <- as_draws(gaussian_example_fit) |>
+    dplyr::filter(.iteration == iter & .chain == 1) |>
+    dplyr::summarise(loglik = dnorm(xzy$y, `alpha_y[20]` +
+      nu_y_id5 + `delta_y_x[20]` * xzy$x +
+      beta_y_z * xzy$z + `delta_y_y_lag1[20]` * xzy$y_lag1, sigma_y,
+    log = TRUE
+    )) |>
+    dplyr::pull(loglik)
+
+  automatic <- out |>
+    dplyr::filter(id == 5 & time == 20 & .draw == 2) |>
+    dplyr::pull(y_loglik)
+  expect_equal(manual, automatic)
 })

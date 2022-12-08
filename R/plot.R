@@ -118,26 +118,31 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
     100 * (1 - 2 * level),
     "% intervals of the time-varying coefficients"
   )
+  # avoid NSE notes from R CMD check
+  time <- mean <- category <- parameter <- NULL
   if (any(!is.na(coefs$category))) {
-    p <- coefs |>
-      ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean,
-        colour = .data$category,
-        fill = .data$category
-      ))
+    p <- ggplot2::ggplot(
+      coefs,
+      ggplot2::aes(
+        time,
+        mean,
+        colour = category,
+        fill = category
+      )
+    )
   } else {
-    p <- coefs |>
-      ggplot2::ggplot(ggplot2::aes(.data$time, .data$mean))
+    p <- ggplot2::ggplot(coefs, ggplot2::aes(time, mean))
   }
   p +
     ggplot2::geom_ribbon(
-      ggplot2::aes_string(
-        ymin = paste0("q", 100 * level),
-        ymax = paste0("q", 100 * (1 - level))
+      ggplot2::aes(
+        ymin = !!rlang::sym(paste0("q", 100 * level)),
+        ymax = !!rlang::sym(paste0("q", 100 * (1 - level)))
       ),
       alpha = alpha
     ) +
     ggplot2::geom_line() +
-    ggplot2::facet_wrap(~ .data$parameter, scales = scales) +
+    ggplot2::facet_wrap("parameter", scales = scales) +
     ggplot2::labs(title = title, x = "Time", y = "Value")
 }
 
@@ -180,24 +185,30 @@ plot_betas <- function(x, responses = NULL, level = 0.05,
     100 * (1 - 2 * level),
     "% intervals of the time-invariant coefficients"
   )
+  # avoid NSE notes from R CMD check
+  time <- mean <- category <- parameter <- NULL
   if (any(!is.na(coefs$category))) {
-    p <- coefs |>
-      ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter,
-        colour = .data$category,
-        group = .data$category
-      ))
+    p <- ggplot2::ggplot(
+      coefs,
+      ggplot2::aes(
+        mean,
+        parameter,
+        colour = category,
+        group = category
+      )
+    )
   } else {
-    p <- coefs |>
-      ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter))
+    p <- ggplot2::ggplot(coefs, ggplot2::aes(mean, parameter))
   }
-  p + ggplot2::geom_pointrange(
-    ggplot2::aes_string(
-      xmin = paste0("q", 100 * level),
-      xmax = paste0("q", 100 * (1 - level))
-    ),
-    position = ggplot2::position_dodge(0.5)
-  ) +
-  ggplot2::labs(title = title, x = "Value", y = "Parameter")
+  p +
+    ggplot2::geom_pointrange(
+      ggplot2::aes(
+        xmin = !!rlang::sym(paste0("q", 100 * level)),
+        xmax = !!rlang::sym(paste0("q", 100 * (1 - level)))
+      ),
+      position = ggplot2::position_dodge(0.5)
+    ) +
+    ggplot2::labs(title = title, x = "Value", y = "Parameter")
 }
 
 #' Plot Random Intercepts of a Dynamite Model
@@ -233,21 +244,153 @@ plot_nus <- function(x, responses = NULL, level = 0.05) {
     !inherits(coefs, "try-error"),
     "The model does not contain random intercepts nu."
   )
-  coefs <- coefs |>
-    dplyr::mutate(parameter = glue::glue("{parameter}_{group}")) |>
-    dplyr::mutate(parameter = factor(.data$parameter,
-      levels = .data$parameter
-    ))
+  # avoid NSE notes from R CMD check
+  mean <- parameter <- NULL
+  coefs$parameter <- glue::glue("{coefs$parameter}_{coefs$group}")
+  coefs$parameter <- factor(coefs$parameter, levels = coefs$parameter)
   title <- paste0(
     "Posterior mean and ",
     100 * (1 - 2 * level),
     "% intervals of the random intercepts"
   )
-  coefs |>
-    ggplot2::ggplot(ggplot2::aes(.data$mean, .data$parameter)) +
-    ggplot2::geom_pointrange(ggplot2::aes_string(
-      xmin = paste0("q", 100 * level),
-      xmax = paste0("q", 100 * (1 - level))
+  ggplot2::ggplot(coefs, ggplot2::aes(mean, parameter)) +
+  ggplot2::geom_pointrange(ggplot2::aes(
+    xmin = !!rlang::sym(paste0("q", 100 * level)),
+    xmax = !!rlang::sym(paste0("q", 100 * (1 - level)))
+  )) +
+  ggplot2::labs(title = title, x = "Value", y = "Parameter")
+}
+#' Plot Factor Loadings of a Dynamite Model
+#'
+#' @export
+#' @inheritParams plot_deltas
+#' @return A `ggplot` object.
+#' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
+#'
+plot_lambdas <- function(x, responses = NULL, level = 0.05) {
+  stopifnot_(
+    checkmate::test_number(
+      x = level,
+      lower = 0.0,
+      upper = 1.0,
+      na.ok = FALSE,
+    ),
+    "Argument {.arg level} must be a single
+     {.cls numeric} value between 0 and 1."
+  )
+  coefs <- try(
+    coef.dynamitefit(
+      x,
+      "lambda",
+      responses = responses,
+      probs = c(level, 1 - level)
+    ),
+    silent = TRUE
+  )
+  stopifnot_(
+    !inherits(coefs, "try-error"),
+    "The model does not contain latent factor psi."
+  )
+  # avoid NSE notes from R CMD check
+  time <- mean <- parameter <- NULL
+  coefs$parameter <- glue::glue("{coefs$parameter}_{coefs$group}")
+  coefs$parameter <- factor(coefs$parameter, levels = coefs$parameter)
+  title <- paste0(
+    "Posterior mean and ",
+    100 * (1 - 2 * level),
+    "% intervals of the latent factor loadings"
+  )
+  ggplot2::ggplot(coefs, ggplot2::aes(mean, parameter)) +
+    ggplot2::geom_pointrange(ggplot2::aes(
+      xmin = !!rlang::sym(paste0("q", 100 * level)),
+      xmax = !!rlang::sym(paste0("q", 100 * (1 - level)))
     )) +
     ggplot2::labs(title = title, x = "Value", y = "Parameter")
+}
+#' Plot Latent Factors of a Dynamite Model
+#'
+#' @export
+#' @param x \[`dynamitefit`]\cr The model fit object
+#' @param responses  \[`character()`]\cr Response(s) for which the coefficients
+#'   should be drawn. Possible options are elements of
+#'   `unique(x$priors$response)`, and the default is this whole vector.
+#' @param level \[`numeric(1)`]\cr Level for posterior intervals.
+#'   Default is 0.05, leading to 90% intervals.
+#' @param alpha \[`numeric(1)`]\cr Opacity level for `geom_ribbon`.
+#'   Default is 0.5.
+#' @param scales \[`character(1)`] Should y-axis of the panels be `"fixed"`
+#'   (the default) or `"free"`? See [ggplot2::facet_wrap()].
+#' @return A `ggplot` object.
+#' @srrstats {G2.3a} Uses match.arg.
+#' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
+#'
+plot_psis <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
+  scales = c("fixed", "free")) {
+  stopifnot_(
+    checkmate::test_number(
+      x = level,
+      lower = 0.0,
+      upper = 1.0,
+      na.ok = FALSE,
+    ),
+    "Argument {.arg level} must be a single
+     {.cls numeric} value between 0 and 1."
+  )
+  stopifnot_(
+    checkmate::test_number(
+      x = alpha,
+      lower = 0.0,
+      upper = 1.0,
+      na.ok = FALSE,
+    ),
+    "Argument {.arg alpha} must be a single
+     {.cls numeric} value between 0 and 1."
+  )
+  coefs <- coef.dynamitefit(
+    x,
+    "psi",
+    responses = responses,
+    probs = c(level, 1 - level)
+  )
+  stopifnot_(
+    nrow(coefs) > 0L,
+    "The model does not contain latent factor psi."
+  )
+  scales <- onlyif(is.character(scales), tolower(scales))
+  scales <- try(match.arg(scales, c("fixed", "free")), silent = TRUE)
+  stopifnot_(
+    !inherits(scales, "try-error"),
+    "Argument {.arg scales} must be either \"fixed\" or \"free\"."
+  )
+  title <- paste0(
+    "Posterior mean and ",
+    100 * (1 - 2 * level),
+    "% intervals of the latent factors"
+  )
+  # avoid NSE notes from R CMD check
+  time <- mean <- category <- NULL
+  if (any(!is.na(coefs$category))) {
+    p <- ggplot2::ggplot(
+      coefs,
+      ggplot2::aes(
+        time,
+        mean,
+        colour = category,
+        fill = category
+      )
+    )
+  } else {
+    p <- ggplot2::ggplot(coefs, ggplot2::aes(time, mean))
+  }
+  p +
+    ggplot2::geom_ribbon(
+      ggplot2::aes(
+        ymin = !!rlang::sym(paste0("q", 100 * level)),
+        ymax = !!rlang::sym(paste0("q", 100 * (1 - level)))
+      ),
+      alpha = alpha
+    ) +
+    ggplot2::geom_line() +
+    ggplot2::facet_wrap("parameter", scales = scales) +
+    ggplot2::labs(title = title, x = "Time", y = "Value")
 }

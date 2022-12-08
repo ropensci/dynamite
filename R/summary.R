@@ -5,7 +5,6 @@
 #'
 #' @export
 #' @rdname dynamite
-#' @method summary dynamitefit
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param ... Further arguments to [dynamite::as.data.frame.dynamitefit()].
 #' @return `summary` returns a `data.frame`.
