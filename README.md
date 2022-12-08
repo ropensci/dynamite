@@ -42,9 +42,6 @@ Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)).
 
 ## Installation
 
-`dynamite` uses R’s native pipe operator, so R version 4.1.0 or newer is
-required.
-
 <!-- `dynamite` also relies on some of the features of [Stan](https://mc-stan.org/)'s  -->
 <!-- which are not yet available on the [CRAN](https://cran.r-project.org/) version  -->
 <!-- of [rstan](https://CRAN.R-project.org/package=rstan) package. Therefore you  -->
@@ -57,9 +54,9 @@ required.
 <!-- ``` -->
 <!-- (See more help on [RStan wiki](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started)) -->
 
-Also, version `1.14.3` or newer of the
-[data.table](https://github.com/Rdatatable/data.table) package is
-required, which can be installed via:
+`dynamite` requires the development version of the
+[data.table](https://github.com/Rdatatable/data.table) package (version
+`1.14.3` or newer), which can be installed via:
 
 ``` r
 # run the next line if you do not have any version of the data.table installed:
@@ -69,7 +66,7 @@ required, which can be installed via:
 data.table::update.dev.pkg()
 ```
 
-After these steps, you can install the development version of dynamite
+After these steps, you can install the development version of `dynamite`
 from [GitHub](https://github.com/) with:
 
 ``` r
