@@ -25,9 +25,12 @@
   * The `env` argument of `data.table` is now used to avoid possible variable
     name conflicts.
   * Breaking change: The shrinkage parameter which was previously named as 
-    `lambda` is now `xi` in order to free `lambda` for factor loadings parameter 
-     as is customary in factor analysis.
-  * Added support for correlated latent dynamic factors (modelled as splines).
+    `lambda` is now `xi` in order to free `lambda` for factor loadings 
+    parameter as is customary in factor analysis.
+  * Added support for correlated latent dynamic factors (modeled as splines).
+  * `get_code` applied to fitted model now correctly returns only the model 
+    code and not the stanmodel object.
+  * Fixed the `.draw` column of the `as.data.frame` output.
 
 # dynamite 0.0.2
 
