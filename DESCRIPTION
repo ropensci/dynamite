@@ -22,7 +22,7 @@ Imports:
     bayesplot,
     checkmate,
     cli,
-    data.table (>= 1.14.3),
+    data.table (>= 1.14.7),
     glue,
     ggplot2,
     loo,
