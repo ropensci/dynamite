@@ -46,7 +46,7 @@ from many other approaches are:
 * Transparent quantification of parameter and predictive uncertainty due to a 
   fully Bayesian approach.
 * User-friendly and efficient R interface with state-of-the-art estimation via 
-  Stan. Both `rstan` and `cmdstanr` backend are supported.
+  Stan. Both `rstan` and `cmdstanr` backends are supported.
 
 The `dynamite` package is developed with the support of Academy of Finland 
 grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)). 
@@ -61,7 +61,7 @@ grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)).
 # install.packages("data.table")
 
 # install the latest development version:
-data.table::update.dev.pkg()
+data.table::update_dev_pkg()
 ```
 
 After these steps, you can install the development version of `dynamite` from 
