@@ -1,7 +1,13 @@
 #' Define a Common Latent Factor for the Dynamite Model.
 #'
 #' This function can be used as part of [dynamiteformula()] to define
-#' a common latent factor component. #TODO definition and constraint on lambdas
+#' a common latent factor component. The latent factor is modelled as a spline
+#' similarly as time-varying intercept, but instead of having equal effect on
+#' each group, there is additional loading variable for each group so that in
+#' the linear predictor we have a term \eqn{\lambda_i  \psi_t} for each group i.
+#' In order to keep the full the factor loadings \eqn{\lambda}, the latent
+#' factor \eqn{\psi} and the full model identifiable, some restrictions are
+#' added to the model. Details will be available in an upcoming paper.
 #'
 #' @export
 #' @param responses \[`character()`]\cr Names of the responses for which the

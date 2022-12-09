@@ -266,7 +266,7 @@ prepare_splines <- function(spline_defs, n_channels, T_idx) {
 #' @param responses Names of the response variables.
 #' @noRd
 prepare_lfactors <- function(lfactor_defs, responses) {
-  # TODO: There is repetition here with the checks in parse_lags function! Remove this?
+  # There is repetition here with the checks in parse_lags function! Remove this?
   out <- list()
   if (!is.null(lfactor_defs)) {
     out$responses <- lfactor_defs$responses
