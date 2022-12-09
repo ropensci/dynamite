@@ -51,6 +51,10 @@ from the output.}
 
 \item{...}{Ignored.}
 }
+\value{
+A \code{data.table} containing either samples or summary statistics of
+the model parameters.
+}
 \description{
 Provides a \code{data.table} representation of the posterior samples of the model
 parameters. See \code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}} for details.

@@ -715,92 +715,14 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
   attr(dformula_lag_det, "rank_order") <-
     order(c(gl$rank[!gl$stoch], sl$rank[!sl$stoch & !sl$pred]))
   attr(dformula, "max_lag") <- max_lag
-  random_defs <- attr(dformula, "random")
-  if (!is.null(random_defs)) {
-    families <- unlist(get_families(dformula[channels_stoch]))
-    valid_channels <- resp_stoch[!(families %in% "categorical")]
-    # default, use all channels except categorical
-    if (is.null(random_defs$responses)) {
-      random_defs$responses <- valid_channels
-      stopifnot_(
-        length(valid_channels) > 0L,
-        c(
-          "No valid responses for random intercept component:",
-          `x` = "Random intercepts are not supported for the categorical
-                family."
-        )
-      )
-    } else {
-      nu_channels <- random_defs$responses %in% resp_stoch
-      stopifnot_(
-        all(nu_channels),
-        c(
-          "Argument {.arg responses} of {.fun random} contains variables
-          {.var {cs(resp_stoch[nu_channels])}}:",
-          `x` = "No such response variables in the model."
-        )
-      )
-      nu_channels <- random_defs$responses %in% valid_channels
-      stopifnot_(
-        all(nu_channels),
-        c(
-          "Random intercepts are not supported for the categorical family:",
-          `x` = "Found random intercept declaration for categorical variable{?s}
-                {.var {cs(valid_channels[nu_channels])}}."
-        )
-      )
-    }
-    if (length(random_defs$responses) < 2L) {
-      random_defs$correlated <- FALSE
-    }
-  }
-  lfactor_defs <- attr(dformula, "lfactor")
-  if (!is.null(lfactor_defs)) {
-    families <- unlist(get_families(dformula[channels_stoch]))
-    valid_channels <- resp_stoch[!(families %in% "categorical")]
-    # default, use all channels except categorical
-    if (is.null(lfactor_defs$responses)) {
-      lfactor_defs$responses <- valid_channels
-      stopifnot_(
-        length(valid_channels) > 0L,
-        c(
-          "No valid responses for latent factor component:",
-          `x` = "Latent factors are not supported for the categorical
-                family."
-        )
-      )
-    } else {
-      psi_channels <- lfactor_defs$responses %in% resp_stoch
-      stopifnot_(
-        all(psi_channels),
-        c(
-          "Argument {.arg responses} of {.fun lfactor} contains variables
-          {.var {cs(resp_stoch[psi_channels])}}:",
-          `x` = "No such response variables in the model."
-        )
-      )
-      psi_channels <- lfactor_defs$responses %in% valid_channels
-      stopifnot_(
-        all(psi_channels),
-        c(
-          "Latent factors are not supported for the categorical family:",
-          `x` = "Found latent factor declaration for categorical variable{?s}
-                {.var {cs(valid_channels[psi_channels])}}."
-        )
-      )
-    }
-    if (length(lfactor_defs$responses) < 2L) {
-      lfactor_defs$correlated <- FALSE
-    }
-  }
   list(
     all = dformula,
     det = dformula_det,
     stoch = structure(
       dformula[channels_stoch],
       splines = attr(dformula, "splines"),
-      random = random_defs,
-      lfactor = lfactor_defs
+      random = attr(dformula, "random"),
+      lfactor = attr(dformula, "lfactor")
     ),
     lag_pred = dformula_lag_pred,
     lag_det = dformula_lag_det,

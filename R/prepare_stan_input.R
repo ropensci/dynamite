@@ -61,10 +61,12 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   )
   sampling_vars$D <- spline_defs$D
   sampling_vars$Bs <- spline_defs$Bs
-  has_random <- attr(dformula, "random")$responses
+  random_defs <- prepare_random(dformula, attr(dformula, "random"))
+  has_random <- random_defs$responses
   lfactor_defs <- attr(dformula, "lfactor")
   has_lfactor <- !is.null(lfactor_defs)
   lfactor_defs <- prepare_lfactors(
+    dformula,
     attr(dformula, "lfactor"),
     resp_names
   )
@@ -189,10 +191,16 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   sampling_vars$N <- N
   sampling_vars$K <- K
   sampling_vars$X <- X
-  sampling_vars$M <- sum(unlist(
-    lapply(model_vars, "[[", "has_random_intercept")))
-  sampling_vars$P <- sum(unlist(
-    lapply(model_vars, "[[", "has_lfactor")))
+  sampling_vars$M <- sum(
+    unlist(
+      lapply(model_vars, "[[", "has_random_intercept")
+    )
+  )
+  sampling_vars$P <- sum(
+    unlist(
+      lapply(model_vars, "[[", "has_lfactor")
+    )
+  )
   # avoid goodpractice warning, T is a Stan variable, not an R variable
   sampling_vars[["T"]] <- T_full - fixed
   sampling_vars$X_m <- as.array(x_means)
@@ -260,14 +268,103 @@ prepare_splines <- function(spline_defs, n_channels, T_idx) {
   }
   out
 }
+
+#' Prepare Random Intercept Definitions for Stan
+#'
+#' @param dformula A `dynamiteformula` of stochastic channels.
+#' @param random_defs A `random` object.
+#' @param responses Names of the response variables.
+#' @noRd
+prepare_random <- function(dformula, random_defs) {
+  if (is.null(random_defs)) {
+    return(NULL)
+  }
+  resp <- get_responses(dformula)
+  families <- unlist(get_families(dformula))
+  valid_channels <- resp[!(families %in% "categorical")]
+  # default, use all channels except categorical
+  if (is.null(random_defs$responses)) {
+    random_defs$responses <- valid_channels
+    stopifnot_(
+      length(valid_channels) > 0L,
+      c(
+        "No valid responses for random intercept component:",
+        `x` = "Random intercepts are not supported for the categorical
+               family."
+      )
+    )
+  } else {
+    nu_channels <- random_defs$responses %in% resp
+    stopifnot_(
+      all(nu_channels),
+      c(
+        "Argument {.arg responses} of {.fun random} contains variables
+        {.var {cs(resp_stoch[nu_channels])}}:",
+        `x` = "No such response variables in the model."
+      )
+    )
+    nu_channels <- random_defs$responses %in% valid_channels
+    stopifnot_(
+      all(nu_channels),
+      c(
+        "Random intercepts are not supported for the categorical family:",
+        `x` = "Found random intercept declaration for categorical variable{?s}
+              {.var {cs(valid_channels[nu_channels])}}."
+      )
+    )
+  }
+  if (length(random_defs$responses) < 2L) {
+    random_defs$correlated <- FALSE
+  }
+  random_defs
+}
+
 #' Prepare Latent Factor Definitions for Stan
 #'
+#' @param dformula A `dynamiteformula` of stochastic channels.
 #' @param lfactor_defs An `lfactor` object.
 #' @param responses Names of the response variables.
 #' @noRd
-prepare_lfactors <- function(lfactor_defs, responses) {
+prepare_lfactors <- function(dformula, lfactor_defs, responses) {
+  # There is repetition here with the checks in parse_lags function! Remove this?
   out <- list()
   if (!is.null(lfactor_defs)) {
+    resp <- get_responses(dformula)
+    families <- unlist(get_families(dformula))
+    valid_channels <- resp_stoch[!(families %in% "categorical")]
+    # default, use all channels except categorical
+    if (is.null(lfactor_defs$responses)) {
+      lfactor_defs$responses <- valid_channels
+      stopifnot_(
+        length(valid_channels) > 0L,
+        c(
+          "No valid responses for latent factor component:",
+          `x` = "Latent factors are not supported for the categorical family."
+        )
+      )
+    } else {
+      psi_channels <- lfactor_defs$responses %in% resp_stoch
+      stopifnot_(
+        all(psi_channels),
+        c(
+          "Argument {.arg responses} of {.fun lfactor} contains variables
+          {.var {cs(resp_stoch[psi_channels])}}:",
+          `x` = "No such response variables in the model."
+        )
+      )
+      psi_channels <- lfactor_defs$responses %in% valid_channels
+      stopifnot_(
+        all(psi_channels),
+        c(
+          "Latent factors are not supported for the categorical family:",
+          `x` = "Found latent factor declaration for categorical variable{?s}
+                {.var {cs(valid_channels[psi_channels])}}."
+        )
+      )
+    }
+    if (length(lfactor_defs$responses) < 2L) {
+      lfactor_defs$correlated <- FALSE
+    }
     out$responses <- lfactor_defs$responses
     if (!is.null(out$responses)) {
       out$responses <- responses

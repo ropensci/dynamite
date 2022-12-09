@@ -499,7 +499,7 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
     env = list(u_time = u_time, n_draws = n_draws)
   ]
   summaries[,
-    ("draw") := rep(seq_len(n_draws), each = n_time),
+    (".draw") := rep(seq_len(n_draws), each = n_time),
     env = list(n_draws = n_draws, n_time = n_time)
   ]
   idx_summ <- which(summaries[[time_var]] == u_time[1L]) + (fixed - 1L)

@@ -128,7 +128,9 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   ks <- vector("list", T_ - L - 1L)
 
   for (i in seq.int(L + 1L, T_ - 1L)) {
-    if (lls[time == timepoints[i + 1L], .N, env = list(time = time, i = i)] > 0L) {
+    if (lls[time == timepoints[i + 1L],
+            .N,
+            env = list(time = time, i = i)] > 0L) {
       logratio <- lls[
         time > timepoints[i_refit] & time <= timepoints[i], ,
         env = list(

@@ -9,6 +9,8 @@
 #' @importFrom data.table as.data.table
 #' @param keep.rownames \[`logical(1)`]\cr Not used.
 #' @inheritParams as.data.frame.dynamitefit
+#' @return A `data.table` containing either samples or summary statistics of
+#'   the model parameters.
 #' @examples
 #' as.data.table(
 #'   gaussian_example_fit,
@@ -453,11 +455,13 @@ as_data_table_lambda <- function(x, draws, n_draws, response, ...) {
     group = rep(sort(unique(x$data[[x$group_var]])), each = n_draws)
   )
 }
+
 #' @describeIn as_data_table_default Data Table for a "sigma_lambda" Parameter
 #' @noRd
 as_data_table_sigma_lambda <- function(draws, response, ...) {
   as_data_table_default("sigma_lambda", draws, response)
 }
+
 #' @describeIn as_data_table_default Data Table for a "psi" Parameter
 #' @noRd
 as_data_table_psi <- function(x, draws, n_draws,
@@ -487,11 +491,13 @@ as_data_table_psi <- function(x, draws, n_draws,
     })
   )
 }
+
 #' @describeIn as_data_table_default Data Table for a "tau_psi" Parameter
 #' @noRd
 as_data_table_tau_psi <- function(draws, response, ...) {
   as_data_table_default("tau_psi", draws, response)
 }
+
 #' @describeIn as_data_table_default Data Table for a "omega_psi" Parameter
 #' @noRd
 as_data_table_omega_psi <- function(x, draws, n_draws, category, ...) {
@@ -506,6 +512,7 @@ as_data_table_omega_psi <- function(x, draws, n_draws, category, ...) {
     category = rep(category, each = n_draws)
   )
 }
+
 #' @describeIn as_data_table_default Data Table for a "corr_psi" Parameter
 #' @noRd
 as_data_table_corr_psi <- function(x, draws, ...) {

@@ -267,45 +267,44 @@ create_model <- function(dformula, idt, vars, backend) {
     splinetext <- paste_rows("xi[1] ~ {xi_prior};", .indent = idt(1))
   }
   randomtext <- ""
-  has_nu <- length(attr(dformula, "random")$responses) > 0
-  if (has_nu) {
+  if (length(attr(dformula, "random")$responses) > 0) {
     if (attr(dformula, "random")$correlated) {
       L_prior <- attr(vars, "common_priors")
       L_prior <- L_prior[L_prior$parameter == "L", "prior"]
-      if (attr(dformula, "random")$noncentered) {
-        randomtext <- paste_rows(
+      randomtext <- ifelse_(
+        attr(dformula, "random")$noncentered,
+        paste_rows(
           "to_vector(nu_raw) ~ std_normal();",
           "L ~ {L_prior};",
           .indent = idt(c(1, 1))
-        )
-      } else {
-        randomtext <- paste_rows(
+        ),
+        paste_rows(
           "nu_raw ~ multi_normal_cholesky(0, diag_pre_multiply(sigma_nu, L));",
           "L ~ {L_prior};",
           .indent = idt(c(1, 1))
         )
-      }
+      )
     } else {
-      if (attr(dformula, "random")$noncentered) {
-        randomtext <- paste_rows(
+      nus <- attr(dformula, "random")$responses
+      M <- length(nus)
+      randomtext <- ifelse_(
+        attr(dformula, "random")$noncentered,
+        paste_rows(
           "to_vector(nu_raw) ~ std_normal();",
           .indent = idt(1)
-        )
-      } else {
-        nus <- attr(dformula, "random")$responses
-        M <- length(nus)
-        randomtext <- paste_rows(
+        ),
+        paste_rows(
           glue::glue("nu_raw[, {1:M}] ~ normal(0, sigma_nu_{nus});"),
           .indent = idt(1)
         )
-      }
+      )
     }
   }
 
   lfactortext <- ""
   psis <- attr(dformula, "lfactor")$responses
   P <- length(psis)
-  if (P > 0) {
+  if (P > 0L) {
     if (attr(dformula, "lfactor")$correlated) {
       L_prior <- attr(vars, "common_priors")
       L_prior <- L_prior[L_prior$parameter == "L_lf", "prior"]
@@ -317,8 +316,14 @@ create_model <- function(dformula, idt, vars, backend) {
         )
       } else {
         if (any(attr(dformula, "lfactor")$nonzero_lambda)) {
-          tau <- paste0(ifelse(attr(dformula, "lfactor")$nonzero_lambda,
-            paste0("tau_psi_", psis), "1"), collapse = ", ")
+          tau <- paste0(
+            ifelse_(
+              attr(dformula, "lfactor")$nonzero_lambda,
+              paste0("tau_psi_", psis),
+              "1"
+            ),
+            collapse = ", "
+          )
           lfactortext <- paste_rows(
             "L_lf ~ {L_prior};",
             "{{",
