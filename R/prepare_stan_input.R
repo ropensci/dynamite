@@ -266,41 +266,36 @@ prepare_splines <- function(spline_defs, n_channels, T_idx) {
 #' @param responses Names of the response variables.
 #' @noRd
 prepare_lfactors <- function(lfactor_defs, responses) {
-  # TODO: There is repetition here with the checks in parse_lags function! Remove this?
   out <- list()
   if (!is.null(lfactor_defs)) {
     out$responses <- lfactor_defs$responses
     if (!is.null(out$responses)) {
       out$responses <- responses
     } else {
-      if (!all(out$responses %in% responses)) {
-        stop_("Found response variable names in {.arg responses} of
-          {.fun lfactor} function without corresponding channel definition in
-          dynamiteformula.")
-      }
+      stopifnot_(
+        all(out$responses %in% responses),
+        "Found response variable names in argument {.arg responses} of
+        {.fun lfactor} function without corresponding channel definition
+        in the model formula."
+      )
     }
     out$noncentered_psi <- lfactor_defs$noncentered_psi
     n_channels <- length(responses)
     out$noncentered_lambda <- lfactor_defs$noncentered_lambda
-    if (length(out$noncentered_lambda) %in% c(1L, n_channels)) {
-      out$noncentered_lambda <- rep(out$noncentered_lambda, length = n_channels)
-    } else {
-      stop_(
-        "Length of the {.arg noncentered_lambda} argument of {.fun lfactor}
-        function is not equal to 1 or {n_channels}, the number of the channels
-        with latent factor."
-      )
-    }
+    stopifnot_(
+      !length(out$noncentered_lambda) %in% c(1L, n_channels),
+      "Length of the {.arg noncentered_lambda} argument of {.fun lfactor}
+      function is not equal to 1 or {n_channels}, the number of the channels
+      with latent factor."
+    )
+    out$noncentered_lambda <- rep(out$noncentered_lambda, length = n_channels)
     out$nonzero_lambda <- lfactor_defs$nonzero_lambda
-    if (length(out$nonzero_lambda) %in% c(1L, n_channels)) {
-      out$nonzero_lambda <- rep(out$nonzero_lambda, length = n_channels)
-    } else {
-      stop_(
-        "Length of the {.arg nonzero_lambda} argument of {.fun lfactor} function
-         is not equal to 1 or {n_channels}, the number of the channels with
-         latent factor."
-      )
-    }
+    stopifnot_(
+      !length(out$nonzero_lambda) %in% c(1L, n_channels),
+      "Length of the {.arg nonzero_lambda} argument of {.fun lfactor} function
+      is not equal to 1 or {n_channels}, the number of the channels with
+      latent factor."
+    )
     out$correlated <- lfactor_defs$correlated
   } else {
     n_channels <- length(responses)
@@ -314,6 +309,7 @@ prepare_lfactors <- function(lfactor_defs, responses) {
   }
   out
 }
+
 #' Construct a Prior Definition for a Regression Parameters
 #'
 #' @param ptype \[character(1L)]\cr Type of the parameter.
