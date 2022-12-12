@@ -19,17 +19,17 @@ test_that("parameters of the Grunfield model are recovered", {
   p <- get_priors(
     obs(inv ~ -1 + intercept + value + capital,
       family = "gaussian"
-    ) + random(),
+    ) + random(noncentered = FALSE),
     Grunfeld, "firm", "year"
   )
   # set very vague priors
   p$prior[] <- rep("normal(0, 1000)", nrow(p))
   fit <- dynamite(obs(inv ~ value + capital,
     family = "gaussian"
-  ) + random(),
-  Grunfeld, "firm", "year",
-  refresh = 0, seed = 1,
-  chains = 2, cores = 2, iter = 20000, warmup = 1000
+  ) + random(noncentered = FALSE),
+    Grunfeld, "firm", "year",
+    refresh = 0, seed = 1,
+    chains = 2, cores = 2, iter = 20000, warmup = 1000
   )
 
   expect_equal(coef(fit_plm), coef(fit)$mean[2:3],
