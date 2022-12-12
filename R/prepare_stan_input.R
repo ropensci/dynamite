@@ -350,8 +350,8 @@ prepare_lfactors <- function(dformula, lfactor_defs, responses) {
       stopifnot_(
         all(psi_channels),
         c(
-          "Argument {.arg responses} of {.fun lfactor} contains variables
-          {.var {cs(resp[psi_channels])}}:",
+          "Argument {.arg responses} of {.fun lfactor} contains variable{?s}
+          {.var {cs(lfactor_defs$responses[!psi_channels])}}:",
           `x` = "No such response variables in the model."
         )
       )

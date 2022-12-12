@@ -99,6 +99,19 @@ test_that("nus can be plotted", {
   )
 })
 
+test_that("lambdas can be plotted", {
+  expect_error(
+    plot_deltas(latent_factor_example_fit),
+    NA
+  )
+})
+test_that("psis can be plotted", {
+  expect_error(
+    plot_psis(latent_factor_example_fit),
+    NA
+  )
+})
+
 test_that("formula can be extracted", {
   expect_error(
     formula(gaussian_example_fit),

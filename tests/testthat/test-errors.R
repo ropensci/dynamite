@@ -243,6 +243,84 @@ test_that("pure deterministic formula to dynamite fails", {
   )
 })
 
+test_that("categorical latent factor fails", {
+  expect_error(
+    dynamite(obs(y ~ x, family = "categorical") + lfactor(),
+      data = data.frame(y = factor(1:4), x = runif(4), id = 1, time = 1:4),
+      "id", "time",
+      debug = list(no_compile = TRUE)
+    ),
+    paste0(
+      "No valid responses for latent factor component:\n",
+      "x Latent factors are not supported for the categorical family\\."
+    )
+  )
+})
+
+test_that("Latent factor errors with invalid responses", {
+  expect_error(
+    dynamite(obs(y ~ x, family = "gaussian") + lfactor(responses = 1),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      "id", "time",
+      debug = list(no_compile = TRUE)
+    ),
+    "Argument `responses` must be a <character> vector\\."
+  )
+  expect_error(
+    dynamite(obs(y ~ x, family = "gaussian") + lfactor(responses = "x"),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      "id", "time",
+      debug = list(no_compile = TRUE)
+    ),
+    paste0(
+      "Argument `responses` of `lfactor\\(\\)` contains variable `x`:\n",
+      "x No such response variables in the model\\."
+    )
+  )
+})
+test_that("Latent factor errors with nonlogical value for argument
+  noncentered", {
+  expect_error(
+    dynamite(obs(y ~ x, family = "gaussian") + lfactor(noncentered_lambda = 1),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      "id", "time",
+      debug = list(no_compile = TRUE)
+    ),
+    "Argument `noncentered_lambda` must be a <logical> vector\\."
+  )
+})
+test_that("Latent factor errors with nonlogical value for argument
+  nonzero_lambda", {
+  expect_error(
+    dynamite(obs(y ~ x, family = "gaussian") + lfactor(nonzero_lambda = 1),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      "id", "time",
+      debug = list(no_compile = TRUE)
+    ),
+    "Argument `nonzero_lambda` must be a <logical> vector\\."
+  )
+})
+test_that("Latent factor errors with nonlogical value for argument
+  noncentered_psi", {
+  expect_error(
+    dynamite(obs(y ~ x, family = "gaussian") + lfactor(noncentered_psi = 1),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      "id", "time",
+      debug = list(no_compile = TRUE)
+    ),
+    "Argument `noncentered_psi` must be a single <logical> value\\."
+  )
+})
+test_that("Latent factor errors with nonlogical value for argument correlated", {
+  expect_error(
+    dynamite(obs(y ~ x, family = "gaussian") + lfactor(correlated = 1),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      "id", "time",
+      debug = list(no_compile = TRUE)
+    ),
+    "Argument `correlated` must be a single <logical> value\\."
+  )
+})
 # Formula specials errors -------------------------------------------------
 
 test_that("no intercept or predictors fails", {

@@ -125,6 +125,21 @@ test_that("LOO works for AR(1) model", {
     ),
     tolerance = 1
   )
+  expect_error(plot(l), NA)
+})
+
+test_that("LFO works for AR(1) model", {
+  # This also implicitly tests update method
+  skip_if_not(run_extended_tests)
+  set.seed(1)
+  fit <- dynamite(obs(LakeHuron ~ 1, "gaussian") + lags(),
+    data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
+    "id", "time", chains = 1, iter = 2000, refresh = 500
+  )
+  l <- lfo(fit, L = 20)
+  expect_equal(l$ELPD, -90.4188604974201, tolerance = 1)
+  expect_equal(l$ELPD_SE, 7.58842574523583, tolerance = 1)
+  expect_error(plot(l), NA)
 })
 
 test_that("parameters of a time-varying gaussian model are recovered", {
@@ -209,7 +224,6 @@ test_that("parameters of a time-varying gaussian model are recovered", {
     ignore_attr = TRUE, tolerance = 0.1
   )
 })
-
 
 test_that("prior parameters are recovered with zero observations", {
   skip_if_not(run_extended_tests)

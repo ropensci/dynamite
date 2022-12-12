@@ -261,8 +261,10 @@ test_that("latent factors are handled correctly", {
     NA
   )
   expect_equal(
-    c("sigma_lambda_y2", "tau_psi_y2", "", "tau_psi_y3"),
-    get_priors(obs_all_lfactor, test_data, "group", "time")$parameter[c(1, 6, 24)]
+    c("sigma_lambda_y2", "tau_psi_y2", "psi_y2",
+      "sigma_lambda_y3", "psi_y3", "L_lf"),
+    get_priors(obs_all_lfactor, test_data, "group", "time")$parameter[
+      c(1:3, 6:7, 25)]
   )
 })
 # Lag edgecases -----------------------------------------------------------
