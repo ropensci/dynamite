@@ -214,9 +214,9 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   )
   # for stanblocks
   attr(model_vars, "common_priors") <- prior_list[["common_priors"]]
-  model_vars$spline_defs <- spline_defs
-  model_vars$random_defs <- random_defs
-  model_vars$lfactor_defs <- lfactor_defs
+  attr(model_vars, "spline_defs") <- spline_defs
+  attr(model_vars, "random_defs") <- random_defs
+  attr(model_vars, "lfactor_defs") <- lfactor_defs
   list(
     model_vars = model_vars,
     sampling_vars = sampling_vars,
