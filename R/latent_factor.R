@@ -49,7 +49,7 @@ lfactor <- function(responses = NULL, noncentered_lambda = TRUE,
     checkmate::test_logical(
       x = noncentered_lambda,
       any.missing = FALSE,
-      len = ifelse_(is.null(responses), 1L, length(responses))
+      min.len = 1L
     ),
     "Argument {.arg noncentered_lambda} must be a {.cls logical} vector."
   )
@@ -65,7 +65,7 @@ lfactor <- function(responses = NULL, noncentered_lambda = TRUE,
     checkmate::test_logical(
       x = nonzero_lambda,
       any.missing = FALSE,
-      len = ifelse_(is.null(responses), 1L, length(responses))
+      min.len = 1L
     ),
     "Argument {.arg nonzero_lambda} must be a {.cls logical} vector."
   )
@@ -75,7 +75,7 @@ lfactor <- function(responses = NULL, noncentered_lambda = TRUE,
       any.missing = FALSE,
       len = 1
     ),
-    "Argument {.arg noncentered_psi} must be a single {.cls logical} value."
+    "Argument {.arg correlated} must be a single {.cls logical} value."
   )
   structure(
     list(

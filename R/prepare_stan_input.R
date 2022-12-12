@@ -214,6 +214,9 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   )
   # for stanblocks
   attr(model_vars, "common_priors") <- prior_list[["common_priors"]]
+  model_vars$spline_defs <- spline_defs
+  model_vars$random_defs <- random_defs
+  model_vars$lfactor_defs <- lfactor_defs
   list(
     model_vars = model_vars,
     sampling_vars = sampling_vars,
@@ -366,32 +369,20 @@ prepare_lfactors <- function(dformula, lfactor_defs, responses) {
       lfactor_defs$correlated <- FALSE
     }
     out$responses <- lfactor_defs$responses
-    if (!is.null(out$responses)) {
-      out$responses <- responses
-    } else {
-      stopifnot_(
-        all(out$responses %in% responses),
-        "Found response variable names in argument {.arg responses} of
-        {.fun lfactor} function without corresponding channel definition
-        in the model formula."
-      )
-    }
     out$noncentered_psi <- lfactor_defs$noncentered_psi
     n_channels <- length(responses)
     out$noncentered_lambda <- lfactor_defs$noncentered_lambda
     stopifnot_(
       length(out$noncentered_lambda) %in% c(1L, n_channels),
       "Length of the {.arg noncentered_lambda} argument of {.fun lfactor}
-      function is not equal to 1 or {n_channels}, the number of the channels
-      with latent factor."
+      function is not equal to 1 or {n_channels}, the number of the channels."
     )
     out$noncentered_lambda <- rep(out$noncentered_lambda, length = n_channels)
     out$nonzero_lambda <- lfactor_defs$nonzero_lambda
     stopifnot_(
       length(out$nonzero_lambda) %in% c(1L, n_channels),
       "Length of the {.arg nonzero_lambda} argument of {.fun lfactor} function
-      is not equal to 1 or {n_channels}, the number of the channels with
-      latent factor."
+      is not equal to 1 or {n_channels}, the number of the channels."
     )
     out$nonzero_lambda <- rep(out$nonzero_lambda, length = n_channels)
     out$correlated <- lfactor_defs$correlated

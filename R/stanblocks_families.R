@@ -682,7 +682,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     .parse = FALSE
   )
 
-  m <- ifelse_(nonzero_lambda, "1 + ", "")
+  m <- ifelse(nonzero_lambda, "1 + ", "")
   if (noncentered_lambda) {
     declare_lambda <- paste_rows(
       "// hard sum-to-zero constraint",

@@ -251,6 +251,20 @@ test_that("manual fixed() terms work", {
   )
 })
 
+test_that("latent factors are handled correctly", {
+  expect_error(
+    obs_all_lfactor <- obs(y2 ~ -1 + x2, family = "gaussian") +
+      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = "binomial") +
+      obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
+      splines(df = 5) + lfactor(c("y2", "y3"),
+        nonzero_lambda = c(TRUE, FALSE, FALSE)),
+    NA
+  )
+  expect_equal(
+    c("sigma_lambda_y2", "tau_psi_y2", "", "tau_psi_y3"),
+    get_priors(obs_all_lfactor, test_data, "group", "time")$parameter[c(1, 6, 24)]
+  )
+})
 # Lag edgecases -----------------------------------------------------------
 
 test_that("lags are parsed", {
