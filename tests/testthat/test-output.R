@@ -101,7 +101,7 @@ test_that("nus can be plotted", {
 
 test_that("lambdas can be plotted", {
   expect_error(
-    plot_deltas(latent_factor_example_fit),
+    plot_lambdas(latent_factor_example_fit),
     NA
   )
 })
