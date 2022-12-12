@@ -382,6 +382,11 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
                                      noncentered_lambda,
                                      nonzero_lambda) {
   oname <- ifelse_(noncentered, "omega_raw_", "omega_")
+  allow_intercept <- !(has_lfactor && nonzero_lambda)
+  if (!allow_intercept && (has_fixed_intercept || has_varying_intercept)) {
+    warning_(("Separate intercept term of channel {y} was removed as channel
+      predictors contain possibly nonzero latent factor."))
+  }
   paste_rows(
     onlyif(
       has_random_intercept,
@@ -397,16 +402,16 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
       "vector<lower={lb}>[{K_varying}] tau_{y}; // SDs for the random walks"
     ),
     ifelse_(
-      has_fixed_intercept || has_varying_intercept,
+      (has_fixed_intercept || has_varying_intercept) && allow_intercept,
       "real a_{y}; // Mean of the first time point",
       ""
     ),
     onlyif(
-      has_varying_intercept,
+      has_varying_intercept && allow_intercept,
       "row_vector[D - 1] omega_raw_alpha_{y}; // Coefficients for alpha"
     ),
     onlyif(
-      has_varying_intercept,
+      has_varying_intercept && allow_intercept,
       "real<lower={lb}> tau_alpha_{y}; // SD for the random walk"
     ),
     onlyif(
@@ -720,13 +725,13 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     .indent = idt(c(1, 2, 1)),
     .parse = FALSE
   )
-
+  allow_intercept <- !(has_lfactor && nonzero_lambda)
   list(
     declarations = paste_rows(
       onlyif(has_varying && noncentered, declare_omega),
       onlyif(has_varying, declare_delta),
-      onlyif(has_fixed_intercept, declare_fixed_intercept),
-      onlyif(has_varying_intercept, declare_varying_intercept),
+      onlyif(has_fixed_intercept && allow_intercept, declare_fixed_intercept),
+      onlyif(has_varying_intercept && allow_intercept, declare_varying_intercept),
       onlyif(has_lfactor, declare_psi),
       onlyif(has_lfactor, declare_lambda),
       .indent = idt(0)
@@ -734,8 +739,8 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     statements = paste_rows(
       onlyif(has_varying && noncentered, state_omega),
       onlyif(has_varying, state_delta),
-      onlyif(has_fixed_intercept, state_fixed_intercept),
-      onlyif(has_varying_intercept, state_varying_intercept),
+      onlyif(has_fixed_intercept && allow_intercept, state_fixed_intercept),
+      onlyif(has_varying_intercept && allow_intercept, state_varying_intercept),
       onlyif(has_lfactor && noncentered_psi, state_omega_psi),
       onlyif(has_lfactor, state_psi),
       .indent = idt(0)
@@ -1015,6 +1020,9 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
                                 psi_prior_distr = "",
                                 tau_psi_prior_distr = "",
                                 K_fixed, K_varying, ...) {
+
+  allow_intercept <- !(has_lfactor && nonzero_lambda)
+
   mtext_u <- "sigma_nu_{y} ~ {sigma_nu_prior_distr};"
   mtext_alpha <- "a_{y} ~ {alpha_prior_distr};"
 
@@ -1129,14 +1137,18 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
     mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {tau_prior_distr};"
   }
 
-  intercept_alpha <- ifelse_(
-    has_fixed_intercept,
-    glue::glue("alpha_{y}"),
+  intercept_alpha <- ifelse(
+    allow_intercept,
     ifelse_(
-      has_varying_intercept,
-      glue::glue("alpha_{y}[t]"),
-      ""
-    )
+      has_fixed_intercept,
+      glue::glue("alpha_{y}"),
+      ifelse_(
+        has_varying_intercept,
+        glue::glue("alpha_{y}[t]"),
+        ""
+      )
+    ),
+    ""
   )
   intercept_nu <- ifelse_(
     has_random_intercept,
@@ -1171,8 +1183,8 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
   list(text = paste_rows(
     onlyif(has_lfactor, mtext_lambda),
     onlyif(has_random_intercept, mtext_u),
-    onlyif(has_fixed_intercept, mtext_fixed_intercept),
-    onlyif(has_varying_intercept, mtext_varying_intercept),
+    onlyif(has_fixed_intercept && allow_intercept, mtext_fixed_intercept),
+    onlyif(has_varying_intercept  && allow_intercept, mtext_varying_intercept),
     onlyif(has_fixed, mtext_fixed),
     onlyif(has_varying, mtext_varying),
     onlyif(has_varying, mtext_tau),

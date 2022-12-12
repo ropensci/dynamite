@@ -299,7 +299,7 @@ prepare_random <- function(dformula, random_defs) {
       all(nu_channels),
       c(
         "Argument {.arg responses} of {.fun random} contains variables
-        {.var {cs(resp_stoch[nu_channels])}}:",
+        {.var {cs(resp[nu_channels])}}:",
         `x` = "No such response variables in the model."
       )
     )
@@ -331,7 +331,7 @@ prepare_lfactors <- function(dformula, lfactor_defs, responses) {
   if (!is.null(lfactor_defs)) {
     resp <- get_responses(dformula)
     families <- unlist(get_families(dformula))
-    valid_channels <- resp_stoch[!(families %in% "categorical")]
+    valid_channels <- resp[!(families %in% "categorical")]
     # default, use all channels except categorical
     if (is.null(lfactor_defs$responses)) {
       lfactor_defs$responses <- valid_channels
@@ -343,12 +343,12 @@ prepare_lfactors <- function(dformula, lfactor_defs, responses) {
         )
       )
     } else {
-      psi_channels <- lfactor_defs$responses %in% resp_stoch
+      psi_channels <- lfactor_defs$responses %in% resp
       stopifnot_(
         all(psi_channels),
         c(
           "Argument {.arg responses} of {.fun lfactor} contains variables
-          {.var {cs(resp_stoch[psi_channels])}}:",
+          {.var {cs(resp[psi_channels])}}:",
           `x` = "No such response variables in the model."
         )
       )
@@ -380,7 +380,7 @@ prepare_lfactors <- function(dformula, lfactor_defs, responses) {
     n_channels <- length(responses)
     out$noncentered_lambda <- lfactor_defs$noncentered_lambda
     stopifnot_(
-      !length(out$noncentered_lambda) %in% c(1L, n_channels),
+      length(out$noncentered_lambda) %in% c(1L, n_channels),
       "Length of the {.arg noncentered_lambda} argument of {.fun lfactor}
       function is not equal to 1 or {n_channels}, the number of the channels
       with latent factor."
@@ -388,11 +388,12 @@ prepare_lfactors <- function(dformula, lfactor_defs, responses) {
     out$noncentered_lambda <- rep(out$noncentered_lambda, length = n_channels)
     out$nonzero_lambda <- lfactor_defs$nonzero_lambda
     stopifnot_(
-      !length(out$nonzero_lambda) %in% c(1L, n_channels),
+      length(out$nonzero_lambda) %in% c(1L, n_channels),
       "Length of the {.arg nonzero_lambda} argument of {.fun lfactor} function
       is not equal to 1 or {n_channels}, the number of the channels with
       latent factor."
     )
+    out$nonzero_lambda <- rep(out$nonzero_lambda, length = n_channels)
     out$correlated <- lfactor_defs$correlated
   } else {
     n_channels <- length(responses)
