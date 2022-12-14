@@ -17,5 +17,5 @@ bibentry(
   author   = "Jouni Helske and Santtu Tikka",
   note  = "SocArxiv preperint",
   year     = "2022",
-  url      = "https://github.com/ropensci/dynamite"
+  url      = ""
 )

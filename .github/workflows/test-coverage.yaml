@@ -22,7 +22,7 @@ jobs:
         with:
           extra-repositories: |
             https://mc-stan.org/r-packages/
-            https://Rdatatable.gitlab.io/data.table
+           #https://Rdatatable.gitlab.io/data.table
           use-public-rspm: true
 
       - uses: r-lib/actions/setup-r-dependencies@v2
