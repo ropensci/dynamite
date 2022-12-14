@@ -11,7 +11,7 @@
 #' * The package vignette.
 #' * [dynamite::dynamiteformula()] for information on defining models.
 #' * [dynamite::dynamite()] for information on fitting models.
-#' * \url{https://github.com/santikka/dynamite/issues/} to submit a bug report
+#' * \url{https://github.com/ropensci/dynamite/issues/} to submit a bug report
 #'   or a feature request.
 #'
 #' # Authors
@@ -56,7 +56,7 @@ NULL
 #' coefficients vary according to a spline with 20 degrees of freedom.
 #'
 #' @source The data was generated according to a script in
-#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/
+#' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/
 #' gaussian_example.R}
 #' @format A data frame with 3000 rows and 5 variables:
 #' \describe{
@@ -85,7 +85,7 @@ NULL
 #' }
 #' Note the small number of samples due to size restrictions on CRAN.
 #' @source The data was generated according to a script in
-#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/
+#' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/
 #' gaussian_example_fit.R}
 #' @format A `dynamitefit` object.
 "gaussian_example_fit"
@@ -96,7 +96,7 @@ NULL
 #' response variables of different distributions.
 #'
 #' @source The data was generated according to a script in
-#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/
+#' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/
 #' multichannel_example.R}
 #' @format A data frame with 3000 rows and 5 variables:
 #' \describe{
@@ -126,7 +126,7 @@ NULL
 #' }
 #' Note the small number of samples due to size restrictions on CRAN.
 #' @source Script in
-#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/
+#' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/
 #' multichannel_example_fit.R}
 #' @format A `dynamitefit` object.
 "multichannel_example_fit"
@@ -137,7 +137,7 @@ NULL
 #' response variables.
 #'
 #' @source The data was generated according to a script in
-#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/
+#' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/
 #' categorical_example.R}
 #' @format A data frame with 2000 rows and 5 variables:
 #' \describe{
@@ -164,7 +164,7 @@ NULL
 #' }
 #' Note the small number of samples due to size restrictions on CRAN.
 #' @source Script in
-#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/
+#' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/
 #' categorical_example_fit.R}
 #' @format A `dynamitefit` object.
 "categorical_example_fit"
@@ -174,7 +174,7 @@ NULL
 #' trajectories are defined by a latent factor and random intercept terms.
 #'
 #' @source The data was generated according to a script in
-#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/
+#' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/
 #' latent_factor_example.R}
 #' @format A data frame with 2000 rows and 3 variables:
 #' \describe{
@@ -207,7 +207,7 @@ NULL
 #' }
 #' Note the small number of samples due to size restrictions on CRAN.
 #' @source Script in
-#' \url{https://github.com/santikka/dynamite/blob/main/data-raw/
+#' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/
 #' latent_factor_example_fit.R}
 #' @format A `dynamitefit` object.
 "latent_factor_example_fit"

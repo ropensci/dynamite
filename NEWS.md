@@ -14,7 +14,7 @@
   * Moved `dplyr` and `tidyr` to 'Suggests'.
   * `categorical_logit` is now used instead of `categorical_logit_glm` on older
     `rstan` and `cmdstanr` versions.
-  * Random intercepts with `random` now also support centered parameterization.
+  * Random intercepts with `random` now also support centered parametrization.
   * Added more comments to the generated Stan code.
   * Fixed the output of `formula.dynamitefit` so that it is now compatible with 
     the `update` method. Also added the required `call` object to the 

@@ -6,7 +6,7 @@ bibentry(
   title    = "Bayesian Modeling and Causal Inference for Multivariate
     Longitudinal Data",
   author   = "Santtu Tikka and Jouni Helske",
-  note  = "R package version 0.0.1",
+  note  = "R package version 0.0.3",
   year     = "2022",
-  url      = "https://github.com/santikka/dynamite"
+  url      = "https://github.com/ropensci/dynamite"
 )

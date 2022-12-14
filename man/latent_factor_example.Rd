@@ -14,7 +14,7 @@ A data frame with 2000 rows and 3 variables:
 }
 \source{
 The data was generated according to a script in
-\url{https://github.com/santikka/dynamite/blob/main/data-raw/
+\url{https://github.com/ropensci/dynamite/blob/main/data-raw/
 latent_factor_example.R}
 }
 \usage{

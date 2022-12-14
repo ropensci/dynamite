@@ -9,7 +9,7 @@ A \code{dynamitefit} object.
 }
 \source{
 Script in
-\url{https://github.com/santikka/dynamite/blob/main/data-raw/
+\url{https://github.com/ropensci/dynamite/blob/main/data-raw/
 latent_factor_example_fit.R}
 }
 \usage{

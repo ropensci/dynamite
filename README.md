@@ -8,9 +8,9 @@
 [![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-[![R-CMD-check](https://github.com/santikka/dynamite/workflows/R-CMD-check/badge.svg)](https://github.com/santikka/dynamite/actions)
+[![R-CMD-check](https://github.com/ropensci/dynamite/workflows/R-CMD-check/badge.svg)](https://github.com/ropensci/dynamite/actions)
 [![Codecov test
-coverage](https://codecov.io/gh/santikka/dynamite/branch/main/graph/badge.svg)](https://app.codecov.io/gh/santikka/dynamite?branch=main)
+coverage](https://codecov.io/gh/ropensci/dynamite/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ropensci/dynamite?branch=main)
 [![Status at rOpenSci Software Peer
 Review](https://badges.ropensci.org/554_status.svg)](https://github.com/ropensci/software-review/issues/554)
 <!-- badges: end -->
@@ -21,22 +21,22 @@ series) data comprising of multiple measurements per multiple
 individuals measured in time. The main features distinguishing the
 package and the underlying methodology from many other approaches are:
 
-- Support for both time-invariant and time-varying effects modeled via
-  B-splines.
-- Joint modeling of multiple measurements per individual (multiple
-  channels) based directly on the assumed data generating process.
-- Support for non-Gaussian observations: Currently Gaussian,
-  Categorical, Poisson, Bernoulli, Binomial, Negative Binomial, Gamma,
-  Exponential, and Beta distributions are available and these can be
-  mixed arbitrarily in multichannel models.
-- Allows evaluating realistic long-term counterfactual predictions which
-  take into account the dynamic structure of the model by posterior
-  predictive distribution simulation.
-- Transparent quantification of parameter and predictive uncertainty due
-  to a fully Bayesian approach.
-- User-friendly and efficient R interface with state-of-the-art
-  estimation via Stan. Both `rstan` and `cmdstanr` backends are
-  supported.
+-   Support for both time-invariant and time-varying effects modeled via
+    B-splines.
+-   Joint modeling of multiple measurements per individual (multiple
+    channels) based directly on the assumed data generating process.
+-   Support for non-Gaussian observations: Currently Gaussian,
+    Categorical, Poisson, Bernoulli, Binomial, Negative Binomial, Gamma,
+    Exponential, and Beta distributions are available and these can be
+    mixed arbitrarily in multichannel models.
+-   Allows evaluating realistic long-term counterfactual predictions
+    which take into account the dynamic structure of the model by
+    posterior predictive distribution simulation.
+-   Transparent quantification of parameter and predictive uncertainty
+    due to a fully Bayesian approach.
+-   User-friendly and efficient R interface with state-of-the-art
+    estimation via Stan. Both `rstan` and `cmdstanr` backends are
+    supported.
 
 The `dynamite` package is developed with the support of Academy of
 Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)).
@@ -56,11 +56,13 @@ data.table::update_dev_pkg()
 ```
 
 After these steps, you can install the development version of `dynamite`
-from [GitHub](https://github.com/) with:
+from [GitHub](https://github.com/) by running one of the following
+lines:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("santikka/dynamite")
+devtools::install_github("ropensci/dynamite")
+install.packages("dynamite", repos = "https://ropensci.r-universe.dev")
 ```
 
 ## Example
@@ -93,7 +95,7 @@ Posterior estimates of time-varying effects
 
 ``` r
 plot_deltas(gaussian_example_fit, scales = "free")
-#> Warning: Removed 1 row(s) containing missing values (geom_path).
+#> Warning: Removed 1 row containing missing values (`geom_line()`).
 ```
 
 <img src="man/figures/README-unnamed-chunk-7-1.png" width="80%" />
@@ -120,6 +122,7 @@ first time point):
 
 ``` r
 library(ggplot2)
+#> Warning: package 'ggplot2' was built under R version 4.2.2
 pred <- predict(gaussian_example_fit, n_draws = 50)
 pred |> dplyr::filter(id < 5) |> 
   ggplot(aes(time, y_new, group = .draw)) +
@@ -136,32 +139,32 @@ For more examples, see the package vignette.
 
 ## Related packages
 
-- The `dynamite` package uses Stan via
-  [`rstan`](https://CRAN.R-project.org/package=rstan) and
-  [`cmdstanr`](https://CRAN.R-project.org/package=cmdstanr) (see also
-  <https://mc-stan.org>), which is a probabilistic programming language
-  for general Bayesian modelling.
+-   The `dynamite` package uses Stan via
+    [`rstan`](https://CRAN.R-project.org/package=rstan) and
+    [`cmdstanr`](https://CRAN.R-project.org/package=cmdstanr) (see also
+    <https://mc-stan.org>), which is a probabilistic programming
+    language for general Bayesian modelling.
 
-- The [`brms`](https://CRAN.R-project.org/package=brms) package also
-  uses Stan, and can be used to fit various complex multilevel models.
+-   The [`brms`](https://CRAN.R-project.org/package=brms) package also
+    uses Stan, and can be used to fit various complex multilevel models.
 
-- Regression modelling with time-varying coefficients based on kernel
-  smoothing and least squares estimation is available in package
-  [`tvReg`](https://CRAN.R-project.org/package=tvReg). The
-  [`tvem`](https://CRAN.R-project.org/package=tvem) package provides
-  similar functionality for gaussian, binomial and poisson responses
-  with [`mgcv`](https://CRAN.R-project.org/package=mgcv) backend.
+-   Regression modelling with time-varying coefficients based on kernel
+    smoothing and least squares estimation is available in package
+    [`tvReg`](https://CRAN.R-project.org/package=tvReg). The
+    [`tvem`](https://CRAN.R-project.org/package=tvem) package provides
+    similar functionality for gaussian, binomial and poisson responses
+    with [`mgcv`](https://CRAN.R-project.org/package=mgcv) backend.
 
-- [`plm`](https://CRAN.R-project.org/package=plm) contains various
-  methods to estimate linear models for panel data, e.g. the fixed
-  effect models.
+-   [`plm`](https://CRAN.R-project.org/package=plm) contains various
+    methods to estimate linear models for panel data, e.g. the fixed
+    effect models.
 
-- [`lavaan`](https://CRAN.R-project.org/package=lavaan) provides tools
-  for structural equation modelling, and as such can be used to model
-  various panel data models as well.
+-   [`lavaan`](https://CRAN.R-project.org/package=lavaan) provides tools
+    for structural equation modelling, and as such can be used to model
+    various panel data models as well.
 
 ## Contributing
 
 Contributions are very welcome, see
-[CONTRIBUTING.md](https://github.com/santikka/dynamite/blob/main/.github/CONTRIBUTING.md)
+[CONTRIBUTING.md](https://github.com/ropensci/dynamite/blob/main/.github/CONTRIBUTING.md)
 for general guidelines.

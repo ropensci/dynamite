@@ -21,8 +21,8 @@ knitr::opts_chunk$set(
 
 <!-- badges: start -->
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-[![R-CMD-check](https://github.com/santikka/dynamite/workflows/R-CMD-check/badge.svg)](https://github.com/santikka/dynamite/actions)
-[![Codecov test coverage](https://codecov.io/gh/santikka/dynamite/branch/main/graph/badge.svg)](https://app.codecov.io/gh/santikka/dynamite?branch=main)
+[![R-CMD-check](https://github.com/ropensci/dynamite/workflows/R-CMD-check/badge.svg)](https://github.com/ropensci/dynamite/actions)
+[![Codecov test coverage](https://codecov.io/gh/ropensci/dynamite/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ropensci/dynamite?branch=main)
 [![Status at rOpenSci Software Peer Review](https://badges.ropensci.org/554_status.svg)](https://github.com/ropensci/software-review/issues/554)
 <!-- badges: end -->
 
@@ -65,11 +65,12 @@ data.table::update_dev_pkg()
 ```
 
 After these steps, you can install the development version of `dynamite` from 
-[GitHub](https://github.com/) with:
+[GitHub](https://github.com/) by running one of the following lines:
 
 ```{r, eval = FALSE}
 # install.packages("devtools")
-devtools::install_github("santikka/dynamite")
+devtools::install_github("ropensci/dynamite")
+install.packages("dynamite", repos = "https://ropensci.r-universe.dev")
 ```
 
 ## Example
@@ -144,4 +145,4 @@ For more examples, see the package vignette.
 
 ## Contributing
 
-Contributions are very welcome, see [CONTRIBUTING.md](https://github.com/santikka/dynamite/blob/main/.github/CONTRIBUTING.md) for general guidelines.
+Contributions are very welcome, see [CONTRIBUTING.md](https://github.com/ropensci/dynamite/blob/main/.github/CONTRIBUTING.md) for general guidelines.

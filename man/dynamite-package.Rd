@@ -16,7 +16,7 @@ account the dynamic structure of the model.
 \item The package vignette.
 \item \code{\link[=dynamiteformula]{dynamiteformula()}} for information on defining models.
 \item \code{\link[=dynamite]{dynamite()}} for information on fitting models.
-\item \url{https://github.com/santikka/dynamite/issues/} to submit a bug report
+\item \url{https://github.com/ropensci/dynamite/issues/} to submit a bug report
 or a feature request.
 }
 }
