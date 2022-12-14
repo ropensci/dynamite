@@ -57,4 +57,4 @@ LazyData: true
 LazyDataCompression: xz
 Additional_repositories: https://mc-stan.org/r-packages/
 Remotes: 
-    url::https://Rdatatable.gitlab.io/data.table
+   url::https://Rdatatable.gitlab.io/data.table/src/contrib/data.table_1.14.7.tar.gz
