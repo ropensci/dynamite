@@ -1,3 +1,7 @@
+# dynamite 1.0.0
+  * Increased the version number to 1.0.0 to reflect the fact that the package 
+    is now fully functional and has successfully passed the rOpenSci review.
+  
 # dynamite 0.0.3
 
   * `get_prior`, `get_code`, and `get_data` now support case without `group` 
