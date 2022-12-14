@@ -1,4 +1,4 @@
-# Code to create `gaussian_example_fit` object
+# Code to create `latent_factor_example_fit` object
 
 library(dynamite)
 
