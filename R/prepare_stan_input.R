@@ -40,7 +40,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   specials <- evaluate_specials(dformula, data)
   model_matrix <- full_model.matrix(dformula, data, verbose)
   n_channels <- length(resp_names)
-  # A list of variables for stan sampling without grouping by channel
+  # A list of variables for Stan sampling without grouping by channel
   sampling_vars <- list()
   empty_list <- setNames(vector(mode = "list", length = n_channels), resp_names)
   # A list containing a list for each channel consisting of
@@ -53,23 +53,14 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   T_idx <- seq.int(fixed + 1L, T_full)
   has_groups <- !is.null(group_var)
   group <- data[[group_var]]
-  has_splines <- !is.null(attr(dformula, "splines"))
-  spline_defs <- prepare_splines(
-    attr(dformula, "splines"),
-    n_channels,
-    T_idx
-  )
+  spline_defs <- attr(dformula, "splines")
+  random_defs <- attr(dformula, "random")
+  lfactor_defs <- attr(dformula, "lfactor")
+  has_splines <- spline_defs$has_splines
   sampling_vars$D <- spline_defs$D
   sampling_vars$Bs <- spline_defs$Bs
-  random_defs <- prepare_random(dformula, attr(dformula, "random"))
-  has_random <- random_defs$responses
-  lfactor_defs <- attr(dformula, "lfactor")
-  has_lfactor <- !is.null(lfactor_defs)
-  lfactor_defs <- prepare_lfactors(
-    dformula,
-    attr(dformula, "lfactor"),
-    resp_names
-  )
+  random_resp <- random_defs$responses
+  has_lfactor <- lfactor_defs$has_lfactor
   stopifnot_(
     !has_lfactor || has_splines,
     "Model contains time-varying latent factor(s) but splines have not been
@@ -140,7 +131,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     )
     channel$has_fixed_intercept <- dformula[[i]]$has_fixed_intercept
     channel$has_varying_intercept <- dformula[[i]]$has_varying_intercept
-    channel$has_random_intercept <- resp %in% has_random
+    channel$has_random_intercept <- resp %in% random_resp
     channel$has_fixed <- channel$K_fixed > 0L
     channel$has_varying <- channel$K_varying > 0L
     channel$lb <- spline_defs$lb[i]
@@ -225,178 +216,6 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     u_names = colnames(model_matrix),
     fixed = fixed
   )
-}
-
-#' Prepare B-spline Parameters for Stan
-#'
-#' @param spline_defs A `splines` object.
-#' @param n_channels Number of channels
-#' @param T_idx An `integer` vector of time indices
-#' @noRd
-prepare_splines <- function(spline_defs, n_channels, T_idx) {
-  out <- list()
-  if (!is.null(spline_defs)) {
-    out$shrinkage <- spline_defs$shrinkage
-    out$bs_opts <- spline_defs$bs_opts
-    out$bs_opts$x <- T_idx
-    if (is.null(out$bs_opts$Boundary.knots)) {
-      out$bs_opts$Boundary.knots <- range(out$bs_opts$x)
-    }
-    out$Bs <- t(do.call(splines::bs, args = out$bs_opts))
-    out$D <- nrow(out$Bs)
-    out$lb <- spline_defs$lb_tau
-    if (length(out$lb) %in% c(1L, n_channels)) {
-      out$lb <- rep(out$lb, length = n_channels)
-    } else {
-      stop_(
-        "Length of the {.arg lb_tau} argument of {.fun splines} function
-         is not equal to 1 or {n_channels}, the number of the channels."
-      )
-    }
-    out$noncentered <- spline_defs$noncentered
-    if (length(out$noncentered) %in% c(1L, n_channels)) {
-      out$noncentered <- rep(out$noncentered, length = n_channels)
-    } else {
-      stop_(
-        "Length of the {.arg noncentered} argument of {.fun splines} function
-         is not equal to 1 or {n_channels}, the number of the channels."
-      )
-    }
-  } else {
-    out <- list(
-      lb = numeric(n_channels),
-      noncentered = logical(n_channels),
-      shrinkage = logical(1L)
-    )
-  }
-  out
-}
-
-#' Prepare Random Intercept Definitions for Stan
-#'
-#' @param dformula A `dynamiteformula` of stochastic channels.
-#' @param random_defs A `random` object.
-#' @param responses Names of the response variables.
-#' @noRd
-prepare_random <- function(dformula, random_defs) {
-  if (is.null(random_defs)) {
-    return(NULL)
-  }
-  resp <- get_responses(dformula)
-  families <- unlist(get_families(dformula))
-  valid_channels <- resp[!(families %in% "categorical")]
-  # default, use all channels except categorical
-  if (is.null(random_defs$responses)) {
-    random_defs$responses <- valid_channels
-    stopifnot_(
-      length(valid_channels) > 0L,
-      c(
-        "No valid responses for random intercept component:",
-        `x` = "Random intercepts are not supported for the categorical
-               family."
-      )
-    )
-  } else {
-    nu_channels <- random_defs$responses %in% resp
-    stopifnot_(
-      all(nu_channels),
-      c(
-        "Argument {.arg responses} of {.fun random} contains variables
-        {.var {cs(resp[nu_channels])}}:",
-        `x` = "No such response variables in the model."
-      )
-    )
-    nu_channels <- random_defs$responses %in% valid_channels
-    stopifnot_(
-      all(nu_channels),
-      c(
-        "Random intercepts are not supported for the categorical family:",
-        `x` = "Found random intercept declaration for categorical variable{?s}
-              {.var {cs(valid_channels[nu_channels])}}."
-      )
-    )
-  }
-  if (length(random_defs$responses) < 2L) {
-    random_defs$correlated <- FALSE
-  }
-  random_defs
-}
-
-#' Prepare Latent Factor Definitions for Stan
-#'
-#' @param dformula A `dynamiteformula` of stochastic channels.
-#' @param lfactor_defs An `lfactor` object.
-#' @param responses Names of the response variables.
-#' @noRd
-prepare_lfactors <- function(dformula, lfactor_defs, responses) {
-  # There is repetition here with the checks in parse_lags function! Remove this?
-  out <- list()
-  if (!is.null(lfactor_defs)) {
-    resp <- get_responses(dformula)
-    families <- unlist(get_families(dformula))
-    valid_channels <- resp[!(families %in% "categorical")]
-    # default, use all channels except categorical
-    if (is.null(lfactor_defs$responses)) {
-      lfactor_defs$responses <- valid_channels
-      stopifnot_(
-        length(valid_channels) > 0L,
-        c(
-          "No valid responses for latent factor component:",
-          `x` = "Latent factors are not supported for the categorical family."
-        )
-      )
-    } else {
-      psi_channels <- lfactor_defs$responses %in% resp
-      stopifnot_(
-        all(psi_channels),
-        c(
-          "Argument {.arg responses} of {.fun lfactor} contains variable{?s}
-          {.var {cs(lfactor_defs$responses[!psi_channels])}}:",
-          `x` = "No such response variables in the model."
-        )
-      )
-      psi_channels <- lfactor_defs$responses %in% valid_channels
-      stopifnot_(
-        all(psi_channels),
-        c(
-          "Latent factors are not supported for the categorical family:",
-          `x` = "Found latent factor declaration for categorical variable{?s}
-                {.var {cs(valid_channels[psi_channels])}}."
-        )
-      )
-    }
-    if (length(lfactor_defs$responses) < 2L) {
-      lfactor_defs$correlated <- FALSE
-    }
-    out$responses <- lfactor_defs$responses
-    out$noncentered_psi <- lfactor_defs$noncentered_psi
-    n_channels <- length(responses)
-    out$noncentered_lambda <- lfactor_defs$noncentered_lambda
-    stopifnot_(
-      length(out$noncentered_lambda) %in% c(1L, n_channels),
-      "Length of the {.arg noncentered_lambda} argument of {.fun lfactor}
-      function is not equal to 1 or {n_channels}, the number of the channels."
-    )
-    out$noncentered_lambda <- rep(out$noncentered_lambda, length = n_channels)
-    out$nonzero_lambda <- lfactor_defs$nonzero_lambda
-    stopifnot_(
-      length(out$nonzero_lambda) %in% c(1L, n_channels),
-      "Length of the {.arg nonzero_lambda} argument of {.fun lfactor} function
-      is not equal to 1 or {n_channels}, the number of the channels."
-    )
-    out$nonzero_lambda <- rep(out$nonzero_lambda, length = n_channels)
-    out$correlated <- lfactor_defs$correlated
-  } else {
-    n_channels <- length(responses)
-    out <- list(
-      responses = character(0),
-      noncentered_psi = FALSE,
-      noncentered_lambda = logical(n_channels),
-      nonzero_lambda = logical(n_channels),
-      correlated = FALSE
-    )
-  }
-  out
 }
 
 #' Construct a Prior Definition for a Regression Parameters

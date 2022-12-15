@@ -20,7 +20,7 @@
 #' @examples
 #' \dontrun{
 #' # re-estimate the example fit without thinning:
-#' # As the model is compiled in windows, this will fail in other platforms
+#' # As the model is compiled on Windows, this will fail on other platforms
 #' if (.Platform$OS.type == "windows") {
 #'   fit <- update(gaussian_example_fit, thin = 1)
 #' }

@@ -9,8 +9,7 @@ A \code{dynamitefit} object.
 }
 \source{
 Script in
-\url{https://github.com/ropensci/dynamite/blob/main/data-raw/
-categorical_example_fit.R}
+\url{https://github.com/ropensci/dynamite/blob/main/data-raw/categorical_example_fit.R}
 }
 \usage{
 categorical_example_fit

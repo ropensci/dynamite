@@ -16,8 +16,7 @@ A data frame with 3000 rows and 5 variables:
 }
 \source{
 The data was generated according to a script in
-\url{https://github.com/ropensci/dynamite/blob/main/data-raw/
-multichannel_example.R}
+\url{https://github.com/ropensci/dynamite/blob/main/data-raw/multichannel_example.R}
 }
 \usage{
 multichannel_example

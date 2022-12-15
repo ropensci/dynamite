@@ -26,8 +26,7 @@
 #' The prior for the correlation structure of the random intercepts is defined
 #' via the Cholesky decomposition of the correlation matrix, as
 #' `lkj_corr_cholesky(1)`. See
-#' \url{https://mc-stan.org/docs/functions-reference/
-#' cholesky-lkj-correlation-distribution.html}
+#' \url{https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html}
 #' for details.
 #'
 #' The best-case scalability of `dynamite` in terms of data size should be
@@ -229,6 +228,7 @@ dynamite <- function(dformula, data, group = NULL, time,
   data <- parse_data(dformula, data, group, time, verbose)
   dformula <- parse_past(dformula, data, group, time)
   dformulas <- parse_lags(dformula, data, group, time, verbose)
+  dformulas <- parse_components(dformulas, data, time)
   evaluate_deterministic(dformulas, data, group, time)
   stan_out <- dynamite_stan(
     dformulas,
@@ -728,6 +728,204 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
     lag_det = dformula_lag_det,
     lag_stoch = dformula_lag_stoch
   )
+}
+
+#' Parse Additional Model Formula Components
+#'
+#' @inheritParams parse_data
+#' @param dformulas \[`list()`]\cr Output of `parse_lags`.
+#' @noRd
+parse_components <- function(dformulas, data, time_var) {
+  fixed <- attr(dformulas$all, "max_lag")
+  resp <- get_responses(dformulas$stoch)
+  families <- unlist(get_families(dformulas$stoch))
+  attr(dformulas$stoch, "splines") <- parse_splines(
+    spline_defs = attr(dformulas$stoch, "splines"),
+    resp = resp,
+    times = seq.int(fixed + 1L, n_unique(data[[time_var]]))
+  )
+  attr(dformulas$stoch, "random") <- parse_random(
+    random_defs = attr(dformulas$stoch, "random"),
+    resp = resp,
+    families = families
+  )
+  attr(dformulas$stoch, "lfactor") <- parse_lfactors(
+    lfactor_defs = attr(dformulas$stoch, "lfactor"),
+    resp = resp,
+    families = families
+  )
+  dformulas
+}
+
+#' Parse B-spline Parameters
+#'
+#' @param spline_defs A `splines` object.
+#' @param n_channels Number of channels
+#' @param times An `integer` vector of time indices
+#' @noRd
+parse_splines <- function(spline_defs, resp, times) {
+  out <- list()
+  n_channels <- length(resp)
+  if (!is.null(spline_defs)) {
+    out$has_splines <- TRUE
+    out$shrinkage <- spline_defs$shrinkage
+    out$bs_opts <- spline_defs$bs_opts
+    out$bs_opts$x <- times
+    if (is.null(out$bs_opts$Boundary.knots)) {
+      out$bs_opts$Boundary.knots <- range(out$bs_opts$x)
+    }
+    out$Bs <- t(do.call(splines::bs, args = out$bs_opts))
+    out$D <- nrow(out$Bs)
+    out$lb <- spline_defs$lb_tau
+    if (length(out$lb) %in% c(1L, n_channels)) {
+      out$lb <- rep(out$lb, length = n_channels)
+    } else {
+      stop_(
+        "Length of the {.arg lb_tau} argument of {.fun splines} function
+        is not equal to 1 or {n_channels}, the number of the channels."
+      )
+    }
+    out$noncentered <- spline_defs$noncentered
+    if (length(out$noncentered) %in% c(1L, n_channels)) {
+      out$noncentered <- rep(out$noncentered, length = n_channels)
+    } else {
+      stop_(
+        "Length of the {.arg noncentered} argument of {.fun splines} function
+        is not equal to 1 or {n_channels}, the number of the channels."
+      )
+    }
+  } else {
+    out <- list(
+      has_splines = FALSE,
+      lb = numeric(n_channels),
+      noncentered = logical(n_channels),
+      shrinkage = logical(1L)
+    )
+  }
+  out
+}
+
+#' Parse Random Intercept Definitions
+#'
+#' @param random_defs A `random` object.
+#' @param resp A `character` vector of response variable names.
+#' @param families A `character` vector response family names.
+#' @noRd
+parse_random <- function(random_defs, resp, families) {
+  if (is.null(random_defs)) {
+    return(NULL)
+  }
+  valid_channels <- resp[!(families %in% "categorical")]
+  # default, use all channels except categorical
+  if (is.null(random_defs$responses)) {
+    random_defs$responses <- valid_channels
+    stopifnot_(
+      length(valid_channels) > 0L,
+      c(
+        "No valid responses for random intercept component:",
+        `x` = "Random intercepts are not supported for the categorical family."
+      )
+    )
+  } else {
+    nu_channels <- random_defs$responses %in% resp
+    stopifnot_(
+      all(nu_channels),
+      c(
+        "Argument {.arg responses} of {.fun random} contains variables
+        {.var {cs(resp[nu_channels])}}:",
+        `x` = "No such response variables in the model."
+      )
+    )
+    nu_channels <- random_defs$responses %in% valid_channels
+    stopifnot_(
+      all(nu_channels),
+      c(
+        "Random intercepts are not supported for the categorical family:",
+        `x` = "Found random intercept declaration for categorical variable{?s}
+              {.var {cs(valid_channels[nu_channels])}}."
+      )
+    )
+  }
+  if (length(random_defs$responses) < 2L) {
+    random_defs$correlated <- FALSE
+  }
+  random_defs
+}
+
+#' Parse Latent Factor Definitions
+#'
+#' @param lfactor_defs An `lfactor` object.
+#' @param resp A `character` vector of response variable names.
+#' @param families A `character` vector response family names.
+#' @noRd
+parse_lfactors <- function(lfactor_defs, resp, families) {
+  out <- list()
+  if (!is.null(lfactor_defs)) {
+    valid_channels <- resp[!(families %in% "categorical")]
+    # default, use all channels except categorical
+    if (is.null(lfactor_defs$responses)) {
+      lfactor_defs$responses <- valid_channels
+      stopifnot_(
+        length(valid_channels) > 0L,
+        c(
+          "No valid responses for latent factor component:",
+          `x` = "Latent factors are not supported for the categorical family."
+        )
+      )
+    } else {
+      psi_channels <- lfactor_defs$responses %in% resp
+      stopifnot_(
+        all(psi_channels),
+        c(
+          "Argument {.arg responses} of {.fun lfactor} contains variable{?s}
+          {.var {cs(lfactor_defs$responses[!psi_channels])}}:",
+          `x` = "No such response variables in the model."
+        )
+      )
+      psi_channels <- lfactor_defs$responses %in% valid_channels
+      stopifnot_(
+        all(psi_channels),
+        c(
+          "Latent factors are not supported for the categorical family:",
+          `x` = "Found latent factor declaration for categorical variable{?s}
+                {.var {cs(valid_channels[psi_channels])}}."
+        )
+      )
+    }
+    if (length(lfactor_defs$responses) < 2L) {
+      lfactor_defs$correlated <- FALSE
+    }
+    out$has_lfactor <- TRUE
+    out$responses <- lfactor_defs$responses
+    out$noncentered_psi <- lfactor_defs$noncentered_psi
+    n_channels <- length(resp)
+    out$noncentered_lambda <- lfactor_defs$noncentered_lambda
+    stopifnot_(
+      length(out$noncentered_lambda) %in% c(1L, n_channels),
+      "Length of the {.arg noncentered_lambda} argument of {.fun lfactor}
+      function is not equal to 1 or {n_channels}, the number of the channels."
+    )
+    out$noncentered_lambda <- rep(out$noncentered_lambda, length = n_channels)
+    out$nonzero_lambda <- lfactor_defs$nonzero_lambda
+    stopifnot_(
+      length(out$nonzero_lambda) %in% c(1L, n_channels),
+      "Length of the {.arg nonzero_lambda} argument of {.fun lfactor} function
+      is not equal to 1 or {n_channels}, the number of the channels."
+    )
+    out$nonzero_lambda <- rep(out$nonzero_lambda, length = n_channels)
+    out$correlated <- lfactor_defs$correlated
+  } else {
+    n_channels <- length(resp)
+    out <- list(
+      has_lfactor = FALSE,
+      responses = character(0L),
+      noncentered_psi = FALSE,
+      noncentered_lambda = logical(n_channels),
+      nonzero_lambda = logical(n_channels),
+      correlated = FALSE
+    )
+  }
+  out
 }
 
 #' Parse a `lags` Definition in a `dynamiteformula` Object
