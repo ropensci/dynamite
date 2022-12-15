@@ -36,7 +36,6 @@ jobs:
             Rcpp
             rstan
             StanHeaders
-            r-lib/pak
 
 # To be added when we have tests for cmdstanr backend
 # - name: Build CmdStan

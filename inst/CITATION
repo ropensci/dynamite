@@ -12,10 +12,10 @@ bibentry(
 )
 bibentry(
   key = "dynamitepaper",
-  bibtype  = "Article",
+  bibtype  = "Misc",
   title    = "Estimating Causal Effects from Panel Data with Dynamic Multivariate Panel Models",
   author   = "Jouni Helske and Santtu Tikka",
-  note  = "SocArxiv preperint",
+  publisher = "SocArxiv",
   year     = "2022",
-  url      = ""
+  url      = "https://osf.io/preprints/socarxiv/mdwu5/"
 )
