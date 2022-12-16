@@ -179,6 +179,7 @@ formula(gaussian_example_fit)
 
 print(gaussian_example_fit)
 
-summary(gaussian_example_fit, types = "beta")
+summary(gaussian_example_fit, types = "beta",
+  probs = c(0.05, 0.1, 0.9, 0.95))
 
 }
