@@ -8,7 +8,7 @@ Authors@R: c(
     person("Jouni", "Helske", email = "jouni.helske@iki.fi", role = "aut",
            comment = c(ORCID = "0000-0001-7130-793X")),
     person("Nicholas", "Clark", role = "rev"),
-    person("Lucy", "McGowan", role = "rev")
+    person("Lucy", "D’Agostino McGowan", role = "rev")
   )
 Description: Easy-to-use and efficient interface for 
   Bayesian inference of complex panel (time series) data. The package supports 
