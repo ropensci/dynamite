@@ -18,11 +18,13 @@ gaussian_example_fit <- dynamite(
   time = "time",
   iter = 2000,
   warmup = 1000,
-  thin = 5,
+  thin = 10,
   chains = 2,
   cores = 2,
   refresh = 0,
-  save_warmup = FALSE
+  save_warmup = FALSE,
+  pars = c("omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L"),
+  include = FALSE
 )
 
 usethis::use_data(

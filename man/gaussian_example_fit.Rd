@@ -24,10 +24,12 @@ gaussian_example_fit <- dynamite(
   obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
   random() + splines(df = 20),
   data = gaussian_example, time = "time", group = "id",
-  iter = 2000, warmup = 1000, thin = 5,
-  chains = 2, cores = 2, refresh = 0, save_warmup = FALSE
+  iter = 2000, warmup = 1000, thin = 10,
+  chains = 2, cores = 2, refresh = 0, save_warmup = FALSE,
+  pars = c("omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L"),
+  include = FALSE
 )
 }
-Note the small number of samples due to size restrictions on CRAN.
+Note the very small number of samples due to size restrictions on CRAN.
 }
 \keyword{datasets}

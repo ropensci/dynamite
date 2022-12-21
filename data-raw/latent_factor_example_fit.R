@@ -11,19 +11,21 @@ latent_factor_example_fit <- dynamite(
       y ~ 1,
       family = "gaussian"
     ) +
-      random() +
-      lfactor() +
-      splines(df = 10),
+    lfactor() +
+    splines(df = 10),
   data = latent_factor_example,
   group = "id",
   time = "time",
   iter = 2000,
   warmup = 1000,
-  thin = 5,
-  chains = 1,
-  cores = 1,
+  thin = 10,
+  chains = 2,
+  cores = 2,
   refresh = 0,
-  save_warmup = FALSE
+  save_warmup = FALSE,
+  pars = c("omega_alpha_1_y", "omega_raw_alpha_y", "omega_raw_psi", "L_lf",
+    "lambda_raw_y", "lambda_std_y"),
+  include = FALSE
 )
 
 usethis::use_data(

@@ -21,19 +21,22 @@ A \code{dynamitefit} object obtained by running \code{dynamite} on the
 set.seed(1)
 library(dynamite)
 latent_factor_example_fit <- dynamite(
-  obs(y ~ 1, family = "gaussian") + random() + lfactor() + splines(df = 10),
+  obs(y ~ 1, family = "gaussian") + lfactor() + splines(df = 10),
   data = latent_factor_example,
   group = "id",
   time = "time",
   iter = 2000,
   warmup = 1000,
-  thin = 5,
+  thin = 10,
   chains = 2,
   cores = 2,
   refresh = 0,
-  save_warmup = FALSE
+  save_warmup = FALSE,
+  pars = c("omega_alpha_1_y", "omega_raw_alpha_y", "omega_raw_psi", "L_lf",
+    "lambda_raw_y", "lambda_std_y"),
+  include = FALSE
 )
 }
-Note the small number of samples due to size restrictions on CRAN.
+Note the very small number of samples due to size restrictions on CRAN.
 }
 \keyword{datasets}

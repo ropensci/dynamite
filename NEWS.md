@@ -4,6 +4,8 @@
   * `multichannel_example` and the corresponding fit was modified: The standard 
     deviation parameter of the Gaussian channel used in the data generation was 
     decreased in order to make the example in the vignette more interesting.
+  * The latent factor model was also modified by removing the `random()` 
+    component in order to reduce the size of the model fit object.
 
 # dynamite 1.0.0
   * Increased the version number to 1.0.0 to reflect the fact that the package 
