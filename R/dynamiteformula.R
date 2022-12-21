@@ -49,7 +49,9 @@
 #' the lags to specified values, or by `past` which computes the initial values
 #' based on an R expression. Both `init` and `past` should appear on the
 #' right hand side of the model formula, separated from the primary defining
-#' expression via `|`.
+#' expression via `|`. Currently, the development version of `data.table`
+#' is required to use deterministic channels. You can upgrade your installation
+#' by running `data.table::update_dev_pkg()`
 #'
 #' The formula within `obs` can also contain an additional special
 #' function `varying`, which defines the time-varying part of the model
@@ -150,6 +152,14 @@ dynamiteformula <- function(formula, family) {
   stopifnot_(
     is_supported(family),
     "Family {.val {family}} is not supported."
+  )
+  stopifnot_(
+    !identical(family, "deterministic") || datatable_supports_env(),
+    c(
+      "Deterministic channels are not supported by current data.table version",
+      `i` = "Please upgrade your data.table installation via
+            {.code data.table::update_dev_pkg()}"
+    )
   )
   family <- do.call(paste0(family, "_"), args = list())
   stopifnot_(

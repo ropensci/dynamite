@@ -307,6 +307,21 @@ stan_supports_categorical_logit_glm <- function(backend) {
   utils::compareVersion(backend_version, "2.23") >= 0
 }
 
+#' Is env-argument of data.table available?
+#'
+#' @noRd
+datatable_supports_env <- function() {
+  if (utils::packageVersion("data.table") >= "1.14.3") {
+    out <- try({
+      x <- data.table::data.table(a = 1)
+      x[, b := y, env = list(y = 2)]
+    }, silent = TRUE)
+    !inherits(out, what = "try-error")
+  } else {
+    FALSE
+  }
+}
+
 #' Row-wise log-sum-exp
 #'
 #' @noRd
