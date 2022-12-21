@@ -123,6 +123,7 @@ test_that("formula can be extracted", {
     aux(numeric(d) ~ y + 1) +
     lags(k = 1) +
     splines(df = 5)
+
   set.seed(0)
   d <- data.frame(
     y = rnorm(6),

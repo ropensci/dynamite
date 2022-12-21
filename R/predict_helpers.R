@@ -227,11 +227,15 @@ parse_funs <- function(object, type, funs) {
 #' @inheritParams dynamite
 #' @noRd
 fill_time_predict <- function(data, group_var, time_var, time_scale) {
-  time_duplicated <- data[,
-    any(duplicated(time_var)),
-    by = group_var,
-    env = list(time_var = time_var)
-  ]$V1
+  #time_duplicated <- data[,
+  #  any(duplicated(time_var)),
+  #  by = group_var,
+  #  env = list(time_var = time_var)
+  #]$V1
+  split_data <- split(data, by = group_var)
+  time_duplicated <- unlist(
+    lapply(split_data, function(x) any(duplicated(x[[time_var]])))
+  )
   d <- which(time_duplicated)
   stopifnot_(
     all(!time_duplicated),
@@ -245,19 +249,29 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
   if (length(time) > 1L) {
     original_order <- colnames(data)
     full_time <- seq(time[1L], time[length(time)], by = time_scale)
-    time_groups <- data[,
-      {
-        has_missing = !identical(time_var, full_time)
-        has_gaps = .N != (diff(range(time_var)) + 1L) * time_scale
-        list(has_missing, has_gaps)
-      },
-      by = group_var,
-      env = list(
-        time_var = time_var,
-        group_var = group_var,
-        time_scale = time_scale
+    #time_groups <- data[,
+      #{
+      #  has_missing = !identical(time_var, full_time)
+      #  has_gaps = .N != (diff(range(time_var)) + 1L) * time_scale
+      #  list(has_missing, has_gaps)
+      #},
+      #by = group_var
+      #env = list(
+      #  time_var = time_var,
+      #  group_var = group_var,
+      #  time_scale = time_scale
+      #)
+    #]
+    time_groups <- list(
+      has_missing = unlist(
+        lapply(split_data, function(x) !identical(x[[time_var]], full_time))
+      ),
+      has_gaps = unlist(
+        lapply(split_data, function(x) {
+          nrow(x) != (diff(range(x[[time_var]])) + 1L) * time_scale
+        })
       )
-    ]
+    )
     if (any(time_groups$has_missing)) {
       if (any(time_groups$has_gaps)) {
         warning_(c(
@@ -294,8 +308,9 @@ impute_newdata <- function(newdata, impute, predictors, group_var) {
     newdata[,
       (predictors) := lapply(.SD, locf),
       .SDcols = predictors,
-      by = group_var,
-      env = list(locf = locf)
+      by = group_var
+      #by = group_var,
+      #env = list(locf = locf)
     ]
   }
 }
@@ -315,18 +330,21 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
     if (global_fixed) {
       clear_idx <- newdata[,
         .I[seq.int(fixed + 1L, .N)],
-        by = group_var,
-        env = list(fixed = fixed)
+        by = group_var
+        #by = group_var,
+        #env = list(fixed = fixed)
       ]$V1
     } else {
       clear_idx <- newdata[,
         .I[seq.int(fixed + which(apply(!is.na(.SD), 1L, any))[1L], .N)],
         .SDcols = resp_stoch,
-        by = group_var,
-        env = list(fixed = fixed, any = any)
+        by = group_var
+        #by = group_var,
+        #env = list(fixed = fixed, any = any)
       ]$V1
     }
-    newdata[clear_idx, c(resp_stoch) := NA, env = list(clear_idx = clear_idx)]
+    #newdata[clear_idx, c(resp_stoch) := NA, env = list(clear_idx = clear_idx)]
+    newdata[clear_idx, c(resp_stoch) := NA]
   }
 }
 

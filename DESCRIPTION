@@ -25,7 +25,7 @@ Imports:
     bayesplot,
     checkmate,
     cli,
-    data.table (>= 1.14.7),
+    data.table,
     glue,
     ggplot2,
     loo,
@@ -55,5 +55,5 @@ Roxygen: list(markdown = TRUE, roclets = c ("namespace", "rd",
 RoxygenNote: 7.2.3
 LazyData: true
 LazyDataCompression: xz
-Additional_repositories: https://mc-stan.org/r-packages/
-Remotes: rdatatable/data.table
+Additional_repositories: https://mc-stan.org/r-packages/,
+    https://Rdatatable.gitlab.io/data.table

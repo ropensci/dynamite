@@ -218,8 +218,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   if (summary) {
     pars <- unique(out$parameter)
     out <- out[,
-      parameter := factor(parameter, levels = pars, ordered = TRUE),
-      env = list(parameter = "parameter")
+      parameter := factor(parameter, levels = pars, ordered = TRUE)
     ][,
       {
         mean = mean(value)
