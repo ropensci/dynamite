@@ -143,8 +143,9 @@ test_that("too large n_draws warns", {
   expect_warning(
     predict(gaussian_example_fit, n_draws = 500),
     paste0(
-      "You've supplied `n_draws` = 500 but ",
-      "there are only 400 samples available:\n",
+      "You've supplied `n_draws` = 500 but there are only ",
+      ndraws(gaussian_example_fit),
+      " samples available:\n",
       "i The available samples will be used for prediction\\."
     )
   )
