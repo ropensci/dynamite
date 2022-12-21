@@ -233,7 +233,9 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
   #  env = list(time_var = time_var)
   #]$V1
   split_data <- split(data, by = group_var)
-  time_duplicated <- unlist(lapply(split_data, function(x) any(duplicated(x))))
+  time_duplicated <- unlist(
+    lapply(split_data, function(x) any(duplicated(x[[time_var]])))
+  )
   d <- which(time_duplicated)
   stopifnot_(
     all(!time_duplicated),
@@ -327,18 +329,18 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
   if (newdata_null && identical(eval_type, "predicted")) {
     if (global_fixed) {
       clear_idx <- newdata[,
-                           .I[seq.int(fixed + 1L, .N)],
-                           by = group_var
-                           #by = group_var,
-                           #env = list(fixed = fixed)
+        .I[seq.int(fixed + 1L, .N)],
+        by = group_var
+        #by = group_var,
+        #env = list(fixed = fixed)
       ]$V1
     } else {
       clear_idx <- newdata[,
-                           .I[seq.int(fixed + which(apply(!is.na(.SD), 1L, any))[1L], .N)],
-                           .SDcols = resp_stoch,
-                           by = group_var
-                           #by = group_var,
-                           #env = list(fixed = fixed, any = any)
+        .I[seq.int(fixed + which(apply(!is.na(.SD), 1L, any))[1L], .N)],
+        .SDcols = resp_stoch,
+        by = group_var
+        #by = group_var,
+        #env = list(fixed = fixed, any = any)
       ]$V1
     }
     #newdata[clear_idx, c(resp_stoch) := NA, env = list(clear_idx = clear_idx)]
@@ -387,36 +389,36 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
     if (any(is_new)) {
       n_new <- sum(is_new)
       out[, which(is_new), ] <- switch(new_levels,
-                                       `bootstrap` = {
-                                         idx <- sample.int(n_draws * n_group, n_draws * n_new, TRUE)
-                                         array(matrix(nu, ncol = M)[idx, ], c(n_draws, n_new, M))
-                                       },
-                                       `gaussian` = {
-                                         x <- array(0.0, c(n_new, M, n_draws))
-                                         zeros <- rep(0.0, M)
-                                         if (is.null(corr_matrix_nu)) {
-                                           # easy to optimise...
-                                           for (i in seq_len(n_draws)) {
-                                             s <- diag(sigma_nu[, i]^2, M)
-                                             x[, , i] <- MASS::mvrnorm(n_new, zeros, s)
-                                           }
-                                         } else {
-                                           # Could also keep the Cholesky L from the sampling phase if this is
-                                           # too slow, or switch algorithm. But probably no need as this is
-                                           # only done once
-                                           for (i in seq_len(n_draws)) {
-                                             s <- diag(sigma_nu[, i])
-                                             x[, , i] <- MASS::mvrnorm(
-                                               n_new, zeros, s %*% corr_matrix_nu[, , i] %*% s
-                                             )
-                                           }
-                                         }
-                                         aperm(x, c(3L, 1L, 2L))
-                                       },
-                                       `original` = {
-                                         match_ids <- sample(orig_ids, n_new, replace = TRUE)
-                                         nu[, match_ids, , drop = FALSE]
-                                       }
+        `bootstrap` = {
+          idx <- sample.int(n_draws * n_group, n_draws * n_new, TRUE)
+          array(matrix(nu, ncol = M)[idx, ], c(n_draws, n_new, M))
+        },
+        `gaussian` = {
+          x <- array(0.0, c(n_new, M, n_draws))
+          zeros <- rep(0.0, M)
+          if (is.null(corr_matrix_nu)) {
+            # easy to optimise...
+            for (i in seq_len(n_draws)) {
+              s <- diag(sigma_nu[, i]^2, M)
+              x[, , i] <- MASS::mvrnorm(n_new, zeros, s)
+            }
+          } else {
+            # Could also keep the Cholesky L from the sampling phase if this is
+            # too slow, or switch algorithm. But probably no need as this is
+            # only done once
+            for (i in seq_len(n_draws)) {
+              s <- diag(sigma_nu[, i])
+              x[, , i] <- MASS::mvrnorm(
+                n_new, zeros, s %*% corr_matrix_nu[, , i] %*% s
+              )
+            }
+          }
+          aperm(x, c(3L, 1L, 2L))
+        },
+        `original` = {
+          match_ids <- sample(orig_ids, n_new, replace = TRUE)
+          nu[, match_ids, , drop = FALSE]
+        }
       )
     }
   }

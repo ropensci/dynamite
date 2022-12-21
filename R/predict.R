@@ -357,7 +357,7 @@ predict_full <- function(object, simulated, observed, type, eval_type,
   )
   ro_ls <- seq_along(lhs_ls)
   n_new <- nrow(simulated)
-  simulated <- simulated[rep(seq_len(n_new), each = n_draws), ]
+  simulated <- simulated[rep(seq_len(n_new), each = n_draws)]
   simulated[, (".draw") := rep(seq.int(1L, n_draws), n_new)]
   eval_envs <- prepare_eval_envs(
     object,
@@ -477,7 +477,7 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
   data.table::set(
     simulated,
     j = ".draw",
-    value = rep(seq.int(1L, n_draws, 2L * n_group))
+    value = rep(seq.int(1L, n_draws), 2L * n_group)
   )
   assign_from_storage(
     storage,
@@ -487,12 +487,9 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
   )
   summaries <- storage[1L, ]
   for (f in funs) {
-    summaries[, (f$name) := target]
-    data.table::set(
-      summaries,
-      j = f$name,
-      value = f$fun(storage[[f$target]][1L])
-    )
+    #target <- f$fun(storage[[f$target]][1L])
+    #summaries[, (f$name) := target, env = list(target = target)]
+    summaries[, (f$name) := f$fun(storage[[f$target]][1L])]
   }
   summaries[, (names(storage)) := NULL]
   summaries[, (names(summaries)) := .SD[NA]]
@@ -597,8 +594,6 @@ assign_from_storage <- function(storage, simulated, idx, idx_obs) {
 #' @noRd
 assign_summaries <- function(summaries, simulated, funs, idx, idx_summ) {
   for (f in funs) {
-    fun <- f$fun
-    target <- f$target
     data.table::set(
       summaries,
       i = idx_summ,
@@ -611,10 +606,10 @@ assign_summaries <- function(summaries, simulated, funs, idx, idx_summ) {
       #][[target]]
       value = simulated[
         idx,
-        lapply(.SD, fun),
+        lapply(.SD, f$fun),
         by = ".draw",
-        .SDcols = target
-      ]
+        .SDcols = f$target
+      ][[f$target]]
     )
   }
 }

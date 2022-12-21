@@ -234,7 +234,7 @@ test_that("lb_tau definition throws error if not of correct length", {
 })
 
 test_that("pure deterministic formula to dynamite fails", {
-  skip_if(!datatable_supports_env())
+  skip_if_not(datatable_supports_env())
   expect_error(
     dynamite(
       dformula = aux(numeric(d) ~ lag(d, 1)),
@@ -344,7 +344,7 @@ test_that("binomial channel without a trials term fails", {
 })
 
 test_that("deterministic fixed fails", {
-  skip_if(!datatable_supports_env())
+  skip_if_not(datatable_supports_env())
   expect_error(
     aux(numeric(y) ~ fixed(~x)),
     paste0(
@@ -357,7 +357,7 @@ test_that("deterministic fixed fails", {
 })
 
 test_that("deterministic varying fails", {
-  skip_if(!datatable_supports_env())
+  skip_if_not(datatable_supports_env())
   expect_error(
     aux(numeric(y) ~ varying(~x)),
     paste0(
@@ -483,7 +483,7 @@ test_that("missing predictor fails", {
 })
 
 test_that("invalid deterministic channel definition fails", {
-  skip_if(!datatable_supports_env())
+  skip_if_not(datatable_supports_env())
   expect_error(
     dynamite(
       dformula = obs(y ~ x, family = "gaussian") +

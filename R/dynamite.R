@@ -1173,7 +1173,9 @@ fill_time <- function(data, group_var, time_var) {
   #  env = list(time_var = time_var)
   #]$V1
   split_data <- split(data, by = group_var)
-  time_duplicated <- unlist(lapply(split_data, function(x) any(duplicated(x))))
+  time_duplicated <- unlist(
+    lapply(split_data, function(x) any(duplicated(x[[time_var]])))
+  )
   d <- which(time_duplicated)
   stopifnot_(
     all(!time_duplicated),
