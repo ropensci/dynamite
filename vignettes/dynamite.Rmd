@@ -368,64 +368,9 @@ of the data). Arguments `chains` and `cores` are passed to `rstan::sampling`
 which then uses to parallel Markov chains in the the Markov chain Monte Carlo 
 (MCMC) sampling of the model parameters.
 
-# Examples
+# Example of Multichannel Model
 
-## Grunfeld Data
-
-As an example, we consider the famous Grunfeld dataset, available in the 
-package `plm`:
-
-```{r}
-library(dynamite)
-library(dplyr)
-data(Grunfeld, package = "plm")
-d <- Grunfeld |> 
-  mutate(invest = inv, firm = factor(firm)) |> 
-  select(-inv)
-head(d)
-```
-
-The data is in a long format (as required by the `dynamite`), containing the 
-firm id (`firm`, 10 firms), the `year` (20 years), value of the firm (`value`), 
-the firms’ gross investment (`invest`) and stock of plant and equipment 
-(`capital`). 
-
-Let's first fit the basic model without time-invariant effects of value and 
-capital on the investment, but with a firm-specific random intercept 
-(using the `random_intercept = TRUE` inside of `obs`):
-
-```{r, eval = FALSE}
-fit_grunfeld <- dynamite(obs(invest ~ value + capital,
-  family = "gaussian") + random(),
-  d, "firm", "year",
-  chains = 1, cores = 1, refresh = 500, iter = 2000, 
-  save_warmup = FALSE)
-fit_grunfeld
-```
-```{r, echo = FALSE}
-fit_grunfeld <- readRDS("fit_grunfeld.rds")
-fit_grunfeld
-```
-
-
-Instead of random intercept terms for each firm, an fixed effect approach would 
-have been possible by using the formula 
-`obs(invest ~ firm + value + capital, family = "gaussian")`.
-
-As we used weakly informative default priors, the coefficient estimates are 
-close to the ones obtained with the `plm` package which is based on  
-ordinary least squares:
-
-```{r}
-fit_plm <- plm::plm(invest ~ value + capital, data = d, 
-                    index = c("firm", "year"), 
-                    effect = "individual", model = "within")
-fit_plm
-```
-
-## Multichannel Model
-
-As a second example, consider the following simulated multichannel data:
+As an example, consider the following simulated multichannel data:
 
 ```{r}
 library(dynamite)
@@ -448,8 +393,11 @@ f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
 As a directed acyclic graph (DAG), the model for the first three time points is 
 ![A DAG of the multichannel model.](dag.png){width=80%}
 
-We again fit the model using the `dynamite` function (note the small number of 
-iterations and additional thinning in order to satisfy the CRAN requirements):
+(The deterministic channel `logp` is omitted for clarity).
+
+We fit the model using the `dynamite` function. In order to satisfy the package 
+size requirements of CRAN, we have to use small number of 
+iterations and additional thinning:
 
 ```{r, eval = FALSE}
 multichannel_example_fit <- dynamite(
@@ -458,7 +406,20 @@ multichannel_example_fit <- dynamite(
   thin = 5, save_warmup = FALSE)
 ```
 
-Note that this produces a warning message related to the 
+You can update the estimated model which is 
+included in the package as 
+```{r, eval = FALSE}
+multichannel_example_fit <- update(multichannel_example_fit,
+    iter = 2000,
+    warmup = 1000,
+    chains = 4,
+    cores = 4,
+    refresh = 0,
+    save_warmup = FALSE
+)
+```
+
+Note that the `dynamite` call above produces a warning message related to the 
 deterministic channel `logp`:
 
 ```{r, eval = TRUE, echo = FALSE}
@@ -509,23 +470,21 @@ We then predict time points 6 to 20 when $b$ at time 5 is 0 or 1 for everyone:
 newdata0 <- d |> 
   dplyr::mutate(
     b = ifelse(time == 5, 0, b))
-pred0 <- predict(multichannel_example_fit, newdata = newdata0)
+pred0 <- predict(multichannel_example_fit, newdata = newdata0, type = "mean")
 newdata1 <- d |> 
   dplyr::mutate(
     b = ifelse(time == 5, 1, b))
-pred1 <- predict(multichannel_example_fit, newdata = newdata1)
+pred1 <- predict(multichannel_example_fit, newdata = newdata1, type = "mean")
 ```
 
 By default, the output from `predict` is a single data frame containing the 
-original new data and the samples from the posterior predictive distribution. 
-In this case the the predicted values in a data frame are in the columns `g_new`, `p_new`, and `b_new` where the NA values of `newdata` are replaced with the 
-posterior samples from the model (the output also contains additional column corresponding to the auxiliary channel `logp` and index variable `.draw`). For 
-more memory efficient format, by using argument `expand = FALSE` the output is 
+original new data and the samples from the posterior predictive distribution new observations. By defining `type = "mean"` we specify that we are interested in the posterior distribution of the expected values instead. 
+In this case the the predicted values in a data frame are in the columns `g_mean`, `p_mean`, and `b_mean` where the NA values of `newdata` are replaced with the posterior samples from the model (the output also contains additional column corresponding to the auxiliary channel `logp` and index variable `.draw`). For more memory efficient format, by using argument `expand = FALSE` the output is 
 returned as a `list` with two components, `simulated` and `observed`, with 
 new samples and original `newdata` respectively.
 
 ```{r}
-head(pred0)
+head(pred0, n = 10) # first rows are NA as those were treated as fixed
 ```
 
 We can now compute summary statistics over the individuals and then over the 
@@ -535,15 +494,31 @@ posterior samples to obtain posterior distribution of the causal effects as
 sumr <- dplyr::bind_rows(
   list(b0 = pred0, b1 = pred1), .id = "case") |> 
   dplyr::group_by(case, .draw, time) |> 
-  dplyr::summarise(mean_t = mean(g_new)) |> 
+  dplyr::summarise(mean_t = mean(g_mean)) |> 
   dplyr::group_by(case, time) |> 
   dplyr::summarise(
     mean = mean(mean_t),
-    q5 = quantile(mean_t, 0.05), 
-    q95 = quantile(mean_t, 0.95))
+    q5 = quantile(mean_t, 0.05, na.rm = TRUE), 
+    q95 = quantile(mean_t, 0.95, na.rm = TRUE))
 ```
 
-which can the be visualized with the `ggplot2` [@ggplot2] as
+It is also possible to do the marginalization over groups inside `predict` by using the argument `funs` which can be used to provide a named list of lists which contains functions to be applied for the corresponding channel. This approach can save considerably amount of memory in case of large number of groups. The names of the outermost list should be either channel names with or without suffix `_mean` depending on whether the functions should be applied to response or mean. In our case we can write
+```{r, eval = FALSE}
+pred0b <- predict(multichannel_example_fit, newdata = newdata0, type = "mean", 
+  funs = list(g_mean = list(mean_t = mean)))$simulated
+pred1b <- predict(multichannel_example_fit, newdata = newdata1, type = "mean", 
+  funs = list(g_mean = list(mean_t = mean)))$simulated
+sumrb <- dplyr::bind_rows(
+  list(b0 = pred0b, b1 = pred1b), .id = "case") |> 
+  dplyr::group_by(case, time) |> 
+  dplyr::summarise(
+    mean = mean(mean_t_g_mean),
+    q5 = quantile(mean_t_g_mean, 0.05, na.rm = TRUE), 
+    q95 = quantile(mean_t_g_mean, 0.95, na.rm = TRUE))
+```
+The resulting tibble `sumrb` is equal to the previous `sumr` (apart from randomness due to simulation of new trajectories).
+
+We can the visualize our predictions with the `ggplot2` [@ggplot2] as
 
 ```{r}
 library(ggplot2)
@@ -566,18 +541,18 @@ which is equal to `mean_t` in above codes.
 We can also compute the difference
 $P(g_t | do(b_5 = 1)) - P(g_t | do(b_5 = 0))$ as
 ```{r}
-sumr <- dplyr::bind_rows(
+sumr_diff <- dplyr::bind_rows(
   list(b0 = pred0, b1 = pred1), .id = "case") |> 
   dplyr::group_by(.draw, time) |>
   dplyr::summarise(
-    mean_t = mean(g_new[case == "b1"] - g_new[case == "b0"])) |>
+    mean_t = mean(g_mean[case == "b1"] - g_mean[case == "b0"])) |>
   dplyr::group_by(time) |>
   dplyr::summarise(
     mean = mean(mean_t),
-    q5 = quantile(mean_t, 0.05),
-    q95 = quantile(mean_t, 0.95))
+    q5 = quantile(mean_t, 0.05, na.rm = TRUE),
+    q95 = quantile(mean_t, 0.95, na.rm = TRUE))
 
-ggplot(sumr, aes(time, mean)) +
+ggplot(sumr_diff, aes(time, mean)) +
   geom_ribbon(aes(ymin = q5, ymax = q95), alpha = 0.5) +
   geom_line() +
   scale_x_continuous(n.breaks = 10) +

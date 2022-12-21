@@ -20,8 +20,8 @@ latent_factor_example_fit <- dynamite(
   iter = 2000,
   warmup = 1000,
   thin = 5,
-  chains = 2,
-  cores = 2,
+  chains = 1,
+  cores = 1,
   refresh = 0,
   save_warmup = FALSE
 )

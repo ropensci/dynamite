@@ -1,7 +1,7 @@
 # code to create `latent_factor_example` object
 
 set.seed(123)
-N <- 100L
+N <- 40L
 T_ <- 20L
 D <- 10
 B <- t(splines::bs(1:T_, df = D, intercept = TRUE))

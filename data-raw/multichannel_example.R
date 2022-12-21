@@ -34,7 +34,7 @@ alpha_g <- 0
 beta_g <- c(0.8, 0.2)
 a_g <- alpha_g + beta_g[1] * mean(d$g[d$time == 1]) +
   beta_g[2] * mean(log(1 + d$p[d$time == 1]))
-sigma_g <- 1
+sigma_g <- 0.2
 
 alpha_p <- 0.1
 beta_p <- c(-0.3, 0.7, 1)
