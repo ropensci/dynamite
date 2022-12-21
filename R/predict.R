@@ -357,7 +357,7 @@ predict_full <- function(object, simulated, observed, type, eval_type,
   )
   ro_ls <- seq_along(lhs_ls)
   n_new <- nrow(simulated)
-  simulated <- simulated[rep(seq_len(n_new), each = n_draws), ]
+  simulated <- simulated[rep(seq_len(n_new), each = n_draws)]
   simulated[, (".draw") := rep(seq.int(1L, n_draws), n_new)]
   eval_envs <- prepare_eval_envs(
     object,
@@ -472,11 +472,13 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
   idx <- seq.int(n_sim + 1L, 2L * n_sim)
   simulated <- storage[1L, ]
   simulated[, (names(simulated)) := .SD[NA]]
-  simulated <- simulated[rep(1L, 2L * n_sim), , env = list(n_sim = n_sim)]
-  simulated[,
-    (".draw") := rep(seq.int(1L, n_draws), 2L * n_group),
-    env = list(n_draws = n_draws, n_group = n_group)
-  ]
+  #simulated <- simulated[rep(1L, 2L * n_sim), , env = list(n_sim = n_sim)]
+  simulated <- simulated[rep(1L, 2L * n_sim)]
+  data.table::set(
+    simulated,
+    j = ".draw",
+    value = rep(seq.int(1L, n_draws), 2L * n_group)
+  )
   assign_from_storage(
     storage,
     simulated,
@@ -485,23 +487,27 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
   )
   summaries <- storage[1L, ]
   for (f in funs) {
-    target <- f$fun(storage[[f$target]][1L])
-    summaries[, (f$name) := target, env = list(target = target)]
+    #target <- f$fun(storage[[f$target]][1L])
+    #summaries[, (f$name) := target, env = list(target = target)]
+    summaries[, (f$name) := f$fun(storage[[f$target]][1L])]
   }
   summaries[, (names(storage)) := NULL]
   summaries[, (names(summaries)) := .SD[NA]]
-  summaries <- summaries[
-    rep(1L, n_time * n_draws),
-    env = list(n_time = n_time, n_draws = n_draws)
-  ]
-  summaries[,
-    (time_var) := rep(u_time, n_draws),
-    env = list(u_time = u_time, n_draws = n_draws)
-  ]
-  summaries[,
-    (".draw") := rep(seq_len(n_draws), each = n_time),
-    env = list(n_draws = n_draws, n_time = n_time)
-  ]
+  #summaries <- summaries[
+  #  rep(1L, n_time * n_draws),
+  #  env = list(n_time = n_time, n_draws = n_draws)
+  #]
+  summaries <- summaries[rep(1L, n_time * n_draws)]
+  data.table::set(
+    summaries,
+    j = time_var,
+    value =  rep(u_time, n_draws)
+  )
+  data.table::set(
+    summaries,
+    j = ".draw",
+    value = rep(seq_len(n_draws), each = n_time)
+  )
   idx_summ <- which(summaries[[time_var]] == u_time[1L]) + (fixed - 1L)
   eval_envs <- prepare_eval_envs(
     object,
@@ -543,7 +549,8 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
       e$trials <- specials[[j]]$trials[idx_obs]
       e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
       idx_na <- is.na(
-        simulated[idx, .SD, .SDcols = resp_stoch[j], env = list(idx = idx)]
+        #simulated[idx, .SD, .SDcols = resp_stoch[j], env = list(idx = idx)]
+        simulated[idx, .SD, .SDcols = resp_stoch[j]]
       )
       e$idx_out <- which(idx_na)
       e$idx_data <- idx[e$idx_out]
@@ -587,18 +594,22 @@ assign_from_storage <- function(storage, simulated, idx, idx_obs) {
 #' @noRd
 assign_summaries <- function(summaries, simulated, funs, idx, idx_summ) {
   for (f in funs) {
-    fun <- f$fun
-    target <- f$target
     data.table::set(
       summaries,
       i = idx_summ,
       j = f$name,
+      #value = simulated[
+      #  idx, lapply(.SD, fun),
+      #  by = ".draw",
+      #  .SDcols = target,
+      #  env = list(fun = fun, target = target)
+      #][[target]]
       value = simulated[
-        idx, lapply(.SD, fun),
+        idx,
+        lapply(.SD, f$fun),
         by = ".draw",
-        .SDcols = target,
-        env = list(fun = fun, target = target)
-      ][[target]]
+        .SDcols = f$target
+      ][[f$target]]
     )
   }
 }

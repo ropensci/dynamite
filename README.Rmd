@@ -53,18 +53,7 @@ grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)).
 
 ## Installation
 
-`dynamite` requires the development version of the 
-[data.table](https://github.com/Rdatatable/data.table) package 
-(version `1.14.3` or newer), which can be installed via:
-```{r, eval = FALSE}
-# run the next line if you do not have any version of the data.table installed:
-# install.packages("data.table")
-
-# install the latest development version:
-data.table::update_dev_pkg()
-```
-
-After these steps, you can install the development version of `dynamite` from 
+You can install the development version of `dynamite` from 
 [GitHub](https://github.com/) by running one of the following lines:
 
 ```{r, eval = FALSE}

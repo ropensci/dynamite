@@ -157,9 +157,9 @@ test_that("plus method fails for nondynamiteformula", {
 test_that("categorical random intercept fails", {
   expect_error(
     dynamite(obs(y ~ x, family = "categorical") + random(),
-      data = data.frame(y = factor(1:4), x = runif(4), id = 1, time = 1:4),
-      "id", "time",
-      debug = list(no_compile = TRUE)
+             data = data.frame(y = factor(1:4), x = runif(4), id = 1, time = 1:4),
+             "id", "time",
+             debug = list(no_compile = TRUE)
     ),
     paste0(
       "No valid responses for random intercept component:\n",
@@ -246,9 +246,9 @@ test_that("pure deterministic formula to dynamite fails", {
 test_that("categorical latent factor fails", {
   expect_error(
     dynamite(obs(y ~ x, family = "categorical") + lfactor(),
-      data = data.frame(y = factor(1:4), x = runif(4), id = 1, time = 1:4),
-      "id", "time",
-      debug = list(no_compile = TRUE)
+             data = data.frame(y = factor(1:4), x = runif(4), id = 1, time = 1:4),
+             "id", "time",
+             debug = list(no_compile = TRUE)
     ),
     paste0(
       "No valid responses for latent factor component:\n",
@@ -260,17 +260,17 @@ test_that("categorical latent factor fails", {
 test_that("Latent factor errors with invalid responses", {
   expect_error(
     dynamite(obs(y ~ x, family = "gaussian") + lfactor(responses = 1),
-      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-      "id", "time",
-      debug = list(no_compile = TRUE)
+             data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+             "id", "time",
+             debug = list(no_compile = TRUE)
     ),
     "Argument `responses` must be a <character> vector\\."
   )
   expect_error(
     dynamite(obs(y ~ x, family = "gaussian") + lfactor(responses = "x"),
-      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-      "id", "time",
-      debug = list(no_compile = TRUE)
+             data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+             "id", "time",
+             debug = list(no_compile = TRUE)
     ),
     paste0(
       "Argument `responses` of `lfactor\\(\\)` contains variable `x`:\n",
@@ -280,43 +280,43 @@ test_that("Latent factor errors with invalid responses", {
 })
 test_that("Latent factor errors with nonlogical value for argument
   noncentered", {
-  expect_error(
-    dynamite(obs(y ~ x, family = "gaussian") + lfactor(noncentered_lambda = 1),
-      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-      "id", "time",
-      debug = list(no_compile = TRUE)
-    ),
-    "Argument `noncentered_lambda` must be a <logical> vector\\."
-  )
-})
+    expect_error(
+      dynamite(obs(y ~ x, family = "gaussian") + lfactor(noncentered_lambda = 1),
+               data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+               "id", "time",
+               debug = list(no_compile = TRUE)
+      ),
+      "Argument `noncentered_lambda` must be a <logical> vector\\."
+    )
+  })
 test_that("Latent factor errors with nonlogical value for argument
   nonzero_lambda", {
-  expect_error(
-    dynamite(obs(y ~ x, family = "gaussian") + lfactor(nonzero_lambda = 1),
-      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-      "id", "time",
-      debug = list(no_compile = TRUE)
-    ),
-    "Argument `nonzero_lambda` must be a <logical> vector\\."
-  )
-})
+    expect_error(
+      dynamite(obs(y ~ x, family = "gaussian") + lfactor(nonzero_lambda = 1),
+               data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+               "id", "time",
+               debug = list(no_compile = TRUE)
+      ),
+      "Argument `nonzero_lambda` must be a <logical> vector\\."
+    )
+  })
 test_that("Latent factor errors with nonlogical value for argument
   noncentered_psi", {
-  expect_error(
-    dynamite(obs(y ~ x, family = "gaussian") + lfactor(noncentered_psi = 1),
-      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-      "id", "time",
-      debug = list(no_compile = TRUE)
-    ),
-    "Argument `noncentered_psi` must be a single <logical> value\\."
-  )
-})
+    expect_error(
+      dynamite(obs(y ~ x, family = "gaussian") + lfactor(noncentered_psi = 1),
+               data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+               "id", "time",
+               debug = list(no_compile = TRUE)
+      ),
+      "Argument `noncentered_psi` must be a single <logical> value\\."
+    )
+  })
 test_that("Latent factor errors with nonlogical value for argument correlated", {
   expect_error(
     dynamite(obs(y ~ x, family = "gaussian") + lfactor(correlated = 1),
-      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-      "id", "time",
-      debug = list(no_compile = TRUE)
+             data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+             "id", "time",
+             debug = list(no_compile = TRUE)
     ),
     "Argument `correlated` must be a single <logical> value\\."
   )
@@ -946,8 +946,8 @@ test_that("incomplete priors fails", {
   p2 <- p[-1, ]
   expect_error(
     dynamite(f,
-      data = gaussian_example, time = "time", group = "id",
-      priors = p2, debug = list(no_compile = TRUE)
+             data = gaussian_example, time = "time", group = "id",
+             priors = p2, debug = list(no_compile = TRUE)
     ),
     paste0(
       "Argument `priors` must contain all relevant parameters:\n",
@@ -966,8 +966,8 @@ test_that("irrevelant parameters fails", {
   ))
   expect_error(
     dynamite(f,
-      data = gaussian_example, time = "time", group = "id",
-      priors = p2, debug = list(no_compile = TRUE)
+             data = gaussian_example, time = "time", group = "id",
+             priors = p2, debug = list(no_compile = TRUE)
     ),
     paste0(
       "Argument `priors` must contain only relevant parameters:\n",
@@ -981,8 +981,8 @@ test_that("unsupported prior distribution fails", {
   p$prior[5] <- "aaa"
   expect_error(
     dynamite(f,
-      data = gaussian_example, time = "time", group = "id",
-      priors = p, debug = list(no_compile = TRUE)
+             data = gaussian_example, time = "time", group = "id",
+             priors = p, debug = list(no_compile = TRUE)
     ),
     paste0(
       "Found an unsupported prior distribution in `priors`:\n",
@@ -995,8 +995,8 @@ test_that("constrained prior for unconstrained parameter fails", {
   p$prior[5] <- "gamma(2, 1)"
   expect_error(
     dynamite(f,
-      data = gaussian_example, time = "time", group = "id",
-      priors = p, debug = list(no_compile = TRUE)
+             data = gaussian_example, time = "time", group = "id",
+             priors = p, debug = list(no_compile = TRUE)
     ),
     paste0(
       "Priors for parameters alpha, beta, and delta ",

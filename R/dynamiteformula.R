@@ -380,17 +380,22 @@ get_family_names <- function(x) {
 #' @noRd
 get_quoted <- function(x) {
   resp <- get_responses(x)
-  if (length(resp) > 0L) {
-    expr <- lapply(x, function(x) deparse1(formula_rhs(x$formula)))
-    quote_str <- paste0(
-      "`:=`(",
-      paste0(resp, " = ", expr, collapse = ","),
-      ")"
-    )
-    str2lang(quote_str)
-  } else {
-    NULL
+  out <- list()
+  for (i in seq_along(resp)) {
+    out[[i]] <- list(name = resp[i], expr = formula_rhs(x[[i]]$formula))
   }
+  out
+  #if (length(resp) > 0L) {
+  #  expr <- lapply(x, function(x) deparse1(formula_rhs(x$formula)))
+  #  quote_str <- paste0(
+  #    "`:=`(",
+  #    paste0(resp, " = ", expr, collapse = ","),
+  #    ")"
+  #  )
+  #  str2lang(quote_str)
+  #} else {
+  #  NULL
+  #}
 }
 
 #' Get Indices of Deterministic Channels in a `dynamiteformula` Object
