@@ -117,19 +117,13 @@ test_that("formula can be extracted", {
     formula(gaussian_example_fit),
     NA
   )
-  if (datatable_supports_env()) {
-    f <- obs(y ~ 1 + varying(~ -1 + x), family = "gaussian") +
-      obs(w ~ x + lag(y), family = "exponential") +
-      aux(numeric(f) ~ w - 1) +
-      aux(numeric(d) ~ y + 1) +
-      lags(k = 1) +
-      splines(df = 5)
-  } else {
-    f <- obs(y ~ 1 + varying(~ -1 + x), family = "gaussian") +
-      obs(w ~ x + lag(y), family = "exponential") +
-      lags(k = 1) +
-      splines(df = 5)
-  }
+  f <- obs(y ~ 1 + varying(~ -1 + x), family = "gaussian") +
+    obs(w ~ x + lag(y), family = "exponential") +
+    aux(numeric(f) ~ w - 1) +
+    aux(numeric(d) ~ y + 1) +
+    lags(k = 1) +
+    splines(df = 5)
+
   set.seed(0)
   d <- data.frame(
     y = rnorm(6),

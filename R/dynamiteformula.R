@@ -49,9 +49,7 @@
 #' the lags to specified values, or by `past` which computes the initial values
 #' based on an R expression. Both `init` and `past` should appear on the
 #' right hand side of the model formula, separated from the primary defining
-#' expression via `|`. Currently, the development version of `data.table`
-#' is required to use deterministic channels. You can upgrade your installation
-#' by running `data.table::update_dev_pkg()`
+#' expression via `|`.
 #'
 #' The formula within `obs` can also contain an additional special
 #' function `varying`, which defines the time-varying part of the model
@@ -152,14 +150,6 @@ dynamiteformula <- function(formula, family) {
   stopifnot_(
     is_supported(family),
     "Family {.val {family}} is not supported."
-  )
-  stopifnot_(
-    !identical(family, "deterministic") || datatable_supports_env(),
-    c(
-      "Deterministic channels are not supported by current data.table version",
-      `i` = "Please upgrade your data.table installation via
-            {.code data.table::update_dev_pkg()}"
-    )
   )
   family <- do.call(paste0(family, "_"), args = list())
   stopifnot_(
@@ -390,17 +380,22 @@ get_family_names <- function(x) {
 #' @noRd
 get_quoted <- function(x) {
   resp <- get_responses(x)
-  if (length(resp) > 0L) {
-    expr <- lapply(x, function(x) deparse1(formula_rhs(x$formula)))
-    quote_str <- paste0(
-      "`:=`(",
-      paste0(resp, " = ", expr, collapse = ","),
-      ")"
-    )
-    str2lang(quote_str)
-  } else {
-    NULL
+  out <- list()
+  for (i in seq_along(resp)) {
+    out[[i]] <- list(name = resp[i], expr = formula_rhs(x[[i]]$formula))
   }
+  out
+  #if (length(resp) > 0L) {
+  #  expr <- lapply(x, function(x) deparse1(formula_rhs(x$formula)))
+  #  quote_str <- paste0(
+  #    "`:=`(",
+  #    paste0(resp, " = ", expr, collapse = ","),
+  #    ")"
+  #  )
+  #  str2lang(quote_str)
+  #} else {
+  #  NULL
+  #}
 }
 
 #' Get Indices of Deterministic Channels in a `dynamiteformula` Object

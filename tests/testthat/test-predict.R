@@ -21,19 +21,16 @@ test_that("predictions are on the same scale as input data", {
     mean(fit$y_fitted, na.rm = TRUE),
     tolerance = 0.5
   )
-  if (datatable_supports_env()) {
-    # Multichannel examle uses deterministic channels
-    expect_error(
-      pred <- predict(multichannel_example_fit, type = "response", n_draws = 1),
-      NA
-    )
-    expect_equal(mean(pred$g), mean(pred$g_new), tolerance = 0.5)
-    expect_equal(mean(pred$p), mean(pred$p_new), tolerance = 0.5)
-    expect_equal(mean(pred$b), mean(pred$b_new), tolerance = 0.1)
-    expect_equal(sd(pred$g), sd(pred$g_new), tolerance = 0.5)
-    expect_equal(sd(pred$p), sd(pred$p_new), tolerance = 0.5)
-    expect_equal(sd(pred$b), sd(pred$b_new), tolerance = 0.1)
-  }
+  expect_error(
+    pred <- predict(multichannel_example_fit, type = "response", n_draws = 1),
+    NA
+  )
+  expect_equal(mean(pred$g), mean(pred$g_new), tolerance = 0.5)
+  expect_equal(mean(pred$p), mean(pred$p_new), tolerance = 0.5)
+  expect_equal(mean(pred$b), mean(pred$b_new), tolerance = 0.1)
+  expect_equal(sd(pred$g), sd(pred$g_new), tolerance = 0.5)
+  expect_equal(sd(pred$p), sd(pred$p_new), tolerance = 0.5)
+  expect_equal(sd(pred$b), sd(pred$b_new), tolerance = 0.1)
 })
 
 test_that("prediction works", {
@@ -188,17 +185,15 @@ test_that("fitted and predict give equal results for the first time point", {
       dplyr::filter(time == 2) |>
       dplyr::pull("y_fitted")
   )
-  if (datatable_supports_env()) {
-    expect_equal(
-      predict(multichannel_example_fit, type = "mean", n_draws = 2) |>
-        dplyr::filter(time == 2) |>
-        dplyr::select("g_mean", "p_mean", "b_mean"),
-      fitted(multichannel_example_fit, n_draws = 2) |>
-        dplyr::filter(time == 2) |>
-        dplyr::select("g_fitted", "p_fitted", "b_fitted"),
-      ignore_attr = TRUE
-    )
-  }
+  expect_equal(
+    predict(multichannel_example_fit, type = "mean", n_draws = 2) |>
+      dplyr::filter(time == 2) |>
+      dplyr::select("g_mean", "p_mean", "b_mean"),
+    fitted(multichannel_example_fit, n_draws = 2) |>
+      dplyr::filter(time == 2) |>
+      dplyr::select("g_fitted", "p_fitted", "b_fitted"),
+    ignore_attr = TRUE
+  )
 })
 
 test_that("predict with NA-imputed newdata works as default NULL", {

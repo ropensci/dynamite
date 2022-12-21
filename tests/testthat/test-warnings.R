@@ -98,7 +98,6 @@ test_that("zero predictor warns", {
 })
 
 test_that("deterministic channel insufficient initial values warns", {
-  skip_if_not(datatable_supports_env())
   expect_warning(
     dynamite(
       dformula = obs(y ~ x, family = "gaussian") + aux(numeric(d) ~ lag(d, 1)),
@@ -129,7 +128,6 @@ test_that("multiple intercept warns", {
 })
 
 test_that("untyped deterministic warns", {
-  skip_if_not(datatable_supports_env())
   expect_warning(
     aux(y ~ 1 + x),
     paste0(
@@ -153,20 +151,18 @@ test_that("too large n_draws warns", {
 })
 
 test_that("gaps in newdata with exogenous predictors and no impute warns", {
-  if (datatable_supports_env()) {
-    newdata <- multichannel_example |>
-      dplyr::mutate(b = ifelse(time > 5, NA, b)) |>
-      dplyr::filter(time < 3 | time > 10)
-    expect_warning(
-      predict(multichannel_example_fit, newdata = newdata, n_draws = 4),
-      paste0(
-        "Time index variable `time` of `newdata` has gaps:\n",
-        "i Filling the `newdata` to regular time points\\. This will lead to ",
-        "propagation of NA values if the model contains exogenous predictors ",
-        "and `impute` is \"none\"\\."
-      )
+  newdata <- multichannel_example |>
+    dplyr::mutate(b = ifelse(time > 5, NA, b)) |>
+    dplyr::filter(time < 3 | time > 10)
+  expect_warning(
+    predict(multichannel_example_fit, newdata = newdata, n_draws = 4),
+    paste0(
+      "Time index variable `time` of `newdata` has gaps:\n",
+      "i Filling the `newdata` to regular time points\\. This will lead to ",
+      "propagation of NA values if the model contains exogenous predictors ",
+      "and `impute` is \"none\"\\."
     )
-  }
+  )
   newdata <- gaussian_example |>
     dplyr::filter(id == 1) |>
     dplyr::mutate(y = ifelse(time > 5, NA, y)) |>

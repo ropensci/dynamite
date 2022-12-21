@@ -1,3 +1,6 @@
+# dynamite 1.0.1
+  * The package no longer depends on the `data.table` development version.
+
 # dynamite 1.0.0
   * Increased the version number to 1.0.0 to reflect the fact that the package 
     is now fully functional and has successfully passed the rOpenSci review.

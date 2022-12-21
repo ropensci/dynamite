@@ -215,7 +215,7 @@ dynamite <- function(dformula, data, group = NULL, time,
     group <- ".group"
     data_names <- names(data)
     while (group %in% data_names) {
-      group <- paste0(".", group)
+      group <- paste0(group, "_")
     }
     data[[group]] <- 1L
   }
@@ -601,7 +601,8 @@ parse_past <- function(dformula, data, group_var, time_var) {
       if (identical(typeof(cl), "language")) {
         past_eval <- try(eval(cl), silent = TRUE)
         if (inherits(past_eval, "try-error")) {
-          past_eval <- try(data[, cl, env = list(cl = cl)], silent = TRUE)
+          past_eval <- try(data[, eval(cl)], silent = TRUE)
+          #past_eval <- try(data[, cl, env = list(cl = cl)], silent = TRUE)
           stopifnot_(
             !inherits(past_eval, "try-error"),
             c(

@@ -442,7 +442,6 @@ test_that("no groups data preparation works", {
 # Deterministic edgecases -------------------------------------------------
 
 test_that("deterministic channels are parsed", {
-  skip_if_not(datatable_supports_env())
   expect_error(
     obs_det <- obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1),
                    family = "negbin"
@@ -457,7 +456,6 @@ test_that("deterministic channels are parsed", {
 })
 
 test_that("deterministic simultaneity is supported", {
-  skip_if_not(datatable_supports_env())
   expect_error(
     obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1), family = "negbin") +
       aux(numeric(d) ~ y5 + 3),
@@ -466,7 +464,6 @@ test_that("deterministic simultaneity is supported", {
 })
 
 test_that("deterministic types are supported", {
-  skip_if_not(datatable_supports_env())
   expect_error(
     aux(factor(a) ~ factor(c(1, 2, 3), levels = c(1, 2, 3))) +
       aux(numeric(b) ~ log(1.0)) +
@@ -477,7 +474,6 @@ test_that("deterministic types are supported", {
 })
 
 test_that("deterministic lags with zero observed lags is evaluated", {
-  skip_if_not(datatable_supports_env())
   obs_zerolag <-
     obs(y2 ~ x1, family = "gaussian") +
     aux(numeric(d) ~ abs(y2) + lag(d) | init(0.5))
@@ -487,7 +483,6 @@ test_that("deterministic lags with zero observed lags is evaluated", {
 })
 
 test_that("past definition computed from data is supported", {
-  skip_if_not(datatable_supports_env())
   expect_error(
     obs_past <- obs(y7 ~ lag(d) + lag(y7, 1), family = "exponential") +
       aux(numeric(d) ~ lag(d, 1) + lag(y3, 1) | past(log(abs(x2)))),

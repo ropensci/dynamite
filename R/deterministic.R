@@ -132,8 +132,15 @@ assign_initial_values <- function(data, idx, dd, dlp, dld, dls,
 #' @noRd
 assign_deterministic <- function(data, idx, cl) {
   # Remove this if when env is available in CRAN data.table
-  if (!is.null(cl)) {
-    data[idx, cl, env = list(cl = cl)]
+  #if (!is.null(cl)) {
+  #  data[idx, cl, env = list(cl = cl)]
+  #}
+  for (.deterministic_channel_definition_ in cl) {
+    data[
+      idx,
+      (.deterministic_channel_definition_$name) :=
+        eval(.deterministic_channel_definition_$expr)
+    ]
   }
 }
 
