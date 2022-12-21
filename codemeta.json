@@ -2,13 +2,13 @@
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
   "identifier": "dynamite",
-  "description": "Easy-to-use and efficient interface for Bayesian inference of complex panel (time series) data. The package supports joint modeling of multiple measurements per individual, time-varying and time-invariant effects, and a wide range of discrete and continuous distributions. Estimation of the models is carried out via 'Stan'.",
+  "description": "Easy-to-use and efficient interface for Bayesian inference of complex panel (time series) data. The package supports joint modeling of multiple measurements per individual, time-varying and time-invariant effects, and a wide range of discrete and continuous distributions. Estimation of these dynamic multivariate panel models is carried out via 'Stan'.",
   "name": "dynamite: Bayesian Modeling and Causal Inference for Multivariate\n    Longitudinal Data",
   "relatedLink": "https://docs.ropensci.org/dynamite",
   "codeRepository": "https://github.com/ropensci/dynamite",
   "issueTracker": "https://github.com/ropensci/dynamite/issues",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "0.0.3",
+  "version": "1.0.0",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -186,7 +186,7 @@
         "name": "Comprehensive R Archive Network (CRAN)",
         "url": "https://cran.r-project.org"
       },
-      "sameAs": "https://CRAN.R-project.org/package=data.table"
+      "sameAs": "https://github.com/rdatatable/data.table"
     },
     "6": {
       "@type": "SoftwareApplication",
@@ -302,7 +302,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "8743.82KB",
+  "fileSize": "8732.465KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -321,7 +321,25 @@
       ],
       "name": "Bayesian Modeling and Causal Inference for Multivariate\n    Longitudinal Data",
       "url": "https://github.com/ropensci/dynamite",
-      "description": "R package version 0.0.3"
+      "description": "R package version 1.0.0"
+    },
+    {
+      "@type": "CreativeWork",
+      "datePublished": "2022",
+      "author": [
+        {
+          "@type": "Person",
+          "givenName": "Jouni",
+          "familyName": "Helske"
+        },
+        {
+          "@type": "Person",
+          "givenName": "Santtu",
+          "familyName": "Tikka"
+        }
+      ],
+      "name": "Estimating Causal Effects from Panel Data with Dynamic Multivariate Panel Models",
+      "url": "https://osf.io/preprints/socarxiv/mdwu5/"
     }
   ],
   "releaseNotes": "https://github.com/ropensci/dynamite/blob/master/NEWS.md",

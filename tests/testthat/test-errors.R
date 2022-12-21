@@ -428,7 +428,8 @@ test_that("duplicated time points fail", {
         z = c(1, 2, 2, 1, 2, 3, 1, 3, 3)
       ),
       group = "x",
-      time = "z"
+      time = "z",
+      debug = list(no_compile = TRUE)
     ),
     paste0(
       "Each time index must correspond to a single observation per group:\n",
@@ -443,7 +444,8 @@ test_that("duplicated time points fail", {
         y = rep(1, 3),
         z = c(1, 2, 2)
       ),
-      time = "z"
+      time = "z",
+      debug = list(no_compile = TRUE)
     ),
     paste0(
       "Each time index must correspond to a single observation per group:\n",
@@ -457,7 +459,8 @@ test_that("missing lag variable fails", {
     dynamite(
       dformula = obs(y ~ lag(d, 1), family = "gaussian"),
       data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
-      group = "x", time = "z"
+      group = "x", time = "z",
+      debug = list(no_compile = TRUE)
     ),
     paste0(
       "Unable to construct lagged values of `d`:\n",
@@ -471,7 +474,8 @@ test_that("missing predictor fails", {
     dynamite(
       dformula = obs(y ~ w, family = "gaussian"),
       data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
-      group = "x", time = "z"
+      group = "x", time = "z",
+      debug = list(no_compile = TRUE)
     ),
     "Can't find variable `w` in `data`\\."
   )
@@ -483,7 +487,8 @@ test_that("invalid deterministic channel definition fails", {
       dformula = obs(y ~ x, family = "gaussian") +
         aux(integer(d) ~ 1 + w),
       data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
-      group = "x", time = "z"
+      group = "x", time = "z",
+      debug = list(no_compile = TRUE)
     ),
     paste0(
       "Unable to evaluate definitions of deterministic channels:\n",
@@ -514,7 +519,8 @@ test_that("invalid column types fail", {
   expect_error(
     dynamite(
       dformula = obs(y ~ x, family = "gaussian"),
-      data = test_data, group = "x", time = "z"
+      data = test_data, group = "x", time = "z",
+      debug = list(no_compile = TRUE)
     ),
     paste0(
       "Columns `y`, `w`, and `d` of `data` are invalid:\n",
@@ -531,7 +537,8 @@ test_that("non-finite values in data fail", {
   expect_error(
     dynamite(
       dformula = obs(y ~ x, family = "gaussian"),
-      data = test_data, group = "x", time = "z"
+      data = test_data, group = "x", time = "z",
+      debug = list(no_compile = TRUE)
     ),
     "Non-finite values were found in variables `y`, `w`, and `u` of `data`\\."
   )
@@ -542,7 +549,8 @@ test_that("non-factor categorical response fails", {
   expect_error(
     dynamite(
       dformula = obs(y ~ 1, family = "categorical"),
-      data = test_data, group = "x", time = "z"
+      data = test_data, group = "x", time = "z",
+      debug = list(no_compile = TRUE)
     ),
     paste0(
       "Response variable `y` is invalid:\n",
@@ -562,7 +570,8 @@ test_that("factor types for non-categorical families fails", {
     expect_error(
       dynamite(
         dformula = obs(form, family = f),
-        data = test_data, group = "x", time = "z"
+        data = test_data, group = "x", time = "z",
+        debug = list(no_compile = TRUE)
       ),
       paste0(
         "Response variable `y` is invalid:\n",
@@ -580,7 +589,8 @@ test_that("negative values for distributions with positive support fails", {
     expect_error(
       dynamite(
         dformula = obs(form, family = f),
-        data = test_data, group = "x", time = "z"
+        data = test_data, group = "x", time = "z",
+        debug = list(no_compile = TRUE)
       ),
       paste0(
         "Response variable `y` is invalid:\n",
@@ -595,7 +605,8 @@ test_that("bernoulli without 0/1 values fails", {
   expect_error(
     dynamite(
       dformula = obs(y ~ 1, family = "bernoulli"),
-      data = test_data, group = "x", time = "z"
+      data = test_data, group = "x", time = "z",
+      debug = list(no_compile = TRUE)
     ),
     paste0(
       "Response variable `y` is invalid:\n",
@@ -609,7 +620,8 @@ test_that("beta without (0, 1) values fails", {
   expect_error(
     dynamite(
       dformula = obs(y ~ 1, family = "beta"),
-      data = test_data, group = "x", time = "z"
+      data = test_data, group = "x", time = "z",
+      debug = list(no_compile = TRUE)
     ),
     paste0(
       "Response variable `y` is invalid:\n",
