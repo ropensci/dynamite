@@ -2,13 +2,13 @@
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
   "identifier": "dynamite",
-  "description": "Easy-to-use and efficient interface for Bayesian inference of complex panel (time series) data. The package supports joint modeling of multiple measurements per individual, time-varying and time-invariant effects, and a wide range of discrete and continuous distributions. Estimation of these dynamic multivariate panel models is carried out via 'Stan'.",
+  "description": "Easy-to-use and efficient interface for Bayesian inference of complex panel (time series) data using dynamic multivariate panel models <doi:10.31235/osf.io/mdwu5>. The package supports joint modeling of multiple measurements per individual, time-varying and time-invariant effects, and a wide range of discrete and continuous distributions. Estimation of these dynamic multivariate panel models is carried out via 'Stan'.",
   "name": "dynamite: Bayesian Modeling and Causal Inference for Multivariate\n    Longitudinal Data",
-  "relatedLink": "https://docs.ropensci.org/dynamite",
-  "codeRepository": "https://github.com/ropensci/dynamite",
-  "issueTracker": "https://github.com/ropensci/dynamite/issues",
+  "relatedLink": "https://docs.ropensci.org/dynamite/",
+  "codeRepository": "https://github.com/ropensci/dynamite/",
+  "issueTracker": "https://github.com/ropensci/dynamite/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -179,14 +179,13 @@
       "@type": "SoftwareApplication",
       "identifier": "data.table",
       "name": "data.table",
-      "version": ">= 1.14.7",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
         "name": "Comprehensive R Archive Network (CRAN)",
         "url": "https://cran.r-project.org"
       },
-      "sameAs": "https://github.com/rdatatable/data.table"
+      "sameAs": "https://CRAN.R-project.org/package=data.table"
     },
     "6": {
       "@type": "SoftwareApplication",
@@ -302,7 +301,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "8732.465KB",
+  "fileSize": "9480.2KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
