@@ -152,7 +152,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
       ][,
         list(logratio = sum(loglik)),
         #by = list(id, .draw),
-        by = c(time_var, ".draw")
+        by = c(group_var, ".draw")
       ]
 
       psis_obj <- suppressWarnings(
