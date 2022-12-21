@@ -11,14 +11,15 @@ Authors@R: c(
     person("Lucy", "D’Agostino McGowan", role = "rev")
   )
 Description: Easy-to-use and efficient interface for 
-  Bayesian inference of complex panel (time series) data. The package supports 
+  Bayesian inference of complex panel (time series) data using dynamic 
+  multivariate panel models <doi:10.31235/osf.io/mdwu5>. The package supports 
   joint modeling of multiple measurements per individual, time-varying and
   time-invariant effects, and a wide range of discrete and 
   continuous distributions. Estimation of these dynamic multivariate panel 
   models is carried out via 'Stan'.
 License: GPL (>= 3)
-URL: https://docs.ropensci.org/dynamite, https://github.com/ropensci/dynamite
-BugReports: https://github.com/ropensci/dynamite/issues
+URL: https://docs.ropensci.org/dynamite/, https://github.com/ropensci/dynamite/
+BugReports: https://github.com/ropensci/dynamite/issues/
 Depends:
     R (>= 3.5.0)
 Imports: 
@@ -42,6 +43,7 @@ Suggests:
     covr,
     dplyr,
     knitr,
+    plm,
     rmarkdown,
     testthat (>= 3.0.0),
     tidyr
@@ -54,5 +56,4 @@ Roxygen: list(markdown = TRUE, roclets = c ("namespace", "rd",
 RoxygenNote: 7.2.3
 LazyData: true
 LazyDataCompression: xz
-Additional_repositories: https://mc-stan.org/r-packages/,
-    https://Rdatatable.gitlab.io/data.table
+Additional_repositories: https://mc-stan.org/r-packages/

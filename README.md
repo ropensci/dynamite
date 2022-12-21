@@ -127,7 +127,7 @@ For more examples, see the package vignette.
 
 - The `dynamite` package uses Stan via
   [`rstan`](https://CRAN.R-project.org/package=rstan) and
-  [`cmdstanr`](https://CRAN.R-project.org/package=cmdstanr) (see also
+  [`cmdstanr`](https://mc-stan.org/cmdstanr/) (see also
   <https://mc-stan.org>), which is a probabilistic programming language
   for general Bayesian modelling.
 

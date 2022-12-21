@@ -1,7 +1,6 @@
 # dynamite 1.0.1
   * The package no longer depends on the `data.table` development version.
-  * Removed the grunfeld example from vignette due to CRAN's size restrictions. 
-    Because of this, `plm` package was removed from the suggested packages.
+  * Removed the grunfeld example from vignette due to CRAN's size restrictions.
   * `multichannel_example` and the corresponding fit was modified: The standard 
     deviation parameter of the Gaussian channel used in the data generation was 
     decreased in order to make the example in the vignette more interesting.
