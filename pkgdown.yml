@@ -1,0 +1,7 @@
+url: https://docs.ropensci.org/dynamite
+destination: docs
+
+template:
+  package: rotemplate
+  params:
+    mathjax: true
