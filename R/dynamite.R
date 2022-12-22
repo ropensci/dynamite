@@ -220,11 +220,14 @@ dynamite <- function(dformula, data, group = NULL, time,
     data[[group]] <- 1L
   }
   data_name <- attr(data, "data_name")
-  data_name <- ifelse_(
-    is.null(data_name),
-    deparse1(substitute(data)),
-    data_name
-  )
+  if (is.null(data_name)) {
+    d <- match.call()$data
+    data_name <- ifelse_(
+      is.symbol(d),
+      deparse1(d),
+      ""
+    )
+  }
   data <- parse_data(dformula, data, group, time, verbose)
   dformula <- parse_past(dformula, data, group, time)
   dformulas <- parse_lags(dformula, data, group, time, verbose)
