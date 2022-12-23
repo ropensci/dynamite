@@ -139,9 +139,11 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
         ymin = !!rlang::sym(paste0("q", 100 * level)),
         ymax = !!rlang::sym(paste0("q", 100 * (1 - level)))
       ),
-      alpha = alpha
+      alpha = alpha,
+      na.rm = TRUE
     ) +
-    ggplot2::geom_line() +
+    ggplot2::geom_line(na.rm = TRUE) +
+    ggplot2::scale_x_continuous(limits = range(coefs$time)) +
     ggplot2::facet_wrap("parameter", scales = scales) +
     ggplot2::labs(title = title, x = "Time", y = "Value")
 }

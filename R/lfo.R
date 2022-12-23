@@ -30,9 +30,9 @@
 #'   * `k_threshold`\cr Threshold used in the LFO estimation.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # this gives warnings due to the small number of iterations
-#' out <- lfo(gaussian_example_fit, L = 20)
+#' out <- suppressWarnings(lfo(gaussian_example_fit, L = 20))
 #' out$ELPD
 #' out$ELPD_SE
 #' }
@@ -251,8 +251,9 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
 #' @return Returns `x` invisibly.
 #' @export
 #' @examples
-#' \dontrun{
-#' lfo(gaussian_example_fit, L = 20)
+#' \donttest{
+#' # this gives warnings due to the small number of iterations
+#' suppressWarnings(lfo(gaussian_example_fit, L = 20))
 #' }
 #'
 print.lfo <- function(x, ...) {
@@ -276,8 +277,9 @@ print.lfo <- function(x, ...) {
 #' @return A ggplot object.
 #' @export
 #' @examples
-#' \dontrun{
-#' plot(lfo(gaussian_example_fit, L = 20))
+#' \donttest{
+#' # this gives warnings due to the small number of iterations
+#' plot(suppressWarnings(lfo(gaussian_example_fit, L = 20)))
 #' }
 #'
 plot.lfo <- function(x, ...) {

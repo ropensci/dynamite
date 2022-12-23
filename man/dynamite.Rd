@@ -148,7 +148,7 @@ depend on the discrepancy of the data and the model (and the subsequent
 shape of the posterior), this can vary greatly.
 }
 \examples{
-\dontrun{
+\donttest{
 fit <- dynamite(
   dformula = obs(y ~ -1 + varying(~x), family = "gaussian") +
     lags(type = "varying") +
@@ -156,23 +156,6 @@ fit <- dynamite(
   chains = 1,
   refresh = 0
 )
-
-if (requireNamespace("dplyr") &&
-    requireNamespace("tidyr") &&
-    base::getRversion() >= "4.1.0") {
-  dplyr::group_by(time, variable) |>
-    dplyr::summarise(
-      mean = mean(value),
-      lwr = quantile(value, 0.025),
-      upr = quantile(value, 0.975)
-    )
-  cf |>
-    ggplot2::ggplot(aes(time, mean)) +
-    ggplot2::theme_bw() +
-    ggplot2::geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.7) +
-    ggplot2::geom_line() +
-    ggplot2::facet_wrap(~variable, scales = "free_y")
-}
 }
 
 formula(gaussian_example_fit)

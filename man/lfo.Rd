@@ -43,9 +43,9 @@ computed independently for each group, but the re-estimation of the model
 is triggered if pareto k values of any group exceeds the threshold.
 }
 \examples{
-\dontrun{
+\donttest{
 # this gives warnings due to the small number of iterations
-out <- lfo(gaussian_example_fit, L = 20)
+out <- suppressWarnings(lfo(gaussian_example_fit, L = 20))
 out$ELPD
 out$ELPD_SE
 }

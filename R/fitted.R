@@ -16,7 +16,7 @@
 #' @srrstats {RE4.9} Returns the fitted values.
 #' @examples
 #' fitted(gaussian_example_fit, n_draws = 2L)
-#' \dontrun{
+#' \donttest{
 #' set.seed(1)
 #' fit <- dynamite(
 #'   dformula = obs(LakeHuron ~ 1, "gaussian") + lags(),
@@ -34,19 +34,19 @@
 #'   # (first time point is fixed due to lag in the model):
 #'   fitted(fit) |>
 #'     dplyr::filter(time > 2) |>
-#'     ggplot2::ggplot(aes(time, LakeHuron_fitted, group = .draw)) +
+#'     ggplot2::ggplot(ggplot2::aes(time, LakeHuron_fitted, group = .draw)) +
 #'     ggplot2::geom_line(alpha = 0.5) +
 #'     # observed values
-#'     ggplot2::geom_line(aes(y = LakeHuron), colour = "tomato") +
+#'     ggplot2::geom_line(ggplot2::aes(y = LakeHuron), colour = "tomato") +
 #'     ggplot2::theme_bw()
 #'
 #'   # Posterior predictive distribution given the first time point:
 #'   predict(fit, type = "mean") |>
 #'     dplyr::filter(time > 2) |>
-#'     ggplot2::ggplot(aes(time, LakeHuron_mean, group = .draw)) +
+#'     ggplot2::ggplot(ggplot2::aes(time, LakeHuron_mean, group = .draw)) +
 #'     ggplot2::geom_line(alpha = 0.5) +
 #'     # observed values
-#'     ggplot2::geom_line(aes(y = LakeHuron), colour = "tomato") +
+#'     ggplot2::geom_line(ggplot2::aes(y = LakeHuron), colour = "tomato") +
 #'     ggplot2::theme_bw()
 #' }
 #' }

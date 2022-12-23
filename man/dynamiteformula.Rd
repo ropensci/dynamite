@@ -159,7 +159,7 @@ obs(y ~ x, family = "gaussian") + obs(z ~ w, family = "exponential")
 
 x <- obs(y ~ x, family = "gaussian") +
   obs(z ~ w, family = "exponential") +
-  aux(d ~ log(y) | init(c(0, 1))) +
+  aux(numeric(d) ~ log(y) | init(c(0, 1))) +
   lags(k = 2) +
   splines(df = 5) +
   random(responses = c("y", "z"), correlated = TRUE)

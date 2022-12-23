@@ -82,7 +82,6 @@ Posterior estimates of time-varying effects
 
 ``` r
 plot_deltas(gaussian_example_fit, scales = "free")
-#> Warning: Removed 1 row(s) containing missing values (geom_path).
 ```
 
 <img src="man/figures/README-unnamed-chunk-6-1.png" width="80%" />

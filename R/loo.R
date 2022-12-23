@@ -15,10 +15,10 @@
 #' @return An output from [loo::loo()] or a list of such outputs (if
 #'   `separate_channels` was `TRUE`).
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' # this gives warnings due to the small number of iterations
-#' loo(gaussian_example_fit)
-#' loo(gaussian_example_fit, separate_channels = TRUE)
+#' suppressWarnings(loo(gaussian_example_fit))
+#' suppressWarnings(loo(gaussian_example_fit, separate_channels = TRUE))
 #' }
 #'
 loo.dynamitefit <- function(x, separate_channels = FALSE, ...) {

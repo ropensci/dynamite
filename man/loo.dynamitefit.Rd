@@ -26,10 +26,10 @@ Estimates the leave-one-out (LOO) information criterion for \code{dynamite}
 models using Pareto smoothed importance sampling with the \code{loo} package.
 }
 \examples{
-\dontrun{
+\donttest{
 # this gives warnings due to the small number of iterations
-loo(gaussian_example_fit)
-loo(gaussian_example_fit, separate_channels = TRUE)
+suppressWarnings(loo(gaussian_example_fit))
+suppressWarnings(loo(gaussian_example_fit, separate_channels = TRUE))
 }
 
 }

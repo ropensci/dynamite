@@ -18,8 +18,9 @@ Returns \code{x} invisibly.
 Prints the summary of the leave-future-out cross-validation.
 }
 \examples{
-\dontrun{
-lfo(gaussian_example_fit, L = 20)
+\donttest{
+# this gives warnings due to the small number of iterations
+suppressWarnings(lfo(gaussian_example_fit, L = 20))
 }
 
 }

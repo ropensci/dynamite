@@ -92,7 +92,7 @@
 #' @examples
 #' predict(gaussian_example_fit, type = "response", n_draws = 2L)
 #'
-#' \dontrun{
+#' \donttest{
 #' # Simulate from the prior predictive distribution
 #'
 #' f <- obs(y ~ lag(y) + varying(~ -1 + x), "gaussian") +
@@ -119,19 +119,21 @@
 #' )
 #'
 #' # samples from the prior conditional on the first time point and x
-#' fit <- dynamite(f,
-#'   data = d, time = "time",
-#'   priors = priors, chains = 1
+#' fit <- dynamite(
+#'   dformula = f,
+#'   data = d,
+#'   time = "time",
+#'   verbose = FALSE,
+#'   priors = priors,
+#'   chains = 1
 #' )
 #'
 #' # simulate new data
 #' pp <- predict(fit)
 #'
-#' if (requireNamespace("ggplot2")) {
-#'   ggplot2::ggplot(pp, aes(time, y_new, group = .draw)) +
-#'     geom_line(alpha = 0.1) +
-#'     theme_bw()
-#' }
+#' ggplot2::ggplot(pp, ggplot2::aes(time, y_new, group = .draw)) +
+#'   ggplot2::geom_line(alpha = 0.1) +
+#'   ggplot2::theme_bw()
 #' }
 #'
 predict.dynamitefit <- function(object, newdata = NULL,
