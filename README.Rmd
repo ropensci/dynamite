@@ -24,6 +24,8 @@ knitr::opts_chunk$set(
 [![R-CMD-check](https://github.com/ropensci/dynamite/workflows/R-CMD-check/badge.svg)](https://github.com/ropensci/dynamite/actions)
 [![Codecov test coverage](https://codecov.io/gh/ropensci/dynamite/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ropensci/dynamite?branch=main)
 [![Status at rOpenSci Software Peer Review](https://badges.ropensci.org/554_status.svg)](https://github.com/ropensci/software-review/issues/554)
+[![dynamite status badge](https://ropensci.r-universe.dev/badges/dynamite)](https://ropensci.r-universe.dev)
+[![dynamite cran-badge](http://www.r-pkg.org/badges/version/dynamite)](https://cran.r-project.org/package=dynamite)
 <!-- badges: end -->
 
 The `dynamite` [R](https://www.r-project.org/) package provides easy-to-use 

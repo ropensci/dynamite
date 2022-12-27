@@ -1,3 +1,6 @@
+# dynamite 1.0.2
+  * Fixed a name clash issue in Stan code generation.
+
 # dynamite 1.0.1
   * The package no longer depends on the `data.table` development version.
   * Removed the grunfeld example from vignette due to CRAN's size restrictions.
