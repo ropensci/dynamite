@@ -623,13 +623,13 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     state_omega_alpha_1 <- paste_rows(
       "// Define the first alpha using mean a_{y}",
       "{{",
-      "vector[{K}] gamma_{y};",
-      onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+      "vector[{K}] gamma__{y};",
+      onlyif(has_fixed, "gamma__{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
       onlyif(
         has_varying,
-        "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1];"
+        "gamma__{y}[{{{cs(L_varying)}}}] = delta_{y}[1];"
       ),
-      "omega_alpha_1_{y} = a_{y} - X_m[{{{cs(J)}}}] * gamma_{y};",
+      "omega_alpha_1_{y} = a_{y} - X_m[{{{cs(J)}}}] * gamma__{y};",
       "}}",
       .indent = idt(c(1, 1, 2, 2, 2, 2, 1)),
       .parse = FALSE
@@ -643,13 +643,13 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     state_fixed_intercept <- paste_rows(
       "// Define the first alpha using mean a_{y}",
       "{{",
-      "vector[{K}] gamma_{y};",
-      onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+      "vector[{K}] gamma__{y};",
+      onlyif(has_fixed, "gamma__{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
       onlyif(
         has_varying,
-        "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1];"
+        "gamma__{y}[{{{cs(L_varying)}}}] = delta_{y}[1];"
       ),
-      "alpha_{y} = a_{y} - X_m[{{{cs(J)}}}] * gamma_{y};",
+      "alpha_{y} = a_{y} - X_m[{{{cs(J)}}}] * gamma__{y};",
       "}}",
       .indent = idt(c(1, 1, 2, 2, 2, 2, 1)),
       .parse = FALSE
@@ -805,16 +805,16 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
     state_omega_alpha_1 <- paste_rows(
       "// Define the first alpha using mean a_{y}",
       "for (s in 1:{S - 1}) {{",
-      "vector[{K}] gamma_{y};",
+      "vector[{K}] gamma__{y};",
       onlyif(
         has_fixed,
-        "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y}[, s];"
+        "gamma__{y}[{{{cs(L_fixed)}}}] = beta_{y}[, s];"
       ),
       onlyif(
         has_varying,
-        "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1, , s];"
+        "gamma__{y}[{{{cs(L_varying)}}}] = delta_{y}[1, , s];"
       ),
-      "omega_alpha_1_{y}[s] = a_{y}[s] - X_m[{{{cs(J)}}}] * gamma_{y};",
+      "omega_alpha_1_{y}[s] = a_{y}[s] - X_m[{{{cs(J)}}}] * gamma__{y};",
       "}}",
       .indent = idt(c(1, 1, 2, 2, 2, 2, 1)),
       .parse = FALSE
@@ -827,16 +827,16 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
     )
     state_fixed_intercept <- paste_rows(
       "for (s in 1:{S - 1}) {{",
-      "vector[{K}] gamma_{y};",
+      "vector[{K}] gamma__{y};",
       onlyif(
         has_fixed,
-        "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y}[, s];"
+        "gamma__{y}[{{{cs(L_fixed)}}}] = beta_{y}[, s];"
       ),
       onlyif(
         has_varying,
-        "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[1, , s];"
+        "gamma__{y}[{{{cs(L_varying)}}}] = delta_{y}[1, , s];"
       ),
-      "alpha_{y}[s] = a_{y}[s] - X_m[{{{cs(J)}}}] * gamma_{y};",
+      "alpha_{y}[s] = a_{y}[s] - X_m[{{{cs(J)}}}] * gamma__{y};",
       "}}",
       .indent = idt(c(1, 2, 2, 2, 2, 1)),
       .parse = FALSE
@@ -1362,7 +1362,7 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
       has_fixed || has_varying,
       paste0(
         "y_{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, {{{cs(J)}}}], ",
-        "{intercept}, append_col(zeros_K_{y}, gamma_{y}));"
+        "{intercept}, append_col(zeros_K_{y}, gamma__{y}));"
       ),
       "y_{y}[t, {obs}] ~ categorical_logit({intercept});"
     ),
@@ -1373,7 +1373,7 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
         paste0(
           "y_{y}[t, i] ~ categorical_logit({intercept} + ",
           "to_vector(X[t][i, {{{cs(J)}}}] * ",
-          "append_col(zeros_K_{y}, gamma_{y})));"
+          "append_col(zeros_K_{y}, gamma__{y})));"
         ),
         "}}",
         .indent = idt(c(0, 1, 0)),
@@ -1389,10 +1389,10 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
     onlyif(has_varying, mtext_varying),
     onlyif(has_varying, mtext_tau),
     "{{",
-    onlyif(has_fixed || has_varying, "matrix[{K}, {S - 1L}] gamma_{y};"),
-    onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+    onlyif(has_fixed || has_varying, "matrix[{K}, {S - 1L}] gamma__{y};"),
+    onlyif(has_fixed, "gamma__{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
     "for (t in 1:T) {{",
-    onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
+    onlyif(has_varying, "gamma__{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
     likelihood_term,
     "}}",
     "}}",
@@ -1411,17 +1411,17 @@ model_lines_gaussian <- function(y, idt, obs, has_fixed, has_varying,
     has_fixed || has_varying,
     paste0(
       "y_{y}[{obs}, t] ~ normal_id_glm(X[t][{obs}, {{{cs(J)}}}], ",
-      "{intercept}, gamma_{y}, sigma_{y});"
+      "{intercept}, gamma__{y}, sigma_{y});"
     ),
     "y_{y}[{obs}, t] ~ normal({intercept}, sigma_{y});"
   )
   mtext <- paste_rows(
     "sigma_{y} ~ {sigma_prior_distr};",
     "{{",
-    onlyif(has_fixed || has_varying, "vector[{K}] gamma_{y};"),
-    onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+    onlyif(has_fixed || has_varying, "vector[{K}] gamma__{y};"),
+    onlyif(has_fixed, "gamma__{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
     "for (t in 1:T) {{",
-    onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
+    onlyif(has_varying, "gamma__{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
     likelihood_term,
     "}}",
     "}}",
@@ -1476,16 +1476,16 @@ model_lines_bernoulli <- function(y, idt, obs, has_varying, has_fixed,
     has_fixed || has_varying,
     paste0(
       "y_{y}[t, {obs}] ~ bernoulli_logit_glm(X[t][{obs}, ",
-      "{{{cs(J)}}}], {intercept}, gamma_{y});"
+      "{{{cs(J)}}}], {intercept}, gamma__{y});"
     ),
     "y_{y}[t, {obs}] ~ bernoulli_logit({intercept});"
   )
   mtext <- paste_rows(
     "{{",
-    onlyif(has_fixed || has_varying, "vector[{K}] gamma_{y};"),
-    onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+    onlyif(has_fixed || has_varying, "vector[{K}] gamma__{y};"),
+    onlyif(has_fixed, "gamma__{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
     "for (t in 1:T) {{",
-    onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
+    onlyif(has_varying, "gamma__{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
     likelihood_term,
     "}}",
     "}}",
@@ -1517,7 +1517,7 @@ model_lines_poisson <- function(y, idt, obs, has_varying, has_fixed, has_offset,
   if (has_fixed || has_varying) {
     likelihood_term <- paste0(
       "y_{y}[t, {obs}] ~ poisson_log_glm(X[t][{obs}, {{{cs(J)}}}], ",
-      "{intercept}, gamma_{y});"
+      "{intercept}, gamma__{y});"
     )
   } else {
     likelihood_term <- paste0(
@@ -1526,10 +1526,10 @@ model_lines_poisson <- function(y, idt, obs, has_varying, has_fixed, has_offset,
   }
   mtext <- paste_rows(
     "{{",
-    onlyif(has_fixed || has_varying, "vector[{K}] gamma_{y};"),
-    onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+    onlyif(has_fixed || has_varying, "vector[{K}] gamma__{y};"),
+    onlyif(has_fixed, "gamma__{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
     "for (t in 1:T) {{",
-    onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
+    onlyif(has_varying, "gamma__{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
     likelihood_term,
     "}}",
     "}}",
@@ -1557,7 +1557,7 @@ model_lines_negbin <- function(y, idt, obs, has_varying, has_fixed, has_offset,
     has_fixed || has_varying,
     paste0(
       "y_{y}[t, {obs}] ~ neg_binomial_2_log_glm(X[t][{obs}, {{{cs(J)}}}], ",
-      "{intercept}, gamma_{y}, phi_{y});"
+      "{intercept}, gamma__{y}, phi_{y});"
     ),
     paste0(
       "y_{y}[t, {obs}] ~ neg_binomial_2_log(",
@@ -1567,10 +1567,10 @@ model_lines_negbin <- function(y, idt, obs, has_varying, has_fixed, has_offset,
   mtext <- paste_rows(
     "phi_{y} ~ {phi_prior_distr};",
     "{{",
-    onlyif(has_fixed || has_varying, "vector[{K}] gamma_{y};"),
-    onlyif(has_fixed, "gamma_{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
+    onlyif(has_fixed || has_varying, "vector[{K}] gamma__{y};"),
+    onlyif(has_fixed, "gamma__{y}[{{{cs(L_fixed)}}}] = beta_{y};"),
     "for (t in 1:T) {{",
-    onlyif(has_varying, "gamma_{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
+    onlyif(has_varying, "gamma__{y}[{{{cs(L_varying)}}}] = delta_{y}[t];"),
     likelihood_term,
     "}}",
     "}}",
