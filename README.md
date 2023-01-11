@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# dynamite
+# dynamite <a href="https://docs.ropensci.org/dynamite"><img src="man/figures/logo.png" align="right" height="139" /></a>
 
 <!-- badges: start -->
 
@@ -86,7 +86,6 @@ Posterior estimates of time-varying effects
 
 ``` r
 plot_deltas(gaussian_example_fit, scales = "free")
-#> Warning: Removed 1 row containing missing values (`geom_line()`).
 ```
 
 <img src="man/figures/README-unnamed-chunk-6-1.png" width="80%" />
@@ -113,7 +112,6 @@ first time point):
 
 ``` r
 library(ggplot2)
-#> Warning: package 'ggplot2' was built under R version 4.2.2
 pred <- predict(gaussian_example_fit, n_draws = 50)
 pred |> dplyr::filter(id < 5) |> 
   ggplot(aes(time, y_new, group = .draw)) +

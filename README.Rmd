@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 #' @srrstats {G1.1,  G1.2}
 ```
 
-# dynamite
+# dynamite <a href="https://docs.ropensci.org/dynamite"><img src="man/figures/logo.png" align="right" height="139" /></a>
 
 <!-- badges: start -->
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
