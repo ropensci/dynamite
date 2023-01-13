@@ -36,7 +36,7 @@ consists of \code{data.frame} objects, and \code{data.table} objects otherwise.}
 A \code{data.frame} containing the fitted values.
 }
 \description{
-Fitted values for a \code{dynamitefit} object.Note that these are conditional on
+Fitted values for a \code{dynamitefit} object. Note that these are conditional on
 the observed data in \code{newdata},i.e., these are one-step estimates
 E(y_t|y_t-1,...,y_1). Often \code{\link[=predict.dynamitefit]{predict.dynamitefit()}} is what you
 want.

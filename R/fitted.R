@@ -1,6 +1,6 @@
 #' Extract Fitted Values of a Dynamite Model
 #'
-#' Fitted values for a `dynamitefit` object.Note that these are conditional on
+#' Fitted values for a `dynamitefit` object. Note that these are conditional on
 #' the observed data in `newdata`,i.e., these are one-step estimates
 #' E(y_t|y_t-1,...,y_1). Often [dynamite::predict.dynamitefit()] is what you
 #' want.
