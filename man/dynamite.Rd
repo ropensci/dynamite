@@ -101,11 +101,11 @@ package was used in sampling.
 \code{summary} returns a \code{data.frame}.
 }
 \description{
-Fit a Bayesian dynamic multivariate panel model using Stan for Bayesian
-inference. The \pkg{dynamite} package supports a wide range of distributions
-and allows the user to flexibly customize the priors for the model
-parameters. The dynamite model is specified using standard \R formula syntax
-via \code{\link[=dynamiteformula]{dynamiteformula()}}. For more information and examples,
+Fit a Bayesian dynamic multivariate panel model (DMPM) using Stan for
+Bayesian inference. The \pkg{dynamite} package supports a wide range of
+distributions and allows the user to flexibly customize the priors for the
+model parameters. The dynamite model is specified using standard \R formula
+syntax via \code{\link[=dynamiteformula]{dynamiteformula()}}. For more information and examples,
 see 'Details' and the package vignette.
 
 The \code{formula} method returns the model definition as a quoted expression.
@@ -165,4 +165,9 @@ print(gaussian_example_fit)
 summary(gaussian_example_fit, types = "beta",
   probs = c(0.05, 0.1, 0.9, 0.95))
 
+}
+\references{
+Jouni Helske and Santtu Tikka (2022). Estimating Causal Effects
+from Panel Data with Dynamic Multivariate Panel Models. SocArxiv preprint,
+\url{https://osf.io/preprints/socarxiv/mdwu5/}.
 }

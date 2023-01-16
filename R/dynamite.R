@@ -1,10 +1,10 @@
 #' Estimate a Bayesian Dynamic Multivariate Panel Model
 #'
-#' Fit a Bayesian dynamic multivariate panel model using Stan for Bayesian
-#' inference. The \pkg{dynamite} package supports a wide range of distributions
-#' and allows the user to flexibly customize the priors for the model
-#' parameters. The dynamite model is specified using standard \R formula syntax
-#' via [dynamite::dynamiteformula()]. For more information and examples,
+#' Fit a Bayesian dynamic multivariate panel model (DMPM) using Stan for
+#' Bayesian inference. The \pkg{dynamite} package supports a wide range of
+#' distributions and allows the user to flexibly customize the priors for the
+#' model parameters. The dynamite model is specified using standard \R formula
+#' syntax via [dynamite::dynamiteformula()]. For more information and examples,
 #' see 'Details' and the package vignette.
 #'
 #' Any univariate unbounded continuous distributions supported by Stan can be
@@ -123,6 +123,9 @@
 #'   extent in the tests and noted here. As the computational algorithms are
 #'   based on Stan, the  scalability of the package depends directly on the
 #'   scalability of Stan.
+#' @references Jouni Helske and Santtu Tikka (2022). Estimating Causal Effects
+#' from Panel Data with Dynamic Multivariate Panel Models. SocArxiv preprint,
+#' <https://osf.io/preprints/socarxiv/mdwu5/>.
 #' @examples
 #' \donttest{
 #' fit <- dynamite(

@@ -33,3 +33,8 @@ suppressWarnings(loo(gaussian_example_fit, separate_channels = TRUE))
 }
 
 }
+\references{
+Aki Vehtari, Andrew, Gelman, and Johah Gabry (2017).
+Practical Bayesian model evaluation using leave-one-out cross-validation and
+WAIC. Statistics and Computing. 27(5), 1413–1432.
+}

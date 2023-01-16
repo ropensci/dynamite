@@ -51,3 +51,8 @@ out$ELPD_SE
 }
 
 }
+\references{
+Paul-Christian Bürkner, Jonah Gabry, and Aki Vehtari (2020).
+Approximate leave-future-out cross-validation for Bayesian time series
+models, Journal of Statistical Computation and Simulation, 90:14, 2499-2523.
+}

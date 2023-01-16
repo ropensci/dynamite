@@ -14,6 +14,9 @@
 #' @param ... Ignored.
 #' @return An output from [loo::loo()] or a list of such outputs (if
 #'   `separate_channels` was `TRUE`).
+#' @references Aki Vehtari, Andrew, Gelman, and Johah Gabry (2017).
+#' Practical Bayesian model evaluation using leave-one-out cross-validation and
+#' WAIC. Statistics and Computing. 27(5), 1413–1432.
 #' @examples
 #' \donttest{
 #' # this gives warnings due to the small number of iterations

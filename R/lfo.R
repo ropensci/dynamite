@@ -28,7 +28,9 @@
 #'   * `refits`\cr Time points where model was re-estimated.
 #'   * `L`\cr L value used in the LFO estimation.
 #'   * `k_threshold`\cr Threshold used in the LFO estimation.
-#'
+#' @references Paul-Christian Bürkner, Jonah Gabry, and Aki Vehtari (2020).
+#' Approximate leave-future-out cross-validation for Bayesian time series
+#' models, Journal of Statistical Computation and Simulation, 90:14, 2499-2523.
 #' @examples
 #' \donttest{
 #' # this gives warnings due to the small number of iterations
