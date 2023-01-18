@@ -264,8 +264,16 @@ as_data_table_xi <- function(x, draws, ...) {
 #' @describeIn as_data_table_default Data Table for a "corr_nu" Parameter
 #' @noRd
 as_data_table_corr_nu <- function(x, draws, ...) {
-  resp <- attr(x$dformulas$stoch, "random")
-  pairs <- apply(utils::combn(resp, 2L), 2L, paste, collapse = "_")
+
+  vars <- unlist(lapply(x$stan$model_vars, function(x) {
+    icpt <- ifelse_(x$has_random_intercept,
+      "alpha",
+      NULL
+    )
+    paste0(x$resp, "_", c(icpt, names(x$J_random)))
+  }))
+
+  pairs <- apply(utils::combn(vars, 2L), 2L, paste, collapse = "__")
   data.table::data.table(
     parameter = paste0("corr_nu_", pairs),
     value = c(draws)
@@ -275,11 +283,22 @@ as_data_table_corr_nu <- function(x, draws, ...) {
 #' @describeIn as_data_table_default Data Table for a "nu" Parameter
 #' @noRd
 as_data_table_nu <- function(x, draws, n_draws, response, ...) {
-  n_group <- dim(draws)[3L]
+
+  icpt <- ifelse_(x$stan$model_vars[[response]]$has_random_intercept,
+    "alpha",
+    NULL
+  )
+  var_names <- paste0(
+    "nu_", response, "_",
+    c(icpt, names(x$stan$model_vars[[response]]$J_random))
+  )
+  n_vars <- length(var_names)
+  groups <- sort(unique(x$data[[x$group_var]]))
+  n_groups <- length(groups)
   data.table::data.table(
-    parameter = paste0("nu_", response),
+    parameter = rep(var_names, each = n_draws * n_groups),
     value = c(draws),
-    group = rep(sort(unique(x$data[[x$group_var]])), each = n_draws)
+    group = rep(groups, each = n_draws)
   )
 }
 
@@ -434,8 +453,19 @@ as_data_table_sigma <- function(draws, response, ...) {
 
 #' @describeIn as_data_table_default Data Table for a "sigma_nu" Parameter
 #' @noRd
-as_data_table_sigma_nu <- function(draws, response, ...) {
-  as_data_table_default("sigma_nu", draws, response)
+as_data_table_sigma_nu <- function(x, draws, n_draws, response, ...) {
+  icpt <- ifelse_(x$stan$model_vars[[response]]$has_random_intercept,
+    "alpha",
+    NULL
+  )
+  var_names <- paste0(
+    "sigma_nu_", response, "_",
+    c(icpt, names(x$stan$model_vars[[response]]$J_random))
+  )
+  data.table::data.table(
+    parameter = rep(var_names, each = n_draws),
+    value = c(draws)
+  )
 }
 
 #' @describeIn as_data_table_default Data Table for a "phi" Parameter
