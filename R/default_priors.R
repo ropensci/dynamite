@@ -13,7 +13,7 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
   mean_gamma <- signif(mean_gamma, 2)
   sd_gamma <- signif(sd_gamma, 2)
   priors <- list()
-  if (channel$has_random_intercept) {
+  if (channel$has_random_intercept || channel$has_random) {
     channel$sigma_nu_prior_distr <- paste0("normal(", 0, ", ", sd_y, ")")
     priors$sigma_nu <- data.frame(
       parameter = paste0("sigma_nu_", y),

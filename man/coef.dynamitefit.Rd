@@ -19,7 +19,7 @@
 
 \item{type}{[\code{character(1)}]\cr Either \code{beta} (the default) for
 time-invariant coefficients, \code{delta} for time-varying coefficients,
-\code{nu} for random intercepts, \code{lambda} for factor loadings, or \code{psi} for
+\code{nu} for random effects, \code{lambda} for factor loadings, or \code{psi} for
 latent factor.}
 
 \item{responses}{[\code{character()}]\cr Response(s) for which the samples

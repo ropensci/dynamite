@@ -28,8 +28,8 @@ formula_specials <- function(x) {
       xt_terms
     )
   )
-  xt <- terms(x, specials = c("fixed", "varying"))
-  xt_specials <- attr(xt, "specials")[c("fixed", "varying")]
+  xt <- terms(x, specials = c("fixed", "varying", "random"))
+  xt_specials <- attr(xt, "specials")[c("fixed", "varying", "random")]
   xt_variables <- attr(xt, "variables")
   xt_terms <- attr(xt, "term.labels")
   fixed_icpt <- 0L
@@ -49,6 +49,14 @@ formula_specials <- function(x) {
     varying_terms <- formula_terms(varying_form)
     varying_icpt <- attr(terms(varying_form), "intercept")
   }
+  random_terms <- character(0L)
+  random_icpt <- 0L
+  if (!is.null(xt_specials[["random"]])) {
+    # eval to ensure random_form is a formula
+    random_form <- eval(xt_variables[[xt_specials[["random"]] + 1]][[2]])
+    random_terms <- formula_terms(random_form)
+    random_icpt <- attr(terms(random_form), "intercept")
+  }
   x <- drop_terms(
     termobj = xt,
     dropx = get_special_term_indices(
@@ -60,8 +68,8 @@ formula_specials <- function(x) {
   form_terms <- formula_terms(x)
   fixed_terms <- union(form_terms, fixed_terms)
   fixed_icpt <- attr(xt, "intercept") || fixed_icpt
-  full_terms <- union(fixed_terms, varying_terms)
-  any_icpt <- fixed_icpt || varying_icpt
+  full_terms <- union(fixed_terms, union(varying_terms, random_terms))
+  any_icpt <- fixed_icpt || varying_icpt || random_icpt
   if (fixed_icpt && varying_icpt) {
     warning_(c(
       "Both time-independent and time-varying intercept specified:",
@@ -92,6 +100,8 @@ formula_specials <- function(x) {
   out$has_fixed_intercept <- as.logical(fixed_icpt)
   out$varying <- which(xt %in% varying_terms)
   out$has_varying_intercept <- as.logical(varying_icpt)
+  out$random <- which(xt %in% random_terms)
+  out$has_random_intercept <- as.logical(random_icpt)
   out
 }
 
@@ -110,7 +120,7 @@ formula_past <- function(formula) {
     stopifnot_(
       past_type %in% c("init", "past"),
       c(
-        "Invalid formula of a determnistic channel:",
+        "Invalid formula of a deterministic channel:",
         `x` = "Unsupported definition {.var {past_type}}
                on the right-hand side of {.fun |}."
       )
@@ -137,6 +147,13 @@ formula_past <- function(formula) {
       `x` = "Time-varying definition was found in {.var {formula_str}}."
     )
   )
+  stopifnot_(
+    !grepl("random\\(.+\\)", formula_str, perl = TRUE),
+    c(
+      "The use of {.fun random} is not meaningful for deterministic channels:",
+      `x` = "Random effect definition was found in {.var {formula_str}}."
+    )
+  )
   list(
     formula = formula,
     specials = list(
@@ -145,7 +162,8 @@ formula_past <- function(formula) {
       rank = Inf
     ),
     fixed = integer(0L),
-    varying = integer(0L)
+    varying = integer(0L),
+    random = integer(0L)
   )
 }
 

@@ -80,16 +80,15 @@
 #' or time-varying predictors via [lags()] instead of writing them manually
 #' for each channel.
 #'
-#' It is also possible to define a random intercept term for each group by
-#' using the component [random()] where the first argument defines for which
-#' channels the intercept should be added, and second argument defines whether
-#' or not these intercepts should be correlated between channels. This leads
-#' to a model where in addition to the common intercept, each individual/group
-#' has their own intercept with zero-mean normal prior and unknown standard
-#' deviation (or multivariate gaussian in case `correlated = TRUE`),
-#' analogously with the typical mixed models. Note however that if the channel
-#' already contains the lagged response variable, the "intercept" is actually a
-#' slope of (linear) trend as dynamite does not do any centering of variables.
+#' It is also possible to define group-specific (random) effects term
+#' using the special function [random()] similarly as [varying()]. For example,
+#' `random(~1)` leads to a model where in addition to the common intercept,
+#' each individual/group has their own intercept with zero-mean normal prior and
+#' unknown standard deviation analogously with the typical mixed models. An
+#' additional model component [random_spec()] can be used to define whether the
+#' random effects are allowed to correlate within and across channels and
+#' whether to use centered or noncentered parameterization for the random
+#' effects.
 #'
 #' @export
 #' @param formula \[`formula`]\cr An \R formula describing the model.
@@ -166,9 +165,11 @@ dynamiteformula <- function(formula, family) {
         response = x$response,
         fixed = x$fixed,
         varying = x$varying,
+        random = x$random,
         specials = x$specials,
         has_fixed_intercept = x$has_fixed_intercept,
-        has_varying_intercept = x$has_varying_intercept
+        has_varying_intercept = x$has_varying_intercept,
+        has_random_intercept = x$has_random_intercept
       )
     ),
     class = "dynamiteformula"
@@ -207,18 +208,20 @@ dynamiteformula_ <- function(formula, original, family) {
 #' @param response \[`character(1)`]\cr Name of the response.
 #' @param fixed \[`integer()`]\cr Time-invariant covariate indices.
 #' @param varying \[`integer()`]\cr Time-varying covariate indices.
+#' @param random \[`integer()`]\cr Random effect covariate indices.
 #' @param has_fixed_intercept \[`logical(1)`]\cr Does the channel contain fixed
 #'   intercept?
 #' @param has_varying_intercept \[`logical(1)`]\cr Does the channel contain
 #'   varying intercept?
-#' @param has_rand_intercept \[`logical(1)`]\cr Does the channel contain random
-#'   individual-level intercept term?
+#' @param has_random_intercept \[`logical(1)`]\cr Does the channel contain random
+#'   group-level intercept term?
 #' @noRd
 dynamitechannel <- function(formula, original = NULL, family, response,
                             fixed = integer(0L), varying = integer(0L),
-                            specials = list(),
+                            random = integer(0L), specials = list(),
                             has_fixed_intercept = FALSE,
-                            has_varying_intercept = FALSE) {
+                            has_varying_intercept = FALSE,
+                            has_random_intercept = FALSE) {
   list(
     formula = formula,
     original = original,
@@ -226,9 +229,11 @@ dynamitechannel <- function(formula, original = NULL, family, response,
     response = response,
     fixed = fixed,
     varying = varying,
+    random = random,
     specials = specials,
     has_fixed_intercept = has_fixed_intercept,
-    has_varying_intercept = has_varying_intercept
+    has_varying_intercept = has_varying_intercept,
+    has_random_intercept = has_random_intercept
   )
 }
 
@@ -271,12 +276,12 @@ aux <- function(formula) {
 #' @param ... Ignored.
 #' @export
 #' @examples
-#' x <- obs(y ~ x, family = "gaussian") +
-#'   obs(z ~ w, family = "exponential") +
+#' x <- obs(y ~ x + random(~1 + d), family = "gaussian") +
+#'   obs(z ~ varying(~w), family = "exponential") +
 #'   aux(numeric(d) ~ log(y) | init(c(0, 1))) +
 #'   lags(k = 2) +
 #'   splines(df = 5) +
-#'   random(responses = c("y", "z"), correlated = TRUE)
+#'   random_spec(correlated = FALSE)
 #' print(x)
 #'
 print.dynamiteformula <- function(x, ...) {
@@ -298,15 +303,10 @@ print.dynamiteformula <- function(x, ...) {
     k <- attr(x, "lags")$k
     cat("\nLagged responses added as predictors with: k = ", cs(k), sep = "")
   }
-  if (!is.null(attr(x, "random"))) {
-    resp <- attr(x, "random")$responses
-    co <- attr(x, "random")$correlated
-    cat(
-      ifelse_(co, "\nCorrelated random ", "\nRandom "),
-      "intercepts added for response(s): ",
-      cs(resp),
-      "\n",
-      sep = ""
+  if (!is.null(attr(x, "random_spec"))) {
+    ifelse_(attr(x, "random_spec")$correlated,
+    cat("\nGroup-level random effects modeled as correlated."),
+    cat("\nGroup-level random effects modeled as independent.")
     )
   }
   invisible(x)
@@ -434,8 +434,8 @@ add_dynamiteformula <- function(e1, e2) {
     out <- set_lags(e1, e2)
   } else if (inherits(e2, "splines")) {
     out <- set_splines(e1, e2)
-  } else if (inherits(e2, "random")) {
-    out <- set_random(e1, e2)
+  } else if (inherits(e2, "random_spec")) {
+    out <- set_random_spec(e1, e2)
   } else if (inherits(e2, "latent_factor")) {
     out <- set_lfactor(e1, e2)
   } else {
@@ -537,17 +537,17 @@ set_splines <- function(e1, e2) {
   e1
 }
 
-#' Set the Random Intercepts of the Model
+#' Set the Random Effect Correlations of the Model
 #'
 #' @param e1 A `dynamiteformula` object.
 #' @param e2 A `random` object.
 #' @noRd
-set_random <- function(e1, e2) {
+set_random_spec <- function(e1, e2) {
   stopifnot_(
-    is.null(attr(e1, "random")) || attr(e2, "random"),
-    "Multiple definitions for random intercepts."
+    is.null(attr(e1, "random_spec")) || attr(e2, "random_spec"),
+    "Multiple definitions for random effect specifications."
   )
-  attr(e1, "random") <- e2
+  attr(e1, "random_spec") <- e2
   e1
 }
 

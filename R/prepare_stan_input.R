@@ -54,12 +54,11 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   has_groups <- !is.null(group_var)
   group <- data[[group_var]]
   spline_defs <- attr(dformula, "splines")
-  random_defs <- attr(dformula, "random")
+  random_defs <- attr(dformula, "random_spec")
   lfactor_defs <- attr(dformula, "lfactor")
   has_splines <- spline_defs$has_splines
   sampling_vars$D <- spline_defs$D
   sampling_vars$Bs <- spline_defs$Bs
-  random_resp <- random_defs$responses
   has_lfactor <- lfactor_defs$has_lfactor
   stopifnot_(
     !has_lfactor || has_splines,
@@ -86,7 +85,11 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   assigned <- attr(model_matrix, "assign")
   fixed_pars <- attr(model_matrix, "fixed")
   varying_pars <- attr(model_matrix, "varying")
+  random_pars <- attr(model_matrix, "random")
   resp_classes <- attr(responses, "resp_class")
+  random_defs$M <- sum(lengths(random_pars)) +
+    sum(unlist(lapply(dformula, "[[", "has_random_intercept")))
+  lfactor_defs$P <- length(lfactor_defs$responses)
   for (i in seq_len(n_channels)) {
     channel <- list()
     resp <- resp_names[i]
@@ -106,9 +109,13 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     channel$J <- as.array(assigned[[i]])
     channel$J_fixed <- as.array(fixed_pars[[i]])
     channel$J_varying <- as.array(varying_pars[[i]])
+    channel$J_random <- as.array(random_pars[[i]])
     channel$K <- length(assigned[[i]])
     channel$K_fixed <- length(fixed_pars[[i]])
     channel$K_varying <- length(varying_pars[[i]])
+    # note! Random intercept is counted to K_random but not to J_random...
+    channel$K_random <- length(random_pars[[i]]) +
+      dformula[[i]]$has_random_intercept
     obs_idx <- array(0L, dim = c(N, T_full - fixed))
     obs_len <- integer(T_full - fixed)
     for (j in seq_len(T_full - fixed)) {
@@ -131,9 +138,12 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     )
     channel$has_fixed_intercept <- dformula[[i]]$has_fixed_intercept
     channel$has_varying_intercept <- dformula[[i]]$has_varying_intercept
-    channel$has_random_intercept <- resp %in% random_resp
+    channel$has_random_intercept <-  dformula[[i]]$has_random_intercept
     channel$has_fixed <- channel$K_fixed > 0L
     channel$has_varying <- channel$K_varying > 0L
+    # note! Random intercept is counted to K_random above, while has_random is
+    # for checking non-intercept terms....
+    channel$has_random <- channel$K_random > 1L
     channel$lb <- spline_defs$lb[i]
     channel$shrinkage <- spline_defs$shrinkage
     channel$noncentered <- spline_defs$noncentered[i]
@@ -159,6 +169,9 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       }
     }
     family <- dformula[[i]]$family
+
+    stopifnot_(!channel$has_random || family != "categorical",
+      "Random effects are not (yet) supported for categorical responses.")
     sampling_vars[[paste0("y_", resp)]] <- ifelse_(
       family %in% c("gaussian", "gamma", "exponential", "beta"),
       t(Y_out),
@@ -182,16 +195,8 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   sampling_vars$N <- N
   sampling_vars$K <- K
   sampling_vars$X <- X
-  sampling_vars$M <- sum(
-    unlist(
-      lapply(model_vars, "[[", "has_random_intercept")
-    )
-  )
-  sampling_vars$P <- sum(
-    unlist(
-      lapply(model_vars, "[[", "has_lfactor")
-    )
-  )
+  sampling_vars$M <- random_defs$M
+  sampling_vars$P <- lfactor_defs$P
   # avoid goodpractice warning, T is a Stan variable, not an R variable
   sampling_vars[["T"]] <- T_full - fixed
   sampling_vars$X_m <- as.array(x_means)
@@ -199,7 +204,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     priors = priors,
     M = sampling_vars$M,
     shrinkage = spline_defs$shrinkage,
-    correlated = attr(dformula, "random")$correlated,
+    correlated_nu = random_defs$correlated,
     P = sampling_vars$P,
     correlated_lf = lfactor_defs$correlated
   )
@@ -242,13 +247,13 @@ prepare_prior <- function(ptype, priors, channel) {
 #'
 #' @inheritParams splines
 #' @param priors Custom prior definitions or `NULL` if not specified.
-#' @param M Number of channels with random intercept.
+#' @param M Number of random effects.
 #' @param shrinkage Does the model contain shrinkage parameter?
-#' @param correlated Does the model contain correlated random intercepts?
+#' @param correlated_nu Does the model contain correlated random effects?
 #' @param P Number of channels with latent factor.
-#' @param correlated Does the model contain correlated latent factors?
+#' @param correlated_lf Does the model contain correlated latent factors?
 #' @noRd
-prepare_common_priors <- function(priors, M, shrinkage, P, correlated,
+prepare_common_priors <- function(priors, M, shrinkage, P, correlated_nu,
   correlated_lf) {
   common_priors <- NULL
   if (shrinkage) {
@@ -264,13 +269,13 @@ prepare_common_priors <- function(priors, M, shrinkage, P, correlated,
       priors[priors$type == "xi", ]
     )
   }
-  if (M > 1L && correlated) {
+  if (M > 1L && correlated_nu) {
     common_priors <- ifelse_(
       is.null(priors),
       rbind(
         common_priors,
         data.frame(
-          parameter = "L",
+          parameter = "L_nu",
           response = "",
           prior = "lkj_corr_cholesky(1)",
           type = "L",
@@ -279,7 +284,7 @@ prepare_common_priors <- function(priors, M, shrinkage, P, correlated,
       ),
       rbind(
         common_priors,
-        priors[priors$parameter == "L", ]
+        priors[priors$parameter == "L_nu", ]
       )
     )
   }

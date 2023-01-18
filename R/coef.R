@@ -6,7 +6,7 @@
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param type  \[`character(1)`]\cr Either `beta` (the default) for
 #'   time-invariant coefficients, `delta` for time-varying coefficients,
-#'   `nu` for random intercepts, `lambda` for factor loadings, or `psi` for
+#'   `nu` for random effects, `lambda` for factor loadings, or `psi` for
 #'   latent factor.
 #' @param include_alpha \[`logical(1)`]\cr If `TRUE` (default), extracts also
 #'   time-invariant intercept term alpha if time-invariant parameters beta are

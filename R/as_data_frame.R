@@ -12,15 +12,15 @@
 #'  * `alpha`\cr Intercept terms (time-invariant or time-varying).
 #'  * `beta`\cr Time-invariant regression coefficients.
 #'  * `delta`\cr Time-varying regression coefficients.
-#'  * `nu`\cr Random intercepts.
+#'  * `nu`\cr Group-level random effects.
 #'  * `lambda`\cr Factor loadings.
 #'  * `psi`\cr Latent factors.
 #'  * `tau`\cr Standard deviations of the spline coefficients of `delta`.
 #'  * `tau_alpha`\cr Standard deviations of the spline coefficients of
 #'    time-varying `alpha`.
 #'  * `xi`\cr Common time-varying shrinkage factor for splines.
-#'  * `sigma_nu`\cr Standard deviation of the random intercepts `nu`.
-#'  * `corr_nu`\cr Pairwise within-group correlations of random intercepts `nu`.
+#'  * `sigma_nu`\cr Standard deviations of the random effects `nu`.
+#'  * `corr_nu`\cr Pairwise within-group correlations of random effects `nu`.
 #'     Samples of the full correlation matrix can be extracted manually as
 #'     `rstan::extract(fit$stanfit, pars = "corr_matrix_nu")` if necessary.
 #'  * `sigma_lambda`\cr Standard deviations of the latent factor loadings

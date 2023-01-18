@@ -29,12 +29,12 @@
 #'   obs(y ~ z, family = "categorical") +
 #'   lags(type = "fixed")
 #'
-lags <- function(k = 1L, type = c("fixed", "varying")) {
+lags <- function(k = 1L, type = c("fixed", "varying", "random")) {
   type <- onlyif(is.character(type), tolower(type))
-  type <- try(match.arg(type, c("fixed", "varying")), silent = TRUE)
+  type <- try(match.arg(type, c("fixed", "varying", "random")), silent = TRUE)
   stopifnot_(
     !inherits(type, "try-error"),
-    "Argument {.arg type} must be \"fixed\" or \"varying\"."
+    "Argument {.arg type} must be \"fixed\", \"varying\", or \"random\"."
   )
   stopifnot_(
     checkmate::test_integerish(

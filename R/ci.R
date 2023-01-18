@@ -11,7 +11,7 @@
 #'    `category` specifies the level of the response the parameter
 #'   is related to if the response is categorical, and `group` determines which
 #'   group of observations the parameter is related to in the case of random
-#'   intercepts and loadings. Non-applicable fields in the this syntax are set
+#'   effects and loadings. Non-applicable fields in the this syntax are set
 #'   to `NA`.
 #' @srrstats {RE4.3} Provides credible intervals.
 #' @examples

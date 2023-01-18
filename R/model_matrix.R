@@ -26,6 +26,7 @@ full_model.matrix <- function(dformula, data, verbose) {
   attr(model_matrix, "assign") <- empty_list
   attr(model_matrix, "fixed") <- empty_list
   attr(model_matrix, "varying") <- empty_list
+  attr(model_matrix, "random") <- empty_list
   for (i in seq_along(model_matrices)) {
     cols <- colnames(model_matrices[[i]])
     assign <- match(cols, u_names)
@@ -35,6 +36,8 @@ full_model.matrix <- function(dformula, data, verbose) {
     attr(model_matrix, "fixed")[[i]] <- setNames(fixed, u_names[fixed])
     varying <- assign[assign_i %in% dformula[[i]]$varying]
     attr(model_matrix, "varying")[[i]] <- setNames(varying, u_names[varying])
+    random <- assign[assign_i %in% dformula[[i]]$random]
+    attr(model_matrix, "random")[[i]] <- setNames(random, u_names[random])
   }
   model_matrix
 }

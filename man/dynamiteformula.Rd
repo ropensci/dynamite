@@ -118,16 +118,15 @@ channel, these can be quickly added to the model as either time-invariant
 or time-varying predictors via \code{\link[=lags]{lags()}} instead of writing them manually
 for each channel.
 
-It is also possible to define a random intercept term for each group by
-using the component \code{\link[=random]{random()}} where the first argument defines for which
-channels the intercept should be added, and second argument defines whether
-or not these intercepts should be correlated between channels. This leads
-to a model where in addition to the common intercept, each individual/group
-has their own intercept with zero-mean normal prior and unknown standard
-deviation (or multivariate gaussian in case \code{correlated = TRUE}),
-analogously with the typical mixed models. Note however that if the channel
-already contains the lagged response variable, the "intercept" is actually a
-slope of (linear) trend as dynamite does not do any centering of variables.
+It is also possible to define group-specific (random) effects term
+using the special function \code{\link[=random]{random()}} similarly as \code{\link[=varying]{varying()}}. For example,
+\code{random(~1)} leads to a model where in addition to the common intercept,
+each individual/group has their own intercept with zero-mean normal prior and
+unknown standard deviation analogously with the typical mixed models. An
+additional model component \code{\link[=random_spec]{random_spec()}} can be used to define whether the
+random effects are allowed to correlate within and across channels and
+whether to use centered or noncentered parameterization for the random
+effects.
 }
 \examples{
 # A single gaussian response channel with a time-varying effect of 'x',
@@ -157,12 +156,12 @@ obs(g ~ lag(g) + lag(logp), family = "gaussian") +
 
 obs(y ~ x, family = "gaussian") + obs(z ~ w, family = "exponential")
 
-x <- obs(y ~ x, family = "gaussian") +
-  obs(z ~ w, family = "exponential") +
+x <- obs(y ~ x + random(~1 + d), family = "gaussian") +
+  obs(z ~ varying(~w), family = "exponential") +
   aux(numeric(d) ~ log(y) | init(c(0, 1))) +
   lags(k = 2) +
   splines(df = 5) +
-  random(responses = c("y", "z"), correlated = TRUE)
+  random_spec(correlated = FALSE)
 print(x)
 
 }

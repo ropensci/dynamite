@@ -735,9 +735,8 @@ parse_components <- function(dformulas, data, time_var) {
     resp = resp,
     times = seq.int(fixed + 1L, n_unique(data[[time_var]]))
   )
-  attr(dformulas$stoch, "random") <- parse_random(
-    random_defs = attr(dformulas$stoch, "random"),
-    resp = resp,
+  attr(dformulas$stoch, "random_spec") <- parse_random_spec(
+    random_spec_def = attr(dformulas$stoch, "random_spec"),
     families = families
   )
   attr(dformulas$stoch, "lfactor") <- parse_lfactors(
@@ -796,51 +795,20 @@ parse_splines <- function(spline_defs, resp, times) {
   out
 }
 
-#' Parse Random Intercept Definitions
+#' Parse Random Effect Definitions
 #'
-#' @param random_defs A `random` object.
-#' @param resp A `character` vector of response variable names.
+#' @param random_spec_def A `random_spec` object.
 #' @param families A `character` vector response family names.
 #' @noRd
-parse_random <- function(random_defs, resp, families) {
-  if (is.null(random_defs)) {
-    return(NULL)
-  }
-  valid_channels <- resp[!(families %in% "categorical")]
-  # default, use all channels except categorical
-  if (is.null(random_defs$responses)) {
-    random_defs$responses <- valid_channels
-    stopifnot_(
-      length(valid_channels) > 0L,
-      c(
-        "No valid responses for random intercept component:",
-        `x` = "Random intercepts are not supported for the categorical family."
-      )
-    )
+parse_random_spec <- function(random_spec_def, families) {
+  out <- list(correlated = TRUE, noncentered = TRUE)
+  if (is.null(random_spec_def) || length(random_spec_def$families) < 2L) {
+    out$correlated <- FALSE
   } else {
-    nu_channels <- random_defs$responses %in% resp
-    stopifnot_(
-      all(nu_channels),
-      c(
-        "Argument {.arg responses} of {.fun random} contains variables
-        {.var {cs(resp[nu_channels])}}:",
-        `x` = "No such response variables in the model."
-      )
-    )
-    nu_channels <- random_defs$responses %in% valid_channels
-    stopifnot_(
-      all(nu_channels),
-      c(
-        "Random intercepts are not supported for the categorical family:",
-        `x` = "Found random intercept declaration for categorical variable{?s}
-              {.var {cs(valid_channels[nu_channels])}}."
-      )
-    )
+    out$correlated <- random_spec_def$correlated
+    out$noncentered <- random_spec_def$noncentered
   }
-  if (length(random_defs$responses) < 2L) {
-    random_defs$correlated <- FALSE
-  }
-  random_defs
+  out
 }
 
 #' Parse Latent Factor Definitions

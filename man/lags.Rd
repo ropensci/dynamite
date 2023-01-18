@@ -4,7 +4,7 @@
 \alias{lags}
 \title{Add Lagged Responses as Predictors to Each Channel of a Dynamite Model}
 \usage{
-lags(k = 1L, type = c("fixed", "varying"))
+lags(k = 1L, type = c("fixed", "varying", "random"))
 }
 \arguments{
 \item{k}{[\code{integer()}]\cr

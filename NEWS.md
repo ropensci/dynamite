@@ -1,3 +1,9 @@
+# dynamite 1.1.0
+  * `dynamite` now supports general group-level random effects. New `random()` 
+    works analogously with `varying()` inside `obs()`, and new `random_spec()`
+    component can be used to define whether the random effects should be 
+    correlated or not and whether to use noncentered parameterization.
+  
 # dynamite 1.0.2
   * Fixed a name clash issue in Stan code generation.
 

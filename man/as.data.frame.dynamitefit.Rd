@@ -66,15 +66,15 @@ Potential values for the \code{types} argument are:
 \item \code{alpha}\cr Intercept terms (time-invariant or time-varying).
 \item \code{beta}\cr Time-invariant regression coefficients.
 \item \code{delta}\cr Time-varying regression coefficients.
-\item \code{nu}\cr Random intercepts.
+\item \code{nu}\cr Group-level random effects.
 \item \code{lambda}\cr Factor loadings.
 \item \code{psi}\cr Latent factors.
 \item \code{tau}\cr Standard deviations of the spline coefficients of \code{delta}.
 \item \code{tau_alpha}\cr Standard deviations of the spline coefficients of
 time-varying \code{alpha}.
 \item \code{xi}\cr Common time-varying shrinkage factor for splines.
-\item \code{sigma_nu}\cr Standard deviation of the random intercepts \code{nu}.
-\item \code{corr_nu}\cr Pairwise within-group correlations of random intercepts \code{nu}.
+\item \code{sigma_nu}\cr Standard deviations of the random effects \code{nu}.
+\item \code{corr_nu}\cr Pairwise within-group correlations of random effects \code{nu}.
 Samples of the full correlation matrix can be extracted manually as
 \code{rstan::extract(fit$stanfit, pars = "corr_matrix_nu")} if necessary.
 \item \code{sigma_lambda}\cr Standard deviations of the latent factor loadings
