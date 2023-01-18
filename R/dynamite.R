@@ -735,9 +735,11 @@ parse_components <- function(dformulas, data, time_var) {
     resp = resp,
     times = seq.int(fixed + 1L, n_unique(data[[time_var]]))
   )
+  M <- sum(lengths(lapply(dformulas$stoch, "[[", "random"))) +
+    sum(unlist(lapply(dformulas$stoch, "[[", "has_random_intercept")))
   attr(dformulas$stoch, "random_spec") <- parse_random_spec(
     random_spec_def = attr(dformulas$stoch, "random_spec"),
-    families = families
+    M = M
   )
   attr(dformulas$stoch, "lfactor") <- parse_lfactors(
     lfactor_defs = attr(dformulas$stoch, "lfactor"),
@@ -798,19 +800,16 @@ parse_splines <- function(spline_defs, resp, times) {
 #' Parse Random Effect Definitions
 #'
 #' @param random_spec_def A `random_spec` object.
-#' @param families A `character` vector response family names.
+#' @param M Number of random effects.
 #' @noRd
-parse_random_spec <- function(random_spec_def, families) {
-  out <- list(correlated = TRUE, noncentered = TRUE)
-  if (is.null(random_spec_def) || length(random_spec_def$families) < 2L) {
-    out$correlated <- FALSE
-  } else {
-    out$correlated <- random_spec_def$correlated
-    out$noncentered <- random_spec_def$noncentered
+parse_random_spec <- function(random_spec_def, M) {
+  if (is.null(random_spec_def)) {
+    random_spec_def <- list(correlated = TRUE, noncentered = TRUE)
   }
-  out
+  if (M < 2L) random_spec_def$correlated <- FALSE
+  random_spec_def$M <- M
+  random_spec_def
 }
-
 #' Parse Latent Factor Definitions
 #'
 #' @param lfactor_defs An `lfactor` object.
@@ -873,6 +872,7 @@ parse_lfactors <- function(lfactor_defs, resp, families) {
     )
     out$nonzero_lambda <- rep(out$nonzero_lambda, length = n_channels)
     out$correlated <- lfactor_defs$correlated
+    out$P <- length(lfactor_defs$responses)
   } else {
     n_channels <- length(resp)
     out <- list(
@@ -881,7 +881,8 @@ parse_lfactors <- function(lfactor_defs, resp, families) {
       noncentered_psi = FALSE,
       noncentered_lambda = logical(n_channels),
       nonzero_lambda = logical(n_channels),
-      correlated = FALSE
+      correlated = FALSE,
+      P = 0
     )
   }
   out

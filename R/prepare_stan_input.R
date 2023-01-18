@@ -87,9 +87,6 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   varying_pars <- attr(model_matrix, "varying")
   random_pars <- attr(model_matrix, "random")
   resp_classes <- attr(responses, "resp_class")
-  random_defs$M <- sum(lengths(random_pars)) +
-    sum(unlist(lapply(dformula, "[[", "has_random_intercept")))
-  lfactor_defs$P <- length(lfactor_defs$responses)
   for (i in seq_len(n_channels)) {
     channel <- list()
     resp <- resp_names[i]
