@@ -135,7 +135,7 @@ create_parameters <- function(dformula, idt, vars) {
         attr(vars, "random_defs")$correlated,
         "cholesky_factor_corr[M] L_nu; // Cholesky for correlated random effects"
       ),
-      "vector[M] sigma_nu; // standard deviations of random effects",
+      "vector<lower=0>[M] sigma_nu; // standard deviations of random effects",
       ifelse_(
         attr(vars, "random_defs")$noncentered,
         "matrix[N, M] nu_raw;", "vector[M] nu_raw[N];"
