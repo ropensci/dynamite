@@ -474,8 +474,8 @@ join_dynamiteformulas <- function(e1, e2) {
     "Both dynamiteformulas contain a splines definition."
   )
   stopifnot_(
-    is.null(attr(e1, "random")) || is.null(attr(e2, "random")),
-    "Both dynamiteformulas contain a random intercepts definition."
+    is.null(attr(e1, "random_spec")) || is.null(attr(e2, "random_spec")),
+    "Both dynamiteformulas contain a random_spec definition."
   )
   rhs_list <- list(
     lapply(get_terms(e1), extract_nonlags),
@@ -540,7 +540,7 @@ set_splines <- function(e1, e2) {
 #' Set the Random Effect Correlations of the Model
 #'
 #' @param e1 A `dynamiteformula` object.
-#' @param e2 A `random` object.
+#' @param e2 A `random_spec` object.
 #' @noRd
 set_random_spec <- function(e1, e2) {
   stopifnot_(

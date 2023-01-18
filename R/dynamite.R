@@ -712,7 +712,7 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
     stoch = structure(
       dformula[channels_stoch],
       splines = attr(dformula, "splines"),
-      random = attr(dformula, "random"),
+      random_spec = attr(dformula, "random_spec"),
       lfactor = attr(dformula, "lfactor")
     ),
     lag_pred = dformula_lag_pred,
@@ -1068,7 +1068,7 @@ prepare_lagged_response <- function(dformula, lag_map,
 #'   are stochastic.
 #' @param increment \[`logical()`]\cr  A vector indicating whether to add
 #'   the new lag term or not (e.g.,, whether it was already present or not).
-#' @param type \[`character(1)`]\cr Either `"fixed"` or `"varying"`.
+#' @param type \[`character(1)`]\cr Either `"fixed"`, `"varying"`, or `"random"`.
 #' @param lhs \[`character()`]\cr A vector of the new lagged variable names.
 #' @noRd
 parse_new_lags <- function(dformula, channels_stoch, increment, type, lhs) {
@@ -1081,7 +1081,9 @@ parse_new_lags <- function(dformula, channels_stoch, increment, type, lhs) {
           type = type,
           varying_idx = dformula[[i]]$varying,
           varying_icpt = dformula[[i]]$has_varying_intercept,
-          fixed_icpt = dformula[[i]]$has_fixed_intercept
+          fixed_icpt = dformula[[i]]$has_fixed_intercept,
+          random_idx = dformula[[i]]$random,
+          random_icpt = dformula[[i]]$has_random_intercept
         ),
         original = dformula[[i]]$original,
         family = dformula[[i]]$family

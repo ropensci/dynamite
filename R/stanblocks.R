@@ -136,10 +136,7 @@ create_parameters <- function(dformula, idt, vars) {
         "cholesky_factor_corr[M] L_nu; // Cholesky for correlated random effects"
       ),
       "vector<lower=0>[M] sigma_nu; // standard deviations of random effects",
-      ifelse_(
-        attr(vars, "random_defs")$noncentered,
-        "matrix[N, M] nu_raw;", "vector[M] nu_raw[N];"
-      ),
+      "matrix[N, M] nu_raw;",
       .indent = idt(c(1, 1, 1, 1))
     ),
     ""
@@ -194,21 +191,21 @@ create_transformed_parameters <- function(dformula, idt, vars) {
           .indent = idt(1)
         ),
         paste_rows(
-          glue::glue("matrix[N, {Ks}] nu_{y} = nu_raw[, {cKs1}:{cKs2}];"),
+          glue::glue("matrix[N, {Ks}] nu_{y} = diag_post_multiply(nu_raw[, {cKs1}:{cKs2}], sigma_nu_{y});"),
           .indent = idt(1)
         )
       )
     } else {
       randomtext <-
         paste_rows(
-          glue::glue("vector[N] nu_{y} = to_vector(nu_raw[, {cKs1}:{cKs2}]);"),
+          glue::glue("matrix[N, {Ks}] nu_{y} = nu_raw[, {cKs1}:{cKs2}];"),
           .indent = idt(1)
         )
     }
     randomtext <- paste_rows(
-      randomtext,
       glue::glue("vector[{Ks}] sigma_nu_{y} = sigma_nu[{cKs1}:{cKs2}];"),
-      .indent = idt(c(0, 1))
+      randomtext,
+      .indent = idt(c(1, 0))
     )
   }
 
@@ -289,9 +286,15 @@ create_model <- function(dformula, idt, vars, backend) {
           .indent = idt(c(1, 1))
         ),
         paste_rows(
-          "nu_raw ~ multi_normal_cholesky(0, diag_pre_multiply(sigma_nu, L_nu));",
+          "{{",
+          "row_vector[M] nu_tmp[N];",
+          "for (i in 1:N) {{",
+            "nu_tmp[i] = nu_raw[i, ];",
+          "}}",
+          "nu_tmp ~ multi_normal_cholesky(rep_vector(0, M), diag_pre_multiply(sigma_nu, L_nu));",
+          "}}",
           "L_nu ~ {L_prior};",
-          .indent = idt(c(1, 1))
+          .indent = idt(c(1, 2, 2, 3, 2, 2, 1, 1))
         )
       )
     } else {
@@ -305,8 +308,10 @@ create_model <- function(dformula, idt, vars, backend) {
           .indent = idt(1)
         ),
         paste_rows(
-          glue::glue("nu_{y} ~ normal(0, sigma_nu_{y});"),
-          .indent = idt(1)
+          "for (i in 1:M) {{",
+            "nu_raw[, i] ~ normal(0, sigma_nu[i]);",
+          "}}",
+          .indent = idt(c(1, 2, 1))
         )
       )
     }

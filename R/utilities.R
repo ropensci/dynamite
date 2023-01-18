@@ -83,7 +83,7 @@ drop_unused <- function(dformula, data, group_var, time_var) {
 #'   intercept?
 #' @param fixed_icpt \[`logical(1)`] Does the formula have a fixed intercept?
 #' @noRd
-increment_formula <- function(formula, x, type = c("fixed", "varying"),
+increment_formula <- function(formula, x, type = c("fixed", "varying", "random"),
                               varying_idx, varying_icpt, fixed_icpt) {
   v_icpt <- ifelse_(varying_icpt, "1", "-1")
   n_varying <- length(varying_idx)
