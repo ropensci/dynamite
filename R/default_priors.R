@@ -14,11 +14,18 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
   sd_gamma <- signif(sd_gamma, 2)
   priors <- list()
   if (channel$has_random_intercept || channel$has_random) {
-    channel$sigma_nu_prior_distr <- paste0("normal(", 0, ", ", sd_y, ")")
+    icpt <- ifelse_(channel$has_random_intercept,
+      "alpha",
+      NULL
+    )
+    ns <- c(icpt, names(sd_gamma[channel$J_random]))
+    channel$sigma_nu_prior_distr <- "normal"
+    channel$sigma_prior_npar <- 2
+    channel$sigma_prior_pars <- cbind(0, rep(1, channel$K_random))
     priors$sigma_nu <- data.frame(
-      parameter = paste0("sigma_nu_", y),
+      parameter = paste0("sigma_nu_", y, "_", ns),
       response = y,
-      prior = channel$sigma_nu_prior_distr,
+      prior = "normal(0, 1)",
       type = "sigma_nu",
       category = ""
     )
