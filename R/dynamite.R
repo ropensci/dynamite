@@ -1080,9 +1080,10 @@ parse_new_lags <- function(dformula, channels_stoch, increment, type, lhs) {
           x = lhs[increment[[i]]],
           type = type,
           varying_idx = dformula[[i]]$varying,
+          fixed_idx = dformula[[i]]$fixed,
+          random_idx = dformula[[i]]$random,
           varying_icpt = dformula[[i]]$has_varying_intercept,
           fixed_icpt = dformula[[i]]$has_fixed_intercept,
-          random_idx = dformula[[i]]$random,
           random_icpt = dformula[[i]]$has_random_intercept
         ),
         original = dformula[[i]]$original,

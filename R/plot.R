@@ -7,11 +7,11 @@
 #'  * `alpha` Intercept terms (time-invariant or time-varying).
 #'  * `beta` Time-invariant regression coefficients.
 #'  * `delta` Time-varying regression coefficients.
-#'  * `nu` Random intercepts.
+#'  * `nu` Random effects
 #'  * `tau` Standard deviations of the spline coefficients of `delta`.
 #'  * `tau_alpha` Standard deviations of the spline coefficients of
 #'    time-varying `alpha`.
-#'  * `sigma_nu` Standard deviation of the random intercepts `nu`.
+#'  * `sigma_nu` Standard deviation of the random effects `nu`.
 #'  * `sigma` Standard deviations of gaussian responses.
 #'  * `phi` Dispersion parameters of negative binomial responses.
 #'  * `omega` Spline coefficients of the regression coefficients `delta`.
@@ -19,7 +19,7 @@
 #'
 #' Note however, that typically drawing these plots for the time-varying
 #' parameters `delta` (and `alpha`), spline coefficients, or random
-#' intercepts leads to too many plots.
+#' effects leads to too many plots.
 #'
 #' @export
 #' @param x \[`dynamitefit`]\cr The model fit object.
@@ -213,7 +213,11 @@ plot_betas <- function(x, responses = NULL, level = 0.05,
     ggplot2::labs(title = title, x = "Value", y = "Parameter")
 }
 
-#' Plot Random Intercepts of a Dynamite Model
+#' Plot Random effects of a Dynamite Model
+#'
+#' Note that as this function tries to draw a plot containing all random
+#' effects, the plot will become messy with large number of groups and/or
+#' parameters.
 #'
 #' @export
 #' @inheritParams plot_deltas
@@ -244,7 +248,7 @@ plot_nus <- function(x, responses = NULL, level = 0.05) {
   )
   stopifnot_(
     !inherits(coefs, "try-error"),
-    "The model does not contain random intercepts nu."
+    "The model does not contain random effects nu."
   )
   # avoid NSE notes from R CMD check
   mean <- parameter <- NULL

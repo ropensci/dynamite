@@ -128,47 +128,60 @@ test_that("intercepts are handled correctly", {
   )
 })
 
-test_that("random intercepts are handled correctly", {
+test_that("random effects are handled correctly", {
   expect_error(
-    obs_all_alpha <- obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
-      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = "binomial") +
+    obs_all_alpha <- obs(y2 ~ -1 + x2 + varying(~1) + random(~1), family = "gaussian") +
+      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials) + random(~1), family = "binomial") +
       obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
-      splines(df = 5) + random(c("y2", "y3")),
+      splines(df = 5) + random_spec(correlated = TRUE, noncentered = TRUE),
     NA
   )
   expect_equal(
-    c("sigma_nu_y2", "sigma_nu_y3", "L"),
+    c("sigma_nu_y2_alpha", "sigma_nu_y3_alpha", "L_nu"),
     get_priors(obs_all_alpha, test_data, "group", "time")$parameter[c(1, 6, 24)]
   )
 
   expect_error(
-    obs_all_alpha <- obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
-      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = "binomial") +
+    obs_all_alpha <- obs(y2 ~ -1 + x2 + varying(~1) + random(~1), family = "gaussian") +
+      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials) + random(~x1), family = "binomial") +
+      obs(y4 ~ x1 + varying(~ -1 + x2) + random(~x1 + x2), family = "bernoulli") +
+      splines(df = 5) + random_spec(correlated = FALSE),
+    NA
+  )
+  expect_error(
+    obs_all_alpha <- obs(y2 ~ -1 + x2 + varying(~1) + random(~x2), family = "gaussian") +
+      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials) + random(~1), family = "binomial") +
       obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
-      splines(df = 5) + random(correlated = FALSE),
+      splines(df = 5) + random_spec(correlated = FALSE, noncentered = FALSE),
     NA
   )
   expect_error(
     obs_all_alpha <- obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
-      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = "binomial") +
-      obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
-      splines(df = 5) + random(correlated = FALSE, noncentered = FALSE),
+      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials) + random(~1), family = "binomial") +
+      obs(y4 ~ x1 + varying(~ -1 + x2) + random(~ -1 + x1), family = "bernoulli") +
+      splines(df = 5) + random_spec(correlated = TRUE, noncentered = FALSE),
     NA
   )
   expect_error(
     obs_all_alpha <- obs(y2 ~ -1 + x2 + varying(~1), family = "gaussian") +
-      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = "binomial") +
-      obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
-      splines(df = 5) + random(correlated = TRUE, noncentered = FALSE),
+      obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials) + random(~1), family = "binomial") +
+      obs(y4 ~ x1 + varying(~ -1 + x2) + random(~ -1 + x1), family = "bernoulli") +
+      splines(df = 5),
     NA
   )
   expect_error(
-    obs_all_alpha <- obs(y2 ~ x2, family = "gaussian") +
-      random(noncentered = FALSE),
+    obs_all_alpha <- obs(y2 ~ 1, family = "gaussian") +
+      obs(y3 ~ trials(trials) + random(~1), family = "binomial") +
+      obs(y4 ~ x1 + random(~ x1), family = "bernoulli"),
+    NA
+  )
+  expect_error(
+    obs_all_alpha <- obs(y2 ~ x2 + random(~1), family = "gaussian") +
+      random_spec(),
     NA
   )
   expect_false(
-    "L" %in% get_priors(obs_all_alpha, test_data, "group", "time")$parameter
+    "L_nu" %in% get_priors(obs_all_alpha, test_data, "group", "time")$parameter
   )
 })
 

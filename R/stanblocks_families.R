@@ -1180,16 +1180,6 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
     glue::glue("{intercept}{plus}{lfactor}"),
     ""
   )
-  # random <- ifelse_(
-  #   has_random,
-  #   ifelse_(
-  #     has_random_intercept,
-  #     paste0("rows_dot_product(X[t][{obs}, {{{cs(J_random)}}}], nu_{y}[{obs}, 2:",
-  #       1 + K_random, "])"),
-  #     "rows_dot_product(X[t][{obs}, {{{cs(J_random)}}}], nu_{y}[{obs}, ])"
-  #   ),
-  #   ""
-  # )
   random <- ifelse_(
     has_random,
     ifelse_(
@@ -1366,7 +1356,7 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
       glue::glue("zeros_S_{y}")
     )
   )
-  # categorical_logit_glm does not support id-varying intercept
+  # categorical_logit_glm does not support id-varying effects
   # and categorical distribution is very slow without it
   stopifnot_(
     identical(K_random, 0L),
@@ -1480,11 +1470,6 @@ model_lines_binomial <- function(y, idt, obs, has_varying, has_fixed,
     has_varying,
     glue::glue("X[t][{obs}, {{{cs(J_varying)}}}] * delta_{y}[t]"),
     ""
-  )
-  nu <- ifelse_(
-    has_random_intercept,
-    glue::glue("tail(nu_{y}, {K_random})"),
-    glue::glue("nu_{y}")
   )
 
   plus_c <- ifelse_(has_fixed && has_varying, " + ", "")

@@ -90,7 +90,7 @@ drop_unused <- function(dformula, data, group_var, time_var) {
 #' @noRd
 increment_formula <- function(formula, x,
                               type = c("fixed", "varying", "random"),
-                              varying_idx, random_idx,
+                              varying_idx, fixed_idx, random_idx,
                               varying_icpt, fixed_icpt, random_icpt) {
   v_icpt <- ifelse_(varying_icpt, "1", "-1")
   r_icpt <- ifelse_(random_icpt, "1", "-1")
@@ -99,73 +99,39 @@ increment_formula <- function(formula, x,
   x_plus <- paste0(x, collapse = " + ")
   ft <- terms(formula)
   tr <- attr(ft, "term.labels")
+  f <- paste0(tr[fixed_idx], collapse = " + ")
   v <- paste0(tr[varying_idx], collapse = " + ")
   r <- paste0(tr[random_idx], collapse = " + ")
-  formula_str <- ""
-  if (n_varying > 0L) {
-    if (n_varying < length(tr)) {
-      formula <- stats::drop.terms(
-        ft,
-        dropx = varying_idx,
-        keep.response = TRUE
-      )
-      ft <- terms(formula)
-      tr <- attr(ft, "term.labels")
-    } else {
-      tr <- character(0L)
-    }
-  }
-  if (n_random > 0L) {
-    if (n_random < length(tr)) {
-      formula <- stats::drop.terms(
-        ft,
-        dropx = random_idx,
-        keep.response = TRUE
-      )
-      ft <- terms(formula)
-      tr <- attr(ft, "term.labels")
-    } else {
-      tr <- character(0L)
-    }
-  }
-  if (length(tr) > 0L) {
-    formula <- reformulate(
-      termlabels = tr,
-      response = formula_lhs(formula),
-      intercept = fixed_icpt
-    )
-    formula_str <- deparse1(formula)
-  } else {
-    formula_str <- paste0(
-      deparse1(formula_lhs(formula)),
-      " ~ ",
-      ifelse_(fixed_icpt, "1", "-1")
-    )
-  }
+  resp <- attr(ft, "variables")[[2L]]
+  formula_str <- ifelse_(
+    fixed_icpt,
+    paste0(resp, "~1"),
+    paste0(resp, "~-1")
+  )
   v_out <- ifelse_(
     identical(type, "varying"),
     paste0(" + ", v, ifelse_(nzchar(v), " + ", ""), x_plus),
     ifelse_(nzchar(v), paste0(" + ", v), v)
   )
   v_out <- ifelse_(
-    n_varying > 0L || varying_icpt,
+    identical(type, "varying") || n_varying > 0L || varying_icpt,
     glue::glue(" + varying(~{v_icpt}{v_out})"),
     ""
   )
   r_out <- ifelse_(
     identical(type, "random"),
-    paste0(" + ", r, ifelse_(nzchar(r)), " + ", "", x_plus),
+    paste0(" + ", r, ifelse_(nzchar(r), " + ", ""), x_plus),
     ifelse_(nzchar(r), paste0(" + ", r), r)
   )
   r_out <- ifelse_(
-    n_random > 0L || random_icpt,
+    identical(type, "random") || n_random > 0L || random_icpt,
     glue::glue(" + random(~{r_icpt}{r_out})"),
     ""
   )
   f_out <- ifelse_(
     identical(type, "fixed"),
-    paste0(" + ", x_plus),
-    ""
+    paste0(" + ", f, ifelse_(nzchar(f), " + ", ""), x_plus),
+    ifelse_(nzchar(f), paste0(" + ", f), f)
   )
   out_str <- glue::glue("{formula_str}{f_out}{v_out}{r_out}")
   as.formula(out_str)
