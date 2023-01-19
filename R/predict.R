@@ -18,10 +18,8 @@
 #'   Missing values in predictor columns can be imputed (argument `impute`).
 #'   There should be no new time points that were not present in the data that
 #'   were used to fit the model. New group levels can be included, but if the
-#'   model contains random intercepts, an options for the random
-#'   effects for the new levels must be chosen (argument `new_levels`). Note
-#'   that as `newdata` is expanded with predictions, it can be beneficial
-#'   in terms of memory usage to first remove redundant columns from `newdata`.
+#'   model contains random effects, an option for the random
+#'   effects for the new levels must be chosen (argument `new_levels`).
 #'   If the grouping variable of the original data is missing, it is assumed
 #'   that all observations in `newdata` belong to the first group in the
 #'   original data.
@@ -44,19 +42,19 @@
 #'   no imputation: `"none"` (default), and
 #'   last observation carried forward: `"locf"`.
 #' @param new_levels \[`character(1)`]\cr
-#'   Defines if and how to sample the random intercepts for observations whose
+#'   Defines if and how to sample the random effects for observations whose
 #'   group level was not present in the original data. The options are
 #'     * `"none"` (the default) which will signal an error if new levels
 #'       are encountered.
 #'     * `"bootstrap"` which will randomly draw from the posterior samples of
-#'       the random intercepts across all original levels.
+#'       the random effects across all original levels.
 #'     * `"gaussian"` which will randomly draw from a gaussian
-#'       distribution using the posterior samples of the random intercept
-#'       standard deviation.
+#'       distribution using the posterior samples of the random effects
+#'       standard deviation (and correlation matrix if applicable).
 #'     * `"original"` which will randomly match each new level to one of
-#'       the original levels. The posterior samples of the random intercept of
+#'       the original levels. The posterior samples of the random effects of
 #'       the matched levels will then be used for the new levels.
-#'   This argument is ignored if model does not contain random intercepts.
+#'   This argument is ignored if model does not contain random effects.
 #' @param global_fixed \[`logical(1)`]\cr If `FALSE` (the default),
 #'   the first non-fixed time point is counted from the the first non-NA
 #'   observation for each group member separately. Otherwise, the first
@@ -216,7 +214,7 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
   time_var <- object$time_var
   resp_stoch <- get_responses(object$dformulas$stoch)
   new_levels <- ifelse_(
-    identical(length(attr(object$dformulas$stoch, "random")$responses), 0L),
+    length(which_random(object$dformulas$all)) == 0L,
     "ignore",
     new_levels
   )

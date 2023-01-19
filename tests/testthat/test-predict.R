@@ -329,6 +329,67 @@ test_that("new group levels can be included in newdata", {
   )
 })
 
+test_that("predict with multiple random effects work", {
+  skip_if_not(run_extended_tests)
+
+  set.seed(1)
+  n <- 40
+  k <- 10
+  x <- rnorm(n * k)
+  u1 <- rep(rnorm(k, sd = 0.2), each = n)
+  u2 <- 0.5 * u1 + rep(rnorm(k, sd = 0.1), each = n)
+  u3 <- 0.2 * u1 +  rep(rnorm(k, sd = 0.3), each = n)
+  y1 <- rbinom(n * k, size = 20, prob = plogis(x + u1 + u2 * x))
+  y2 <- rnorm(n * k, u3 + 2 * x)
+  d <- data.frame(year = 1:n, person = rep(1:k, each = n),
+    y1 = y1, y2 = y2, x = x,  n = 20)
+
+  fit <- dynamite(
+    obs(y1 ~ x + trials(n) + random(~ x), family = "binomial") +
+    obs(y2 ~ x + random(~ 1), family = "gaussian") +
+      random_spec(),
+    data = d, time = "year", group = "person",
+    chains = 1, iter = 2000, refresh = 0
+  )
+  #TODO test correlations,
+  # currently wrong in summary(fit, type="corr_nu") vs colMeans(rstan::extract(fit$stanfit, "corr_nu")[[1]])
+  expect_error(
+    predict(fit, n_draws = 5),
+    NA
+  )
+
+  newdata <- rbind(
+    d,
+    data.frame(
+      y = c(0.5, rep(NA, 29L)),
+      x = rnorm(30),
+      z = rbinom(30, 1, 0.7),
+      id = 226L, time = seq.int(1, 30)
+    )
+  )
+  expect_error(
+    predict(gaussian_example_fit,
+      newdata = gaussian_example_new_levels,
+      type = "response", n_draws = 2, new_levels = "bootstrap"
+    ),
+    NA
+  )
+  expect_error(
+    predict(gaussian_example_fit,
+      newdata = gaussian_example_new_levels,
+      type = "response", n_draws = 2, new_levels = "gaussian"
+    ),
+    NA
+  )
+  expect_error(
+    predict(gaussian_example_fit,
+      newdata = gaussian_example_new_levels,
+      type = "response", n_draws = 2, new_levels = "original"
+    ),
+    NA
+  )
+})
+
 test_that("imputation works", {
   set.seed(0)
   mis_x <- sample(seq_len(nrow(gaussian_example)), 150, replace = FALSE)

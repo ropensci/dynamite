@@ -304,17 +304,12 @@ print.dynamiteformula <- function(x, ...) {
     cat("\nLagged responses added as predictors with: k = ", cs(k), sep = "")
   }
   if (!is.null(attr(x, "random_spec"))) {
-    resp <- get_responses(x)
-    has_random <- unlist(
-      lapply(x, function(z) {
-        z$has_random_intercept || length(z$random) > 0
-      })
-    )
+    res <- which_random(x)
     co <- attr(x, "random_spec")$correlated
     cat(
       ifelse_(co, "\nCorrelated random ", "\nRandom "),
       "effects added for response(s): ",
-      cs(resp[has_random]),
+      cs(res),
       "\n",
       sep = ""
     )
@@ -422,6 +417,19 @@ which_deterministic <- function(x) {
 #' @noRd
 which_stochastic <- function(x) {
   which(vapply(x, function(y) !is_deterministic(y$family), logical(1L)))
+}
+#' Get Responses with Random Effects in a `dynamiteformula` Object
+#'
+#' @param x A `dynamiteformula` object
+#' @noRd
+which_random <- function(x) {
+  resp <- get_responses(x)
+  has_random <- unlist(
+    lapply(x, function(z) {
+      z$has_random_intercept || length(z$random) > 0
+    })
+  )
+  resp[has_random]
 }
 
 #' Get Channels with Past Value Definitions of a `dynamiteformula` Object
