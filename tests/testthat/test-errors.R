@@ -154,17 +154,14 @@ test_that("plus method fails for nondynamiteformula", {
   )
 })
 
-test_that("categorical random intercept fails", {
+test_that("categorical with random effects fails", {
   expect_error(
-    dynamite(obs(y ~ x, family = "categorical") + random(),
-             data = data.frame(y = factor(1:4), x = runif(4), id = 1, time = 1:4),
-             "id", "time",
-             debug = list(no_compile = TRUE)
+    dynamite(obs(y ~ x + random(~1), family = "categorical") + random_spec(),
+      data = data.frame(y = factor(1:4), x = runif(4), id = 1, time = 1:4),
+      "id", "time",
+      debug = list(no_compile = TRUE)
     ),
-    paste0(
-      "No valid responses for random intercept component:\n",
-      "x Random intercepts are not supported for the categorical family\\."
-    )
+    "Categorical family does not yet support random effects."
   )
 })
 
@@ -939,8 +936,8 @@ test_that("invalid funs fails", {
 # Prior errors ------------------------------------------------------------
 
 p <- get_priors(gaussian_example_fit)
-f <- obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
-  random() + splines(df = 20)
+f <- obs(y ~ -1 + random(~1) + z + varying(~ x + lag(y)), family = "gaussian") +
+  splines(df = 20)
 
 test_that("incomplete priors fails", {
   p2 <- p[-1, ]
@@ -951,7 +948,7 @@ test_that("incomplete priors fails", {
     ),
     paste0(
       "Argument `priors` must contain all relevant parameters:\n",
-      "x Prior for parameter `sigma_nu_y` is not defined\\."
+      "x Prior for parameter `sigma_nu_y_alpha` is not defined\\."
     )
   )
 })
