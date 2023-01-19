@@ -135,7 +135,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     )
     channel$has_fixed_intercept <- dformula[[i]]$has_fixed_intercept
     channel$has_varying_intercept <- dformula[[i]]$has_varying_intercept
-    channel$has_random_intercept <-  dformula[[i]]$has_random_intercept
+    channel$has_random_intercept <- dformula[[i]]$has_random_intercept
     channel$has_fixed <- channel$K_fixed > 0L
     channel$has_varying <- channel$K_varying > 0L
     # note! Random intercept is counted to K_random above, while has_random is
