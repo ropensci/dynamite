@@ -161,7 +161,7 @@ test_that("categorical with random effects fails", {
       "id", "time",
       debug = list(no_compile = TRUE)
     ),
-    "Categorical family does not yet support random effects."
+    "Random effects are not \\(yet\\) supported for categorical responses."
   )
 })
 
@@ -1050,6 +1050,6 @@ test_that("plot_deltas errors when the model does not contain deltas", {
 test_that("plot_nus errors when the model does not contain nus", {
   expect_error(
     plot_nus(categorical_example_fit),
-    "The model does not contain random intercepts nu."
+    "The model does not contain random effects nu."
   )
 })

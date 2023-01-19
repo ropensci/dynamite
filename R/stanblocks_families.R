@@ -65,14 +65,17 @@ vectorizable_prior <- function(x) {
 #' @param L_varying \[`integer(1)`]\cr Indices of the time-varying predictors
 #'   of the channel in the joint parameter vector `gamma`.
 #' @param S \[`integer(1)`]\cr Number of categories for a categorical channel.
-#' @param write_alpha \[`logical(1)`]\cr Should the `alpha` parameters of the
-#'   model be written to the model code?
-#' @param write_beta \[`logical(1)`]\cr Should the `beta` parameters of
-#'   time-invariant predictors be written to the model code?
-#' @param write_delta \[`logical(1)`]\cr Should the `delta` parameters of
-#'   time-varying predictors be written to the model code?
-#' @param write_tau \[`logical(1)`]\cr Should the `tau` parameters be written
-#'   to the model code?
+#' @param write_alpha \[`logical(1)`]\cr If `TRUE`, use vectorized prior for
+#'   `alpha` parameters of the model by hard-coding the parameters of the prior
+#'   distribution to the model code?
+#' @param write_beta \[`logical(1)`]\cr If `TRUE`, use vectorized prior for
+#'   time-invariant predictors `beta`.
+#' @param write_delta \[`logical(1)`]\cr If `TRUE`, use vectorized prior for
+#'   time-varying predictors `delta`.
+#' @param write_tau \[`logical(1)`]\cr If `TRUE`, use vectorized prior for
+#'   `tau` parameters.
+#' @param write_sigma_nu \[`logical(1)`]\cr If `TRUE`, use vectorized prior for
+#'   `sigma_nu` parameters.
 #' @param sigma_prior_distr \[`character(1)`]\cr `sigma` parameter prior
 #'   specification.
 #' @param sigma_nu_prior_distr \[`character(1)`]\cr `sigma_nu` parameter prior
@@ -94,6 +97,10 @@ vectorizable_prior <- function(x) {
 #' @param tau_prior_distr \[`character(1)`]\cr `tau` parameter prior
 #'   specification.
 #' @param tau_prior_npars \[`integer(1)`]\cr Number of parameters for the
+#'   prior of `tau`.
+#' @param sigma_nu_prior_distr \[`character(1)`]\cr `sigma_nu` parameter prior
+#'   specification.
+#' @param sigma_nu_prior_npars \[`integer(1)`]\cr Number of parameters for the
 #'   prior of `tau`.
 #' @param phi_prior_distr \[`character(1)`]\cr `phi` parameter prior
 #'   specification.
@@ -200,13 +207,16 @@ data_lines_beta <- function(y, idt, has_missing, ...) {
 # Transformed data block --------------------------------------------------
 
 transformed_data_lines_default <- function(y, idt, write_beta, write_delta,
-                                           write_tau, K_fixed, K_varying,
+                                           write_tau, write_sigma_nu, K_fixed,
+                                           K_varying, K_random,
                                            beta_prior_npars = 1L,
                                            beta_prior_pars = "",
                                            delta_prior_npars = 1L,
                                            delta_prior_pars = "",
                                            tau_prior_npars = 1L,
-                                           tau_prior_pars = "") {
+                                           tau_prior_pars = "",
+                                           sigma_nu_prior_npars = 1L,
+                                           sigma_nu_prior_pars = "") {
   i <- rep(seq_len(K_fixed), beta_prior_npars)
   j <- rep(seq_len(beta_prior_npars), each = K_fixed)
   declare_beta <- glue::glue(
@@ -232,11 +242,20 @@ transformed_data_lines_default <- function(y, idt, write_beta, write_delta,
   )
   state_tau <- glue::glue("tau_prior_pars_{y}[{i},{j}] = {tau_prior_pars};")
 
+  i <- rep(seq_len(K_random), sigma_nu_prior_npars)
+  j <- rep(seq_len(sigma_nu_prior_npars), each = K_random)
+  declare_sigma_nu <- glue::glue(
+    "matrix[{K_random}, {sigma_nu_prior_npars}] sigma_nu_prior_pars_{y};"
+  )
+  state_sigma_nu <-
+    glue::glue("sigma_nu_prior_pars_{y}[{i},{j}] = {sigma_nu_prior_pars};")
+
   list(
     declarations = paste_rows(
       onlyif(write_beta, declare_beta),
       onlyif(write_delta, declare_delta),
       onlyif(write_tau, declare_tau),
+      onlyif(write_sigma_nu, declare_sigma_nu),
       .indent = idt(1),
       .parse = FALSE
     ),
@@ -244,6 +263,7 @@ transformed_data_lines_default <- function(y, idt, write_beta, write_delta,
       onlyif(write_beta, state_beta),
       onlyif(write_delta, state_delta),
       onlyif(write_tau, state_tau),
+      onlyif(write_sigma_nu, state_sigma_nu),
       .indent = idt(1),
       .parse = FALSE
     )
@@ -706,11 +726,6 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
       .parse = FALSE
     )
   }
-  # else {
-  #   state_omega_psi <- paste_rows(
-  #     "omega_psi_{y} = append_col(omega_raw_psi_1_{y}, omega_psi_{y});",
-  #     .indent = idt(1))
-  # }
   declare_psi <- paste_rows(
     "// Latent factor",
     "vector[T] psi_{y};",
@@ -1007,6 +1022,7 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
                                 has_lfactor, noncentered_psi,
                                 noncentered_lambda, nonzero_lambda,
                                 sigma_nu_prior_distr = "",
+                                sigma_nu_prior_npars = 1L,
                                 alpha_prior_distr = "",
                                 tau_alpha_prior_distr = "",
                                 lambda_prior_distr = "",
@@ -1023,8 +1039,18 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
 
   allow_intercept <- !(has_lfactor && nonzero_lambda)
 
-  mtext_u <- "sigma_nu_{y} ~ {sigma_nu_prior_distr};"
   mtext_alpha <- "a_{y} ~ {alpha_prior_distr};"
+
+  if (vectorizable_prior(sigma_nu_prior_distr)) {
+    dpars_sigma_nu<- paste0(
+      "sigma_nu_prior_pars_", y, "[, ", seq_len(sigma_nu_prior_npars), "]",
+      collapse = ", "
+    )
+    mtext_sigma_nu <- "sigma_nu_{y} ~ {sigma_nu_prior_distr}({dpars_sigma_nu});"
+  } else {
+    mtext_sigma_nu <-
+      "sigma_nu_{y}[{{{cs(1:K_random)}}}] ~ {sigma_nu_prior_distr};"
+  }
 
   if (has_lfactor) {
     m <- ifelse_(nonzero_lambda, "1", "0")
@@ -1191,7 +1217,7 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
   )
   list(text = paste_rows(
     onlyif(has_lfactor, mtext_lambda),
-    onlyif(has_random_intercept, mtext_u),
+    onlyif(has_random_intercept || has_random, mtext_sigma_nu),
     onlyif(has_fixed_intercept && allow_intercept, mtext_fixed_intercept),
     onlyif(has_varying_intercept  && allow_intercept, mtext_varying_intercept),
     onlyif(has_fixed, mtext_fixed),

@@ -20,8 +20,8 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
     )
     ns <- c(icpt, names(sd_gamma[channel$J_random]))
     channel$sigma_nu_prior_distr <- "normal"
-    channel$sigma_prior_npar <- 2
-    channel$sigma_prior_pars <- cbind(0, rep(1, channel$K_random))
+    channel$sigma_nu_prior_npars <- 2L
+    channel$sigma_nu_prior_pars <- cbind(0, rep(1, channel$K_random))
     priors$sigma_nu <- data.frame(
       parameter = paste0("sigma_nu_", y, "_", ns),
       response = y,

@@ -167,7 +167,9 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     }
     family <- dformula[[i]]$family
 
-    stopifnot_(!channel$has_random || family != "categorical",
+    stopifnot_(
+      !(channel$has_random || channel$has_random_intercept) ||
+        family != "categorical",
       "Random effects are not (yet) supported for categorical responses.")
     sampling_vars[[paste0("y_", resp)]] <- ifelse_(
       family %in% c("gaussian", "gamma", "exponential", "beta"),
@@ -340,11 +342,11 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
     priors <- priors[priors$response == y, ]
     types <- priors$type
     for (ptype in intersect(types,
-      c("alpha", "tau_alpha", "sigma_nu", "sigma_lambda", "tau_psi"))) {
+      c("alpha", "tau_alpha", "sigma_lambda", "tau_psi"))) {
       pdef <- priors[priors$type == ptype, ]
       channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
     }
-    for (ptype in intersect(types, c("beta", "delta", "tau"))) {
+    for (ptype in intersect(types, c("beta", "delta", "tau", "sigma_nu"))) {
       channel <- prepare_prior(ptype, priors, channel)
     }
   }
@@ -354,6 +356,9 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
     identical(length(channel$delta_prior_distr), 1L)
   channel$write_tau <- channel$has_varying &&
     identical(length(channel$tau_prior_distr), 1L)
+  channel$write_sigma_nu <-
+    (channel$has_random || channel$has_random_intercept) &&
+    identical(length(channel$sigma_nu_prior_distr), 1L)
   list(channel = channel, priors = priors)
 }
 
@@ -377,7 +382,8 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
   } else {
     priors <- priors[priors$response == y, ]
     types <- priors$type
-    for (ptype in intersect(types, c("alpha", "beta", "delta", "tau"))) {
+    for (ptype in intersect(types,
+      c("alpha", "beta", "delta", "tau", "sigma_nu"))) {
       channel <- prepare_prior(ptype, priors, channel)
     }
     if ("tau_alpha" %in% types) {
@@ -397,6 +403,9 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
     identical(length(channel$delta_prior_distr), 1L)
   channel$write_tau <- channel$has_varying &&
     identical(length(channel$tau_prior_distr), 1L)
+  channel$write_sigma_nu <-
+    (channel$has_random || channel$has_random_intercept) &&
+    identical(length(channel$sigma_nu_prior_distr), 1L)
   list(channel = channel, priors = priors)
 }
 
