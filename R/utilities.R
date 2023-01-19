@@ -77,60 +77,63 @@ drop_unused <- function(dformula, data, group_var, time_var) {
 #' @param x \[`character()`]\cr A vector of terms to add.
 #' @param type \[`character(1)`]\cr Either `"fixed"` or `"varying"`
 #'   indicating the type of terms to add.
-#' @param varying_idx \[`integer()`] Indices of left-hand side terms that have
-#'   time-varying coefficients
-#' @param varying_icpt \[`logical(1)`] Does the formula have a varying
+#' @param varying_idx \[`integer()`]\cr Indices of left-hand side terms that
+#'   have time-varying coefficients.
+#' @param random_idx \[`integer()`]\cr Indices of the left-hand side term that
+#'   have random coefficient terms.
+#' @param varying_icpt \[`logical(1)`]\cr Does the formula have a varying
 #'   intercept?
-#' @param fixed_icpt \[`logical(1)`] Does the formula have a fixed intercept?
+#' @param fixed_icpt \[`logical(1)`]\cr
+#'   Does the formula have a fixed intercept?
+#' @param random_icpt \[`logical(1)`]\cr
+#'   Does the formula have a random intercept
 #' @noRd
-increment_formula <- function(formula, x, type = c("fixed", "varying", "random"),
-                              varying_idx, varying_icpt, fixed_icpt,
-                              random_idx, random_icpt) {
+increment_formula <- function(formula, x,
+                              type = c("fixed", "varying", "random"),
+                              varying_idx, fixed_idx, random_idx,
+                              varying_icpt, fixed_icpt, random_icpt) {
   v_icpt <- ifelse_(varying_icpt, "1", "-1")
+  r_icpt <- ifelse_(random_icpt, "1", "-1")
   n_varying <- length(varying_idx)
+  n_random <- length(random_idx)
   x_plus <- paste0(x, collapse = " + ")
   ft <- terms(formula)
   tr <- attr(ft, "term.labels")
+  f <- paste0(tr[fixed_idx], collapse = " + ")
   v <- paste0(tr[varying_idx], collapse = " + ")
-  formula_str <- ""
-  if (n_varying > 0L) {
-    if (n_varying < length(tr)) {
-      formula <- stats::drop.terms(
-        ft,
-        dropx = varying_idx,
-        keep.response = TRUE
-      )
-      ft <- terms(formula)
-      tr <- attr(ft, "term.labels")
-    } else {
-      tr <- character(0L)
-    }
-  }
-  if (length(tr) > 0L) {
-    formula <- reformulate(
-      termlabels = tr,
-      response = formula_lhs(formula),
-      intercept = fixed_icpt
-    )
-    formula_str <- deparse1(formula)
-  } else {
-    formula_str <- paste0(
-      deparse1(formula_lhs(formula)),
-      " ~ ",
-      ifelse_(fixed_icpt, "1", "-1")
-    )
-  }
-  if (identical(type, "varying")) {
-    v <- paste0(" + ", v, ifelse_(nzchar(v), " + ", ""), x_plus)
-    out_str <- glue::glue("{formula_str} + varying(~{v_icpt}{v})")
-  } else {
-    v <- ifelse_(nzchar(v), paste0(" + ", v), v)
-    out_str <- ifelse_(
-      n_varying > 0L || varying_icpt,
-      glue::glue("{formula_str} + {x_plus} + varying(~{v_icpt}{v})"),
-      glue::glue("{formula_str} + {x_plus}")
-    )
-  }
+  r <- paste0(tr[random_idx], collapse = " + ")
+  resp <- attr(ft, "variables")[[2L]]
+  formula_str <- ifelse_(
+    fixed_icpt,
+    paste0(resp, "~1"),
+    paste0(resp, "~-1")
+  )
+  v_out <- ifelse_(
+    identical(type, "varying"),
+    paste0(" + ", v, ifelse_(nzchar(v), " + ", ""), x_plus),
+    ifelse_(nzchar(v), paste0(" + ", v), v)
+  )
+  v_out <- ifelse_(
+    identical(type, "varying") || n_varying > 0L || varying_icpt,
+    glue::glue(" + varying(~{v_icpt}{v_out})"),
+    ""
+  )
+  r_out <- ifelse_(
+    identical(type, "random"),
+    paste0(" + ", r, ifelse_(nzchar(r), " + ", ""), x_plus),
+    ifelse_(nzchar(r), paste0(" + ", r), r)
+  )
+  r_out <- ifelse_(
+    identical(type, "random") || n_random > 0L || random_icpt,
+    glue::glue(" + random(~{r_icpt}{r_out})"),
+    ""
+  )
+  f_out <- ifelse_(
+    identical(type, "fixed"),
+    paste0(" + ", f, ifelse_(nzchar(f), " + ", ""), x_plus),
+    ifelse_(nzchar(f), paste0(" + ", f), f)
+  )
+  out_str <- glue::glue("{formula_str}{f_out}{v_out}{r_out}")
   as.formula(out_str)
 }
 
