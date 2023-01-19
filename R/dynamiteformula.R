@@ -304,9 +304,19 @@ print.dynamiteformula <- function(x, ...) {
     cat("\nLagged responses added as predictors with: k = ", cs(k), sep = "")
   }
   if (!is.null(attr(x, "random_spec"))) {
-    ifelse_(attr(x, "random_spec")$correlated,
-    cat("\nGroup-level random effects modeled as correlated."),
-    cat("\nGroup-level random effects modeled as independent.")
+    resp <- get_responses(x)
+    has_random <- unlist(
+      lapply(x, function(z) {
+        z$has_random_intercept || length(z$random) > 0
+      })
+    )
+    co <- attr(x, "random_spec")$correlated
+    cat(
+      ifelse_(co, "\nCorrelated random ", "\nRandom "),
+      "effects added for response(s): ",
+      cs(resp[has_random]),
+      "\n",
+      sep = ""
     )
   }
   invisible(x)
