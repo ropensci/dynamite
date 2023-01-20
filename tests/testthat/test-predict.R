@@ -3,6 +3,8 @@
 #' @srrstats {G5.4} Predict and fitted method produce results identical with
 #'   "manual" computation based on the same posterior samples.
 #'
+run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "true")
+
 test_that("predictions are on the same scale as input data", {
   expect_error(
     pred <- predict(gaussian_example_fit, type = "response", n_draws = 1),
@@ -129,8 +131,9 @@ test_that("fitted works", {
   xzy <- gaussian_example_fit$data |> dplyr::filter(id == 5 & time == 20)
   manual <- as_draws(gaussian_example_fit) |>
     dplyr::filter(.iteration == iter & .chain == 1) |>
-    dplyr::summarise(fit = `alpha_y[20]` + nu_y_id5 + `delta_y_x[20]` * xzy$x +
-      beta_y_z * xzy$z + `delta_y_y_lag1[20]` * xzy$y_lag1) |>
+    dplyr::summarise(fit = `alpha_y[20]` + nu_y_alpha_id5 +
+        `delta_y_x[20]` * xzy$x + beta_y_z * xzy$z +
+        `delta_y_y_lag1[20]` * xzy$y_lag1) |>
     dplyr::pull(fit)
   automatic <- fitg |>
     dplyr::filter(id == 5 & time == 20) |>
@@ -342,48 +345,61 @@ test_that("predict with multiple random effects work", {
   y1 <- rbinom(n * k, size = 20, prob = plogis(x + u1 + u2 * x))
   y2 <- rnorm(n * k, u3 + 2 * x)
   d <- data.frame(year = 1:n, person = rep(1:k, each = n),
-    y1 = y1, y2 = y2, x = x,  n = 20)
+    y1 = y1, y2 = y2, x = x,  tr = 20)
 
   fit <- dynamite(
-    obs(y1 ~ x + trials(n) + random(~ x), family = "binomial") +
+    obs(y1 ~ x + trials(tr) + random(~ x), family = "binomial") +
     obs(y2 ~ x + random(~ 1), family = "gaussian") +
       random_spec(),
     data = d, time = "year", group = "person",
     chains = 1, iter = 2000, refresh = 0
   )
-  #TODO test correlations,
-  # currently wrong in summary(fit, type="corr_nu") vs colMeans(rstan::extract(fit$stanfit, "corr_nu")[[1]])
+
+  expect_error(
+    sumr <- summary(fit, type = "sigma_nu"),
+    NA
+  )
+  expect_equal(sumr$mean, c(0.2338, 0.1331, 0.3339), tolerance = 0.2)
+
+  expect_error(
+    sumr <- summary(fit, type = "corr_nu"),
+    NA
+  )
+  expect_equal(sumr$mean, c(0.336, -0.0522, -0.0712), tolerance = 0.2)
+
   expect_error(
     predict(fit, n_draws = 5),
     NA
   )
 
   newdata <- rbind(
-    d,
+    d[(n + 1):nrow(d), ], # remove one person and add two
     data.frame(
-      y = c(0.5, rep(NA, 29L)),
-      x = rnorm(30),
-      z = rbinom(30, 1, 0.7),
-      id = 226L, time = seq.int(1, 30)
+      y1 = c(4, rep(NA, n - 1), 4, rep(NA, n - 1)),
+      y2 = c(0, rep(NA, n - 1), 0.5, rep(NA, n - 1)),
+      x = rnorm(2 * n),
+      person = rep(c(226L, 500L), each = n),
+      year = seq.int(1, n),
+      tr = rep(c(10, 25), each = n)
     )
   )
   expect_error(
-    predict(gaussian_example_fit,
-      newdata = gaussian_example_new_levels,
-      type = "response", n_draws = 2, new_levels = "bootstrap"
+    predict(fit,
+      newdata = newdata,
+      type = "response", n_draws = 5, new_levels = "bootstrap"
     ),
     NA
   )
   expect_error(
-    predict(gaussian_example_fit,
-      newdata = gaussian_example_new_levels,
-      type = "response", n_draws = 2, new_levels = "gaussian"
+    predict(fit,
+      newdata = newdata,
+      type = "response", n_draws = 5, new_levels = "gaussian"
     ),
     NA
   )
   expect_error(
-    predict(gaussian_example_fit,
-      newdata = gaussian_example_new_levels,
+    predict(fit,
+      newdata = newdata,
       type = "response", n_draws = 2, new_levels = "original"
     ),
     NA
@@ -454,7 +470,7 @@ test_that("predict with loglik works", {
   manual <- as_draws(gaussian_example_fit) |>
     dplyr::filter(.iteration == iter & .chain == 1) |>
     dplyr::summarise(loglik = dnorm(xzy$y, `alpha_y[20]` +
-      nu_y_id5 + `delta_y_x[20]` * xzy$x +
+      nu_y_alpha_id5 + `delta_y_x[20]` * xzy$x +
       beta_y_z * xzy$z + `delta_y_y_lag1[20]` * xzy$y_lag1, sigma_y,
     log = TRUE
     )) |>
