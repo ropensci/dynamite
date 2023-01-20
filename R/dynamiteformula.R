@@ -423,9 +423,10 @@ which_stochastic <- function(x) {
 #' @param x A `dynamiteformula` object
 #' @noRd
 which_random <- function(x) {
-  resp <- get_responses(x)
+  s <- which_stochastic(x)
+  resp <- get_responses(x)[s]
   has_random <- unlist(
-    lapply(x, function(z) {
+    lapply(x[s], function(z) {
       z$has_random_intercept || length(z$random) > 0
     })
   )
