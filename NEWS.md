@@ -3,7 +3,7 @@
     works analogously with `varying()` inside `obs()`, and new `random_spec()`
     component can be used to define whether the random effects should be 
     correlated or not and whether to use noncentered parameterization.
-  * The packge no longer depends on the `bayesplot` package. Instead, `ggplot2`
+  * The package no longer depends on the `bayesplot` package. Instead, `ggplot2`
     and `patchwork` packages are used for the `plot` method.
   
 # dynamite 1.0.2
