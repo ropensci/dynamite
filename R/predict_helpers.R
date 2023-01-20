@@ -390,7 +390,7 @@ generate_random_effect <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
       n_new <- sum(is_new)
       out[, which(is_new), ] <- switch(new_levels,
         `bootstrap` = {
-          idx <- sample.int(n_draws * n_group, n_draws * n_new, TRUE)
+          idx <- sample.int(n_draws * length(orig_ids), n_draws * n_new, TRUE)
           array(matrix(nu, ncol = M)[idx, ], c(n_draws, n_new, M))
         },
         `gaussian` = {
@@ -470,7 +470,7 @@ prepare_eval_envs <- function(object, simulated, observed,
     M <- nrow(sigma_nu)
     nu_samples <- array(
       unlist(samples[nus]),
-      c(n_all_draws, n_group, M)
+      c(n_all_draws, length(orig_ids), M)
     )[idx_draws, , , drop = FALSE]
     if (attr(object$dformulas$stoch, "random_spec")$correlated) {
       corr_matrix_nu <- aperm(
