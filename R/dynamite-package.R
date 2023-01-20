@@ -23,6 +23,7 @@
 #' @name dynamite-package
 #' @importFrom data.table :=
 #' @importFrom loo loo
+#' @importFrom patchwork wrap_plots
 #' @importFrom posterior as_draws as_draws_df ndraws
 #' @importFrom rlang .data
 #' @importFrom stats formula model.matrix model.matrix.lm na.exclude

@@ -16,10 +16,10 @@ all responses.}
 \item{type}{[\code{character(1)}]\cr Type of the parameter for which the plots
 should be drawn. See details of possible values.}
 
-\item{...}{Further arguments to \link[bayesplot:MCMC-combos]{bayesplot::mcmc_combo}.}
+\item{...}{Not used..}
 }
 \value{
-The output object from \link[bayesplot:MCMC-combos]{bayesplot::mcmc_combo}.
+A \code{ggplot} object.
 }
 \description{
 Produces the traceplots and the density plots of the model parameters.
@@ -31,11 +31,11 @@ Possible parameter types are:
 \item \code{alpha} Intercept terms (time-invariant or time-varying).
 \item \code{beta} Time-invariant regression coefficients.
 \item \code{delta} Time-varying regression coefficients.
-\item \code{nu} Random intercepts.
+\item \code{nu} Random effects
 \item \code{tau} Standard deviations of the spline coefficients of \code{delta}.
 \item \code{tau_alpha} Standard deviations of the spline coefficients of
 time-varying \code{alpha}.
-\item \code{sigma_nu} Standard deviation of the random intercepts \code{nu}.
+\item \code{sigma_nu} Standard deviation of the random effects \code{nu}.
 \item \code{sigma} Standard deviations of gaussian responses.
 \item \code{phi} Dispersion parameters of negative binomial responses.
 \item \code{omega} Spline coefficients of the regression coefficients \code{delta}.
@@ -44,7 +44,7 @@ time-varying \code{alpha}.
 
 Note however, that typically drawing these plots for the time-varying
 parameters \code{delta} (and \code{alpha}), spline coefficients, or random
-intercepts leads to too many plots.
+effects leads to too many plots.
 }
 \examples{
 plot(gaussian_example_fit, type = "beta")

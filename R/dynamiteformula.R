@@ -81,7 +81,7 @@
 #' for each channel.
 #'
 #' It is also possible to define group-specific (random) effects term
-#' using the special function [random()] similarly as [varying()]. For example,
+#' using the special syntax `random()` similarly as `varying()`. For example,
 #' `random(~1)` leads to a model where in addition to the common intercept,
 #' each individual/group has their own intercept with zero-mean normal prior and
 #' unknown standard deviation analogously with the typical mixed models. An
@@ -276,7 +276,7 @@ aux <- function(formula) {
 #' @param ... Ignored.
 #' @export
 #' @examples
-#' x <- obs(y ~ x + random(~1 + d), family = "gaussian") +
+#' x <- obs(y ~ x + random(~1 + lag(d)), family = "gaussian") +
 #'   obs(z ~ varying(~w), family = "exponential") +
 #'   aux(numeric(d) ~ log(y) | init(c(0, 1))) +
 #'   lags(k = 2) +

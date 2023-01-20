@@ -28,11 +28,11 @@
 #'   all responses.
 #' @param type \[`character(1)`]\cr Type of the parameter for which the plots
 #'   should be drawn. See details of possible values.
-#' @param ... Further arguments to [bayesplot::mcmc_combo].
-#' @return The output object from [bayesplot::mcmc_combo].
+#' @param ... Not used..
+#' @return A `ggplot` object.
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.2, BS6.3, BS6.5} Implements the `plot`
 #' method. Further plots can be easily constructed with the help of `as_draws`
-#' combined with `ggplot2` and `bayesplot`, for example.
+#' combined with `ggplot2`, for example.
 #' @examples
 #' plot(gaussian_example_fit, type = "beta")
 #'
@@ -49,7 +49,38 @@ plot.dynamitefit <- function(x, responses = NULL, type, ...) {
   out <- suppressWarnings(
     as_draws_df.dynamitefit(x, responses = responses, types = type)
   )
-  bayesplot::mcmc_combo(out, ...)
+  # avoid NSE notes from R CMD check
+  parameter <- density <- .iteration <- .chain <- NULL
+  vars <- setdiff(names(out), c(".chain", ".iteration", ".draw"))
+  p_list <- vector(mode = "list", length = 2L * length(vars))
+  for (i in seq_along(vars)) {
+    v <- vars[i]
+    d <- out[, c(v, ".chain", ".iteration", ".draw")]
+    p_list[[2L * (i - 1L) + 1L]] <- ggplot2::ggplot(
+      d,
+      ggplot2::aes(x = !!rlang::sym(v), y = ggplot2::after_stat(density))
+    ) +
+      ggplot2::geom_density() +
+      ggplot2::labs(x = v, y = "") +
+      ggplot2::scale_x_continuous(expand = c(0.0, 0.0))
+    p_list[[2L * i]] <- ggplot2::ggplot(
+      d,
+      ggplot2::aes(
+        x = .iteration,
+        y = !!rlang::sym(v),
+        linetype = factor(.chain)
+      )
+    ) +
+      ggplot2::geom_line() +
+      ggplot2::labs(x = "", y = v) +
+      ggplot2::guides(linetype = ggplot2::guide_legend(title = "Chain"))
+  }
+  patchwork::wrap_plots(
+    p_list,
+    ncol = 2L,
+    nrow = length(vars),
+    byrow = TRUE
+  )
 }
 
 #' Plot Time-varying Regression Coefficients of a Dynamite Model

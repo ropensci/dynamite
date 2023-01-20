@@ -21,12 +21,13 @@ A \code{dynamitefit} object obtained by running \code{dynamite} on the
 set.seed(1)
 library(dynamite)
 gaussian_example_fit <- dynamite(
-  obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
-  random() + splines(df = 20),
+  obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1), family = "gaussian") +
+  random_spec() + splines(df = 20),
   data = gaussian_example, time = "time", group = "id",
   iter = 2000, warmup = 1000, thin = 10,
   chains = 2, cores = 2, refresh = 0, save_warmup = FALSE,
-  pars = c("omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L"),
+  pars = c("omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L",
+  "sigma_nu", "a_y"),
   include = FALSE
 )
 }
