@@ -263,7 +263,7 @@ as_data_table_xi <- function(x, draws, ...) {
 
 #' @describeIn as_data_table_default Data Table for a "corr_nu" Parameter
 #' @noRd
-as_data_table_corr_nu <- function(x, draws, ...) {
+as_data_table_corr_nu <- function(x, draws, n_draws, ...) {
 
   vars <- unlist(lapply(x$stan$model_vars, function(x) {
     icpt <- ifelse_(x$has_random_intercept,
@@ -275,7 +275,7 @@ as_data_table_corr_nu <- function(x, draws, ...) {
 
   pairs <- apply(utils::combn(vars, 2L), 2L, paste, collapse = "__")
   data.table::data.table(
-    parameter = paste0("corr_nu_", pairs),
+    parameter = rep(paste0("corr_nu_", pairs), each = n_draws),
     value = c(draws)
   )
 }
@@ -544,11 +544,11 @@ as_data_table_omega_psi <- function(x, draws, n_draws, category, ...) {
 
 #' @describeIn as_data_table_default Data Table for a "corr_psi" Parameter
 #' @noRd
-as_data_table_corr_psi <- function(x, draws, ...) {
+as_data_table_corr_psi <- function(x, draws, n_draws, ...) {
   resp <- attr(x$dformulas$stoch, "lfactor")
   pairs <- apply(utils::combn(resp, 2L), 2L, paste, collapse = "_")
   data.table::data.table(
-    parameter = paste0("corr_psi_", pairs),
+    parameter = rep(paste0("corr_psi_", pairs), each = n_draws),
     value = c(draws)
   )
 }
