@@ -14,8 +14,8 @@ gaussian_example_fit <- dynamite(
       random_spec() +
       splines(df = 20),
   data = gaussian_example,
-  group = "id",
   time = "time",
+  group = "id",
   iter = 2000,
   warmup = 1000,
   thin = 10,

@@ -133,7 +133,11 @@ test_that("parameters for an AR(1) model are recovered as with arima", {
   set.seed(1)
   fit <- dynamite(obs(LakeHuron ~ 1, "gaussian") + lags(),
     data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
-    "id", "time", chains = 1, iter = 2000, refresh = 500
+    time = "time",
+    group = "id",
+    chains = 1,
+    iter = 2000,
+    refresh = 500
   )
   fit_arima <- arima(LakeHuron, c(1, 0, 0))
   expect_equal(coef(fit)$mean[2], coef(fit_arima)[1],
@@ -152,7 +156,11 @@ test_that("LOO works for AR(1) model", {
   set.seed(1)
   fit <- dynamite(obs(LakeHuron ~ 1, "gaussian") + lags(),
     data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
-    "id", "time", chains = 1, iter = 2000, refresh = 500
+    time = "time",
+    group = "id",
+    chains = 1,
+    iter = 2000,
+    refresh = 500
   )
   l <- loo(fit)
   expect_equal(l$estimates,
@@ -174,7 +182,11 @@ test_that("LFO works for AR(1) model", {
   set.seed(1)
   fit <- dynamite(obs(LakeHuron ~ 1, "gaussian") + lags(),
     data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
-    "id", "time", chains = 1, iter = 2000, refresh = 500
+    time = "time",
+    group = "id",
+    chains = 1,
+    iter = 2000,
+    refresh = 500
   )
   l <- lfo(fit, L = 20)
   expect_equal(l$ELPD, -90.4188604974201, tolerance = 1)
@@ -253,7 +265,7 @@ test_that("parameters of a time-varying gaussian model are recovered", {
   # test with a single large dataset
   d <- create_data(T_ = 500, N = 500, D = 100)
   data <- get_data(obs(y ~ -1 + z + varying(~x), family = "gaussian") +
-    splines(df = 100), group = "id", time = "time", data = d$data)
+    splines(df = 100), time = "time", group = "id", data = d$data)
   fit_long <- rstan::sampling(model,
     data = data,
     refresh = 0, chains = 1, iter = 2000,

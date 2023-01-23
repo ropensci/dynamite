@@ -5,6 +5,9 @@
     correlated or not and whether to use noncentered parameterization.
   * The package no longer depends on the `bayesplot` package. Instead, `ggplot2`
     and `patchwork` packages are used for the `plot` method.
+  * Argument order of the `dynamite` function has been changed: `time` now 
+    precedes `group` and `backend` now precedes `verbose`. This change is also 
+    reflected in the `get_data`, `get_priors`, and `get_code` functions.
   
 # dynamite 1.0.2
   * Fixed a name clash issue in Stan code generation.

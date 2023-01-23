@@ -47,18 +47,23 @@
 #'   values which will simply be ignored in the estimation in a case-wise
 #'   fashion (per time-point and per channel). Input `data` is converted to
 #'   channel specific matrix representations via [stats::model.matrix.lm()].
+#' @param time \[`character(1)`]\cr A column name of `data` that denotes the
+#'   time index of observations. If this variable is a factor, the integer
+#'   representation of its levels are used internally for defining the time
+#'   indexing.
 #' @param group \[`character(1)`]\cr A column name of `data` that denotes the
 #'   unique groups or `NULL` corresponding to a scenario without any groups.
 #'   If `group` is `NULL`, a new column `.group` is created with constant
 #'   value `1L` is created indicating that all observations belong to the same
 #'   group. In case of name conflicts with `data`, see the `group_var` element
 #'   of the return object to get the column name of the new variable.
-#' @param time \[`character(1)`]\cr A column name of `data` that denotes the
-#'   time index of observations. If this variable is a factor, the integer
-#'   representation of its levels are used internally for defining the time
-#'   indexing.
 #' @param priors \[`data.frame`]\cr An optional data frame with prior
 #'   definitions. See [dynamite::get_priors()] and 'Details'.
+#' @param backend \[`character(1)`]\cr Defines the backend interface to Stan,
+#'   should be  either `"rstan"` (the default) or `"cmdstanr"`. Note that
+#'   `cmdstanr` needs to be installed separately as it is not on CRAN. It also
+#'   needs the actual `CmdStan` software. See https://mc-stan.org/cmdstanr/ for
+#'   details.
 #' @param verbose \[`logical(1)`]\cr All warnings and messages are suppressed
 #'   if set to `FALSE`. Defaults to `TRUE`.
 #' @param debug \[`list()`]\cr A named list of form `name = TRUE` indicating
@@ -68,11 +73,6 @@
 #'   and sampling steps respectively. This can be useful for debugging when
 #'   combined with `model_code = TRUE`, which adds the Stan model code to the
 #'   return object.
-#' @param backend \[`character(1)`]\cr Defines the backend interface to Stan,
-#'   should be  either `"rstan"` (the default) or `"cmdstanr"`. Note that
-#'   `cmdstanr` needs to be installed separately as it is not on CRAN. It also
-#'   needs the actual `CmdStan` software. See https://mc-stan.org/cmdstanr/ for
-#'   details.
 #' @param ... Additional arguments to [rstan::sampling()] or
 #'  [cmdstanr::sample()], such as `chains` and `cores` (`parallel_chains` in
 #'  `cmdstanr`).
@@ -131,15 +131,18 @@
 #' fit <- dynamite(
 #'   dformula = obs(y ~ -1 + varying(~x), family = "gaussian") +
 #'     lags(type = "varying") +
-#'     splines(df = 20), gaussian_example, "id", "time",
+#'     splines(df = 20),
+#'   gaussian_example,
+#'   "time",
+#'   "id",
 #'   chains = 1,
 #'   refresh = 0
 #' )
 #' }
 #'
-dynamite <- function(dformula, data, group = NULL, time,
-                     priors = NULL, verbose = TRUE, debug = NULL,
-                     backend = "rstan", ...) {
+dynamite <- function(dformula, data, time, group = NULL,
+                     priors = NULL, backend = "rstan",
+                     verbose = TRUE, debug = NULL, ...) {
   stopifnot_(
     !missing(dformula),
     "Argument {.arg dformula} is missing."

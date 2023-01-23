@@ -48,8 +48,8 @@ set.seed(1)
 fit <- dynamite(
   dformula = obs(LakeHuron ~ 1, "gaussian") + lags(),
   data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
-  group = "id",
   time = "time",
+  group = "id",
   chains = 1,
   refresh = 0
 )

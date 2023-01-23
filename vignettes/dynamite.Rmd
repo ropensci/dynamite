@@ -399,7 +399,8 @@ iterations and additional thinning:
 
 ```{r, eval = FALSE}
 multichannel_example_fit <- dynamite(
-  f, multichannel_example, "id", "time",
+  f, data = multichannel_example, 
+  time = "time", group = "id"
   chains = 1, cores = 1, iter = 2000, warmup = 1000, init = 0, refresh = 0,
   thin = 5, save_warmup = FALSE)
 ```
@@ -408,12 +409,12 @@ You can update the estimated model which is
 included in the package as 
 ```{r, eval = FALSE}
 multichannel_example_fit <- update(multichannel_example_fit,
-    iter = 2000,
-    warmup = 1000,
-    chains = 4,
-    cores = 4,
-    refresh = 0,
-    save_warmup = FALSE
+  iter = 2000,
+  warmup = 1000,
+  chains = 4,
+  cores = 4,
+  refresh = 0,
+  save_warmup = FALSE
 )
 ```
 
@@ -421,8 +422,9 @@ Note that the `dynamite` call above produces a warning message related to the
 deterministic channel `logp`:
 
 ```{r, eval = TRUE, echo = FALSE}
-fit <- dynamite(f, multichannel_example, "id", "time", 
-                debug = list(no_compile = TRUE))
+fit <- dynamite(
+  f, data = multichannel_example, 
+  time = "time", id = "id", debug = list(no_compile = TRUE))
 ```
 
 This happens because the formulas of the other channels have `lag(logp)` as a 

@@ -51,8 +51,8 @@ init <- dplyr::lst(a_g, beta_g, sigma_g, beta_p, a_p, beta_b, a_b)
 fit <- dynamite(
   dformula = f,
   data = d,
-  group = "id",
   time = "time",
+  group = "id",
   verbose = FALSE,
   chains = 1,
   iter = 1,

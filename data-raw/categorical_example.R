@@ -37,8 +37,8 @@ init <- list(
 fit <- dynamite(
   dformula = f,
   data = d,
-  group = "id",
   time = "time",
+  group = "id",
   chains = 1,
   iter = 1,
   algorithm = "Fixed_param",

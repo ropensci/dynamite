@@ -36,14 +36,14 @@ get_priors <- function(x, ...) {
 
 #' @rdname get_priors
 #' @export
-get_priors.dynamiteformula <- function(x, data, group = NULL, time, ...) {
+get_priors.dynamiteformula <- function(x, data, time, group = NULL, ...) {
   out <- do.call(
     "dynamite",
     list(
       dformula = x,
       data = data,
-      group = group,
       time = time,
+      group = group,
       debug = list(no_compile = TRUE),
       ...
     )
@@ -83,14 +83,14 @@ get_code <- function(x, ...) {
 
 #' @rdname get_code
 #' @export
-get_code.dynamiteformula <- function(x, data, group = NULL, time, ...) {
+get_code.dynamiteformula <- function(x, data, time, group = NULL, ...) {
   out <- do.call(
     "dynamite",
     list(
       dformula = x,
       data = data,
-      group = group,
       time = time,
+      group = group,
       debug = list(no_compile = TRUE, model_code = TRUE),
       ...
     )
@@ -124,14 +124,14 @@ get_data <- function(x, ...) {
 
 #' @rdname get_data
 #' @export
-get_data.dynamiteformula <- function(x, data, group = NULL, time, ...) {
+get_data.dynamiteformula <- function(x, data, time, group = NULL, ...) {
   out <- do.call(
     "dynamite",
     list(
       dformula = x,
       data = data,
-      group = group,
       time = time,
+      group = group,
       debug = list(no_compile = TRUE, sampling_vars = TRUE),
       ...
     )

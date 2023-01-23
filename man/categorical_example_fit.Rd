@@ -23,8 +23,15 @@ library(dynamite)
 f <- obs(x ~ z + lag(x) + lag(y), family = "categorical") +
   obs(y ~ z + lag(x) + lag(y), family = "categorical")
 categorical_example_fit <- dynamite(
-  f, categorical_example, "id", "time",
-  chains = 1, refresh = 0, thin = 5, save_warmup = FALSE)
+  f,
+  data = categorical_example,
+  time = "time",
+  group = "id",
+  chains = 1,
+  refresh = 0,
+  thin = 5,
+  save_warmup = FALSE
+)
 }
 Note the small number of samples due to size restrictions on CRAN.
 }
