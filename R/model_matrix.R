@@ -59,10 +59,12 @@ full_model.matrix <- function(dformula, data, verbose) {
       }
     }
     attr(model_matrix, "assign")[[i]] <- sort(
-      c(
-        attr(model_matrix, "fixed")[[i]],
-        attr(model_matrix, "varying")[[i]],
-        attr(model_matrix, "random")[[i]]
+      unique(
+        c(
+          attr(model_matrix, "fixed")[[i]],
+          attr(model_matrix, "varying")[[i]],
+          attr(model_matrix, "random")[[i]]
+        )
       )
     )
     #cols <- colnames(model_matrices[[i]])
