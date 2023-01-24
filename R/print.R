@@ -65,7 +65,11 @@ print.dynamitefit <- function(x, ...) {
     cat("\n\nElapsed time (seconds):\n")
     print(rstan::get_elapsed_time(x$stanfit))
 
-    nu <- ifelse(any(x$priors$type == "sigma_nu"), " (excluding random effects)", "")
+    nu <- ifelse(
+      any(x$priors$type == "sigma_nu"),
+      "\n(excluding random effects)",
+      ""
+    )
     cat(
       paste0(
         "\nSummary statistics of the time-invariant parameters",
