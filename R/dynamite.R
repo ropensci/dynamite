@@ -809,7 +809,9 @@ parse_random_spec <- function(random_spec_def, M) {
   if (is.null(random_spec_def)) {
     random_spec_def <- list(correlated = TRUE, noncentered = TRUE)
   }
-  if (M < 2L) random_spec_def$correlated <- FALSE
+  if (M < 2L) {
+    random_spec_def$correlated <- FALSE
+  }
   random_spec_def$M <- M
   random_spec_def
 }

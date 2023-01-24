@@ -355,6 +355,30 @@ get_formulas <- function(x) {
   lapply(x, "[[", "formula")
 }
 
+#' Get Special Type Formula of a channel in a `dynamiteformula`
+#'
+#' @param x A channel of a `dynamiteformula`
+get_type_formula <- function(x, type = c("fixed", "varying", "ranodm")) {
+  has_icpt <- ifelse_(
+    type %in% c("fixed", "varying"),
+    x$has_fixed_intercept || x$has_varying_intercept,
+    x$has_random_intercept
+  )
+  icpt <- ifelse_(has_icpt, "1", "-1")
+  idx <- x[[type]]
+  ft <- terms(x$formula)
+  resp <- attr(ft, "variables")[[2L]]
+  tr <- attr(ft, "term.labels")
+  rhs <- paste0(tr[idx], collapse = " + ")
+  rhs_out <- ifelse_(nzchar(rhs), paste0(" + ", rhs), "")
+  out_str <- paste0(resp, " ~ ", icpt, rhs_out)
+  ifelse_(
+    has_icpt || nzchar(rhs_out),
+    as.formula(out_str),
+    NULL
+  )
+}
+
 #' Get All Original Formulas of a `dynamiteformula` Object
 #'
 #' @param x A `dynamiteformula` object.

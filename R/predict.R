@@ -345,7 +345,7 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
 predict_full <- function(object, simulated, observed, type, eval_type,
                          new_levels, n_draws, fixed,
                          group_var, time_var, expand, df) {
-  formulas_stoch <- get_formulas(object$dformulas$stoch)
+  formulas_stoch <- object$dformulas$stoch
   resp_stoch <- get_responses(object$dformulas$stoch)
   lhs_ld <- get_responses(object$dformulas$lag_det)
   rhs_ld <- get_predictors(object$dformulas$lag_det)
@@ -448,7 +448,7 @@ predict_full <- function(object, simulated, observed, type, eval_type,
 #' @noRd
 predict_summary <- function(object, storage, observed, type, funs, new_levels,
                             n_draws, fixed, group_var, time_var, df) {
-  formulas_stoch <- get_formulas(object$dformulas$stoch)
+  formulas_stoch <- object$dformulas$stoch
   resp_stoch <- get_responses(object$dformulas$stoch)
   lhs_ld <- get_responses(object$dformulas$lag_det)
   rhs_ld <- get_predictors(object$dformulas$lag_det)
