@@ -33,7 +33,6 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
     past <- do.call(as_fun, args = list(0))
     #data[, dd[[i]]$response := past, env = list(past = past)]
     data.table::set(data, j = dd[[i]]$response, value = past)
-    #data[, dd[[i]]$response := past]
     data[, dd[[i]]$response := NA]
   }
   rhs_ld <- get_predictors(dld)
@@ -45,6 +44,7 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
       past <- do.call(as_fun, args = list(dld[[k]]$specials$past[1L]))
       #data[, (dld[[k]]$response) := past, env = list(past = past)]
       data.table::set(data, j = dld[[k]]$response, value = past)
+      #data[, (dld[[k]]$response) := past]
       data[, (dld[[k]]$response) := NA]
     } else {
       #v <- data[[rhs_ld[k]]]
@@ -54,6 +54,7 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
         j = dld[[k]]$response,
         value = data[[rhs_ld[k]]]
       )
+      #data[, (dld[[k]]$response) := data[[rhs_ld[k]]]]
       data[, (dld[[k]]$response) := NA]
     }
   }
@@ -174,7 +175,8 @@ assign_lags_init <- function(data, idx, ro, lhs, rhs, offset = 1L) {
     val <- data[[rhs[k]]][idx - offset]
     na_val <- is.na(val)
     val[na_val] <- data[[lhs[k]]][idx][na_val]
-    data.table::set(data, i = idx, j = lhs[k], value = val)
+    #data.table::set(data, i = idx, j = lhs[k], value = val)
+    data[idx, (lhs[k]) := val]
   }
 }
 

@@ -207,7 +207,7 @@ dynamite <- function(dformula, data, time, group = NULL,
     }
     data[[group]] <- 1L
   }
-  data_name <- attr(data, "data_name")
+  data_name <- attr(dformula, "data_name")
   if (is.null(data_name)) {
     d <- match.call()$data
     data_name <- ifelse_(
@@ -516,7 +516,7 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
         `i` = "Converting the variable to {.cls integer} based on its levels."
       ))
     }
-    data[[time_var]] <- as.integer(data[[time_var]])
+    data.table::set(data, j = time_var, value = as.integer(data[[time_var]]))
   }
   chr_cols <- names(data)[vapply(data, is.character, logical(1L))]
   if (length(chr_cols) > 0L) {
@@ -536,11 +536,10 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
     )
   )
   for (j in which(valid_cols & !factor_cols)) {
-    data.table::set(
-      data,
-      j = j,
-      value = do.call(paste0("as.", typeof(data[[j]])), args = list(data[[j]]))
-    )
+    type <- typeof(data[[j]])
+    col <- data[[j]]
+    val <- do.call(paste0("as.", type), args = list(col))
+    data.table::set(data, j = j, value = val)
   }
   resp <- get_responses(dformula)
   ordered_factor_resp <- vapply(
