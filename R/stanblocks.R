@@ -108,6 +108,7 @@ create_transformed_data <- function(dformula, idt, vars) {
     .indent = idt(c(0, 1, 0, 1, 0, 1, 0)),
     .parse = FALSE
   )
+
 }
 
 #' @describeIn create_function Create the 'Parameters'

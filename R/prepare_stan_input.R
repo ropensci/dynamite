@@ -101,18 +101,21 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     Y_out[Y_na] <- 0.0
     form_specials <- specials[[i]]
     channel$resp <- resp
-    channel$L_fixed <- as.array(match(fixed_pars[[i]], assigned[[i]]))
-    channel$L_varying <- as.array(match(varying_pars[[i]], assigned[[i]]))
-    channel$J <- as.array(assigned[[i]])
+    #channel$L_fixed <- as.array(match(fixed_pars[[i]], assigned[[i]]))
+    #channel$L_varying <- as.array(match(varying_pars[[i]], assigned[[i]]))
+    #channel$J <- as.array(assigned[[i]])
     channel$J_fixed <- as.array(fixed_pars[[i]])
     channel$J_varying <- as.array(varying_pars[[i]])
+    channel$J <- c(channel$J_fixed, channel$J_varying)
     channel$J_random <- as.array(random_pars[[i]])
-    channel$K <- length(assigned[[i]])
     channel$K_fixed <- length(fixed_pars[[i]])
     channel$K_varying <- length(varying_pars[[i]])
     # note! Random intercept is counted to K_random but not to J_random...
     channel$K_random <- length(random_pars[[i]]) +
       dformula[[i]]$has_random_intercept
+    channel$K <- channel$K_fixed + channel$K_varying
+    channel$L_fixed <- seq_len(channel$K_fixed)
+    channel$L_varying <- channel$K_fixed + seq_len(channel$K_varying)
     obs_idx <- array(0L, dim = c(N, T_full - fixed))
     obs_len <- integer(T_full - fixed)
     for (j in seq_len(T_full - fixed)) {
@@ -189,7 +192,8 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     )
     prior_list[[resp]] <- prep$priors
     model_vars[[resp]] <- prep$channel
-    sampling_vars <- c(sampling_vars, prep$sampling_vars)
+    vectorizable_priors <- extract_vectorizable_priors(prep$channel, resp)
+    sampling_vars <- c(sampling_vars, prep$sampling_vars, vectorizable_priors)
   }
   sampling_vars$N <- N
   sampling_vars$K <- K
@@ -222,6 +226,16 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   )
 }
 
+extract_vectorizable_priors <- function(channel, resp) {
+  priors <- channel[which(
+    names(channel) %in% paste0(
+      c("alpha", "beta", "delta", "tau", "sigma_nu"), "_prior_pars")
+  )]
+  ifelse_(length(priors) > 0,
+    setNames(priors, paste0(names(priors), "_", resp)),
+    NULL
+  )
+}
 #' Construct a Prior Definition for a Regression Parameters
 #'
 #' @param ptype \[character(1L)]\cr Type of the parameter.
