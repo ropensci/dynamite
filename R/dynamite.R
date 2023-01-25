@@ -656,7 +656,7 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
   non_lags <- extract_nonlags(
     unique(unlist(get_terms(dformula[channels_stoch])))
   )
-  valid_resp <- c(resp_stoch, data_names)
+  valid_resp <- c(resp_all, data_names)
   mis_vars <- which(!non_lags %in% valid_resp)
   stopifnot_(
     identical(length(mis_vars), 0L),
@@ -1076,22 +1076,23 @@ prepare_lagged_response <- function(dformula, lag_map,
 #' @param lhs \[`character()`]\cr A vector of the new lagged variable names.
 #' @noRd
 parse_new_lags <- function(dformula, channels_stoch, increment, type, lhs) {
-  for (i in channels_stoch) {
+  for (i in seq_along(channels_stoch)) {
+    j <- channels_stoch[i]
     if (any(increment[[i]])) {
-      dformula[[i]] <- dynamiteformula_(
+      dformula[[j]] <- dynamiteformula_(
         formula = increment_formula(
-          formula = dformula[[i]]$formula,
-          x = lhs[increment[[i]]],
+          formula = dformula[[j]]$formula,
+          x = lhs[increment[[j]]],
           type = type,
-          varying_idx = dformula[[i]]$varying,
-          fixed_idx = dformula[[i]]$fixed,
-          random_idx = dformula[[i]]$random,
-          varying_icpt = dformula[[i]]$has_varying_intercept,
-          fixed_icpt = dformula[[i]]$has_fixed_intercept,
-          random_icpt = dformula[[i]]$has_random_intercept
+          varying_idx = dformula[[j]]$varying,
+          fixed_idx = dformula[[j]]$fixed,
+          random_idx = dformula[[j]]$random,
+          varying_icpt = dformula[[j]]$has_varying_intercept,
+          fixed_icpt = dformula[[j]]$has_fixed_intercept,
+          random_icpt = dformula[[j]]$has_random_intercept
         ),
-        original = dformula[[i]]$original,
-        family = dformula[[i]]$family
+        original = dformula[[j]]$original,
+        family = dformula[[j]]$family
       )
     }
   }

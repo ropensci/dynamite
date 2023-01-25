@@ -384,43 +384,55 @@ predict_full <- function(object, simulated, observed, type, eval_type,
   )
   skip <- TRUE
   for (i in seq.int(fixed + 1L, n_time)) {
+    k <- 0L
     time_i <- time_offset + i - fixed
     idx <- idx + n_draws
     idx_obs <- idx_obs + 1L
     assign_lags(simulated, idx, ro_ld, lhs_ld, rhs_ld, skip, n_draws)
     assign_lags(simulated, idx, ro_ls, lhs_ls, rhs_ls, skip, n_draws)
-    for (j in seq_along(resp_stoch)) {
-      model_matrix <- full_model.matrix_predict(
-        formulas_stoch,
-        simulated,
-        observed,
-        idx,
-        idx_obs,
-        object$stan$u_names
-      )
-      e <- eval_envs[[j]]
-      e$idx <- idx
-      e$time <- time_i
-      e$model_matrix <- model_matrix
-      e$offset <- specials[[j]]$offset[idx_obs]
-      e$trials <- specials[[j]]$trials[idx_obs]
-      e$y <- observed[[paste0(resp_stoch[j], "_store")]][idx_obs]
-      if (is_categorical(object$dformulas$stoch[[j]]$family)) {
-        e$y <- as.integer(e$y)
-      }
-      e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
-      if (identical(eval_type, "predicted")) {
-        idx_na <- is.na(simulated[idx, .SD, .SDcols = resp_stoch[j]])
-        e$idx_out <- which(idx_na)
-        e$idx_data <- idx[e$idx_out]
-        if (any(idx_na)) {
+    #for (j in seq_along(resp_stoch)) {
+    for (j in seq_along(object$dformulas$all)) {
+      if (is_deterministic(object$dformulas$all[[j]]$family)) {
+        assign_deterministic_predict(
+          simulated,
+          idx,
+          object$dformulas$all[[j]]$response,
+          formula_rhs(object$dformulas$all[[j]]$formula)
+        )
+      } else {
+        k <- k + 1L
+        model_matrix <- full_model.matrix_predict(
+          formulas_stoch,
+          simulated,
+          observed,
+          idx,
+          idx_obs,
+          object$stan$u_names
+        )
+        e <- eval_envs[[k]]
+        e$idx <- idx
+        e$time <- time_i
+        e$model_matrix <- model_matrix
+        e$offset <- specials[[k]]$offset[idx_obs]
+        e$trials <- specials[[k]]$trials[idx_obs]
+        e$y <- observed[[paste0(resp_stoch[k], "_store")]][idx_obs]
+        if (is_categorical(object$dformulas$stoch[[k]]$family)) {
+          e$y <- as.integer(e$y)
+        }
+        e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
+        if (identical(eval_type, "predicted")) {
+          idx_na <- is.na(simulated[idx, .SD, .SDcols = resp_stoch[k]])
+          e$idx_out <- which(idx_na)
+          e$idx_data <- idx[e$idx_out]
+          if (any(idx_na)) {
+            eval(e$call, envir = e)
+          }
+        } else {
           eval(e$call, envir = e)
         }
-      } else {
-        eval(e$call, envir = e)
       }
     }
-    assign_deterministic(simulated, idx, cl)
+    #assign_deterministic(simulated, idx, cl)
     skip <- FALSE
   }
   finalize_predict(type, resp_stoch, simulated, observed)
@@ -525,6 +537,7 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
   time_offset <- which(unique(object$data[[time_var]]) == u_time[1L]) - 1L
   skip <- TRUE
   for (i in seq.int(fixed + 1L, n_time)) {
+    k <- 0L
     time_i <- time_offset + i - fixed
     idx_obs <- idx_obs + 1L
     idx_summ <- idx_summ + 1L
@@ -532,33 +545,43 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
     assign_from_storage(storage, simulated, idx, idx_obs)
     assign_lags(simulated, idx, ro_ld, lhs_ld, rhs_ld, skip, n_sim)
     assign_lags(simulated, idx, ro_ls, lhs_ls, rhs_ls, skip, n_sim)
-    model_matrix <- full_model.matrix_predict(
-      formulas_stoch,
-      simulated,
-      observed,
-      idx,
-      idx_obs,
-      object$stan$u_names
-    )
     for (j in seq_along(resp_stoch)) {
-      e <- eval_envs[[j]]
-      e$idx <- idx
-      e$time <- time_i
-      e$model_matrix <- model_matrix
-      e$offset <- specials[[j]]$offset[idx_obs]
-      e$trials <- specials[[j]]$trials[idx_obs]
-      e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
-      idx_na <- is.na(
-        #simulated[idx, .SD, .SDcols = resp_stoch[j], env = list(idx = idx)]
-        simulated[idx, .SD, .SDcols = resp_stoch[j]]
-      )
-      e$idx_out <- which(idx_na)
-      e$idx_data <- idx[e$idx_out]
-      if (any(idx_na)) {
-        eval(e$call, envir = e)
+      if (is_deterministic(object$dformulas$all[[j]]$family)) {
+        assign_deterministic_predict(
+          simulated,
+          idx,
+          object$dformulas$all[[j]]$response,
+          formula_rhs(object$dformulas$all[[j]]$formula)
+        )
+      } else {
+        k <- k + 1L
+        model_matrix <- full_model.matrix_predict(
+          formulas_stoch,
+          simulated,
+          observed,
+          idx,
+          idx_obs,
+          object$stan$u_names
+        )
+        e <- eval_envs[[k]]
+        e$idx <- idx
+        e$time <- time_i
+        e$model_matrix <- model_matrix
+        e$offset <- specials[[k]]$offset[idx_obs]
+        e$trials <- specials[[k]]$trials[idx_obs]
+        e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
+        idx_na <- is.na(
+          #simulated[idx, .SD, .SDcols = resp_stoch[j], env = list(idx = idx)]
+          simulated[idx, .SD, .SDcols = resp_stoch[k]]
+        )
+        e$idx_out <- which(idx_na)
+        e$idx_data <- idx[e$idx_out]
+        if (any(idx_na)) {
+          eval(e$call, envir = e)
+        }
       }
     }
-    assign_deterministic(simulated, idx, cl)
+    #assign_deterministic(simulated, idx, cl)
     assign_summaries(summaries, simulated, funs, idx, idx_summ)
     skip <- FALSE
   }

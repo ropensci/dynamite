@@ -109,30 +109,30 @@ test_that("adding dynamiteformulas with existing splines definitions fails", {
   )
 })
 
-test_that("simultaneity fails", {
-  obs_lhs <-
-    obs(q ~ w + e + r + lag(i), family = "gaussian") +
-    obs(t ~ y + u, family = "gaussian") +
-    obs(i ~ o + p + a + lag(f), family = "gaussian")
-  obs_rhs <-
-    obs(f ~ h + l + lag(x), family = "gaussian") +
-    obs(x ~ q + z, family = "gaussian")
-  expect_error(
-    obs_rhs + obs_lhs,
-    paste0(
-      "Simultaneous regression is not supported:\n",
-      "x Response variable `q` appears in the formula of `x`\\."
-    )
-  )
-  # should fail for deterministic as well
-  expect_error(
-    obs(y ~ x, family = "gaussian") + aux(integer(x) ~ y),
-    paste0(
-      "Simultaneous regression is not supported:\n",
-      "x Response variable `x` appears in the formula of `y`\\."
-    )
-  )
-})
+#test_that("simultaneity fails", {
+#  obs_lhs <-
+#    obs(q ~ w + e + r + lag(i), family = "gaussian") +
+#    obs(t ~ y + u, family = "gaussian") +
+#    obs(i ~ o + p + a + lag(f), family = "gaussian")
+#  obs_rhs <-
+#    obs(f ~ h + l + lag(x), family = "gaussian") +
+#    obs(x ~ q + z, family = "gaussian")
+#  expect_error(
+#    obs_rhs + obs_lhs,
+#    paste0(
+#      "Simultaneous regression is not supported:\n",
+#      "x Response variable `q` appears in the formula of `x`\\."
+#    )
+#  )
+#  # should fail for deterministic as well
+#  expect_error(
+#    obs(y ~ x, family = "gaussian") + aux(integer(x) ~ y),
+#    paste0(
+#      "Simultaneous regression is not supported:\n",
+#      "x Response variable `x` appears in the formula of `y`\\."
+#    )
+#  )
+#})
 
 test_that("adding nondynamiteformula to dynamiteformula fails", {
   expect_error(

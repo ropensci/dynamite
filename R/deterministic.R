@@ -129,7 +129,8 @@ assign_initial_values <- function(data, idx, dd, dlp, dld, dls,
 #'
 #' @param data \[`data.table`]\cr Data table to assign the values into.
 #' @param idx \[`integer()`]\cr A vector of indices to assign values into.
-#' @param cl \[`language`]\cr A quoted expression defining the channels.
+#' @param cl \[`language`]\cr A `list` of quoted expression defining
+#'   the channels.
 #' @noRd
 assign_deterministic <- function(data, idx, cl) {
   # Remove this if when env is available in CRAN data.table
@@ -143,6 +144,25 @@ assign_deterministic <- function(data, idx, cl) {
         eval(.deterministic_channel_definition_$expr)
     ]
   }
+}
+
+#' Evaluate a Definition and Assign the Value of a Deterministic Channel
+#'
+#' @param data \[`data.table`]\cr Data table to assign the values into.
+#' @param idx \[`integer()`]\cr A vector of indices to assign values into.
+#' @param .deterministic_channel_name_ \[`character(1)`]\cr
+#'   Name of the response variable of the channel.
+#' @param .deterministic_channel_definition_ \[`language`]\cr
+#'   A quoted expression defining the channel.
+#' @noRd
+assign_deterministic_predict <- function(data, idx,
+                                         .deterministic_channel_name_,
+                                         .deterministic_channel_definition_) {
+  data[
+    idx,
+    (.deterministic_channel_name_) :=
+      eval(.deterministic_channel_definition_)
+  ]
 }
 
 #' Assign Values of Lagged Channels
