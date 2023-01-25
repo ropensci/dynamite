@@ -528,25 +528,38 @@ join_dynamiteformulas <- function(e1, e2) {
     which_stochastic(e1),
     which_stochastic(e2)
   )
-  for (i in 1L:2L) {
-    resp_a <- resp_list[[i]]
-    resp_b <- resp_list[[3L - i]][stoch_list[[3L - i]]]
-    rhs <- rhs_list[[3L - i]][stoch_list[[3L - i]]]
-    if (length(rhs) > 0L) {
-      for (j in seq_along(resp_a)) {
-        simul_lhs <- resp_a[j]
-        simul <- vapply(rhs, function(x) simul_lhs %in% x, logical(1L))
-        stopifnot_(
-          !any(simul),
-          c(
-            "Simultaneous regression is not supported:",
-            `x` = "Response variable {.var {simul_lhs}} appears in
-                  the formula of {.var {resp_b[which(simul)[1L]]}}."
-          )
-        )
-      }
-    }
-  }
+  responses <- unlist(resp_list)
+  predictors <- c(
+    lapply(get_terms(e1), extract_nonlags),
+    lapply(get_terms(e2), extract_nonlags))
+  invalid_graph <- vapply(seq_along(responses), function(i) {
+    responses[i] %in% unlist(predictors[1:i])
+  }, logical(1L))
+
+  stopifnot_(
+    !any(invalid_graph),
+    "TODO"
+  )
+
+  # for (i in 1L:2L) {
+  #   resp_a <- resp_list[[i]]
+  #   resp_b <- resp_list[[3L - i]][stoch_list[[3L - i]]]
+  #   rhs <- rhs_list[[3L - i]][stoch_list[[3L - i]]]
+  #   if (length(rhs) > 0L) {
+  #     for (j in seq_along(resp_a)) {
+  #       simul_lhs <- resp_a[j]
+  #       simul <- vapply(rhs, function(x) simul_lhs %in% x, logical(1L))
+  #       stopifnot_(
+  #         !any(simul),
+  #         c(
+  #           "Simultaneous regression is not supported:",
+  #           `x` = "Response variable {.var {simul_lhs}} appears in
+  #                 the formula of {.var {resp_b[which(simul)[1L]]}}."
+  #         )
+  #       )
+  #     }
+  #   }
+  # }
   attributes(out) <- c(attributes(e1), attributes(e2))
   class(out) <- "dynamiteformula"
   out

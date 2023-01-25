@@ -99,13 +99,12 @@ create_transformed_data <- function(dformula, idt, vars) {
   has_lfactor <- any(unlist(lapply(vars, "[[", "has_lfactor")))
   paste_rows(
     "transformed data {",
-    "// Parameters for vectorized priors",
     declarations,
     onlyif(has_lfactor, declare_AQR),
     statements,
     onlyif(has_lfactor, state_AQR),
     "}",
-    .indent = idt(c(0, 1, 0, 1, 0, 1, 0)),
+    .indent = idt(c(0, 0, 1, 0, 1, 0)),
     .parse = FALSE
   )
 
