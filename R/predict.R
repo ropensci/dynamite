@@ -389,15 +389,15 @@ predict_full <- function(object, simulated, observed, type, eval_type,
     idx_obs <- idx_obs + 1L
     assign_lags(simulated, idx, ro_ld, lhs_ld, rhs_ld, skip, n_draws)
     assign_lags(simulated, idx, ro_ls, lhs_ls, rhs_ls, skip, n_draws)
-    model_matrix <- full_model.matrix_predict(
-      formulas_stoch,
-      simulated,
-      observed,
-      idx,
-      idx_obs,
-      object$stan$u_names
-    )
     for (j in seq_along(resp_stoch)) {
+      model_matrix <- full_model.matrix_predict(
+        formulas_stoch,
+        simulated,
+        observed,
+        idx,
+        idx_obs,
+        object$stan$u_names
+      )
       e <- eval_envs[[j]]
       e$idx <- idx
       e$time <- time_i

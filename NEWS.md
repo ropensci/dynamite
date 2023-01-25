@@ -1,13 +1,18 @@
 # dynamite 1.1.0
   * `dynamite` now supports general group-level random effects. New `random()` 
-    works analogously with `varying()` inside `obs()`, and new `random_spec()`
-    component can be used to define whether the random effects should be 
-    correlated or not and whether to use noncentered parameterization.
+    works analogously with `varying()` inside `obs()`, and the new optional
+    `random_spec()` component can be used to define whether the random effects 
+    should be correlated or not and whether to use noncentered parameterization.
+  * It is now possible to use contemporaneous response variables of previous 
+    channels as predictors, i.e. the ordering of the channels matters (e.g.,
+    `obs(y ~ 1) + obs(x ~ y)` is valid but `obs(x ~ y) + obs(y ~ 1)` is not).
   * The package no longer depends on the `bayesplot` package. Instead, `ggplot2`
     and `patchwork` packages are used for the `plot` method.
   * Argument order of the `dynamite` function has been changed: `time` now 
     precedes `group` and `backend` now precedes `verbose`. This change is also 
     reflected in the `get_data`, `get_priors`, and `get_code` functions.
+  * Vectorized priors and various indexing variables are now passed as data to 
+    Stan instead of hard-coded in the model code generation.
   
 # dynamite 1.0.2
   * Fixed a name clash issue in Stan code generation.
