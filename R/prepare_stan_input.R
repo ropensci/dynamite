@@ -114,9 +114,10 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       J_varying = as.array(varying_pars[[i]]),
       J = as.array(c(fixed_pars[[i]], varying_pars[[i]])),
       J_random = as.array(random_pars[[i]]),
-      L_fixed = seq_along(fixed_pars[[i]]),
-      L_varying = length(fixed_pars[[i]]) + seq_along(varying_pars[[i]]),
-      L_random = seq_along(random_pars[[i]])
+      L_fixed = as.array(seq_along(fixed_pars[[i]])),
+      L_varying =
+        as.array(length(fixed_pars[[i]]) + seq_along(varying_pars[[i]])),
+      L_random = as.array(seq_along(random_pars[[i]]))
       )
     channel <- c(channel, indices)
     sampling_vars <- c(sampling_vars,
