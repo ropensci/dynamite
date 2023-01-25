@@ -114,7 +114,12 @@ data_lines_default <- function(y, idt, has_missing,
                                write_sigma_nu,
                                beta_prior_npars = 1L, delta_prior_npars = 1L,
                                tau_prior_npars = 1L, sigma_nu_prior_npars = 1L,
-                               ...) {
+                               has_random_intercept, ...) {
+  icpt <- ifelse(
+    has_random_intercept,
+    " - 1",
+    ""
+  )
   paste_rows(
     onlyif(has_missing, "// Missing data indicators"),
     onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
@@ -124,13 +129,13 @@ data_lines_default <- function(y, idt, has_missing,
     "int<lower=0> K_varying_{y};",
     "int<lower=0> K_random_{y}; // includes the potential random intercept",
     "int<lower=0> K_{y}; // K_fixed + K_varying",
-    "int<lower=0> J_fixed_{y};",
-    "int<lower=0> J_varying_{y};",
-    "int<lower=0> J_random_{y};",
-    "int<lower=0> J_{y}; // fixed and varying",
-    "int<lower=0> L_fixed_{y};",
-    "int<lower=0> L_varying_{y};",
-    "int<lower=0> L_random_{y};",
+    "int J_fixed_{y}[K_fixed_{y}];",
+    "int J_varying_{y}[K_varying_{y}];",
+    "int J_random_{y}[K_random_{y}{icpt}]; // no intercept",
+    "int J_{y}[K_fixed_{y} + K_varying_{y}]; // fixed and varying",
+    "int L_fixed_{y}[K_fixed_{y}];",
+    "int L_varying_{y}[K_varying_{y}];",
+    "int L_random_{y}[K_random_{y}{icpt}];",
     onlyif(write_beta || write_delta || write_tau || write_sigma_nu,
       "// Parameters of vectorized priors"),
     onlyif(write_beta,
@@ -146,14 +151,18 @@ data_lines_default <- function(y, idt, has_missing,
   )
 }
 
-
 data_lines_categorical <- function(y, idt,
                                    has_missing, write_alpha, write_beta,
                                    write_delta, write_tau,
                                    alpha_prior_npars = 1L,
                                    beta_prior_npars = 1L,
                                    delta_prior_npars = 1L, tau_prior_npars = 1L,
-                                   ...) {
+  has_random_intercept, ...) {
+  icpt <- ifelse(
+    has_random_intercept,
+    " - 1",
+    ""
+  )
   dtext_def <- paste_rows(
     "int<lower=0> S_{y}; // number of categories",
     onlyif(has_missing, "// Missing data indicators"),
@@ -164,13 +173,13 @@ data_lines_categorical <- function(y, idt,
     "int<lower=0> K_varying_{y};",
     "int<lower=0> K_random_{y}; // includes the potential random intercept",
     "int<lower=0> K_{y}; // K_fixed + K_varying",
-    "int<lower=0> J_fixed_{y};",
-    "int<lower=0> J_varying_{y};",
-    "int<lower=0> J_random_{y};",
-    "int<lower=0> J_{y}; // fixed and varying",
-    "int<lower=0> L_fixed_{y};",
-    "int<lower=0> L_varying_{y};",
-    "int<lower=0> L_random_{y};",
+    "int J_fixed_{y}[K_fixed_{y}];",
+    "int J_varying_{y}[K_varying_{y}];",
+    "int J_random_{y}[K_random_{y}{icpt}]; // no intercept",
+    "int J_{y}[K_fixed_{y} + K_varying_{y}]; // fixed and varying",
+    "int L_fixed_{y}[K_fixed_{y}];",
+    "int L_varying_{y}[K_varying_{y}];",
+    "int L_random_{y}[K_random_{y}{icpt}];",
     onlyif(write_alpha || write_beta || write_delta || write_tau,
       "// Parameters of vectorized priors"),
     onlyif(write_alpha,

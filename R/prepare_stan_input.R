@@ -104,18 +104,23 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     #channel$L_fixed <- as.array(match(fixed_pars[[i]], assigned[[i]]))
     #channel$L_varying <- as.array(match(varying_pars[[i]], assigned[[i]]))
     #channel$J <- as.array(assigned[[i]])
-    channel$J_fixed <- as.array(fixed_pars[[i]])
-    channel$J_varying <- as.array(varying_pars[[i]])
-    channel$J <- c(channel$J_fixed, channel$J_varying)
-    channel$J_random <- as.array(random_pars[[i]])
-    channel$K_fixed <- length(fixed_pars[[i]])
-    channel$K_varying <- length(varying_pars[[i]])
-    # note! Random intercept is counted to K_random but not to J_random...
-    channel$K_random <- length(random_pars[[i]]) +
-      dformula[[i]]$has_random_intercept
-    channel$K <- channel$K_fixed + channel$K_varying
-    channel$L_fixed <- seq_len(channel$K_fixed)
-    channel$L_varying <- channel$K_fixed + seq_len(channel$K_varying)
+    indices <- list(
+      K_fixed = length(fixed_pars[[i]]),
+      K_varying = length(varying_pars[[i]]),
+      # note! Random intercept is counted to K_random but not to J_random...
+      K_random = length(random_pars[[i]]) + dformula[[i]]$has_random_intercept,
+      K = length(fixed_pars[[i]]) + length(varying_pars[[i]]),
+      J_fixed = as.array(fixed_pars[[i]]),
+      J_varying = as.array(varying_pars[[i]]),
+      J = as.array(c(fixed_pars[[i]], varying_pars[[i]])),
+      J_random = as.array(random_pars[[i]]),
+      L_fixed = seq_along(fixed_pars[[i]]),
+      L_varying = length(fixed_pars[[i]]) + seq_along(varying_pars[[i]]),
+      L_random = seq_along(random_pars[[i]])
+      )
+    channel <- c(channel, indices)
+    sampling_vars <- c(sampling_vars,
+      setNames(indices, paste0(names(indices), "_", resp)))
     obs_idx <- array(0L, dim = c(N, T_full - fixed))
     obs_len <- integer(T_full - fixed)
     for (j in seq_len(T_full - fixed)) {
