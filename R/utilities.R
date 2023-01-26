@@ -227,6 +227,33 @@ locf <- function(x) {
   rep(x[non_na], fill)
 }
 
+#' Computes a Topological Ordering for the Vertices of a DAG.
+#'
+#' @param A \[`matrix`]\cr An adjacency matrix.
+#' @return An `integer` vector giving a topological order of the vertices.
+#' @noRd
+topological_order <- function(A) {
+  n <- ncol(A)
+  v <- seq.int(n)
+  ord <- integer(n)
+  roots <- which(!colSums(A))
+  n_roots <- length(roots)
+  j <- 1L
+  while (n_roots > 0) {
+    ord[seq.int(j, j + n_roots - 1L)] <- v[roots]
+    v <- v[-roots]
+    A <- A[-roots, -roots, drop = FALSE]
+    j <- j + n_roots
+    roots <- which(!colSums(A))
+    n_roots <- length(roots)
+  }
+  if (nrow(A) > 0) {
+    integer(0L)
+  } else {
+    ord
+  }
+}
+
 #' Stop Function Execution Without Displaying the Call
 #'
 #' @param message See [cli::cli_abort()].

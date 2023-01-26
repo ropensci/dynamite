@@ -653,9 +653,7 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
     )
   }
   data_names <- names(data)
-  non_lags <- extract_nonlags(
-    unique(unlist(get_terms(dformula[channels_stoch])))
-  )
+  non_lags <- unique(unlist(get_nonlag_terms(dformula[channels_stoch])))
   valid_resp <- c(resp_all, data_names)
   mis_vars <- which(!non_lags %in% valid_resp)
   stopifnot_(

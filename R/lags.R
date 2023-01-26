@@ -114,6 +114,25 @@ extract_nonlags <- function(x) {
   x[!find_lags(x)]
 }
 
+#' Extract Non-lag Variables from a Language Object
+#'
+#' @param x A `language` object
+#' @noRd
+extract_nonlags_lang <- function(x) {
+  if (!is.recursive(x)) {
+    return(as.character(x))
+  }
+  if (is.call(x)) {
+    if (!identical(as.character(x[[1L]]), "lag")) {
+      unlist(lapply(x[-1L], extract_nonlags_lang))
+    } else {
+      character(0L)
+    }
+  } else {
+    unlist(lapply(x, extract_nonlags_lang))
+  }
+}
+
 #' Extract Lag Definitions
 #'
 #' Extract variables and shifts of lagged terms of the form `lag(var, k)`

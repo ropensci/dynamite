@@ -172,7 +172,8 @@ dynamiteformula <- function(formula, family) {
         has_random_intercept = x$has_random_intercept
       )
     ),
-    class = "dynamiteformula"
+    class = "dynamiteformula",
+    model_topology = 1L
   )
 }
 
@@ -340,9 +341,23 @@ get_predictors <- function(x) {
 get_terms <- function(x) {
   lapply(x, function(y) {
     if (is_deterministic(y$family)) {
-      character(0L)
+      all.vars(formula_rhs(y$formula))
     } else {
       attr(terms(y$formula), "term.labels")
+    }
+  })
+}
+
+#' Get Non-Lagged Terms of All Formulas of a `dynamiteformula` Object
+#'
+#' @param x A `dynamiteformula` object.
+#' @noRd
+get_nonlag_terms <- function(x) {
+  lapply(x, function(y) {
+    if (is_deterministic(y$family)) {
+      unique(extract_nonlags_lang(formula_rhs(y$formula)))
+    } else {
+      extract_nonlags(attr(terms(y$formula), "term.labels"))
     }
   })
 }
@@ -358,6 +373,7 @@ get_formulas <- function(x) {
 #' Get Special Type Formula of a channel in a `dynamiteformula`
 #'
 #' @param x A channel of a `dynamiteformula`
+#' @noRd
 get_type_formula <- function(x, type = c("fixed", "varying", "ranodm")) {
   has_icpt <- ifelse_(
     type %in% c("fixed", "varying"),
@@ -520,47 +536,24 @@ join_dynamiteformulas <- function(e1, e2) {
     is.null(attr(e1, "random_spec")) || is.null(attr(e2, "random_spec")),
     "Both dynamiteformulas contain a random_spec definition."
   )
-  rhs_list <- list(
-    lapply(get_terms(e1), extract_nonlags),
-    lapply(get_terms(e2), extract_nonlags)
+  n_resp <- length(resp_all)
+  pred <- c(get_nonlag_terms(e1), get_nonlag_terms(e2))
+  dep <- matrix(
+    0L,
+    nrow = n_resp,
+    ncol = n_resp,
+    dimnames = list(resp_all, resp_all)
   )
-  stoch_list <- list(
-    which_stochastic(e1),
-    which_stochastic(e2)
-  )
-  responses <- unlist(resp_list)
-  predictors <- c(
-    lapply(get_terms(e1), extract_nonlags),
-    lapply(get_terms(e2), extract_nonlags))
-  invalid_graph <- vapply(seq_along(responses), function(i) {
-    responses[i] %in% unlist(predictors[1:i])
-  }, logical(1L))
-
+  for (i in seq_len(n_resp)) {
+    dep[which(resp_all %in% pred[[i]]), resp_all[i]] <- 1L
+  }
+  topo <- topological_order(dep)
   stopifnot_(
-    !any(invalid_graph),
-    "TODO"
+    length(topo) > 0L,
+    "Cyclic dependency found in model formula."
   )
-
-  # for (i in 1L:2L) {
-  #   resp_a <- resp_list[[i]]
-  #   resp_b <- resp_list[[3L - i]][stoch_list[[3L - i]]]
-  #   rhs <- rhs_list[[3L - i]][stoch_list[[3L - i]]]
-  #   if (length(rhs) > 0L) {
-  #     for (j in seq_along(resp_a)) {
-  #       simul_lhs <- resp_a[j]
-  #       simul <- vapply(rhs, function(x) simul_lhs %in% x, logical(1L))
-  #       stopifnot_(
-  #         !any(simul),
-  #         c(
-  #           "Simultaneous regression is not supported:",
-  #           `x` = "Response variable {.var {simul_lhs}} appears in
-  #                 the formula of {.var {resp_b[which(simul)[1L]]}}."
-  #         )
-  #       )
-  #     }
-  #   }
-  # }
   attributes(out) <- c(attributes(e1), attributes(e2))
+  attr(out, "model_topology") <- topo
   class(out) <- "dynamiteformula"
   out
 }

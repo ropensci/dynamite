@@ -118,10 +118,12 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       L_varying =
         as.array(length(fixed_pars[[i]]) + seq_along(varying_pars[[i]])),
       L_random = as.array(seq_along(random_pars[[i]]))
-      )
+    )
     channel <- c(channel, indices)
-    sampling_vars <- c(sampling_vars,
-      setNames(indices, paste0(names(indices), "_", resp)))
+    sampling_vars <- c(
+      sampling_vars,
+      setNames(indices, paste0(names(indices), "_", resp))
+    )
     obs_idx <- array(0L, dim = c(N, T_full - fixed))
     obs_len <- integer(T_full - fixed)
     for (j in seq_len(T_full - fixed)) {
@@ -395,6 +397,8 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
   )
   S_y <- length(attr(resp_class, "levels"))
   channel$S <- S_y
+  sampling_vars <- list()
+  sampling_vars[[paste0("S_", y)]] <- S_y
   if (is.null(priors)) {
     out <- default_priors_categorical(y, channel, sd_x, resp_class)
     channel <- out$channel
@@ -426,7 +430,7 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
   channel$write_sigma_nu <-
     (channel$has_random || channel$has_random_intercept) &&
     identical(length(channel$sigma_nu_prior_distr), 1L)
-  list(channel = channel, priors = priors)
+  list(channel = channel, sampling_vars = sampling_vars, priors = priors)
 }
 
 #' @describeIn prepare_channel_default Prepare a Gaussian Channel

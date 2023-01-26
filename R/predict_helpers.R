@@ -449,15 +449,16 @@ expand_predict_output <- function(simulated, observed, df) {
 #' @inheritParams clear_nonfixed
 #' @noRd
 prepare_eval_envs <- function(object, simulated, observed,
-                              type, eval_type, resp_stoch, n_draws,
+                              type, eval_type, n_draws,
                               new_levels, group_var) {
   samples <- rstan::extract(object$stanfit)
   model_vars <- object$stan$model_vars
-  n_resp <- length(resp_stoch)
+  n_resp <- length(object$dformulas$all)
   eval_envs <- vector(mode = "list", length = n_resp)
   idx_draws <- seq_len(n_draws)
   nu_channels <- which_random(object$dformulas$all)
   n_group <- n_unique(observed[[group_var]])
+  j <- 0L
   if (length(nu_channels) > 0L) {
     orig_ids <- unique(object$data[[group_var]])
     new_ids <- unique(observed[[group_var]])
@@ -492,9 +493,14 @@ prepare_eval_envs <- function(object, simulated, observed,
     Ks <- unlist(lapply(object$stan$model_vars, "[[", "K_random"))
     dimnames(nu_samples)[[3L]] <- make.unique(rep(nus, times = Ks))
   }
-  for (j in seq_len(n_resp)) {
-    resp <- resp_stoch[j]
-    resp_family <- object$dformulas$stoch[[j]]$family
+  for (i in seq_len(n_resp)) {
+    if (is_deterministic(object$dformulas$all[[i]]$family)) {
+      eval_envs[[i]] <- list()
+      next
+    }
+    j <- j + 1L
+    resp <- object$dformulas$all[[i]]$response
+    resp_family <- object$dformulas$stoch[[i]]$family
     alpha <- paste0("alpha_", resp)
     beta <- paste0("beta_", resp)
     delta <- paste0("delta_", resp)
@@ -513,7 +519,7 @@ prepare_eval_envs <- function(object, simulated, observed,
     e$J_random <- model_vars[[j]]$J_random
     e$K_random <- model_vars[[j]]$K_random
     e$has_random_intercept <- model_vars[[j]]$has_random_intercept
-    e$resp <- resp_stoch[j]
+    e$resp <- resp
     e$phi <- samples[[phi]][idx_draws]
     e$sigma <- samples[[sigma]][idx_draws]
     if (resp %in% nu_channels) {
@@ -559,7 +565,7 @@ prepare_eval_envs <- function(object, simulated, observed,
       model_vars[[j]]$has_random_intercept,
       model_vars[[j]]$has_offset
     )
-    eval_envs[[j]] <- e
+    eval_envs[[i]] <- e
   }
   eval_envs
 }

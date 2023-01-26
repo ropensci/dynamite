@@ -3,16 +3,17 @@
     works analogously with `varying()` inside `obs()`, and the new optional
     `random_spec()` component can be used to define whether the random effects 
     should be correlated or not and whether to use noncentered parameterization.
-  * It is now possible to use contemporaneous response variables of previous 
-    channels as predictors, i.e. the ordering of the channels matters (e.g.,
-    `obs(y ~ 1) + obs(x ~ y)` is valid but `obs(x ~ y) + obs(y ~ 1)` is not).
   * The package no longer depends on the `bayesplot` package. Instead, `ggplot2`
     and `patchwork` packages are used for the `plot` method.
   * Argument order of the `dynamite` function has been changed: `time` now 
     precedes `group` and `backend` now precedes `verbose`. This change is also 
     reflected in the `get_data`, `get_priors`, and `get_code` functions.
   * Vectorized priors and various indexing variables are now passed as data to 
-    Stan instead of hard-coded in the model code generation.
+    Stan instead of being hard-coded in the generated model code.
+  * The package now supports conteporaneous dependencies between channels 
+    such that the dependency structure is acyclic. For example, having 
+    `y ~ x` and `x ~ z` simultaneously is valid, but adding `z ~ y` to these 
+    would result in a cycle.
   
 # dynamite 1.0.2
   * Fixed a name clash issue in Stan code generation.
