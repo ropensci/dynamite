@@ -7,7 +7,7 @@
 #' @export
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param n \[`integer(1)`]\cr How many rows to print in
-#'   parameter-specific convergence measures. The default is 1. Should be a
+#'   parameter-specific convergence measures. The default is 3. Should be a
 #'   positive (unrestricted) integer.
 #' @return Returns `x` (invisibly).
 #' @examples
@@ -19,7 +19,7 @@ mcmc_diagnostics <- function(x, n) {
 
 #' @export
 #' @rdname mcmc_diagnostics
-mcmc_diagnostics.dynamitefit <- function(x, n = 1L) {
+mcmc_diagnostics.dynamitefit <- function(x, n = 3L) {
   stopifnot_(
     !missing(x),
     "Argument {.arg x} is missing."
@@ -51,25 +51,19 @@ mcmc_diagnostics.dynamitefit <- function(x, n = 1L) {
     )
     cat("\nSmallest bulk-ESS values: \n")
     bulk <- sumr[order(sumr$ess_bulk), c("variable", "ess_bulk")][init, ]
-    var <- bulk$variable
-    out <- bulk$ess_bulk
-    names(out) <- var
-    print(tibble::as_tibble(t(out)))
+    out <- matrix(bulk$ess_bulk, dimnames = list(bulk$variable, ""))
+    print(out, digits = 1)
     cat("\nSmallest tail-ESS values: \n")
     tail <- sumr[order(sumr$ess_tail), c("variable", "ess_tail")][init, ]
-    var <- tail$variable
-    out <- tail$ess_tail
-    names(out) <- var
-    print(tibble::as_tibble(t(out)))
+    out <- matrix(tail$ess_tail, dimnames = list(tail$variable, ""))
+    print(out, digits = 1)
     cat("\nLargest Rhat values: \n")
     rhat <- sumr[
       order(sumr$rhat, decreasing = TRUE),
       c("variable", "rhat")
     ][init, ]
-    var <- rhat$variable
-    out <- rhat$rhat
-    names(out) <- var
-    print(tibble::as_tibble(t(out)))
+    out <- matrix(rhat$rhat, dimnames = list(rhat$variable, ""))
+    print(out, digits = 3)
   } else {
     cat("No Stan model fit is available.")
   }

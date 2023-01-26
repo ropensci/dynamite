@@ -14,6 +14,7 @@
     such that the dependency structure is acyclic. For example, having 
     `y ~ x` and `x ~ z` simultaneously is valid, but adding `z ~ y` to these 
     would result in a cycle.
+  * The output of `mcmc_diagnostics` is now clearer.
   
 # dynamite 1.0.2
   * Fixed a name clash issue in Stan code generation.
