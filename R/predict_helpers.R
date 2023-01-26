@@ -522,8 +522,8 @@ prepare_eval_envs <- function(object, simulated, observed,
     e$K_random <- model_vars[[j]]$K_random
     e$has_random_intercept <- model_vars[[j]]$has_random_intercept
     e$resp <- resp
-    e$phi <- samples[[phi]][idx_draws]
-    e$sigma <- samples[[sigma]][idx_draws]
+    e$phi <- c(samples[[phi]][idx_draws])
+    e$sigma <- c(samples[[sigma]][idx_draws])
     if (resp %in% nu_channels) {
       nus <- make.unique(rep(paste0("nu_", resp), e$K_random))
       e$nu <- nu_samples[, , nus, drop = FALSE]
