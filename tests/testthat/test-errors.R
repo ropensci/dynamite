@@ -109,7 +109,7 @@ test_that("adding dynamiteformulas with existing splines definitions fails", {
   )
 })
 
-#test_that("simultaneity fails", {
+# test_that("simultaneity fails", {
 #  obs_lhs <-
 #    obs(q ~ w + e + r + lag(i), family = "gaussian") +
 #    obs(t ~ y + u, family = "gaussian") +
@@ -132,7 +132,7 @@ test_that("adding dynamiteformulas with existing splines definitions fails", {
 #      "x Response variable `x` appears in the formula of `y`\\."
 #    )
 #  )
-#})
+# })
 
 test_that("adding nondynamiteformula to dynamiteformula fails", {
   expect_error(
@@ -283,43 +283,43 @@ test_that("Latent factor errors with invalid responses", {
 })
 test_that("Latent factor errors with nonlogical value for argument
   noncentered", {
-    expect_error(
-      dynamite(
-        obs(y ~ x, family = "gaussian") + lfactor(noncentered_lambda = 1),
-        data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-        time = "time",
-        group = "id",
-        debug = list(no_compile = TRUE)
-      ),
-      "Argument `noncentered_lambda` must be a <logical> vector\\."
-    )
-  })
+  expect_error(
+    dynamite(
+      obs(y ~ x, family = "gaussian") + lfactor(noncentered_lambda = 1),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      time = "time",
+      group = "id",
+      debug = list(no_compile = TRUE)
+    ),
+    "Argument `noncentered_lambda` must be a <logical> vector\\."
+  )
+})
 test_that("Latent factor errors with nonlogical value for argument
   nonzero_lambda", {
-    expect_error(
-      dynamite(
-        obs(y ~ x, family = "gaussian") + lfactor(nonzero_lambda = 1),
-        data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-        time = "time",
-        group = "id",
-        debug = list(no_compile = TRUE)
-      ),
-      "Argument `nonzero_lambda` must be a <logical> vector\\."
-    )
-  })
+  expect_error(
+    dynamite(
+      obs(y ~ x, family = "gaussian") + lfactor(nonzero_lambda = 1),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      time = "time",
+      group = "id",
+      debug = list(no_compile = TRUE)
+    ),
+    "Argument `nonzero_lambda` must be a <logical> vector\\."
+  )
+})
 test_that("Latent factor errors with nonlogical value for argument
   noncentered_psi", {
-    expect_error(
-      dynamite(
-        obs(y ~ x, family = "gaussian") + lfactor(noncentered_psi = 1),
-        data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-        time = "time",
-        group = "id",
-        debug = list(no_compile = TRUE)
-      ),
-      "Argument `noncentered_psi` must be a single <logical> value\\."
-    )
-  })
+  expect_error(
+    dynamite(
+      obs(y ~ x, family = "gaussian") + lfactor(noncentered_psi = 1),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      time = "time",
+      group = "id",
+      debug = list(no_compile = TRUE)
+    ),
+    "Argument `noncentered_psi` must be a single <logical> value\\."
+  )
+})
 test_that("Latent factor errors with nonlogical value for argument correlated", {
   expect_error(
     dynamite(
@@ -793,14 +793,14 @@ test_that("Invalid confint level fails", {
 
 gaussian_example_small <- gaussian_example |> dplyr::filter(.data$time < 6)
 
-#test_that("newdata without group variable fails when there are groups", {
+# test_that("newdata without group variable fails when there are groups", {
 #  gaussian_example_nogroup <- gaussian_example_small |>
 #    dplyr::select(!"id")
 #  expect_error(
 #    predict(gaussian_example_fit, newdata = gaussian_example_nogroup),
 #    "Can't find grouping variable `id` in `newdata`\\."
 #  )
-#})
+# })
 
 test_that("newdata with new groups fails when there are groups", {
   gaussian_example_newgroup <- rbind(

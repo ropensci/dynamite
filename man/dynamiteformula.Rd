@@ -156,7 +156,7 @@ obs(g ~ lag(g) + lag(logp), family = "gaussian") +
 
 obs(y ~ x, family = "gaussian") + obs(z ~ w, family = "exponential")
 
-x <- obs(y ~ x + random(~1 + lag(d)), family = "gaussian") +
+x <- obs(y ~ x + random(~ 1 + lag(d)), family = "gaussian") +
   obs(z ~ varying(~w), family = "exponential") +
   aux(numeric(d) ~ log(y) | init(c(0, 1))) +
   lags(k = 2) +

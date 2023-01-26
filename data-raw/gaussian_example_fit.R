@@ -7,10 +7,7 @@ library(dynamite)
 set.seed(1)
 gaussian_example_fit <- dynamite(
   dformula =
-    obs(
-      y ~ -1 + z + varying(~ x + lag(y)) + random(~1),
-      family = "gaussian"
-    ) +
+    obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1), family = "gaussian") +
       random_spec() +
       splines(df = 20),
   data = gaussian_example,
@@ -23,8 +20,10 @@ gaussian_example_fit <- dynamite(
   cores = 2,
   refresh = 0,
   save_warmup = FALSE,
-  pars = c("omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L",
-    "sigma_nu", "a_y"),
+  pars = c(
+    "omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L",
+    "sigma_nu", "a_y"
+  ),
   include = FALSE
 )
 

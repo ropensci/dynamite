@@ -424,7 +424,7 @@ deterministic channel `logp`:
 ```{r, eval = TRUE, echo = FALSE}
 fit <- dynamite(
   f, data = multichannel_example, 
-  time = "time", id = "id", debug = list(no_compile = TRUE))
+  time = "time", group = "id", debug = list(no_compile = TRUE))
 ```
 
 This happens because the formulas of the other channels have `lag(logp)` as a 

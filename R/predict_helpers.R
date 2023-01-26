@@ -64,7 +64,7 @@ parse_newdata <- function(dformula, newdata, data, type, eval_type,
                           clear_names, new_levels, group_var, time_var) {
   if (!group_var %in% names(newdata)) {
     orig <- sort(data[[group_var]])[1L]
-    data.table::set(newdata, j = group_var, value = orig)
+    data.table::set(x = newdata, j = group_var, value = orig)
   }
   group <- newdata[[group_var]]
   group <- unique(group)
@@ -151,7 +151,9 @@ parse_newdata <- function(dformula, newdata, data, type, eval_type,
       }
     }
     data.table::set(
-      newdata, j = glue::glue("{resp}_store"), value = newdata[[resp]]
+      x = newdata,
+      j = glue::glue("{resp}_store"),
+      value = newdata[[resp]]
     )
   }
   newdata
@@ -227,11 +229,11 @@ parse_funs <- function(object, type, funs) {
 #' @inheritParams dynamite
 #' @noRd
 fill_time_predict <- function(data, group_var, time_var, time_scale) {
-  #time_duplicated <- data[,
+  # time_duplicated <- data[,
   #  any(duplicated(time_var)),
   #  by = group_var,
   #  env = list(time_var = time_var)
-  #]$V1
+  # ]$V1
   split_data <- split(data, by = group_var)
   time_duplicated <- unlist(
     lapply(split_data, function(x) any(duplicated(x[[time_var]])))
@@ -249,19 +251,19 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
   if (length(time) > 1L) {
     original_order <- colnames(data)
     full_time <- seq(time[1L], time[length(time)], by = time_scale)
-    #time_groups <- data[,
-      #{
-      #  has_missing = !identical(time_var, full_time)
-      #  has_gaps = .N != (diff(range(time_var)) + 1L) * time_scale
-      #  list(has_missing, has_gaps)
-      #},
-      #by = group_var
-      #env = list(
-      #  time_var = time_var,
-      #  group_var = group_var,
-      #  time_scale = time_scale
-      #)
-    #]
+    # time_groups <- data[,
+    # {
+    #  has_missing = !identical(time_var, full_time)
+    #  has_gaps = .N != (diff(range(time_var)) + 1L) * time_scale
+    #  list(has_missing, has_gaps)
+    # },
+    # by = group_var
+    # env = list(
+    #  time_var = time_var,
+    #  group_var = group_var,
+    #  time_scale = time_scale
+    # )
+    # ]
     time_groups <- list(
       has_missing = unlist(
         lapply(split_data, function(x) !identical(x[[time_var]], full_time))
@@ -309,8 +311,8 @@ impute_newdata <- function(newdata, impute, predictors, group_var) {
       (predictors) := lapply(.SD, locf),
       .SDcols = predictors,
       by = group_var
-      #by = group_var,
-      #env = list(locf = locf)
+      # by = group_var,
+      # env = list(locf = locf)
     ]
   }
 }
@@ -331,19 +333,19 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
       clear_idx <- newdata[,
         .I[seq.int(fixed + 1L, .N)],
         by = group_var
-        #by = group_var,
-        #env = list(fixed = fixed)
+        # by = group_var,
+        # env = list(fixed = fixed)
       ]$V1
     } else {
       clear_idx <- newdata[,
         .I[seq.int(fixed + which(apply(!is.na(.SD), 1L, any))[1L], .N)],
         .SDcols = resp_stoch,
         by = group_var
-        #by = group_var,
-        #env = list(fixed = fixed, any = any)
+        # by = group_var,
+        # env = list(fixed = fixed, any = any)
       ]$V1
     }
-    #newdata[clear_idx, c(resp_stoch) := NA, env = list(clear_idx = clear_idx)]
+    # newdata[clear_idx, c(resp_stoch) := NA, env = list(clear_idx = clear_idx)]
     newdata[clear_idx, c(resp_stoch) := NA]
   }
 }
@@ -376,7 +378,7 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
 #' @return An n_draws x n_groups x n_intercepts array of random intercepts.
 #' @noRd
 generate_random_effect <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
-                                      n_group, orig_ids, new_ids, new_levels) {
+                                   n_group, orig_ids, new_ids, new_levels) {
   is_orig <- which(orig_ids %in% new_ids)
   is_new <- !new_ids %in% orig_ids
   out <- NULL
@@ -435,7 +437,7 @@ expand_predict_output <- function(simulated, observed, df) {
     rep(seq_len(nrow(observed)), n_unique(simulated$.draw)),
   ]
   for (col in add_cols) {
-    data.table::set(simulated, j = col, value = observed[[col]])
+    data.table::set(x = simulated, j = col, value = observed[[col]])
   }
   if (df) {
     data.table::setDF(simulated)
@@ -596,7 +598,6 @@ generate_sim_call <- function(resp, resp_levels, family, eval_type,
                               has_fixed, has_varying, has_random,
                               has_fixed_intercept, has_varying_intercept,
                               has_random_intercept, has_offset) {
-
   if (is_categorical(family)) {
     glue::glue(
       "{{\n",

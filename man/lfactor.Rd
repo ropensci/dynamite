@@ -56,7 +56,9 @@ added to the model. Details will be available in an upcoming paper.
 obs(y ~ 1, family = "gaussian") +
   obs(x ~ 1, family = "poisson") +
   obs(z ~ 1, family = "gaussian") +
-  lfactor(responses = c("y", "x"), noncentered_lambda = c(FALSE, TRUE),
-    noncentered_psi = FALSE, nonzero_lambda = c(TRUE, FALSE))
+  lfactor(
+    responses = c("y", "x"), noncentered_lambda = c(FALSE, TRUE),
+    noncentered_psi = FALSE, nonzero_lambda = c(TRUE, FALSE)
+  )
 
 }

@@ -74,7 +74,8 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, ...) {
   } else {
     temp <- out[, .SD, .SDcols = patterns("_loglik$")]
     ll <- temp[is.finite(rowSums(temp))][,
-      rowSums(.SD), .SDcols = names(temp)
+      rowSums(.SD),
+      .SDcols = names(temp)
     ]
     loo_(ll, n_draws, n_chains)
   }

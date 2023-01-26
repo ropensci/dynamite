@@ -29,9 +29,9 @@ test_that("formula incrementation logic is correct", {
       y ~ 1 + random(~ -1 + w)
     ),
     list(
-      y ~ -1 + w + varying(~ 1),
+      y ~ -1 + w + varying(~1),
       y ~ -1 + varying(~ 1 + w),
-      y ~ -1 + varying(~ 1) + random(~ -1 + w)
+      y ~ -1 + varying(~1) + random(~ -1 + w)
     ),
     list(
       y ~ 1 + x + w,
@@ -59,8 +59,8 @@ test_that("formula incrementation logic is correct", {
       y ~ -1 + varying(~ 1 + x + z) + random(~ -1 + w)
     ),
     list(
-      y ~ -1 + w + random(~ 1),
-      y ~ -1 + varying(~ -1 + w) + random(~ 1),
+      y ~ -1 + w + random(~1),
+      y ~ -1 + varying(~ -1 + w) + random(~1),
       y ~ -1 + random(~ 1 + w)
     ),
     list(

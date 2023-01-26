@@ -173,7 +173,7 @@ extract_lags <- function(x) {
         src = "",
         var = v,
         k = seq.int(1L, max(tmp$k)),
-        present  = FALSE
+        present = FALSE
       )
       expanded[[i]] <- full[full$k %in% tmp$k, ] <- tmp
     }

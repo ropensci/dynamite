@@ -78,7 +78,7 @@ library(dynamite)
 set.seed(1)
 library(dynamite)
 gaussian_example_fit <- dynamite(
-  obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") + 
+  obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
     random() + splines(df = 20),
   data = gaussian_example, time = "time", group = "id",
   iter = 2000, warmup = 1000, thin = 5,
@@ -111,12 +111,13 @@ distribution of model parameters and observed data on first time point):
 ```{r}
 library(ggplot2)
 pred <- predict(gaussian_example_fit, n_draws = 50)
-pred |> dplyr::filter(id < 5) |> 
+pred |>
+  dplyr::filter(id < 5) |>
   ggplot(aes(time, y_new, group = .draw)) +
-  geom_line(alpha = 0.5) + 
+  geom_line(alpha = 0.5) +
   # observed values
   geom_line(aes(y = y), colour = "tomato") +
-  facet_wrap(~ id) +
+  facet_wrap(~id) +
   theme_bw()
 ```
 

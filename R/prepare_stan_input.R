@@ -101,9 +101,9 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     Y_out[Y_na] <- 0.0
     form_specials <- specials[[i]]
     channel$resp <- resp
-    #channel$L_fixed <- as.array(match(fixed_pars[[i]], assigned[[i]]))
-    #channel$L_varying <- as.array(match(varying_pars[[i]], assigned[[i]]))
-    #channel$J <- as.array(assigned[[i]])
+    # channel$L_fixed <- as.array(match(fixed_pars[[i]], assigned[[i]]))
+    # channel$L_varying <- as.array(match(varying_pars[[i]], assigned[[i]]))
+    # channel$J <- as.array(assigned[[i]])
     indices <- list(
       K_fixed = length(fixed_pars[[i]]),
       K_varying = length(varying_pars[[i]]),
@@ -181,7 +181,8 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     stopifnot_(
       !(channel$has_random || channel$has_random_intercept) ||
         family != "categorical",
-      "Random effects are not (yet) supported for categorical responses.")
+      "Random effects are not (yet) supported for categorical responses."
+    )
     sampling_vars[[paste0("y_", resp)]] <- ifelse_(
       family %in% c("gaussian", "gamma", "exponential", "beta"),
       t(Y_out),
@@ -237,9 +238,11 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
 extract_vectorizable_priors <- function(channel, resp) {
   priors <- channel[which(
     names(channel) %in% paste0(
-      c("alpha", "beta", "delta", "tau", "sigma_nu"), "_prior_pars")
+      c("alpha", "beta", "delta", "tau", "sigma_nu"), "_prior_pars"
+    )
   )]
-  ifelse_(length(priors) > 0,
+  ifelse_(
+    length(priors) > 0,
     setNames(priors, paste0(names(priors), "_", resp)),
     NULL
   )
@@ -274,8 +277,9 @@ prepare_prior <- function(ptype, priors, channel) {
 #' @param P Number of channels with latent factor.
 #' @param correlated_lf Does the model contain correlated latent factors?
 #' @noRd
-prepare_common_priors <- function(priors, M, shrinkage, P, correlated_nu,
-  correlated_lf) {
+prepare_common_priors <- function(
+    priors, M, shrinkage, P, correlated_nu,
+    correlated_lf) {
   common_priors <- NULL
   if (shrinkage) {
     common_priors <- ifelse_(
@@ -363,12 +367,19 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
   } else {
     priors <- priors[priors$response == y, ]
     types <- priors$type
-    for (ptype in intersect(types,
-      c("alpha", "tau_alpha", "sigma_lambda", "tau_psi"))) {
+    loop_types <- intersect(
+      types,
+      c("alpha", "tau_alpha", "sigma_lambda", "tau_psi")
+    )
+    for (ptype in loop_types) {
       pdef <- priors[priors$type == ptype, ]
       channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
     }
-    for (ptype in intersect(types, c("beta", "delta", "tau", "sigma_nu"))) {
+    loop_types <- intersect(
+      types,
+      c("beta", "delta", "tau", "sigma_nu")
+    )
+    for (ptype in loop_types) {
       channel <- prepare_prior(ptype, priors, channel)
     }
   }
@@ -380,7 +391,7 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
     identical(length(channel$tau_prior_distr), 1L)
   channel$write_sigma_nu <-
     (channel$has_random || channel$has_random_intercept) &&
-    identical(length(channel$sigma_nu_prior_distr), 1L)
+      identical(length(channel$sigma_nu_prior_distr), 1L)
   list(channel = channel, priors = priors)
 }
 
@@ -406,8 +417,11 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
   } else {
     priors <- priors[priors$response == y, ]
     types <- priors$type
-    for (ptype in intersect(types,
-      c("alpha", "beta", "delta", "tau", "sigma_nu"))) {
+    loop_types <- intersect(
+      types,
+      c("alpha", "beta", "delta", "tau", "sigma_nu")
+    )
+    for (ptype in loop_types) {
       channel <- prepare_prior(ptype, priors, channel)
     }
     if ("tau_alpha" %in% types) {
@@ -429,7 +443,7 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
     identical(length(channel$tau_prior_distr), 1L)
   channel$write_sigma_nu <-
     (channel$has_random || channel$has_random_intercept) &&
-    identical(length(channel$sigma_nu_prior_distr), 1L)
+      identical(length(channel$sigma_nu_prior_distr), 1L)
   list(channel = channel, sampling_vars = sampling_vars, priors = priors)
 }
 

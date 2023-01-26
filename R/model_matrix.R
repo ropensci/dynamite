@@ -4,7 +4,6 @@
 #' @srrstats {RE1.3, RE1.3a} `full_model.matrix` preserves relevant attributes.
 #' @noRd
 full_model.matrix <- function(dformula, data, verbose) {
-  #formulas <- get_formulas(dformula)
   model_matrices <- vector(mode = "list", length = length(dformula))
   model_matrices_type <- vector(mode = "list", length = length(dformula))
   types <- c("fixed", "varying", "random")
@@ -17,11 +16,11 @@ full_model.matrix <- function(dformula, data, verbose) {
     if (verbose) {
       test_collinearity(dformula[[i]]$resp, mm, data)
     }
-    #formulas <- stats::setNames(vector(mode = "list", length = 3L), types)
     model_matrices_type[[i]] <- list()
     for (type in c("fixed", "varying", "random")) {
       type_formula <- get_type_formula(dformula[[i]], type)
       if (!is.null(type_formula)) {
+        # Intercept is not part of X
         model_matrices_type[[i]][[type]] <- remove_intercept(
           stats::model.matrix.lm(
             type_formula,
@@ -32,8 +31,6 @@ full_model.matrix <- function(dformula, data, verbose) {
       }
     }
     model_matrices[[i]] <- do.call(cbind, model_matrices_type[[i]])
-    # Intercept is not part of X
-    #model_matrices[[i]] <- remove_intercept(mm)
   }
   model_matrix <- do.call(cbind, model_matrices)
   u_names <- unique(colnames(model_matrix))
@@ -67,16 +64,6 @@ full_model.matrix <- function(dformula, data, verbose) {
         )
       )
     )
-    #cols <- colnames(model_matrices[[i]])
-    #assign <- match(cols, u_names)
-    #assign_i <- attr(model_matrices[[i]], "assign")
-    #attr(model_matrix, "assign")[[i]] <- sort(assign)
-    #fixed <- assign[assign_i %in% dformula[[i]]$fixed]
-    #attr(model_matrix, "fixed")[[i]] <- setNames(fixed, u_names[fixed])
-    #varying <- assign[assign_i %in% dformula[[i]]$varying]
-    #attr(model_matrix, "varying")[[i]] <- setNames(varying, u_names[varying])
-    #random <- assign[assign_i %in% dformula[[i]]$random]
-    #attr(model_matrix, "random")[[i]] <- setNames(random, u_names[random])
   }
   model_matrix
 }
@@ -145,7 +132,6 @@ full_model.matrix_predict <- function(formula_list, newdata_resp, newdata_pred,
   sub_pred <- newdata_pred[idx_pred, ]
   sub <- cbind(sub_resp, sub_pred)
   model_matrices <- lapply(formula_list, function(x) {
-    #stats::model.matrix.lm(x, sub, na.action = na.pass)
     model_matrices_type <- list()
     for (type in c("fixed", "varying", "random")) {
       type_formula <- get_type_formula(x, type)

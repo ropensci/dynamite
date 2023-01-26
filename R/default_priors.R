@@ -14,7 +14,8 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
   sd_gamma <- signif(sd_gamma, 2)
   priors <- list()
   if (channel$has_random_intercept || channel$has_random) {
-    icpt <- ifelse_(channel$has_random_intercept,
+    icpt <- ifelse_(
+      channel$has_random_intercept,
       "alpha",
       NULL
     )

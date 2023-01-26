@@ -132,8 +132,8 @@ test_that("fitted works", {
   manual <- as_draws(gaussian_example_fit) |>
     dplyr::filter(.iteration == iter & .chain == 1) |>
     dplyr::summarise(fit = `alpha_y[20]` + nu_y_alpha_id5 +
-        `delta_y_x[20]` * xzy$x + beta_y_z * xzy$z +
-        `delta_y_y_lag1[20]` * xzy$y_lag1) |>
+      `delta_y_x[20]` * xzy$x + beta_y_z * xzy$z +
+      `delta_y_y_lag1[20]` * xzy$y_lag1) |>
     dplyr::pull(fit)
   automatic <- fitg |>
     dplyr::filter(id == 5 & time == 20) |>
@@ -341,15 +341,17 @@ test_that("predict with multiple random effects work", {
   x <- rnorm(n * k)
   u1 <- rep(rnorm(k, sd = 0.2), each = n)
   u2 <- 0.5 * u1 + rep(rnorm(k, sd = 0.1), each = n)
-  u3 <- 0.2 * u1 +  rep(rnorm(k, sd = 0.3), each = n)
+  u3 <- 0.2 * u1 + rep(rnorm(k, sd = 0.3), each = n)
   y1 <- rbinom(n * k, size = 20, prob = plogis(x + u1 + u2 * x))
   y2 <- rnorm(n * k, u3 + 2 * x)
-  d <- data.frame(year = 1:n, person = rep(1:k, each = n),
-    y1 = y1, y2 = y2, x = x,  tr = 20)
+  d <- data.frame(
+    year = 1:n, person = rep(1:k, each = n),
+    y1 = y1, y2 = y2, x = x, tr = 20
+  )
 
   fit <- dynamite(
-    obs(y1 ~ x + trials(tr) + random(~ x), family = "binomial") +
-    obs(y2 ~ x + random(~ 1), family = "gaussian") +
+    obs(y1 ~ x + trials(tr) + random(~x), family = "binomial") +
+      obs(y2 ~ x + random(~1), family = "gaussian") +
       random_spec(),
     data = d, time = "year", group = "person",
     chains = 1, iter = 2000, refresh = 0

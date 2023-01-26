@@ -277,7 +277,7 @@ aux <- function(formula) {
 #' @param ... Ignored.
 #' @export
 #' @examples
-#' x <- obs(y ~ x + random(~1 + lag(d)), family = "gaussian") +
+#' x <- obs(y ~ x + random(~ 1 + lag(d)), family = "gaussian") +
 #'   obs(z ~ varying(~w), family = "exponential") +
 #'   aux(numeric(d) ~ log(y) | init(c(0, 1))) +
 #'   lags(k = 2) +
@@ -430,7 +430,7 @@ get_quoted <- function(x) {
     out[[i]] <- list(name = resp[i], expr = formula_rhs(x[[i]]$formula))
   }
   out
-  #if (length(resp) > 0L) {
+  # if (length(resp) > 0L) {
   #  expr <- lapply(x, function(x) deparse1(formula_rhs(x$formula)))
   #  quote_str <- paste0(
   #    "`:=`(",
@@ -438,9 +438,9 @@ get_quoted <- function(x) {
   #    ")"
   #  )
   #  str2lang(quote_str)
-  #} else {
+  # } else {
   #  NULL
-  #}
+  # }
 }
 
 #' Get Indices of Deterministic Channels in a `dynamiteformula` Object

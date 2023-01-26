@@ -217,18 +217,20 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   out <- data.table::rbindlist(all_values, fill = TRUE)
   if (summary) {
     pars <- unique(out$parameter)
-    out <- out[,
+    out <- out[
+      ,
       parameter := factor(parameter, levels = pars, ordered = TRUE)
     ][,
       {
-        mean = mean(value)
-        sd = sd(value)
-        tmp = quantile(value, probs = probs, na.rm = TRUE)
+        mean <- mean(value)
+        sd <- sd(value)
+        tmp <- quantile(value, probs = probs, na.rm = TRUE)
         names(tmp) <- paste0("q", 100 * probs)
         c(list(mean = mean, sd = sd), tmp)
       },
       by = list(parameter, time, category, group, response, type)
-    ][,
+    ][
+      ,
       parameter := as.character(parameter)
     ]
   }
@@ -264,9 +266,9 @@ as_data_table_xi <- function(x, draws, ...) {
 #' @describeIn as_data_table_default Data Table for a "corr_nu" Parameter
 #' @noRd
 as_data_table_corr_nu <- function(x, draws, n_draws, ...) {
-
   vars <- unlist(lapply(x$stan$model_vars, function(x) {
-    icpt <- ifelse_(x$has_random_intercept,
+    icpt <- ifelse_(
+      x$has_random_intercept,
       "alpha",
       NULL
     )
@@ -283,8 +285,8 @@ as_data_table_corr_nu <- function(x, draws, n_draws, ...) {
 #' @describeIn as_data_table_default Data Table for a "nu" Parameter
 #' @noRd
 as_data_table_nu <- function(x, draws, n_draws, response, ...) {
-
-  icpt <- ifelse_(x$stan$model_vars[[response]]$has_random_intercept,
+  icpt <- ifelse_(
+    x$stan$model_vars[[response]]$has_random_intercept,
     "alpha",
     NULL
   )
@@ -454,7 +456,8 @@ as_data_table_sigma <- function(draws, response, ...) {
 #' @describeIn as_data_table_default Data Table for a "sigma_nu" Parameter
 #' @noRd
 as_data_table_sigma_nu <- function(x, draws, n_draws, response, ...) {
-  icpt <- ifelse_(x$stan$model_vars[[response]]$has_random_intercept,
+  icpt <- ifelse_(
+    x$stan$model_vars[[response]]$has_random_intercept,
     "alpha",
     NULL
   )
@@ -493,8 +496,9 @@ as_data_table_sigma_lambda <- function(draws, response, ...) {
 
 #' @describeIn as_data_table_default Data Table for a "psi" Parameter
 #' @noRd
-as_data_table_psi <- function(x, draws, n_draws,
-  response, category, include_fixed) {
+as_data_table_psi <- function(
+    x, draws, n_draws,
+    response, category, include_fixed) {
   n_cat <- length(category)
   fixed <- x$stan$fixed
   all_time_points <- sort(unique(x$data[[x$time_var]]))

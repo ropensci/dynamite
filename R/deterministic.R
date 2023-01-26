@@ -13,8 +13,12 @@
 initialize_deterministic <- function(data, dd, dlp, dld, dls) {
   resp_pred <- attr(dlp, "original_response")
   for (i in seq_along(dlp)) {
-    #data[, (dlp[[i]]$response) := v, env = list(v = data[[resp_pred[i]]])]
-    data.table::set(data, j = dlp[[i]]$response, value = data[[resp_pred[i]]])
+    # data[, (dlp[[i]]$response) := v, env = list(v = data[[resp_pred[i]]])]
+    data.table::set(
+      x = data,
+      j = dlp[[i]]$response,
+      value = data[[resp_pred[i]]]
+    )
     data[, (dlp[[i]]$response) := NA]
   }
   rhs_ls <- get_predictors(dls)
@@ -23,16 +27,16 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
       rhs_ls[i] %in% names(data),
       "Can't find variable{?s} {.var {rhs_ls[i]}} in {.arg data}."
     )
-    #v <- data[[rhs_ls[i]]]
-    #data[, (dls[[i]]$response) := v, env = list(v = v)]
-    data.table::set(data, j = dls[[i]]$response, value = data[[rhs_ls[i]]])
+    # v <- data[[rhs_ls[i]]]
+    # data[, (dls[[i]]$response) := v, env = list(v = v)]
+    data.table::set(x = data, j = dls[[i]]$response, value = data[[rhs_ls[i]]])
     data[, (dls[[i]]$response) := NA]
   }
   for (i in seq_along(dd)) {
     as_fun <- paste0("as.", dd[[i]]$specials$resp_type)
     past <- do.call(as_fun, args = list(0))
-    #data[, dd[[i]]$response := past, env = list(past = past)]
-    data.table::set(data, j = dd[[i]]$response, value = past)
+    # data[, dd[[i]]$response := past, env = list(past = past)]
+    data.table::set(x = data, j = dd[[i]]$response, value = past)
     data[, dd[[i]]$response := NA]
   }
   rhs_ld <- get_predictors(dld)
@@ -42,19 +46,19 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
     if (init[k]) {
       as_fun <- paste0("as.", dld[[k]]$specials$resp_type)
       past <- do.call(as_fun, args = list(dld[[k]]$specials$past[1L]))
-      #data[, (dld[[k]]$response) := past, env = list(past = past)]
-      data.table::set(data, j = dld[[k]]$response, value = past)
-      #data[, (dld[[k]]$response) := past]
+      # data[, (dld[[k]]$response) := past, env = list(past = past)]
+      data.table::set(x = data, j = dld[[k]]$response, value = past)
+      # data[, (dld[[k]]$response) := past]
       data[, (dld[[k]]$response) := NA]
     } else {
-      #v <- data[[rhs_ld[k]]]
-      #data[, (dld[[k]]$response) := v, env = list(v = v)]
+      # v <- data[[rhs_ld[k]]]
+      # data[, (dld[[k]]$response) := v, env = list(v = v)]
       data.table::set(
-        data,
+        x = data,
         j = dld[[k]]$response,
         value = data[[rhs_ld[k]]]
       )
-      #data[, (dld[[k]]$response) := data[[rhs_ld[k]]]]
+      # data[, (dld[[k]]$response) := data[[rhs_ld[k]]]]
       data[, (dld[[k]]$response) := NA]
     }
   }
@@ -104,15 +108,15 @@ assign_initial_values <- function(data, idx, dd, dlp, dld, dls,
       (dlp[[i]]$response) := lapply(.SD, lag_, k),
       .SDcols = resp_lp[i],
       by = group_var
-      #by = group_var,
-      #env = list(k = k, lag_ = lag_)
+      # by = group_var,
+      # env = list(k = k, lag_ = lag_)
     ]
   }
   init <- which(has_past(dld))
   for (i in init) {
     as_fun <- paste0("as.", dld[[i]]$specials$resp_type)
     past <- do.call(as_fun, args = list(dld[[i]]$specials$past))
-    data.table::set(data, j = lhs_ld[i], value = past)
+    data.table::set(x = data, j = lhs_ld[i], value = past)
   }
   idx <- idx + 1L
   assign_deterministic(data, idx, cl)
@@ -134,9 +138,9 @@ assign_initial_values <- function(data, idx, dd, dlp, dld, dls,
 #' @noRd
 assign_deterministic <- function(data, idx, cl) {
   # Remove this if when env is available in CRAN data.table
-  #if (!is.null(cl)) {
+  # if (!is.null(cl)) {
   #  data[idx, cl, env = list(cl = cl)]
-  #}
+  # }
   for (.deterministic_channel_definition_ in cl) {
     data[
       idx,
@@ -180,7 +184,10 @@ assign_lags <- function(data, idx, ro, lhs, rhs, skip = FALSE, offset = 1L) {
   if (!skip) {
     for (k in ro) {
       data.table::set(
-        data, i = idx, j = lhs[k], value = data[[rhs[k]]][idx - offset]
+        x = data,
+        i = idx,
+        j = lhs[k],
+        value = data[[rhs[k]]][idx - offset]
       )
     }
   }
@@ -195,8 +202,8 @@ assign_lags_init <- function(data, idx, ro, lhs, rhs, offset = 1L) {
     val <- data[[rhs[k]]][idx - offset]
     na_val <- is.na(val)
     val[na_val] <- data[[lhs[k]]][idx][na_val]
-    #data.table::set(data, i = idx, j = lhs[k], value = val)
-    data[idx, (lhs[k]) := val]
+    data.table::set(x = data, i = idx, j = lhs[k], value = val)
+    # data[idx, (lhs[k]) := val]
   }
 }
 

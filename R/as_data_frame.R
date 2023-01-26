@@ -84,8 +84,9 @@
 #' )
 #'
 #' if (requireNamespace("dplyr") &&
-#'     requireNamespace("tidyr") &&
-#'     base::getRversion() >= "4.1.0") {
+#'   requireNamespace("tidyr") &&
+#'   base::getRversion() >= "4.1.0") {
+#'
 #'   results |>
 #'     dplyr::group_by(parameter) |>
 #'     dplyr::summarise(mean = mean(value), sd = sd(value))

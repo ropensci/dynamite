@@ -8,11 +8,11 @@ B <- t(splines::bs(1:T_, df = D, intercept = TRUE))
 a <- cumsum(rnorm(D))
 psi <- numeric(T_)
 lambda_i <- rnorm(N, 1, 0.2)
-for(t in 1:T_) {
+for (t in 1:T_) {
   psi[t] <- B[, t] %*% a
 }
 y <- matrix(0, N, T_)
-for(t in 1:T_) {
+for (t in 1:T_) {
   y[, t] <- rnorm(N, lambda_i * psi[t], 0.2)
 }
 latent_factor_example <- data.frame(

@@ -20,13 +20,16 @@
 #' betas <- coef(gaussian_example_fit, type = "beta")
 #' deltas <- coef(gaussian_example_fit, type = "delta")
 #'
-coef.dynamitefit <- function(object, type = c("beta", "delta", "nu", "lambda",
-                             "psi"), responses = NULL, summary = TRUE,
+coef.dynamitefit <- function(object,
+                             type = c("beta", "delta", "nu", "lambda", "psi"),
+                             responses = NULL, summary = TRUE,
                              probs = c(0.05, 0.95),
                              include_alpha = TRUE, ...) {
   type <- onlyif(is.character(type), tolower(type))
-  type <- try(match.arg(type, c("beta", "delta", "nu", "lambda", "psi")),
-    silent = TRUE)
+  type <- try(
+    match.arg(type, c("beta", "delta", "nu", "lambda", "psi")),
+    silent = TRUE
+  )
   stopifnot_(
     !inherits(type, "try-error"),
     "Argument {.arg type} must be either \"beta\", \"delta\", \"nu\",

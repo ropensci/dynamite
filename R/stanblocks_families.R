@@ -136,16 +136,26 @@ data_lines_default <- function(y, idt, has_missing,
     "int L_fixed_{y}[K_fixed_{y}];",
     "int L_varying_{y}[K_varying_{y}];",
     "int L_random_{y}[K_random_{y}{icpt}];",
-    onlyif(write_beta || write_delta || write_tau || write_sigma_nu,
-      "// Parameters of vectorized priors"),
-    onlyif(write_beta,
-      "matrix[K_fixed_{y}, {beta_prior_npars}] beta_prior_pars_{y};"),
-    onlyif(write_delta,
-      "matrix[K_varying_{y}, {delta_prior_npars}] delta_prior_pars_{y};"),
-    onlyif(write_tau,
-      "matrix[K_varying_{y}, {tau_prior_npars}] tau_prior_pars_{y};"),
-    onlyif(write_sigma_nu,
-      "matrix[K_random_{y}, {sigma_nu_prior_npars}] sigma_nu_prior_pars_{y};"),
+    onlyif(
+      write_beta || write_delta || write_tau || write_sigma_nu,
+      "// Parameters of vectorized priors"
+    ),
+    onlyif(
+      write_beta,
+      "matrix[K_fixed_{y}, {beta_prior_npars}] beta_prior_pars_{y};"
+    ),
+    onlyif(
+      write_delta,
+      "matrix[K_varying_{y}, {delta_prior_npars}] delta_prior_pars_{y};"
+    ),
+    onlyif(
+      write_tau,
+      "matrix[K_varying_{y}, {tau_prior_npars}] tau_prior_pars_{y};"
+    ),
+    onlyif(
+      write_sigma_nu,
+      "matrix[K_random_{y}, {sigma_nu_prior_npars}] sigma_nu_prior_pars_{y};"
+    ),
     "// Responses",
     .indent = idt(1)
   )
@@ -157,7 +167,7 @@ data_lines_categorical <- function(y, idt,
                                    alpha_prior_npars = 1L,
                                    beta_prior_npars = 1L,
                                    delta_prior_npars = 1L, tau_prior_npars = 1L,
-  has_random_intercept, ...) {
+                                   has_random_intercept, ...) {
   icpt <- ifelse(
     has_random_intercept,
     " - 1",
@@ -180,16 +190,26 @@ data_lines_categorical <- function(y, idt,
     "int L_fixed_{y}[K_fixed_{y}];",
     "int L_varying_{y}[K_varying_{y}];",
     "int L_random_{y}[K_random_{y}{icpt}];",
-    onlyif(write_alpha || write_beta || write_delta || write_tau,
-      "// Parameters of vectorized priors"),
-    onlyif(write_alpha,
-      "matrix[S_{y} - 1, {alpha_prior_npars}] alpha_prior_pars_{y};"),
-    onlyif(write_beta,
-      "matrix[K_fixed_{y} * (S_{y} - 1), {beta_prior_npars}] beta_prior_pars_{y};"),
-    onlyif(write_delta,
-      "matrix[K_varying_{y} * (S_{y} - 1), {delta_prior_npars}] delta_prior_pars_{y};"),
-    onlyif(write_delta,
-      "matrix[K_varying_{y}, {tau_prior_npars}] tau_prior_pars_{y};"),
+    onlyif(
+      write_alpha || write_beta || write_delta || write_tau,
+      "// Parameters of vectorized priors"
+    ),
+    onlyif(
+      write_alpha,
+      "matrix[S_{y} - 1, {alpha_prior_npars}] alpha_prior_pars_{y};"
+    ),
+    onlyif(
+      write_beta,
+      "matrix[K_fixed_{y} * (S_{y} - 1), {beta_prior_npars}] beta_prior_pars_{y};"
+    ),
+    onlyif(
+      write_delta,
+      "matrix[K_varying_{y} * (S_{y} - 1), {delta_prior_npars}] delta_prior_pars_{y};"
+    ),
+    onlyif(
+      write_delta,
+      "matrix[K_varying_{y}, {tau_prior_npars}] tau_prior_pars_{y};"
+    ),
     "// Responses",
     "int<lower=0> y_{y}[T, N];",
     .indent = idt(1)
@@ -410,7 +430,7 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
       "vector[N - 1] lambda_raw_{y}; // raw factor loadings"
     ),
     onlyif(
-      has_lfactor  && noncentered_psi,
+      has_lfactor && noncentered_psi,
       "real omega_raw_psi_1_{y}; // factor spline coef for first time point"
     ),
     .indent = idt(1)
@@ -917,7 +937,7 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
 transformed_parameters_lines_gaussian <- function(...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in%
-      names(formals(transformed_parameters_lines_default))]
+    names(formals(transformed_parameters_lines_default))]
   do.call(what = transformed_parameters_lines_default, args = args)
 }
 
@@ -993,7 +1013,6 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
                                 psi_prior_distr = "",
                                 tau_psi_prior_distr = "",
                                 K_fixed, K_varying, K_random, J_random, ...) {
-
   allow_intercept <- !(has_lfactor && nonzero_lambda)
 
   mtext_alpha <- "a_{y} ~ {alpha_prior_distr};"
@@ -1012,18 +1031,21 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
   if (has_lfactor) {
     m <- ifelse_(nonzero_lambda, "1", "0")
     mtext_lambda <- paste_rows(
-      ifelse_(noncentered_lambda,
+      ifelse_(
+        noncentered_lambda,
         "lambda_std_{y} ~ normal(0, inv(sqrt(1 - inv(N))));",
         "lambda_{y} ~ normal({m}, sigma_lambda_{y} * inv(sqrt(1 - inv(N))));"
       ),
       "sigma_lambda_{y} ~ {sigma_lambda_prior_distr};",
       onlyif(nonzero_lambda, "tau_psi_{y} ~ {tau_psi_prior_distr};"),
-      ifelse_(noncentered_psi,
+      ifelse_(
+        noncentered_psi,
         "omega_raw_psi_1_{y} ~ {psi_prior_distr};",
         "omega_psi_{y}[1] ~ {psi_prior_distr};"
-        ),
+      ),
       .indent = idt(c(0, 1, 1, 1)),
-      .parse = TRUE)
+      .parse = TRUE
+    )
   }
 
   if (noncentered) {
@@ -1176,7 +1198,7 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
     onlyif(has_lfactor, mtext_lambda),
     onlyif(has_random_intercept || has_random, mtext_sigma_nu),
     onlyif(has_fixed_intercept && allow_intercept, mtext_fixed_intercept),
-    onlyif(has_varying_intercept  && allow_intercept, mtext_varying_intercept),
+    onlyif(has_varying_intercept && allow_intercept, mtext_varying_intercept),
     onlyif(has_fixed, mtext_fixed),
     onlyif(has_varying, mtext_varying),
     onlyif(has_varying, mtext_tau),
@@ -1382,8 +1404,10 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
     onlyif(has_varying, mtext_varying),
     onlyif(has_varying, mtext_tau),
     "{{",
-    onlyif(has_fixed || has_varying,
-           "matrix[K_{y}, S_{y} - 1] gamma__{y};"),
+    onlyif(
+      has_fixed || has_varying,
+      "matrix[K_{y}, S_{y} - 1] gamma__{y};"
+    ),
     onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
     "for (t in 1:T) {{",
     onlyif(has_varying, "gamma__{y}[L_varying_{y}] = delta_{y}[t];"),
@@ -1420,8 +1444,10 @@ model_lines_gaussian <- function(y, idt, obs, has_fixed, has_varying,
   mtext <- paste_rows(
     "sigma_{y} ~ {sigma_prior_distr};",
     "{{",
-    onlyif(has_fixed || has_varying,
-           "vector[K_{y}] gamma__{y};"),
+    onlyif(
+      has_fixed || has_varying,
+      "vector[K_{y}] gamma__{y};"
+    ),
     onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
     "for (t in 1:T) {{",
     onlyif(has_varying, "gamma__{y}[L_varying_{y}] = delta_{y}[t];"),
@@ -1501,8 +1527,10 @@ model_lines_bernoulli <- function(y, idt, obs, has_varying, has_fixed,
   )
   mtext <- paste_rows(
     "{{",
-    onlyif(has_fixed || has_varying,
-           "vector[K_{y}] gamma__{y};"),
+    onlyif(
+      has_fixed || has_varying,
+      "vector[K_{y}] gamma__{y};"
+    ),
     onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
     "for (t in 1:T) {{",
     onlyif(has_varying, "gamma__{y}[L_varying_{y}] = delta_{y}[t];"),
@@ -1546,8 +1574,10 @@ model_lines_poisson <- function(y, idt, obs, has_varying, has_fixed, has_random,
   )
   mtext <- paste_rows(
     "{{",
-    onlyif(has_fixed || has_varying,
-           "vector[K_{y}] gamma__{y};"),
+    onlyif(
+      has_fixed || has_varying,
+      "vector[K_{y}] gamma__{y};"
+    ),
     onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
     "for (t in 1:T) {{",
     onlyif(has_varying, "gamma__{y}[L_varying_{y}] = delta_{y}[t];"),
@@ -1595,8 +1625,10 @@ model_lines_negbin <- function(y, idt, obs, has_varying, has_fixed, has_random,
   mtext <- paste_rows(
     "phi_{y} ~ {phi_prior_distr};",
     "{{",
-    onlyif(has_fixed || has_varying,
-           "vector[K_{y}] gamma__{y};"),
+    onlyif(
+      has_fixed || has_varying,
+      "vector[K_{y}] gamma__{y};"
+    ),
     onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
     "for (t in 1:T) {{",
     onlyif(has_varying, "gamma__{y}[L_varying_{y}] = delta_{y}[t];"),

@@ -107,7 +107,6 @@ create_transformed_data <- function(dformula, idt, vars) {
     .indent = idt(c(0, 0, 1, 0, 1, 0)),
     .parse = FALSE
   )
-
 }
 
 #' @describeIn create_function Create the 'Parameters'
@@ -166,14 +165,14 @@ create_parameters <- function(dformula, idt, vars) {
     pars[i] <- lines_wrap("parameters", family, line_args)
   }
   paste_rows("parameters {", splinetext, randomtext, lfactortext, pars, "}",
-    .parse = FALSE)
+    .parse = FALSE
+  )
 }
 
 #' @describeIn create_function Create the 'Transformed Parameters'
 #'   Block of the Stan Model Code
 #' @noRd
 create_transformed_parameters <- function(dformula, idt, vars) {
-
   randomtext <- ""
   M <- attr(vars, "random_defs")$M
   if (M > 0L) {
@@ -214,8 +213,11 @@ create_transformed_parameters <- function(dformula, idt, vars) {
   P <- length(psis)
   if (P > 0) {
     if (attr(vars, "lfactor_defs")$noncentered_psi) {
-      tau_psi <- ifelse(attr(vars, "lfactor_defs")$nonzero_lambda,
-        paste0("tau_psi_", psis, " * "), "")
+      tau_psi <- ifelse_(
+        attr(vars, "lfactor_defs")$nonzero_lambda,
+        paste0("tau_psi_", psis, " * "),
+        ""
+      )
       # create noise terms for latent factors
       lfactortext <- ifelse_(
         attr(vars, "lfactor_defs")$correlated,
@@ -223,20 +225,25 @@ create_transformed_parameters <- function(dformula, idt, vars) {
           "matrix[P, D - 1] omega_psi = L_lf * omega_raw_psi;",
           glue::glue(
             "row_vector[D] omega_psi_{psis} = \\
-            append_col(0, {tau_psi}omega_psi[{1:P}, ]);"),
+            append_col(0, {tau_psi}omega_psi[{1:P}, ]);"
+          ),
           .indent = idt(1)
         ),
         paste_rows(
-          glue::glue("row_vector[D] omega_psi_{psis} = \\
-            append_col(0, {tau_psi}omega_raw_psi[{1:P}, ]);"),
+          glue::glue(
+            "row_vector[D] omega_psi_{psis} = \\
+            append_col(0, {tau_psi}omega_raw_psi[{1:P}, ]);"
+          ),
           .indent = idt(1)
         )
       )
     } else {
       lfactortext <-
         paste_rows(
-          glue::glue("row_vector[D] omega_psi_{psis} = \\
-            omega_raw_psi[{1:P}, ];"),
+          glue::glue(
+            "row_vector[D] omega_psi_{psis} = \\
+            omega_raw_psi[{1:P}, ];"
+          ),
           .indent = idt(1)
         )
     }
@@ -289,9 +296,12 @@ create_model <- function(dformula, idt, vars, backend) {
           "{{",
           "row_vector[M] nu_tmp[N];",
           "for (i in 1:N) {{",
-            "nu_tmp[i] = nu_raw[i, ];",
+          "nu_tmp[i] = nu_raw[i, ];",
           "}}",
-          "nu_tmp ~ multi_normal_cholesky(rep_vector(0, M), diag_pre_multiply(sigma_nu, L_nu));",
+          paste0(
+            "nu_tmp ~ multi_normal_cholesky(rep_vector(0, M), ",
+            "diag_pre_multiply(sigma_nu, L_nu));"
+          ),
           "}}",
           "L_nu ~ {L_prior};",
           .indent = idt(c(1, 2, 2, 3, 2, 2, 1, 1))
@@ -309,7 +319,7 @@ create_model <- function(dformula, idt, vars, backend) {
         ),
         paste_rows(
           "for (i in 1:M) {{",
-            "nu_raw[, i] ~ normal(0, sigma_nu[i]);",
+          "nu_raw[, i] ~ normal(0, sigma_nu[i]);",
           "}}",
           .indent = idt(c(1, 2, 1))
         )
@@ -378,7 +388,8 @@ create_model <- function(dformula, idt, vars, backend) {
           psis <- attr(vars, "lfactor_defs")$responses
           P <- length(psis)
           tau <- paste0(ifelse(attr(vars, "lfactor_defs")$nonzero_lambda,
-            paste0("tau_psi_", psis), "1"), collapse = ", ")
+            paste0("tau_psi_", psis), "1"
+          ), collapse = ", ")
           lfactortext <- paste_rows(
             "{{",
             "vector[P] tau_psi = [{tau}]';",
@@ -443,8 +454,14 @@ create_generated_quantities <- function(dformula, idt, vars) {
   P <- attr(vars, "lfactor_defs")$P
   if (P > 0 && attr(vars, "lfactor_defs")$correlated) {
     # evaluate number of corrs to avoid Stan warning about integer division
-    tau <- paste0(ifelse(attr(vars, "lfactor_defs")$nonzero_lambda,
-      paste0("tau_psi_", psis), "1"), collapse = ", ")
+    tau <- paste0(
+      ifelse(
+        attr(vars, "lfactor_defs")$nonzero_lambda,
+        paste0("tau_psi_", psis),
+        "1"
+      ),
+      collapse = ", "
+    )
     gen_psi <- paste_rows(
       "vector[P] tau_psi = [{tau}]';",
       "corr_matrix[P] corr_matrix_psi =

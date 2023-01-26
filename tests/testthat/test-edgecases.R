@@ -144,7 +144,7 @@ test_that("random effects are handled correctly", {
   expect_error(
     obs_all_alpha <- obs(y2 ~ -1 + x2 + varying(~1) + random(~1), family = "gaussian") +
       obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials) + random(~x1), family = "binomial") +
-      obs(y4 ~ x1 + varying(~ -1 + x2) + random(~x1 + x2), family = "bernoulli") +
+      obs(y4 ~ x1 + varying(~ -1 + x2) + random(~ x1 + x2), family = "bernoulli") +
       splines(df = 5) + random_spec(correlated = FALSE),
     NA
   )
@@ -172,7 +172,7 @@ test_that("random effects are handled correctly", {
   expect_error(
     obs_all_alpha <- obs(y2 ~ 1, family = "gaussian") +
       obs(y3 ~ trials(trials) + random(~1), family = "binomial") +
-      obs(y4 ~ x1 + random(~ x1), family = "bernoulli"),
+      obs(y4 ~ x1 + random(~x1), family = "bernoulli"),
     NA
   )
   expect_error(
@@ -304,7 +304,8 @@ test_that("latent factors are handled correctly", {
       "sigma_lambda_y3", "psi_y3", "L_lf"
     ),
     get_priors(obs_all_lfactor, test_data, "time", "group")$parameter[
-      c(1:3, 6:7, 25)]
+      c(1:3, 6:7, 25)
+    ]
   )
 })
 # Lag edgecases -----------------------------------------------------------
@@ -317,7 +318,7 @@ test_that("lags are parsed", {
   )
   expect_error(
     obs_b <- obs(y1 ~ -1 + x1 + varying(~ lag(y2, 1)),
-                 family = "categorical"
+      family = "categorical"
     ) +
       obs(y2 ~ -1 + x2 + varying(~ lag(y1, 1)), family = "gaussian") +
       splines(),
@@ -377,9 +378,9 @@ test_that("higher order lags() and lag() give equal results", {
     obs(y2 ~ x2, family = "gaussian") +
     lags(k = 1:2, type = "fixed")
   f2 <- obs(y1 ~ x1 + lag(y1, 1) + lag(y2, 1) +
-              lag(y1, 2) + lag(y2, 2), family = "categorical") +
+    lag(y1, 2) + lag(y2, 2), family = "categorical") +
     obs(y2 ~ x2 + lag(y1, 1) + lag(y2, 1) +
-          lag(y1, 2) + lag(y2, 2), family = "gaussian")
+      lag(y1, 2) + lag(y2, 2), family = "gaussian")
   expect_identical(
     get_priors(f1, test_data, "time", "group"),
     get_priors(f2, test_data, "time", "group")
@@ -484,7 +485,7 @@ test_that("no groups data preparation works", {
 test_that("deterministic channels are parsed", {
   expect_error(
     obs_det <- obs(y5 ~ x1 + lag(d, 1) + lag(y5, 1) + lag(x1, 1),
-                   family = "negbin"
+      family = "negbin"
     ) +
       aux(numeric(d) ~ lag(d, 1) + lag(f, 2) + x2 | init(0)) +
       aux(numeric(f) ~ lag(y5, 1) + x2 * 3 + 1 | init(c(0, 1))),

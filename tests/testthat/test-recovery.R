@@ -101,15 +101,20 @@ test_that("parameters for poisson mixed model are recovered", {
 
   # use default priors of brms (except not totally flat for beta)
   p <- data.frame(
-    parameter = c("sigma_nu_y_alpha", "sigma_nu_y_x", "alpha_y", "beta_y_x",
-      "L_nu"),
+    parameter = c(
+      "sigma_nu_y_alpha", "sigma_nu_y_x", "alpha_y", "beta_y_x",
+      "L_nu"
+    ),
     response = "y",
-    prior = c("student_t(3, 0, 2.5)", "student_t(3, 0, 2.5)",
-      "student_t(3, 1.9, 2.5)", "normal(0, 1000)", "lkj_corr_cholesky(1)"),
+    prior = c(
+      "student_t(3, 0, 2.5)", "student_t(3, 0, 2.5)",
+      "student_t(3, 1.9, 2.5)", "normal(0, 1000)", "lkj_corr_cholesky(1)"
+    ),
     type = c("sigma_nu", "sigma_nu", "alpha", "beta", "L"),
     category = ""
   )
-  fit_dynamite <- dynamite(obs(y ~ x + random(~1 + x), family = "poisson") +
+  fit_dynamite <- dynamite(
+    obs(y ~ x + random(~ 1 + x), family = "poisson") +
       random_spec(noncentered = FALSE, correlated = TRUE),
     data = d, time = "year", group = "person", priors = p,
     chains = 1, iter = 2000, refresh = 0
@@ -120,10 +125,12 @@ test_that("parameters for poisson mixed model are recovered", {
   expect_equal(coef(fit_dynamite)$mean, c(2.014, -0.9932),
     tolerance = 0.05
   )
-  expect_equal(coef(fit_dynamite, type="nu")$mean,
-    c(0.1635, 0.4153, -0.0924, -0.1344, -0.0773, -0.1237, -0.2027,
+  expect_equal(coef(fit_dynamite, type = "nu")$mean,
+    c(
+      0.1635, 0.4153, -0.0924, -0.1344, -0.0773, -0.1237, -0.2027,
       -0.1231, 0.2726, -0.1071, -0.03, 4e-04, 0.0997, -0.1146, -0.0313,
-      0.0146, 0.0407, -0.0169, -0.1407, 0.1635),
+      0.0146, 0.0407, -0.0169, -0.1407, 0.1635
+    ),
     tolerance = 0.05
   )
 })
@@ -164,12 +171,13 @@ test_that("LOO works for AR(1) model", {
   )
   l <- loo(fit)
   expect_equal(l$estimates,
-    structure(c(
-      -107.877842970846, 2.86041434691809, 215.755685941693,
-      7.36848739076899, 0.561813071004331, 14.736974781538
-    ),
-    dim = 3:2,
-    dimnames = list(c("elpd_loo", "p_loo", "looic"), c("Estimate", "SE"))
+    structure(
+      c(
+        -107.877842970846, 2.86041434691809, 215.755685941693,
+        7.36848739076899, 0.561813071004331, 14.736974781538
+      ),
+      dim = 3:2,
+      dimnames = list(c("elpd_loo", "p_loo", "looic"), c("Estimate", "SE"))
     ),
     tolerance = 1
   )

@@ -291,11 +291,13 @@ plot_nus <- function(x, responses = NULL, level = 0.05) {
     "% intervals of the random intercepts"
   )
   ggplot2::ggplot(coefs, ggplot2::aes(mean, parameter)) +
-  ggplot2::geom_pointrange(ggplot2::aes(
-    xmin = !!rlang::sym(paste0("q", 100 * level)),
-    xmax = !!rlang::sym(paste0("q", 100 * (1 - level)))
-  )) +
-  ggplot2::labs(title = title, x = "Value", y = "Parameter")
+    ggplot2::geom_pointrange(
+      ggplot2::aes(
+        xmin = !!rlang::sym(paste0("q", 100 * level)),
+        xmax = !!rlang::sym(paste0("q", 100 * (1 - level)))
+      )
+    ) +
+    ggplot2::labs(title = title, x = "Value", y = "Parameter")
 }
 #' Plot Factor Loadings of a Dynamite Model
 #'
@@ -361,8 +363,9 @@ plot_lambdas <- function(x, responses = NULL, level = 0.05) {
 #' @srrstats {G2.3a} Uses match.arg.
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #'
-plot_psis <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
-  scales = c("fixed", "free")) {
+plot_psis <- function(
+    x, responses = NULL, level = 0.05, alpha = 0.5,
+    scales = c("fixed", "free")) {
   stopifnot_(
     checkmate::test_number(
       x = level,

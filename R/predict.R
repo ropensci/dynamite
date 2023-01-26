@@ -486,10 +486,10 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
   idx <- seq.int(n_sim + 1L, 2L * n_sim)
   simulated <- storage[1L, ]
   simulated[, (names(simulated)) := .SD[NA]]
-  #simulated <- simulated[rep(1L, 2L * n_sim), , env = list(n_sim = n_sim)]
+  # simulated <- simulated[rep(1L, 2L * n_sim), , env = list(n_sim = n_sim)]
   simulated <- simulated[rep(1L, 2L * n_sim)]
   data.table::set(
-    simulated,
+    x = simulated,
     j = ".draw",
     value = rep(seq.int(1L, n_draws), 2L * n_group)
   )
@@ -501,24 +501,24 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
   )
   summaries <- storage[1L, ]
   for (f in funs) {
-    #target <- f$fun(storage[[f$target]][1L])
-    #summaries[, (f$name) := target, env = list(target = target)]
+    # target <- f$fun(storage[[f$target]][1L])
+    # summaries[, (f$name) := target, env = list(target = target)]
     summaries[, (f$name) := f$fun(storage[[f$target]][1L])]
   }
   summaries[, (names(storage)) := NULL]
   summaries[, (names(summaries)) := .SD[NA]]
-  #summaries <- summaries[
+  # summaries <- summaries[
   #  rep(1L, n_time * n_draws),
   #  env = list(n_time = n_time, n_draws = n_draws)
-  #]
+  # ]
   summaries <- summaries[rep(1L, n_time * n_draws)]
   data.table::set(
-    summaries,
+    x = summaries,
     j = time_var,
-    value =  rep(u_time, n_draws)
+    value = rep(u_time, n_draws)
   )
   data.table::set(
-    summaries,
+    x = summaries,
     j = ".draw",
     value = rep(seq_len(n_draws), each = n_time)
   )
@@ -569,7 +569,7 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
         e$trials <- specials[[j]]$trials[idx_obs]
         e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
         idx_na <- is.na(
-          #simulated[idx, .SD, .SDcols = resp_stoch[j], env = list(idx = idx)]
+          # simulated[idx, .SD, .SDcols = resp_stoch[j], env = list(idx = idx)]
           simulated[idx, .SD, .SDcols = resp[j]]
         )
         e$idx_out <- which(idx_na)
@@ -600,7 +600,10 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
 assign_from_storage <- function(storage, simulated, idx, idx_obs) {
   for (n in names(storage)) {
     data.table::set(
-      simulated, i = idx, j = n, value = storage[[n]][idx_obs]
+      x = simulated,
+      i = idx,
+      j = n,
+      value = storage[[n]][idx_obs]
     )
   }
 }
@@ -615,15 +618,15 @@ assign_from_storage <- function(storage, simulated, idx, idx_obs) {
 assign_summaries <- function(summaries, simulated, funs, idx, idx_summ) {
   for (f in funs) {
     data.table::set(
-      summaries,
+      x = summaries,
       i = idx_summ,
       j = f$name,
-      #value = simulated[
+      # value = simulated[
       #  idx, lapply(.SD, fun),
       #  by = ".draw",
       #  .SDcols = target,
       #  env = list(fun = fun, target = target)
-      #][[target]]
+      # ][[target]]
       value = simulated[
         idx,
         lapply(.SD, f$fun),
@@ -643,7 +646,10 @@ assign_summaries <- function(summaries, simulated, funs, idx, idx_summ) {
 shift_simulated_values <- function(simulated, idx, idx_prev) {
   for (n in names(simulated)) {
     data.table::set(
-      simulated, i = idx_prev, j = n, value = simulated[[n]][idx]
+      x = simulated,
+      i = idx_prev,
+      j = n,
+      value = simulated[[n]][idx]
     )
   }
 }
@@ -658,10 +664,12 @@ finalize_predict <- function(type, resp_stoch, simulated, observed) {
     store <- glue::glue("{resp}_store")
     if (identical(type, "response")) {
       data.table::set(
-        simulated, j = glue::glue("{resp}_new"), value = simulated[[resp]]
+        x = simulated,
+        j = glue::glue("{resp}_new"),
+        value = simulated[[resp]]
       )
     }
-    data.table::set(observed, j = resp, value = observed[[store]])
+    data.table::set(x = observed, j = resp, value = observed[[store]])
     observed[, c(store) := NULL]
     simulated[, c(resp) := NULL]
   }

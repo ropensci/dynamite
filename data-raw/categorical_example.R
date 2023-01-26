@@ -20,17 +20,23 @@ f <- obs(x ~ z + lag(x) + lag(y), family = "categorical") +
   obs(y ~ z + lag(x) + lag(y), family = "categorical")
 
 init <- list(
-  beta_x =
-    matrix(c(c(
+  beta_x = matrix(
+    c(
       2, 0.8, 0.2, 0, 0,
       1, 0.5, 2, 0.2, 0.1
-    )), 5, 2),
+    ),
+    nrow = 5,
+    ncol = 2
+  ),
   a_x = c(-0.1, 0.2),
-  beta_y =
-    matrix(c(c(
+  beta_y = matrix(
+    c(
       0, 1, 0.8, 0.3, 0.5,
       1, 0.2, 0, 0.3, -0.5
-    )), 5, 2),
+    ),
+    nrow = 5,
+    ncol = 2
+  ),
   a_y = c(0.1, -0.5)
 )
 

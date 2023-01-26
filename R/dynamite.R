@@ -371,7 +371,7 @@ sampling_info <- function(dformulas, verbose, debug, backend) {
     message_("Compiling Stan model.")
   }
   if (!stan_supports_categorical_logit_glm(backend) &&
-      "categorical" %in% get_family_names(dformulas$all)) {
+    "categorical" %in% get_family_names(dformulas$all)) {
     warning_(
       c(
         "Efficient glm-variant of the categorical likelihood is not
@@ -393,15 +393,15 @@ remove_redundant_parameters <- function(stan_input, backend, ...) {
   # could also remove omega_raw
   dots <- list(...)
   if (is.null(dots$pars) &&
-      stan_input$sampling_vars$M > 0 &&
-      backend == "rstan") {
+    stan_input$sampling_vars$M > 0 &&
+    backend == "rstan") {
     dots$pars <- c("nu_raw", "nu", "L")
     dots$include <- FALSE
   }
   if (is.null(dots$pars) &&
-      stan_input$sampling_vars$P > 0 &&
-      backend == "rstan") {
-    #many more, but depends on the channel names
+    stan_input$sampling_vars$P > 0 &&
+    backend == "rstan") {
+    # many more, but depends on the channel names
     dots$pars <- c("omega_raw_psi", "L_lf")
     dots$include <- FALSE
   }
@@ -592,7 +592,7 @@ parse_past <- function(dformula, data, group_var, time_var) {
         past_eval <- try(eval(cl), silent = TRUE)
         if (inherits(past_eval, "try-error")) {
           past_eval <- try(data[, eval(cl)], silent = TRUE)
-          #past_eval <- try(data[, cl, env = list(cl = cl)], silent = TRUE)
+          # past_eval <- try(data[, cl, env = list(cl = cl)], silent = TRUE)
           stopifnot_(
             !inherits(past_eval, "try-error"),
             c(
@@ -989,7 +989,7 @@ parse_singleton_lags <- function(dformula, data, group_var,
       if (y$is_resp && !is.null(y$past_val)) {
         if (identical(y$past_type, "past")) {
           past_out <- lag_(y$past_val, i)
-          #na_idx <- data[, .I[seq_len(i)], by = group_var, env = list(i = i)]$V1
+          # na_idx <- data[, .I[seq_len(i)], by = group_var, env = list(i = i)]$V1
           na_idx <- data[, .I[seq_len(i)], by = group_var]$V1
           past_out[na_idx] <- NA
           spec <- list(
@@ -1131,11 +1131,11 @@ fill_time <- function(data, group_var, time_var) {
     length(time) > 1L,
     "There must be at least two time points in the data."
   )
-  #time_duplicated <- data[,
+  # time_duplicated <- data[,
   #  any(duplicated(time_var)),
   #  by = group_var,
   #  env = list(time_var = time_var)
-  #]$V1
+  # ]$V1
   split_data <- split(data, by = group_var)
   time_duplicated <- unlist(
     lapply(split_data, function(x) any(duplicated(x[[time_var]])))
@@ -1155,11 +1155,11 @@ fill_time <- function(data, group_var, time_var) {
     stop_("Observations must occur at regular time intervals.")
   } else {
     full_time <- seq(time[1L], time[length(time)], by = time_scale)
-    #time_missing <- data[,
+    # time_missing <- data[,
     #  !identical(time_var, full_time),
     #  by = group_var,
     #  env = list(time_var = time_var, full_time = full_time)
-    #]$V1
+    # ]$V1
     time_missing <- unlist(
       lapply(split_data, function(x) !identical(x[[time_var]], full_time))
     )

@@ -55,8 +55,9 @@ fit <- dynamite(
 )
 
 if (requireNamespace("dplyr") &&
-    requireNamespace("tidyr") &&
-    base::getRversion() >= "4.1.0") {
+  requireNamespace("tidyr") &&
+  base::getRversion() >= "4.1.0") {
+
   # One-step ahead samples (fitted values) from the posterior
   # (first time point is fixed due to lag in the model):
   fitted(fit) |>
