@@ -502,7 +502,7 @@ prepare_eval_envs <- function(object, simulated, observed,
     }
     j <- j + 1L
     resp <- object$dformulas$all[[i]]$response
-    resp_family <- object$dformulas$stoch[[i]]$family
+    resp_family <- object$dformulas$stoch[[j]]$family
     alpha <- paste0("alpha_", resp)
     beta <- paste0("beta_", resp)
     delta <- paste0("delta_", resp)
