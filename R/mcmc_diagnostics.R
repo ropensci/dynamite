@@ -37,12 +37,30 @@ mcmc_diagnostics.dynamitefit <- function(x, n = 3L) {
   )
   if (!is.null(x$stanfit)) {
     if (identical(x$stanfit@stan_args[[1L]]$algorithm, "NUTS")) {
-      cat("NUTS sampler diagnostics:\n")
-      invisible(utils::capture.output(msg <-
-        utils::capture.output(rstan::check_hmc_diagnostics(x$stanfit),
-          type = "message"
-        )))
-      cat(msg, sep = "\n")
+      n_draws <- ndraws(x)
+      n_divs <- rstan::get_num_divergent(x$stanfit)
+      n_trees <- rstan::get_num_max_treedepth(x$stanfit)
+      bfmis <- rstan::get_bfmi(x$stanfit)
+      all_ok <- n_divs == 0 && n_trees == 0 && all(bfmis > 0.2)
+      cat("\nNUTS sampler diagnostics:\n")
+      if (all_ok) {
+        cat("\nNo divergences, saturated max treedepths or low E-BFMIs.\n")
+      }
+      if (n_divs > 0) {
+        cat("\n", n_divs, " out of ", n_draws, " iterations ended with a ",
+          "divergence. See Stan documentation for details.\n", sep = "")
+      }
+      if (n_trees > 0) {
+        mt <- x$stanfit@stan_args[[1]]$control$max_treedepth
+        mt <- ifelse_(is.null(mt), 10, mt)
+        cat("\n", n_trees, " out of ", n_draws, " saturated the maximum ",
+          "tree depth of ", mt, ". See Stan documentation for details.\n",
+          sep = "")
+      }
+      if (any(bfmis < 0.2)) {
+        cat("\nChain(s)", cs(which(bfmis < 0.2)), "had E-BFMI below 0.2,",
+          "indicating possible issues. See Stan documentation for details.\n")
+      }
     }
     init <- seq_len(n)
     sumr <- posterior::summarise_draws(
