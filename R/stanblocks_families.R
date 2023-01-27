@@ -261,12 +261,14 @@ data_lines_poisson <- function(y, idt, has_missing, has_offset, ...) {
   )
 }
 
-data_lines_negbin <- function(y, idt, has_missing, ...) {
+data_lines_negbin <- function(y, idt, has_missing, has_offset, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(data_lines_default))]
   paste_rows(
     do.call(what = data_lines_default, args = args),
     "int<lower=0> y_{y}[T, N];",
+    "// Offset term",
+    onlyif(has_offset, "real offset_{y}[T, N];"),
     .indent = idt(c(0, 1))
   )
 }
