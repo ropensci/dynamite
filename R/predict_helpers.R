@@ -493,7 +493,7 @@ prepare_eval_envs <- function(object, simulated, observed,
       new_levels = new_levels
     )
     Ks <- unlist(lapply(object$stan$model_vars, "[[", "K_random"))
-    dimnames(nu_samples)[[3L]] <- make.unique(rep(nus, times = Ks))
+    dimnames(nu_samples)[[3L]] <- make.unique(rep(nus, times = Ks[Ks > 0]))
   }
   for (i in seq_len(n_resp)) {
     if (is_deterministic(object$dformulas$all[[i]]$family)) {
