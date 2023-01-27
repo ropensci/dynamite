@@ -910,7 +910,7 @@ predicted_beta <- "
       x = out,
       i = idx_data,
       j = '{resp}_mean',
-      value = mu[idx_out])
+      value = mu[idx_out]
     )
   }
   data.table::set(
