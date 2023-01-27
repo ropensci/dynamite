@@ -496,13 +496,13 @@ prepare_eval_envs <- function(object, simulated, observed,
     dimnames(nu_samples)[[3L]] <- make.unique(rep(nus, times = Ks[Ks > 0]))
   }
   for (i in seq_len(n_resp)) {
-    if (is_deterministic(object$dformulas$all[[i]]$family)) {
+    resp_family <- object$dformulas$all[[i]]$family
+    if (is_deterministic(resp_family)) {
       eval_envs[[i]] <- list()
       next
     }
     j <- j + 1L
     resp <- object$dformulas$all[[i]]$response
-    resp_family <- object$dformulas$stoch[[j]]$family
     alpha <- paste0("alpha_", resp)
     beta <- paste0("beta_", resp)
     delta <- paste0("delta_", resp)
