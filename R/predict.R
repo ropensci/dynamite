@@ -550,7 +550,9 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
       if (is_deterministic(families[[j]])) {
         assign_deterministic_predict(
           simulated,
+          observed,
           idx,
+          idx_obs,
           resp[j],
           formula_rhs(object$dformulas$all[[j]]$formula)
         )
