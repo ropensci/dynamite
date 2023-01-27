@@ -153,20 +153,30 @@ assign_deterministic <- function(data, idx, cl) {
 #' Evaluate a Definition and Assign the Value of a Deterministic Channel
 #'
 #' @param data \[`data.table`]\cr Data table to assign the values into.
+#' @param data_obs \[`data.table`]\cr Data table containing observed predictors
 #' @param idx \[`integer()`]\cr A vector of indices to assign values into.
+#' @param idx_obs \[`integer()`]\cr A vector of indices of predictor values.
 #' @param .deterministic_channel_name_ \[`character(1)`]\cr
 #'   Name of the response variable of the channel.
 #' @param .deterministic_channel_definition_ \[`language`]\cr
 #'   A quoted expression defining the channel.
 #' @noRd
-assign_deterministic_predict <- function(data, idx,
+assign_deterministic_predict <- function(data, data_obs, idx, idx_obs,
                                          .deterministic_channel_name_,
                                          .deterministic_channel_definition_) {
-  data[
-    idx,
+  data_resp <- data[idx, ]
+  data_pred <- data_obs[idx_obs, ]
+  sub <- cbind(data_resp, data_pred)
+  sub[,
     (.deterministic_channel_name_) :=
       eval(.deterministic_channel_definition_)
   ]
+  data.table::set(
+    x = data,
+    i = idx,
+    j = .deterministic_channel_name_,
+    value = sub[[.deterministic_channel_name_]]
+  )
 }
 
 #' Assign Values of Lagged Channels

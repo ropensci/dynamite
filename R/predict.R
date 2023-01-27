@@ -394,7 +394,9 @@ predict_full <- function(object, simulated, observed, type, eval_type,
       if (is_deterministic(families[[j]])) {
         assign_deterministic_predict(
           simulated,
+          observed,
           idx,
+          idx_obs,
           resp[j],
           formula_rhs(object$dformulas$all[[j]]$formula)
         )
