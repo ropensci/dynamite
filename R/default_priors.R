@@ -245,7 +245,7 @@ check_priors <- function(priors, defaults) {
   priors <- priors[order(prior_order), ]
   unconstrained_dists <- c(
     "normal", "student_t", "double_exponential", "cauchy", "exp_mod_normal",
-    "skew_normal", "logistic", "gumbel", "skew_double_exponential"
+    "skew_normal", "logistic", "gumbel", "skew_double_exponential", "std_normal"
   )
   positive_dists <- c(
     "gamma", "exponential", "lognormal", "chi_square", "inv_chi_square",
