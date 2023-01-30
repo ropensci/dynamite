@@ -141,19 +141,19 @@ data_lines_default <- function(y, idt, has_missing,
       "// Parameters of vectorized priors"
     ),
     onlyif(
-      write_beta,
-      "matrix[K_fixed_{y}, {beta_prior_npars}] beta_prior_pars_{y};"
+      write_beta && beta_prior_npars > 0L,
+        "matrix[K_fixed_{y}, {beta_prior_npars}] beta_prior_pars_{y};"
     ),
     onlyif(
-      write_delta,
+      write_delta && delta_prior_npars > 0L,
       "matrix[K_varying_{y}, {delta_prior_npars}] delta_prior_pars_{y};"
     ),
     onlyif(
-      write_tau,
+      write_tau && tau_prior_npars > 0L,
       "matrix[K_varying_{y}, {tau_prior_npars}] tau_prior_pars_{y};"
     ),
     onlyif(
-      write_sigma_nu,
+      write_sigma_nu && sigma_nu_prior_npars > 0L,
       "matrix[K_random_{y}, {sigma_nu_prior_npars}] sigma_nu_prior_pars_{y};"
     ),
     "// Responses",
@@ -195,19 +195,19 @@ data_lines_categorical <- function(y, idt,
       "// Parameters of vectorized priors"
     ),
     onlyif(
-      write_alpha,
+      write_alpha && alpha_prior_npars > 0L,
       "matrix[S_{y} - 1, {alpha_prior_npars}] alpha_prior_pars_{y};"
     ),
     onlyif(
-      write_beta,
+      write_beta && beta_prior_npars > 0L,
       "matrix[K_fixed_{y} * (S_{y} - 1), {beta_prior_npars}] beta_prior_pars_{y};"
     ),
     onlyif(
-      write_delta,
+      write_delta && delta_prior_npars > 0L,
       "matrix[K_varying_{y} * (S_{y} - 1), {delta_prior_npars}] delta_prior_pars_{y};"
     ),
     onlyif(
-      write_delta,
+      write_tau && tau_prior_npars > 0L,
       "matrix[K_varying_{y}, {tau_prior_npars}] tau_prior_pars_{y};"
     ),
     "// Responses",
@@ -1020,9 +1020,12 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
   mtext_alpha <- "a_{y} ~ {alpha_prior_distr};"
 
   if (vectorizable_prior(sigma_nu_prior_distr)) {
-    dpars_sigma_nu <- paste0(
-      "sigma_nu_prior_pars_", y, "[, ", seq_len(sigma_nu_prior_npars), "]",
-      collapse = ", "
+    dpars_sigma_nu <- ifelse_(sigma_nu_prior_npars > 0L,
+      paste0(
+        "sigma_nu_prior_pars_", y, "[, ", seq_len(sigma_nu_prior_npars), "]",
+        collapse = ", "
+      ),
+      ""
     )
     mtext_sigma_nu <- "sigma_nu_{y} ~ {sigma_nu_prior_distr}({dpars_sigma_nu});"
   } else {
@@ -1053,9 +1056,12 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
   if (noncentered) {
     mtext_omega <- "omega_raw_alpha_{y} ~ std_normal();"
     if (vectorizable_prior(delta_prior_distr)) {
-      dpars_varying <- paste0(
-        "delta_prior_pars_", y, "[, ", seq_len(delta_prior_npars), "]",
-        collapse = ", "
+      dpars_varying <- ifelse_(delta_prior_npars > 0L,
+        paste0(
+          "delta_prior_pars_", y, "[, ", seq_len(delta_prior_npars), "]",
+          collapse = ", "
+        ),
+        ""
       )
       mtext_varying <-
         "omega_raw_{y}[, 1] ~ {delta_prior_distr}({dpars_varying});"
@@ -1087,9 +1093,12 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
       .parse = FALSE
     )
     if (vectorizable_prior(delta_prior_distr)) {
-      dpars_varying <- paste0(
-        "delta_prior_pars_", y, "[, ", seq_len(delta_prior_npars), "]",
-        collapse = ", "
+      dpars_varying <- ifelse_(delta_prior_npars > 0L,
+        paste0(
+          "delta_prior_pars_", y, "[, ", seq_len(delta_prior_npars), "]",
+          collapse = ", "
+        ),
+        ""
       )
       mtext_varying <-
         "omega_{y}[, 1] ~ {delta_prior_distr}({dpars_varying});"
@@ -1125,9 +1134,12 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
   mtext_fixed_intercept <- mtext_alpha
 
   if (vectorizable_prior(beta_prior_distr)) {
-    dpars_fixed <- paste0(
-      "beta_prior_pars_", y, "[, ", seq_len(beta_prior_npars), "]",
-      collapse = ", "
+    dpars_fixed <-  ifelse_(beta_prior_npars > 0L,
+      paste0(
+        "beta_prior_pars_", y, "[, ", seq_len(beta_prior_npars), "]",
+        collapse = ", "
+      ),
+      ""
     )
     mtext_fixed <- "beta_{y} ~ {beta_prior_distr}({dpars_fixed});"
   } else {
@@ -1135,9 +1147,12 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
   }
 
   if (vectorizable_prior(tau_prior_distr)) {
-    dpars_tau <- paste0(
-      "tau_prior_pars_", y, "[, ", seq_len(tau_prior_npars), "]",
-      collapse = ", "
+    dpars_tau <-  ifelse_(tau_prior_npars > 0L,
+      paste0(
+        "tau_prior_pars_", y, "[, ", seq_len(tau_prior_npars), "]",
+        collapse = ", "
+      ),
+      ""
     )
     mtext_tau <- "tau_{y} ~ {tau_prior_distr}({dpars_tau});"
   } else {
@@ -1227,10 +1242,12 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
                                     K_random, L_fixed, L_varying, S, backend,
                                     ...) {
   if (vectorizable_prior(alpha_prior_distr)) {
-    np <- alpha_prior_npars
-    dpars_alpha <- paste0(
-      "alpha_prior_pars_", y, "[, ", seq_len(np), "]",
-      collapse = ", "
+    dpars_alpha <- ifelse_(alpha_prior_npars > 0L,
+      paste0(
+        "alpha_prior_pars_", y, "[, ", seq_len(alpha_prior_npars), "]",
+        collapse = ", "
+      ),
+      ""
     )
     mtext_alpha <- "to_vector(a_{y}) ~ {alpha_prior_distr}({dpars_alpha});"
   } else {
@@ -1277,10 +1294,12 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
   )
 
   if (vectorizable_prior(beta_prior_distr)) {
-    np <- beta_prior_npars
-    dpars_fixed <- paste0(
-      "beta_prior_pars_", y, "[, ", seq_len(np), "]",
-      collapse = ", "
+    dpars_fixed <- ifelse_(beta_prior_npars > 0L,
+      paste0(
+        "beta_prior_pars_", y, "[, ", seq_len(beta_prior_npars), "]",
+        collapse = ", "
+      ),
+      ""
     )
     mtext_fixed <- "to_vector(beta_{y}) ~ {beta_prior_distr}({dpars_fixed});"
   } else {
@@ -1291,10 +1310,12 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
 
   if (noncentered) {
     if (vectorizable_prior(delta_prior_distr)) {
-      np <- delta_prior_npars
-      dpars_varying <- paste0(
-        "delta_prior_pars_", y, "[, ", seq_len(np), "]",
-        collapse = ", "
+      dpars_varying <- ifelse_(delta_prior_npars > 0L,
+        paste0(
+          "delta_prior_pars_", y, "[, ", seq_len(delta_prior_npars), "]",
+          collapse = ", "
+        ),
+        ""
       )
       mtext_varying <-
         "to_vector(delta_{y}[1]) ~ {delta_prior_distr}({dpars_varying});"
@@ -1313,10 +1334,12 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
     )
   } else {
     if (vectorizable_prior(delta_prior_distr)) {
-      np <- delta_prior_npars
-      dpars_varying <- paste0(
-        "delta_prior_pars_", y, "[, ", seq_len(np), "]",
-        collapse = ", "
+      dpars_varying <- ifelse_(delta_prior_npars > 0L,
+        paste0(
+          "delta_prior_pars_", y, "[, ", seq_len(delta_prior_npars), "]",
+          collapse = ", "
+        ),
+        ""
       )
       mtext_varying <-
         "to_vector(delta_{y}[1]) ~ {delta_prior_distr}({dpars_varying});"
@@ -1344,11 +1367,12 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
     )
   }
   if (vectorizable_prior(tau_prior_distr)) {
-    np <- tau_prior_npars
-    dpars_tau <- paste0(
-      "tau_prior_pars_", y, "[, ", seq_len(np), "]",
-      collapse = ", "
-    )
+    dpars_tau <- ifelse_(tau_prior_npars > 0L,
+      paste0(
+        "tau_prior_pars_", y, "[, ", seq_len(tau_prior_npars), "]",
+        collapse = ", "
+      ),
+      "")
     mtext_tau <- "tau_{y} ~ {tau_prior_distr}({dpars_tau});"
   } else {
     mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {tau_prior_distr};"

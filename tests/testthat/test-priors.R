@@ -42,6 +42,7 @@ test_that("prior order does not matter", {
 
 test_that("inserting a valid prior works", {
   p$prior[2] <- "cauchy(0, 2)"
+  p$prior[5:6] <- "std_normal()"
   expect_error(
     dynamite(f,
       data = gaussian_example, time = "time", group = "id",

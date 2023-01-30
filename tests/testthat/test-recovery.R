@@ -22,7 +22,7 @@ test_that("parameters for the linear regression are recovered as with lm", {
   priors <- get_priors(obs(y ~ x, family = "gaussian"),
     data = d, time = "time"
   )
-  priors$prior <- c("normal(0, 5)", "normal(0, 1)", "exponential(1)")
+  priors$prior <- c("normal(0, 5)", "std_normal()", "exponential(1)")
   fit_dynamite <- dynamite(obs(y ~ x, family = "gaussian"),
     data = d, time = "time", priors = priors,
     chains = 1, iter = 2000, refresh = 500
