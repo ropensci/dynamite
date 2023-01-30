@@ -735,8 +735,25 @@ parse_components <- function(dformulas, data, time_var) {
     resp = resp,
     times = seq.int(fixed + 1L, n_unique(data[[time_var]]))
   )
-  M <- sum(lengths(lapply(dformulas$stoch, "[[", "random"))) +
-    sum(unlist(lapply(dformulas$stoch, "[[", "has_random_intercept")))
+  #M <- sum(lengths(lapply(dformulas$stoch, "[[", "random"))) +
+  #  sum(unlist(lapply(dformulas$stoch, "[[", "has_random_intercept")))
+  M <- sum(
+    vapply(
+      dformulas$stoch,
+      function(formula) {
+        random_formula <- get_type_formula(formula, type = "random")
+        if (is.null(random_formula)) {
+          0L
+        } else {
+          mm <- remove_intercept(
+            stats::model.matrix.lm(random_formula, data)
+          )
+          ncol(mm) + 1L * formula$has_random_intercept
+        }
+      },
+      integer(1L)
+    )
+  )
   attr(dformulas$stoch, "random_spec") <- parse_random_spec(
     random_spec_def = attr(dformulas$stoch, "random_spec"),
     M = M
