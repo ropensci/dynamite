@@ -134,6 +134,17 @@ test_that("adding dynamiteformulas with existing splines definitions fails", {
 #  )
 # })
 
+test_that("cyclic dependency fails", {
+  obs_lhs <- obs(y ~ x, family = "gaussian") +
+    obs(z ~ y, family = "gaussian")
+  obs_rhs <- aux(numeric(w) ~ z + 1) +
+    obs(x ~ z, family = "gaussian")
+  expect_error(
+    obs_lhs + obs_rhs,
+    "Cyclic dependency found in model formula\\."
+  )
+})
+
 test_that("adding nondynamiteformula to dynamiteformula fails", {
   expect_error(
     obs_test + 1.0,

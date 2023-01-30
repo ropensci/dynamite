@@ -132,6 +132,13 @@ test_that("formula incrementation logic is correct", {
   }
 })
 
+test_that("non-lag term extraction from language objects is correct", {
+  expect_identical(extract_nonlags_lang(quote(x + z)), c("x", "z"))
+  expect_identical(extract_nonlags_lang(quote(x + fun(y))), c("x", "y"))
+  expect_identical(extract_nonlags_lang(quote(x + lag(y))), c("x"))
+  expect_identical(extract_nonlags_lang(quote(x + fun(y, lag(z)))), c("x", "y"))
+})
+
 test_that("internally unsupported families fail", {
   expect_error(
     dynamitefamily("new family"),

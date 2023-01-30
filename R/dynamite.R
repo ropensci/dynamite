@@ -441,8 +441,8 @@ formula.dynamitefit <- function(x, ...) {
     function(y) y$name,
     character(1L)
   )
-  lag_defs <- attr(x$dformulas$all, "lags")
-  spline_defs <- attr(x$dformulas$stoch, "splines")
+  lag_def <- attr(x$dformulas$all, "lags")
+  spline_def <- attr(x$dformulas$stoch, "splines")
   obs_str <- onlyif(
     length(ch_stoch) > 0L,
     obs_str <- paste0(
@@ -460,22 +460,55 @@ formula.dynamitefit <- function(x, ...) {
     )
   )
   lags_str <- onlyif(
-    !is.null(lag_defs),
-    glue::glue("lags(k = {lag_defs$k}, type = {lag_defs$type})")
+    !is.null(lag_def),
+    glue::glue("lags(k = {lag_def$k}, type = {lag_def$type})")
   )
   spline_str <- onlyif(
-    !is.null(spline_defs),
+    spline_def$has_splines,
     paste0(
       "splines(",
-      "shrinkage = ", spline_defs$shrinkage, ", ",
+      "shrinkage = ", spline_def$shrinkage, ", ",
       "override = FALSE, ",
-      "df = ", spline_defs$bs_opts$df, ", ",
-      "degree = ", spline_defs$bs_opts$degree, ", ",
-      "lb_tau = ", spline_defs$lb_tau, ", ",
-      "noncentered = ", spline_defs$noncentered, ")"
+      "df = ", spline_def$bs_opts$df, ", ",
+      "degree = ", spline_def$bs_opts$degree, ", ",
+      "lb_tau = ", spline_def$lb, ", ",
+      "noncentered = ", spline_def$noncentered, ")"
     )
   )
-  str2lang(paste(c(obs_str, aux_str, lags_str, spline_str), collapse = " + "))
+  lfactor_def <- attr(x$dformulas$stoch, "lfactor")
+  lfactor_str <- onlyif(
+    lfactor_def$has_lfactor,
+    paste0(
+      "lfactor(",
+      "responses = ", lfactor_def$responses, ", ",
+      "noncentered_psi = ", lfactor_def$noncentered_psi, ", ",
+      "noncentered_lambda = ", lfactor_def$noncentered_lambda, ", ",
+      "nonzero_lambda = ", lfactor_def$nonzero_lambda, ", ",
+      "correlated = ", lfactor_def$correlated, ")"
+    )
+  )
+  random_spec_def <- attr(x$dformulas$stoch, "random_spec")
+  random_spec_str <- onlyif(
+    random_spec_def$has_random_spec,
+    paste0(
+      "random_spec(",
+      "correlated = ", random_spec_def$correlated, ", ",
+      "noncentered = ", random_spec_def$noncentered, ")"
+    )
+  )
+  str2lang(
+    paste(
+      c(
+        obs_str,
+        aux_str,
+        lags_str,
+        spline_str,
+        lfactor_str,
+        random_spec_str
+      ),
+      collapse = " + "
+    )
+  )
 }
 
 #' Is The Argument a `dynamitefit` Object
@@ -731,18 +764,35 @@ parse_components <- function(dformulas, data, time_var) {
   resp <- get_responses(dformulas$stoch)
   families <- unlist(get_families(dformulas$stoch))
   attr(dformulas$stoch, "splines") <- parse_splines(
-    spline_defs = attr(dformulas$stoch, "splines"),
+    spline_def = attr(dformulas$stoch, "splines"),
     resp = resp,
     times = seq.int(fixed + 1L, n_unique(data[[time_var]]))
   )
-  M <- sum(lengths(lapply(dformulas$stoch, "[[", "random"))) +
-    sum(unlist(lapply(dformulas$stoch, "[[", "has_random_intercept")))
+  #M <- sum(lengths(lapply(dformulas$stoch, "[[", "random"))) +
+  #  sum(unlist(lapply(dformulas$stoch, "[[", "has_random_intercept")))
+  M <- sum(
+    vapply(
+      dformulas$stoch,
+      function(formula) {
+        random_formula <- get_type_formula(formula, type = "random")
+        if (is.null(random_formula)) {
+          0L
+        } else {
+          mm <- remove_intercept(
+            stats::model.matrix.lm(random_formula, data)
+          )
+          ncol(mm) + 1L * formula$has_random_intercept
+        }
+      },
+      integer(1L)
+    )
+  )
   attr(dformulas$stoch, "random_spec") <- parse_random_spec(
     random_spec_def = attr(dformulas$stoch, "random_spec"),
     M = M
   )
-  attr(dformulas$stoch, "lfactor") <- parse_lfactors(
-    lfactor_defs = attr(dformulas$stoch, "lfactor"),
+  attr(dformulas$stoch, "lfactor") <- parse_lfactor(
+    lfactor_def = attr(dformulas$stoch, "lfactor"),
     resp = resp,
     families = families
   )
@@ -751,24 +801,24 @@ parse_components <- function(dformulas, data, time_var) {
 
 #' Parse B-spline Parameters
 #'
-#' @param spline_defs A `splines` object.
+#' @param spline_def A `splines` object.
 #' @param n_channels Number of channels
 #' @param times An `integer` vector of time indices
 #' @noRd
-parse_splines <- function(spline_defs, resp, times) {
+parse_splines <- function(spline_def, resp, times) {
   out <- list()
   n_channels <- length(resp)
-  if (!is.null(spline_defs)) {
+  if (!is.null(spline_def)) {
     out$has_splines <- TRUE
-    out$shrinkage <- spline_defs$shrinkage
-    out$bs_opts <- spline_defs$bs_opts
+    out$shrinkage <- spline_def$shrinkage
+    out$bs_opts <- spline_def$bs_opts
     out$bs_opts$x <- times
     if (is.null(out$bs_opts$Boundary.knots)) {
       out$bs_opts$Boundary.knots <- range(out$bs_opts$x)
     }
     out$Bs <- t(do.call(splines::bs, args = out$bs_opts))
     out$D <- nrow(out$Bs)
-    out$lb <- spline_defs$lb_tau
+    out$lb <- spline_def$lb_tau
     if (length(out$lb) %in% c(1L, n_channels)) {
       out$lb <- rep(out$lb, length = n_channels)
     } else {
@@ -777,7 +827,7 @@ parse_splines <- function(spline_defs, resp, times) {
         is not equal to 1 or {n_channels}, the number of the channels."
       )
     }
-    out$noncentered <- spline_defs$noncentered
+    out$noncentered <- spline_def$noncentered
     if (length(out$noncentered) %in% c(1L, n_channels)) {
       out$noncentered <- rep(out$noncentered, length = n_channels)
     } else {
@@ -803,28 +853,36 @@ parse_splines <- function(spline_defs, resp, times) {
 #' @param M Number of random effects.
 #' @noRd
 parse_random_spec <- function(random_spec_def, M) {
+  out <- list()
   if (is.null(random_spec_def)) {
-    random_spec_def <- list(correlated = TRUE, noncentered = TRUE)
+    out <- list(
+      has_random_spec = FALSE,
+      correlated = TRUE,
+      noncentered = TRUE
+    )
+  } else {
+    out <- random_spec_def
+    out$has_random_spec <- TRUE
   }
   if (M < 2L) {
-    random_spec_def$correlated <- FALSE
+    out$correlated <- FALSE
   }
-  random_spec_def$M <- M
-  random_spec_def
+  out$M <- M
+  out
 }
 #' Parse Latent Factor Definitions
 #'
-#' @param lfactor_defs An `lfactor` object.
+#' @param lfactor_def An `lfactor` object.
 #' @param resp A `character` vector of response variable names.
 #' @param families A `character` vector response family names.
 #' @noRd
-parse_lfactors <- function(lfactor_defs, resp, families) {
+parse_lfactor <- function(lfactor_def, resp, families) {
   out <- list()
-  if (!is.null(lfactor_defs)) {
+  if (!is.null(lfactor_def)) {
     valid_channels <- resp[!(families %in% "categorical")]
     # default, use all channels except categorical
-    if (is.null(lfactor_defs$responses)) {
-      lfactor_defs$responses <- valid_channels
+    if (is.null(lfactor_def$responses)) {
+      lfactor_def$responses <- valid_channels
       stopifnot_(
         length(valid_channels) > 0L,
         c(
@@ -833,16 +891,16 @@ parse_lfactors <- function(lfactor_defs, resp, families) {
         )
       )
     } else {
-      psi_channels <- lfactor_defs$responses %in% resp
+      psi_channels <- lfactor_def$responses %in% resp
       stopifnot_(
         all(psi_channels),
         c(
           "Argument {.arg responses} of {.fun lfactor} contains variable{?s}
-          {.var {cs(lfactor_defs$responses[!psi_channels])}}:",
+          {.var {cs(lfactor_def$responses[!psi_channels])}}:",
           `x` = "No such response variables in the model."
         )
       )
-      psi_channels <- lfactor_defs$responses %in% valid_channels
+      psi_channels <- lfactor_def$responses %in% valid_channels
       stopifnot_(
         all(psi_channels),
         c(
@@ -852,29 +910,29 @@ parse_lfactors <- function(lfactor_defs, resp, families) {
         )
       )
     }
-    if (length(lfactor_defs$responses) < 2L) {
-      lfactor_defs$correlated <- FALSE
+    if (length(lfactor_def$responses) < 2L) {
+      lfactor_def$correlated <- FALSE
     }
     out$has_lfactor <- TRUE
-    out$responses <- lfactor_defs$responses
-    out$noncentered_psi <- lfactor_defs$noncentered_psi
+    out$responses <- lfactor_def$responses
+    out$noncentered_psi <- lfactor_def$noncentered_psi
     n_channels <- length(resp)
-    out$noncentered_lambda <- lfactor_defs$noncentered_lambda
+    out$noncentered_lambda <- lfactor_def$noncentered_lambda
     stopifnot_(
       length(out$noncentered_lambda) %in% c(1L, n_channels),
       "Length of the {.arg noncentered_lambda} argument of {.fun lfactor}
       function is not equal to 1 or {n_channels}, the number of the channels."
     )
     out$noncentered_lambda <- rep(out$noncentered_lambda, length = n_channels)
-    out$nonzero_lambda <- lfactor_defs$nonzero_lambda
+    out$nonzero_lambda <- lfactor_def$nonzero_lambda
     stopifnot_(
       length(out$nonzero_lambda) %in% c(1L, n_channels),
       "Length of the {.arg nonzero_lambda} argument of {.fun lfactor} function
       is not equal to 1 or {n_channels}, the number of the channels."
     )
     out$nonzero_lambda <- rep(out$nonzero_lambda, length = n_channels)
-    out$correlated <- lfactor_defs$correlated
-    out$P <- length(lfactor_defs$responses)
+    out$correlated <- lfactor_def$correlated
+    out$P <- length(lfactor_def$responses)
   } else {
     n_channels <- length(resp)
     out <- list(
