@@ -273,7 +273,7 @@ test_that("parameters of a time-varying gaussian model are recovered", {
   # test with a single large dataset
   d <- create_data(T_ = 500, N = 500, D = 100)
   data <- get_data(obs(y ~ -1 + z + varying(~x), family = "gaussian") +
-    splines(df = 100), time = "time", group = "id", data = d$data)
+      splines(df = 100), time = "time", group = "id", data = d$data)
   fit_long <- rstan::sampling(model,
     data = data,
     refresh = 0, chains = 1, iter = 2000,
@@ -327,5 +327,103 @@ test_that("prior parameters are recovered with zero observations", {
     unlist(sumr[3, 2:5]),
     c(0.1, 0.1, qexp(c(0.05, 0.95), 10)),
     tolerance = 0.1, ignore_attr = TRUE
+  )
+})
+
+test_that("predict recovers correct estimates", {
+
+  set.seed(1)
+  N <- 20
+  T_ <- 30
+  y <- matrix(0, N, T_)
+  nu <- rnorm(N)
+  y[, 1] <- rbinom(N, size = 1, prob = 0.5)
+  for(t in 2:T) y[, t] <- rbinom(N, 1, plogis(nu + y[, t-1]))
+
+  ## check these if tests fail ##
+  # model <- rstan::stan_model("testmodel.stan")
+  # fit <- rstan::sampling(model, data = list(N = N, T = T_, y = y), chains = 1,
+  #   iter = 2e4, warmup = 1000)
+  # rstan_obs_results_id1_time4 <- rstan::summary(fit, "y_rep[1, 4]",
+  #   use_cache = FALSE)$summary[, 1:3]
+  # rstan_obs_results_avg4 <- setNames(c(rstan::summary(fit,
+  #   c("mean_y[4]", "sd_y[4]"),
+  #   use_cache = FALSE)$summary[, 1:3]),
+  # c("mean_m", "mean_s", "se_m", "se_s", "sd_m", "sd_s"))
+  #
+  # rstan_prob_results_id1_time4 <- rstan::summary(fit, "y_m[1, 4]",
+  #   use_cache = FALSE)$summary[, 1:3]
+  # rstan_prob_results_avg4 <- setNames(c(rstan::summary(fit,
+  #   c("mean_y_m[4]", "sd_y_m[4]"),
+  #   use_cache = FALSE)$summary[, 1:3]),
+  #   c("mean_m", "mean_s", "se_m", "se_s", "sd_m", "sd_s"))
+
+  rstan_obs_results_id1_time4 <- c(mean = 0.6098, se_mean = 0.0035, sd = 0.4878)
+  rstan_obs_results_avg4 <- c(mean_m = 0.7136, mean_s = 0.4508,
+    se_m = 7e-04, se_s = 4e-04, sd_m = 0.0939, sd_s = 0.0511)
+  rstan_prob_results_id1_time4 <- c(mean = 0.6062, se_mean = 9e-04, sd = 0.1409)
+  rstan_prob_results_avg4 <- c(mean_m = 0.7138, mean_s = 0.213, se_m = 2e-04,
+    se_s = 2e-04, sd_m = 0.0264, sd_s = 0.025)
+
+  d <- data.frame(y = c(y), time = rep(1:T_, each = N), id = 1:N)
+  p <- get_priors(obs(y ~ lag(y) + random(~1), "bernoulli"),
+    data = d, "time", "id")
+  p$prior[] <- "std_normal()"
+  fitd <- dynamite(obs(y ~ lag(y) + random(~1), "bernoulli"),
+    data = d, "time", "id", priors = p,
+    chains = 1, iter = 2e4, warmup = 1000, refresh = 0)
+
+  pred <- predict(fitd)
+  y_new <- pred$y_new[pred$time == 4 & pred$id == 1]
+  expect_equal(
+    c(
+      mean = mean(y_new),
+      se_mean = sd(y_new) / sqrt(length(y_new)),
+      sd = sd(y_new)
+    ),
+    rstan_obs_results_id1_time4,
+    tolerance = 4*rstan_obs_results_id1_time4["se_mean"]
+  )
+
+  res <- pred |>
+    dplyr::filter(time == 4) |>
+    dplyr::group_by(.draw) |>
+    dplyr::summarise(m = mean(y_new), s = sd(y_new)) |>
+    dplyr::summarise(
+      mean_m = mean(m), mean_s = mean(s),
+      se_m = sd(m) / sqrt(dplyr::n()), se_s = sd(s) / sqrt(dplyr::n()),
+      sd_m = sd(m), sd_s = sd(s)
+      ) |> unlist()
+
+  expect_equal(res,
+    rstan_obs_results_avg4,
+    tolerance = 0.01
+  )
+
+  pred_m <- predict(fitd, type = "mean")
+  y_mean <- pred_m$y_mean[pred_m$time == 4 & pred_m$id == 1]
+  expect_equal(
+    c(
+      mean = mean(y_mean),
+      se_mean = sd(y_mean) / sqrt(length(y_mean)),
+      sd = sd(y_mean)
+    ),
+    rstan_prob_results_id1_time4,
+    tolerance = 4*rstan_prob_results_id1_time4["se_mean"]
+  )
+
+  res <- pred_m |>
+    dplyr::filter(time == 4) |>
+    dplyr::group_by(.draw) |>
+    dplyr::summarise(m = mean(y_mean), s = sd(y_mean)) |>
+    dplyr::summarise(
+      mean_m = mean(m), mean_s = mean(s),
+      se_m = sd(m) / sqrt(dplyr::n()), se_s = sd(s) / sqrt(dplyr::n()),
+      sd_m = sd(m), sd_s = sd(s)
+    ) |> unlist()
+
+  expect_equal(res,
+    rstan_prob_results_avg4,
+    tolerance = 0.01
   )
 })
