@@ -464,7 +464,7 @@ formula.dynamitefit <- function(x, ...) {
     glue::glue("lags(k = {lag_defs$k}, type = {lag_defs$type})")
   )
   spline_str <- onlyif(
-    !is.null(spline_defs),
+    spline_defs$has_splines,
     paste0(
       "splines(",
       "shrinkage = ", spline_defs$shrinkage, ", ",
