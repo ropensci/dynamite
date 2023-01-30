@@ -53,13 +53,13 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   T_idx <- seq.int(fixed + 1L, T_full)
   has_groups <- !is.null(group_var)
   group <- data[[group_var]]
-  spline_defs <- attr(dformula, "splines")
-  random_defs <- attr(dformula, "random_spec")
-  lfactor_defs <- attr(dformula, "lfactor")
-  has_splines <- spline_defs$has_splines
-  sampling_vars$D <- spline_defs$D
-  sampling_vars$Bs <- spline_defs$Bs
-  has_lfactor <- lfactor_defs$has_lfactor
+  spline_def <- attr(dformula, "splines")
+  random_def <- attr(dformula, "random_spec")
+  lfactor_def <- attr(dformula, "lfactor")
+  has_splines <- spline_def$has_splines
+  sampling_vars$D <- spline_def$D
+  sampling_vars$Bs <- spline_def$Bs
+  has_lfactor <- lfactor_def$has_lfactor
   stopifnot_(
     !has_lfactor || has_splines,
     "Model contains time-varying latent factor(s) but splines have not been
@@ -152,13 +152,13 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     # note! Random intercept is counted to K_random above, while has_random is
     # for checking non-intercept terms....
     channel$has_random <- channel$K_random > 1L
-    channel$lb <- spline_defs$lb[i]
-    channel$shrinkage <- spline_defs$shrinkage
-    channel$noncentered <- spline_defs$noncentered[i]
-    channel$has_lfactor <- resp %in% lfactor_defs$responses
-    channel$noncentered_psi <- lfactor_defs$noncentered_psi
-    channel$noncentered_lambda <- lfactor_defs$noncentered_lambda[i]
-    channel$nonzero_lambda <- lfactor_defs$nonzero_lambda[i]
+    channel$lb <- spline_def$lb[i]
+    channel$shrinkage <- spline_def$shrinkage
+    channel$noncentered <- spline_def$noncentered[i]
+    channel$has_lfactor <- resp %in% lfactor_def$responses
+    channel$noncentered_psi <- lfactor_def$noncentered_psi
+    channel$noncentered_lambda <- lfactor_def$noncentered_lambda[i]
+    channel$nonzero_lambda <- lfactor_def$nonzero_lambda[i]
     stopifnot_(
       has_splines || !(channel$has_varying || channel$has_varying_intercept),
       "Model for response variable {.var {resp}} contains time-varying
@@ -207,24 +207,24 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   sampling_vars$N <- N
   sampling_vars$K <- K
   sampling_vars$X <- X
-  sampling_vars$M <- random_defs$M
-  sampling_vars$P <- lfactor_defs$P
+  sampling_vars$M <- random_def$M
+  sampling_vars$P <- lfactor_def$P
   # avoid goodpractice warning, T is a Stan variable, not an R variable
   sampling_vars[["T"]] <- T_full - fixed
   sampling_vars$X_m <- as.array(x_means)
   prior_list[["common_priors"]] <- prepare_common_priors(
     priors = priors,
     M = sampling_vars$M,
-    shrinkage = spline_defs$shrinkage,
-    correlated_nu = random_defs$correlated,
+    shrinkage = spline_def$shrinkage,
+    correlated_nu = random_def$correlated,
     P = sampling_vars$P,
-    correlated_lf = lfactor_defs$correlated
+    correlated_lf = lfactor_def$correlated
   )
   # for stanblocks
   attr(model_vars, "common_priors") <- prior_list[["common_priors"]]
-  attr(model_vars, "spline_defs") <- spline_defs
-  attr(model_vars, "random_defs") <- random_defs
-  attr(model_vars, "lfactor_defs") <- lfactor_defs
+  attr(model_vars, "spline_def") <- spline_def
+  attr(model_vars, "random_def") <- random_def
+  attr(model_vars, "lfactor_def") <- lfactor_def
   list(
     model_vars = model_vars,
     sampling_vars = sampling_vars,
