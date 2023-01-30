@@ -40,8 +40,7 @@
 #' the function `aux` to define auxiliary channels which are deterministic
 #' functions of other variables. The values of auxiliary variables are computed
 #' dynamically during prediction, making the use of lagged values and other
-#' transformations possible. Note that the auxiliary channel can also depend
-#' on other variables without lags. The function `aux` also does not use the
+#' transformations possible. The function `aux` also does not use the
 #' `family` argument, which is automatically set to `deterministic` and is a
 #' special channel type of `obs`. Note that lagged values of deterministic
 #' `aux` channels do not imply fixed time points. Instead they must be given
