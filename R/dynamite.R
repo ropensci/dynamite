@@ -768,8 +768,6 @@ parse_components <- function(dformulas, data, time_var) {
     resp = resp,
     times = seq.int(fixed + 1L, n_unique(data[[time_var]]))
   )
-  #M <- sum(lengths(lapply(dformulas$stoch, "[[", "random"))) +
-  #  sum(unlist(lapply(dformulas$stoch, "[[", "has_random_intercept")))
   M <- sum(
     vapply(
       dformulas$stoch,
@@ -967,7 +965,9 @@ parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
   n_stoch <- length(resp_stoch)
   n_lag <- max_lag * n_stoch
   channels <- vector(mode = "list", length = n_lag)
-  dterms <- get_terms(dformula[channels_stoch])
+  dterms <- lapply(dformula[channels_stoch], function(y) {
+    attr(terms(y$formula), "term.labels")
+  })
   stoch <- logical(n_lag)
   rank <- integer(n_lag)
   lhs <- character(n_lag)

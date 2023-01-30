@@ -334,20 +334,6 @@ get_predictors <- function(x) {
   vapply(x, function(y) deparse1(formula_rhs(y$formula)), character(1L))
 }
 
-#' Get Terms of All Formulas of a `dynamiteformula` Object
-#'
-#' @param x A `dynamiteformula` object.
-#' @noRd
-get_terms <- function(x) {
-  lapply(x, function(y) {
-    if (is_deterministic(y$family)) {
-      all.vars(formula_rhs(y$formula))
-    } else {
-      attr(terms(y$formula), "term.labels")
-    }
-  })
-}
-
 #' Get Non-Lagged Terms of All Formulas of a `dynamiteformula` Object
 #'
 #' @param x A `dynamiteformula` object.
