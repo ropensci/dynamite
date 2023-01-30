@@ -128,8 +128,6 @@ extract_nonlags_lang <- function(x) {
     } else {
       character(0L)
     }
-  } else {
-    unlist(lapply(x, extract_nonlags_lang))
   }
 }
 

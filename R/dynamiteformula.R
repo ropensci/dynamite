@@ -362,13 +362,13 @@ get_nonlag_terms <- function(x) {
   })
 }
 
-#' Get All Formulas of a `dynamiteformula` Object
-#'
-#' @param x A `dynamiteformula` object.
-#' @noRd
-get_formulas <- function(x) {
-  lapply(x, "[[", "formula")
-}
+# #' Get All Formulas of a `dynamiteformula` Object
+# #'
+# #' @param x A `dynamiteformula` object.
+# #' @noRd
+# get_formulas <- function(x) {
+#   lapply(x, "[[", "formula")
+# }
 
 #' Get Special Type Formula of a channel in a `dynamiteformula`
 #'
