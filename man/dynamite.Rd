@@ -70,7 +70,12 @@ and sampling steps respectively. This can be useful for debugging when
 combined with \code{model_code = TRUE}, which adds the Stan model code to the
 return object.}
 
-\item{...}{Further arguments to \code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}}.}
+\item{...}{For \code{dynamite()}, additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} or
+\code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}, such as \code{chains} and \code{cores} (\code{parallel_chains} in
+\code{cmdstanr}). For \code{summary()}, additional arguments to
+\code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}}. For \code{print()}, further arguments
+to the print method for tibbles (see \link[tibble:formatting]{tibble::formatting}). Not used for
+\code{formula()}.}
 
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
@@ -116,7 +121,8 @@ effective sample sizes, largest Rhat and summary statistics of the
 time-invariant model parameters.
 
 The \code{summary} method provides statistics of the posterior samples of the
-model; this is an alias of \code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}}.
+model; this is an alias of \code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}} with
+\code{summary = TRUE}.
 }
 \details{
 Any univariate unbounded continuous distributions supported by Stan can be

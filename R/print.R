@@ -7,9 +7,6 @@
 #'
 #' @export
 #' @rdname dynamite
-#' @param x \[`dynamitefit`]\cr The model fit object.
-#' @param ... Further arguments to the print method for tibbles.
-#'   See [tibble::formatting].
 #' @return `print` returns `x` invisibly.
 #' @srrstats {BS6.0, RE4.17} Implements the `print` method for the model fit.
 #' @srrstats {BS5.3, BS5.5} Contains convergence statistics in the output.

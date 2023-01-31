@@ -46,10 +46,10 @@
 #'   samples should be extracted. See details of possible values. Default is
 #'   all values listed in details except spline coefficients `omega` and
 #'   `omega_alpha`.
-#' @param summary \[`logical(1)`]\cr If `TRUE` (default), returns posterior
+#' @param summary \[`logical(1)`]\cr If `TRUE`, returns posterior
 #'   mean, standard deviation, and posterior quantiles (as defined by the
-#'   `probs` argument) for all parameters. If `FALSE`, returns the posterior
-#'   samples instead.
+#'   `probs` argument) for all parameters. If `FALSE` (default), returns the
+#'   posterior samples instead.
 #' @param probs \[`numeric()`]\cr Quantiles of interest. Default is
 #'   `c(0.05, 0.95)`.
 #' @param include_fixed \[`logical(1)`]\cr If `TRUE` (default), time-varying
@@ -115,7 +115,7 @@
 #'
 as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
                                       responses = NULL, types = NULL,
-                                      summary = TRUE, probs = c(0.05, 0.95),
+                                      summary = FALSE, probs = c(0.05, 0.95),
                                       include_fixed = TRUE, ...) {
   out <- as.data.table.dynamitefit(
     x,

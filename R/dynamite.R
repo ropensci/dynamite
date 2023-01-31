@@ -36,6 +36,7 @@
 #' shape of the posterior), this can vary greatly.
 #'
 #' @export
+#' @rdname dynamite
 #' @param dformula \[`dynamiteformula`]\cr The model formula.
 #'   See [dynamiteformula()] and 'Details'.
 #' @param data
@@ -73,9 +74,12 @@
 #'   and sampling steps respectively. This can be useful for debugging when
 #'   combined with `model_code = TRUE`, which adds the Stan model code to the
 #'   return object.
-#' @param ... Additional arguments to [rstan::sampling()] or
+#' @param ... For `dynamite()`, additional arguments to [rstan::sampling()] or
 #'  [cmdstanr::sample()], such as `chains` and `cores` (`parallel_chains` in
-#'  `cmdstanr`).
+#'  `cmdstanr`). For `summary()`, additional arguments to
+#'  [dynamite::as.data.frame.dynamitefit()]. For `print()`, further arguments
+#'  to the print method for tibbles (see [tibble::formatting]). Not used for
+#'  `formula()`.
 #' @return `dynamite` returns a `dynamitefit` object which is a list containing
 #'   the following components:
 #'
@@ -414,7 +418,6 @@ remove_redundant_parameters <- function(stan_input, backend, ...) {
 #'
 #' @rdname dynamite
 #' @param x \[`dynamitefit`\]\cr The model fit object.
-#' @param ... Not used.
 #' @return `formula` returns a quoted expression.
 #' @export
 #' @examples

@@ -11,6 +11,10 @@
 #' @param include_alpha \[`logical(1)`]\cr If `TRUE` (default), extracts also
 #'   time-invariant intercept term alpha if time-invariant parameters beta are
 #'   extracted, and time-varying alpha if time-varying delta are extracted.
+#'  @param summary \[`logical(1)`]\cr If `TRUE` (default), returns posterior
+#'   mean, standard deviation, and posterior quantiles (as defined by the
+#'   `probs` argument) for all parameters. If `FALSE`, returns the
+#'   posterior samples instead.
 #' @inheritParams as.data.frame.dynamitefit
 #' @param ... Ignored.
 #' @return A `tibble` containing either samples or summary statistics of the

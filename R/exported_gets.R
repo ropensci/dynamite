@@ -79,7 +79,7 @@ get_priors.dynamitefit <- function(x, ...) {
 #'   debug = list(model_code = TRUE, no_compile = TRUE)
 #' )$model_code)
 #'
-get_code <- function(x, blocks = NULL, ...) {
+get_code <- function(x, ...) {
   UseMethod("get_code", x)
 }
 

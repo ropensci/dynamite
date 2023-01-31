@@ -22,7 +22,7 @@
 as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
                                       row.names = NULL, optional = FALSE,
                                       responses = NULL, types = NULL,
-                                      summary = TRUE, probs = c(0.05, 0.95),
+                                      summary = FALSE, probs = c(0.05, 0.95),
                                       include_fixed = TRUE, ...) {
   stopifnot_(
     !missing(x),
@@ -228,11 +228,14 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
         names(tmp) <- paste0("q", 100 * probs)
         c(list(mean = mean, sd = sd), tmp)
       },
-      by = list(parameter, time, category, group, response, type)
+      by = list(parameter, time, group, category, response, type)
     ][
       ,
       parameter := as.character(parameter)
     ]
+    cnames <- setdiff(colnames(out), c("time", "group", "category",
+      "response", "type", ".draw", ".iteration", ".chain"))
+    data.table::setcolorder(out, cnames, before = "time")
   }
   out
 }

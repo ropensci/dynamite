@@ -12,7 +12,7 @@
   optional = FALSE,
   responses = NULL,
   types = NULL,
-  summary = TRUE,
+  summary = FALSE,
   probs = c(0.05, 0.95),
   include_fixed = TRUE,
   ...
@@ -36,10 +36,10 @@ samples should be extracted. See details of possible values. Default is
 all values listed in details except spline coefficients \code{omega} and
 \code{omega_alpha}.}
 
-\item{summary}{[\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
+\item{summary}{[\code{logical(1)}]\cr If \code{TRUE}, returns posterior
 mean, standard deviation, and posterior quantiles (as defined by the
-\code{probs} argument) for all parameters. If \code{FALSE}, returns the posterior
-samples instead.}
+\code{probs} argument) for all parameters. If \code{FALSE} (default), returns the
+posterior samples instead.}
 
 \item{probs}{[\code{numeric()}]\cr Quantiles of interest. Default is
 \code{c(0.05, 0.95)}.}

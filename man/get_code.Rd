@@ -8,9 +8,9 @@
 \usage{
 get_code(x, ...)
 
-\method{get_code}{dynamiteformula}(x, data, time, group = NULL, ...)
+\method{get_code}{dynamiteformula}(x, data, time, group = NULL, blocks = NULL, ...)
 
-\method{get_code}{dynamitefit}(x, ...)
+\method{get_code}{dynamitefit}(x, blocks = NULL, ...)
 }
 \arguments{
 \item{x}{[\code{dynamiteformula} or \code{dynamitefit}]\cr The model formula or an
@@ -38,9 +38,12 @@ If \code{group} is \code{NULL}, a new column \code{.group} is created with const
 value \code{1L} is created indicating that all observations belong to the same
 group. In case of name conflicts with \code{data}, see the \code{group_var} element
 of the return object to get the column name of the new variable.}
+
+\item{blocks}{[\code{character()}]\cr Stan block names to extract. If \code{NULL},
+extracts the full model code.}
 }
 \value{
-A Stan model code as a \code{character} string.
+The stan model blocks as a \code{character} string.
 }
 \description{
 Returns the Stan code of the model. Mostly useful for debugging or for

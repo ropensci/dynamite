@@ -26,17 +26,21 @@ latent factor.}
 should be extracted. Possible options are elements of
 \code{unique(x$priors$response)}, and the default is this entire vector.}
 
-\item{summary}{[\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
+\item{summary}{[\code{logical(1)}]\cr If \code{TRUE}, returns posterior
 mean, standard deviation, and posterior quantiles (as defined by the
-\code{probs} argument) for all parameters. If \code{FALSE}, returns the posterior
-samples instead.}
+\code{probs} argument) for all parameters. If \code{FALSE} (default), returns the
+posterior samples instead.}
 
 \item{probs}{[\code{numeric()}]\cr Quantiles of interest. Default is
 \code{c(0.05, 0.95)}.}
 
 \item{include_alpha}{[\code{logical(1)}]\cr If \code{TRUE} (default), extracts also
 time-invariant intercept term alpha if time-invariant parameters beta are
-extracted, and time-varying alpha if time-varying delta are extracted.}
+extracted, and time-varying alpha if time-varying delta are extracted.
+@param summary [\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
+mean, standard deviation, and posterior quantiles (as defined by the
+\code{probs} argument) for all parameters. If \code{FALSE}, returns the
+posterior samples instead.}
 
 \item{...}{Ignored.}
 }

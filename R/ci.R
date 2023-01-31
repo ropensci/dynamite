@@ -29,7 +29,7 @@ confint.dynamitefit <- function(object, parm, level = 0.95, ...) {
     {.cls numeric} value between 0 and 1."
   )
   a <- (1.0 - level) / 2.0
-  d <- as.data.frame.dynamitefit(object, probs = c(a, 1.0 - a))
+  d <- summary.dynamitefit(object, probs = c(a, 1.0 - a))
   row_names <- paste0(
     d$parameter, "_",
     d$time, "_",

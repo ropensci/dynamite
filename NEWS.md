@@ -15,6 +15,11 @@
     `y ~ x` and `x ~ z` simultaneously is valid, but adding `z ~ y` to these 
     would result in a cycle.
   * The output of `mcmc_diagnostics` is now clearer.
+  * The default of the argument `summary` was changed to FALSE in 
+    `as.data.frame` and `as.data.table` methods, whereas it is now hardcoded 
+    to TRUE in `summary` method. The column ordering of the output of these 
+    methods was also changed so that the estimates are before the extra 
+    columns such as `time`.
   
 # dynamite 1.0.2
   * Fixed a name clash issue in Stan code generation.
