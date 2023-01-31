@@ -42,7 +42,7 @@ mcmc_diagnostics.dynamitefit <- function(x, n = 3L) {
       n_trees <- rstan::get_num_max_treedepth(x$stanfit)
       bfmis <- rstan::get_bfmi(x$stanfit)
       all_ok <- n_divs == 0L && n_trees == 0L && all(bfmis > 0.2)
-      cat("\nNUTS sampler diagnostics:\n")
+      cat("NUTS sampler diagnostics:\n")
       all_ok_str <- ifelse_(
         all_ok,
         "\nNo divergences, saturated max treedepths or low E-BFMIs.\n",
