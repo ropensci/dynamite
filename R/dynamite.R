@@ -219,8 +219,8 @@ dynamite <- function(dformula, data, time, group = NULL,
   data <- parse_data(dformula, data, group, time, verbose)
   dformula <- parse_past(dformula, data, group, time)
   dformulas <- parse_lags(dformula, data, group, time, verbose)
-  dformulas <- parse_components(dformulas, data, time)
   evaluate_deterministic(dformulas, data, group, time)
+  dformulas <- parse_components(dformulas, data, time)
   stan_out <- dynamite_stan(
     dformulas,
     data,
