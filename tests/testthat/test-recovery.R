@@ -382,7 +382,7 @@ test_that("predict recovers correct estimates", {
       sd = sd(y_new)
     ),
     rstan_obs_results_id1_time4,
-    tolerance = 4*rstan_obs_results_id1_time4["se_mean"]
+    tolerance = 0.05
   )
 
   res <- pred |>
@@ -409,7 +409,7 @@ test_that("predict recovers correct estimates", {
       sd = sd(y_mean)
     ),
     rstan_prob_results_id1_time4,
-    tolerance = 4*rstan_prob_results_id1_time4["se_mean"]
+    tolerance = 0.01
   )
 
   res <- pred_m |>
