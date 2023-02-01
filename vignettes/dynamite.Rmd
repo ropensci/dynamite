@@ -331,7 +331,7 @@ The declared model formula is supplied to `dynamite`, which has the following
 arguments and default values:
 
 ```{r, echo=TRUE, eval=FALSE}
-dynamite(dformula, data, group = NULL, time, priors = NULL, verbose = TRUE, 
+dynamite(dformula, data, time, group = NULL,priors = NULL, verbose = TRUE, 
   debug = NULL, ...)
 
 ```
@@ -353,8 +353,8 @@ these parameters). For example,
 dynamite(
   dformula = obs(x ~ varying(~ -1 + w), family = "poisson") + splines(df = 10), 
   data = d, 
-  group = "id"
   time = "year", 
+  group = "id"
   chains = 2, 
   cores = 2
 )

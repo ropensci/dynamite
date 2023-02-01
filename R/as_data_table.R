@@ -233,9 +233,9 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       ,
       parameter := as.character(parameter)
     ]
-    cnames <- setdiff(colnames(out), c("time", "group", "category",
-      "response", "type", ".draw", ".iteration", ".chain"))
-    data.table::setcolorder(out, cnames, before = "time")
+    pnames <- c("time", "group", "category", "response", "type")
+    cnames <- setdiff(colnames(out), pnames)
+    data.table::setcolorder(out, neworder = c(cnames, pnames))
   }
   out
 }
