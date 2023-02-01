@@ -28,7 +28,7 @@ knitr::opts_chunk$set(
 [![dynamite cran-badge](http://www.r-pkg.org/badges/version/dynamite)](https://cran.r-project.org/package=dynamite)
 <!-- badges: end -->
 
-The `dynamite` [R](https://www.r-project.org/) package provides easy-to-use 
+The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use 
 interface for Bayesian inference of complex panel (time series) data comprising 
 of multiple measurements per multiple individuals measured in time. 
 The main features distinguishing the package and the underlying methodology 
@@ -72,6 +72,7 @@ intercepts:
 
 ```{r, echo = FALSE}
 library(dynamite)
+ggplot2::theme_set(ggplot2::theme_bw())
 ```
 
 ```{r, eval = FALSE}
