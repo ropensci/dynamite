@@ -25,9 +25,19 @@ f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
   aux(numeric(logp) ~ log(p + 1))
 multichannel_example_fit <- dynamite(
-  f, multichannel_example, "id", "time",
-  chains = 1, cores = 1, iter = 2000, warmup = 1000, init = 0, refresh = 0,
-  thin = 5, save_warmup = FALSE)
+  f,
+  data = multichannel_example,
+  time = "time",
+  group = "id",
+  chains = 1,
+  cores = 1,
+  iter = 2000,
+  warmup = 1000,
+  init = 0,
+  refresh = 0,
+  thin = 5,
+  save_warmup = FALSE
+)
 }
 Note the small number of samples due to size restrictions on CRAN.
 }

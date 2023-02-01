@@ -11,8 +11,8 @@ multichannel_example_fit <- dynamite(
     obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
     aux(numeric(logp) ~ log(p + 1)),
   data = multichannel_example,
-  group = "id",
   time = "time",
+  group = "id",
   verbose = FALSE,
   chains = 1,
   cores = 1,

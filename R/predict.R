@@ -18,10 +18,8 @@
 #'   Missing values in predictor columns can be imputed (argument `impute`).
 #'   There should be no new time points that were not present in the data that
 #'   were used to fit the model. New group levels can be included, but if the
-#'   model contains random intercepts, an options for the random
-#'   effects for the new levels must be chosen (argument `new_levels`). Note
-#'   that as `newdata` is expanded with predictions, it can be beneficial
-#'   in terms of memory usage to first remove redundant columns from `newdata`.
+#'   model contains random effects, an option for the random
+#'   effects for the new levels must be chosen (argument `new_levels`).
 #'   If the grouping variable of the original data is missing, it is assumed
 #'   that all observations in `newdata` belong to the first group in the
 #'   original data.
@@ -44,19 +42,19 @@
 #'   no imputation: `"none"` (default), and
 #'   last observation carried forward: `"locf"`.
 #' @param new_levels \[`character(1)`]\cr
-#'   Defines if and how to sample the random intercepts for observations whose
+#'   Defines if and how to sample the random effects for observations whose
 #'   group level was not present in the original data. The options are
 #'     * `"none"` (the default) which will signal an error if new levels
 #'       are encountered.
 #'     * `"bootstrap"` which will randomly draw from the posterior samples of
-#'       the random intercepts across all original levels.
+#'       the random effects across all original levels.
 #'     * `"gaussian"` which will randomly draw from a gaussian
-#'       distribution using the posterior samples of the random intercept
-#'       standard deviation.
+#'       distribution using the posterior samples of the random effects
+#'       standard deviation (and correlation matrix if applicable).
 #'     * `"original"` which will randomly match each new level to one of
-#'       the original levels. The posterior samples of the random intercept of
+#'       the original levels. The posterior samples of the random effects of
 #'       the matched levels will then be used for the new levels.
-#'   This argument is ignored if model does not contain random intercepts.
+#'   This argument is ignored if model does not contain random effects.
 #' @param global_fixed \[`logical(1)`]\cr If `FALSE` (the default),
 #'   the first non-fixed time point is counted from the the first non-NA
 #'   observation for each group member separately. Otherwise, the first
@@ -216,7 +214,7 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
   time_var <- object$time_var
   resp_stoch <- get_responses(object$dformulas$stoch)
   new_levels <- ifelse_(
-    identical(length(attr(object$dformulas$stoch, "random")$responses), 0L),
+    length(which_random(object$dformulas$all)) == 0L,
     "ignore",
     new_levels
   )
@@ -347,8 +345,11 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
 predict_full <- function(object, simulated, observed, type, eval_type,
                          new_levels, n_draws, fixed,
                          group_var, time_var, expand, df) {
-  formulas_stoch <- get_formulas(object$dformulas$stoch)
+  formulas_stoch <- object$dformulas$stoch
+  resp <- get_responses(object$dformulas$all)
   resp_stoch <- get_responses(object$dformulas$stoch)
+  families <- get_families(object$dformulas$all)
+  model_topology <- attr(object$dformulas$all, "model_topology")
   lhs_ld <- get_responses(object$dformulas$lag_det)
   rhs_ld <- get_predictors(object$dformulas$lag_det)
   lhs_ls <- get_responses(object$dformulas$lag_stoch)
@@ -367,13 +368,11 @@ predict_full <- function(object, simulated, observed, type, eval_type,
     observed,
     type,
     eval_type,
-    resp_stoch,
     n_draws,
     new_levels,
     group_var
   )
-  cl <- get_quoted(object$dformulas$det)
-  specials <- evaluate_specials(object$dformulas$stoch, observed)
+  specials <- evaluate_specials(object$dformulas$all, observed)
   time <- observed[[time_var]]
   u_time <- unique(time)
   n_time <- length(u_time)
@@ -391,38 +390,50 @@ predict_full <- function(object, simulated, observed, type, eval_type,
     idx_obs <- idx_obs + 1L
     assign_lags(simulated, idx, ro_ld, lhs_ld, rhs_ld, skip, n_draws)
     assign_lags(simulated, idx, ro_ls, lhs_ls, rhs_ls, skip, n_draws)
-    model_matrix <- full_model.matrix_predict(
-      formulas_stoch,
-      simulated,
-      observed,
-      idx,
-      idx_obs,
-      object$stan$u_names
-    )
-    for (j in seq_along(resp_stoch)) {
-      e <- eval_envs[[j]]
-      e$idx <- idx
-      e$time <- time_i
-      e$model_matrix <- model_matrix
-      e$offset <- specials[[j]]$offset[idx_obs]
-      e$trials <- specials[[j]]$trials[idx_obs]
-      e$y <- observed[[paste0(resp_stoch[j], "_store")]][idx_obs]
-      if (is_categorical(object$dformulas$stoch[[j]]$family)) {
-        e$y <- as.integer(e$y)
-      }
-      e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
-      if (identical(eval_type, "predicted")) {
-        idx_na <- is.na(simulated[idx, .SD, .SDcols = resp_stoch[j]])
-        e$idx_out <- which(idx_na)
-        e$idx_data <- idx[e$idx_out]
-        if (any(idx_na)) {
+    for (j in model_topology) {
+      if (is_deterministic(families[[j]])) {
+        assign_deterministic_predict(
+          simulated,
+          observed,
+          idx,
+          idx_obs,
+          resp[j],
+          formula_rhs(object$dformulas$all[[j]]$formula)
+        )
+      } else {
+        model_matrix <- full_model.matrix_predict(
+          formulas_stoch,
+          simulated,
+          observed,
+          idx,
+          idx_obs,
+          object$stan$u_names
+        )
+        e <- eval_envs[[j]]
+        e$idx <- idx
+        e$time <- time_i
+        e$model_matrix <- model_matrix
+        e$offset <- specials[[j]]$offset[idx_obs]
+        e$trials <- specials[[j]]$trials[idx_obs]
+        e$y <- observed[[paste0(resp[j], "_store")]][idx_obs]
+        e$y <- ifelse_(
+          is_categorical(families[[j]]),
+          as.integer(e$y),
+          e$y
+        )
+        e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
+        if (identical(eval_type, "predicted")) {
+          idx_na <- is.na(simulated[idx, .SD, .SDcols = resp[j]])
+          e$idx_out <- which(idx_na)
+          e$idx_data <- idx[e$idx_out]
+          if (any(idx_na)) {
+            eval(e$call, envir = e)
+          }
+        } else {
           eval(e$call, envir = e)
         }
-      } else {
-        eval(e$call, envir = e)
       }
     }
-    assign_deterministic(simulated, idx, cl)
     skip <- FALSE
   }
   finalize_predict(type, resp_stoch, simulated, observed)
@@ -450,8 +461,11 @@ predict_full <- function(object, simulated, observed, type, eval_type,
 #' @noRd
 predict_summary <- function(object, storage, observed, type, funs, new_levels,
                             n_draws, fixed, group_var, time_var, df) {
-  formulas_stoch <- get_formulas(object$dformulas$stoch)
+  formulas_stoch <- object$dformulas$stoch
+  resp <- get_responses(object$dformulas$all)
   resp_stoch <- get_responses(object$dformulas$stoch)
+  families <- get_families(object$dformulas$all)
+  model_topology <- attr(object$dformulas$all, "model_topology")
   lhs_ld <- get_responses(object$dformulas$lag_det)
   rhs_ld <- get_predictors(object$dformulas$lag_det)
   lhs_ls <- get_responses(object$dformulas$lag_stoch)
@@ -474,10 +488,10 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
   idx <- seq.int(n_sim + 1L, 2L * n_sim)
   simulated <- storage[1L, ]
   simulated[, (names(simulated)) := .SD[NA]]
-  #simulated <- simulated[rep(1L, 2L * n_sim), , env = list(n_sim = n_sim)]
+  # simulated <- simulated[rep(1L, 2L * n_sim), , env = list(n_sim = n_sim)]
   simulated <- simulated[rep(1L, 2L * n_sim)]
   data.table::set(
-    simulated,
+    x = simulated,
     j = ".draw",
     value = rep(seq.int(1L, n_draws), 2L * n_group)
   )
@@ -489,24 +503,24 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
   )
   summaries <- storage[1L, ]
   for (f in funs) {
-    #target <- f$fun(storage[[f$target]][1L])
-    #summaries[, (f$name) := target, env = list(target = target)]
+    # target <- f$fun(storage[[f$target]][1L])
+    # summaries[, (f$name) := target, env = list(target = target)]
     summaries[, (f$name) := f$fun(storage[[f$target]][1L])]
   }
   summaries[, (names(storage)) := NULL]
   summaries[, (names(summaries)) := .SD[NA]]
-  #summaries <- summaries[
+  # summaries <- summaries[
   #  rep(1L, n_time * n_draws),
   #  env = list(n_time = n_time, n_draws = n_draws)
-  #]
+  # ]
   summaries <- summaries[rep(1L, n_time * n_draws)]
   data.table::set(
-    summaries,
+    x = summaries,
     j = time_var,
-    value =  rep(u_time, n_draws)
+    value = rep(u_time, n_draws)
   )
   data.table::set(
-    summaries,
+    x = summaries,
     j = ".draw",
     value = rep(seq_len(n_draws), each = n_time)
   )
@@ -517,13 +531,11 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
     observed,
     type,
     eval_type = "predicted",
-    resp_stoch,
     n_draws,
     new_levels,
     group_var
   )
-  cl <- get_quoted(object$dformulas$det)
-  specials <- evaluate_specials(object$dformulas$stoch, observed)
+  specials <- evaluate_specials(object$dformulas$all, observed)
   time_offset <- which(unique(object$data[[time_var]]) == u_time[1L]) - 1L
   skip <- TRUE
   for (i in seq.int(fixed + 1L, n_time)) {
@@ -534,33 +546,43 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
     assign_from_storage(storage, simulated, idx, idx_obs)
     assign_lags(simulated, idx, ro_ld, lhs_ld, rhs_ld, skip, n_sim)
     assign_lags(simulated, idx, ro_ls, lhs_ls, rhs_ls, skip, n_sim)
-    model_matrix <- full_model.matrix_predict(
-      formulas_stoch,
-      simulated,
-      observed,
-      idx,
-      idx_obs,
-      object$stan$u_names
-    )
-    for (j in seq_along(resp_stoch)) {
-      e <- eval_envs[[j]]
-      e$idx <- idx
-      e$time <- time_i
-      e$model_matrix <- model_matrix
-      e$offset <- specials[[j]]$offset[idx_obs]
-      e$trials <- specials[[j]]$trials[idx_obs]
-      e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
-      idx_na <- is.na(
-        #simulated[idx, .SD, .SDcols = resp_stoch[j], env = list(idx = idx)]
-        simulated[idx, .SD, .SDcols = resp_stoch[j]]
-      )
-      e$idx_out <- which(idx_na)
-      e$idx_data <- idx[e$idx_out]
-      if (any(idx_na)) {
-        eval(e$call, envir = e)
+    for (j in model_topology) {
+      if (is_deterministic(families[[j]])) {
+        assign_deterministic_predict(
+          simulated,
+          observed,
+          idx,
+          idx_obs,
+          resp[j],
+          formula_rhs(object$dformulas$all[[j]]$formula)
+        )
+      } else {
+        model_matrix <- full_model.matrix_predict(
+          formulas_stoch,
+          simulated,
+          observed,
+          idx,
+          idx_obs,
+          object$stan$u_names
+        )
+        e <- eval_envs[[j]]
+        e$idx <- idx
+        e$time <- time_i
+        e$model_matrix <- model_matrix
+        e$offset <- specials[[j]]$offset[idx_obs]
+        e$trials <- specials[[j]]$trials[idx_obs]
+        e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
+        idx_na <- is.na(
+          # simulated[idx, .SD, .SDcols = resp_stoch[j], env = list(idx = idx)]
+          simulated[idx, .SD, .SDcols = resp[j]]
+        )
+        e$idx_out <- which(idx_na)
+        e$idx_data <- idx[e$idx_out]
+        if (any(idx_na)) {
+          eval(e$call, envir = e)
+        }
       }
     }
-    assign_deterministic(simulated, idx, cl)
     assign_summaries(summaries, simulated, funs, idx, idx_summ)
     skip <- FALSE
   }
@@ -582,7 +604,10 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
 assign_from_storage <- function(storage, simulated, idx, idx_obs) {
   for (n in names(storage)) {
     data.table::set(
-      simulated, i = idx, j = n, value = storage[[n]][idx_obs]
+      x = simulated,
+      i = idx,
+      j = n,
+      value = storage[[n]][idx_obs]
     )
   }
 }
@@ -597,15 +622,15 @@ assign_from_storage <- function(storage, simulated, idx, idx_obs) {
 assign_summaries <- function(summaries, simulated, funs, idx, idx_summ) {
   for (f in funs) {
     data.table::set(
-      summaries,
+      x = summaries,
       i = idx_summ,
       j = f$name,
-      #value = simulated[
+      # value = simulated[
       #  idx, lapply(.SD, fun),
       #  by = ".draw",
       #  .SDcols = target,
       #  env = list(fun = fun, target = target)
-      #][[target]]
+      # ][[target]]
       value = simulated[
         idx,
         lapply(.SD, f$fun),
@@ -625,7 +650,10 @@ assign_summaries <- function(summaries, simulated, funs, idx, idx_summ) {
 shift_simulated_values <- function(simulated, idx, idx_prev) {
   for (n in names(simulated)) {
     data.table::set(
-      simulated, i = idx_prev, j = n, value = simulated[[n]][idx]
+      x = simulated,
+      i = idx_prev,
+      j = n,
+      value = simulated[[n]][idx]
     )
   }
 }
@@ -640,10 +668,12 @@ finalize_predict <- function(type, resp_stoch, simulated, observed) {
     store <- glue::glue("{resp}_store")
     if (identical(type, "response")) {
       data.table::set(
-        simulated, j = glue::glue("{resp}_new"), value = simulated[[resp]]
+        x = simulated,
+        j = glue::glue("{resp}_new"),
+        value = simulated[[resp]]
       )
     }
-    data.table::set(observed, j = resp, value = observed[[store]])
+    data.table::set(x = observed, j = resp, value = observed[[store]])
     observed[, c(store) := NULL]
     simulated[, c(resp) := NULL]
   }

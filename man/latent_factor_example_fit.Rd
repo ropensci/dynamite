@@ -23,8 +23,8 @@ library(dynamite)
 latent_factor_example_fit <- dynamite(
   obs(y ~ 1, family = "gaussian") + lfactor() + splines(df = 10),
   data = latent_factor_example,
-  group = "id",
   time = "time",
+  group = "id",
   iter = 2000,
   warmup = 1000,
   thin = 10,

@@ -23,6 +23,7 @@
 #' @name dynamite-package
 #' @importFrom data.table :=
 #' @importFrom loo loo
+#' @importFrom patchwork wrap_plots
 #' @importFrom posterior as_draws as_draws_df ndraws
 #' @importFrom rlang .data
 #' @importFrom stats formula model.matrix model.matrix.lm na.exclude
@@ -75,12 +76,20 @@ NULL
 #' set.seed(1)
 #' library(dynamite)
 #' gaussian_example_fit <- dynamite(
-#'   obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
-#'   random() + splines(df = 20),
-#'   data = gaussian_example, time = "time", group = "id",
-#'   iter = 2000, warmup = 1000, thin = 10,
-#'   chains = 2, cores = 2, refresh = 0, save_warmup = FALSE,
-#'   pars = c("omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L"),
+#'   obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1), family = "gaussian") +
+#'     random_spec() + splines(df = 20),
+#'   data = gaussian_example,
+#'   time = "time",
+#'   group = "id",
+#'   iter = 2000,
+#'   warmup = 1000,
+#'   thin = 10,
+#'   chains = 2,
+#'   cores = 2,
+#'   refresh = 0,
+#'   save_warmup = FALSE,
+#'   pars = c("omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L",
+#'     "sigma_nu", "a_y"),
 #'   include = FALSE
 #' )
 #' }
@@ -119,9 +128,19 @@ NULL
 #'   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
 #'   aux(numeric(logp) ~ log(p + 1))
 #' multichannel_example_fit <- dynamite(
-#'   f, multichannel_example, "id", "time",
-#'   chains = 1, cores = 1, iter = 2000, warmup = 1000, init = 0, refresh = 0,
-#'   thin = 5, save_warmup = FALSE)
+#'   f,
+#'   data = multichannel_example,
+#'   time = "time",
+#'   group = "id",
+#'   chains = 1,
+#'   cores = 1,
+#'   iter = 2000,
+#'   warmup = 1000,
+#'   init = 0,
+#'   refresh = 0,
+#'   thin = 5,
+#'   save_warmup = FALSE
+#' )
 #' }
 #' Note the small number of samples due to size restrictions on CRAN.
 #' @source Script in
@@ -156,8 +175,15 @@ NULL
 #' f <- obs(x ~ z + lag(x) + lag(y), family = "categorical") +
 #'   obs(y ~ z + lag(x) + lag(y), family = "categorical")
 #' categorical_example_fit <- dynamite(
-#'   f, categorical_example, "id", "time",
-#'   chains = 1, refresh = 0, thin = 5, save_warmup = FALSE)
+#'   f,
+#'   data = categorical_example,
+#'   time = "time",
+#'   group = "id",
+#'   chains = 1,
+#'   refresh = 0,
+#'   thin = 5,
+#'   save_warmup = FALSE
+#' )
 #' }
 #' Note the small number of samples due to size restrictions on CRAN.
 #' @source Script in
@@ -189,8 +215,8 @@ NULL
 #' latent_factor_example_fit <- dynamite(
 #'   obs(y ~ 1, family = "gaussian") + lfactor() + splines(df = 10),
 #'   data = latent_factor_example,
-#'   group = "id",
 #'   time = "time",
+#'   group = "id",
 #'   iter = 2000,
 #'   warmup = 1000,
 #'   thin = 10,

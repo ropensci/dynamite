@@ -48,15 +48,16 @@ set.seed(1)
 fit <- dynamite(
   dformula = obs(LakeHuron ~ 1, "gaussian") + lags(),
   data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
-  group = "id",
   time = "time",
+  group = "id",
   chains = 1,
   refresh = 0
 )
 
 if (requireNamespace("dplyr") &&
-    requireNamespace("tidyr") &&
-    base::getRversion() >= "4.1.0") {
+  requireNamespace("tidyr") &&
+  base::getRversion() >= "4.1.0") {
+
   # One-step ahead samples (fitted values) from the posterior
   # (first time point is fixed due to lag in the model):
   fitted(fit) |>

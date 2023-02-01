@@ -36,6 +36,7 @@
 #' shape of the posterior), this can vary greatly.
 #'
 #' @export
+#' @rdname dynamite
 #' @param dformula \[`dynamiteformula`]\cr The model formula.
 #'   See [dynamiteformula()] and 'Details'.
 #' @param data
@@ -47,18 +48,23 @@
 #'   values which will simply be ignored in the estimation in a case-wise
 #'   fashion (per time-point and per channel). Input `data` is converted to
 #'   channel specific matrix representations via [stats::model.matrix.lm()].
+#' @param time \[`character(1)`]\cr A column name of `data` that denotes the
+#'   time index of observations. If this variable is a factor, the integer
+#'   representation of its levels are used internally for defining the time
+#'   indexing.
 #' @param group \[`character(1)`]\cr A column name of `data` that denotes the
 #'   unique groups or `NULL` corresponding to a scenario without any groups.
 #'   If `group` is `NULL`, a new column `.group` is created with constant
 #'   value `1L` is created indicating that all observations belong to the same
 #'   group. In case of name conflicts with `data`, see the `group_var` element
 #'   of the return object to get the column name of the new variable.
-#' @param time \[`character(1)`]\cr A column name of `data` that denotes the
-#'   time index of observations. If this variable is a factor, the integer
-#'   representation of its levels are used internally for defining the time
-#'   indexing.
 #' @param priors \[`data.frame`]\cr An optional data frame with prior
 #'   definitions. See [dynamite::get_priors()] and 'Details'.
+#' @param backend \[`character(1)`]\cr Defines the backend interface to Stan,
+#'   should be  either `"rstan"` (the default) or `"cmdstanr"`. Note that
+#'   `cmdstanr` needs to be installed separately as it is not on CRAN. It also
+#'   needs the actual `CmdStan` software. See https://mc-stan.org/cmdstanr/ for
+#'   details.
 #' @param verbose \[`logical(1)`]\cr All warnings and messages are suppressed
 #'   if set to `FALSE`. Defaults to `TRUE`.
 #' @param debug \[`list()`]\cr A named list of form `name = TRUE` indicating
@@ -68,14 +74,12 @@
 #'   and sampling steps respectively. This can be useful for debugging when
 #'   combined with `model_code = TRUE`, which adds the Stan model code to the
 #'   return object.
-#' @param backend \[`character(1)`]\cr Defines the backend interface to Stan,
-#'   should be  either `"rstan"` (the default) or `"cmdstanr"`. Note that
-#'   `cmdstanr` needs to be installed separately as it is not on CRAN. It also
-#'   needs the actual `CmdStan` software. See https://mc-stan.org/cmdstanr/ for
-#'   details.
-#' @param ... Additional arguments to [rstan::sampling()] or
+#' @param ... For `dynamite()`, additional arguments to [rstan::sampling()] or
 #'  [cmdstanr::sample()], such as `chains` and `cores` (`parallel_chains` in
-#'  `cmdstanr`).
+#'  `cmdstanr`). For `summary()`, additional arguments to
+#'  [dynamite::as.data.frame.dynamitefit()]. For `print()`, further arguments
+#'  to the print method for tibbles (see [tibble::formatting]). Not used for
+#'  `formula()`.
 #' @return `dynamite` returns a `dynamitefit` object which is a list containing
 #'   the following components:
 #'
@@ -131,15 +135,18 @@
 #' fit <- dynamite(
 #'   dformula = obs(y ~ -1 + varying(~x), family = "gaussian") +
 #'     lags(type = "varying") +
-#'     splines(df = 20), gaussian_example, "id", "time",
+#'     splines(df = 20),
+#'   gaussian_example,
+#'   "time",
+#'   "id",
 #'   chains = 1,
 #'   refresh = 0
 #' )
 #' }
 #'
-dynamite <- function(dformula, data, group = NULL, time,
-                     priors = NULL, verbose = TRUE, debug = NULL,
-                     backend = "rstan", ...) {
+dynamite <- function(dformula, data, time, group = NULL,
+                     priors = NULL, backend = "rstan",
+                     verbose = TRUE, debug = NULL, ...) {
   stopifnot_(
     !missing(dformula),
     "Argument {.arg dformula} is missing."
@@ -204,7 +211,7 @@ dynamite <- function(dformula, data, group = NULL, time,
     }
     data[[group]] <- 1L
   }
-  data_name <- attr(data, "data_name")
+  data_name <- attr(dformula, "data_name")
   if (is.null(data_name)) {
     d <- match.call()$data
     data_name <- ifelse_(
@@ -216,8 +223,8 @@ dynamite <- function(dformula, data, group = NULL, time,
   data <- parse_data(dformula, data, group, time, verbose)
   dformula <- parse_past(dformula, data, group, time)
   dformulas <- parse_lags(dformula, data, group, time, verbose)
-  dformulas <- parse_components(dformulas, data, time)
   evaluate_deterministic(dformulas, data, group, time)
+  dformulas <- parse_components(dformulas, data, time)
   stan_out <- dynamite_stan(
     dformulas,
     data,
@@ -368,7 +375,7 @@ sampling_info <- function(dformulas, verbose, debug, backend) {
     message_("Compiling Stan model.")
   }
   if (!stan_supports_categorical_logit_glm(backend) &&
-      "categorical" %in% get_family_names(dformulas$all)) {
+    "categorical" %in% get_family_names(dformulas$all)) {
     warning_(
       c(
         "Efficient glm-variant of the categorical likelihood is not
@@ -390,15 +397,15 @@ remove_redundant_parameters <- function(stan_input, backend, ...) {
   # could also remove omega_raw
   dots <- list(...)
   if (is.null(dots$pars) &&
-      stan_input$sampling_vars$M > 0 &&
-      backend == "rstan") {
+    stan_input$sampling_vars$M > 0 &&
+    backend == "rstan") {
     dots$pars <- c("nu_raw", "nu", "L")
     dots$include <- FALSE
   }
   if (is.null(dots$pars) &&
-      stan_input$sampling_vars$P > 0 &&
-      backend == "rstan") {
-    #many more, but depends on the channel names
+    stan_input$sampling_vars$P > 0 &&
+    backend == "rstan") {
+    # many more, but depends on the channel names
     dots$pars <- c("omega_raw_psi", "L_lf")
     dots$include <- FALSE
   }
@@ -411,7 +418,6 @@ remove_redundant_parameters <- function(stan_input, backend, ...) {
 #'
 #' @rdname dynamite
 #' @param x \[`dynamitefit`\]\cr The model fit object.
-#' @param ... Not used.
 #' @return `formula` returns a quoted expression.
 #' @export
 #' @examples
@@ -438,8 +444,8 @@ formula.dynamitefit <- function(x, ...) {
     function(y) y$name,
     character(1L)
   )
-  lag_defs <- attr(x$dformulas$all, "lags")
-  spline_defs <- attr(x$dformulas$stoch, "splines")
+  lag_def <- attr(x$dformulas$all, "lags")
+  spline_def <- attr(x$dformulas$stoch, "splines")
   obs_str <- onlyif(
     length(ch_stoch) > 0L,
     obs_str <- paste0(
@@ -457,22 +463,55 @@ formula.dynamitefit <- function(x, ...) {
     )
   )
   lags_str <- onlyif(
-    !is.null(lag_defs),
-    glue::glue("lags(k = {lag_defs$k}, type = {lag_defs$type})")
+    !is.null(lag_def),
+    glue::glue("lags(k = {lag_def$k}, type = {lag_def$type})")
   )
   spline_str <- onlyif(
-    !is.null(spline_defs),
+    spline_def$has_splines,
     paste0(
       "splines(",
-      "shrinkage = ", spline_defs$shrinkage, ", ",
+      "shrinkage = ", spline_def$shrinkage, ", ",
       "override = FALSE, ",
-      "df = ", spline_defs$bs_opts$df, ", ",
-      "degree = ", spline_defs$bs_opts$degree, ", ",
-      "lb_tau = ", spline_defs$lb_tau, ", ",
-      "noncentered = ", spline_defs$noncentered, ")"
+      "df = ", spline_def$bs_opts$df, ", ",
+      "degree = ", spline_def$bs_opts$degree, ", ",
+      "lb_tau = ", spline_def$lb, ", ",
+      "noncentered = ", spline_def$noncentered, ")"
     )
   )
-  str2lang(paste(c(obs_str, aux_str, lags_str, spline_str), collapse = " + "))
+  lfactor_def <- attr(x$dformulas$stoch, "lfactor")
+  lfactor_str <- onlyif(
+    lfactor_def$has_lfactor,
+    paste0(
+      "lfactor(",
+      "responses = ", lfactor_def$responses, ", ",
+      "noncentered_psi = ", lfactor_def$noncentered_psi, ", ",
+      "noncentered_lambda = ", lfactor_def$noncentered_lambda, ", ",
+      "nonzero_lambda = ", lfactor_def$nonzero_lambda, ", ",
+      "correlated = ", lfactor_def$correlated, ")"
+    )
+  )
+  random_spec_def <- attr(x$dformulas$stoch, "random_spec")
+  random_spec_str <- onlyif(
+    random_spec_def$has_random_spec,
+    paste0(
+      "random_spec(",
+      "correlated = ", random_spec_def$correlated, ", ",
+      "noncentered = ", random_spec_def$noncentered, ")"
+    )
+  )
+  str2lang(
+    paste(
+      c(
+        obs_str,
+        aux_str,
+        lags_str,
+        spline_str,
+        lfactor_str,
+        random_spec_str
+      ),
+      collapse = " + "
+    )
+  )
 }
 
 #' Is The Argument a `dynamitefit` Object
@@ -513,7 +552,7 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
         `i` = "Converting the variable to {.cls integer} based on its levels."
       ))
     }
-    data[[time_var]] <- as.integer(data[[time_var]])
+    data.table::set(data, j = time_var, value = as.integer(data[[time_var]]))
   }
   chr_cols <- names(data)[vapply(data, is.character, logical(1L))]
   if (length(chr_cols) > 0L) {
@@ -533,11 +572,10 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
     )
   )
   for (j in which(valid_cols & !factor_cols)) {
-    data.table::set(
-      data,
-      j = j,
-      value = do.call(paste0("as.", typeof(data[[j]])), args = list(data[[j]]))
-    )
+    type <- typeof(data[[j]])
+    col <- data[[j]]
+    val <- do.call(paste0("as.", type), args = list(col))
+    data.table::set(data, j = j, value = val)
   }
   resp <- get_responses(dformula)
   ordered_factor_resp <- vapply(
@@ -590,7 +628,7 @@ parse_past <- function(dformula, data, group_var, time_var) {
         past_eval <- try(eval(cl), silent = TRUE)
         if (inherits(past_eval, "try-error")) {
           past_eval <- try(data[, eval(cl)], silent = TRUE)
-          #past_eval <- try(data[, cl, env = list(cl = cl)], silent = TRUE)
+          # past_eval <- try(data[, cl, env = list(cl = cl)], silent = TRUE)
           stopifnot_(
             !inherits(past_eval, "try-error"),
             c(
@@ -651,10 +689,8 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
     )
   }
   data_names <- names(data)
-  non_lags <- extract_nonlags(
-    unique(unlist(get_terms(dformula[channels_stoch])))
-  )
-  valid_resp <- c(resp_stoch, data_names)
+  non_lags <- unique(unlist(get_nonlag_terms(dformula[channels_stoch])))
+  valid_resp <- c(resp_all, data_names)
   mis_vars <- which(!non_lags %in% valid_resp)
   stopifnot_(
     identical(length(mis_vars), 0L),
@@ -712,7 +748,7 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
     stoch = structure(
       dformula[channels_stoch],
       splines = attr(dformula, "splines"),
-      random = attr(dformula, "random"),
+      random_spec = attr(dformula, "random_spec"),
       lfactor = attr(dformula, "lfactor")
     ),
     lag_pred = dformula_lag_pred,
@@ -731,17 +767,33 @@ parse_components <- function(dformulas, data, time_var) {
   resp <- get_responses(dformulas$stoch)
   families <- unlist(get_families(dformulas$stoch))
   attr(dformulas$stoch, "splines") <- parse_splines(
-    spline_defs = attr(dformulas$stoch, "splines"),
+    spline_def = attr(dformulas$stoch, "splines"),
     resp = resp,
     times = seq.int(fixed + 1L, n_unique(data[[time_var]]))
   )
-  attr(dformulas$stoch, "random") <- parse_random(
-    random_defs = attr(dformulas$stoch, "random"),
-    resp = resp,
-    families = families
+  M <- sum(
+    vapply(
+      dformulas$stoch,
+      function(formula) {
+        random_formula <- get_type_formula(formula, type = "random")
+        if (is.null(random_formula)) {
+          0L
+        } else {
+          mm <- remove_intercept(
+            stats::model.matrix.lm(random_formula, data)
+          )
+          ncol(mm) + 1L * formula$has_random_intercept
+        }
+      },
+      integer(1L)
+    )
   )
-  attr(dformulas$stoch, "lfactor") <- parse_lfactors(
-    lfactor_defs = attr(dformulas$stoch, "lfactor"),
+  attr(dformulas$stoch, "random_spec") <- parse_random_spec(
+    random_spec_def = attr(dformulas$stoch, "random_spec"),
+    M = M
+  )
+  attr(dformulas$stoch, "lfactor") <- parse_lfactor(
+    lfactor_def = attr(dformulas$stoch, "lfactor"),
     resp = resp,
     families = families
   )
@@ -750,24 +802,24 @@ parse_components <- function(dformulas, data, time_var) {
 
 #' Parse B-spline Parameters
 #'
-#' @param spline_defs A `splines` object.
+#' @param spline_def A `splines` object.
 #' @param n_channels Number of channels
 #' @param times An `integer` vector of time indices
 #' @noRd
-parse_splines <- function(spline_defs, resp, times) {
+parse_splines <- function(spline_def, resp, times) {
   out <- list()
   n_channels <- length(resp)
-  if (!is.null(spline_defs)) {
+  if (!is.null(spline_def)) {
     out$has_splines <- TRUE
-    out$shrinkage <- spline_defs$shrinkage
-    out$bs_opts <- spline_defs$bs_opts
+    out$shrinkage <- spline_def$shrinkage
+    out$bs_opts <- spline_def$bs_opts
     out$bs_opts$x <- times
     if (is.null(out$bs_opts$Boundary.knots)) {
       out$bs_opts$Boundary.knots <- range(out$bs_opts$x)
     }
     out$Bs <- t(do.call(splines::bs, args = out$bs_opts))
     out$D <- nrow(out$Bs)
-    out$lb <- spline_defs$lb_tau
+    out$lb <- spline_def$lb_tau
     if (length(out$lb) %in% c(1L, n_channels)) {
       out$lb <- rep(out$lb, length = n_channels)
     } else {
@@ -776,7 +828,7 @@ parse_splines <- function(spline_defs, resp, times) {
         is not equal to 1 or {n_channels}, the number of the channels."
       )
     }
-    out$noncentered <- spline_defs$noncentered
+    out$noncentered <- spline_def$noncentered
     if (length(out$noncentered) %in% c(1L, n_channels)) {
       out$noncentered <- rep(out$noncentered, length = n_channels)
     } else {
@@ -796,66 +848,42 @@ parse_splines <- function(spline_defs, resp, times) {
   out
 }
 
-#' Parse Random Intercept Definitions
+#' Parse Random Effect Definitions
 #'
-#' @param random_defs A `random` object.
-#' @param resp A `character` vector of response variable names.
-#' @param families A `character` vector response family names.
+#' @param random_spec_def A `random_spec` object.
+#' @param M Number of random effects.
 #' @noRd
-parse_random <- function(random_defs, resp, families) {
-  if (is.null(random_defs)) {
-    return(NULL)
-  }
-  valid_channels <- resp[!(families %in% "categorical")]
-  # default, use all channels except categorical
-  if (is.null(random_defs$responses)) {
-    random_defs$responses <- valid_channels
-    stopifnot_(
-      length(valid_channels) > 0L,
-      c(
-        "No valid responses for random intercept component:",
-        `x` = "Random intercepts are not supported for the categorical family."
-      )
+parse_random_spec <- function(random_spec_def, M) {
+  out <- list()
+  if (is.null(random_spec_def)) {
+    out <- list(
+      has_random_spec = FALSE,
+      correlated = TRUE,
+      noncentered = TRUE
     )
   } else {
-    nu_channels <- random_defs$responses %in% resp
-    stopifnot_(
-      all(nu_channels),
-      c(
-        "Argument {.arg responses} of {.fun random} contains variables
-        {.var {cs(resp[nu_channels])}}:",
-        `x` = "No such response variables in the model."
-      )
-    )
-    nu_channels <- random_defs$responses %in% valid_channels
-    stopifnot_(
-      all(nu_channels),
-      c(
-        "Random intercepts are not supported for the categorical family:",
-        `x` = "Found random intercept declaration for categorical variable{?s}
-              {.var {cs(valid_channels[nu_channels])}}."
-      )
-    )
+    out <- random_spec_def
+    out$has_random_spec <- TRUE
   }
-  if (length(random_defs$responses) < 2L) {
-    random_defs$correlated <- FALSE
+  if (M < 2L) {
+    out$correlated <- FALSE
   }
-  random_defs
+  out$M <- M
+  out
 }
-
 #' Parse Latent Factor Definitions
 #'
-#' @param lfactor_defs An `lfactor` object.
+#' @param lfactor_def An `lfactor` object.
 #' @param resp A `character` vector of response variable names.
 #' @param families A `character` vector response family names.
 #' @noRd
-parse_lfactors <- function(lfactor_defs, resp, families) {
+parse_lfactor <- function(lfactor_def, resp, families) {
   out <- list()
-  if (!is.null(lfactor_defs)) {
+  if (!is.null(lfactor_def)) {
     valid_channels <- resp[!(families %in% "categorical")]
     # default, use all channels except categorical
-    if (is.null(lfactor_defs$responses)) {
-      lfactor_defs$responses <- valid_channels
+    if (is.null(lfactor_def$responses)) {
+      lfactor_def$responses <- valid_channels
       stopifnot_(
         length(valid_channels) > 0L,
         c(
@@ -864,16 +892,16 @@ parse_lfactors <- function(lfactor_defs, resp, families) {
         )
       )
     } else {
-      psi_channels <- lfactor_defs$responses %in% resp
+      psi_channels <- lfactor_def$responses %in% resp
       stopifnot_(
         all(psi_channels),
         c(
           "Argument {.arg responses} of {.fun lfactor} contains variable{?s}
-          {.var {cs(lfactor_defs$responses[!psi_channels])}}:",
+          {.var {cs(lfactor_def$responses[!psi_channels])}}:",
           `x` = "No such response variables in the model."
         )
       )
-      psi_channels <- lfactor_defs$responses %in% valid_channels
+      psi_channels <- lfactor_def$responses %in% valid_channels
       stopifnot_(
         all(psi_channels),
         c(
@@ -883,28 +911,29 @@ parse_lfactors <- function(lfactor_defs, resp, families) {
         )
       )
     }
-    if (length(lfactor_defs$responses) < 2L) {
-      lfactor_defs$correlated <- FALSE
+    if (length(lfactor_def$responses) < 2L) {
+      lfactor_def$correlated <- FALSE
     }
     out$has_lfactor <- TRUE
-    out$responses <- lfactor_defs$responses
-    out$noncentered_psi <- lfactor_defs$noncentered_psi
+    out$responses <- lfactor_def$responses
+    out$noncentered_psi <- lfactor_def$noncentered_psi
     n_channels <- length(resp)
-    out$noncentered_lambda <- lfactor_defs$noncentered_lambda
+    out$noncentered_lambda <- lfactor_def$noncentered_lambda
     stopifnot_(
       length(out$noncentered_lambda) %in% c(1L, n_channels),
       "Length of the {.arg noncentered_lambda} argument of {.fun lfactor}
       function is not equal to 1 or {n_channels}, the number of the channels."
     )
     out$noncentered_lambda <- rep(out$noncentered_lambda, length = n_channels)
-    out$nonzero_lambda <- lfactor_defs$nonzero_lambda
+    out$nonzero_lambda <- lfactor_def$nonzero_lambda
     stopifnot_(
       length(out$nonzero_lambda) %in% c(1L, n_channels),
       "Length of the {.arg nonzero_lambda} argument of {.fun lfactor} function
       is not equal to 1 or {n_channels}, the number of the channels."
     )
     out$nonzero_lambda <- rep(out$nonzero_lambda, length = n_channels)
-    out$correlated <- lfactor_defs$correlated
+    out$correlated <- lfactor_def$correlated
+    out$P <- length(lfactor_def$responses)
   } else {
     n_channels <- length(resp)
     out <- list(
@@ -913,7 +942,8 @@ parse_lfactors <- function(lfactor_defs, resp, families) {
       noncentered_psi = FALSE,
       noncentered_lambda = logical(n_channels),
       nonzero_lambda = logical(n_channels),
-      correlated = FALSE
+      correlated = FALSE,
+      P = 0
     )
   }
   out
@@ -938,7 +968,9 @@ parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
   n_stoch <- length(resp_stoch)
   n_lag <- max_lag * n_stoch
   channels <- vector(mode = "list", length = n_lag)
-  dterms <- get_terms(dformula[channels_stoch])
+  dterms <- lapply(dformula[channels_stoch], function(y) {
+    attr(terms(y$formula), "term.labels")
+  })
   stoch <- logical(n_lag)
   rank <- integer(n_lag)
   lhs <- character(n_lag)
@@ -1018,7 +1050,7 @@ parse_singleton_lags <- function(dformula, data, group_var,
       if (y$is_resp && !is.null(y$past_val)) {
         if (identical(y$past_type, "past")) {
           past_out <- lag_(y$past_val, i)
-          #na_idx <- data[, .I[seq_len(i)], by = group_var, env = list(i = i)]$V1
+          # na_idx <- data[, .I[seq_len(i)], by = group_var, env = list(i = i)]$V1
           na_idx <- data[, .I[seq_len(i)], by = group_var]$V1
           past_out[na_idx] <- NA
           spec <- list(
@@ -1099,23 +1131,27 @@ prepare_lagged_response <- function(dformula, lag_map,
 #'   are stochastic.
 #' @param increment \[`logical()`]\cr  A vector indicating whether to add
 #'   the new lag term or not (e.g.,, whether it was already present or not).
-#' @param type \[`character(1)`]\cr Either `"fixed"` or `"varying"`.
+#' @param type \[`character(1)`]\cr Either `"fixed"`, `"varying"`, or `"random"`.
 #' @param lhs \[`character()`]\cr A vector of the new lagged variable names.
 #' @noRd
 parse_new_lags <- function(dformula, channels_stoch, increment, type, lhs) {
-  for (i in channels_stoch) {
+  for (i in seq_along(channels_stoch)) {
+    j <- channels_stoch[i]
     if (any(increment[[i]])) {
-      dformula[[i]] <- dynamiteformula_(
+      dformula[[j]] <- dynamiteformula_(
         formula = increment_formula(
-          formula = dformula[[i]]$formula,
-          x = lhs[increment[[i]]],
+          formula = dformula[[j]]$formula,
+          x = lhs[increment[[j]]],
           type = type,
-          varying_idx = dformula[[i]]$varying,
-          varying_icpt = dformula[[i]]$has_varying_intercept,
-          fixed_icpt = dformula[[i]]$has_fixed_intercept
+          varying_idx = dformula[[j]]$varying,
+          fixed_idx = dformula[[j]]$fixed,
+          random_idx = dformula[[j]]$random,
+          varying_icpt = dformula[[j]]$has_varying_intercept,
+          fixed_icpt = dformula[[j]]$has_fixed_intercept,
+          random_icpt = dformula[[j]]$has_random_intercept
         ),
-        original = dformula[[i]]$original,
-        family = dformula[[i]]$family
+        original = dformula[[j]]$original,
+        family = dformula[[j]]$family
       )
     }
   }
@@ -1156,11 +1192,11 @@ fill_time <- function(data, group_var, time_var) {
     length(time) > 1L,
     "There must be at least two time points in the data."
   )
-  #time_duplicated <- data[,
+  # time_duplicated <- data[,
   #  any(duplicated(time_var)),
   #  by = group_var,
   #  env = list(time_var = time_var)
-  #]$V1
+  # ]$V1
   split_data <- split(data, by = group_var)
   time_duplicated <- unlist(
     lapply(split_data, function(x) any(duplicated(x[[time_var]])))
@@ -1180,11 +1216,11 @@ fill_time <- function(data, group_var, time_var) {
     stop_("Observations must occur at regular time intervals.")
   } else {
     full_time <- seq(time[1L], time[length(time)], by = time_scale)
-    #time_missing <- data[,
+    # time_missing <- data[,
     #  !identical(time_var, full_time),
     #  by = group_var,
     #  env = list(time_var = time_var, full_time = full_time)
-    #]$V1
+    # ]$V1
     time_missing <- unlist(
       lapply(split_data, function(x) !identical(x[[time_var]], full_time))
     )

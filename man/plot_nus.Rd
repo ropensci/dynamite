@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot.R
 \name{plot_nus}
 \alias{plot_nus}
-\title{Plot Random Intercepts of a Dynamite Model}
+\title{Plot Random effects of a Dynamite Model}
 \usage{
 plot_nus(x, responses = NULL, level = 0.05)
 }
@@ -20,7 +20,9 @@ Default is 0.05, leading to 90\% intervals.}
 A \code{ggplot} object.
 }
 \description{
-Plot Random Intercepts of a Dynamite Model
+Note that as this function tries to draw a plot containing all random
+effects, the plot will become messy with large number of groups and/or
+parameters.
 }
 \examples{
 plot_nus(gaussian_example_fit)

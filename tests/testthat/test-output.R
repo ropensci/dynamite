@@ -7,17 +7,17 @@ capture_all_output <- function(x) {
 }
 
 test_that("dynamiteformula can be printed", {
-  f <- obs(y ~ x, family = "gaussian") +
+  f <- obs(y ~ x + random(~1), family = "gaussian") +
     lags(k = c(1, 3)) +
-    random(responses = "y")
+    random_spec()
   expect_output(
     print(f),
     paste0(
-      "  Family   Formula\n",
-      "y gaussian y ~ x  \n",
+      "  Family   Formula           \n",
+      "y gaussian y ~ x \\+ random\\(~1\\)\n",
       "\n",
       "Lagged responses added as predictors with: k = 1, 3\n",
-      "Correlated random intercepts added for response\\(s\\): y"
+      "Correlated random effects added for response\\(s\\): y"
     )
   )
 })
@@ -158,8 +158,8 @@ test_that("MCMC diagnostics can be computed", {
 test_that("gets can be got", {
   expect_error(
     get_code(
-      obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
-        random() + splines(df = 20),
+      obs(y ~ -1 + z + varying(~ x + lag(y)) +
+        random(~1), family = "gaussian") + random_spec() + splines(df = 20),
       gaussian_example, "id", "time"
     ),
     NA
@@ -170,8 +170,9 @@ test_that("gets can be got", {
   )
   expect_error(
     get_data(
-      obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
-        random() + splines(df = 20),
+      obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1),
+        family = "gaussian"
+      ) + random_spec() + splines(df = 20),
       gaussian_example, "id", "time"
     ),
     NA

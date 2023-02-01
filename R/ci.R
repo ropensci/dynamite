@@ -11,7 +11,7 @@
 #'    `category` specifies the level of the response the parameter
 #'   is related to if the response is categorical, and `group` determines which
 #'   group of observations the parameter is related to in the case of random
-#'   intercepts and loadings. Non-applicable fields in the this syntax are set
+#'   effects and loadings. Non-applicable fields in the this syntax are set
 #'   to `NA`.
 #' @srrstats {RE4.3} Provides credible intervals.
 #' @examples
@@ -29,7 +29,7 @@ confint.dynamitefit <- function(object, parm, level = 0.95, ...) {
     {.cls numeric} value between 0 and 1."
   )
   a <- (1.0 - level) / 2.0
-  d <- as.data.frame.dynamitefit(object, probs = c(a, 1.0 - a))
+  d <- summary.dynamitefit(object, probs = c(a, 1.0 - a))
   row_names <- paste0(
     d$parameter, "_",
     d$time, "_",

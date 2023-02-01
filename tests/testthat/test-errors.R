@@ -109,28 +109,39 @@ test_that("adding dynamiteformulas with existing splines definitions fails", {
   )
 })
 
-test_that("simultaneity fails", {
-  obs_lhs <-
-    obs(q ~ w + e + r + lag(i), family = "gaussian") +
-    obs(t ~ y + u, family = "gaussian") +
-    obs(i ~ o + p + a + lag(f), family = "gaussian")
-  obs_rhs <-
-    obs(f ~ h + l + lag(x), family = "gaussian") +
-    obs(x ~ q + z, family = "gaussian")
+# test_that("simultaneity fails", {
+#  obs_lhs <-
+#    obs(q ~ w + e + r + lag(i), family = "gaussian") +
+#    obs(t ~ y + u, family = "gaussian") +
+#    obs(i ~ o + p + a + lag(f), family = "gaussian")
+#  obs_rhs <-
+#    obs(f ~ h + l + lag(x), family = "gaussian") +
+#    obs(x ~ q + z, family = "gaussian")
+#  expect_error(
+#    obs_rhs + obs_lhs,
+#    paste0(
+#      "Simultaneous regression is not supported:\n",
+#      "x Response variable `q` appears in the formula of `x`\\."
+#    )
+#  )
+#  # should fail for deterministic as well
+#  expect_error(
+#    obs(y ~ x, family = "gaussian") + aux(integer(x) ~ y),
+#    paste0(
+#      "Simultaneous regression is not supported:\n",
+#      "x Response variable `x` appears in the formula of `y`\\."
+#    )
+#  )
+# })
+
+test_that("cyclic dependency fails", {
+  obs_lhs <- obs(y ~ x, family = "gaussian") +
+    obs(z ~ y, family = "gaussian")
+  obs_rhs <- aux(numeric(w) ~ z + 1) +
+    obs(x ~ z, family = "gaussian")
   expect_error(
-    obs_rhs + obs_lhs,
-    paste0(
-      "Simultaneous regression is not supported:\n",
-      "x Response variable `q` appears in the formula of `x`\\."
-    )
-  )
-  # should fail for deterministic as well
-  expect_error(
-    obs(y ~ x, family = "gaussian") + aux(integer(x) ~ y),
-    paste0(
-      "Simultaneous regression is not supported:\n",
-      "x Response variable `x` appears in the formula of `y`\\."
-    )
+    obs_lhs + obs_rhs,
+    "Cyclic dependency found in model formula\\."
   )
 })
 
@@ -154,17 +165,14 @@ test_that("plus method fails for nondynamiteformula", {
   )
 })
 
-test_that("categorical random intercept fails", {
+test_that("categorical with random effects fails", {
   expect_error(
-    dynamite(obs(y ~ x, family = "categorical") + random(),
-             data = data.frame(y = factor(1:4), x = runif(4), id = 1, time = 1:4),
-             "id", "time",
-             debug = list(no_compile = TRUE)
+    dynamite(obs(y ~ x + random(~1), family = "categorical") + random_spec(),
+      data = data.frame(y = factor(1:4), x = runif(4), id = 1, time = 1:4),
+      "time", "id",
+      debug = list(no_compile = TRUE)
     ),
-    paste0(
-      "No valid responses for random intercept component:\n",
-      "x Random intercepts are not supported for the categorical family\\."
-    )
+    "Random effects are not \\(yet\\) supported for categorical responses."
   )
 })
 
@@ -203,7 +211,7 @@ test_that("noncentered definition throws error if not of correct length", {
     NA
   )
   expect_error(
-    dynamite(obs_all_alpha, test_data, "group", "time"),
+    dynamite(obs_all_alpha, test_data, "time", "group"),
     paste(
       "Length of the `noncentered` argument of `splines\\(\\)` function",
       "is not equal to 1 or 6, the number of the channels\\."
@@ -223,7 +231,7 @@ test_that("lb_tau definition throws error if not of correct length", {
     NA
   )
   expect_error(
-    dynamite(obs_all_alpha, test_data, "group", "time"),
+    dynamite(obs_all_alpha, test_data, "time", "group"),
     paste(
       "Length of the `lb_tau` argument of `splines\\(\\)` function is not",
       "equal to 1 or 6, the number of the channels\\."
@@ -245,10 +253,12 @@ test_that("pure deterministic formula to dynamite fails", {
 
 test_that("categorical latent factor fails", {
   expect_error(
-    dynamite(obs(y ~ x, family = "categorical") + lfactor(),
-             data = data.frame(y = factor(1:4), x = runif(4), id = 1, time = 1:4),
-             "id", "time",
-             debug = list(no_compile = TRUE)
+    dynamite(
+      obs(y ~ x, family = "categorical") + lfactor(),
+      data = data.frame(y = factor(1:4), x = runif(4), id = 1, time = 1:4),
+      time = "time",
+      group = "id",
+      debug = list(no_compile = TRUE)
     ),
     paste0(
       "No valid responses for latent factor component:\n",
@@ -259,18 +269,22 @@ test_that("categorical latent factor fails", {
 
 test_that("Latent factor errors with invalid responses", {
   expect_error(
-    dynamite(obs(y ~ x, family = "gaussian") + lfactor(responses = 1),
-             data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-             "id", "time",
-             debug = list(no_compile = TRUE)
+    dynamite(
+      obs(y ~ x, family = "gaussian") + lfactor(responses = 1),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      time = "time",
+      group = "id",
+      debug = list(no_compile = TRUE)
     ),
     "Argument `responses` must be a <character> vector\\."
   )
   expect_error(
-    dynamite(obs(y ~ x, family = "gaussian") + lfactor(responses = "x"),
-             data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-             "id", "time",
-             debug = list(no_compile = TRUE)
+    dynamite(
+      obs(y ~ x, family = "gaussian") + lfactor(responses = "x"),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      time = "time",
+      group = "id",
+      debug = list(no_compile = TRUE)
     ),
     paste0(
       "Argument `responses` of `lfactor\\(\\)` contains variable `x`:\n",
@@ -280,43 +294,51 @@ test_that("Latent factor errors with invalid responses", {
 })
 test_that("Latent factor errors with nonlogical value for argument
   noncentered", {
-    expect_error(
-      dynamite(obs(y ~ x, family = "gaussian") + lfactor(noncentered_lambda = 1),
-               data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-               "id", "time",
-               debug = list(no_compile = TRUE)
-      ),
-      "Argument `noncentered_lambda` must be a <logical> vector\\."
-    )
-  })
+  expect_error(
+    dynamite(
+      obs(y ~ x, family = "gaussian") + lfactor(noncentered_lambda = 1),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      time = "time",
+      group = "id",
+      debug = list(no_compile = TRUE)
+    ),
+    "Argument `noncentered_lambda` must be a <logical> vector\\."
+  )
+})
 test_that("Latent factor errors with nonlogical value for argument
   nonzero_lambda", {
-    expect_error(
-      dynamite(obs(y ~ x, family = "gaussian") + lfactor(nonzero_lambda = 1),
-               data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-               "id", "time",
-               debug = list(no_compile = TRUE)
-      ),
-      "Argument `nonzero_lambda` must be a <logical> vector\\."
-    )
-  })
+  expect_error(
+    dynamite(
+      obs(y ~ x, family = "gaussian") + lfactor(nonzero_lambda = 1),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      time = "time",
+      group = "id",
+      debug = list(no_compile = TRUE)
+    ),
+    "Argument `nonzero_lambda` must be a <logical> vector\\."
+  )
+})
 test_that("Latent factor errors with nonlogical value for argument
   noncentered_psi", {
-    expect_error(
-      dynamite(obs(y ~ x, family = "gaussian") + lfactor(noncentered_psi = 1),
-               data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-               "id", "time",
-               debug = list(no_compile = TRUE)
-      ),
-      "Argument `noncentered_psi` must be a single <logical> value\\."
-    )
-  })
+  expect_error(
+    dynamite(
+      obs(y ~ x, family = "gaussian") + lfactor(noncentered_psi = 1),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      time = "time",
+      group = "id",
+      debug = list(no_compile = TRUE)
+    ),
+    "Argument `noncentered_psi` must be a single <logical> value\\."
+  )
+})
 test_that("Latent factor errors with nonlogical value for argument correlated", {
   expect_error(
-    dynamite(obs(y ~ x, family = "gaussian") + lfactor(correlated = 1),
-             data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-             "id", "time",
-             debug = list(no_compile = TRUE)
+    dynamite(
+      obs(y ~ x, family = "gaussian") + lfactor(correlated = 1),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      time = "time",
+      group = "id",
+      debug = list(no_compile = TRUE)
     ),
     "Argument `correlated` must be a single <logical> value\\."
   )
@@ -364,6 +386,21 @@ test_that("deterministic varying fails", {
   )
 })
 
+test_that("multiple special components fail", {
+  expect_error(
+    obs(y ~ fixed(~1) + fixed(~x), family = "gaussian"),
+    "Multiple `fixed\\(\\)` terms are not supported\\."
+  )
+  expect_error(
+    obs(y ~ varying(~1) + varying(~x), family = "gaussian"),
+    "Multiple `varying\\(\\)` terms are not supported\\."
+  )
+  expect_error(
+    obs(y ~ random(~1) + random(~x), family = "gaussian"),
+    "Multiple `random\\(\\)` terms are not supported\\."
+  )
+})
+
 # Data errors -------------------------------------------------------------
 
 test_that("missing data object fails", {
@@ -391,7 +428,7 @@ test_that("group variable not in data fails", {
   expect_error(
     dynamite(
       dformula = obs_test,
-      data = data.frame(y = 1, x = 1), group = "z", time = "x"
+      data = data.frame(y = 1, x = 1), time = "x", group = "z"
     ),
     "Can't find grouping variable `z` in `data`\\."
   )
@@ -401,7 +438,8 @@ test_that("time variable not in data fails", {
   expect_error(
     dynamite(
       dformula = obs_test,
-      data = data.frame(y = 1, x = 1), time = "z"
+      data = data.frame(y = 1, x = 1),
+      time = "z"
     ),
     "Can't find time index variable `z` in `data`\\."
   )
@@ -410,8 +448,10 @@ test_that("time variable not in data fails", {
 test_that("single time point fails", {
   expect_error(
     dynamite(
-      dformula = obs_test, data = data.frame(y = 1, x = 1, z = 1),
-      group = "x", time = "z"
+      dformula = obs_test,
+      data = data.frame(y = 1, x = 1, z = 1),
+      time = "z",
+      group = "x"
     ),
     "There must be at least two time points in the data."
   )
@@ -427,8 +467,8 @@ test_that("duplicated time points fail", {
         x = gl(3, 3),
         z = c(1, 2, 2, 1, 2, 3, 1, 3, 3)
       ),
-      group = "x",
       time = "z",
+      group = "x",
       debug = list(no_compile = TRUE)
     ),
     paste0(
@@ -459,7 +499,8 @@ test_that("missing lag variable fails", {
     dynamite(
       dformula = obs(y ~ lag(d, 1), family = "gaussian"),
       data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
-      group = "x", time = "z",
+      time = "z",
+      group = "x",
       debug = list(no_compile = TRUE)
     ),
     paste0(
@@ -474,7 +515,8 @@ test_that("missing predictor fails", {
     dynamite(
       dformula = obs(y ~ w, family = "gaussian"),
       data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
-      group = "x", time = "z",
+      time = "z",
+      group = "x",
       debug = list(no_compile = TRUE)
     ),
     "Can't find variable `w` in `data`\\."
@@ -487,7 +529,8 @@ test_that("invalid deterministic channel definition fails", {
       dformula = obs(y ~ x, family = "gaussian") +
         aux(integer(d) ~ 1 + w),
       data = data.frame(y = c(1, 1), x = c(1, 1), z = c(1, 2)),
-      group = "x", time = "z",
+      time = "z",
+      group = "x",
       debug = list(no_compile = TRUE)
     ),
     paste0(
@@ -519,7 +562,9 @@ test_that("invalid column types fail", {
   expect_error(
     dynamite(
       dformula = obs(y ~ x, family = "gaussian"),
-      data = test_data, group = "x", time = "z",
+      data = test_data,
+      time = "z",
+      group = "x",
       debug = list(no_compile = TRUE)
     ),
     paste0(
@@ -537,7 +582,9 @@ test_that("non-finite values in data fail", {
   expect_error(
     dynamite(
       dformula = obs(y ~ x, family = "gaussian"),
-      data = test_data, group = "x", time = "z",
+      data = test_data,
+      time = "z",
+      group = "x",
       debug = list(no_compile = TRUE)
     ),
     "Non-finite values were found in variables `y`, `w`, and `u` of `data`\\."
@@ -549,7 +596,9 @@ test_that("non-factor categorical response fails", {
   expect_error(
     dynamite(
       dformula = obs(y ~ 1, family = "categorical"),
-      data = test_data, group = "x", time = "z",
+      data = test_data,
+      time = "z",
+      group = "x",
       debug = list(no_compile = TRUE)
     ),
     paste0(
@@ -570,7 +619,9 @@ test_that("factor types for non-categorical families fails", {
     expect_error(
       dynamite(
         dformula = obs(form, family = f),
-        data = test_data, group = "x", time = "z",
+        data = test_data,
+        time = "z",
+        group = "x",
         debug = list(no_compile = TRUE)
       ),
       paste0(
@@ -589,7 +640,9 @@ test_that("negative values for distributions with positive support fails", {
     expect_error(
       dynamite(
         dformula = obs(form, family = f),
-        data = test_data, group = "x", time = "z",
+        data = test_data,
+        time = "z",
+        group = "x",
         debug = list(no_compile = TRUE)
       ),
       paste0(
@@ -605,7 +658,9 @@ test_that("bernoulli without 0/1 values fails", {
   expect_error(
     dynamite(
       dformula = obs(y ~ 1, family = "bernoulli"),
-      data = test_data, group = "x", time = "z",
+      data = test_data,
+      time = "z",
+      group = "x",
       debug = list(no_compile = TRUE)
     ),
     paste0(
@@ -620,7 +675,9 @@ test_that("beta without (0, 1) values fails", {
   expect_error(
     dynamite(
       dformula = obs(y ~ 1, family = "beta"),
-      data = test_data, group = "x", time = "z",
+      data = test_data,
+      time = "z",
+      group = "x",
       debug = list(no_compile = TRUE)
     ),
     paste0(
@@ -762,14 +819,14 @@ test_that("Invalid confint level fails", {
 
 gaussian_example_small <- gaussian_example |> dplyr::filter(.data$time < 6)
 
-#test_that("newdata without group variable fails when there are groups", {
+# test_that("newdata without group variable fails when there are groups", {
 #  gaussian_example_nogroup <- gaussian_example_small |>
 #    dplyr::select(!"id")
 #  expect_error(
 #    predict(gaussian_example_fit, newdata = gaussian_example_nogroup),
 #    "Can't find grouping variable `id` in `newdata`\\."
 #  )
-#})
+# })
 
 test_that("newdata with new groups fails when there are groups", {
   gaussian_example_newgroup <- rbind(
@@ -939,19 +996,23 @@ test_that("invalid funs fails", {
 # Prior errors ------------------------------------------------------------
 
 p <- get_priors(gaussian_example_fit)
-f <- obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
-  random() + splines(df = 20)
+f <- obs(y ~ -1 + random(~1) + z + varying(~ x + lag(y)), family = "gaussian") +
+  splines(df = 20)
 
 test_that("incomplete priors fails", {
   p2 <- p[-1, ]
   expect_error(
-    dynamite(f,
-             data = gaussian_example, time = "time", group = "id",
-             priors = p2, debug = list(no_compile = TRUE)
+    dynamite(
+      f,
+      data = gaussian_example,
+      time = "time",
+      group = "id",
+      priors = p2,
+      debug = list(no_compile = TRUE)
     ),
     paste0(
       "Argument `priors` must contain all relevant parameters:\n",
-      "x Prior for parameter `sigma_nu_y` is not defined\\."
+      "x Prior for parameter `sigma_nu_y_alpha` is not defined\\."
     )
   )
 })
@@ -965,9 +1026,13 @@ test_that("irrevelant parameters fails", {
     category = ""
   ))
   expect_error(
-    dynamite(f,
-             data = gaussian_example, time = "time", group = "id",
-             priors = p2, debug = list(no_compile = TRUE)
+    dynamite(
+      f,
+      data = gaussian_example,
+      time = "time",
+      group = "id",
+      priors = p2,
+      debug = list(no_compile = TRUE)
     ),
     paste0(
       "Argument `priors` must contain only relevant parameters:\n",
@@ -980,9 +1045,13 @@ test_that("irrevelant parameters fails", {
 test_that("unsupported prior distribution fails", {
   p$prior[5] <- "aaa"
   expect_error(
-    dynamite(f,
-             data = gaussian_example, time = "time", group = "id",
-             priors = p, debug = list(no_compile = TRUE)
+    dynamite(
+      f,
+      data = gaussian_example,
+      time = "time",
+      group = "id",
+      priors = p,
+      debug = list(no_compile = TRUE)
     ),
     paste0(
       "Found an unsupported prior distribution in `priors`:\n",
@@ -994,9 +1063,13 @@ test_that("unsupported prior distribution fails", {
 test_that("constrained prior for unconstrained parameter fails", {
   p$prior[5] <- "gamma(2, 1)"
   expect_error(
-    dynamite(f,
-             data = gaussian_example, time = "time", group = "id",
-             priors = p, debug = list(no_compile = TRUE)
+    dynamite(
+      f,
+      data = gaussian_example,
+      time = "time",
+      group = "id",
+      priors = p,
+      debug = list(no_compile = TRUE)
     ),
     paste0(
       "Priors for parameters alpha, beta, and delta ",
@@ -1053,6 +1126,6 @@ test_that("plot_deltas errors when the model does not contain deltas", {
 test_that("plot_nus errors when the model does not contain nus", {
   expect_error(
     plot_nus(categorical_example_fit),
-    "The model does not contain random intercepts nu."
+    "The model does not contain random effects nu."
   )
 })

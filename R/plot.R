@@ -7,11 +7,11 @@
 #'  * `alpha` Intercept terms (time-invariant or time-varying).
 #'  * `beta` Time-invariant regression coefficients.
 #'  * `delta` Time-varying regression coefficients.
-#'  * `nu` Random intercepts.
+#'  * `nu` Random effects
 #'  * `tau` Standard deviations of the spline coefficients of `delta`.
 #'  * `tau_alpha` Standard deviations of the spline coefficients of
 #'    time-varying `alpha`.
-#'  * `sigma_nu` Standard deviation of the random intercepts `nu`.
+#'  * `sigma_nu` Standard deviation of the random effects `nu`.
 #'  * `sigma` Standard deviations of gaussian responses.
 #'  * `phi` Dispersion parameters of negative binomial responses.
 #'  * `omega` Spline coefficients of the regression coefficients `delta`.
@@ -19,7 +19,7 @@
 #'
 #' Note however, that typically drawing these plots for the time-varying
 #' parameters `delta` (and `alpha`), spline coefficients, or random
-#' intercepts leads to too many plots.
+#' effects leads to too many plots.
 #'
 #' @export
 #' @param x \[`dynamitefit`]\cr The model fit object.
@@ -28,11 +28,11 @@
 #'   all responses.
 #' @param type \[`character(1)`]\cr Type of the parameter for which the plots
 #'   should be drawn. See details of possible values.
-#' @param ... Further arguments to [bayesplot::mcmc_combo].
-#' @return The output object from [bayesplot::mcmc_combo].
+#' @param ... Not used..
+#' @return A `ggplot` object.
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.2, BS6.3, BS6.5} Implements the `plot`
 #' method. Further plots can be easily constructed with the help of `as_draws`
-#' combined with `ggplot2` and `bayesplot`, for example.
+#' combined with `ggplot2`, for example.
 #' @examples
 #' plot(gaussian_example_fit, type = "beta")
 #'
@@ -49,7 +49,38 @@ plot.dynamitefit <- function(x, responses = NULL, type, ...) {
   out <- suppressWarnings(
     as_draws_df.dynamitefit(x, responses = responses, types = type)
   )
-  bayesplot::mcmc_combo(out, ...)
+  # avoid NSE notes from R CMD check
+  parameter <- density <- .iteration <- .chain <- NULL
+  vars <- setdiff(names(out), c(".chain", ".iteration", ".draw"))
+  p_list <- vector(mode = "list", length = 2L * length(vars))
+  for (i in seq_along(vars)) {
+    v <- vars[i]
+    d <- out[, c(v, ".chain", ".iteration", ".draw")]
+    p_list[[2L * (i - 1L) + 1L]] <- ggplot2::ggplot(
+      d,
+      ggplot2::aes(x = !!rlang::sym(v), y = ggplot2::after_stat(density))
+    ) +
+      ggplot2::geom_density() +
+      ggplot2::labs(x = v, y = "") +
+      ggplot2::scale_x_continuous(expand = c(0.0, 0.0))
+    p_list[[2L * i]] <- ggplot2::ggplot(
+      d,
+      ggplot2::aes(
+        x = .iteration,
+        y = !!rlang::sym(v),
+        linetype = factor(.chain)
+      )
+    ) +
+      ggplot2::geom_line() +
+      ggplot2::labs(x = "", y = v) +
+      ggplot2::guides(linetype = ggplot2::guide_legend(title = "Chain"))
+  }
+  patchwork::wrap_plots(
+    p_list,
+    ncol = 2L,
+    nrow = length(vars),
+    byrow = TRUE
+  )
 }
 
 #' Plot Time-varying Regression Coefficients of a Dynamite Model
@@ -213,7 +244,11 @@ plot_betas <- function(x, responses = NULL, level = 0.05,
     ggplot2::labs(title = title, x = "Value", y = "Parameter")
 }
 
-#' Plot Random Intercepts of a Dynamite Model
+#' Plot Random effects of a Dynamite Model
+#'
+#' Note that as this function tries to draw a plot containing all random
+#' effects, the plot will become messy with large number of groups and/or
+#' parameters.
 #'
 #' @export
 #' @inheritParams plot_deltas
@@ -244,7 +279,7 @@ plot_nus <- function(x, responses = NULL, level = 0.05) {
   )
   stopifnot_(
     !inherits(coefs, "try-error"),
-    "The model does not contain random intercepts nu."
+    "The model does not contain random effects nu."
   )
   # avoid NSE notes from R CMD check
   mean <- parameter <- NULL
@@ -256,11 +291,13 @@ plot_nus <- function(x, responses = NULL, level = 0.05) {
     "% intervals of the random intercepts"
   )
   ggplot2::ggplot(coefs, ggplot2::aes(mean, parameter)) +
-  ggplot2::geom_pointrange(ggplot2::aes(
-    xmin = !!rlang::sym(paste0("q", 100 * level)),
-    xmax = !!rlang::sym(paste0("q", 100 * (1 - level)))
-  )) +
-  ggplot2::labs(title = title, x = "Value", y = "Parameter")
+    ggplot2::geom_pointrange(
+      ggplot2::aes(
+        xmin = !!rlang::sym(paste0("q", 100 * level)),
+        xmax = !!rlang::sym(paste0("q", 100 * (1 - level)))
+      )
+    ) +
+    ggplot2::labs(title = title, x = "Value", y = "Parameter")
 }
 #' Plot Factor Loadings of a Dynamite Model
 #'
@@ -326,8 +363,9 @@ plot_lambdas <- function(x, responses = NULL, level = 0.05) {
 #' @srrstats {G2.3a} Uses match.arg.
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #'
-plot_psis <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
-  scales = c("fixed", "free")) {
+plot_psis <- function(
+    x, responses = NULL, level = 0.05, alpha = 0.5,
+    scales = c("fixed", "free")) {
   stopifnot_(
     checkmate::test_number(
       x = level,

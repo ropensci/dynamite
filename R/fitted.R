@@ -1,15 +1,14 @@
 #' Extract Fitted Values of a Dynamite Model
 #'
-#' Fitted values for a `dynamitefit` object. Note that these are conditional on
-#' the observed data in `newdata`,i.e., these are one-step estimates
-#' \eqn{E(y_t|y_t-1,...,y_1, \theta)} where \eqn{\theta} contains all the model
-#' parameters. Often [dynamite::predict.dynamitefit()] is what you want.
+#' Fitted values for a `dynamitefit` object, i.e., \eqn{E(y_t | newdata, \theta)}
+#' where \eqn{\theta} contains all the model parameters. See also
+#' [dynamite::predict.dynamitefit()] for multi-step predictions.
 #'
 #' @export
 #' @inheritParams predict.dynamitefit
 #' @param newdata \[`data.frame`]\cr Data used in predictions.
 #'   If `NULL` (default), the data used in model estimation is used for
-#'   predictions as well,
+#'   predictions as well.
 #'   There should be no new time points that were not present in the data that
 #'   were used to fit the model, and no new group levels can be included.
 #' @return A `data.frame` containing the fitted values.
@@ -21,15 +20,16 @@
 #' fit <- dynamite(
 #'   dformula = obs(LakeHuron ~ 1, "gaussian") + lags(),
 #'   data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
-#'   group = "id",
 #'   time = "time",
+#'   group = "id",
 #'   chains = 1,
 #'   refresh = 0
 #' )
 #'
 #' if (requireNamespace("dplyr") &&
-#'     requireNamespace("tidyr") &&
-#'     base::getRversion() >= "4.1.0") {
+#'   requireNamespace("tidyr") &&
+#'   base::getRversion() >= "4.1.0") {
+#'
 #'   # One-step ahead samples (fitted values) from the posterior
 #'   # (first time point is fixed due to lag in the model):
 #'   fitted(fit) |>

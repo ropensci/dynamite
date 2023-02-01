@@ -36,10 +36,13 @@
 #' obs(y ~ 1, family = "gaussian") +
 #'   obs(x ~ 1, family = "poisson") +
 #'   obs(z ~ 1, family = "gaussian") +
-#'   lfactor(responses = c("y", "x"), noncentered_lambda = c(FALSE, TRUE),
-#'     noncentered_psi = FALSE, nonzero_lambda = c(TRUE, FALSE))
+#'   lfactor(
+#'     responses = c("y", "x"), noncentered_lambda = c(FALSE, TRUE),
+#'     noncentered_psi = FALSE, nonzero_lambda = c(TRUE, FALSE)
+#'   )
 #'
-lfactor <- function(responses = NULL, noncentered_lambda = TRUE,
+lfactor <- function(
+    responses = NULL, noncentered_lambda = TRUE,
     noncentered_psi = FALSE, nonzero_lambda = TRUE, correlated = TRUE) {
   stopifnot_(
     checkmate::test_character(x = responses, min.len = 1L, null.ok = TRUE),

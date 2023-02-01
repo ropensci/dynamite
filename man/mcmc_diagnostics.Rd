@@ -7,13 +7,13 @@
 \usage{
 mcmc_diagnostics(x, n)
 
-\method{mcmc_diagnostics}{dynamitefit}(x, n = 1L)
+\method{mcmc_diagnostics}{dynamitefit}(x, n = 3L)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
 \item{n}{[\code{integer(1)}]\cr How many rows to print in
-parameter-specific convergence measures. The default is 1. Should be a
+parameter-specific convergence measures. The default is 3. Should be a
 positive (unrestricted) integer.}
 }
 \value{

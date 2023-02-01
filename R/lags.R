@@ -29,12 +29,12 @@
 #'   obs(y ~ z, family = "categorical") +
 #'   lags(type = "fixed")
 #'
-lags <- function(k = 1L, type = c("fixed", "varying")) {
+lags <- function(k = 1L, type = c("fixed", "varying", "random")) {
   type <- onlyif(is.character(type), tolower(type))
-  type <- try(match.arg(type, c("fixed", "varying")), silent = TRUE)
+  type <- try(match.arg(type, c("fixed", "varying", "random")), silent = TRUE)
   stopifnot_(
     !inherits(type, "try-error"),
-    "Argument {.arg type} must be \"fixed\" or \"varying\"."
+    "Argument {.arg type} must be \"fixed\", \"varying\", or \"random\"."
   )
   stopifnot_(
     checkmate::test_integerish(
@@ -114,6 +114,23 @@ extract_nonlags <- function(x) {
   x[!find_lags(x)]
 }
 
+#' Extract Non-lag Variables from a Language Object
+#'
+#' @param x A `language` object
+#' @noRd
+extract_nonlags_lang <- function(x) {
+  if (!is.recursive(x)) {
+    return(as.character(x))
+  }
+  if (is.call(x)) {
+    if (!identical(as.character(x[[1L]]), "lag")) {
+      unlist(lapply(x[-1L], extract_nonlags_lang))
+    } else {
+      character(0L)
+    }
+  }
+}
+
 #' Extract Lag Definitions
 #'
 #' Extract variables and shifts of lagged terms of the form `lag(var, k)`
@@ -154,7 +171,7 @@ extract_lags <- function(x) {
         src = "",
         var = v,
         k = seq.int(1L, max(tmp$k)),
-        present  = FALSE
+        present = FALSE
       )
       expanded[[i]] <- full[full$k %in% tmp$k, ] <- tmp
     }

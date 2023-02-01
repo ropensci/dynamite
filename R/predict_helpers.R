@@ -64,7 +64,7 @@ parse_newdata <- function(dformula, newdata, data, type, eval_type,
                           clear_names, new_levels, group_var, time_var) {
   if (!group_var %in% names(newdata)) {
     orig <- sort(data[[group_var]])[1L]
-    data.table::set(newdata, j = group_var, value = orig)
+    data.table::set(x = newdata, j = group_var, value = orig)
   }
   group <- newdata[[group_var]]
   group <- unique(group)
@@ -151,7 +151,9 @@ parse_newdata <- function(dformula, newdata, data, type, eval_type,
       }
     }
     data.table::set(
-      newdata, j = glue::glue("{resp}_store"), value = newdata[[resp]]
+      x = newdata,
+      j = glue::glue("{resp}_store"),
+      value = newdata[[resp]]
     )
   }
   newdata
@@ -227,11 +229,11 @@ parse_funs <- function(object, type, funs) {
 #' @inheritParams dynamite
 #' @noRd
 fill_time_predict <- function(data, group_var, time_var, time_scale) {
-  #time_duplicated <- data[,
+  # time_duplicated <- data[,
   #  any(duplicated(time_var)),
   #  by = group_var,
   #  env = list(time_var = time_var)
-  #]$V1
+  # ]$V1
   split_data <- split(data, by = group_var)
   time_duplicated <- unlist(
     lapply(split_data, function(x) any(duplicated(x[[time_var]])))
@@ -249,19 +251,19 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
   if (length(time) > 1L) {
     original_order <- colnames(data)
     full_time <- seq(time[1L], time[length(time)], by = time_scale)
-    #time_groups <- data[,
-      #{
-      #  has_missing = !identical(time_var, full_time)
-      #  has_gaps = .N != (diff(range(time_var)) + 1L) * time_scale
-      #  list(has_missing, has_gaps)
-      #},
-      #by = group_var
-      #env = list(
-      #  time_var = time_var,
-      #  group_var = group_var,
-      #  time_scale = time_scale
-      #)
-    #]
+    # time_groups <- data[,
+    # {
+    #  has_missing = !identical(time_var, full_time)
+    #  has_gaps = .N != (diff(range(time_var)) + 1L) * time_scale
+    #  list(has_missing, has_gaps)
+    # },
+    # by = group_var
+    # env = list(
+    #  time_var = time_var,
+    #  group_var = group_var,
+    #  time_scale = time_scale
+    # )
+    # ]
     time_groups <- list(
       has_missing = unlist(
         lapply(split_data, function(x) !identical(x[[time_var]], full_time))
@@ -309,8 +311,8 @@ impute_newdata <- function(newdata, impute, predictors, group_var) {
       (predictors) := lapply(.SD, locf),
       .SDcols = predictors,
       by = group_var
-      #by = group_var,
-      #env = list(locf = locf)
+      # by = group_var,
+      # env = list(locf = locf)
     ]
   }
 }
@@ -331,52 +333,52 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
       clear_idx <- newdata[,
         .I[seq.int(fixed + 1L, .N)],
         by = group_var
-        #by = group_var,
-        #env = list(fixed = fixed)
+        # by = group_var,
+        # env = list(fixed = fixed)
       ]$V1
     } else {
       clear_idx <- newdata[,
         .I[seq.int(fixed + which(apply(!is.na(.SD), 1L, any))[1L], .N)],
         .SDcols = resp_stoch,
         by = group_var
-        #by = group_var,
-        #env = list(fixed = fixed, any = any)
+        # by = group_var,
+        # env = list(fixed = fixed, any = any)
       ]$V1
     }
-    #newdata[clear_idx, c(resp_stoch) := NA, env = list(clear_idx = clear_idx)]
+    # newdata[clear_idx, c(resp_stoch) := NA, env = list(clear_idx = clear_idx)]
     newdata[clear_idx, c(resp_stoch) := NA]
   }
 }
 
-#' Generate Random Intercepts for New Group Levels
+#' Generate Random Effects for New Group Levels
 #'
 #' @inheritParams predict
-#' @param nu Posterior draws of the random intercept parameters.
+#' @param nu Posterior draws of the random effects.
 #' @param sigma_nu Posterior draws of the standard deviations of the random
-#'   intercept parameters.
+#'   effects.
 #' @param corr_matrix_nu Posterior draws of the correlation matrix of
-#'   intercepts (within-group).
+#'   random effects.
 #' @param n_group \[`integer(1)`]\cr Number of groups.
 #' @param orig_ids \[`character()`]\cr Group levels of the original data.
 #' @param new_ids \[`character()`]\cr Group levels of `newdata` in
 #'   [dynamite::predict.dynamitefit()].
 #' @param new_levels \[`character(1)`]\cr
-#'   Defines if and how to sample the random intercepts for observations whose
-#'   group level was not present in the original data. The options are
+#'   Defines if and how to sample the random effects for groups not present in
+#'   the original data. The options are
 #'     * `"none"` (the default) which will signal an error if new levels
 #'       are encountered.
 #'     * `"bootstrap"` which will randomly draw from the posterior samples of
-#'       the random intercepts across all original levels.
+#'       the random effects across all original levels.
 #'     * `"gaussian"` which will randomly draw from a gaussian
-#'       distribution using the posterior samples of the random intercept
-#'       standard deviation (and correlation matrix if applicable).
+#'       distribution using the posterior samples of the random effect
+#'       standard deviations (and correlation matrix if applicable).
 #'     * `"original"` which will randomly match each new level to one of
-#'       the original levels. The posterior samples of the random intercept of
+#'       the original levels. The posterior samples of the random effects of
 #'       the matched levels will then be used for the new levels.
 #' @return An n_draws x n_groups x n_intercepts array of random intercepts.
 #' @noRd
-generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
-                                      n_group, orig_ids, new_ids, new_levels) {
+generate_random_effect <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
+                                   n_group, orig_ids, new_ids, new_levels) {
   is_orig <- which(orig_ids %in% new_ids)
   is_new <- !new_ids %in% orig_ids
   out <- NULL
@@ -390,7 +392,7 @@ generate_random_intercept <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
       n_new <- sum(is_new)
       out[, which(is_new), ] <- switch(new_levels,
         `bootstrap` = {
-          idx <- sample.int(n_draws * n_group, n_draws * n_new, TRUE)
+          idx <- sample.int(n_draws * length(orig_ids), n_draws * n_new, TRUE)
           array(matrix(nu, ncol = M)[idx, ], c(n_draws, n_new, M))
         },
         `gaussian` = {
@@ -435,7 +437,7 @@ expand_predict_output <- function(simulated, observed, df) {
     rep(seq_len(nrow(observed)), n_unique(simulated$.draw)),
   ]
   for (col in add_cols) {
-    data.table::set(simulated, j = col, value = observed[[col]])
+    data.table::set(x = simulated, j = col, value = observed[[col]])
   }
   if (df) {
     data.table::setDF(simulated)
@@ -449,17 +451,17 @@ expand_predict_output <- function(simulated, observed, df) {
 #' @inheritParams clear_nonfixed
 #' @noRd
 prepare_eval_envs <- function(object, simulated, observed,
-                              type, eval_type, resp_stoch, n_draws,
+                              type, eval_type, n_draws,
                               new_levels, group_var) {
   samples <- rstan::extract(object$stanfit)
   model_vars <- object$stan$model_vars
-  n_resp <- length(resp_stoch)
+  n_resp <- length(object$dformulas$all)
   eval_envs <- vector(mode = "list", length = n_resp)
   idx_draws <- seq_len(n_draws)
-  nu_channels <- attr(object$dformulas$stoch, "random")$responses
-  M <- length(nu_channels)
+  nu_channels <- which_random(object$dformulas$all)
   n_group <- n_unique(observed[[group_var]])
-  if (M > 0L) {
+  j <- 0L
+  if (length(nu_channels) > 0L) {
     orig_ids <- unique(object$data[[group_var]])
     new_ids <- unique(observed[[group_var]])
     n_all_draws <- ndraws(object)
@@ -468,18 +470,19 @@ prepare_eval_envs <- function(object, simulated, observed,
       do.call("cbind", samples[sigma_nus])[idx_draws, , drop = FALSE]
     )
     nus <- glue::glue("nu_{nu_channels}")
+    M <- nrow(sigma_nu)
     nu_samples <- array(
       unlist(samples[nus]),
-      c(n_all_draws, n_group, M)
+      c(n_all_draws, length(orig_ids), M)
     )[idx_draws, , , drop = FALSE]
-    if (attr(object$dformulas$stoch, "random")$correlated) {
+    if (attr(object$dformulas$stoch, "random_spec")$correlated) {
       corr_matrix_nu <- aperm(
         samples[["corr_matrix_nu"]][idx_draws, , , drop = FALSE]
       )
     } else {
       corr_matrix_nu <- NULL
     }
-    nu_samples <- generate_random_intercept(
+    nu_samples <- generate_random_effect(
       nu = nu_samples,
       sigma_nu = sigma_nu,
       corr_matrix_nu = corr_matrix_nu,
@@ -489,11 +492,17 @@ prepare_eval_envs <- function(object, simulated, observed,
       new_ids = new_ids,
       new_levels = new_levels
     )
-    dimnames(nu_samples)[[3L]] <- nus
+    Ks <- unlist(lapply(object$stan$model_vars, "[[", "K_random"))
+    dimnames(nu_samples)[[3L]] <- make.unique(rep(nus, times = Ks[Ks > 0]))
   }
-  for (j in seq_len(n_resp)) {
-    resp <- resp_stoch[j]
-    resp_family <- object$dformulas$stoch[[j]]$family
+  for (i in seq_len(n_resp)) {
+    resp_family <- object$dformulas$all[[i]]$family
+    if (is_deterministic(resp_family)) {
+      eval_envs[[i]] <- list()
+      next
+    }
+    j <- j + 1L
+    resp <- object$dformulas$all[[i]]$response
     alpha <- paste0("alpha_", resp)
     beta <- paste0("beta_", resp)
     delta <- paste0("delta_", resp)
@@ -509,11 +518,15 @@ prepare_eval_envs <- function(object, simulated, observed,
     e$K_fixed <- model_vars[[j]]$K_fixed
     e$J_varying <- model_vars[[j]]$J_varying
     e$K_varying <- model_vars[[j]]$K_varying
-    e$resp <- resp_stoch[j]
-    e$phi <- samples[[phi]][idx_draws]
-    e$sigma <- samples[[sigma]][idx_draws]
+    e$J_random <- model_vars[[j]]$J_random
+    e$K_random <- model_vars[[j]]$K_random
+    e$has_random_intercept <- model_vars[[j]]$has_random_intercept
+    e$resp <- resp
+    e$phi <- c(samples[[phi]][idx_draws])
+    e$sigma <- c(samples[[sigma]][idx_draws])
     if (resp %in% nu_channels) {
-      e$nu <- matrix(nu_samples[, , paste0("nu_", resp)], ncol = n_group)
+      nus <- make.unique(rep(paste0("nu_", resp), e$K_random))
+      e$nu <- nu_samples[, , nus, drop = FALSE]
     }
     if (is_categorical(resp_family)) {
       resp_levels <- attr(object$stan$responses, "resp_class")[[resp]] |>
@@ -548,12 +561,13 @@ prepare_eval_envs <- function(object, simulated, observed,
       eval_type,
       model_vars[[j]]$has_fixed,
       model_vars[[j]]$has_varying,
+      model_vars[[j]]$has_random,
       model_vars[[j]]$has_fixed_intercept,
       model_vars[[j]]$has_varying_intercept,
       model_vars[[j]]$has_random_intercept,
       model_vars[[j]]$has_offset
     )
-    eval_envs[[j]] <- e
+    eval_envs[[i]] <- e
   }
   eval_envs
 }
@@ -569,6 +583,8 @@ prepare_eval_envs <- function(object, simulated, observed,
 #'   Does the channel have time-invariant predictors?
 #' @param has_varying \[logical(1)]\cr
 #'   Does the channel have time-varying predictors?
+#' @param has_random \[logical(1)]\cr
+#'   Does the channel have random effects?
 #' @param has_fixed_intercept \[logical(1)]\cr
 #'   Does the channel have a time-invariant intercept?
 #' @param has_varying_intercept \[logical(1)]\cr
@@ -579,7 +595,7 @@ prepare_eval_envs <- function(object, simulated, observed,
 #'   Does the channel have an offset?
 #' @noRd
 generate_sim_call <- function(resp, resp_levels, family, eval_type,
-                              has_fixed, has_varying,
+                              has_fixed, has_varying, has_random,
                               has_fixed_intercept, has_varying_intercept,
                               has_random_intercept, has_offset) {
   if (is_categorical(family)) {
@@ -617,7 +633,7 @@ generate_sim_call <- function(resp, resp_levels, family, eval_type,
         "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '0', '')}",
         "{ifelse_(has_fixed_intercept, 'alpha', '')}",
         "{ifelse_(has_varying_intercept, 'alpha[, a_time]', '')}",
-        "{ifelse_(has_random_intercept, '+ nu[, j]', '')}",
+        "{ifelse_(has_random_intercept, '+ nu[, j, 1]', '')}",
         "{ifelse_(has_fixed, ",
         "' + .rowSums(
             x = model_matrix[idx_draw, J_fixed, drop = FALSE] * beta,
@@ -631,6 +647,14 @@ generate_sim_call <- function(resp, resp_levels, family, eval_type,
                   delta[, time, ],
             m = n_draws,
             n = K_varying
+          )',
+        '')}",
+        "{ifelse_(has_random, ",
+        "' + .rowSums(
+            x = model_matrix[idx_draw, J_random, drop = FALSE] *
+                  nu[, j, (1 + has_random_intercept):K_random],
+            m = n_draws,
+            n = K_random - has_random_intercept
           )',
         '')}",
         "}}\n"
@@ -886,7 +910,7 @@ predicted_beta <- "
       x = out,
       i = idx_data,
       j = '{resp}_mean',
-      value = mu[idx_out])
+      value = mu[idx_out]
     )
   }
   data.table::set(

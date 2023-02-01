@@ -36,14 +36,14 @@ get_priors <- function(x, ...) {
 
 #' @rdname get_priors
 #' @export
-get_priors.dynamiteformula <- function(x, data, group = NULL, time, ...) {
+get_priors.dynamiteformula <- function(x, data, time, group = NULL, ...) {
   out <- do.call(
     "dynamite",
     list(
       dformula = x,
       data = data,
-      group = group,
       time = time,
+      group = group,
       debug = list(no_compile = TRUE),
       ...
     )
@@ -65,7 +65,9 @@ get_priors.dynamitefit <- function(x, ...) {
 #' @export
 #' @rdname get_code
 #' @inheritParams get_priors.dynamiteformula
-#' @return A Stan model code as a `character` string.
+#' @param blocks \[`character()`]\cr Stan block names to extract. If `NULL`,
+#'   extracts the full model code.
+#' @return The stan model blocks as a `character` string.
 #' @examples
 #' d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
 #' cat(get_code(obs(y ~ x, family = "gaussian"),
@@ -83,25 +85,70 @@ get_code <- function(x, ...) {
 
 #' @rdname get_code
 #' @export
-get_code.dynamiteformula <- function(x, data, group = NULL, time, ...) {
+get_code.dynamiteformula <- function(x, data, time,
+                                     group = NULL, blocks = NULL, ...) {
   out <- do.call(
     "dynamite",
     list(
       dformula = x,
       data = data,
-      group = group,
       time = time,
+      group = group,
       debug = list(no_compile = TRUE, model_code = TRUE),
       ...
     )
   )
-  out$model_code
+  get_code_(out$model_code, blocks)
 }
 
 #' @rdname get_code
 #' @export
-get_code.dynamitefit <- function(x, ...) {
-  x$stanfit@stanmodel@model_code
+get_code.dynamitefit <- function(x, blocks = NULL, ...) {
+  get_code_(x$stanfit@stanmodel@model_code, blocks)
+}
+
+#' Internal Stan Code Block Extraction
+#'
+#' @param x \[`character(1L)`]\cr The Stan model code string.
+#' @param blocks \[`character`]\cr Stan block names to extract. If `NULL`,
+#'   extracts the full model code.
+#' @noRd
+get_code_ <- function(x, blocks = NULL) {
+  if (is.null(blocks)) {
+    return(x)
+  }
+  stopifnot_(
+    checkmate::test_character(blocks, null.ok = TRUE)
+  )
+  block_names <- c(
+    "data",
+    "transformed data",
+    "parameters",
+    "transformed parameters",
+    "model"
+  )
+  invalid_blocks <- !blocks %in% block_names
+  stopifnot_(
+    all(!invalid_blocks),
+    c(
+      "Invalid Stan blocks provided: {cs(blocks[invalid_blocks])}",
+      `i` = "Argument {.arg blocks} must be NULL or a subset of
+             {cs(paste0(\"'\", block_names, \"'\"))}."
+    )
+  )
+  x <- strsplit(x, "\n")[[1L]]
+  block_rows <- paste0(block_names, " {")
+  block_start <- which(x %in% block_rows)
+  block_end <- c(block_start[-1L] - 1L, length(x))
+  names(block_start) <- names(block_end) <- block_names
+  out <- ""
+  for (block in blocks) {
+    out <- c(
+      out,
+      x[block_start[block]:block_end[block]]
+    )
+  }
+  paste_rows(out, .parse = FALSE)
 }
 
 #' Extract the Model Data of the Dynamite Model
@@ -124,14 +171,14 @@ get_data <- function(x, ...) {
 
 #' @rdname get_data
 #' @export
-get_data.dynamiteformula <- function(x, data, group = NULL, time, ...) {
+get_data.dynamiteformula <- function(x, data, time, group = NULL, ...) {
   out <- do.call(
     "dynamite",
     list(
       dformula = x,
       data = data,
-      group = group,
       time = time,
+      group = group,
       debug = list(no_compile = TRUE, sampling_vars = TRUE),
       ...
     )

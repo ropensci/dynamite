@@ -43,7 +43,7 @@ update.dynamitefit <- function(object, dformula = NULL, data = NULL,
     }
   }
   if (!is.null(data)) {
-    attr(data, "data_name") <- deparse1(substitute(data))
+    data.table::setattr(data, "data_name", deparse1(substitute(data)))
     call$data <- data
   }
   if (object$backend == "cmdstanr") {

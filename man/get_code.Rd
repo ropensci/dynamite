@@ -8,9 +8,9 @@
 \usage{
 get_code(x, ...)
 
-\method{get_code}{dynamiteformula}(x, data, group = NULL, time, ...)
+\method{get_code}{dynamiteformula}(x, data, time, group = NULL, blocks = NULL, ...)
 
-\method{get_code}{dynamitefit}(x, ...)
+\method{get_code}{dynamitefit}(x, blocks = NULL, ...)
 }
 \arguments{
 \item{x}{[\code{dynamiteformula} or \code{dynamitefit}]\cr The model formula or an
@@ -27,6 +27,11 @@ values which will simply be ignored in the estimation in a case-wise
 fashion (per time-point and per channel). Input \code{data} is converted to
 channel specific matrix representations via \code{\link[stats:model.matrix]{stats::model.matrix.lm()}}.}
 
+\item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
+time index of observations. If this variable is a factor, the integer
+representation of its levels are used internally for defining the time
+indexing.}
+
 \item{group}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 unique groups or \code{NULL} corresponding to a scenario without any groups.
 If \code{group} is \code{NULL}, a new column \code{.group} is created with constant
@@ -34,13 +39,11 @@ value \code{1L} is created indicating that all observations belong to the same
 group. In case of name conflicts with \code{data}, see the \code{group_var} element
 of the return object to get the column name of the new variable.}
 
-\item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
-time index of observations. If this variable is a factor, the integer
-representation of its levels are used internally for defining the time
-indexing.}
+\item{blocks}{[\code{character()}]\cr Stan block names to extract. If \code{NULL},
+extracts the full model code.}
 }
 \value{
-A Stan model code as a \code{character} string.
+The stan model blocks as a \code{character} string.
 }
 \description{
 Returns the Stan code of the model. Mostly useful for debugging or for

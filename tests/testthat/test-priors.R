@@ -5,8 +5,8 @@ test_that("priors can be extracted", {
   )
 })
 
-f <- obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
-  random() + splines(df = 20)
+f <- obs(y ~ -1 + random(~1) + z + varying(~ x + lag(y)), family = "gaussian") +
+  random_spec() + splines(df = 20)
 p <- get_priors(gaussian_example_fit)
 
 test_that("manual prior setting works", {
@@ -42,6 +42,7 @@ test_that("prior order does not matter", {
 
 test_that("inserting a valid prior works", {
   p$prior[2] <- "cauchy(0, 2)"
+  p$prior[5:6] <- "std_normal()"
   expect_error(
     dynamite(f,
       data = gaussian_example, time = "time", group = "id",

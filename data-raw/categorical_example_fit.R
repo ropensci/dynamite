@@ -7,8 +7,8 @@ categorical_example_fit <- dynamite(
   dformula = obs(x ~ z + lag(x) + lag(y), family = "categorical") +
     obs(y ~ z + lag(x) + lag(y), family = "categorical"),
   data = categorical_example,
-  group = "id",
   time = "time",
+  group = "id",
   chains = 1,
   refresh = 0,
   thin = 5,

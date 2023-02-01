@@ -7,7 +7,7 @@
 #' @export
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param n \[`integer(1)`]\cr How many rows to print in
-#'   parameter-specific convergence measures. The default is 1. Should be a
+#'   parameter-specific convergence measures. The default is 3. Should be a
 #'   positive (unrestricted) integer.
 #' @return Returns `x` (invisibly).
 #' @examples
@@ -19,7 +19,7 @@ mcmc_diagnostics <- function(x, n) {
 
 #' @export
 #' @rdname mcmc_diagnostics
-mcmc_diagnostics.dynamitefit <- function(x, n = 1L) {
+mcmc_diagnostics.dynamitefit <- function(x, n = 3L) {
   stopifnot_(
     !missing(x),
     "Argument {.arg x} is missing."
@@ -37,12 +37,47 @@ mcmc_diagnostics.dynamitefit <- function(x, n = 1L) {
   )
   if (!is.null(x$stanfit)) {
     if (identical(x$stanfit@stan_args[[1L]]$algorithm, "NUTS")) {
+      n_draws <- ndraws(x)
+      n_divs <- rstan::get_num_divergent(x$stanfit)
+      n_trees <- rstan::get_num_max_treedepth(x$stanfit)
+      bfmis <- rstan::get_bfmi(x$stanfit)
+      all_ok <- n_divs == 0L && n_trees == 0L && all(bfmis > 0.2)
       cat("NUTS sampler diagnostics:\n")
-      invisible(utils::capture.output(msg <-
-        utils::capture.output(rstan::check_hmc_diagnostics(x$stanfit),
-          type = "message"
-        )))
-      cat(msg, sep = "\n")
+      all_ok_str <- ifelse_(
+        all_ok,
+        "\nNo divergences, saturated max treedepths or low E-BFMIs.\n",
+        ""
+      )
+      cat(all_ok_str)
+      div_str <- ifelse_(
+        n_divs > 0L,
+        paste0(
+          "\n", n_divs, " out of ", n_draws, " iterations ended with a ",
+          "divergence. See Stan documentation for details.\n"
+        ),
+        ""
+      )
+      cat(div_str)
+      mt <- x$stanfit@stan_args[[1]]$control$max_treedepth
+      mt <- ifelse_(is.null(mt), 10, mt)
+      trees_str <- ifelse_(
+        n_trees > 0L,
+        paste0(
+          "\n", n_trees, " out of ", n_draws, " saturated the maximum ",
+          "tree depth of ", mt, ". See Stan documentation for details.\n"
+        ),
+        ""
+      )
+      cat(trees_str)
+      bfmis_str <- ifelse_(
+        any(bfmis < 0.2),
+        paste0(
+          "\nChain(s) ", cs(which(bfmis < 0.2)), " had E-BFMI below 0.2, ",
+          "indicating possible issues. See Stan documentation for details.\n"
+        ),
+        ""
+      )
+      cat(bfmis_str)
     }
     init <- seq_len(n)
     sumr <- posterior::summarise_draws(
@@ -51,25 +86,19 @@ mcmc_diagnostics.dynamitefit <- function(x, n = 1L) {
     )
     cat("\nSmallest bulk-ESS values: \n")
     bulk <- sumr[order(sumr$ess_bulk), c("variable", "ess_bulk")][init, ]
-    var <- bulk$variable
-    out <- bulk$ess_bulk
-    names(out) <- var
-    print(tibble::as_tibble(t(out)))
+    out <- matrix(bulk$ess_bulk, dimnames = list(bulk$variable, ""))
+    print(out, digits = 1)
     cat("\nSmallest tail-ESS values: \n")
     tail <- sumr[order(sumr$ess_tail), c("variable", "ess_tail")][init, ]
-    var <- tail$variable
-    out <- tail$ess_tail
-    names(out) <- var
-    print(tibble::as_tibble(t(out)))
+    out <- matrix(tail$ess_tail, dimnames = list(tail$variable, ""))
+    print(out, digits = 1)
     cat("\nLargest Rhat values: \n")
     rhat <- sumr[
       order(sumr$rhat, decreasing = TRUE),
       c("variable", "rhat")
     ][init, ]
-    var <- rhat$variable
-    out <- rhat$rhat
-    names(out) <- var
-    print(tibble::as_tibble(t(out)))
+    out <- matrix(rhat$rhat, dimnames = list(rhat$variable, ""))
+    print(out, digits = 3)
   } else {
     cat("No Stan model fit is available.")
   }

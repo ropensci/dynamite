@@ -13,12 +13,20 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
   mean_gamma <- signif(mean_gamma, 2)
   sd_gamma <- signif(sd_gamma, 2)
   priors <- list()
-  if (channel$has_random_intercept) {
-    channel$sigma_nu_prior_distr <- paste0("normal(", 0, ", ", sd_y, ")")
+  if (channel$has_random_intercept || channel$has_random) {
+    icpt <- ifelse_(
+      channel$has_random_intercept,
+      "alpha",
+      NULL
+    )
+    ns <- c(icpt, names(sd_gamma[channel$J_random]))
+    channel$sigma_nu_prior_distr <- "normal"
+    channel$sigma_nu_prior_npars <- 2L
+    channel$sigma_nu_prior_pars <- cbind(0, rep(1, channel$K_random))
     priors$sigma_nu <- data.frame(
-      parameter = paste0("sigma_nu_", y),
+      parameter = paste0("sigma_nu_", y, "_", ns),
       response = y,
-      prior = channel$sigma_nu_prior_distr,
+      prior = "normal(0, 1)",
       type = "sigma_nu",
       category = ""
     )
@@ -237,7 +245,7 @@ check_priors <- function(priors, defaults) {
   priors <- priors[order(prior_order), ]
   unconstrained_dists <- c(
     "normal", "student_t", "double_exponential", "cauchy", "exp_mod_normal",
-    "skew_normal", "logistic", "gumbel", "skew_double_exponential"
+    "skew_normal", "logistic", "gumbel", "skew_double_exponential", "std_normal"
   )
   positive_dists <- c(
     "gamma", "exponential", "lognormal", "chi_square", "inv_chi_square",

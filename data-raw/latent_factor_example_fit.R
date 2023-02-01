@@ -7,12 +7,9 @@ library(dynamite)
 set.seed(1)
 latent_factor_example_fit <- dynamite(
   dformula =
-    obs(
-      y ~ 1,
-      family = "gaussian"
-    ) +
-    lfactor() +
-    splines(df = 10),
+    obs(y ~ 1, family = "gaussian") +
+      lfactor() +
+      splines(df = 10),
   data = latent_factor_example,
   group = "id",
   time = "time",
@@ -23,8 +20,10 @@ latent_factor_example_fit <- dynamite(
   cores = 2,
   refresh = 0,
   save_warmup = FALSE,
-  pars = c("omega_alpha_1_y", "omega_raw_alpha_y", "omega_raw_psi", "L_lf",
-    "lambda_raw_y", "lambda_std_y"),
+  pars = c(
+    "omega_alpha_1_y", "omega_raw_alpha_y", "omega_raw_psi", "L_lf",
+    "lambda_raw_y", "lambda_std_y"
+  ),
   include = FALSE
 )
 

@@ -40,8 +40,7 @@
 #' the function `aux` to define auxiliary channels which are deterministic
 #' functions of other variables. The values of auxiliary variables are computed
 #' dynamically during prediction, making the use of lagged values and other
-#' transformations possible. Note that the auxiliary channel can also depend
-#' on other variables without lags. The function `aux` also does not use the
+#' transformations possible. The function `aux` also does not use the
 #' `family` argument, which is automatically set to `deterministic` and is a
 #' special channel type of `obs`. Note that lagged values of deterministic
 #' `aux` channels do not imply fixed time points. Instead they must be given
@@ -80,16 +79,15 @@
 #' or time-varying predictors via [lags()] instead of writing them manually
 #' for each channel.
 #'
-#' It is also possible to define a random intercept term for each group by
-#' using the component [random()] where the first argument defines for which
-#' channels the intercept should be added, and second argument defines whether
-#' or not these intercepts should be correlated between channels. This leads
-#' to a model where in addition to the common intercept, each individual/group
-#' has their own intercept with zero-mean normal prior and unknown standard
-#' deviation (or multivariate gaussian in case `correlated = TRUE`),
-#' analogously with the typical mixed models. Note however that if the channel
-#' already contains the lagged response variable, the "intercept" is actually a
-#' slope of (linear) trend as dynamite does not do any centering of variables.
+#' It is also possible to define group-specific (random) effects term
+#' using the special syntax `random()` similarly as `varying()`. For example,
+#' `random(~1)` leads to a model where in addition to the common intercept,
+#' each individual/group has their own intercept with zero-mean normal prior and
+#' unknown standard deviation analogously with the typical mixed models. An
+#' additional model component [random_spec()] can be used to define whether the
+#' random effects are allowed to correlate within and across channels and
+#' whether to use centered or noncentered parameterization for the random
+#' effects.
 #'
 #' @export
 #' @param formula \[`formula`]\cr An \R formula describing the model.
@@ -166,12 +164,15 @@ dynamiteformula <- function(formula, family) {
         response = x$response,
         fixed = x$fixed,
         varying = x$varying,
+        random = x$random,
         specials = x$specials,
         has_fixed_intercept = x$has_fixed_intercept,
-        has_varying_intercept = x$has_varying_intercept
+        has_varying_intercept = x$has_varying_intercept,
+        has_random_intercept = x$has_random_intercept
       )
     ),
-    class = "dynamiteformula"
+    class = "dynamiteformula",
+    model_topology = 1L
   )
 }
 
@@ -207,18 +208,20 @@ dynamiteformula_ <- function(formula, original, family) {
 #' @param response \[`character(1)`]\cr Name of the response.
 #' @param fixed \[`integer()`]\cr Time-invariant covariate indices.
 #' @param varying \[`integer()`]\cr Time-varying covariate indices.
+#' @param random \[`integer()`]\cr Random effect covariate indices.
 #' @param has_fixed_intercept \[`logical(1)`]\cr Does the channel contain fixed
 #'   intercept?
 #' @param has_varying_intercept \[`logical(1)`]\cr Does the channel contain
 #'   varying intercept?
-#' @param has_rand_intercept \[`logical(1)`]\cr Does the channel contain random
-#'   individual-level intercept term?
+#' @param has_random_intercept \[`logical(1)`]\cr Does the channel contain random
+#'   group-level intercept term?
 #' @noRd
 dynamitechannel <- function(formula, original = NULL, family, response,
                             fixed = integer(0L), varying = integer(0L),
-                            specials = list(),
+                            random = integer(0L), specials = list(),
                             has_fixed_intercept = FALSE,
-                            has_varying_intercept = FALSE) {
+                            has_varying_intercept = FALSE,
+                            has_random_intercept = FALSE) {
   list(
     formula = formula,
     original = original,
@@ -226,9 +229,11 @@ dynamitechannel <- function(formula, original = NULL, family, response,
     response = response,
     fixed = fixed,
     varying = varying,
+    random = random,
     specials = specials,
     has_fixed_intercept = has_fixed_intercept,
-    has_varying_intercept = has_varying_intercept
+    has_varying_intercept = has_varying_intercept,
+    has_random_intercept = has_random_intercept
   )
 }
 
@@ -271,12 +276,12 @@ aux <- function(formula) {
 #' @param ... Ignored.
 #' @export
 #' @examples
-#' x <- obs(y ~ x, family = "gaussian") +
-#'   obs(z ~ w, family = "exponential") +
+#' x <- obs(y ~ x + random(~ 1 + lag(d)), family = "gaussian") +
+#'   obs(z ~ varying(~w), family = "exponential") +
 #'   aux(numeric(d) ~ log(y) | init(c(0, 1))) +
 #'   lags(k = 2) +
 #'   splines(df = 5) +
-#'   random(responses = c("y", "z"), correlated = TRUE)
+#'   random_spec(correlated = FALSE)
 #' print(x)
 #'
 print.dynamiteformula <- function(x, ...) {
@@ -298,13 +303,13 @@ print.dynamiteformula <- function(x, ...) {
     k <- attr(x, "lags")$k
     cat("\nLagged responses added as predictors with: k = ", cs(k), sep = "")
   }
-  if (!is.null(attr(x, "random"))) {
-    resp <- attr(x, "random")$responses
-    co <- attr(x, "random")$correlated
+  if (!is.null(attr(x, "random_spec"))) {
+    res <- which_random(x)
+    co <- attr(x, "random_spec")$correlated
     cat(
       ifelse_(co, "\nCorrelated random ", "\nRandom "),
-      "intercepts added for response(s): ",
-      cs(resp),
+      "effects added for response(s): ",
+      cs(res),
       "\n",
       sep = ""
     )
@@ -328,26 +333,51 @@ get_predictors <- function(x) {
   vapply(x, function(y) deparse1(formula_rhs(y$formula)), character(1L))
 }
 
-#' Get Terms of All Formulas of a `dynamiteformula` Object
+#' Get Non-Lagged Terms of All Formulas of a `dynamiteformula` Object
 #'
 #' @param x A `dynamiteformula` object.
 #' @noRd
-get_terms <- function(x) {
+get_nonlag_terms <- function(x) {
   lapply(x, function(y) {
     if (is_deterministic(y$family)) {
-      character(0L)
+      unique(extract_nonlags_lang(formula_rhs(y$formula)))
     } else {
-      attr(terms(y$formula), "term.labels")
+      extract_nonlags(attr(terms(y$formula), "term.labels"))
     }
   })
 }
 
-#' Get All Formulas of a `dynamiteformula` Object
+# #' Get All Formulas of a `dynamiteformula` Object
+# #'
+# #' @param x A `dynamiteformula` object.
+# #' @noRd
+# get_formulas <- function(x) {
+#   lapply(x, "[[", "formula")
+# }
+
+#' Get Special Type Formula of a channel in a `dynamiteformula`
 #'
-#' @param x A `dynamiteformula` object.
+#' @param x A channel of a `dynamiteformula`
 #' @noRd
-get_formulas <- function(x) {
-  lapply(x, "[[", "formula")
+get_type_formula <- function(x, type = c("fixed", "varying", "ranodm")) {
+  has_icpt <- ifelse_(
+    type %in% c("fixed", "varying"),
+    x$has_fixed_intercept || x$has_varying_intercept,
+    x$has_random_intercept
+  )
+  icpt <- ifelse_(has_icpt, "1", "-1")
+  idx <- x[[type]]
+  ft <- terms(x$formula)
+  resp <- attr(ft, "variables")[[2L]]
+  tr <- attr(ft, "term.labels")
+  rhs <- paste0(tr[idx], collapse = " + ")
+  rhs_out <- ifelse_(nzchar(rhs), paste0(" + ", rhs), "")
+  out_str <- paste0(resp, " ~ ", icpt, rhs_out)
+  ifelse_(
+    has_icpt || nzchar(rhs_out),
+    as.formula(out_str),
+    NULL
+  )
 }
 
 #' Get All Original Formulas of a `dynamiteformula` Object
@@ -385,7 +415,7 @@ get_quoted <- function(x) {
     out[[i]] <- list(name = resp[i], expr = formula_rhs(x[[i]]$formula))
   }
   out
-  #if (length(resp) > 0L) {
+  # if (length(resp) > 0L) {
   #  expr <- lapply(x, function(x) deparse1(formula_rhs(x$formula)))
   #  quote_str <- paste0(
   #    "`:=`(",
@@ -393,9 +423,9 @@ get_quoted <- function(x) {
   #    ")"
   #  )
   #  str2lang(quote_str)
-  #} else {
+  # } else {
   #  NULL
-  #}
+  # }
 }
 
 #' Get Indices of Deterministic Channels in a `dynamiteformula` Object
@@ -412,6 +442,20 @@ which_deterministic <- function(x) {
 #' @noRd
 which_stochastic <- function(x) {
   which(vapply(x, function(y) !is_deterministic(y$family), logical(1L)))
+}
+#' Get Responses with Random Effects in a `dynamiteformula` Object
+#'
+#' @param x A `dynamiteformula` object
+#' @noRd
+which_random <- function(x) {
+  s <- which_stochastic(x)
+  resp <- get_responses(x)[s]
+  has_random <- unlist(
+    lapply(x[s], function(z) {
+      z$has_random_intercept || length(z$random) > 0
+    })
+  )
+  resp[has_random]
 }
 
 #' Get Channels with Past Value Definitions of a `dynamiteformula` Object
@@ -434,8 +478,8 @@ add_dynamiteformula <- function(e1, e2) {
     out <- set_lags(e1, e2)
   } else if (inherits(e2, "splines")) {
     out <- set_splines(e1, e2)
-  } else if (inherits(e2, "random")) {
-    out <- set_random(e1, e2)
+  } else if (inherits(e2, "random_spec")) {
+    out <- set_random_spec(e1, e2)
   } else if (inherits(e2, "latent_factor")) {
     out <- set_lfactor(e1, e2)
   } else {
@@ -474,37 +518,27 @@ join_dynamiteformulas <- function(e1, e2) {
     "Both dynamiteformulas contain a splines definition."
   )
   stopifnot_(
-    is.null(attr(e1, "random")) || is.null(attr(e2, "random")),
-    "Both dynamiteformulas contain a random intercepts definition."
+    is.null(attr(e1, "random_spec")) || is.null(attr(e2, "random_spec")),
+    "Both dynamiteformulas contain a random_spec definition."
   )
-  rhs_list <- list(
-    lapply(get_terms(e1), extract_nonlags),
-    lapply(get_terms(e2), extract_nonlags)
+  n_resp <- length(resp_all)
+  pred <- c(get_nonlag_terms(e1), get_nonlag_terms(e2))
+  dep <- matrix(
+    0L,
+    nrow = n_resp,
+    ncol = n_resp,
+    dimnames = list(resp_all, resp_all)
   )
-  stoch_list <- list(
-    which_stochastic(e1),
-    which_stochastic(e2)
-  )
-  for (i in 1L:2L) {
-    resp_a <- resp_list[[i]]
-    resp_b <- resp_list[[3L - i]][stoch_list[[3L - i]]]
-    rhs <- rhs_list[[3L - i]][stoch_list[[3L - i]]]
-    if (length(rhs) > 0L) {
-      for (j in seq_along(resp_a)) {
-        simul_lhs <- resp_a[j]
-        simul <- vapply(rhs, function(x) simul_lhs %in% x, logical(1L))
-        stopifnot_(
-          !any(simul),
-          c(
-            "Simultaneous regression is not supported:",
-            `x` = "Response variable {.var {simul_lhs}} appears in
-                  the formula of {.var {resp_b[which(simul)[1L]]}}."
-          )
-        )
-      }
-    }
+  for (i in seq_len(n_resp)) {
+    dep[which(resp_all %in% pred[[i]]), resp_all[i]] <- 1L
   }
+  topo <- topological_order(dep)
+  stopifnot_(
+    length(topo) > 0L,
+    "Cyclic dependency found in model formula."
+  )
   attributes(out) <- c(attributes(e1), attributes(e2))
+  attr(out, "model_topology") <- topo
   class(out) <- "dynamiteformula"
   out
 }
@@ -537,17 +571,17 @@ set_splines <- function(e1, e2) {
   e1
 }
 
-#' Set the Random Intercepts of the Model
+#' Set the Random Effect Correlations of the Model
 #'
 #' @param e1 A `dynamiteformula` object.
-#' @param e2 A `random` object.
+#' @param e2 A `random_spec` object.
 #' @noRd
-set_random <- function(e1, e2) {
+set_random_spec <- function(e1, e2) {
   stopifnot_(
-    is.null(attr(e1, "random")) || attr(e2, "random"),
-    "Multiple definitions for random intercepts."
+    is.null(attr(e1, "random_spec")) || attr(e2, "random_spec"),
+    "Multiple definitions for random effect specifications."
   )
-  attr(e1, "random") <- e2
+  attr(e1, "random_spec") <- e2
   e1
 }
 
