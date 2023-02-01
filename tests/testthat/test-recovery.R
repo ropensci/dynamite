@@ -246,8 +246,8 @@ test_that("parameters of a time-varying gaussian model are recovered", {
   # compile model only once
   code <- get_code(dformula,
     data = d$data,
-    group = "id",
-    time = "time"
+    time = "time",
+    group = "id"
   )
   model <- rstan::stan_model(model_code = code)
 
@@ -289,12 +289,12 @@ test_that("prior parameters are recovered with zero observations", {
   skip_if_not(run_extended_tests)
   set.seed(1)
   d <- data.frame(y = rep(NA, 10), x = rnorm(10), id = 1, time = 1:10)
-  p <- get_priors(obs(y ~ x, "gaussian"), d, "id", "time")
+  p <- get_priors(obs(y ~ x, "gaussian"), d, time = "time", group = "id")
   p$prior[] <- c("normal(2, 0.1)", "normal(5, 0.5)", "exponential(10)")
   fit_prior <- dynamite(obs(y ~ x, "gaussian"),
     data = d,
-    group = "id",
     time = "time",
+    group = "id",
     priors = p,
     iter = 55000,
     warmup = 5000,
@@ -367,10 +367,10 @@ test_that("predict recovers correct estimates", {
 
   d <- data.frame(y = c(y), time = rep(1:T_, each = N), id = 1:N)
   p <- get_priors(obs(y ~ lag(y) + random(~1), "bernoulli"),
-    data = d, "time", "id")
+    data = d, time = "time", group = "id")
   p$prior[] <- "std_normal()"
   fitd <- dynamite(obs(y ~ lag(y) + random(~1), "bernoulli"),
-    data = d, "time", "id", priors = p,
+    data = d, time = "time", group = "id", priors = p,
     chains = 1, iter = 2e4, warmup = 1000, refresh = 0)
 
   pred <- predict(fitd)

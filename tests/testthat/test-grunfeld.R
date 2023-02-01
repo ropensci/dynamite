@@ -20,7 +20,7 @@ test_that("parameters of the Grunfield model are recovered", {
     obs(inv ~ -1 + intercept + value + capital + random(~1),
       family = "gaussian"
     ) + random_spec(noncentered = FALSE),
-    Grunfeld, "firm", "year"
+    Grunfeld, time = "year", group = "firm"
   )
   # set very vague priors
   p$prior[] <- rep("normal(0, 1000)", nrow(p))
@@ -28,7 +28,7 @@ test_that("parameters of the Grunfield model are recovered", {
     obs(inv ~ value + capital + random(~1),
       family = "gaussian"
     ) + random_spec(noncentered = FALSE),
-    Grunfeld, "firm", "year",
+    Grunfeld, time = "year", group = "firm",
     refresh = 0, seed = 1,
     chains = 2, cores = 2, iter = 20000, warmup = 1000
   )

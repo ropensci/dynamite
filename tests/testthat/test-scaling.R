@@ -25,20 +25,22 @@ test_that("scaling for gaussian model is linear in number of time points", {
     time = rep(seq_len(T_), each = N)
   )
 
-  code <- get_code(obs(y ~ x, family = "gaussian"),
+  code <- get_code(
+    obs(y ~ x, family = "gaussian"),
     data = d,
-    group = "id",
-    time = "time"
+    time = "time",
+    group = "id"
   )
   model <- rstan::stan_model(model_code = code)
 
   n <- seq(100, 1000, length = 5)
   times <- numeric(length(n))
   for (i in seq_along(n)) {
-    data <- get_data(obs(y ~ x, family = "gaussian"),
+    data <- get_data(
+      obs(y ~ x, family = "gaussian"),
       data = d |> dplyr::filter(time <= n[i]),
-      group = "id",
-      time = "time"
+      time = "time",
+      group = "id"
     )
     fit <- rstan::sampling(model,
       data = data,
@@ -63,20 +65,22 @@ test_that("scaling for gaussian model is linear in number of groups", {
     time = rep(seq_len(T_), each = N)
   )
 
-  code <- get_code(obs(y ~ x, family = "gaussian"),
+  code <- get_code(
+    obs(y ~ x, family = "gaussian"),
     data = d,
-    group = "id",
-    time = "time"
+    time = "time",
+    group = "id"
   )
   model <- rstan::stan_model(model_code = code)
 
   n <- c(1000, 5000)
   times <- numeric(length(n))
   for (i in seq_along(n)) {
-    data <- get_data(obs(y ~ x, family = "gaussian"),
+    data <- get_data(
+      obs(y ~ x, family = "gaussian"),
       data = d |> dplyr::filter(id <= n[i]),
-      group = "id",
-      time = "time"
+      time = "time",
+      group = "id"
     )
     fit <- rstan::sampling(model,
       data = data,
@@ -102,20 +106,22 @@ test_that("scaling for gamma model is linear in number of time points", {
     time = rep(seq_len(T_), each = N)
   )
 
-  code <- get_code(obs(y ~ x, family = "gamma"),
+  code <- get_code(
+    obs(y ~ x, family = "gamma"),
     data = d,
-    group = "id",
-    time = "time"
+    time = "time",
+    group = "id"
   )
   model <- rstan::stan_model(model_code = code)
 
   n <- seq(100, 1000, length = 5)
   times <- numeric(length(n))
   for (i in seq_along(n)) {
-    data <- get_data(obs(y ~ x, family = "gamma"),
+    data <- get_data(
+      obs(y ~ x, family = "gamma"),
       data = d |> dplyr::filter(time <= n[i]),
-      group = "id",
-      time = "time"
+      time = "time",
+      group = "id"
     )
     fit <- rstan::sampling(model,
       data = data,
@@ -140,10 +146,11 @@ test_that("scaling for gamma model is linear in number of groups", {
     time = rep(seq_len(T_), each = N)
   )
 
-  code <- get_code(obs(y ~ x, family = "gamma"),
+  code <- get_code(
+    obs(y ~ x, family = "gamma"),
     data = d,
-    group = "id",
-    time = "time"
+    time = "time",
+    group = "id"
   )
   model <- rstan::stan_model(model_code = code)
 
@@ -152,8 +159,8 @@ test_that("scaling for gamma model is linear in number of groups", {
   for (i in seq_along(n)) {
     data <- get_data(obs(y ~ x, family = "gamma"),
       data = d |> dplyr::filter(id <= n[i]),
-      group = "id",
-      time = "time"
+      time = "time",
+      group = "id"
     )
     fit <- rstan::sampling(model,
       data = data,
