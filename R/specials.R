@@ -36,6 +36,10 @@ formula_specials <- function(x) {
   special_vars <- unlist(xt_specials)
   fixed_terms <- character(0L)
   if (!is.null(xt_specials[["fixed"]])) {
+    stopifnot_(
+      length(xt_specials[["fixed"]]) == 1L,
+      "Multiple {.code fixed()} terms are not supported."
+    )
     # eval to ensure fixed_form is a formula
     fixed_form <- eval(xt_variables[[xt_specials[["fixed"]] + 1]][[2]])
     fixed_terms <- formula_terms(fixed_form)
@@ -44,6 +48,10 @@ formula_specials <- function(x) {
   varying_terms <- character(0L)
   varying_icpt <- 0L
   if (!is.null(xt_specials[["varying"]])) {
+    stopifnot_(
+      length(xt_specials[["varying"]]) == 1L,
+      "Multiple {.code varying()} terms are not supported."
+    )
     # eval to ensure varying_form is a formula
     varying_form <- eval(xt_variables[[xt_specials[["varying"]] + 1]][[2]])
     varying_terms <- formula_terms(varying_form)
@@ -52,6 +60,10 @@ formula_specials <- function(x) {
   random_terms <- character(0L)
   random_icpt <- 0L
   if (!is.null(xt_specials[["random"]])) {
+    stopifnot_(
+      length(xt_specials[["random"]]) == 1L,
+      "Multiple {.code random()} terms are not supported."
+    )
     # eval to ensure random_form is a formula
     random_form <- eval(xt_variables[[xt_specials[["random"]] + 1]][[2]])
     random_terms <- formula_terms(random_form)

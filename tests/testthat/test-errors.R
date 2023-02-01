@@ -386,6 +386,21 @@ test_that("deterministic varying fails", {
   )
 })
 
+test_that("multiple special components fail", {
+  expect_error(
+    obs(y ~ fixed(~1) + fixed(~x), family = "gaussian"),
+    "Multiple `fixed\\(\\)` terms are not supported\\."
+  )
+  expect_error(
+    obs(y ~ varying(~1) + varying(~x), family = "gaussian"),
+    "Multiple `varying\\(\\)` terms are not supported\\."
+  )
+  expect_error(
+    obs(y ~ random(~1) + random(~x), family = "gaussian"),
+    "Multiple `random\\(\\)` terms are not supported\\."
+  )
+})
+
 # Data errors -------------------------------------------------------------
 
 test_that("missing data object fails", {
