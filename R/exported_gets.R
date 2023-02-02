@@ -202,7 +202,12 @@ get_data.dynamitefit <- function(x, ...) {
 #' @export
 #' @examples
 #' get_parameter_types(multichannel_example_fit)
-get_parameter_types <- function(x) {
+get_parameter_types <- function(x, ...) {
+  UseMethod("get_parameter_types", x)
+}
+#' @rdname get_parameter_types
+#' @export
+get_parameter_types.dynamitefit <- function(x, ...) {
   types <- c(
     "alpha", "beta", "delta", "tau", "tau_alpha", "xi",
     "sigma_nu", "corr_nu", "sigma", "phi", "nu", "lambda", "sigma_lambda",
@@ -217,10 +222,10 @@ get_parameter_types <- function(x) {
 #'
 #' The naming of parameters generally follows style where the name starts with
 #' the parameter type (e.g. beta for time-invariant regression coefficient),
-#' followed by underscore and the name of the ersponse variable, and in case of
+#' followed by underscore and the name of the response variable, and in case of
 #' time-invariant, time-varying or random effect, the name of the predictor. An
 #' exception to this is spline coefficients omega, which also contain the number
-#' denoting the knot number
+#' denoting the knot number.
 #'
 #' @param x \[`dynamitefit`]\cr A dynamitefit object.
 #' @param types Extract only names of parameter of certain type. See
@@ -229,7 +234,12 @@ get_parameter_types <- function(x) {
 #' @export
 #' @examples
 #' get_parameter_names(multichannel_example_fit)
-get_parameter_names <- function(x, types = NULL) {
+get_parameter_names <- function(x, types = NULL, ...) {
+  UseMethod("get_parameter_names", x)
+}
+#' @rdname get_parameter_names
+#' @export
+get_parameter_names.dynamitefit <- function(x, types = NULL, ...) {
   if (is.null(types)) {
     types <- get_parameter_types(x)
   }

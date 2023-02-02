@@ -9,7 +9,7 @@
 \usage{
 \method{as_draws_df}{dynamitefit}(x, parameters = NULL, responses = NULL, types = NULL, ...)
 
-\method{as_draws}{dynamitefit}(x, responses = NULL, types = NULL, ...)
+\method{as_draws}{dynamitefit}(x, parameters = NULL, responses = NULL, types = NULL, ...)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}

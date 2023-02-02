@@ -2,9 +2,12 @@
 % Please edit documentation in R/exported_gets.R
 \name{get_parameter_types}
 \alias{get_parameter_types}
+\alias{get_parameter_types.dynamitefit}
 \title{Get Parameter Types of the Dynamite Model}
 \usage{
-get_parameter_types(x)
+get_parameter_types(x, ...)
+
+\method{get_parameter_types}{dynamitefit}(x, ...)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr A dynamitefit object.}

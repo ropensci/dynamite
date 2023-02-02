@@ -74,6 +74,7 @@ as_draws_df.dynamitefit <- function(x, parameters = NULL, responses = NULL,
 #' @rdname as_draws-dynamitefit
 #' @return A `draws_df` object.
 #' @inheritParams as_draws_df.dynamitefit
-as_draws.dynamitefit <- function(x, responses = NULL, types = NULL, ...) {
-  as_draws_df.dynamitefit(x, responses, types, ...)
+as_draws.dynamitefit <- function(x, parameters = NULL, responses = NULL,
+  types = NULL, ...) {
+  as_draws_df.dynamitefit(x, parameters, responses, types, ...)
 }
