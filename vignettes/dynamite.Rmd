@@ -21,6 +21,7 @@ knitr::opts_chunk$set(
 
 ```{r setup, echo = FALSE}
 library(dynamite)
+ggplot2::theme_set(ggplot2::theme_bw())
 ```
 
 # Introduction
@@ -89,61 +90,38 @@ effects of interventions which take into account the interdependency of several
 variables of the model, and allows realistic simulation of complex 
 counterfactual scenarios.
   
-# The Model
+# The dynamic multivariate panel model
 
-Consider an individual $i$ with observations 
-$y_{i,t} = (y^1_{i,t}, \ldots, y^c_{i,t},\ldots, y^C_{i,t})$, $t=1,\ldots,T$, 
-$i = 1,\ldots,N$ i.e. at each time point $t$ we have $C$ observations from $N$ 
-individuals. Assume that each element of $y_{i,t}$ can depend on the past 
-values $y_{i,t-1}$, as well as additional exogenous covariates $x_{i,t}$. 
-Then, assuming that the elements of $y_{i,t}$ are independent given 
-$y_{i, t-1}$ and $x_{i,t}$, we have
+Consider an individual \(i\) with observations \(y_{i,t} = (y^1_{i,t}, \ldots, y^c_{i,t},\ldots, y^C_{i,t})\), \(t=1,\ldots,T\), \(i = 1,\ldots,N\) i.e., at each time point \(t\) we have \(C\) observations from \(N\) individuals, where \(C\) is the number of  channels, i.e., different response variables that have been measured. Assume that each element of \(y_{i,t}\) can depend on the past observations \(y_{i,t-\ell}\), \(\ell=1,\ldots\) (where the set of past values can be different for each channel) and also on additional exogenous covariates \(x_{i,t}\). In addition, \(y^c_{i,t}\) can depend on the elements of current \(y_{i,t}\), assuming that this does not lead to cyclic dependencies; this translates to a condition that the channels can be ordered so that \(y^c_{i,t}\) depends only on \(y^1_{i,t}, \ldots, y^{c-1}_{i,t}\), exogenous covariates, and past observations. For simplicity of the presentation, we now assume that the observations of each channel only depend on the previous time points, i.e., \(\ell = 1\) for all channels. We denote the set of all model parameters by \(\theta\). Now, assuming that the elements of \(y_{i,t}\) are independent given \(y_{i, t-1}\), \(x_{i,t}\), and \(\theta\) we have
 \[
 \begin{aligned}
-  y_{i,t} &\sim p_t(y_{i,t} | y_{i,t-1},x_{i,t}) = 
-    \prod_{c=1}^C p^c_t(y^c_{i,t} | y^1_{i,t-1}, \ldots, y^C_{i,t-1}, x_{i,t}).
+  y_{i,t} &\sim p_t(y_{i,t} | y_{i,t-1},x_{i,t},\theta) =
+    \prod_{c=1}^C p^c_t(y^c_{i,t} | y^1_{i,t-1}, \ldots, y^C_{i,t-1}, x_{i,t}, \theta).
 \end{aligned}
 \]
-Here the parameters of the conditional distributions $p^c$ depend on time, 
-which allows us to take into account the fact that the dynamics of our system 
-can evolve over time. 
+Importantly, the parameters of the conditional distributions \(p^c\) are time-dependent, enabling us to consider the evolution of the dynamics of our system over time.
 
-For $p^c_t$, given a suitable link function depending on our distributional 
-assumptions, we define a linear predictor $\eta^c_{i,t}$ for the channel $c$ 
-with a following general form:
+Given a suitable link function depending on our distributional assumptions, we define a linear predictor \(\eta^c_{i,t}\) for the conditional distribution \(p^c_t\) of each channel \(c\) with the following general form:
 \[
 \begin{aligned}
-  \eta^c_{i,t} &= 
-    \nu_{i} + \alpha^c_{t} + Z^c_{i,t} \beta^c + X^c_{i,t} \delta^c_{t}
+  \eta^c_{i,t} &=
+    \alpha^c_{t} + X^{\beta, c}_{i,t} \beta^c + X^{\delta, c}_{i,t} \delta^c_{t} + X^{\nu, c}_{i,t} \nu_i^c +  \lambda^c_i \psi^c_t,
 \end{aligned}
 \]
-$\nu_{i}$ is the individual-specific random intercept, $\alpha_t$ 
-(possibly time-varying) is the common intercept term, $Z^c_{i,t}$ defines the 
-predictors corresponding to the vector of time-invariant coefficients 
-$\beta^c$, and similarly for the time-varying part $X^c_{i,t} \delta^c_{t}$. 
-The random intercept terms $\nu_{i}$ are assumed to follow zero-mean Gaussian 
-and these can be correlated across channels. Note that dynamite does not center 
-the response nor predictor variables.
+where \(\alpha_t\) is the (possibly time-varying) common intercept term, \(X^{\beta, c}_{i,t}\) defines the predictors corresponding to the vector of time-invariant coefficients \(\beta^c\), and similarly for the time-varying term \(X^{\delta, c}_{i,t} \delta^c_{t}\). The term \(X^{\nu, c}_{i,t} \nu^c_{t}\) corresponds to individual-level random effects, where \(\nu^1_{i},\ldots, \nu^C_{i}\) are assumed to follow zero-mean Gaussian distribution, either with a diagonal or a full covariance matrix. Note that the predictors in \(X^{\beta, c}_{i,t}\), \(X^{\delta, c}_{i,t}\), and \(X^{\nu, c}_{i,t}\) may contain exogenous covariates or past observations of the response channels (or transformations of either).The final term \(\lambda^c_i \psi^c_t\) is a product of latent individual loadings \(\lambda^c_i\) and a univariate latent dynamic factor \(\psi^c_t\).
 
-For time-varying coefficients $\delta$ (and similarly for $\alpha$), 
-we use Bayesian P-splines (penalized B-splines) [@lang2004] where
+For time-varying coefficients \(\delta\) (and similarly for time-varying \(\alpha\) and latent factor \(\psi\)), we use Bayesian P-splines (penalized B-splines) [@lang2004] where
 \[
   \delta^c_{k,t} = B_t \omega_k^c, \quad k=1,\ldots,K,
 \]
-where $K$ is the number of covariates, $B_t$ is a vector of B-spline values at 
-time $t$ and $\omega_k^c$ is vector of corresponding spline coefficients. In 
-general the number of B-splines $D$ used for constructing the splines for the 
-study period $1,\ldots,T$ can be chosen freely, but too large $D$ can result in 
-overfitting. To mitigate this, we define a random walk prior for $\omega^c_k$ as
+where \(K\) is the number of covariates, \(B_t\) is a vector of B-spline basis function values at time \(t\) and \(\omega_k^c\) is a vector of corresponding spline coefficients. In general, the number of B-splines \(D\) used for constructing the splines for the study period \(1,\ldots,T\) can be chosen freely, but the actual value is not too important (as long as \(D \leq T\) and larger than the degree of the spline, e.g., three in case of cubic splines) [@Wood2020]. Therefore, we use the same \(D\) basis functions for all time-varying effects. To mitigate overfitting due to too large a value of \(D\), we define a random walk prior for \(\omega^c_k\) as
 \[
   \omega^c_{k,1} \sim p(\omega^c_{k,1}), \quad
   \omega^c_{k,d} \sim N(\omega^c_{k,d-1}, (\tau^c_k)^2), \quad d=2, \ldots, D.
 \]
-with user defined prior $p(\omega^c_{k,1})$ on the first coefficient, which due 
-to the structure of $B_1$ corresponds to the prior on the $\delta^c_{k,1}$. 
-Here, the parameter $\tau^c_k$ controls the smoothness of the spline curves.
+with a user defined prior \(p(\omega^c_{k,1})\) on the first coefficient, which due to the structure of \(B_1\) corresponds to the prior on the \(\delta^c_{k,1}\). Here, the parameter \(\tau^c_k\) controls the smoothness of the spline curves. While the different time-varying coefficients are modeled as independent a priori, the latent factors \(\psi\) can be modeled as correlated via correlated spline coefficients \(\omega\).
 
-# Defining The Model
+# Defining the model
 
 The models in the `dynamite` package are defined by combining the 
 channel-specific formulas defined via the function `dynamiteformula` for which 
@@ -246,18 +224,22 @@ time-varying coefficients, same spline basis is used for all coefficients,
 with unique spline coefficients and their standard deviation, 
 as defined in the previous Section.
 
-## Random intercepts
+## Group-level random effects
 
-Defining the random intercept term for each group ca be done using 
-component `random` where the first argument defines for which channels the 
-intercept should be added, and second argument defines whether or not these 
-intercepts should be correlated between channels. This leads to a model where 
-the in addition to the common intercept each individual/group has their own 
-intercept with zero-mean normal prior and unknown standard deviation 
-(or multivariate gaussian in case argument `correlated = TRUE`),
-analogously with the typical mixed models. Note however, that currently random 
-intercepts are not supported for categorical distribution due to technical 
-reasons.
+Random effect terms for each group can be defined using the special term `random()` within the `formula` argument of `obs()`, analogously to `varying()`. By default, all random effects within a group and across all channels are modeled as zero-mean multivariate normal. The optional model component `random_spec()` can be used to define non-correlated random effects as `random_spec(correlated = FALSE)`. In addition, as with the spline coefficients, it is possible to switch between centered and non-centered (the default) parameterization of the random effects using the `noncentered` argument of `random_spec`. The random effects are not yet supported for categorical distribution due to technical reasons.
+
+For example, the following code defines a Gaussian response variable `x` with a time-invariant common effect of `z` as well as a group-specific intercept and group-specific effect of `z`.
+```{r, echo=TRUE, eval=FALSE}
+obs(x ~ z + random(~1 + z), family = "gaussian")
+```
+The variable that defines the groups in the data is provided in the call to the model fitting function `dynamite()`.
+
+
+## Latent factors
+
+Instead of common time-varying intercept terms, it is possible to define channel-specific univariate latent factors using the `lfactor()` model component. Each latent factor is modeled as a spline, with degrees of freedom and spline degree defined via the `splines()` component (in the case that the model also contains time-varying effects, the same spline basis definition is currently used for both latent factors and time-varying effects). The argument `responses` of `lfactor` defines which channels should contain a latent factor, while argument `correlated` determines whether the latent factors should modeled as correlated. Again, users can switch between centered and non-centered parameterizations using the arguments `noncentered_lambda` and `noncentered_psi`.
+
+In general, dynamic latent factors are not identifiable without imposing some constraints on the factor loadings \(\lambda\) or the latent factor \(\psi\) [@Bai2015], especially in the context of DMPMs and `dynamite`. In the package these identifiability problems are addressed via internal reparameterization and an additional argument `nonzero_lambda` which determines whether we assume that the expected value of the factor loadings is zero or not. The theory and thorough experiments regarding the robustness of these identifiability constraints is a work in progress, so some caution should be used regarding the use of the `lfactor()` component.
 
 ## Auxiliary channels
 
@@ -331,9 +313,9 @@ The declared model formula is supplied to `dynamite`, which has the following
 arguments and default values:
 
 ```{r, echo=TRUE, eval=FALSE}
-dynamite(dformula, data, time, group = NULL,priors = NULL, verbose = TRUE, 
-  debug = NULL, ...)
-
+dynamite(dformula, data, time, group = NULL, 
+  priors = NULL, backend = "rstan",
+  verbose = TRUE, verbose_stan = FALSE, debug = NULL, ...)
 ```
 
 The first argument `dformula` is the `dynamiteformula` object that defines the 
@@ -343,11 +325,17 @@ variables used in the model formula. The argument `group` is a column name of
 a column name of `data` that specifies the unique time points. Note that 
 `group` is optional: when `group = NULL` we assume that there is only a single 
 group (or individual). The argument `priors` supplies optional user-defined 
-priors for the model parameters, and `...` supplies additional arguments to 
-`rstan::sampling` which handles the model estimation. Finally, `verbose` 
-controls the verbosity of the output and `debug` can be used for various 
+priors for the model parameters. The `backend` argument accepts either `"rstan"`
+or `"cmdstanr"` and can be used to select the whether to use the `rstan` or
+`cmdstanr` package for the estimation, respectively. The arguments `verbose` and
+`verbose_stan` controls the verbosity of the output from `dynamite` and Stan,
+respectively. The `debug` argument can be used for various 
 debugging options (see `?dynamite` for further information on 
-these parameters). For example, 
+these parameters). Finally, `...` supplies additional arguments to the backend
+sampling function (either `rstan::sampling()` or the `sample()` method of the 
+`CmdStanModel` model object).
+
+For example, 
 
 ```{r, echo=TRUE, eval=FALSE}
 dynamite(
@@ -502,19 +490,19 @@ sumr <- dplyr::bind_rows(
     q95 = quantile(mean_t, 0.95, na.rm = TRUE))
 ```
 
-It is also possible to do the marginalization over groups inside `predict` by using the argument `funs` which can be used to provide a named list of lists which contains functions to be applied for the corresponding channel. This approach can save considerably amount of memory in case of large number of groups. The names of the outermost list should be either channel names with or without suffix `_mean` depending on whether the functions should be applied to response or mean. In our case we can write
+It is also possible to do the marginalization over groups inside `predict` by using the argument `funs` which can be used to provide a named list of lists which contains functions to be applied for the corresponding channel. This approach can save considerably amount of memory in case of large number of groups. The names of the outermost list should be channel names. In our case we can write
 ```{r, eval = FALSE}
 pred0b <- predict(multichannel_example_fit, newdata = newdata0, type = "mean", 
-  funs = list(g_mean = list(mean_t = mean)))$simulated
+  funs = list(g = list(mean_t = mean)))$simulated
 pred1b <- predict(multichannel_example_fit, newdata = newdata1, type = "mean", 
-  funs = list(g_mean = list(mean_t = mean)))$simulated
+  funs = list(g = list(mean_t = mean)))$simulated
 sumrb <- dplyr::bind_rows(
   list(b0 = pred0b, b1 = pred1b), .id = "case") |> 
   dplyr::group_by(case, time) |> 
   dplyr::summarise(
-    mean = mean(mean_t_g_mean),
-    q5 = quantile(mean_t_g_mean, 0.05, na.rm = TRUE), 
-    q95 = quantile(mean_t_g_mean, 0.95, na.rm = TRUE))
+    mean = mean(mean_t_g),
+    q5 = quantile(mean_t_g, 0.05, na.rm = TRUE), 
+    q95 = quantile(mean_t_g, 0.95, na.rm = TRUE))
 ```
 The resulting tibble `sumrb` is equal to the previous `sumr` (apart from randomness due to simulation of new trajectories).
 
