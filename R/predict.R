@@ -38,22 +38,24 @@
 #'   if there are multiple individuals (i.e., `group` was not `NULL` in the
 #'   `dynamite` call).
 #' @param impute \[`character(1)`]\cr Which imputation scheme to use for
-#'   missing predictor values. Currently supported options are
+#'   missing exogenous predictor values. Currently supported options are
 #'   no imputation: `"none"` (default), and
 #'   last observation carried forward: `"locf"`.
 #' @param new_levels \[`character(1)`]\cr
 #'   Defines if and how to sample the random effects for observations whose
-#'   group level was not present in the original data. The options are
-#'     * `"none"` (the default) which will signal an error if new levels
-#'       are encountered.
-#'     * `"bootstrap"` which will randomly draw from the posterior samples of
-#'       the random effects across all original levels.
-#'     * `"gaussian"` which will randomly draw from a gaussian
-#'       distribution using the posterior samples of the random effects
-#'       standard deviation (and correlation matrix if applicable).
-#'     * `"original"` which will randomly match each new level to one of
-#'       the original levels. The posterior samples of the random effects of
-#'       the matched levels will then be used for the new levels.
+#'   group level was not present in the original data. The options are:
+#'
+#'   * `"none"` (the default) which will signal an error if new levels
+#'     are encountered.
+#'   * `"bootstrap"` which will randomly draw from the posterior samples of
+#'     the random effects across all original levels.
+#'   * `"gaussian"` which will randomly draw from a gaussian
+#'     distribution using the posterior samples of the random effects
+#'     standard deviation (and correlation matrix if applicable).
+#'   * `"original"` which will randomly match each new level to one of
+#'     the original levels. The posterior samples of the random effects of
+#'     the matched levels will then be used for the new levels.
+#'
 #'   This argument is ignored if model does not contain random effects.
 #' @param global_fixed \[`logical(1)`]\cr If `FALSE` (the default),
 #'   the first non-fixed time point is counted from the the first non-NA
@@ -437,7 +439,12 @@ predict_full <- function(object, simulated, observed, type, eval_type,
     skip <- FALSE
   }
   finalize_predict(type, resp_stoch, simulated, observed)
-  simulated[, c(lhs_ld, lhs_ls) := NULL]
+  lhs_lag <- c(lhs_ld, lhs_ls)
+  if (length(lhs_lag) > 0L) {
+    # This if might not be needed in next version of data.table
+    #simulated[, c(lhs_ld, lhs_ls) := NULL]
+    simulated[, c(lhs_lag) := NULL]
+  }
   data.table::setkeyv(simulated, cols = c(".draw", group_var, time_var))
   if (expand) {
     expand_predict_output(simulated, observed, df)

@@ -178,23 +178,18 @@ parse_funs <- function(object, type, funs) {
     "Argument {.arg funs} must be named."
   )
   valid_names <- get_responses(object$dformulas$all)
-  if (identical(type, "response")) {
-    stopifnot_(
-      all(funs_names %in% get_responses(object$dformulas$all)),
-      "The names of {.arg funs} must be response variables of the model."
-    )
-  } else {
-    valid_names <- c(valid_names, paste0(valid_names, "_", type))
-    stopifnot_(
-      all(funs_names %in% valid_names),
-      paste0(
-        "The names of {.arg funs} must be response variables of the model, or ",
-        "response variable names with the suffix _", type, "."
-      )
-    )
-  }
+  stopifnot_(
+    all(funs_names %in% get_responses(object$dformulas$all)),
+    "The names of {.arg funs} must be response variables of the model."
+  )
   out <- list()
   idx <- 1L
+  suffix <- ifelse_(
+    identical(type, "response"),
+    "",
+    paste0("_", type)
+  )
+  resp_stoch <- get_responses(object$dformulas$stoch)
   for (i in seq_along(funs)) {
     stopifnot_(
       is.list(funs[[i]]),
@@ -213,7 +208,11 @@ parse_funs <- function(object, type, funs) {
       out[[idx]] <- list(
         fun = funs[[i]][[j]],
         name = paste0(fun_names[j], "_", funs_names[i]),
-        target = funs_names[i]
+        target = ifelse_(
+          funs_names[i] %in% resp_stoch,
+          paste0(funs_names[i], suffix),
+          funs_names[i]
+        )
       )
       idx <- idx + 1L
     }

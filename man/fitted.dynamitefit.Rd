@@ -11,7 +11,7 @@
 
 \item{newdata}{[\code{data.frame}]\cr Data used in predictions.
 If \code{NULL} (default), the data used in model estimation is used for
-predictions as well,
+predictions as well.
 There should be no new time points that were not present in the data that
 were used to fit the model, and no new group levels can be included.}
 
@@ -36,10 +36,9 @@ consists of \code{data.frame} objects, and \code{data.table} objects otherwise.}
 A \code{data.frame} containing the fitted values.
 }
 \description{
-Fitted values for a \code{dynamitefit} object. Note that these are conditional on
-the observed data in \code{newdata},i.e., these are one-step estimates
-\eqn{E(y_t|y_t-1,...,y_1, \theta)} where \eqn{\theta} contains all the model
-parameters. Often \code{\link[=predict.dynamitefit]{predict.dynamitefit()}} is what you want.
+Fitted values for a \code{dynamitefit} object, i.e., \eqn{E(y_t | newdata, \theta)}
+where \eqn{\theta} contains all the model parameters. See also
+\code{\link[=predict.dynamitefit]{predict.dynamitefit()}} for multi-step predictions.
 }
 \examples{
 fitted(gaussian_example_fit, n_draws = 2L)

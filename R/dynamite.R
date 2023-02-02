@@ -67,6 +67,8 @@
 #'   details.
 #' @param verbose \[`logical(1)`]\cr All warnings and messages are suppressed
 #'   if set to `FALSE`. Defaults to `TRUE`.
+#' @param verbose_stan \[`logical(1)`]\cr This is the `verbose` argument for
+#'   [rstan::sampling()]. Defaults to `FALSE`.
 #' @param debug \[`list()`]\cr A named list of form `name = TRUE` indicating
 #'   additional objects in the environment of the `dynamite` function which are
 #'   added to the return object. Additionally, values `no_compile = TRUE` and
@@ -146,7 +148,7 @@
 #'
 dynamite <- function(dformula, data, time, group = NULL,
                      priors = NULL, backend = "rstan",
-                     verbose = TRUE, debug = NULL, ...) {
+                     verbose = TRUE, verbose_stan = FALSE, debug = NULL, ...) {
   stopifnot_(
     !missing(dformula),
     "Argument {.arg dformula} is missing."
@@ -195,6 +197,10 @@ dynamite <- function(dformula, data, time, group = NULL,
     "Argument {.arg verbose} must be a single {.cls logical} value."
   )
   stopifnot_(
+    checkmate::test_flag(x = verbose_stan),
+    "Argument {.arg verbose_stan} must be a single {.cls logical} value."
+  )
+  stopifnot_(
     is.null(debug) || is.list(debug),
     "Argument {.arg debug} must be a {.cls list} or NULL."
   )
@@ -233,6 +239,7 @@ dynamite <- function(dformula, data, time, group = NULL,
     time,
     priors,
     verbose,
+    verbose_stan,
     debug,
     backend,
     ...
@@ -272,7 +279,7 @@ dynamite <- function(dformula, data, time, group = NULL,
 #' @param data_name Name of the `data` object.
 #' @noRd
 dynamite_stan <- function(dformulas, data, data_name, group, time,
-                          priors, verbose, debug, backend, ...) {
+                          priors, verbose, verbose_stan, debug, backend, ...) {
   stan_input <- prepare_stan_input(
     dformulas$stoch,
     data,
@@ -305,7 +312,7 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     model_code = model_code,
     model = model,
     sampling_vars = stan_input$sampling_vars,
-    dots = remove_redundant_parameters(stan_input, backend, ...)
+    dots = remove_redundant_parameters(stan_input, backend, verbose_stan, ...)
   )
   list(
     stan_input = stan_input,
@@ -392,10 +399,12 @@ sampling_info <- function(dformulas, verbose, debug, backend) {
 #' @param stan_input Output from `prepare_stan_input`.
 #' @inheritParams dynamite
 #' @noRd
-remove_redundant_parameters <- function(stan_input, backend, ...) {
+remove_redundant_parameters <- function(stan_input, backend,
+                                        verbose_stan, ...) {
   # don't save redundant parameters by default
   # could also remove omega_raw
   dots <- list(...)
+  dots$verbose <- verbose_stan
   if (is.null(dots$pars) &&
     stan_input$sampling_vars$M > 0 &&
     backend == "rstan") {

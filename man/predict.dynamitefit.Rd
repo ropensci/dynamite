@@ -53,23 +53,26 @@ if there are multiple individuals (i.e., \code{group} was not \code{NULL} in the
 \code{dynamite} call).}
 
 \item{impute}{[\code{character(1)}]\cr Which imputation scheme to use for
-missing predictor values. Currently supported options are
+missing exogenous predictor values. Currently supported options are
 no imputation: \code{"none"} (default), and
 last observation carried forward: \code{"locf"}.}
 
 \item{new_levels}{[\code{character(1)}]\cr
 Defines if and how to sample the random effects for observations whose
-group level was not present in the original data. The options are
-* \code{"none"} (the default) which will signal an error if new levels
+group level was not present in the original data. The options are:
+\itemize{
+\item \code{"none"} (the default) which will signal an error if new levels
 are encountered.
-* \code{"bootstrap"} which will randomly draw from the posterior samples of
+\item \code{"bootstrap"} which will randomly draw from the posterior samples of
 the random effects across all original levels.
-* \code{"gaussian"} which will randomly draw from a gaussian
+\item \code{"gaussian"} which will randomly draw from a gaussian
 distribution using the posterior samples of the random effects
 standard deviation (and correlation matrix if applicable).
-* \code{"original"} which will randomly match each new level to one of
+\item \code{"original"} which will randomly match each new level to one of
 the original levels. The posterior samples of the random effects of
 the matched levels will then be used for the new levels.
+}
+
 This argument is ignored if model does not contain random effects.}
 
 \item{global_fixed}{[\code{logical(1)}]\cr If \code{FALSE} (the default),

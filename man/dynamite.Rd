@@ -15,6 +15,7 @@ dynamite(
   priors = NULL,
   backend = "rstan",
   verbose = TRUE,
+  verbose_stan = FALSE,
   debug = NULL,
   ...
 )
@@ -61,6 +62,9 @@ details.}
 
 \item{verbose}{[\code{logical(1)}]\cr All warnings and messages are suppressed
 if set to \code{FALSE}. Defaults to \code{TRUE}.}
+
+\item{verbose_stan}{[\code{logical(1)}]\cr This is the \code{verbose} argument for
+\code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}. Defaults to \code{FALSE}.}
 
 \item{debug}{[\code{list()}]\cr A named list of form \code{name = TRUE} indicating
 additional objects in the environment of the \code{dynamite} function which are
