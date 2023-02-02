@@ -151,7 +151,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     channel$has_varying <- channel$K_varying > 0L
     # note! Random intercept is counted to K_random above, while has_random is
     # for checking non-intercept terms....
-    channel$has_random <- channel$K_random > 1L
+    channel$has_random <- channel$K_random > channel$has_random_intercept
     channel$lb <- spline_def$lb[i]
     channel$shrinkage <- spline_def$shrinkage
     channel$noncentered <- spline_def$noncentered[i]

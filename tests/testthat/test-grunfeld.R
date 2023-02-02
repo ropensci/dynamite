@@ -16,18 +16,14 @@ test_that("parameters of the Grunfield model are recovered", {
   # dynamite defines prior for the intercept based on the mean at the first time
   # point, which differs from the brms, so use dummy intercept instead in both
   Grunfeld$intercept <- 1
-  p <- get_priors(
-    obs(inv ~ -1 + intercept + value + capital + random(~1),
-      family = "gaussian"
-    ) + random_spec(noncentered = FALSE),
+  f <- obs(inv ~ -1 + intercept + value + capital + random(~-1 + intercept),
+      family = "gaussian") + random_spec(noncentered = FALSE)
+  p <- get_priors(f,
     Grunfeld, time = "year", group = "firm"
   )
   # set very vague priors
   p$prior[] <- rep("normal(0, 1000)", nrow(p))
-  fit <- dynamite(
-    obs(inv ~ value + capital + random(~1),
-      family = "gaussian"
-    ) + random_spec(noncentered = FALSE),
+  fit <- dynamite(f,
     Grunfeld, time = "year", group = "firm",
     refresh = 0, seed = 1,
     chains = 2, cores = 2, iter = 20000, warmup = 1000
