@@ -90,8 +90,14 @@
 #' @srrstats {RE4.16} New group levels are supported via
 #'   `new_levels` parameter.
 #' @examples
-#' predict(gaussian_example_fit, type = "response", n_draws = 2L)
+#' out <- predict(gaussian_example_fit, type = "response", n_draws = 2L)
+#' head(out)
 #'
+#' # using summary functions
+#' sumr <- predict(multichannel_example_fit, type = "mean",
+#'   funs = list(g = list(m = mean, s = sd), b = list(sum = sum)),
+#'   n_draws = 2L)
+#' head(sumr$simulated)
 #' \donttest{
 #' # Simulate from the prior predictive distribution
 #'

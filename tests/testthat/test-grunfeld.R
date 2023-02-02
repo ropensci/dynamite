@@ -50,7 +50,7 @@ test_that("parameters of the Grunfield model are recovered", {
     0.646235, -28.227079, 50.50187
   )
   # reorder parameters to match dynamite
-  brms_est <- brms_est[c(1, 3, 2, 6:15, 5, 4)]
+  brms_est <- brms_est[c(3, 1, 2, 6:15, 5, 4)]
   sumr <- as_draws(fit) |> posterior::summarise_draws(
     posterior::default_mcse_measures(),
     posterior::default_summary_measures()

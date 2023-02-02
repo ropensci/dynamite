@@ -21,6 +21,9 @@
     to `TRUE` in `summary` method. The column ordering of the output of these 
     methods was also changed so that the estimates are before the extra 
     columns such as `time`.
+  * The standard deviation of the default priors for spline coefficient 
+    standard deviations is now scaled based on the data analogously with 
+    regression coefficients.
   
 # dynamite 1.0.2
 

@@ -9,24 +9,30 @@
 #' @noRd
 default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
   mean_y <- signif(mean_y, 2)
-  sd_y <- signif(sd_y, 2)
+  sd_y <- signif(2 * max(1, sd_y), 2)
   mean_gamma <- signif(mean_gamma, 2)
-  sd_gamma <- signif(sd_gamma, 2)
+  sd_gamma <- signif(pmax(sd_gamma, 1), 2)
   priors <- list()
   if (channel$has_random_intercept || channel$has_random) {
     icpt <- ifelse_(
       channel$has_random_intercept,
-      "alpha",
+      c(alpha = sd_y),
       NULL
     )
-    ns <- c(icpt, names(sd_gamma[channel$J_random]))
+    s <- c(icpt,
+      ifelse_(
+        channel$has_random,
+        sd_gamma[channel$J_random],
+        NULL)
+    )
+    ns <- names(s)
     channel$sigma_nu_prior_distr <- "normal"
     channel$sigma_nu_prior_npars <- 2L
-    channel$sigma_nu_prior_pars <- cbind(0, rep(1, channel$K_random))
+    channel$sigma_nu_prior_pars <- cbind(0, s)
     priors$sigma_nu <- data.frame(
       parameter = paste0("sigma_nu_", y, "_", ns),
       response = y,
-      prior = "normal(0, 1)",
+      prior = paste0("normal(0, ", s, ")"),
       type = "sigma_nu",
       category = ""
     )
@@ -41,7 +47,7 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
       category = ""
     )
     if (channel$nonzero_lambda) {
-      channel$tau_psi_prior_distr <- "normal(0, 1)"
+      channel$tau_psi_prior_distr <- paste0("normal(0,", sd_y, ")")
       priors$tau_psi <- data.frame(
         parameter = paste0("tau_psi_", y),
         response = y,
@@ -60,7 +66,7 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
     )
   }
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {
-    channel$alpha_prior_distr <- paste0("normal(", mean_y, ", ", 2 * sd_y, ")")
+    channel$alpha_prior_distr <- paste0("normal(", mean_y, ", ", sd_y, ")")
     priors$alpha <- data.frame(
       parameter = paste0("alpha_", y),
       response = y,
@@ -69,11 +75,11 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
       category = ""
     )
     if (channel$has_varying_intercept) {
-      channel$tau_alpha_prior_distr <- "normal(0, 1)"
+      channel$tau_alpha_prior_distr <- paste0("normal(0, ", sd_y, ")")
       priors$tau_alpha <- data.frame(
         parameter = paste0("tau_alpha_", y),
         response = y,
-        prior = "normal(0, 1)",
+        prior = channel$tau_alpha_prior_distr,
         type = "tau_alpha",
         category = ""
       )
@@ -108,11 +114,11 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
     )
     channel$tau_prior_distr <- "normal"
     channel$tau_prior_npars <- 2
-    channel$tau_prior_pars <- cbind(0, rep(1, channel$K_varying))
+    channel$tau_prior_pars <- cbind(0, s)
     priors$tau <- data.frame(
       parameter = paste0("tau_", y, "_", names(s)),
       response = y,
-      prior = "normal(0, 1)",
+      prior = paste0("normal(0, ", s, ")"),
       type = "tau",
       category = ""
     )
@@ -135,7 +141,7 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
   S_y <- length(attr(resp_class, "levels"))
   # remove the first level which acts as reference
   resp_levels <- attr(resp_class, "levels")[-1]
-  sd_gamma <- signif(2 / sd_x, 2)
+  sd_gamma <- signif(2 * min(1, 1 / sd_x), 2)
   priors <- list()
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {
     m <- rep(0.0, S_y - 1L)
@@ -190,11 +196,11 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
     )
     channel$tau_prior_distr <- "normal"
     channel$tau_prior_npars <- 2L
-    channel$tau_prior_pars <- cbind(0.0, rep(1.0, channel$K_varying))
+    channel$tau_prior_pars <- cbind(0.0, sd_gamma[channel$J_varying])
     priors$tau <- data.frame(
       parameter = paste0("tau_", y, "_", names(sd_gamma[channel$J_varying])),
       response = y,
-      prior = "normal(0, 1)",
+      prior = paste0("normal(0, ", sd_gamma[channel$J_varying], ")"),
       type = "tau",
       category = ""
     )
