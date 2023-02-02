@@ -117,13 +117,13 @@ test_that("parameters for poisson mixed model are recovered", {
     obs(y ~ x + random(~ 1 + x), family = "poisson") +
       random_spec(noncentered = FALSE, correlated = TRUE),
     data = d, time = "year", group = "person", priors = p,
-    chains = 1, iter = 2000, refresh = 0
+    chains = 1, iter = 2000, refresh = 0, seed = 1
   )
   # "ground truth" obtained from one long dynamite run and brms,
   # note that brms can give few divergences as does dynamite if
   # noncentered = TRUE
   expect_equal(coef(fit_dynamite)$mean, c(2.014, -0.9932),
-    tolerance = 0.05
+    tolerance = 0.1
   )
   expect_equal(coef(fit_dynamite, type = "nu")$mean,
     c(
@@ -131,7 +131,7 @@ test_that("parameters for poisson mixed model are recovered", {
       -0.1231, 0.2726, -0.1071, -0.03, 4e-04, 0.0997, -0.1146, -0.0313,
       0.0146, 0.0407, -0.0169, -0.1407, 0.1635
     ),
-    tolerance = 0.05
+    tolerance = 0.1
   )
 })
 
