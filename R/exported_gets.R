@@ -198,6 +198,7 @@ get_data.dynamitefit <- function(x, ...) {
 #' [dynamite::as.data.frame.dynamitefit()] for explanations of different types.
 #'
 #' @param x \[`dynamitefit`]\cr A dynamitefit object.
+#' @param ... Ignored.
 #' @return A character vector with all parameter types of the input model.
 #' @export
 #' @examples
@@ -230,6 +231,7 @@ get_parameter_types.dynamitefit <- function(x, ...) {
 #' @param x \[`dynamitefit`]\cr A dynamitefit object.
 #' @param types Extract only names of parameter of certain type. See
 #' [dynamite::get_parameter_types()].
+#' @param ... Ignored.
 #' @return A character vector with parameter names of the input model.
 #' @export
 #' @examples

@@ -11,6 +11,8 @@ get_parameter_types(x, ...)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr A dynamitefit object.}
+
+\item{...}{Ignored.}
 }
 \value{
 A character vector with all parameter types of the input model.

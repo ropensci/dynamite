@@ -14,6 +14,8 @@ get_parameter_names(x, types = NULL, ...)
 
 \item{types}{Extract only names of parameter of certain type. See
 \code{\link[=get_parameter_types]{get_parameter_types()}}.}
+
+\item{...}{Ignored.}
 }
 \value{
 A character vector with parameter names of the input model.
