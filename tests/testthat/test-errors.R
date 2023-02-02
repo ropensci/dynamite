@@ -1093,8 +1093,8 @@ test_that("plot errors when no type is defined", {
   expect_error(
     plot(categorical_example_fit),
     paste0(
-      "Argument `type` is missing while it should be a single ",
-      "<character> string."
+      "Both arguments `parameters` and `type` are missing, ",
+      "you should supply one of them."
     )
   )
 })

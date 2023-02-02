@@ -25,7 +25,7 @@
 #'     `rstan::extract(fit$stanfit, pars = "corr_matrix_nu")` if necessary.
 #'  * `sigma_lambda`\cr Standard deviations of the latent factor loadings
 #'    `lambda`.
-#'  * `tau_psi`\cr Standard deviations of the the spline coeffients of `psi`.
+#'  * `tau_psi`\cr Standard deviations of the the spline coefficients of `psi`.
 #'  * `corr_psi`\cr Pairwise correlations of the latent factors.
 #'     Samples of the full correlation matrix can be extracted manually as
 #'     `rstan::extract(fit$stanfit, pars = "corr_matrix_psi")` if necessary.
@@ -39,13 +39,19 @@
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param row.names Ignored.
 #' @param optional Ignored.
-#' @param responses  \[`character()`]\cr Response(s) for which the samples
+#' @param parameters \[`character()`]\cr Parameter(s) for which the samples
+#'   should be extracted. Possible options can be found with function
+#'   `get_parameter_names()`. Default is all parameters of specific type for all
+#'   responses.
+#' @param responses \[`character()`]\cr Response(s) for which the samples
 #'   should be extracted. Possible options are elements of
 #'   `unique(x$priors$response)`, and the default is this entire vector.
+#'    Ignored if the argument `parameters` is supplied.
 #' @param types \[`character()`]\cr Type(s) of the parameters for which the
 #'   samples should be extracted. See details of possible values. Default is
-#'   all values listed in details except spline coefficients `omega` and
-#'   `omega_alpha`.
+#'   all values listed in details except spline coefficients `omega`,
+#'   `omega_alpha`, and `omega_psi`. See also [dynamite::get_parameter_types()].
+#'    Ignored if the argument `parameters` is supplied.
 #' @param summary \[`logical(1)`]\cr If `TRUE`, returns posterior
 #'   mean, standard deviation, and posterior quantiles (as defined by the
 #'   `probs` argument) for all parameters. If `FALSE` (default), returns the
@@ -114,7 +120,8 @@
 #' }
 #'
 as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
-                                      responses = NULL, types = NULL,
+                                      parameters = NULL, responses = NULL,
+                                      types = NULL,
                                       summary = FALSE, probs = c(0.05, 0.95),
                                       include_fixed = TRUE, ...) {
   out <- as.data.table.dynamitefit(
@@ -122,6 +129,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     keep.rownames = FALSE,
     row.names,
     optional,
+    parameters,
     responses,
     types,
     summary,

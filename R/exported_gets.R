@@ -191,3 +191,49 @@ get_data.dynamiteformula <- function(x, data, time, group = NULL, ...) {
 get_data.dynamitefit <- function(x, ...) {
   x$stan$sampling_vars
 }
+
+#' Get Parameter Types of the Dynamite Model
+#'
+#' Extracts all parameter types of used in the `dynamitefit` object. See
+#' [dynamite::as.data.frame.dynamitefit()] for explanations of different types.
+#'
+#' @param x \[`dynamitefit`]\cr A dynamitefit object.
+#' @return A character vector with all parameter types of the input model.
+#' @export
+#' @examples
+#' get_parameter_types(multichannel_example_fit)
+get_parameter_types <- function(x) {
+  types <- c(
+    "alpha", "beta", "delta", "tau", "tau_alpha", "xi",
+    "sigma_nu", "corr_nu", "sigma", "phi", "nu", "lambda", "sigma_lambda",
+    "psi", "tau_psi", "corr_psi", "omega", "omega_alpha", "omega_psi"
+  )
+  d <- as.data.table(x, types =  types)
+  unique(d$type)
+}
+#' Get Parameter Names of the Dynamite Model
+#'
+#' Extracts all parameter names of used in the `dynamitefit` object.
+#'
+#' The naming of parameters generally follows style where the name starts with
+#' the parameter type (e.g. beta for time-invariant regression coefficient),
+#' followed by underscore and the name of the ersponse variable, and in case of
+#' time-invariant, time-varying or random effect, the name of the predictor. An
+#' exception to this is spline coefficients omega, which also contain the number
+#' denoting the knot number
+#'
+#' @param x \[`dynamitefit`]\cr A dynamitefit object.
+#' @param types Extract only names of parameter of certain type. See
+#' [dynamite::get_parameter_types()].
+#' @return A character vector with parameter names of the input model.
+#' @export
+#' @examples
+#' get_parameter_names(multichannel_example_fit)
+get_parameter_names <- function(x, types = NULL) {
+  if (is.null(types)) {
+    types <- get_parameter_types(x)
+  }
+  d <- as.data.table(x, types =  types)
+  unique(d$parameter)
+}
+

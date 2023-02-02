@@ -9,7 +9,9 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.path = "man/figures/README-",
-  out.width = "80%"
+  fig.align = "center",
+  fig.width = 9, 
+  fig.height = 6
 )
 ```
 
@@ -25,7 +27,7 @@ knitr::opts_chunk$set(
 [![Codecov test coverage](https://codecov.io/gh/ropensci/dynamite/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ropensci/dynamite?branch=main)
 [![Status at rOpenSci Software Peer Review](https://badges.ropensci.org/554_status.svg)](https://github.com/ropensci/software-review/issues/554)
 [![dynamite status badge](https://ropensci.r-universe.dev/badges/dynamite)](https://ropensci.r-universe.dev)
-[![dynamite cran-badge](http://www.r-pkg.org/badges/version/dynamite)](https://cran.r-project.org/package=dynamite)
+[![dynamite CRAN badge](http://www.r-pkg.org/badges/version/dynamite)](https://cran.r-project.org/package=dynamite)
 <!-- badges: end -->
 
 The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use 
@@ -34,8 +36,8 @@ of multiple measurements per multiple individuals measured in time.
 The main features distinguishing the package and the underlying methodology 
 from many other approaches are:
 
-* Support for both time-invariant and time-varying effects modeled via 
-  B-splines.
+* Support for regular time-invariant effects, group-level random effects, and 
+  time-varying effects modeled via Bayesian P-splines.
 * Joint modeling of multiple measurements per individual (multiple channels) 
   based directly on the assumed data generating process.
 * Support for non-Gaussian observations: Currently Gaussian, Categorical, 
@@ -55,12 +57,12 @@ grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)).
 
 ## Installation
 
-You can install the development version of `dynamite` from 
-[GitHub](https://github.com/) by running one of the following lines:
+You can install the stable version of `dynamite` from 
+[CRAN](https://cran.r-project.org/package=dynamite), and the development 
+version from [R-universe](https://r-universe.dev/search/) by running one the 
+following lines:
 
 ```{r, eval = FALSE}
-# install.packages("devtools")
-devtools::install_github("ropensci/dynamite")
 install.packages("dynamite", repos = "https://ropensci.r-universe.dev")
 ```
 
@@ -79,50 +81,58 @@ ggplot2::theme_set(ggplot2::theme_bw())
 set.seed(1)
 library(dynamite)
 gaussian_example_fit <- dynamite(
-  obs(y ~ -1 + z + varying(~ x + lag(y)), family = "gaussian") +
-    random() + splines(df = 20),
+  obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1), family = "gaussian") +
+    splines(df = 20),
   data = gaussian_example, time = "time", group = "id",
-  iter = 2000, warmup = 1000, thin = 5,
-  chains = 2, cores = 2, refresh = 0, save_warmup = FALSE
+  iter = 2000, chains = 2, cores = 2, refresh = 0
 )
 ```
 
-Posterior estimates of the fixed effects:
-```{r}
-plot_betas(gaussian_example_fit)
+```{r, echo = FALSE}
+set.seed(1)
+library(dynamite)
+gaussian_example_fit <- update(gaussian_example_fit,
+  iter = 2000, warmup = 1000, thin = 1,
+  chains = 2, cores = 2, refresh = 0
+)
 ```
 
-Posterior estimates of time-varying effects
+Summary of the model:
 ```{r}
+gaussian_example_fit
+```
+
+Posterior estimates of time-varying effects:
+```{r, fig.width = 9, fig.height = 4}
 plot_deltas(gaussian_example_fit, scales = "free")
 ```
 
 And group-specific intercepts:
-```{r}
-plot_nus(gaussian_example_fit)
+```{r, fig.width = 9, fig.height = 4}
+plot_nus(gaussian_example_fit, groups = 1:10)
 ```
 
 Traceplots and density plots:
-```{r}
+```{r, fig.width = 9, fig.height = 4}
 plot(gaussian_example_fit, type = "beta")
 ```
 
 Posterior predictive samples for the first 4 groups (samples based on the posterior
 distribution of model parameters and observed data on first time point):
-```{r}
+```{r, fig.width = 9, fig.height = 4}
 library(ggplot2)
-pred <- predict(gaussian_example_fit, n_draws = 50)
+pred <- predict(gaussian_example_fit, n_draws = 100)
 pred |>
   dplyr::filter(id < 5) |>
   ggplot(aes(time, y_new, group = .draw)) +
-  geom_line(alpha = 0.5) +
+  geom_line(alpha = 0.25) +
   # observed values
   geom_line(aes(y = y), colour = "tomato") +
   facet_wrap(~id) +
   theme_bw()
 ```
 
-For more examples, see the package vignette.
+For more examples, see the package vignette and the [blog post about dynamite](https://ropensci.org/blog/2023/01/31/dynamite-r-package/) .
 
 ## Related packages
 

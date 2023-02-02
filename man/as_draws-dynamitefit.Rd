@@ -7,21 +7,28 @@
 \alias{as_draws}
 \title{Convert \code{dynamite} Output to \code{draws_df} Format}
 \usage{
-\method{as_draws_df}{dynamitefit}(x, responses = NULL, types = NULL, ...)
+\method{as_draws_df}{dynamitefit}(x, parameters = NULL, responses = NULL, types = NULL, ...)
 
 \method{as_draws}{dynamitefit}(x, responses = NULL, types = NULL, ...)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
+\item{parameters}{[\code{character()}]\cr Parameter(s) for which the samples
+should be extracted. Possible options can be found with function
+\code{get_parameter_names()}. Default is all parameters of specific type for all
+responses.}
+
 \item{responses}{[\code{character()}]\cr Response(s) for which the samples
 should be extracted. Possible options are elements of
-\code{unique(x$priors$response)}, and the default is this entire vector.}
+\code{unique(x$priors$response)}, and the default is this entire vector.
+Ignored if the argument \code{parameters} is supplied.}
 
 \item{types}{[\code{character()}]\cr Type(s) of the parameters for which the
 samples should be extracted. See details of possible values. Default is
-all values listed in details except spline coefficients \code{omega} and
-\code{omega_alpha}.}
+all values listed in details except spline coefficients \code{omega},
+\code{omega_alpha}, and \code{omega_psi}. See also \code{\link[=get_parameter_types]{get_parameter_types()}}.
+Ignored if the argument \code{parameters} is supplied.}
 
 \item{...}{Ignored.}
 }
@@ -34,16 +41,18 @@ A \code{draws_df} object.
 Converts the output from \code{\link[=dynamite]{dynamite()}} call to a
 \code{draws_df} format of the \pkg{posterior} package, enabling the use
 of diagnostics and plotting methods of \pkg{posterior} and \pkg{bayesplot}
-packages. Note that this function returns all variables in a wide format,
+packages. Note that this function returns variables in a wide format,
 whereas \code{\link[=as.data.frame]{as.data.frame()}} uses the long format.
 }
 \details{
-You can use the arguments \code{responses} and \code{types} to extract only a subset
-of the model parameters (i.e., only certain types of parameters related to a
-certain response variable).
+You can use the arguments \code{parameters}, \code{responses} and \code{types} to extract
+only a subset of the model parameters (i.e., only certain types of parameters
+related to a certain response variable).
 
 See potential values for the types argument in
-\code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}}
+\code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}} and
+\code{\link[=get_parameter_names]{get_parameter_names()}} for potential values for \code{parameters}
+argument.
 }
 \examples{
 as_draws(gaussian_example_fit, types = c("sigma", "beta"))

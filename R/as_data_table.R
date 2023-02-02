@@ -21,6 +21,7 @@
 #'
 as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
                                       row.names = NULL, optional = FALSE,
+                                      parameters = NULL,
                                       responses = NULL, types = NULL,
                                       summary = FALSE, probs = c(0.05, 0.95),
                                       include_fixed = TRUE, ...) {
@@ -35,6 +36,15 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   stopifnot_(
     !is.null(x$stanfit),
     "No Stan model fit is available."
+  )
+  stopifnot_(
+    checkmate::test_character(
+      x = parameters,
+      any.missing = FALSE,
+      min.len = 1L,
+      null.ok = TRUE
+    ),
+    "Argument {.arg parameters} must be a {.cls character} vector."
   )
   stopifnot_(
     checkmate::test_character(
@@ -73,6 +83,9 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
     checkmate::test_flag(x = include_fixed),
     "Argument {.arg include_fixed} must be a single {.cls logical} value."
   )
+  if (!is.null(parameters)) {
+    responses <- types <- NULL
+  }
   if (is.null(responses)) {
     responses <- setdiff(unique(x$priors$response), "")
   } else {
@@ -215,6 +228,18 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
     MoreArgs = NULL
   )
   out <- data.table::rbindlist(all_values, fill = TRUE)
+  if (!is.null(parameters)) {
+    data.table::setkey(out, "parameter")
+    found_pars <- parameters %in% unique(out$parameter)
+    stopifnot_(all(found_pars),
+      c(
+      "Parameter{?s} {.var {parameters[!found_pars]}} not found in
+        the model output.",
+        `x` = "Use {.fun get_parameter_names} to check available parameters."
+      )
+    )
+    out <- out[parameters]
+  }
   if (summary) {
     pars <- unique(out$parameter)
     out <- out[

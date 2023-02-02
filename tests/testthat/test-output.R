@@ -181,6 +181,16 @@ test_that("gets can be got", {
     get_data(gaussian_example_fit),
     NA
   )
+  expect_equal(
+    get_parameter_names(categorical_example_fit),
+    c("alpha_x", "beta_x_z", "beta_x_x_lag1B", "beta_x_x_lag1C",
+      "beta_x_y_lag1b", "beta_x_y_lag1c", "alpha_y", "beta_y_z",
+      "beta_y_x_lag1B", "beta_y_x_lag1C", "beta_y_y_lag1b", "beta_y_y_lag1c")
+  )
+  expect_equal(
+    get_parameter_types(latent_factor_example_fit),
+    c("sigma", "lambda", "sigma_lambda", "psi", "tau_psi", "omega_psi")
+  )
 })
 
 test_that("credible intervals can be computed", {

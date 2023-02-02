@@ -4,10 +4,14 @@
 \alias{plot_nus}
 \title{Plot Random effects of a Dynamite Model}
 \usage{
-plot_nus(x, responses = NULL, level = 0.05)
+plot_nus(x, parameters = NULL, responses = NULL, level = 0.05, groups = NULL)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object}
+
+\item{parameters}{[\code{charecter()}]\ Parameter name(s) for which the plots
+should be drawn. Possible options can be found with function
+\code{get_parameter_names(types = "delta")}.}
 
 \item{responses}{[\code{character()}]\cr Response(s) for which the coefficients
 should be drawn. Possible options are elements of
@@ -15,14 +19,16 @@ should be drawn. Possible options are elements of
 
 \item{level}{[\code{numeric(1)}]\cr Level for posterior intervals.
 Default is 0.05, leading to 90\% intervals.}
+
+\item{groups}{Group name(s) for which the plots should be drawn.
+Default is all groups.}
 }
 \value{
 A \code{ggplot} object.
 }
 \description{
-Note that as this function tries to draw a plot containing all random
-effects, the plot will become messy with large number of groups and/or
-parameters.
+Note that as this function tries to draw a plot containing effects of all
+groups, the plot will become messy with large number of groups.
 }
 \examples{
 plot_nus(gaussian_example_fit)

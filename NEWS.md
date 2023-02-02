@@ -24,6 +24,10 @@
   * The standard deviation of the default priors for spline coefficient 
     standard deviations is now scaled based on the data analogously with 
     regression coefficients.
+  * Added argument `parameters` to `as.data.frame` and similar methods as well 
+    for the plotting functions. 
+  * Added functions `get_parameter_types` and `get_parameter_names` for 
+    extracting model parameter types and names respectively.
   
 # dynamite 1.0.2
 

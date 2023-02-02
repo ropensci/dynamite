@@ -4,10 +4,20 @@
 \alias{plot_betas}
 \title{Plot Time-invariant Regression Coefficients of a Dynamite Model}
 \usage{
-plot_betas(x, responses = NULL, level = 0.05, include_alpha = TRUE)
+plot_betas(
+  x,
+  parameters = NULL,
+  responses = NULL,
+  level = 0.05,
+  include_alpha = TRUE
+)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object}
+
+\item{parameters}{[\code{charecter()}]\ Parameter name(s) for which the plots
+should be drawn. Possible options can be found with function
+\code{get_parameter_names(types = "beta")}.}
 
 \item{responses}{[\code{character()}]\cr Response(s) for which the coefficients
 should be drawn. Possible options are elements of

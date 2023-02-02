@@ -2,19 +2,25 @@
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
   "identifier": "dynamite",
-  "description": "Easy-to-use and efficient interface for Bayesian inference of complex panel (time series) data using dynamic multivariate panel models <doi:10.31235/osf.io/mdwu5>. The package supports joint modeling of multiple measurements per individual, time-varying and time-invariant effects, and a wide range of discrete and continuous distributions. Estimation of these dynamic multivariate panel models is carried out via 'Stan'.",
+  "description": "Easy-to-use and efficient interface for Bayesian inference of complex panel (time series) data using dynamic multivariate panel models by Helske and Tikka (2022) <doi:10.31235/osf.io/mdwu5>. The package supports joint modeling of multiple measurements per individual, time-varying and time-invariant effects, and a wide range of discrete and continuous distributions. Estimation of these dynamic multivariate panel models is carried out via 'Stan'.",
   "name": "dynamite: Bayesian Modeling and Causal Inference for Multivariate\n    Longitudinal Data",
   "relatedLink": "https://docs.ropensci.org/dynamite/",
   "codeRepository": "https://github.com/ropensci/dynamite/",
   "issueTracker": "https://github.com/ropensci/dynamite/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
   "runtimePlatform": "R version 4.2.1 (2022-06-23 ucrt)",
+  "provider": {
+    "@id": "https://cran.r-project.org",
+    "@type": "Organization",
+    "name": "Comprehensive R Archive Network (CRAN)",
+    "url": "https://cran.r-project.org"
+  },
   "author": [
     {
       "@type": "Person",
@@ -141,18 +147,6 @@
     },
     "2": {
       "@type": "SoftwareApplication",
-      "identifier": "bayesplot",
-      "name": "bayesplot",
-      "provider": {
-        "@id": "https://cran.r-project.org",
-        "@type": "Organization",
-        "name": "Comprehensive R Archive Network (CRAN)",
-        "url": "https://cran.r-project.org"
-      },
-      "sameAs": "https://CRAN.R-project.org/package=bayesplot"
-    },
-    "3": {
-      "@type": "SoftwareApplication",
       "identifier": "checkmate",
       "name": "checkmate",
       "provider": {
@@ -163,7 +157,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=checkmate"
     },
-    "4": {
+    "3": {
       "@type": "SoftwareApplication",
       "identifier": "cli",
       "name": "cli",
@@ -175,7 +169,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=cli"
     },
-    "5": {
+    "4": {
       "@type": "SoftwareApplication",
       "identifier": "data.table",
       "name": "data.table",
@@ -187,7 +181,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=data.table"
     },
-    "6": {
+    "5": {
       "@type": "SoftwareApplication",
       "identifier": "glue",
       "name": "glue",
@@ -199,7 +193,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=glue"
     },
-    "7": {
+    "6": {
       "@type": "SoftwareApplication",
       "identifier": "ggplot2",
       "name": "ggplot2",
@@ -211,7 +205,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=ggplot2"
     },
-    "8": {
+    "7": {
       "@type": "SoftwareApplication",
       "identifier": "loo",
       "name": "loo",
@@ -223,7 +217,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=loo"
     },
-    "9": {
+    "8": {
       "@type": "SoftwareApplication",
       "identifier": "MASS",
       "name": "MASS",
@@ -235,10 +229,22 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=MASS"
     },
-    "10": {
+    "9": {
       "@type": "SoftwareApplication",
       "identifier": "methods",
       "name": "methods"
+    },
+    "10": {
+      "@type": "SoftwareApplication",
+      "identifier": "patchwork",
+      "name": "patchwork",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=patchwork"
     },
     "11": {
       "@type": "SoftwareApplication",
@@ -301,7 +307,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "9480.2KB",
+  "fileSize": "4989.51KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",

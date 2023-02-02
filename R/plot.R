@@ -1,33 +1,19 @@
 #' Traceplots and Density Plots of a `dynamitefit` Object
 #'
 #' Produces the traceplots and the density plots of the model parameters.
-#' See 'Details' for the available parameter types.
-#'
-#' Possible parameter types are:
-#'  * `alpha` Intercept terms (time-invariant or time-varying).
-#'  * `beta` Time-invariant regression coefficients.
-#'  * `delta` Time-varying regression coefficients.
-#'  * `nu` Random effects
-#'  * `tau` Standard deviations of the spline coefficients of `delta`.
-#'  * `tau_alpha` Standard deviations of the spline coefficients of
-#'    time-varying `alpha`.
-#'  * `sigma_nu` Standard deviation of the random effects `nu`.
-#'  * `sigma` Standard deviations of gaussian responses.
-#'  * `phi` Dispersion parameters of negative binomial responses.
-#'  * `omega` Spline coefficients of the regression coefficients `delta`.
-#'  * `omega_alpha` Spline coefficients of time-varying `alpha`.
-#'
-#' Note however, that typically drawing these plots for the time-varying
-#' parameters `delta` (and `alpha`), spline coefficients, or random
-#' effects leads to too many plots.
 #'
 #' @export
 #' @param x \[`dynamitefit`]\cr The model fit object.
+#' @param parameters \[`charecter()`]\ Parameter name(s) for which the plots
+#'   should be drawn. Possible options can be found with function
+#'   `get_parameter_names()`. Default is all parameters of specific type for all
+#'   responses, which can lead to too crowded figure.
+#' @param type \[`character(1)`]\cr Type of the parameter for which the plots
+#'   should be drawn. Possible options can be found with function
+#'   `get_parameter_types()`. Ignored if the argument `parameters` is supplied.
 #' @param responses \[`character()`]\cr Response(s) for which the plots should
 #'   be drawn. Possible options are `unique(x$priors$response)`. Default is
-#'   all responses.
-#' @param type \[`character(1)`]\cr Type of the parameter for which the plots
-#'   should be drawn. See details of possible values.
+#'   all responses. Ignored if the argument `parameters` is supplied.
 #' @param ... Not used..
 #' @return A `ggplot` object.
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.2, BS6.3, BS6.5} Implements the `plot`
@@ -36,18 +22,20 @@
 #' @examples
 #' plot(gaussian_example_fit, type = "beta")
 #'
-plot.dynamitefit <- function(x, responses = NULL, type, ...) {
+plot.dynamitefit <- function(x, parameters = NULL, type = NULL,
+  responses = NULL, ...) {
   stopifnot_(
-    !missing(type),
-    "Argument {.arg type} is missing while it should be a single
-    {.cls character} string."
+    !is.null(parameters) || !is.null(type),
+    "Both arguments {.arg parameters} and {.arg type} are missing, you should
+    supply one of them."
   )
   stopifnot_(
-    checkmate::test_string(x = type, na.ok = FALSE),
+    is.null(type) || checkmate::test_string(x = type, na.ok = FALSE),
     "Argument {.arg type} must be a single {.cls character} string."
   )
   out <- suppressWarnings(
-    as_draws_df.dynamitefit(x, responses = responses, types = type)
+    as_draws_df.dynamitefit(x, parameters = parameters,
+      responses = responses, types = type)
   )
   # avoid NSE notes from R CMD check
   parameter <- density <- .iteration <- .chain <- NULL
@@ -87,9 +75,13 @@ plot.dynamitefit <- function(x, responses = NULL, type, ...) {
 #'
 #' @export
 #' @param x \[`dynamitefit`]\cr The model fit object
-#' @param responses  \[`character()`]\cr Response(s) for which the coefficients
+#' @param parameters \[`charecter()`]\ Parameter name(s) for which the plots
+#'   should be drawn. Possible options can be found with function
+#'   `get_parameter_names(types = "delta")`.
+#' @param responses \[`character()`]\cr Response(s) for which the coefficients
 #'   should be drawn. Possible options are elements of
 #'   `unique(x$priors$response)`, and the default is this whole vector.
+#    Ignored if the argument `parameters` is supplied.
 #' @param level \[`numeric(1)`]\cr Level for posterior intervals.
 #'   Default is 0.05, leading to 90% intervals.
 #' @param alpha \[`numeric(1)`]\cr Opacity level for `geom_ribbon`.
@@ -105,8 +97,9 @@ plot.dynamitefit <- function(x, responses = NULL, type, ...) {
 #' plot_deltas(gaussian_example_fit, level = 0.025, scales = "free") +
 #'   ggplot2::theme_minimal()
 #'
-plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
-                        scales = c("fixed", "free"), include_alpha = TRUE) {
+plot_deltas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
+                        alpha = 0.5, scales = c("fixed", "free"),
+                        include_alpha = TRUE) {
   stopifnot_(
     checkmate::test_number(
       x = level,
@@ -129,7 +122,8 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
   )
   coefs <- coef.dynamitefit(
     x,
-    "delta",
+    parameters = parameters,
+    type = "delta",
     responses = responses,
     probs = c(level, 1 - level),
     include_alpha = include_alpha
@@ -183,6 +177,9 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
 #'
 #' @export
 #' @inheritParams plot_deltas
+#' @param parameters \[`charecter()`]\ Parameter name(s) for which the plots
+#'   should be drawn. Possible options can be found with function
+#'   `get_parameter_names(types = "beta")`.
 #' @param include_alpha \[`logical(1)`]\cr If `TRUE` (default), plots also
 #'   the time-invariant alphas if such parameters exists in the model.
 #' @return A `ggplot` object.
@@ -190,7 +187,7 @@ plot_deltas <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
 #' @examples
 #' plot_betas(gaussian_example_fit, level = 0.1)
 #'
-plot_betas <- function(x, responses = NULL, level = 0.05,
+plot_betas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
                        include_alpha = TRUE) {
   stopifnot_(
     checkmate::test_number(
@@ -204,7 +201,8 @@ plot_betas <- function(x, responses = NULL, level = 0.05,
   )
   coefs <- coef.dynamitefit(
     x,
-    "beta",
+    parameters = parameters,
+    type = "beta",
     responses = responses,
     probs = c(level, 1 - level),
     include_alpha = include_alpha
@@ -246,18 +244,20 @@ plot_betas <- function(x, responses = NULL, level = 0.05,
 
 #' Plot Random effects of a Dynamite Model
 #'
-#' Note that as this function tries to draw a plot containing all random
-#' effects, the plot will become messy with large number of groups and/or
-#' parameters.
+#' Note that as this function tries to draw a plot containing effects of all
+#' groups, the plot will become messy with large number of groups.
 #'
 #' @export
 #' @inheritParams plot_deltas
+#' @param groups Group name(s) for which the plots should be drawn.
+#'   Default is all groups.
 #' @return A `ggplot` object.
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @examples
 #' plot_nus(gaussian_example_fit)
 #'
-plot_nus <- function(x, responses = NULL, level = 0.05) {
+plot_nus <- function(x, parameters = NULL, responses = NULL, level = 0.05,
+  groups = NULL) {
   stopifnot_(
     checkmate::test_number(
       x = level,
@@ -271,7 +271,8 @@ plot_nus <- function(x, responses = NULL, level = 0.05) {
   coefs <- try(
     coef.dynamitefit(
       x,
-      "nu",
+      parameters = parameters,
+      type = "nu",
       responses = responses,
       probs = c(level, 1 - level)
     ),
@@ -281,6 +282,9 @@ plot_nus <- function(x, responses = NULL, level = 0.05) {
     !inherits(coefs, "try-error"),
     "The model does not contain random effects nu."
   )
+  if (!is.null(groups)) {
+    coefs <- coefs[coefs$group %in% groups, ]
+  }
   # avoid NSE notes from R CMD check
   mean <- parameter <- NULL
   coefs$parameter <- glue::glue("{coefs$parameter}_{coefs$group}")
@@ -320,7 +324,7 @@ plot_lambdas <- function(x, responses = NULL, level = 0.05) {
   coefs <- try(
     coef.dynamitefit(
       x,
-      "lambda",
+      type = "lambda",
       responses = responses,
       probs = c(level, 1 - level)
     ),
@@ -388,7 +392,7 @@ plot_psis <- function(
   )
   coefs <- coef.dynamitefit(
     x,
-    "psi",
+    type = "psi",
     responses = responses,
     probs = c(level, 1 - level)
   )

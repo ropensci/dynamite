@@ -6,6 +6,7 @@
 \usage{
 plot_deltas(
   x,
+  parameters = NULL,
   responses = NULL,
   level = 0.05,
   alpha = 0.5,
@@ -15,6 +16,10 @@ plot_deltas(
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object}
+
+\item{parameters}{[\code{charecter()}]\ Parameter name(s) for which the plots
+should be drawn. Possible options can be found with function
+\code{get_parameter_names(types = "delta")}.}
 
 \item{responses}{[\code{character()}]\cr Response(s) for which the coefficients
 should be drawn. Possible options are elements of

@@ -4,17 +4,23 @@
 \alias{plot.dynamitefit}
 \title{Traceplots and Density Plots of a \code{dynamitefit} Object}
 \usage{
-\method{plot}{dynamitefit}(x, responses = NULL, type, ...)
+\method{plot}{dynamitefit}(x, parameters = NULL, type = NULL, responses = NULL, ...)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
-\item{responses}{[\code{character()}]\cr Response(s) for which the plots should
-be drawn. Possible options are \code{unique(x$priors$response)}. Default is
-all responses.}
+\item{parameters}{[\code{charecter()}]\ Parameter name(s) for which the plots
+should be drawn. Possible options can be found with function
+\code{get_parameter_names()}. Default is all parameters of specific type for all
+responses, which can lead to too crowded figure.}
 
 \item{type}{[\code{character(1)}]\cr Type of the parameter for which the plots
-should be drawn. See details of possible values.}
+should be drawn. Possible options can be found with function
+\code{get_parameter_types()}. Ignored if the argument \code{parameters} is supplied.}
+
+\item{responses}{[\code{character()}]\cr Response(s) for which the plots should
+be drawn. Possible options are \code{unique(x$priors$response)}. Default is
+all responses. Ignored if the argument \code{parameters} is supplied.}
 
 \item{...}{Not used..}
 }
@@ -23,28 +29,6 @@ A \code{ggplot} object.
 }
 \description{
 Produces the traceplots and the density plots of the model parameters.
-See 'Details' for the available parameter types.
-}
-\details{
-Possible parameter types are:
-\itemize{
-\item \code{alpha} Intercept terms (time-invariant or time-varying).
-\item \code{beta} Time-invariant regression coefficients.
-\item \code{delta} Time-varying regression coefficients.
-\item \code{nu} Random effects
-\item \code{tau} Standard deviations of the spline coefficients of \code{delta}.
-\item \code{tau_alpha} Standard deviations of the spline coefficients of
-time-varying \code{alpha}.
-\item \code{sigma_nu} Standard deviation of the random effects \code{nu}.
-\item \code{sigma} Standard deviations of gaussian responses.
-\item \code{phi} Dispersion parameters of negative binomial responses.
-\item \code{omega} Spline coefficients of the regression coefficients \code{delta}.
-\item \code{omega_alpha} Spline coefficients of time-varying \code{alpha}.
-}
-
-Note however, that typically drawing these plots for the time-varying
-parameters \code{delta} (and \code{alpha}), spline coefficients, or random
-effects leads to too many plots.
 }
 \examples{
 plot(gaussian_example_fit, type = "beta")
