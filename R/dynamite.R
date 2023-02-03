@@ -404,7 +404,7 @@ remove_redundant_parameters <- function(stan_input, backend,
   # don't save redundant parameters by default
   # could also remove omega_raw
   dots <- list(...)
-  dots$verbose <- verbose_stan
+  dots$verbose <- onlyif(backend == "rstan", verbose_stan)
   if (is.null(dots$pars) &&
     stan_input$sampling_vars$M > 0 &&
     backend == "rstan") {
