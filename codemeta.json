@@ -8,7 +8,7 @@
   "codeRepository": "https://github.com/ropensci/dynamite/",
   "issueTracker": "https://github.com/ropensci/dynamite/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -307,7 +307,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "4954.179KB",
+  "fileSize": "4957.238KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",

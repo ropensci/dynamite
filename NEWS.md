@@ -1,3 +1,7 @@
+# dynamite 1.1.1
+  * `plot_deltas` and other plotting functions now throw an error if you try to 
+    plot parameters of incorrect type with them.
+    
 # dynamite 1.1.0
 
   * `dynamite` now supports general group-level random effects. New `random()` 

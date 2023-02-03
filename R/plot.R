@@ -101,6 +101,15 @@ plot_deltas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
                         alpha = 0.5, scales = c("fixed", "free"),
                         include_alpha = TRUE) {
   stopifnot_(
+    checkmate::test_character(
+      x = parameters,
+      any.missing = FALSE,
+      min.len = 1L,
+      null.ok = TRUE
+    ),
+    "Argument {.arg parameters} must be a {.cls character} vector."
+  )
+  stopifnot_(
     checkmate::test_number(
       x = level,
       lower = 0.0,
@@ -120,6 +129,18 @@ plot_deltas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
     "Argument {.arg alpha} must be a single
      {.cls numeric} value between 0 and 1."
   )
+  if (!is.null(parameters)) {
+    delta_names <- get_parameter_names(x, types = "delta")
+    found_pars <- parameters %in% delta_names
+    stopifnot_(all(found_pars),
+      c(
+        "Parameter{?s} {.var {parameters[!found_pars]}} not found or
+        {?it is/they are} of wrong type:",
+        `x` = 'Use {.fun get_parameter_names} with {.arg types = "delta"} to
+        check suitable parameter names.'
+      )
+    )
+  }
   coefs <- coef.dynamitefit(
     x,
     parameters = parameters,
@@ -190,6 +211,15 @@ plot_deltas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
 plot_betas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
                        include_alpha = TRUE) {
   stopifnot_(
+    checkmate::test_character(
+      x = parameters,
+      any.missing = FALSE,
+      min.len = 1L,
+      null.ok = TRUE
+    ),
+    "Argument {.arg parameters} must be a {.cls character} vector."
+  )
+  stopifnot_(
     checkmate::test_number(
       x = level,
       lower = 0.0,
@@ -199,6 +229,18 @@ plot_betas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
     "Argument {.arg level} must be a single
      {.cls numeric} value between 0 and 1."
   )
+  if (!is.null(parameters)) {
+    beta_names <- get_parameter_names(x, types = "beta")
+    found_pars <- parameters %in% beta_names
+    stopifnot_(all(found_pars),
+      c(
+        "Parameter{?s} {.var {parameters[!found_pars]}} not found or
+        {?it is/they are} of wrong type:",
+        `x` = 'Use {.fun get_parameter_names} with {.arg types = "beta"} to
+        check suitable parameter names.'
+      )
+    )
+  }
   coefs <- coef.dynamitefit(
     x,
     parameters = parameters,
@@ -259,6 +301,15 @@ plot_betas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
 plot_nus <- function(x, parameters = NULL, responses = NULL, level = 0.05,
   groups = NULL) {
   stopifnot_(
+    checkmate::test_character(
+      x = parameters,
+      any.missing = FALSE,
+      min.len = 1L,
+      null.ok = TRUE
+    ),
+    "Argument {.arg parameters} must be a {.cls character} vector."
+  )
+  stopifnot_(
     checkmate::test_number(
       x = level,
       lower = 0.0,
@@ -268,6 +319,18 @@ plot_nus <- function(x, parameters = NULL, responses = NULL, level = 0.05,
     "Argument {.arg level} must be a single
      {.cls numeric} value between 0 and 1."
   )
+  if (!is.null(parameters)) {
+    nu_names <- get_parameter_names(x, types = "nu")
+    found_pars <- parameters %in% nu_names
+    stopifnot_(all(found_pars),
+      c(
+        "Parameter{?s} {.var {parameters[!found_pars]}} not found or
+        {?it is/they are} of wrong type:",
+        `x` = 'Use {.fun get_parameter_names} with {.arg types = "nu"} to
+        check suitable parameter names.'
+      )
+    )
+  }
   coefs <- try(
     coef.dynamitefit(
       x,
