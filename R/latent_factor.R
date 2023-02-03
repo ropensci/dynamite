@@ -2,9 +2,9 @@
 #'
 #' This function can be used as part of [dynamite::dynamiteformula()] to define
 #' a common latent factor component. The latent factor is modeled as a spline
-#' similarly as time-varying intercept, but instead of having equal effect on
-#' each group, there is additional loading variable for each group so that in
-#' the linear predictor we have a term \eqn{\lambda_i  \psi_t} for each group i.
+#' similarly as a time-varying intercept, but instead of having equal effect on
+#' each group, there is an additional loading variable for each group so that in
+#' the linear predictor we have a term \eqn{\lambda_i \psi_t} for each group i.
 #' In order to keep the full the factor loadings \eqn{\lambda}, the latent
 #' factor \eqn{\psi} and the full model identifiable, some restrictions are
 #' added to the model. Details will be available in an upcoming paper.

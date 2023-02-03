@@ -33,7 +33,7 @@ family status and income of each individual at each time point of interest.
 Such data can be analyzed in various ways, depending on the research questions 
 and the characteristics of the data such as the number of individuals and time 
 points, and the assumed distribution of the response variables. Popular, 
-somewhat overlapping modelling approaches include dynamic panel models, 
+somewhat overlapping modeling approaches include dynamic panel models, 
 fixed effect models, cross-lagged panel models (CLPM), CLPM with fixed or 
 random effects [@arellano1991, @Allison2009, @Bollen2010,
 @Allison2017, @Hamaker2015, @Mulder2021]. Parameter estimation is typically 
@@ -48,7 +48,7 @@ different distributions of response variables (based on `stats::family`).
 methods for "within-between" models which combine fixed effect and random 
 effect models. This is done by using `lme4` [@lme4], `geepack` [@geepack], 
 and `brms` [@brms] packages as a backend. Finally, the `lavaan` [@lavaan] 
-package provides methods for general structural equation modelling, and thus 
+package provides methods for general structural equation modeling, and thus 
 can be used to estimate various panel data models such as cross-lagged panel
 models with fixed or random intercepts.
 
@@ -63,7 +63,7 @@ or thousands, it can be reasonable to assume that the dynamics of the system
 change over time. There are various methods to model time-varying effects in 
 (generalized) linear models based on state space models 
 [@harvey1982; @durbin2012], with various R implementations 
-[@helske2022; @knaus2021; @brodersen2014]. The state space modelling 
+[@helske2022; @knaus2021; @brodersen2014]. The state space modeling 
 approaches are highly flexible but often computationally demanding due to 
 assumed latent processes for the regression coefficients and an analytically 
 intractable marginal likelihood, so they are most useful in settings with only 
@@ -77,7 +77,7 @@ The `dynamite` package provides an alternative approach to panel data inference
 which avoids some of the limitations and drawbacks of the aforementioned 
 methods. First, `dynamite` supports estimating effects which vary smoothly over 
 time according to splines, with penalization based on random walk priors. 
-This allows modelling for example effects of interventions which increase or 
+This allows modeling for example effects of interventions which increase or 
 decrease over time. Second, `dynamite` supports wide variety of distributions 
 for the response variables such as categorical distribution commonly 
 encountered in life-course research [@Helske2018]. Third, estimation is done in 
@@ -85,7 +85,7 @@ a fully Bayesian fashion using `Stan` [@Stan; @rstan], which leads to
 transparent and interpretable quantification of parameter and predictive 
 uncertainty. Finally, with `dynamite` we can model arbitrary number of 
 measurements per individual (i.e. multiple channels following [@seqHMM]). 
-Jointly modelling all endogenous variables allows us to consider long-term 
+Jointly modeling all endogenous variables allows us to consider long-term 
 effects of interventions which take into account the interdependency of several 
 variables of the model, and allows realistic simulation of complex 
 counterfactual scenarios.

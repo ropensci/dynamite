@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# dynamite <a href="https://docs.ropensci.org/dynamite"><img src="man/figures/logo.png" align="right" height="139" /></a>
+# dynamite <a href="https://docs.ropensci.org/dynamite/"><img src="man/figures/logo.png" align="right" height="139"/></a>
 
 <!-- badges: start -->
 
@@ -93,8 +93,8 @@ gaussian_example_fit
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  5.406  2.870
-#> chain:2  5.364  3.024
+#> chain:1  4.913  2.755
+#> chain:2  4.842  2.859
 #> 
 #> Summary statistics of the time-invariant parameters
 #> (excluding random effects):
@@ -154,7 +154,7 @@ pred |>
 <img src="man/figures/README-unnamed-chunk-10-1.png" style="display: block; margin: auto;" />
 
 For more examples, see the package vignette and the [blog post about
-dynamite](https://ropensci.org/blog/2023/01/31/dynamite-r-package/) .
+dynamite](https://ropensci.org/blog/2023/01/31/dynamite-r-package/).
 
 ## Related packages
 
@@ -167,7 +167,7 @@ dynamite](https://ropensci.org/blog/2023/01/31/dynamite-r-package/) .
 - The [`brms`](https://CRAN.R-project.org/package=brms) package also
   uses Stan, and can be used to fit various complex multilevel models.
 
-- Regression modelling with time-varying coefficients based on kernel
+- Regression modeling with time-varying coefficients based on kernel
   smoothing and least squares estimation is available in package
   [`tvReg`](https://CRAN.R-project.org/package=tvReg). The
   [`tvem`](https://CRAN.R-project.org/package=tvem) package provides
@@ -179,7 +179,7 @@ dynamite](https://ropensci.org/blog/2023/01/31/dynamite-r-package/) .
   effect models.
 
 - [`lavaan`](https://CRAN.R-project.org/package=lavaan) provides tools
-  for structural equation modelling, and as such can be used to model
+  for structural equation modeling, and as such can be used to model
   various panel data models as well.
 
 ## Contributing

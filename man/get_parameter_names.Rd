@@ -10,7 +10,7 @@ get_parameter_names(x, types = NULL, ...)
 \method{get_parameter_names}{dynamitefit}(x, types = NULL, ...)
 }
 \arguments{
-\item{x}{[\code{dynamitefit}]\cr A dynamitefit object.}
+\item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
 \item{types}{Extract only names of parameter of certain type. See
 \code{\link[=get_parameter_types]{get_parameter_types()}}.}
@@ -18,7 +18,7 @@ get_parameter_names(x, types = NULL, ...)
 \item{...}{Ignored.}
 }
 \value{
-A character vector with parameter names of the input model.
+A \code{character} vector with parameter names of the input model.
 }
 \description{
 Extracts all parameter names of used in the \code{dynamitefit} object.
@@ -33,4 +33,5 @@ denoting the knot number.
 }
 \examples{
 get_parameter_names(multichannel_example_fit)
+
 }

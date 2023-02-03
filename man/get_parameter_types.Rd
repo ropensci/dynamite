@@ -10,12 +10,12 @@ get_parameter_types(x, ...)
 \method{get_parameter_types}{dynamitefit}(x, ...)
 }
 \arguments{
-\item{x}{[\code{dynamitefit}]\cr A dynamitefit object.}
+\item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
 \item{...}{Ignored.}
 }
 \value{
-A character vector with all parameter types of the input model.
+A \code{character} vector with all parameter types of the input model.
 }
 \description{
 Extracts all parameter types of used in the \code{dynamitefit} object. See
@@ -23,4 +23,5 @@ Extracts all parameter types of used in the \code{dynamitefit} object. See
 }
 \examples{
 get_parameter_types(multichannel_example_fit)
+
 }

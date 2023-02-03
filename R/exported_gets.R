@@ -197,15 +197,17 @@ get_data.dynamitefit <- function(x, ...) {
 #' Extracts all parameter types of used in the `dynamitefit` object. See
 #' [dynamite::as.data.frame.dynamitefit()] for explanations of different types.
 #'
-#' @param x \[`dynamitefit`]\cr A dynamitefit object.
+#' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param ... Ignored.
-#' @return A character vector with all parameter types of the input model.
+#' @return A `character` vector with all parameter types of the input model.
 #' @export
 #' @examples
 #' get_parameter_types(multichannel_example_fit)
+#'
 get_parameter_types <- function(x, ...) {
   UseMethod("get_parameter_types", x)
 }
+
 #' @rdname get_parameter_types
 #' @export
 get_parameter_types.dynamitefit <- function(x, ...) {
@@ -217,6 +219,7 @@ get_parameter_types.dynamitefit <- function(x, ...) {
   d <- as.data.table(x, types =  types)
   unique(d$type)
 }
+
 #' Get Parameter Names of the Dynamite Model
 #'
 #' Extracts all parameter names of used in the `dynamitefit` object.
@@ -228,17 +231,19 @@ get_parameter_types.dynamitefit <- function(x, ...) {
 #' exception to this is spline coefficients omega, which also contain the number
 #' denoting the knot number.
 #'
-#' @param x \[`dynamitefit`]\cr A dynamitefit object.
+#' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param types Extract only names of parameter of certain type. See
 #' [dynamite::get_parameter_types()].
 #' @param ... Ignored.
-#' @return A character vector with parameter names of the input model.
+#' @return A `character` vector with parameter names of the input model.
 #' @export
 #' @examples
 #' get_parameter_names(multichannel_example_fit)
+#'
 get_parameter_names <- function(x, types = NULL, ...) {
   UseMethod("get_parameter_names", x)
 }
+
 #' @rdname get_parameter_names
 #' @export
 get_parameter_names.dynamitefit <- function(x, types = NULL, ...) {
@@ -248,4 +253,3 @@ get_parameter_names.dynamitefit <- function(x, types = NULL, ...) {
   d <- as.data.table(x, types =  types)
   unique(d$parameter)
 }
-

@@ -7,19 +7,19 @@
 random_spec(correlated = TRUE, noncentered = TRUE)
 }
 \arguments{
-\item{correlated}{[\code{logical(1)}]\cr If \code{TRUE} (the default), correlations of
-random effects are modeled as multivariate normal.}
+\item{correlated}{[\code{logical(1)}]\cr If \code{TRUE} (the default), correlations
+of random effects are modeled as multivariate normal.}
 
 \item{noncentered}{[\code{logical(1)}]\cr If \code{TRUE} (the default), use a
 noncentered parameterization for random effects. Try changing this if
 you encounter divergences or other problems in sampling.}
 }
 \value{
-An object of class \code{random}.
+An object of class \code{random_spec}.
 }
 \description{
 This function can be used as part of \code{\link[=dynamiteformula]{dynamiteformula()}} to define
-whether the group-level random effects should be modelled as correlated or
+whether the group-level random effects should be modeled as correlated or
 not.
 }
 \details{
@@ -33,5 +33,8 @@ variation (sigma) in the Gaussian case.
 }
 \examples{
 # two channel model with correlated random effects for responses x and y
+obs(y ~ 1 + random(~1), family = "gaussian") +
+  obs(x ~ 1 + random(~1 + z), family = "poisson") +
+  random_spec(correlated = TRUE)
 
 }
