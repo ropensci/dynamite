@@ -1,7 +1,10 @@
+# dynamite 1.1.2
+  * The argument `verbose_stan` is now ignored when `backend = "cmdstanr"`.
+
 # dynamite 1.1.1
   * `plot_deltas` and other plotting functions now throw an error if you try to 
     plot parameters of incorrect type with them.
-    
+
 # dynamite 1.1.0
 
   * `dynamite` now supports general group-level random effects. New `random()` 
@@ -32,7 +35,7 @@
     for the plotting functions. 
   * Added functions `get_parameter_types` and `get_parameter_names` for 
     extracting model parameter types and names respectively.
-  
+
 # dynamite 1.0.2
 
   * Fixed a name clash issue in Stan code generation.
@@ -53,7 +56,7 @@
 
   * Increased the version number to 1.0.0 to reflect the fact that the package 
     is now fully functional and has successfully passed the rOpenSci review.
-  
+
 # dynamite 0.0.3
 
   * `get_prior`, `get_code`, and `get_data` now support case without `group` 
