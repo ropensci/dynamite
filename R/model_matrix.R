@@ -121,16 +121,12 @@ test_collinearity <- function(y, mm, data) {
 #' A streamlined Version of `full_model.matrix` for Prediction
 #'
 #' @param formula_list \[`list`]\cr A `list` of `formula` objects.
-#' @param newdata \[`data.table`]\cr Data containing the variables in the model.
-#' @param idx \[`integer()`]\cr A vector of row indices to subset with.
+#' @param sub \[`data.table`]\cr Subset of data containing
+#'   the variables in the model.
 #' @param u_names \[`character()`]\cr A vector of unique column names of
 #'   the resulting matrix.
 #' @noRd
-full_model.matrix_predict <- function(formula_list, newdata_resp, newdata_pred,
-                                      idx_resp, idx_pred, n_draws, u_names) {
-  sub_resp <- newdata_resp[idx_resp, ]
-  sub_pred <- newdata_pred[idx_pred, ]
-  sub <- cbind(sub_resp, sub_pred)
+full_model.matrix_predict <- function(formula_list, sub, u_names) {
   model_matrices <- lapply(formula_list, function(x) {
     model_matrices_type <- list()
     for (type in c("fixed", "varying", "random")) {

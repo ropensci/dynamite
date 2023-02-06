@@ -358,6 +358,7 @@ predict_full <- function(object, simulated, observed, type, eval_type,
   resp_stoch <- get_responses(object$dformulas$stoch)
   families <- get_families(object$dformulas$all)
   model_topology <- attr(object$dformulas$all, "model_topology")
+  specials <- evaluate_specials(object$dformulas$all, observed)
   lhs_ld <- get_responses(object$dformulas$lag_det)
   rhs_ld <- get_predictors(object$dformulas$lag_det)
   lhs_ls <- get_responses(object$dformulas$lag_stoch)
@@ -380,7 +381,6 @@ predict_full <- function(object, simulated, observed, type, eval_type,
     new_levels,
     group_var
   )
-  specials <- evaluate_specials(object$dformulas$all, observed)
   time <- observed[[time_var]]
   u_time <- unique(time)
   n_time <- length(u_time)
@@ -399,22 +399,19 @@ predict_full <- function(object, simulated, observed, type, eval_type,
     assign_lags(simulated, idx, ro_ld, lhs_ld, rhs_ld, skip, n_draws)
     assign_lags(simulated, idx, ro_ls, lhs_ls, rhs_ls, skip, n_draws)
     for (j in model_topology) {
+      sub <- cbind(simulated[idx, ], observed[idx_obs, ])
       if (is_deterministic(families[[j]])) {
         assign_deterministic_predict(
           simulated,
-          observed,
+          sub,
           idx,
-          idx_obs,
           resp[j],
           formula_rhs(object$dformulas$all[[j]]$formula)
         )
       } else {
         model_matrix <- full_model.matrix_predict(
           formulas_stoch,
-          simulated,
-          observed,
-          idx,
-          idx_obs,
+          sub,
           object$stan$u_names
         )
         e <- eval_envs[[j]]
@@ -479,6 +476,7 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
   resp_stoch <- get_responses(object$dformulas$stoch)
   families <- get_families(object$dformulas$all)
   model_topology <- attr(object$dformulas$all, "model_topology")
+  specials <- evaluate_specials(object$dformulas$all, observed)
   lhs_ld <- get_responses(object$dformulas$lag_det)
   rhs_ld <- get_predictors(object$dformulas$lag_det)
   lhs_ls <- get_responses(object$dformulas$lag_stoch)
@@ -548,7 +546,6 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
     new_levels,
     group_var
   )
-  specials <- evaluate_specials(object$dformulas$all, observed)
   time_offset <- which(unique(object$data[[time_var]]) == u_time[1L]) - 1L
   skip <- TRUE
   for (i in seq.int(fixed + 1L, n_time)) {
@@ -560,22 +557,19 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
     assign_lags(simulated, idx, ro_ld, lhs_ld, rhs_ld, skip, n_sim)
     assign_lags(simulated, idx, ro_ls, lhs_ls, rhs_ls, skip, n_sim)
     for (j in model_topology) {
+      sub <- cbind(simulated[idx, ], observed[idx_obs, ])
       if (is_deterministic(families[[j]])) {
         assign_deterministic_predict(
           simulated,
-          observed,
+          sub,
           idx,
-          idx_obs,
           resp[j],
           formula_rhs(object$dformulas$all[[j]]$formula)
         )
       } else {
         model_matrix <- full_model.matrix_predict(
           formulas_stoch,
-          simulated,
-          observed,
-          idx,
-          idx_obs,
+          sub,
           object$stan$u_names
         )
         e <- eval_envs[[j]]
