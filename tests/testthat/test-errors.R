@@ -1159,24 +1159,34 @@ test_that("plot_betas errors when incorrect parameters are supplied", {
     plot_betas(gaussian_example_fit, parameters = "delta_y_x"),
     paste0(
       "Parameter `delta_y_x` not found or it is of wrong type:\n",
-      'x Use `get_parameter_names\\(\\)` with `types = "beta"` to check ',
+      'i Use `get_parameter_names\\(\\)` with `types = "beta"` to check ',
       'suitable parameter names\\.'
     )
   )
 })
+
 test_that("plot_deltas errors when incorrect parameters are supplied", {
   expect_error(
     plot_deltas(gaussian_example_fit, parameters = c("a", "delta_y_x")),
     paste0(
       "Parameter `a` not found or it is of wrong type:\n",
-      'x Use `get_parameter_names\\(\\)` with `types = "delta"` to check ',
+      'i Use `get_parameter_names\\(\\)` with `types = "delta"` to check ',
       'suitable parameter names\\.'
     )
   )
 })
+
 test_that("plot_nus errors when incorrect parameters are supplied", {
   expect_error(
     plot_nus(gaussian_example_fit, parameters = 5),
     "Argument `parameters` must be a <character> vector\\."
+  )
+  expect_error(
+    plot_nus(gaussian_example_fit, parameters = "test"),
+    paste0(
+      "Parameter `test` not found or it is of wrong type:\n",
+      'i Use `get_parameter_names\\(\\)` with `types = "nu"` to check ',
+      'suitable parameter names\\.'
+    )
   )
 })

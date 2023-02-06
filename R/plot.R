@@ -136,7 +136,7 @@ plot_deltas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
       c(
         "Parameter{?s} {.var {parameters[!found_pars]}} not found or
         {?it is/they are} of wrong type:",
-        `x` = 'Use {.fun get_parameter_names} with {.arg types = "delta"} to
+        `i` = 'Use {.fun get_parameter_names} with {.arg types = "delta"} to
         check suitable parameter names.'
       )
     )
@@ -236,7 +236,7 @@ plot_betas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
       c(
         "Parameter{?s} {.var {parameters[!found_pars]}} not found or
         {?it is/they are} of wrong type:",
-        `x` = 'Use {.fun get_parameter_names} with {.arg types = "beta"} to
+        `i` = 'Use {.fun get_parameter_names} with {.arg types = "beta"} to
         check suitable parameter names.'
       )
     )
@@ -326,7 +326,7 @@ plot_nus <- function(x, parameters = NULL, responses = NULL, level = 0.05,
       c(
         "Parameter{?s} {.var {parameters[!found_pars]}} not found or
         {?it is/they are} of wrong type:",
-        `x` = 'Use {.fun get_parameter_names} with {.arg types = "nu"} to
+        `i` = 'Use {.fun get_parameter_names} with {.arg types = "nu"} to
         check suitable parameter names.'
       )
     )
