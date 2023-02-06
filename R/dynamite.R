@@ -69,6 +69,10 @@
 #'   if set to `FALSE`. Defaults to `TRUE`.
 #' @param verbose_stan \[`logical(1)`]\cr This is the `verbose` argument for
 #'   [rstan::sampling()]. Defaults to `FALSE`.
+#' @param stanc_options \[`list()`]\cr This is the `stanc_options` argument
+#'   passed to the compile method of a `CmdStanModel` object via
+#'   [cmdstanr::cmdstan_model()] when `backend = "cmdstanr"`.
+#'   Defaults to `list("O1")` to enable level one compiler optimizations.
 #' @param debug \[`list()`]\cr A named list of form `name = TRUE` indicating
 #'   additional objects in the environment of the `dynamite` function which are
 #'   added to the return object. Additionally, values `no_compile = TRUE` and
@@ -148,7 +152,8 @@
 #'
 dynamite <- function(dformula, data, time, group = NULL,
                      priors = NULL, backend = "rstan",
-                     verbose = TRUE, verbose_stan = FALSE, debug = NULL, ...) {
+                     verbose = TRUE, verbose_stan = FALSE,
+                     stanc_options = list("O1"), debug = NULL, ...) {
   stopifnot_(
     !missing(dformula),
     "Argument {.arg dformula} is missing."
@@ -238,10 +243,11 @@ dynamite <- function(dformula, data, time, group = NULL,
     group,
     time,
     priors,
+    backend,
     verbose,
     verbose_stan,
+    stanc_options,
     debug,
-    backend,
     ...
   )
   # extract elements for debug argument
@@ -279,7 +285,8 @@ dynamite <- function(dformula, data, time, group = NULL,
 #' @param data_name Name of the `data` object.
 #' @noRd
 dynamite_stan <- function(dformulas, data, data_name, group, time,
-                          priors, verbose, verbose_stan, debug, backend, ...) {
+                          priors, backend, verbose, verbose_stan,
+                          stanc_options, debug, ...) {
   stan_input <- prepare_stan_input(
     dformulas$stoch,
     data,
@@ -301,8 +308,9 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     is.null(debug) || is.null(debug$stanfit),
     dynamite_model(
       compile = is.null(debug) || !isTRUE(debug$no_compile),
+      model_code = model_code,
       backend = backend,
-      model_code = model_code
+      stanc_options = stanc_options
     ),
     debug$stanfit
   )
@@ -323,17 +331,17 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
 
 #' Compile a Stan Model for `dynamite`
 #'
+#' @inheritParams dynamite
 #' @param compile \[`logical(1)`]\cr Should the model be compiled?
-#' @param backend \[`character(1)`]\cr `"rstan"` or `"cmdstanr"`.
 #' @param model_code \[`logical(1)`]\cr The model code as a string.
 #' @noRd
-dynamite_model <- function(compile, backend, model_code) {
+dynamite_model <- function(compile, model_code, backend, stanc_options) {
   if (compile) {
     if (backend == "rstan") {
       rstan::stan_model(model_code = model_code)
     } else {
       file <- cmdstanr::write_stan_file(model_code)
-      cmdstanr::cmdstan_model(file, stanc_options = list("O1"))
+      cmdstanr::cmdstan_model(file, stanc_options = stanc_options)
     }
   } else {
     NULL

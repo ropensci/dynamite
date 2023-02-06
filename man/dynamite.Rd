@@ -16,6 +16,7 @@ dynamite(
   backend = "rstan",
   verbose = TRUE,
   verbose_stan = FALSE,
+  stanc_options = list("O1"),
   debug = NULL,
   ...
 )
@@ -65,6 +66,11 @@ if set to \code{FALSE}. Defaults to \code{TRUE}.}
 
 \item{verbose_stan}{[\code{logical(1)}]\cr This is the \code{verbose} argument for
 \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}. Defaults to \code{FALSE}.}
+
+\item{stanc_options}{[\code{list()}]\cr This is the \code{stanc_options} argument
+passed to the compile method of a \code{CmdStanModel} object via
+\code{\link[cmdstanr:cmdstan_model]{cmdstanr::cmdstan_model()}} when \code{backend = "cmdstanr"}.
+Defaults to \code{list("O1")} to enable level one compiler optimizations.}
 
 \item{debug}{[\code{list()}]\cr A named list of form \code{name = TRUE} indicating
 additional objects in the environment of the \code{dynamite} function which are
