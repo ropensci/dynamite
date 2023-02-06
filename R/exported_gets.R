@@ -118,7 +118,8 @@ get_code_ <- function(x, blocks = NULL) {
     return(x)
   }
   stopifnot_(
-    checkmate::test_character(blocks, null.ok = TRUE)
+    checkmate::test_character(blocks, null.ok = TRUE),
+    "Argument {.arg blocks} must be a {.cls character} vector or NULL."
   )
   block_names <- c(
     "data",

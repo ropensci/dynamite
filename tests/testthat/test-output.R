@@ -169,6 +169,10 @@ test_that("gets can be got", {
     NA
   )
   expect_error(
+    get_code(gaussian_example_fit, blocks = c("parameters", "model")),
+    NA
+  )
+  expect_error(
     get_data(
       obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1),
         family = "gaussian"

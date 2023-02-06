@@ -231,11 +231,12 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   if (!is.null(parameters)) {
     data.table::setkey(out, "parameter")
     found_pars <- parameters %in% unique(out$parameter)
-    stopifnot_(all(found_pars),
+    stopifnot_(
+      all(found_pars),
       c(
-      "Parameter{?s} {.var {parameters[!found_pars]}} not found in
-        the model output.",
-        `x` = "Use {.fun get_parameter_names} to check available parameters."
+        "Parameter{?s} {.var {parameters[!found_pars]}} not found in
+         the model output.",
+        `i` = "Use {.fun get_parameter_names} to check available parameters."
       )
     )
     out <- out[parameters]

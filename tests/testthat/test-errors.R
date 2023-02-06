@@ -815,6 +815,30 @@ test_that("Invalid confint level fails", {
   )
 })
 
+test_that("Invalid parameter name fails", {
+  expect_error(
+    as.data.table(gaussian_example_fit, parameter = "test"),
+    paste0(
+      "Parameter `test` not found in the model output\\.\n",
+      "i Use `get_parameter_names\\(\\)` to check available parameters\\."
+    )
+  )
+})
+
+test_that("Invalid code blocks fail", {
+  expect_error(
+    get_code(gaussian_example_fit, blocks = mean),
+    "Argument `blocks` must be a <character> vector or NULL\\."
+  )
+  expect_error(
+    get_code(gaussian_example_fit, blocks = "block"),
+    paste0(
+      "Invalid Stan blocks provided: block\n",
+      "i Argument `blocks` must be NULL or a subset of .*"
+    )
+  )
+})
+
 # Predict errors ----------------------------------------------------------
 
 gaussian_example_small <- gaussian_example |> dplyr::filter(.data$time < 6)
