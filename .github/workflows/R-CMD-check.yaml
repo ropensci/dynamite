@@ -51,6 +51,7 @@ jobs:
           extra-repositories: |
             https://mc-stan.org/r-packages/
           r-version: ${{ matrix.config.r }}
+          rtools-version: ${{ matrix.config.rtools }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
