@@ -1,5 +1,9 @@
 #' Update Dynamite Model
 #'
+#' Note that using different backend for the original model fit and updating can
+#' lead to error due to different naming of cmdstanr and rstan sampling
+#' arguments.
+#'
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param dformula \[`dynamiteformula`]\cr Updated model formula. By default
 #'   the original formula is used.
@@ -46,11 +50,15 @@ update.dynamitefit <- function(object, dformula = NULL, data = NULL,
     data.table::setattr(data, "data_name", deparse1(substitute(data)))
     call$data <- data
   }
-  if (object$backend == "cmdstanr") {
+  extras <- match.call(expand.dots = FALSE)$...
+  # always ask for recompilation if using cmdstanr
+  # however, this does not necessarily lead to recompilation if original model
+  # was compiled in the same session
+  if (object$backend == "cmdstanr" ||
+      !is.null(extras$backend) && extras$backend == "cmdstanr") {
     recompile <- TRUE
   }
 
-  extras <- match.call(expand.dots = FALSE)$...
   if (length(extras) > 0L) {
     existing <- !is.na(match(names(extras), names(call)))
     for (a in names(extras)[existing]) {
