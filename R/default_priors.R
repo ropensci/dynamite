@@ -141,7 +141,7 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
   S_y <- length(attr(resp_class, "levels"))
   # remove the first level which acts as reference
   resp_levels <- attr(resp_class, "levels")[-1]
-  sd_gamma <- signif(2 * min(1, 1 / sd_x), 2)
+  sd_gamma <- signif(pmax(2 / sd_x, 1), 2)
   priors <- list()
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {
     m <- rep(0.0, S_y - 1L)
