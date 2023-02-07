@@ -1,6 +1,8 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/master/examples
 # This is as CMD-check workflow of dynamite
-# but uses CRAN version of rstan and StanHeaders
+# strike this -> but uses CRAN version of rstan and StanHeaders #
+# does not use CRAN versions as they are broken:
+# https://github.com/stan-dev/rstan/wiki/Configuring-C---Toolchain-for-Windows#r-42
 
 on:
   push:
@@ -64,8 +66,8 @@ jobs:
             RcppParallel
             RcppEigen
             Rcpp
-            cran/StanHeaders
-            cran/rstan
+            StanHeaders
+            rstan
             cmdstanr
 
       - name: Build CmdStan
