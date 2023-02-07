@@ -38,7 +38,9 @@ new backend is \code{cmdstanr}.}
 Updated \code{dynamitefit} object.
 }
 \description{
-Update Dynamite Model
+Note that using a different backend for the original model fit and when
+updating can lead to an error due to different naming in  \code{cmdstanr} and
+\code{rstan} sampling arguments.
 }
 \examples{
 \dontrun{

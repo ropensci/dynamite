@@ -1,7 +1,15 @@
 # dynamite 1.1.2
+
   * The argument `verbose_stan` is now ignored when `backend = "cmdstanr"`.
+  * The `stanc_options` argument for defining compiler options when 
+    using `cmdstanr` can now be controlled via `dynamite`.
+  * Optimized column binding of `data.table` objects in `predict` leading to 
+    faster computation.
+  * The `update` method now checks if the `backend` has changed from the 
+    original model fit.
 
 # dynamite 1.1.1
+
   * `plot_deltas` and other plotting functions now throw an error if you try to 
     plot parameters of incorrect type with them.
 

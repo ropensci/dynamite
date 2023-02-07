@@ -1,8 +1,8 @@
 #' Update Dynamite Model
 #'
-#' Note that using different backend for the original model fit and updating can
-#' lead to error due to different naming of cmdstanr and rstan sampling
-#' arguments.
+#' Note that using a different backend for the original model fit and when
+#' updating can lead to an error due to different naming in  `cmdstanr` and
+#' `rstan` sampling arguments.
 #'
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param dformula \[`dynamiteformula`]\cr Updated model formula. By default

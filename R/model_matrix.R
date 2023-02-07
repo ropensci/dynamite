@@ -20,20 +20,17 @@ full_model.matrix <- function(dformula, data, verbose) {
     for (type in c("fixed", "varying", "random")) {
       type_formula <- get_type_formula(dformula[[i]], type)
       if (!is.null(type_formula)) {
-        # Intercept is not part of X
-        model_matrices_type[[i]][[type]] <- remove_intercept(
-          stats::model.matrix.lm(
-            type_formula,
-            data = data,
-            na.action = na.pass
-          )
+        model_matrices_type[[i]][[type]] <- stats::model.matrix.lm(
+          type_formula,
+          data = data,
+          na.action = na.pass
         )
       }
     }
     model_matrices[[i]] <- do.call(cbind, model_matrices_type[[i]])
   }
   model_matrix <- do.call(cbind, model_matrices)
-  u_names <- unique(colnames(model_matrix))
+  u_names <- setdiff(unique(colnames(model_matrix)), "(Intercept)")
   model_matrix <- model_matrix[, u_names, drop = FALSE]
   y_names <- get_responses(dformula)
   empty_list <- setNames(
@@ -118,7 +115,7 @@ test_collinearity <- function(y, mm, data) {
   }
 }
 
-#' A streamlined Version of `full_model.matrix` for Prediction
+#' A Streamlined Version of `full_model.matrix` for Prediction
 #'
 #' @param formula_list \[`list`]\cr A `list` of `formula` objects.
 #' @param sub \[`data.table`]\cr Subset of data containing
@@ -132,35 +129,15 @@ full_model.matrix_predict <- function(formula_list, sub, u_names) {
     for (type in c("fixed", "varying", "random")) {
       type_formula <- get_type_formula(x, type)
       if (!is.null(type_formula)) {
-        model_matrices_type[[type]] <- remove_intercept(
-          stats::model.matrix.lm(
-            type_formula,
-            data = sub,
-            na.action = na.pass
-          )
+        model_matrices_type[[type]] <- stats::model.matrix.lm(
+          type_formula,
+          data = sub,
+          na.action = na.pass
         )
       }
     }
     do.call(cbind, model_matrices_type)
   })
   model_matrix <- do.call(cbind, model_matrices)
-  model_matrix <- model_matrix[,
-    !duplicated(colnames(model_matrix)),
-    drop = FALSE
-  ]
   model_matrix[, u_names, drop = FALSE]
-}
-
-#' Remove Intercept from the Model Matrix
-#'
-#' @param x A model matrix from `model.matrix.lm`
-#' @noRd
-remove_intercept <- function(x) {
-  idx <- which(attr(x, "assign") == 0L)
-  if (length(idx) > 0L) {
-    a <- attr(x, "assign")[-idx]
-    x <- x[, -idx, drop = FALSE]
-    attr(x, "assign") <- a
-  }
-  x
 }

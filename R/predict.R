@@ -399,7 +399,7 @@ predict_full <- function(object, simulated, observed, type, eval_type,
     assign_lags(simulated, idx, ro_ld, lhs_ld, rhs_ld, skip, n_draws)
     assign_lags(simulated, idx, ro_ls, lhs_ls, rhs_ls, skip, n_draws)
     for (j in model_topology) {
-      sub <- cbind(simulated[idx, ], observed[idx_obs, ])
+      sub <- cbind_datatable(simulated[idx, ], observed[idx_obs, ])
       if (is_deterministic(families[[j]])) {
         assign_deterministic_predict(
           simulated,
@@ -557,7 +557,7 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
     assign_lags(simulated, idx, ro_ld, lhs_ld, rhs_ld, skip, n_sim)
     assign_lags(simulated, idx, ro_ls, lhs_ls, rhs_ls, skip, n_sim)
     for (j in model_topology) {
-      sub <- cbind(simulated[idx, ], observed[idx_obs, ])
+      sub <- cbind_datatable(simulated[idx, ], observed[idx_obs, ])
       if (is_deterministic(families[[j]])) {
         assign_deterministic_predict(
           simulated,
