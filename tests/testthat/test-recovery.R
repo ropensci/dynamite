@@ -25,7 +25,7 @@ test_that("parameters for the linear regression are recovered as with lm", {
   priors$prior <- c("normal(0, 5)", "std_normal()", "exponential(1)")
   fit_dynamite <- dynamite(obs(y ~ x, family = "gaussian"),
     data = d, time = "time", priors = priors,
-    chains = 1, iter = 2000, refresh = 500
+    chains = 1, iter = 2000, refresh = 0
   )
   expect_equal(coef(fit_dynamite)$mean, coef(fit_lm),
     tolerance = 0.01,
@@ -43,7 +43,7 @@ test_that("parameters for the poisson glm are recovered as with glm", {
 
   fit_glm <- glm(y ~ x, data = d, family = poisson)
   fit_dynamite <- dynamite(obs(y ~ x, family = "poisson"),
-    data = d, time = "time", chains = 1, iter = 2000, refresh = 500
+    data = d, time = "time", chains = 1, iter = 2000, refresh = 0
   )
   expect_equal(coef(fit_dynamite)$mean, coef(fit_glm),
     tolerance = 0.01,
@@ -62,7 +62,7 @@ test_that("parameters for the binomial glm are recovered as with glm", {
 
   fit_glm <- glm(cbind(y, u - y) ~ x, data = d, family = binomial)
   fit_dynamite <- dynamite(obs(y ~ x + trials(u), family = "binomial"),
-    data = d, time = "time", chains = 1, iter = 2000, refresh = 500
+    data = d, time = "time", chains = 1, iter = 2000, refresh = 0
   )
   expect_equal(coef(fit_dynamite)$mean, coef(fit_glm),
     tolerance = 0.01,
@@ -80,7 +80,7 @@ test_that("parameters for the gamma glm are recovered as with glm", {
 
   fit_glm <- glm(y ~ x, data = d, family = Gamma(link = "log"))
   fit_dynamite <- dynamite(obs(y ~ x, family = "gamma"),
-    data = d, time = "time", chains = 1, iter = 2000, refresh = 500
+    data = d, time = "time", chains = 1, iter = 2000, refresh = 0
   )
   expect_equal(coef(fit_dynamite)$mean[1:2], coef(fit_glm),
     tolerance = 0.01,
@@ -144,7 +144,7 @@ test_that("parameters for an AR(1) model are recovered as with arima", {
     group = "id",
     chains = 1,
     iter = 2000,
-    refresh = 500
+    refresh = 0
   )
   fit_arima <- arima(LakeHuron, c(1, 0, 0))
   expect_equal(coef(fit)$mean[2], coef(fit_arima)[1],
@@ -167,7 +167,7 @@ test_that("LOO works for AR(1) model", {
     group = "id",
     chains = 1,
     iter = 2000,
-    refresh = 500
+    refresh = 0
   )
   l <- loo(fit)
   expect_equal(l$estimates,
@@ -194,7 +194,7 @@ test_that("LFO works for AR(1) model", {
     group = "id",
     chains = 1,
     iter = 2000,
-    refresh = 500
+    refresh = 0
   )
   l <- lfo(fit, L = 20)
   expect_equal(l$ELPD, -90.4188604974201, tolerance = 1)
