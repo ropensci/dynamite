@@ -578,8 +578,8 @@ as_data_table_omega_psi <- function(x, draws, n_draws, category, ...) {
 #' @describeIn as_data_table_default Data Table for a "corr_psi" Parameter
 #' @noRd
 as_data_table_corr_psi <- function(x, draws, n_draws, ...) {
-  resp <- attr(x$dformulas$stoch, "lfactor")
-  pairs <- apply(utils::combn(resp, 2L), 2L, paste, collapse = "_")
+  resp <- attr(x$dformulas$stoch, "lfactor")$responses
+  pairs <- apply(utils::combn(resp, 2L), 2L, paste, collapse = "__")
   data.table::data.table(
     parameter = rep(paste0("corr_psi_", pairs), each = n_draws),
     value = c(draws)
