@@ -67,11 +67,10 @@ jobs:
             StanHeaders
             cmdstanr
 
-
-        - name: Build CmdStan
-          run: |
-            cmdstanr::check_cmdstan_toolchain(fix = TRUE)
-            cmdstanr::install_cmdstan()
-          shell: Rscript {0}
+      - name: Build CmdStan
+        run: |
+          cmdstanr::check_cmdstan_toolchain(fix = TRUE)
+          cmdstanr::install_cmdstan()
+        shell: Rscript {0}
 
       - uses: r-lib/actions/check-r-package@v2
