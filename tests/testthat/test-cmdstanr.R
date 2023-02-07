@@ -28,7 +28,8 @@ test_that("stanc_options argument works", {
     gaussian_example,
     "time",
     "id",
-    chains = 1,
+    parallel_chains = 2,
+    chains = 2,
     refresh = 0,
     backend = "cmdstanr",
     stanc_options = list("O0")
@@ -47,7 +48,8 @@ test_that("LOO and LFO works for AR(1) model estimated with cmdstanr", {
     time = "time",
     group = "id",
     chains = 1,
-    iter = 2000,
+    iter_sampling = 1000,
+    iter_warmup = 1000,
     refresh = 0,
     backend = "cmdstanr"
   )
