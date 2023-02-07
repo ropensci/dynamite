@@ -50,7 +50,6 @@ jobs:
         with:
           extra-repositories: |
             https://mc-stan.org/r-packages/
-           # https://Rdatatable.gitlab.io/data.table
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
