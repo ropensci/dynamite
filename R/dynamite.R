@@ -796,10 +796,12 @@ parse_components <- function(dformulas, data, time_var) {
         if (is.null(random_formula)) {
           0L
         } else {
-          mm <- remove_intercept(
-            stats::model.matrix.lm(random_formula, data)
-          )
-          ncol(mm) + 1L * formula$has_random_intercept
+          #mm <- stats::model.matrix.lm(random_formula, data)
+          #mm <- ifelse_(
+          #  formula$has_random_intercept
+          #)
+          #ncol(mm) + 1L * formula$has_random_intercept
+          ncol(stats::model.matrix.lm(random_formula, data))
         }
       },
       integer(1L)

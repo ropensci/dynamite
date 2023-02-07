@@ -56,6 +56,16 @@ drop_terms <- function(termobj, dropx) {
   }
 }
 
+#' Faster Column Bind for `data.table` Objects
+#'
+#' @param ... `data.table` objects.
+#' @noRd
+cbind_datatable <- function(...) {
+  data.table::setattr(
+    do.call(c, list(...)), "class", c("data.table", "data.frame")
+  )
+}
+
 #' Drops Variables from the Data That Are Not Used by Any Model Formula
 #'
 #' @inheritParams dynamite
