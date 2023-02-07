@@ -38,7 +38,8 @@ Imports:
     stats,
     tibble (>= 2.0.0),
     utils
-Suggests: 
+Suggests:
+    bookdown,
     cmdstanr,
     covr,
     dplyr,
