@@ -393,8 +393,8 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
   oname <- ifelse_(noncentered, "omega_raw_", "omega_")
   allow_intercept <- !(has_lfactor && nonzero_lambda)
   if (!allow_intercept && (has_fixed_intercept || has_varying_intercept)) {
-    warning_(("Separate common intercept term of channel {y} was removed as
-      channel predictors contain possibly nonzero latent factor."))
+    warning_("Separate common intercept term of channel {y} was removed as
+      channel predictors contain possibly nonzero latent factor.")
   }
   paste_rows(
     onlyif(has_fixed, "vector[K_fixed_{y}] beta_{y}; // Fixed coefficients"),

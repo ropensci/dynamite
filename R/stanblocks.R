@@ -213,7 +213,7 @@ create_transformed_parameters <- function(dformula, idt, vars) {
   P <- length(psis)
   if (P > 0) {
     if (attr(vars, "lfactor_def")$noncentered_psi) {
-      tau_psi <- ifelse_(
+      tau_psi <- ifelse(
         attr(vars, "lfactor_def")$nonzero_lambda,
         paste0("tau_psi_", psis, " * "),
         ""
@@ -463,16 +463,15 @@ create_generated_quantities <- function(dformula, idt, vars) {
       collapse = ", "
     )
     gen_psi <- paste_rows(
-      "vector[P] tau_psi = [{tau}]';",
-      "corr_matrix[P] corr_matrix_psi =
-       multiply_lower_tri_self_transpose(diag_pre_multiply(tau_psi, L_lf));",
+      paste0("corr_matrix[P] corr_matrix_psi = ",
+        "multiply_lower_tri_self_transpose(L_lf);"),
       "vector<lower=-1,upper=1>[{(P * (P - 1L)) %/% 2L}] corr_psi;",
       "for (k in 1:P) {{",
       "for (j in 1:(k - 1)) {{",
       "corr_psi[choose(k - 1, 2) + j] = corr_matrix_psi[j, k];",
       "}}",
       "}}",
-      .indent = idt(c(1, 1, 1, 1, 2, 3, 2, 1))
+      .indent = idt(c(1, 1, 1, 2, 3, 2, 1))
     )
   }
   if (any(nzchar(gen_nu)) || any(nzchar(gen_psi))) {
