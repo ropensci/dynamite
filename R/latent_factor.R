@@ -7,7 +7,8 @@
 #' the linear predictor we have a term \eqn{\lambda_i \psi_t} for each group i.
 #' In order to keep the full the factor loadings \eqn{\lambda}, the latent
 #' factor \eqn{\psi} and the full model identifiable, some restrictions are
-#' added to the model. Details will be available in an upcoming paper.
+#' added to the model. Details will be available in an upcoming paper. This
+#' component should be treated as experimental feature.
 #'
 #' @export
 #' @param responses \[`character()`]\cr Names of the responses for which the

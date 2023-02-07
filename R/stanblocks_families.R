@@ -396,6 +396,8 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
     warning_("Separate common intercept term of channel {y} was removed as
       channel predictors contain possibly nonzero latent factor.")
   }
+  # positivity constraint to deal with label-switching
+  tr <- ifelse(has_lfactor && !nonzero_lambda, "<lower=0>", "")
   paste_rows(
     onlyif(has_fixed, "vector[K_fixed_{y}] beta_{y}; // Fixed coefficients"),
     onlyif(
@@ -432,8 +434,8 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
       "vector[N - 1] lambda_raw_{y}; // raw factor loadings"
     ),
     onlyif(
-      has_lfactor && noncentered_psi,
-      "real omega_raw_psi_1_{y}; // factor spline coef for first time point"
+      has_lfactor,
+      "real{tr} omega_raw_psi_1_{y}; // factor spline coef for first time point"
     ),
     .indent = idt(1)
   )
@@ -701,6 +703,12 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     state_omega_psi <- paste_rows(
       "omega_psi_{y}[1] = omega_raw_psi_1_{y};",
       "omega_psi_{y} = cumulative_sum(omega_psi_{y});",
+      .indent = idt(1),
+      .parse = FALSE
+    )
+  } else {
+    state_omega_psi <- paste_rows(
+      "omega_psi_{y}[1] = omega_raw_psi_1_{y};",
       .indent = idt(1),
       .parse = FALSE
     )
@@ -1043,11 +1051,7 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
       ),
       "sigma_lambda_{y} ~ {sigma_lambda_prior_distr};",
       onlyif(nonzero_lambda, "tau_psi_{y} ~ {tau_psi_prior_distr};"),
-      ifelse_(
-        noncentered_psi,
-        "omega_raw_psi_1_{y} ~ {psi_prior_distr};",
-        "omega_psi_{y}[1] ~ {psi_prior_distr};"
-      ),
+      "omega_raw_psi_1_{y} ~ {psi_prior_distr};",
       .indent = idt(c(0, 1, 1, 1)),
       .parse = TRUE
     )

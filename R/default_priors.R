@@ -47,7 +47,7 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
       category = ""
     )
     if (channel$nonzero_lambda) {
-      channel$tau_psi_prior_distr <- paste0("normal(0,", sd_y, ")")
+      channel$tau_psi_prior_distr <- paste0("normal(0, ", sd_y, ")")
       priors$tau_psi <- data.frame(
         parameter = paste0("tau_psi_", y),
         response = y,
