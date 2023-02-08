@@ -26,7 +26,7 @@ effects and loadings. Non-applicable fields in the this syntax are set
 to \code{NA}.
 }
 \description{
-Credible Intervals for Dynamite Model Parameters
+Extracts credible intervals from \code{dynamitefit} object.
 }
 \examples{
 confint(gaussian_example_fit, level = 0.9)

@@ -1,5 +1,7 @@
 #' Credible Intervals for Dynamite Model Parameters
 #'
+#' Extracts credible intervals from `dynamitefit` object.
+#'
 #' @export
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param parm Ignored.
