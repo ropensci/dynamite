@@ -3,7 +3,9 @@ title: "dynamite"
 link-citations: yes
 output:
   bookdown::html_document2:
-      base_format: rmarkdown::html_vignette
+    base_format: rmarkdown::html_vignette
+pkgdown:
+  as_is: true
 bibliography: dynamite.bib
 vignette: >
   %\VignetteIndexEntry{dynamite} 
