@@ -21,6 +21,11 @@ test_that("manual prior setting works", {
 })
 
 test_that("extracted priors match initial priors", {
+  fit <- dynamite(
+    f,
+    data = gaussian_example, time = "time", group = "id",
+    priors = p, debug = list(no_compile = TRUE)
+  )
   p <- get_priors(gaussian_example_fit)
   expect_identical(get_priors(fit), p)
 })

@@ -84,7 +84,7 @@ with a user defined prior \(p(\omega^c_{k,1})\) on the first coefficient, which 
 
 # The dynamite package {#sec:dynamitepackage}
 
-The `dynamite` package provides an easy-to-use interface for fitting DMPMs in R. As the package is part of rOpenSci ((htps://ropensci.org)), it complies with its rigorous software standards and the development version of `dynamite` can be installed from the R-universe system (https://ropensci.org/r-universe/). The stable version of the package is available from CRAN at (https://cran.r-project.org/package=dynamite). The software is published under the GNU general public license (GPL \(\geq\) 3) and can be obtained in R by running the following commands:
+The `dynamite` package provides an easy-to-use interface for fitting DMPMs in R. As the package is part of rOpenSci (https://ropensci.org), it complies with its rigorous software standards and the development version of `dynamite` can be installed from the R-universe system (https://ropensci.org/r-universe/). The stable version of the package is available from CRAN at (https://cran.r-project.org/package=dynamite). The software is published under the GNU general public license (GPL \(\geq\) 3) and can be obtained in R by running the following commands:
 
 ```{r dynamiteinstall, echo=TRUE, eval=FALSE}
 install.packages("dynamite")
@@ -385,7 +385,7 @@ In general, dynamic latent factors are not identifiable without imposing some co
 
 ## Auxiliary channels {#sec:auxiliary}
 
-In addition to declaring response variables via `obs()`, we can also use the function `aux()` to define auxiliary channels which are deterministic functions of other variables in the model. Defining these auxiliary variables explicitly instead of defining them implicitly on the right-hand side of the formulas (i.e., by using the ``as is'' function `I()`) makes the subsequent prediction steps more clear and allows easier checks on the model validity. In fact, we do not allow the use of `I()` in the `formula` argument of `dynamiteformula()`. The values of auxiliary variables are computed automatically when fitting the model, and dynamically during prediction, making the use of lagged values and other transformations possible in prediction as well. An example of a model formula using an auxiliary channel could be
+In addition to declaring response variables via `obs()`, we can also use the function `aux()` to define auxiliary channels which are deterministic functions of other variables in the model. Defining these auxiliary variables explicitly instead of defining them implicitly on the right-hand side of the formulas (i.e., by using the "as is" function `I()`) makes the subsequent prediction steps more clear and allows easier checks on the model validity. In fact, we do not allow the use of `I()` in the `formula` argument of `dynamiteformula()`. The values of auxiliary variables are computed automatically when fitting the model, and dynamically during prediction, making the use of lagged values and other transformations possible in prediction as well. An example of a model formula using an auxiliary channel could be
 
 ```{r formulawithaux, echo=TRUE, eval=FALSE}
 obs(y ~ lag(log1x), family = "gaussian") +
