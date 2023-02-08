@@ -7,7 +7,9 @@ test_that("cmdstanr backend works for categorical model", {
   skip_if_not(run_extended_tests)
   set.seed(1)
 
-  fit_dynamite <- update(categorical_example_fit,
+  fit_dynamite <- update(
+    categorical_example_fit,
+    stanc_options = list("O0"),
     backend = "cmdstanr"
   )
   expect_equal(coef(fit_dynamite)$mean[1], -0.5,
@@ -51,7 +53,8 @@ test_that("LOO and LFO works for AR(1) model estimated with cmdstanr", {
     iter_sampling = 1000,
     iter_warmup = 1000,
     refresh = 0,
-    backend = "cmdstanr"
+    backend = "cmdstanr",
+    stanc_options = list("O0")
   )
   l <- loo(fit)
   expect_equal(l$estimates,
