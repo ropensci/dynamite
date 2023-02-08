@@ -1,6 +1,26 @@
 citHeader("To cite dynamite in publications use:")
 
 bibentry(
+  key = "dynamitepaper",
+  bibtype  = "Misc",
+  doi = "10.48550/ARXIV.2302.01607",
+  url = "https://arxiv.org/abs/2302.01607",
+  author = "Tikka, Santtu and Helske, Jouni",
+  title = "dynamite: An R Package for Dynamic Multivariate Panel Models",
+  publisher = "arXiv",
+  year = "2023"
+)
+bibentry(
+  key = "dmpmpaper",
+  bibtype  = "Misc",
+  title    = "Estimating Causal Effects from Panel Data with Dynamic Multivariate Panel Models",
+  author   = "Jouni Helske and Santtu Tikka",
+  publisher = "SocArxiv",
+  year     = "2022",
+  url      = "https://osf.io/preprints/socarxiv/mdwu5/"
+)
+
+bibentry(
   key = "dynamite",
   bibtype  = "Manual",
   title    = "Bayesian Modeling and Causal Inference for Multivariate
@@ -10,12 +30,5 @@ bibentry(
   year     = "2022",
   url      = "https://github.com/ropensci/dynamite"
 )
-bibentry(
-  key = "dynamitepaper",
-  bibtype  = "Misc",
-  title    = "Estimating Causal Effects from Panel Data with Dynamic Multivariate Panel Models",
-  author   = "Jouni Helske and Santtu Tikka",
-  publisher = "SocArxiv",
-  year     = "2022",
-  url      = "https://osf.io/preprints/socarxiv/mdwu5/"
-)
+
+

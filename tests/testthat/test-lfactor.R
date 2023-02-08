@@ -73,4 +73,24 @@ test_that("latent factors work", {
     summary(fit3, types = c("alpha", "beta", "sigma"))$mean,
     tolerance = 0.1
   )
+
+  expect_error(
+    dynamite(
+      obs(y1 ~ -1 + x, family = "poisson") + obs(y2 ~ x, family = "gaussian") +
+        lfactor(responses = c("y1", "y2"),
+          noncentered_psi = TRUE, noncentered_lambda = TRUE,
+          correlated = TRUE, nonzero_lambda = FALSE) + splines(30),
+      data = d, time = "time", group = "id", debug = list(no_compile = TRUE)),
+    NA
+  )
+  expect_warning(
+    dynamite(
+      obs(y1 ~ -1 + x, family = "poisson") + obs(y2 ~ x, family = "gaussian") +
+        lfactor(responses = c("y1", "y2"),
+          noncentered_psi = TRUE, noncentered_lambda = TRUE,
+          correlated = TRUE, nonzero_lambda = TRUE) + splines(30),
+      data = d, time = "time", group = "id", debug = list(no_compile = TRUE)),
+    paste0("Common intercept term of channel `y2` was removed as ",
+      "channel predictors contain possibly nonzero latent factor\\.")
+  )
 })

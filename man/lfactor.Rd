@@ -49,7 +49,8 @@ each group, there is an additional loading variable for each group so that in
 the linear predictor we have a term \eqn{\lambda_i \psi_t} for each group i.
 In order to keep the full the factor loadings \eqn{\lambda}, the latent
 factor \eqn{\psi} and the full model identifiable, some restrictions are
-added to the model. Details will be available in an upcoming paper.
+added to the model. Details will be available in an upcoming paper. This
+component should be treated as experimental feature.
 }
 \examples{
 # three channel model with common factor affecting for responses x and y

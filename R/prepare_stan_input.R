@@ -369,7 +369,7 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
     types <- priors$type
     loop_types <- intersect(
       types,
-      c("alpha", "tau_alpha", "sigma_lambda", "tau_psi")
+      c("alpha", "tau_alpha", "sigma_lambda", "tau_psi", "psi")
     )
     for (ptype in loop_types) {
       pdef <- priors[priors$type == ptype, ]
@@ -419,7 +419,7 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
     types <- priors$type
     loop_types <- intersect(
       types,
-      c("alpha", "beta", "delta", "tau", "sigma_nu")
+      c("alpha", "beta", "delta", "tau", "sigma_nu", "psi")
     )
     for (ptype in loop_types) {
       channel <- prepare_prior(ptype, priors, channel)

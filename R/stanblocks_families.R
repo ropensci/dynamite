@@ -393,9 +393,11 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
   oname <- ifelse_(noncentered, "omega_raw_", "omega_")
   allow_intercept <- !(has_lfactor && nonzero_lambda)
   if (!allow_intercept && (has_fixed_intercept || has_varying_intercept)) {
-    warning_("Separate common intercept term of channel {y} was removed as
+    warning_(
+    "Common intercept term of channel {.var {y}} was removed as
       channel predictors contain possibly nonzero latent factor.")
-  }
+  } #TODO why is this here, should be dealt earlier...
+
   # positivity constraint to deal with label-switching
   tr <- ifelse(has_lfactor && !nonzero_lambda, "<lower=0>", "")
   paste_rows(

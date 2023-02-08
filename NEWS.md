@@ -10,6 +10,7 @@
   * Fixed a bug in the default prior definitions of intercept for families using 
     log-link which lead to a prior mean -Inf if all observations at the first 
     time point were zero.
+  * Fixed some issues in the code generation of latent factor components.
 
 # dynamite 1.1.1
 
