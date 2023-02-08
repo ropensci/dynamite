@@ -7,6 +7,9 @@
     faster computation.
   * The `update` method now checks if the `backend` has changed from the 
     original model fit.
+  * Fixed a bug in the default prior definitions of intercept for families using 
+    log-link which lead to a prior mean -Inf if all observations at the first 
+    time point were zero.
 
 # dynamite 1.1.1
 

@@ -343,6 +343,16 @@ test_that("Latent factor errors with nonlogical value for argument correlated", 
     "Argument `correlated` must be a single <logical> value\\."
   )
 })
+test_that("update fails with incompatible formula", {
+  expect_error(
+    update(
+      multichannel_example_fit,
+      obs(y ~ x, family = "gaussian"),
+      debug = list(no_compile = TRUE)
+    ),
+    "Can't find variable `x` in `data`\\."
+  )
+})
 # Formula specials errors -------------------------------------------------
 
 test_that("no intercept or predictors fails", {
@@ -1031,6 +1041,17 @@ test_that("incomplete priors fails", {
       data = gaussian_example,
       time = "time",
       group = "id",
+      priors = p2,
+      debug = list(no_compile = TRUE)
+    ),
+    paste0(
+      "Argument `priors` must contain all relevant parameters:\n",
+      "x Prior for parameter `sigma_nu_y_alpha` is not defined\\."
+    )
+  )
+
+  expect_error(
+    update(gaussian_example_fit,
       priors = p2,
       debug = list(no_compile = TRUE)
     ),

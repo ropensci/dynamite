@@ -460,10 +460,10 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
     sd_y <- sd(Y, na.rm = TRUE)
     mean_y <- Y[1L]
   }
-  if (is.na(sd_y) || identical(sd_y, 0.0)) {
+  if (!is.finite(sd_y) || identical(sd_y, 0.0)) {
     sd_y <- 1.0
   }
-  if (is.na(mean_y)) {
+  if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }
   sd_gamma <- 2.0 * sd_y / sd_x
@@ -574,7 +574,7 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
   } else {
     mean_y <- log(Y[1L])
   }
-  if (is.na(mean_y)) {
+  if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }
   sd_gamma <- 2.0 / sd_x
@@ -618,7 +618,7 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
   } else {
     mean_y <- log(Y[1L])
   }
-  if (is.na(mean_y)) {
+  if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }
   sd_gamma <- 2.0 / sd_x
@@ -680,7 +680,7 @@ prepare_channel_exponential <- function(y, Y, channel, sd_x, resp_class,
   } else {
     mean_y <- log(Y[1L])
   }
-  if (is.na(mean_y)) {
+  if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }
   sd_gamma <- 2.0 / sd_x
@@ -712,7 +712,7 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
     abort_factor(y, "Gamma", call = rlang::caller_env())
   }
   Y_obs <- Y[!is.na(Y)]
-  if (any(Y_obs <= 0.0)) {
+  if (any(Y_obs < 0.0)) {
     abort_negative(y, "Gamma", type = "values", call = rlang::caller_env())
   }
   sd_y <- 1.0
@@ -721,7 +721,7 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
   } else {
     mean_y <- log(Y[1L])
   }
-  if (is.na(mean_y)) {
+  if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }
   sd_gamma <- 2.0 / sd_x
@@ -779,7 +779,7 @@ prepare_channel_beta <- function(y, Y, channel, sd_x, resp_class, priors) {
   } else {
     mean_y <- log(Y[1L])
   }
-  if (is.na(mean_y)) {
+  if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }
   sd_gamma <- 2.0 / sd_x
