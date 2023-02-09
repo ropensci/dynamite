@@ -193,7 +193,7 @@ test_that("gets can be got", {
   )
   expect_equal(
     get_parameter_types(latent_factor_example_fit),
-    c("sigma", "lambda", "sigma_lambda", "psi", "tau_psi", "omega_psi")
+    c("alpha", "sigma", "lambda", "sigma_lambda", "psi", "tau_psi", "omega_psi")
   )
 })
 

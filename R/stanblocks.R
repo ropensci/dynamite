@@ -43,19 +43,27 @@ create_functions <- function(dformula, idt, vars) {
 #' @describeIn create_function Create The 'Data' Block of the Stan Model Code
 #' @noRd
 create_data <- function(dformula, idt, vars) {
-  has_splines <- any(unlist(lapply(vars, "[[", "has_varying"))) ||
-    any(unlist(lapply(vars, "[[", "has_varying_intercept"))) ||
-    any(unlist(lapply(vars, "[[", "has_lfactor")))
+  has_splines <- any(vapply(vars, "[[", logical(1L), "has_varying")) ||
+    any(vapply(vars, "[[", logical(1L), "has_varying_intercept")) ||
+    any(vapply(vars, "[[", logical(1L), "has_lfactor"))
+  K <- sum(vapply(vars, "[[", integer(1), "K"))
+  M <- attr(vars, "random_def")$M
+  P <- attr(vars, "lfactor_def")$P
   mtext <- paste_rows(
     "int<lower=1> T; // number of time points",
     "int<lower=1> N; // number of individuals",
-    "int<lower=0> K; // total number of covariates across all channels",
-    "matrix[N, K] X[T]; // covariates as an array of N x K matrices",
-    "row_vector[K] X_m; // Means of all covariates at first time point",
+    onlyif(K > 0,
+      "int<lower=0> K; // total number of covariates across all channels"),
+    onlyif(K > 0,
+      "matrix[N, K] X[T]; // covariates as an array of N x K matrices"),
+    onlyif(K > 0,
+      "row_vector[K] X_m; // Means of all covariates at first time point"),
     onlyif(has_splines, "int<lower=1> D; // number of B-splines"),
     onlyif(has_splines, "matrix[D, T] Bs; // B-spline basis matrix"),
-    "int<lower=0> M; // number group-level effects (including intercepts)",
-    "int<lower=0> P; // number of channels with latent factor",
+    onlyif(M > 0,
+      "int<lower=0> M; // number group-level effects (including intercepts)"),
+    onlyif(P > 0,
+      "int<lower=0> P; // number of channels with latent factor"),
     .indent = idt(1),
     .parse = FALSE
   )
@@ -96,7 +104,7 @@ create_transformed_data <- function(dformula, idt, vars) {
     .indent = idt(c(0, 2, 2, 2, 2, 1)),
     .parse = FALSE
   )
-  has_lfactor <- any(unlist(lapply(vars, "[[", "has_lfactor")))
+  has_lfactor <- any(vapply(vars, "[[", logical(1L), "has_lfactor"))
   paste_rows(
     "transformed data {",
     declarations,
@@ -173,7 +181,7 @@ create_transformed_parameters <- function(dformula, idt, vars) {
   randomtext <- ""
   M <- attr(vars, "random_def")$M
   if (M > 0L) {
-    Ks <- unlist(lapply(vars, "[[", "K_random"))
+    Ks <- vapply(vars, "[[", integer(1L), "K_random")
     Ks <- Ks[Ks > 0]
     y <- names(Ks)
     cKs1 <- cumsum(c(1, Ks[-length(Ks)]))
@@ -306,7 +314,7 @@ create_model <- function(dformula, idt, vars, backend) {
       )
     } else {
       M <- attr(vars, "random_def")$M
-      Ks <- unlist(lapply(vars, "[[", "K_random"))
+      Ks <- vapply(vars, "[[", integer(1L), "K_random")
       y <- names(Ks[Ks > 0])
       randomtext <- ifelse_(
         attr(vars, "random_def")$noncentered,
