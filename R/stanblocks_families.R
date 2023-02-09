@@ -2,7 +2,7 @@
 #'
 #' @param prefix \[`character(1)`]\cr Stan model block name, e.g., "model".
 #' @param family \[`character(1)`]\cr Supported family name
-#' @param args Channel specific component of `model_vars`
+#' @param args Channel specific component of `channel_vars`
 #'   (see [create_blocks()])
 #' @noRd
 lines_wrap <- function(prefix, family, args) {

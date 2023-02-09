@@ -295,7 +295,7 @@ as_data_table_xi <- function(x, draws, ...) {
 #' @describeIn as_data_table_default Data Table for a "corr_nu" Parameter
 #' @noRd
 as_data_table_corr_nu <- function(x, draws, n_draws, ...) {
-  vars <- ulapply(x$stan$model_vars, function(x) {
+  vars <- ulapply(x$stan$channel_vars, function(x) {
     icpt <- ifelse_(
       x$has_random_intercept,
       "alpha",
@@ -315,13 +315,13 @@ as_data_table_corr_nu <- function(x, draws, n_draws, ...) {
 #' @noRd
 as_data_table_nu <- function(x, draws, n_draws, response, ...) {
   icpt <- ifelse_(
-    x$stan$model_vars[[response]]$has_random_intercept,
+    x$stan$channel_vars[[response]]$has_random_intercept,
     "alpha",
     NULL
   )
   var_names <- paste0(
     "nu_", response, "_",
-    c(icpt, names(x$stan$model_vars[[response]]$J_random))
+    c(icpt, names(x$stan$channel_vars[[response]]$J_random))
   )
   n_vars <- length(var_names)
   groups <- sort(unique(x$data[[x$group_var]]))
@@ -340,7 +340,7 @@ as_data_table_alpha <- function(x, draws, n_draws,
   n_cat <- length(category)
   fixed <- x$stan$fixed
   all_time_points <- sort(unique(x$data[[x$time_var]]))
-  if (x$stan$model_vars[[response]]$has_varying_intercept) {
+  if (x$stan$channel_vars[[response]]$has_varying_intercept) {
     time_points <- ifelse_(
       include_fixed,
       all_time_points,
@@ -376,7 +376,7 @@ as_data_table_alpha <- function(x, draws, n_draws,
 as_data_table_beta <- function(x, draws, n_draws, response, category, ...) {
   var_names <- paste0(
     "beta_", response, "_",
-    names(x$stan$model_vars[[response]]$J_fixed)
+    names(x$stan$channel_vars[[response]]$J_fixed)
   )
   n_vars <- length(var_names)
   data.table::data.table(
@@ -395,7 +395,7 @@ as_data_table_delta <- function(x, draws, n_draws,
   all_time_points <- sort(unique(x$data[[x$time_var]]))
   var_names <- paste0(
     "delta_", response, "_",
-    names(x$stan$model_vars[[response]]$J_varying)
+    names(x$stan$channel_vars[[response]]$J_varying)
   )
   n_vars <- length(var_names)
   time_points <- ifelse_(
@@ -427,7 +427,7 @@ as_data_table_delta <- function(x, draws, n_draws,
 as_data_table_tau <- function(x, draws, n_draws, response, ...) {
   var_names <- paste0(
     "tau_", response, "_",
-    names(x$stan$model_vars[[response]]$J_varying)
+    names(x$stan$channel_vars[[response]]$J_varying)
   )
   data.table::data.table(
     parameter = rep(var_names, each = n_draws),
@@ -440,7 +440,7 @@ as_data_table_tau <- function(x, draws, n_draws, response, ...) {
 as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
   n_cat <- length(category)
   D <- x$stan$sampling_vars$D
-  var_names <- names(x$stan$model_vars[[response]]$J_varying)
+  var_names <- names(x$stan$channel_vars[[response]]$J_varying)
   k <- length(var_names)
   data.table::data.table(
     parameter = rep(
@@ -486,13 +486,13 @@ as_data_table_sigma <- function(draws, response, ...) {
 #' @noRd
 as_data_table_sigma_nu <- function(x, draws, n_draws, response, ...) {
   icpt <- ifelse_(
-    x$stan$model_vars[[response]]$has_random_intercept,
+    x$stan$channel_vars[[response]]$has_random_intercept,
     "alpha",
     NULL
   )
   var_names <- paste0(
     "sigma_nu_", response, "_",
-    c(icpt, names(x$stan$model_vars[[response]]$J_random))
+    c(icpt, names(x$stan$channel_vars[[response]]$J_random))
   )
   data.table::data.table(
     parameter = rep(var_names, each = n_draws),

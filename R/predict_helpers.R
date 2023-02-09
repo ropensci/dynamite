@@ -453,7 +453,7 @@ prepare_eval_envs <- function(object, simulated, observed,
                               type, eval_type, n_draws,
                               new_levels, group_var) {
   samples <- rstan::extract(object$stanfit)
-  model_vars <- object$stan$model_vars
+  channel_vars <- object$stan$channel_vars
   n_resp <- length(object$dformulas$all)
   eval_envs <- vector(mode = "list", length = n_resp)
   idx_draws <- seq_len(n_draws)
@@ -491,7 +491,7 @@ prepare_eval_envs <- function(object, simulated, observed,
       new_ids = new_ids,
       new_levels = new_levels
     )
-    Ks <- ulapply(object$stan$model_vars, "[[", "K_random")
+    Ks <- ulapply(object$stan$channel_vars, "[[", "K_random")
     dimnames(nu_samples)[[3L]] <- make.unique(rep(nus, times = Ks[Ks > 0]))
   }
   for (i in seq_len(n_resp)) {
@@ -513,13 +513,13 @@ prepare_eval_envs <- function(object, simulated, observed,
     e$n_group <- n_group
     e$n_draws <- n_draws
     e$k <- n_draws * n_group
-    e$J_fixed <- model_vars[[j]]$J_fixed
-    e$K_fixed <- model_vars[[j]]$K_fixed
-    e$J_varying <- model_vars[[j]]$J_varying
-    e$K_varying <- model_vars[[j]]$K_varying
-    e$J_random <- model_vars[[j]]$J_random
-    e$K_random <- model_vars[[j]]$K_random
-    e$has_random_intercept <- model_vars[[j]]$has_random_intercept
+    e$J_fixed <- channel_vars[[j]]$J_fixed
+    e$K_fixed <- channel_vars[[j]]$K_fixed
+    e$J_varying <- channel_vars[[j]]$J_varying
+    e$K_varying <- channel_vars[[j]]$K_varying
+    e$J_random <- channel_vars[[j]]$J_random
+    e$K_random <- channel_vars[[j]]$K_random
+    e$has_random_intercept <- channel_vars[[j]]$has_random_intercept
     e$resp <- resp
     e$phi <- c(samples[[phi]][idx_draws])
     e$sigma <- c(samples[[sigma]][idx_draws])
@@ -532,10 +532,10 @@ prepare_eval_envs <- function(object, simulated, observed,
         attr("levels")
       e$resp_levels <- resp_levels
       e$S <- length(resp_levels)
-      if (model_vars[[j]]$has_fixed_intercept) {
+      if (channel_vars[[j]]$has_fixed_intercept) {
         e$alpha <- samples[[alpha]][idx_draws, , drop = FALSE]
       }
-      if (model_vars[[j]]$has_varying_intercept) {
+      if (channel_vars[[j]]$has_varying_intercept) {
         e$alpha <- samples[[alpha]][idx_draws, , , drop = FALSE]
       }
       e$beta <- samples[[beta]][idx_draws, , , drop = FALSE]
@@ -543,10 +543,10 @@ prepare_eval_envs <- function(object, simulated, observed,
       e$xbeta <- matrix(0.0, e$k, e$S)
     } else {
       resp_levels <- NULL
-      if (model_vars[[j]]$has_fixed_intercept) {
+      if (channel_vars[[j]]$has_fixed_intercept) {
         e$alpha <- array(samples[[alpha]][idx_draws], c(n_draws, 1L))
       }
-      if (model_vars[[j]]$has_varying_intercept) {
+      if (channel_vars[[j]]$has_varying_intercept) {
         e$alpha <- samples[[alpha]][idx_draws, , drop = FALSE]
       }
       e$beta <- samples[[beta]][idx_draws, , drop = FALSE]
@@ -558,13 +558,13 @@ prepare_eval_envs <- function(object, simulated, observed,
       resp_levels,
       resp_family,
       eval_type,
-      model_vars[[j]]$has_fixed,
-      model_vars[[j]]$has_varying,
-      model_vars[[j]]$has_random,
-      model_vars[[j]]$has_fixed_intercept,
-      model_vars[[j]]$has_varying_intercept,
-      model_vars[[j]]$has_random_intercept,
-      model_vars[[j]]$has_offset
+      channel_vars[[j]]$has_fixed,
+      channel_vars[[j]]$has_varying,
+      channel_vars[[j]]$has_random,
+      channel_vars[[j]]$has_fixed_intercept,
+      channel_vars[[j]]$has_varying_intercept,
+      channel_vars[[j]]$has_random_intercept,
+      channel_vars[[j]]$has_offset
     )
     eval_envs[[i]] <- e
   }

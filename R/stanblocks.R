@@ -13,7 +13,8 @@ create_blocks <- function(dformula, ...) {
 #' @inheritParams dynamite
 #' @param indent \[`integer(1)`] How many units of indentation to use for the
 #'   code generation. One unit is equal to one space.
-#' @param cvars \[`list()`]\cr The `model_vars` component of
+#' @param cvars \[`list()`]\cr The `channel_vars` component of
+#' @param cgvars \[`list()`]\cr The `channel_group_vars` component of
 #'   [prepare_stan_input()] output.
 #' @param ... Not used.
 #' @noRd
