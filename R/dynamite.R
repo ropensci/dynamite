@@ -698,7 +698,6 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
   resp_all <- get_responses(dformula)
   resp_stoch <- resp_all[channels_stoch]
   n_channels <- length(resp_all)
-  max_lag <- 0L
   for (i in seq_len(n_channels)) {
     fix_rhs <- complete_lags(formula_rhs(dformula[[i]]$formula))
     dformula[[i]]$formula <- as.formula(
