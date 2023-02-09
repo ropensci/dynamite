@@ -753,6 +753,7 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
     sl$channels[!sl$stoch & !sl$pred]
   )
   ro_lp <- sl$rank[sl$pred]
+  cg <- attr(dformula, "channel_groups")
   attr(dformula_lag_pred, "rank_order") <- order(ro_lp)
   attr(dformula_lag_pred, "original_response") <- sl$resp[sl$pred]
   attr(dformula_lag_pred, "original_shift") <- ro_lp
@@ -764,9 +765,10 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
     det = dformula_det,
     stoch = structure(
       dformula[channels_stoch],
+      channel_groups = rank_(cg[which(channels_stoch)]),
       splines = attr(dformula, "splines"),
       random_spec = attr(dformula, "random_spec"),
-      lfactor = attr(dformula, "lfactor")
+      lfactor = attr(dformula, "lfactor"),
     ),
     lag_pred = dformula_lag_pred,
     lag_det = dformula_lag_det,

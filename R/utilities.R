@@ -338,6 +338,14 @@ ulapply <- function(X, FUN, ...) {
   unlist(lapply(X, FUN, ...))
 }
 
+#' Actual rank for an increasing sequence
+#'
+#' @param x An increasing `numeric` sequence
+#' @noRd
+rank_ <- function(x) {
+  1L + c(0L, cumsum(diff(x) > 0))
+}
+
 #' Number of Unique Values
 #'
 #' @inheritParams data.table::uniqueN

@@ -43,9 +43,9 @@ create_functions <- function(dformula, idt, vars) {
 #' @describeIn create_function Create The 'Data' Block of the Stan Model Code
 #' @noRd
 create_data <- function(dformula, idt, vars) {
-  has_splines <- any(unlist(lapply(vars, "[[", "has_varying"))) ||
-    any(unlist(lapply(vars, "[[", "has_varying_intercept"))) ||
-    any(unlist(lapply(vars, "[[", "has_lfactor")))
+  has_splines <- any(ulapply(vars, "[[", "has_varying")) ||
+    any(ulapply(vars, "[[", "has_varying_intercept")) ||
+    any(ulapply(vars, "[[", "has_lfactor"))
   mtext <- paste_rows(
     "int<lower=1> T; // number of time points",
     "int<lower=1> N; // number of individuals",
@@ -96,7 +96,7 @@ create_transformed_data <- function(dformula, idt, vars) {
     .indent = idt(c(0, 2, 2, 2, 2, 1)),
     .parse = FALSE
   )
-  has_lfactor <- any(unlist(lapply(vars, "[[", "has_lfactor")))
+  has_lfactor <- any(ulapply(vars, "[[", "has_lfactor"))
   paste_rows(
     "transformed data {",
     declarations,
@@ -173,7 +173,7 @@ create_transformed_parameters <- function(dformula, idt, vars) {
   randomtext <- ""
   M <- attr(vars, "random_def")$M
   if (M > 0L) {
-    Ks <- unlist(lapply(vars, "[[", "K_random"))
+    Ks <- ulapply(vars, "[[", "K_random")
     Ks <- Ks[Ks > 0]
     y <- names(Ks)
     cKs1 <- cumsum(c(1, Ks[-length(Ks)]))
@@ -306,7 +306,7 @@ create_model <- function(dformula, idt, vars, backend) {
       )
     } else {
       M <- attr(vars, "random_def")$M
-      Ks <- unlist(lapply(vars, "[[", "K_random"))
+      Ks <- ulapply(vars, "[[", "K_random")
       y <- names(Ks[Ks > 0])
       randomtext <- ifelse_(
         attr(vars, "random_def")$noncentered,

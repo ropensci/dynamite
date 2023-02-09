@@ -124,7 +124,7 @@ extract_nonlags_lang <- function(x) {
   }
   if (is.call(x)) {
     if (!identical(as.character(x[[1L]]), "lag")) {
-      unlist(lapply(x[-1L], extract_nonlags_lang))
+      ulapply(x[-1L], extract_nonlags_lang)
     } else {
       character(0L)
     }

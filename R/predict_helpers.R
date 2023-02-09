@@ -491,7 +491,7 @@ prepare_eval_envs <- function(object, simulated, observed,
       new_ids = new_ids,
       new_levels = new_levels
     )
-    Ks <- unlist(lapply(object$stan$model_vars, "[[", "K_random"))
+    Ks <- ulapply(object$stan$model_vars, "[[", "K_random")
     dimnames(nu_samples)[[3L]] <- make.unique(rep(nus, times = Ks[Ks > 0]))
   }
   for (i in seq_len(n_resp)) {

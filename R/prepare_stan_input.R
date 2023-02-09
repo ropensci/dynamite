@@ -39,6 +39,8 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   })
   specials <- evaluate_specials(dformula, data)
   model_matrix <- full_model.matrix(dformula, data, verbose)
+  cg <- attr(dformula, "channel_groups")
+  n_cg <- length(unique(cg))
   n_channels <- length(resp_names)
   # A list of variables for Stan sampling without grouping by channel
   sampling_vars <- list()
@@ -203,6 +205,13 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     model_vars[[resp]] <- prep$channel
     vectorizable_priors <- extract_vectorizable_priors(prep$channel, resp)
     sampling_vars <- c(sampling_vars, prep$sampling_vars, vectorizable_priors)
+  }
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    if (is_multivariate(dformula[[cg_idx[1L]]]$family)) {
+      # dformula[cg_idx] : Channels of this group
+      # Define priors for multivariate distributions etc.
+    }
   }
   sampling_vars$N <- N
   sampling_vars$K <- K
@@ -502,6 +511,14 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
     out$priors <- check_priors(priors, defaults)
   }
   out
+}
+
+# Just duplicated for now...
+
+#' @describeIn prepare_channel_default Prepare a Multivariate Gaussian Channel
+#' @noRd
+prepare_channel_mvgaussian <- function(y, Y, sd_x, resp_class, priors) {
+  prepare_channel_gaussian(y, Y, sd_x, resp_class, priors)
 }
 
 #' @describeIn prepare_channel_default Prepare a Binomial Channel
