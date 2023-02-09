@@ -330,6 +330,14 @@ onlyif <- function(test, yes) {
   }
 }
 
+#' Unlist lapply
+#'
+#' @inheritParams base::lapply
+#' @noRd
+ulapply <- function(X, FUN, ...) {
+  unlist(lapply(X, FUN, ...))
+}
+
 #' Number of Unique Values
 #'
 #' @inheritParams data.table::uniqueN

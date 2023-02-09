@@ -1,15 +1,54 @@
+#' Parse Channel Formulas for `dynamiteformula
+#'
+#' @param x A `formula` object.
+#' @noRd
+parse_formula <- function(x, original, family) {
+  responses <- all.vars(formula_lhs(x))
+  formula_str <- deparse1(formula_rhs(x))
+  formula_parts <- strsplit(formula_str, "|", fixed = TRUE)[[1L]]
+  n_formulas <- length(formula_parts)
+  n_responses <- length(responses)
+  stopifnot_(
+    n_responses == 1L || (is_multivariate(family) && n_responses > 1L),
+    "A multivariate family must be supplied more than one dimension."
+  )
+  stopifnot_(
+    n_formulas == 1L || n_formulas == n_responses,
+    "Number of component formulas must be 1 or
+     the number of dimensions {n_responses}"
+  )
+  formula_parts <- ifelse_(
+    n_formulas == 1L,
+    rep(formula_parts, n_responses),
+    formula_parts
+  )
+  formulas <- lapply(paste0(responses, "~", formula_parts), as.formula)
+  resp_pred <- responses %in%
+    ulapply(formulas, function(y) get_nonlag_terms(y$formula))
+  stopifnot_(
+    !any(resp_pred),
+    "Variable{?s} {cs(respones[resp_pred])} appear{?s}
+     on both sides of the formula."
+  )
+  out <- vector(mode = "list", length = n_formulas)
+  for (i in seq_len(n_formulas)) {
+    out[[i]] <- formula_specials(formulas[[i]], original)
+  }
+  out
+}
+
 #' Get and Separate All Specials of a Formula Object
 #'
 #' @param x A `formula` object.
 #' @noRd
-formula_specials <- function(x) {
-  out <- list(formula = NULL, specials = NULL, coefs = NULL)
+formula_specials <- function(x, original) {
   xt <- terms(x, specials = formula_special_funs)
   xt_specials <- attr(xt, "specials")[formula_special_funs]
   xt_variables <- attr(xt, "variables")
   xt_terms <- attr(xt, "term.labels")
+  specials <- list()
   for (y in formula_special_funs) {
-    out$specials[[y]] <- onlyif(
+    specials[[y]] <- onlyif(
       !is.null(xt_specials[[y]]),
       xt_variables[[xt_specials[[y]] + 1]][[2]]
     )
@@ -107,14 +146,18 @@ formula_specials <- function(x) {
     x <- as.formula(paste0(y, "~ 1"))
   }
   xt <- formula_terms(x)
-  out$formula <- x
-  out$fixed <- which(xt %in% fixed_terms)
-  out$has_fixed_intercept <- as.logical(fixed_icpt)
-  out$varying <- which(xt %in% varying_terms)
-  out$has_varying_intercept <- as.logical(varying_icpt)
-  out$random <- which(xt %in% random_terms)
-  out$has_random_intercept <- as.logical(random_icpt)
-  out
+  list(
+    response = deparse1(formula_lhs(x)),
+    formula = x,
+    original = original,
+    specials = specials,
+    fixed = which(xt %in% fixed_terms),
+    has_fixed_intercept = as.logical(fixed_icpt),
+    varying = which(xt %in% varying_terms),
+    has_varying_intercept = as.logical(varying_icpt),
+    random = which(xt %in% random_terms),
+    has_random_intercept = as.logical(random_icpt)
+  )
 }
 
 

@@ -32,6 +32,14 @@ is_supported <- function(name) {
   name %in% supported_families
 }
 
+#' Check If a Family Is Multivariate
+#'
+#' @param \[`dynamitefamily`]\cr A family object.
+#' @noRd
+is_multivariate <- function(x) {
+  x$name %in% c("mvgaussian")
+}
+
 supported_families <- c(
   "binomial",
   "bernoulli", # separate as Stan has more efficient pmf for it
