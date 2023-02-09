@@ -38,6 +38,7 @@ supported_families <- c(
   "categorical",
   "negbin",
   "gaussian",
+  "mvgaussian",
   "poisson",
   "deterministic",
   "gamma",
