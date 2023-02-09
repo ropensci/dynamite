@@ -32,7 +32,7 @@ parse_formula <- function(x, original, family) {
   )
   out <- vector(mode = "list", length = n_formulas)
   for (i in seq_len(n_formulas)) {
-    out[[i]] <- formula_specials(formulas[[i]], original)
+    out[[i]] <- formula_specials(formulas[[i]], original, family)
   }
   out
 }
@@ -41,7 +41,7 @@ parse_formula <- function(x, original, family) {
 #'
 #' @param x A `formula` object.
 #' @noRd
-formula_specials <- function(x, original) {
+formula_specials <- function(x, original, family) {
   xt <- terms(x, specials = formula_special_funs)
   xt_specials <- attr(xt, "specials")[formula_special_funs]
   xt_variables <- attr(xt, "variables")
@@ -149,6 +149,7 @@ formula_specials <- function(x, original) {
   list(
     response = deparse1(formula_lhs(x)),
     formula = x,
+    family = family,
     original = original,
     specials = specials,
     fixed = which(xt %in% fixed_terms),

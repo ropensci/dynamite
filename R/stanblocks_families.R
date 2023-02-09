@@ -156,7 +156,6 @@ data_lines_default <- function(y, idt, has_missing,
       write_sigma_nu && sigma_nu_prior_npars > 0L,
       "matrix[K_random_{y}, {sigma_nu_prior_npars}] sigma_nu_prior_pars_{y};"
     ),
-    "// Responses",
     .indent = idt(1)
   )
 }
@@ -224,6 +223,14 @@ data_lines_gaussian <- function(y, idt, has_missing, ...) {
     do.call(what = data_lines_default, args = args),
     "matrix[N, T] y_{y};",
     .indent = idt(c(0, 1))
+  )
+}
+
+data_lines_mvgaussian <- function(y, idt, has_missing, ...) {
+  paste_rows(
+    "int<lower=0> O_{y};",
+    "vector[O_{y}] y_{y}[T, N];",
+    .indent = idt(1)
   )
 }
 
@@ -335,6 +342,12 @@ transformed_data_lines_categorical <- function(y, idt, write_alpha, write_beta,
 }
 
 transformed_data_lines_gaussian <- function(...) {
+  args <- as.list(match.call()[-1L])
+  args <- args[names(args) %in% names(formals(transformed_data_lines_default))]
+  do.call(what = transformed_data_lines_default, args = args)
+}
+
+transformed_data_lines_mvgaussian <- function(...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(transformed_data_lines_default))]
   do.call(what = transformed_data_lines_default, args = args)
@@ -486,6 +499,13 @@ parameters_lines_gaussian <- function(y, idt, ...) {
   paste_rows(
     do.call(what = parameters_lines_default, args = args),
     "real<lower=0> sigma_{y}; // SD of the normal distribution",
+    .indent = idt(c(0, 1))
+  )
+}
+
+parameters_lines_mvgaussian <- function(y, idt, ...) {
+  paste_rows(
+    "cholesky_factor_corr[O_{y}] L_{y}; // Cholesky for gaussian",
     .indent = idt(c(0, 1))
   )
 }
@@ -950,6 +970,13 @@ transformed_parameters_lines_gaussian <- function(...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in%
     names(formals(transformed_parameters_lines_default))]
+  do.call(what = transformed_parameters_lines_default, args = args)
+}
+
+transformed_parameters_lines_mvgaussian <- function(...) {
+  args <- as.list(match.call()[-1L])
+  args <- args[names(args) %in%
+                 names(formals(transformed_parameters_lines_default))]
   do.call(what = transformed_parameters_lines_default, args = args)
 }
 
@@ -1489,6 +1516,10 @@ model_lines_gaussian <- function(y, idt, obs, has_fixed, has_varying,
     .indent = idt(c(1, 1, 2, 2, 2, 3, 3, 2, 1))
   )
   paste_rows(mtext_def$text, mtext, .parse = FALSE)
+}
+
+model_lines_mvgaussian <- function() {
+  # TODO
 }
 
 model_lines_binomial <- function(y, idt, obs, has_varying, has_fixed,

@@ -13,20 +13,21 @@ create_blocks <- function(dformula, ...) {
 #' @inheritParams dynamite
 #' @param indent \[`integer(1)`] How many units of indentation to use for the
 #'   code generation. One unit is equal to one space.
-#' @param vars \[`list()`]\cr The `model_vars` component of
+#' @param cvars \[`list()`]\cr The `model_vars` component of
 #'   [prepare_stan_input()] output.
 #' @param ... Not used.
 #' @noRd
-create_blocks.default <- function(dformula, indent = 2L, vars, backend, ...) {
+create_blocks.default <- function(dformula, indent = 2L, cvars, cgvars,
+                                  backend, ...) {
   idt <- indenter_(indent)
   paste_rows(
-    create_functions(dformula, idt, vars),
-    create_data(dformula, idt, vars),
-    create_transformed_data(dformula, idt, vars),
-    create_parameters(dformula, idt, vars),
-    create_transformed_parameters(dformula, idt, vars),
-    create_model(dformula, idt, vars, backend),
-    create_generated_quantities(dformula, idt, vars),
+    create_functions(dformula, idt, cvars, cgvars),
+    create_data(dformula, idt, cvars, cgvars),
+    create_transformed_data(dformula, idt, cvars, cgvars),
+    create_parameters(dformula, idt, cvars, cgvars),
+    create_transformed_parameters(dformula, idt, cvars, cgvars),
+    create_model(dformula, idt, cvars, cgvars, backend),
+    create_generated_quantities(dformula, idt, cvars, cgvars),
     .parse = FALSE
   )
 }
@@ -36,16 +37,16 @@ create_blocks.default <- function(dformula, indent = 2L, vars, backend, ...) {
 #' @inheritParams create_blocks.default
 #' @param idt \[`function`] An indentation function created by [indenter_()]
 #' @noRd
-create_functions <- function(dformula, idt, vars) {
+create_functions <- function(dformula, idt, cvars, cgvars) {
   NULL
 }
 
 #' @describeIn create_function Create The 'Data' Block of the Stan Model Code
 #' @noRd
-create_data <- function(dformula, idt, vars) {
-  has_splines <- any(ulapply(vars, "[[", "has_varying")) ||
-    any(ulapply(vars, "[[", "has_varying_intercept")) ||
-    any(ulapply(vars, "[[", "has_lfactor"))
+create_data <- function(dformula, idt, cvars, cgvars) {
+  has_splines <- any(ulapply(cvars, "[[", "has_varying")) ||
+    any(ulapply(cvars, "[[", "has_varying_intercept")) ||
+    any(ulapply(cvars, "[[", "has_lfactor"))
   mtext <- paste_rows(
     "int<lower=1> T; // number of time points",
     "int<lower=1> N; // number of individuals",
@@ -60,26 +61,49 @@ create_data <- function(dformula, idt, vars) {
     .parse = FALSE
   )
   datatext <- character(length(dformula))
-  for (i in seq_along(dformula)) {
-    channel <- vars[[i]]
-    y <- channel$resp
-    family <- dformula[[i]]$family$name
-    line_args <- c(list(y = y, idt = idt), channel)
-    datatext[i] <- lines_wrap("data", family, line_args)
+  cg <- attr(dformula, "channel_groups")
+  n_cg <- length(unique(cg))
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    j <- cg_idx[1L]
+    family <- dformula[[j]]$family$name
+    if (is_multivariate(dformula[[j]]$family)) {
+      datatext[i] <- ""
+      for (k in cg_idx) {
+        line_args <- c(
+          list(y = dformula[[cg_idx[k]]]$response, idt = idt),
+          cvars[[j]]
+        )
+        datatext[i] <- paste_rows(
+          datatext[i],
+          lines_wrap("data", "default", line_args)
+        )
+      }
+      y <- paste(get_responses(dformula[cg_idx]), collapse = "_")
+      line_args <- c(list(y = y, idt = idt), cvars[[j]])
+      datatext[i] <- paste_rows(
+        datatext[i],
+        lines_wrap("data", family, line_args)
+      )
+    } else {
+      line_args <- c(list(y = dformula[[j]]$response, idt = idt), cvars[[j]])
+      datatext[i] <- lines_wrap("data", family, line_args)
+    }
   }
+
   paste_rows("data {", mtext, datatext, "}", .parse = FALSE)
 }
 
 #' @describeIn create_function Create the 'Transformed Data'
 #'   Block of the Stan Model Code
 #' @noRd
-create_transformed_data <- function(dformula, idt, vars) {
+create_transformed_data <- function(dformula, idt, cvars, cgvars) {
   n <- length(dformula)
   declarations <- character(n)
   statements <- character(n)
   for (i in seq_len(n)) {
     family <- dformula[[i]]$family$name
-    line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
+    line_args <- c(list(y = cvars[[i]]$resp, idt = idt), cvars[[i]])
     tr_data <- lines_wrap("transformed_data", family, line_args)
     declarations[i] <- tr_data$declarations
     statements[i] <- tr_data$statements
@@ -96,7 +120,7 @@ create_transformed_data <- function(dformula, idt, vars) {
     .indent = idt(c(0, 2, 2, 2, 2, 1)),
     .parse = FALSE
   )
-  has_lfactor <- any(ulapply(vars, "[[", "has_lfactor"))
+  has_lfactor <- any(ulapply(cvars, "[[", "has_lfactor"))
   paste_rows(
     "transformed data {",
     declarations,
@@ -112,7 +136,7 @@ create_transformed_data <- function(dformula, idt, vars) {
 #' @describeIn create_function Create the 'Parameters'
 #'   Block of the Stan Model Code
 #' @noRd
-create_parameters <- function(dformula, idt, vars) {
+create_parameters <- function(dformula, idt, cvars, cgvars) {
   spline_def <- attr(dformula, "splines")
   splinetext <- ifelse_(
     is.null(spline_def),
@@ -127,11 +151,11 @@ create_parameters <- function(dformula, idt, vars) {
   )
 
   randomtext <- ifelse_(
-    attr(vars, "random_def")$M > 0L,
+    attr(cvars, "random_def")$M > 0L,
     paste_rows(
       "// Random group-level effects",
       onlyif(
-        attr(vars, "random_def")$correlated,
+        attr(cvars, "random_def")$correlated,
         "cholesky_factor_corr[M] L_nu; // Cholesky for correlated random effects"
       ),
       "vector<lower=0>[M] sigma_nu; // standard deviations of random effects",
@@ -142,12 +166,12 @@ create_parameters <- function(dformula, idt, vars) {
   )
 
   lfactortext <- ifelse_(
-    identical(length(attr(vars, "lfactor_def")$responses), 0L),
+    identical(length(attr(cvars, "lfactor_def")$responses), 0L),
     "",
     paste_rows(
       "// Latent factor splines",
       onlyif(
-        attr(vars, "lfactor_def")$correlated,
+        attr(cvars, "lfactor_def")$correlated,
         "cholesky_factor_corr[P] L_lf; // Cholesky for correlated factors"
       ),
       "matrix[P, D - 1] omega_raw_psi;",
@@ -156,10 +180,39 @@ create_parameters <- function(dformula, idt, vars) {
   )
 
   pars <- character(length(dformula))
-  for (i in seq_along(dformula)) {
-    family <- dformula[[i]]$family$name
-    line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
-    pars[i] <- lines_wrap("parameters", family, line_args)
+  cg <- attr(dformula, "channel_croups")
+  n_cg <- length(unique(cg))
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    j <- cg_idx[1L]
+    family <- dformula[[j]]$family$name
+    if (is_multivariate(dformula[[j]]$family)) {
+      pars[i] <- ""
+      for (k in cg_idx) {
+        line_args <- c(
+          list(y = dformula[[cg_idx[k]]]$response, idt = idt),
+          cvars[[j]]
+        )
+        pars[i] <- paste_rows(
+          pars[i],
+          lines_wrap(
+            "parameters",
+            get_univariate(dformula[[j]]$family),
+            line_args
+          )
+        )
+      }
+      y <- paste(get_responses(dformula[cg_idx]), collapse = "_")
+      line_args <- c(list(y = y, idt = idt), cvars[[j]])
+      pars[i] <- paste_rows(
+        pars[i],
+        lines_wrap("parameters", family, line_args)
+      )
+    } else {
+      family <- dformula[[j]]$family$name
+      line_args <- c(list(y = dformula[[j]]$response, idt = idt), cvars[[j]])
+      pars[j] <- lines_wrap("parameters", family, line_args)
+    }
   }
   paste_rows("parameters {", splinetext, randomtext, lfactortext, pars, "}",
     .parse = FALSE
@@ -169,18 +222,18 @@ create_parameters <- function(dformula, idt, vars) {
 #' @describeIn create_function Create the 'Transformed Parameters'
 #'   Block of the Stan Model Code
 #' @noRd
-create_transformed_parameters <- function(dformula, idt, vars) {
+create_transformed_parameters <- function(dformula, idt, cvars, cgvars) {
   randomtext <- ""
-  M <- attr(vars, "random_def")$M
+  M <- attr(cvars, "random_def")$M
   if (M > 0L) {
-    Ks <- ulapply(vars, "[[", "K_random")
+    Ks <- ulapply(cvars, "[[", "K_random")
     Ks <- Ks[Ks > 0]
     y <- names(Ks)
     cKs1 <- cumsum(c(1, Ks[-length(Ks)]))
     cKs2 <- cumsum(Ks)
-    if (attr(vars, "random_def")$noncentered) {
+    if (attr(cvars, "random_def")$noncentered) {
       randomtext <- ifelse_(
-        attr(vars, "random_def")$correlated,
+        attr(cvars, "random_def")$correlated,
         paste_rows(
           "matrix[N, M] nu = nu_raw * diag_pre_multiply(sigma_nu, L_nu)';",
           glue::glue("matrix[N, {Ks}] nu_{y} = nu[, {cKs1}:{cKs2}];"),
@@ -206,18 +259,18 @@ create_transformed_parameters <- function(dformula, idt, vars) {
   }
 
   lfactortext <- ""
-  psis <- attr(vars, "lfactor_def")$responses
+  psis <- attr(cvars, "lfactor_def")$responses
   P <- length(psis)
   if (P > 0) {
-    if (attr(vars, "lfactor_def")$noncentered_psi) {
+    if (attr(cvars, "lfactor_def")$noncentered_psi) {
       tau_psi <- ifelse(
-        attr(vars, "lfactor_def")$nonzero_lambda,
+        attr(cvars, "lfactor_def")$nonzero_lambda,
         paste0("tau_psi_", psis, " * "),
         ""
       )
       # create noise terms for latent factors
       lfactortext <- ifelse_(
-        attr(vars, "lfactor_def")$correlated,
+        attr(cvars, "lfactor_def")$correlated,
         paste_rows(
           "matrix[P, D - 1] omega_psi = L_lf * omega_raw_psi;",
           glue::glue(
@@ -251,7 +304,7 @@ create_transformed_parameters <- function(dformula, idt, vars) {
   statements <- character(n)
   for (i in seq_len(n)) {
     family <- dformula[[i]]$family$name
-    line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
+    line_args <- c(list(y = cvars[[i]]$resp, idt = idt), cvars[[i]])
     tr_pars <- lines_wrap("transformed_parameters", family, line_args)
     declarations[i] <- tr_pars$declarations
     statements[i] <- tr_pars$statements
@@ -269,21 +322,21 @@ create_transformed_parameters <- function(dformula, idt, vars) {
 
 #' @describeIn create_function Create the 'Model' Block of the Stan Model Code
 #' @noRd
-create_model <- function(dformula, idt, vars, backend) {
+create_model <- function(dformula, idt, cvars, cgvars, backend) {
   spline_def <- attr(dformula, "splines")
   splinetext <- ""
   if (!is.null(spline_def) && spline_def$shrinkage) {
-    xi_prior <- attr(vars, "common_priors")
+    xi_prior <- attr(cvars, "common_priors")
     xi_prior <- xi_prior[xi_prior$parameter == "xi", "prior"]
     splinetext <- paste_rows("xi[1] ~ {xi_prior};", .indent = idt(1))
   }
   randomtext <- ""
-  if (attr(vars, "random_def")$M > 0L) {
-    if (attr(vars, "random_def")$correlated) {
-      L_prior <- attr(vars, "common_priors")
+  if (attr(cvars, "random_def")$M > 0L) {
+    if (attr(cvars, "random_def")$correlated) {
+      L_prior <- attr(cvars, "common_priors")
       L_prior <- L_prior[L_prior$parameter == "L_nu", "prior"]
       randomtext <- ifelse_(
-        attr(vars, "random_def")$noncentered,
+        attr(cvars, "random_def")$noncentered,
         paste_rows(
           "to_vector(nu_raw) ~ std_normal();",
           "L_nu ~ {L_prior};",
@@ -305,11 +358,11 @@ create_model <- function(dformula, idt, vars, backend) {
         )
       )
     } else {
-      M <- attr(vars, "random_def")$M
-      Ks <- ulapply(vars, "[[", "K_random")
+      M <- attr(cvars, "random_def")$M
+      Ks <- ulapply(cvars, "[[", "K_random")
       y <- names(Ks[Ks > 0])
       randomtext <- ifelse_(
-        attr(vars, "random_def")$noncentered,
+        attr(cvars, "random_def")$noncentered,
         paste_rows(
           "to_vector(nu_raw) ~ std_normal();",
           .indent = idt(1)
@@ -325,26 +378,26 @@ create_model <- function(dformula, idt, vars, backend) {
   }
 
   lfactortext <- ""
-  psis <- attr(vars, "lfactor_def")$responses
+  psis <- attr(cvars, "lfactor_def")$responses
   P <- length(psis)
   if (P > 0L) {
     omega1 <- paste0("omega_raw_psi_1_", psis,
       collapse = ", "
     )
-    if (attr(vars, "lfactor_def")$correlated) {
-      L_prior <- attr(vars, "common_priors")
+    if (attr(cvars, "lfactor_def")$correlated) {
+      L_prior <- attr(cvars, "common_priors")
       L_prior <- L_prior[L_prior$parameter == "L_lf", "prior"]
-      if (attr(vars, "lfactor_def")$noncentered_psi) {
+      if (attr(cvars, "lfactor_def")$noncentered_psi) {
         lfactortext <- paste_rows(
           "to_vector(omega_raw_psi) ~ std_normal();",
           "L_lf ~ {L_prior};",
           .indent = idt(c(1, 1))
         )
       } else {
-        if (any(attr(vars, "lfactor_def")$nonzero_lambda)) {
+        if (any(attr(cvars, "lfactor_def")$nonzero_lambda)) {
           tau <- paste0(
             ifelse(
-              attr(vars, "lfactor_def")$nonzero_lambda,
+              attr(cvars, "lfactor_def")$nonzero_lambda,
               paste0("tau_psi_", psis),
               "1"
             ),
@@ -382,14 +435,14 @@ create_model <- function(dformula, idt, vars, backend) {
         }
       }
     } else {
-      if (attr(vars, "lfactor_def")$noncentered_psi) {
+      if (attr(cvars, "lfactor_def")$noncentered_psi) {
         lfactortext <- paste_rows(
           "to_vector(omega_raw_psi) ~ std_normal();",
           .indent = idt(1)
         )
       } else {
-        if (any(attr(vars, "lfactor_def")$nonzero_lambda)) {
-          tau <- paste0(ifelse(attr(vars, "lfactor_def")$nonzero_lambda,
+        if (any(attr(cvars, "lfactor_def")$nonzero_lambda)) {
+          tau <- paste0(ifelse(attr(cvars, "lfactor_def")$nonzero_lambda,
             paste0("tau_psi_", psis), "1"
           ), collapse = ", ")
           lfactortext <- paste_rows(
@@ -417,14 +470,40 @@ create_model <- function(dformula, idt, vars, backend) {
     }
   }
   mod <- character(length(dformula))
-  for (i in seq_along(dformula)) {
-    family <- dformula[[i]]$family$name
-    line_args <- c(
-      list(y = vars[[i]]$resp, idt = idt, backend = backend),
-      vars[[i]]
-    )
-    mod[i] <- lines_wrap("model", family, line_args)
+  cg <- attr(dformula, "channel_croups")
+  n_cg <- length(unique(cg))
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    j <- cg_idx[1L]
+    family <- dformula[[j]]$family$name
+    if (is_multivariate(dformula[[j]]$family)) {
+      mod[i] <- ""
+      for (k in cg_idx) {
+        line_args <- c(
+          list(y = dformula[[cg_idx[k]]]$response, idt = idt, backend = backend),
+          cvars[[j]]
+        )
+        mod[i] <- paste_rows(
+          mod[i],
+          lines_wrap("model", "default", line_args)
+        )
+      }
+      y <- paste(get_responses(dformula[cg_idx]), collapse = "_")
+      line_args <- c(list(y = y, idt = idt), cvars[[j]])
+      mod[i] <- paste_rows(
+        mod[i],
+        lines_wrap("parameters", family, line_args)
+      )
+    } else {
+      family <- dformula[[i]]$family$name
+      line_args <- c(
+        list(y = cvars[[i]]$resp, idt = idt, backend = backend),
+        cvars[[i]]
+      )
+      mod[i] <- lines_wrap("model", family, line_args)
+    }
   }
+
   paste_rows(
     "model {",
     splinetext,
@@ -439,10 +518,10 @@ create_model <- function(dformula, idt, vars, backend) {
 #' @describeIn create_function Create the 'Generated Quantities'
 #'   Block of the Stan Model Code
 #' @noRd
-create_generated_quantities <- function(dformula, idt, vars) {
+create_generated_quantities <- function(dformula, idt, cvars, cgvars) {
   gen_nu <- ""
-  M <- attr(vars, "random_def")$M
-  if (M > 1 && attr(vars, "random_def")$correlated) {
+  M <- attr(cvars, "random_def")$M
+  if (M > 1 && attr(cvars, "random_def")$correlated) {
     # evaluate number of corrs to avoid Stan warning about integer division
     gen_nu <- paste_rows(
       "corr_matrix[M] corr_matrix_nu = multiply_lower_tri_self_transpose(L_nu);",
@@ -456,13 +535,13 @@ create_generated_quantities <- function(dformula, idt, vars) {
     )
   }
   gen_psi <- ""
-  psis <- attr(vars, "lfactor_def")$responses
-  P <- attr(vars, "lfactor_def")$P
-  if (P > 0 && attr(vars, "lfactor_def")$correlated) {
+  psis <- attr(cvars, "lfactor_def")$responses
+  P <- attr(cvars, "lfactor_def")$P
+  if (P > 0 && attr(cvars, "lfactor_def")$correlated) {
     # evaluate number of corrs to avoid Stan warning about integer division
     tau <- paste0(
       ifelse(
-        attr(vars, "lfactor_def")$nonzero_lambda,
+        attr(cvars, "lfactor_def")$nonzero_lambda,
         paste0("tau_psi_", psis),
         "1"
       ),

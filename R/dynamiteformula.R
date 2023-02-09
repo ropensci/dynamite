@@ -214,7 +214,7 @@ dynamiteformula_ <- function(formula, original, family) {
 #' @inheritParams dynamiteformula
 #' @param TODO
 #' @noRd
-dynamitechannel <- function(formula, original = NULL, family, response, name,
+dynamitechannel <- function(formula, original = NULL, family, response, name = NULL,
                             fixed = integer(0L), varying = integer(0L),
                             random = integer(0L), specials = list(),
                             has_fixed_intercept = FALSE,
@@ -551,7 +551,7 @@ join_dynamiteformulas <- function(e1, e2) {
   )
   cg1 <- attr(e1, "channel_groups")
   cg2 <- attr(e2, "channel_groups")
-  cg <-  c(c1, c2 + max(cg1))
+  cg <-  c(cg1, cg2 + max(cg1))
   attributes(out) <- c(attributes(e1), attributes(e2))
   attr(out, "channel_groups") <- cg
   attr(out, "model_topology") <- unique(cg[topo])

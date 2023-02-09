@@ -299,7 +299,8 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
   model_code <- create_blocks(
     dformula = dformulas$stoch,
     indent = 2L,
-    vars = stan_input$model_vars,
+    cvars = stan_input$channel_vars,
+    cgvars = stan_input$channel_group_vars,
     backend = backend
   )
   sampling_info(dformulas, verbose, debug, backend)
@@ -765,10 +766,10 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
     det = dformula_det,
     stoch = structure(
       dformula[channels_stoch],
-      channel_groups = rank_(cg[which(channels_stoch)]),
+      channel_groups = rank_(cg[channels_stoch]),
       splines = attr(dformula, "splines"),
       random_spec = attr(dformula, "random_spec"),
-      lfactor = attr(dformula, "lfactor"),
+      lfactor = attr(dformula, "lfactor")
     ),
     lag_pred = dformula_lag_pred,
     lag_det = dformula_lag_det,
@@ -1159,7 +1160,7 @@ parse_new_lags <- function(dformula, channels_stoch, increment, type, lhs) {
   for (i in seq_along(channels_stoch)) {
     j <- channels_stoch[i]
     if (any(increment[[i]])) {
-      dformula[[j]] <- dynamiteformula_(
+      dformula[j] <- dynamiteformula_(
         formula = increment_formula(
           formula = dformula[[j]]$formula,
           x = lhs[increment[[j]]],

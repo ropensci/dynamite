@@ -44,10 +44,11 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   n_channels <- length(resp_names)
   # A list of variables for Stan sampling without grouping by channel
   sampling_vars <- list()
+  channel_group_vars <- list()
   empty_list <- setNames(vector(mode = "list", length = n_channels), resp_names)
   # A list containing a list for each channel consisting of
   # variables used to construct the Stan model code
-  model_vars <- empty_list
+  channel_vars <- empty_list
   # A list for getting current prior definitions
   prior_list <- empty_list
   time <- sort(unique(data[[time_var]]))
@@ -202,7 +203,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       )
     )
     prior_list[[resp]] <- prep$priors
-    model_vars[[resp]] <- prep$channel
+    channel_vars[[resp]] <- prep$channel
     vectorizable_priors <- extract_vectorizable_priors(prep$channel, resp)
     sampling_vars <- c(sampling_vars, prep$sampling_vars, vectorizable_priors)
   }
@@ -212,6 +213,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       # dformula[cg_idx] : Channels of this group
       # Define priors for multivariate distributions etc.
     }
+    channel_group_vars[[i]] <- list()
   }
   sampling_vars$N <- N
   sampling_vars$K <- K
@@ -230,12 +232,13 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     correlated_lf = lfactor_def$correlated
   )
   # for stanblocks
-  attr(model_vars, "common_priors") <- prior_list[["common_priors"]]
-  attr(model_vars, "spline_def") <- spline_def
-  attr(model_vars, "random_def") <- random_def
-  attr(model_vars, "lfactor_def") <- lfactor_def
+  attr(channel_vars, "common_priors") <- prior_list[["common_priors"]]
+  attr(channel_vars, "spline_def") <- spline_def
+  attr(channel_vars, "random_def") <- random_def
+  attr(channel_vars, "lfactor_def") <- lfactor_def
   list(
-    model_vars = model_vars,
+    channel_vars = channel_vars,
+    channel_group_vars = channel_group_vars,
     sampling_vars = sampling_vars,
     priors = prior_list,
     responses = responses,
@@ -517,8 +520,8 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
 
 #' @describeIn prepare_channel_default Prepare a Multivariate Gaussian Channel
 #' @noRd
-prepare_channel_mvgaussian <- function(y, Y, sd_x, resp_class, priors) {
-  prepare_channel_gaussian(y, Y, sd_x, resp_class, priors)
+prepare_channel_mvgaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
+  prepare_channel_gaussian(y, Y, channel, sd_x, resp_class, priors)
 }
 
 #' @describeIn prepare_channel_default Prepare a Binomial Channel
