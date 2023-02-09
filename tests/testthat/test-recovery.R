@@ -338,7 +338,7 @@ test_that("predict recovers correct estimates", {
   y <- matrix(0, N, T_)
   nu <- rnorm(N)
   y[, 1] <- rbinom(N, size = 1, prob = 0.5)
-  for(t in 2:T_) y[, t] <- rbinom(N, 1, plogis(nu + y[, t-1]))
+  for (t in 2:T_) y[, t] <- rbinom(N, 1, plogis(nu + y[, t-1]))
 
   ## check these if tests fail ##
   # model <- rstan::stan_model("testmodel.stan")

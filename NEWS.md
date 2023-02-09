@@ -7,6 +7,8 @@
     faster computation.
   * The `update` method now checks if the `backend` has changed from the 
     original model fit.
+  * The `update` method now properly recompiles the model (if necessary) in 
+    cases where the `update` is used for already updated `dynamitefit` object.
   * Fixed a bug in the default prior definitions of intercept for families using 
     log-link which lead to a prior mean -Inf if all observations at the first 
     time point were zero.
@@ -30,7 +32,7 @@
     reflected in the `get_data`, `get_priors`, and `get_code` functions.
   * Vectorized priors and various indexing variables are now passed as data to 
     Stan instead of being hard-coded in the generated model code.
-  * The package now supports conteporaneous dependencies between channels 
+  * The package now supports contemporaneous dependencies between channels 
     such that the dependency structure is acyclic. For example, having 
     `y ~ x` and `x ~ z` simultaneously is valid, but adding `z ~ y` to these 
     would result in a cycle.
