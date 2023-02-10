@@ -180,7 +180,6 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       }
     }
     family <- dformula[[i]]$family
-
     stopifnot_(
       !(channel$has_random || channel$has_random_intercept) ||
         family != "categorical",
@@ -192,7 +191,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       Y_out
     )
     prep <- do.call(
-      paste0("prepare_channel_", family),
+      paste0("prepare_channel_", get_univariate(family)),
       list(
         y = resp,
         Y = Y,
@@ -207,9 +206,38 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     vectorizable_priors <- extract_vectorizable_priors(prep$channel, resp)
     sampling_vars <- c(sampling_vars, prep$sampling_vars, vectorizable_priors)
   }
+  merge_has <- c(
+    "has_fixed_intercept",
+    "has_varying_intercept",
+    "has_random_intercept",
+    "has_fixed",
+    "has_varying",
+    "has_random",
+    "has_lfactor"
+  )
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
+    channel_group <- list()
     if (is_multivariate(dformula[[cg_idx[1L]]]$family)) {
+      for (j in merge_has) {
+        channel_group[[j]] <- vapply(
+          channel_vars[cg_idx], "[[", logical(1L), j
+        )
+      }
+      #obs_len_cg <- sampling_vars[paste0("n_obs_", resp_names[cf_idx]]
+      resp_cg <- ifelse_(
+        is.null(dformula[[cf_idx[1L]]]$name),
+        paste(resp_names[cg_idx], collapse = "_"),
+        dformula[[cf_idx[1L]]]$name
+      )
+      sampling_vars[[paste0("obs_", resp_cg)]] <- matrix_intersect(
+        sampling_vars[paste0("obs_", resp_names[cg_idx])]
+      )
+      sampling_vars[[paste0("n_obs_", resp_cg)]] <- apply(
+        sampling_vars[[paste0("obs_", resp_cg)]],
+        2L,
+        function(x) { sum(x > 0L) }
+      )
       # dformula[cg_idx] : Channels of this group
       # Define priors for multivariate distributions etc.
     }
@@ -521,7 +549,7 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
 #' @describeIn prepare_channel_default Prepare a Multivariate Gaussian Channel
 #' @noRd
 prepare_channel_mvgaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
-  prepare_channel_gaussian(y, Y, channel, sd_x, resp_class, priors)
+  # TODO
 }
 
 #' @describeIn prepare_channel_default Prepare a Binomial Channel

@@ -346,6 +346,21 @@ rank_ <- function(x) {
   1L + c(0L, cumsum(diff(x) > 0))
 }
 
+#' Intersect matrix columns
+#'
+#' @param ... Arbitrary number of matrices of identical dimensions
+matrix_intersect <- function(...) {
+  dots <- list(...)
+  nc <- ncol(dots[[1L]])
+  nr <- nrow(dots[[1L]])
+  out <- matrix(0L, nrow = nr, ncol = nc)
+  for (i in seq_len(nc)) {
+    tmp <-Reduce(intersect, lapply(dots, function(x) x[,i]))
+    out[seq_along(tmp), i] <- tmp
+  }
+  out
+}
+
 #' Number of Unique Values
 #'
 #' @inheritParams data.table::uniqueN

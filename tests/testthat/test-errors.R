@@ -417,7 +417,7 @@ test_that("no intercept or predictors fails if no lfactor", {
       data = gaussian_example,
       time = "time",
       group = "id"
-    )
+    ),
     paste0(
       "Invalid formula for response variable `y`:\n",
       "x There are no predictors, intercept terms or latent factors\\."
