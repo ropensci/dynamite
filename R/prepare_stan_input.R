@@ -224,11 +224,18 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
           channel_vars[cg_idx], "[[", logical(1L), j
         )
       }
+      channel_group[["has_missing"]] <- any(vapply(
+        channel_vars[cg_idx], "[[", logical(1L), "has_missing"
+      ))
       #obs_len_cg <- sampling_vars[paste0("n_obs_", resp_names[cf_idx]]
       resp_cg <- ifelse_(
-        is.null(dformula[[cf_idx[1L]]]$name),
+        is.null(dformula[[cg_idx[1L]]]$name),
         paste(resp_names[cg_idx], collapse = "_"),
         dformula[[cf_idx[1L]]]$name
+      )
+      channel_group[["obs"]] <- ifelse_(channel_group[["has_missing"]],
+        glue::glue("obs_{resp_cg}[1:n_obs_{resp_cg}[t], t]"),
+        ""
       )
       sampling_vars[[paste0("obs_", resp_cg)]] <- matrix_intersect(
         sampling_vars[paste0("obs_", resp_names[cg_idx])]
@@ -241,7 +248,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       # dformula[cg_idx] : Channels of this group
       # Define priors for multivariate distributions etc.
     }
-    channel_group_vars[[i]] <- list()
+    channel_group_vars[[i]] <- channel_group
   }
   sampling_vars$N <- N
   sampling_vars$K <- K
