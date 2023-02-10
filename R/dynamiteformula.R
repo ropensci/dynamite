@@ -94,7 +94,7 @@
 #' @param formula \[`formula`]\cr An \R formula describing the model.
 #' @param family \[`character(1)`]\cr The family name. See 'Details' for the
 #'   supported families.
-#' @param name \[`character(1)`]\cr Optinal name for the channel. By default
+#' @param name \[`character(1)`]\cr Optional name for the channel. By default
 #'   the name is the same as the response variable of `formula`.
 #' @return A `dynamiteformula` object.
 #' @srrstats {G2.3b} Uses tolower.
@@ -212,7 +212,16 @@ dynamiteformula_ <- function(formula, original, family) {
 #' Create a Channel For a `dynamiteformula` Object Directly
 #'
 #' @inheritParams dynamiteformula
-#' @param TODO
+#' @param response \[`character(1)`]\cr Name of the response.
+#' @param fixed \[`integer()`]\cr Time-invariant covariate indices.
+#' @param varying \[`integer()`]\cr Time-varying covariate indices.
+#' @param random \[`integer()`]\cr Random effect covariate indices.
+#' @param has_fixed_intercept \[`logical(1)`]\cr Does the channel contain fixed
+#'   intercept?
+#' @param has_varying_intercept \[`logical(1)`]\cr Does the channel contain
+#'   varying intercept?
+#' @param has_random_intercept \[`logical(1)`]\cr Does the channel contain random
+#'   group-level intercept term?
 #' @noRd
 dynamitechannel <- function(formula, original = NULL, family, response, name = NULL,
                             fixed = integer(0L), varying = integer(0L),

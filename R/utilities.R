@@ -346,9 +346,10 @@ rank_ <- function(x) {
   1L + c(0L, cumsum(diff(x) > 0))
 }
 
-#' Intersect matrix columns
+#' Intersect Matrix Columns
 #'
 #' @param x List of matrices of identical dimensions
+#' @noRd
 matrix_intersect <- function(x) {
   nc <- ncol(x[[1L]])
   nr <- nrow(x[[1L]])

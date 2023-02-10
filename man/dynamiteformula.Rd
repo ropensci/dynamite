@@ -8,9 +8,9 @@
 \alias{print.dynamiteformula}
 \title{Model formula for \pkg{dynamite}}
 \usage{
-dynamiteformula(formula, family)
+dynamiteformula(formula, family, name = NULL)
 
-obs(formula, family)
+obs(formula, family, name = NULL)
 
 aux(formula)
 
@@ -23,6 +23,9 @@ aux(formula)
 
 \item{family}{[\code{character(1)}]\cr The family name. See 'Details' for the
 supported families.}
+
+\item{name}{[\code{character(1)}]\cr Optional name for the channel. By default
+the name is the same as the response variable of \code{formula}.}
 
 \item{e1}{[\code{dynamiteformula}]\cr A model formula specification.}
 
@@ -52,6 +55,7 @@ as reference). See the documentation of the \code{categorical_logit_glm} in the
 Stan function reference manual (https://mc-stan.org/users/documentation/).
 \item Gaussian: \code{gaussian} (identity link, parameterized using mean and standard
 deviation).
+\item Multivariate Gaussian: \code{mvgaussian} (identity link, TODO)
 \item Poisson: \code{poisson} (log-link, with an optional known offset variable).
 \item Negative-binomial: \code{negbin} (log-link, using mean and dispersion
 parameterization, with an optional known offset variable). See the

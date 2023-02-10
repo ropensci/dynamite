@@ -227,11 +227,10 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       channel_group[["has_missing"]] <- any(vapply(
         channel_vars[cg_idx], "[[", logical(1L), "has_missing"
       ))
-      #obs_len_cg <- sampling_vars[paste0("n_obs_", resp_names[cf_idx]]
       resp_cg <- ifelse_(
         is.null(dformula[[cg_idx[1L]]]$name),
         paste(resp_names[cg_idx], collapse = "_"),
-        dformula[[cf_idx[1L]]]$name
+        dformula[[cg_idx[1L]]]$name
       )
       channel_group[["obs"]] <- ifelse_(channel_group[["has_missing"]],
         glue::glue("obs_{resp_cg}[1:n_obs_{resp_cg}[t], t]"),

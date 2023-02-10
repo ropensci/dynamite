@@ -126,7 +126,7 @@ data_lines_default <- function(y, idt, has_missing,
     onlyif(K_fixed > 0L, "int<lower=0> K_fixed_{y};"),
     onlyif(K_varying > 0L, "int<lower=0> K_varying_{y};"),
     onlyif(
-      K_random > 1L,
+      K_random > 0L,
       "int<lower=0> K_random_{y}; // includes the potential random intercept"
     ),
     onlyif(
@@ -151,19 +151,19 @@ data_lines_default <- function(y, idt, has_missing,
       "// Parameters of vectorized priors"
     ),
     onlyif(
-      write_beta && beta_prior_npars > 0L,
+      write_beta && beta_prior_npars > 0L && K_fixed > 0L,
         "matrix[K_fixed_{y}, {beta_prior_npars}] beta_prior_pars_{y};"
     ),
     onlyif(
-      write_delta && delta_prior_npars > 0L,
+      write_delta && delta_prior_npars > 0L && K_varying > 0L,
       "matrix[K_varying_{y}, {delta_prior_npars}] delta_prior_pars_{y};"
     ),
     onlyif(
-      write_tau && tau_prior_npars > 0L,
+      write_tau && tau_prior_npars > 0L && K_varying > 0L,
       "matrix[K_varying_{y}, {tau_prior_npars}] tau_prior_pars_{y};"
     ),
     onlyif(
-      write_sigma_nu && sigma_nu_prior_npars > 0L,
+      write_sigma_nu && sigma_nu_prior_npars > 0L && K_random > 0L,
       "matrix[K_random_{y}, {sigma_nu_prior_npars}] sigma_nu_prior_pars_{y};"
     ),
     .indent = idt(1)
@@ -176,7 +176,8 @@ data_lines_categorical <- function(y, idt,
                                    alpha_prior_npars = 1L,
                                    beta_prior_npars = 1L,
                                    delta_prior_npars = 1L, tau_prior_npars = 1L,
-                                   has_random_intercept, ...) {
+                                   has_random_intercept,
+                                   K_fixed, K_varying, K_random, ...) {
   icpt <- ifelse(
     has_random_intercept,
     " - 1",
@@ -191,17 +192,29 @@ data_lines_categorical <- function(y, idt,
     onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
     onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
     "// number of fixed, varying and random coefficients, and related indices",
-    "int<lower=0> K_fixed_{y};",
-    "int<lower=0> K_varying_{y};",
-    "int<lower=0> K_random_{y}; // includes the potential random intercept",
-    "int<lower=0> K_{y}; // K_fixed + K_varying",
-    "int J_fixed_{y}[K_fixed_{y}];",
-    "int J_varying_{y}[K_varying_{y}];",
-    "int J_random_{y}[K_random_{y}{icpt}]; // no intercept",
-    "int J_{y}[K_fixed_{y} + K_varying_{y}]; // fixed and varying",
-    "int L_fixed_{y}[K_fixed_{y}];",
-    "int L_varying_{y}[K_varying_{y}];",
-    "int L_random_{y}[K_random_{y}{icpt}];",
+    onlyif(K_fixed > 0L, "int<lower=0> K_fixed_{y};"),
+    onlyif(K_varying > 0L, "int<lower=0> K_varying_{y};"),
+    onlyif(
+      K_random > 0L,
+      "int<lower=0> K_random_{y}; // includes the potential random intercept"
+    ),
+    onlyif(
+      K_fixed + K_varying > 0L,
+      "int<lower=0> K_{y}; // K_fixed + K_varying"
+    ),
+    onlyif(K_fixed > 0L, "int J_fixed_{y}[K_fixed_{y}];"),
+    onlyif(K_varying > 0L, "int J_varying_{y}[K_varying_{y}];"),
+    onlyif(
+      K_random > 1L,
+      "int J_random_{y}[K_random_{y}{icpt}]; // no intercept"
+    ),
+    onlyif(
+      K_fixed + K_varying > 0L,
+      "int J_{y}[K_{y}]; // fixed and varying"
+    ),
+    onlyif(K_fixed > 0L, "int L_fixed_{y}[K_fixed_{y}];"),
+    onlyif(K_varying > 0L, "int L_varying_{y}[K_varying_{y}];"),
+    onlyif(K_random > 1L, "int L_random_{y}[K_random_{y}{icpt}];"),
     onlyif(
       write_alpha || write_beta || write_delta || write_tau,
       "// Parameters of vectorized priors"
@@ -211,15 +224,15 @@ data_lines_categorical <- function(y, idt,
       "matrix[S_{y} - 1, {alpha_prior_npars}] alpha_prior_pars_{y};"
     ),
     onlyif(
-      write_beta && beta_prior_npars > 0L,
+      write_beta && beta_prior_npars > 0L && K_fixed > 0L,
       "matrix[K_fixed_{y} * (S_{y} - 1), {beta_prior_npars}] beta_prior_pars_{y};"
     ),
     onlyif(
-      write_delta && delta_prior_npars > 0L,
+      write_delta && delta_prior_npars > 0L && K_varying > 0L,
       "matrix[K_varying_{y} * (S_{y} - 1), {delta_prior_npars}] delta_prior_pars_{y};"
     ),
     onlyif(
-      write_tau && tau_prior_npars > 0L,
+      write_tau && tau_prior_npars > 0L && K_varying > 0L,
       "matrix[K_varying_{y}, {tau_prior_npars}] tau_prior_pars_{y};"
     ),
     "// Responses",
