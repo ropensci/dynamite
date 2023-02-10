@@ -80,8 +80,8 @@ create_data <- function(dformula, idt, cvars, cgvars) {
       datatext[i] <- ""
       for (k in cg_idx) {
         line_args <- c(
-          list(y = dformula[[cg_idx[k]]]$response, idt = idt),
-          cvars[[j]]
+          list(y = dformula[[k]]$response, idt = idt),
+          cvars[[k]] # TODO is this correct?
         )
         datatext[i] <- paste_rows(
           datatext[i],
@@ -199,8 +199,8 @@ create_parameters <- function(dformula, idt, cvars, cgvars) {
       pars[i] <- ""
       for (k in cg_idx) {
         line_args <- c(
-          list(y = dformula[[cg_idx[k]]]$response, idt = idt),
-          cvars[[j]]
+          list(y = dformula[[k]]$response, idt = idt),
+          cvars[[k]]
         )
         pars[i] <- paste_rows(
           pars[i],

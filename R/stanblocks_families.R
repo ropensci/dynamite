@@ -122,9 +122,6 @@ data_lines_default <- function(y, idt, has_missing,
     ""
   )
   paste_rows(
-    onlyif(has_missing, "// Missing data indicators"),
-    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
-    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
     "// number of fixed, varying and random coefficients, and related indices",
     onlyif(K_fixed > 0L, "int<lower=0> K_fixed_{y};"),
     onlyif(K_varying > 0L, "int<lower=0> K_varying_{y};"),
@@ -144,7 +141,7 @@ data_lines_default <- function(y, idt, has_missing,
     ),
     onlyif(
       K_fixed + K_varying > 0L,
-      "int J_{y}[K_fixed_{y} + K_varying_{y}]; // fixed and varying"
+      "int J_{y}[K_{y}]; // fixed and varying"
     ),
     onlyif(K_fixed > 0L, "int L_fixed_{y}[K_fixed_{y}];"),
     onlyif(K_varying > 0L, "int L_varying_{y}[K_varying_{y}];"),
@@ -186,6 +183,9 @@ data_lines_categorical <- function(y, idt,
     ""
   )
   dtext_def <- paste_rows(
+    onlyif(has_missing, "// Missing data indicators"),
+    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
+    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
     "int<lower=0> S_{y}; // number of categories",
     onlyif(has_missing, "// Missing data indicators"),
     onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
@@ -233,14 +233,20 @@ data_lines_gaussian <- function(y, idt, has_missing, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(data_lines_default))]
   paste_rows(
+    onlyif(has_missing, "// Missing data indicators"),
+    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
+    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
     do.call(what = data_lines_default, args = args),
     "matrix[N, T] y_{y};",
-    .indent = idt(c(0, 1))
+    .indent = idt(c(1, 1, 1, 0, 1))
   )
 }
 
 data_lines_mvgaussian <- function(y, idt, has_missing, ...) {
   paste_rows(
+    onlyif(has_missing, "// Missing data indicators"),
+    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
+    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
     "int<lower=0> O_{y};",
     "vector[O_{y}] y_{y}[T, N];",
     .indent = idt(1)
@@ -251,11 +257,14 @@ data_lines_binomial <- function(y, idt, has_missing, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(data_lines_default))]
   paste_rows(
+    onlyif(has_missing, "// Missing data indicators"),
+    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
+    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
     do.call(what = data_lines_default, args = args),
     "int<lower=0> y_{y}[T, N];",
     "// Trials for binomial response {y}",
     "int<lower=1> trials_{y}[T, N];",
-    .indent = idt(c(0, 1, 1, 1))
+    .indent = idt(c(1, 1, 1, 0, 1, 1, 1))
   )
 }
 
@@ -263,9 +272,12 @@ data_lines_bernoulli <- function(y, idt, has_missing, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(data_lines_default))]
   paste_rows(
+    onlyif(has_missing, "// Missing data indicators"),
+    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
+    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
     do.call(what = data_lines_default, args = args),
     "int<lower=0,upper=1> y_{y}[T, N];",
-    .indent = idt(c(0, 1))
+    .indent = idt(c(1, 1, 1, 0, 1))
   )
 }
 
@@ -273,11 +285,14 @@ data_lines_poisson <- function(y, idt, has_missing, has_offset, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(data_lines_default))]
   paste_rows(
+    onlyif(has_missing, "// Missing data indicators"),
+    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
+    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
     do.call(what = data_lines_default, args = args),
     "int<lower=0> y_{y}[T, N];",
     "// Offset term",
     onlyif(has_offset, "real offset_{y}[T, N];"),
-    .indent = idt(c(0, 1, 1, 1))
+    .indent = idt(c(1, 1, 1, 0, 1, 1, 1))
   )
 }
 
@@ -285,11 +300,14 @@ data_lines_negbin <- function(y, idt, has_missing, has_offset, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(data_lines_default))]
   paste_rows(
+    onlyif(has_missing, "// Missing data indicators"),
+    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
+    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
     do.call(what = data_lines_default, args = args),
     "int<lower=0> y_{y}[T, N];",
     "// Offset term",
     onlyif(has_offset, "real offset_{y}[T, N];"),
-    .indent = idt(c(0, 1))
+    .indent = idt(c(1, 1, 1, 0, 1))
   )
 }
 
@@ -297,9 +315,12 @@ data_lines_exponential <- function(y, idt, has_missing, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(data_lines_default))]
   paste_rows(
+    onlyif(has_missing, "// Missing data indicators"),
+    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
+    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
     do.call(what = data_lines_default, args = args),
     "matrix<lower=0>[N, T] y_{y};",
-    .indent = idt(c(0, 1))
+    .indent = idt(c(1, 1, 1, 0, 1))
   )
 }
 
@@ -307,9 +328,12 @@ data_lines_gamma <- function(y, idt, has_missing, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(data_lines_default))]
   paste_rows(
+    onlyif(has_missing, "// Missing data indicators"),
+    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
+    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
     do.call(what = data_lines_default, args = args),
     "matrix<lower=0>[N, T] y_{y};",
-    .indent = idt(c(0, 1))
+    .indent = idt(c(1, 1, 1, 0, 1))
   )
 }
 
@@ -317,9 +341,12 @@ data_lines_beta <- function(y, idt, has_missing, ...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in% names(formals(data_lines_default))]
   paste_rows(
+    onlyif(has_missing, "// Missing data indicators"),
+    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
+    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
     do.call(what = data_lines_default, args = args),
     "matrix<lower=0, upper=1>[N, T] y_{y};",
-    .indent = idt(c(0, 1))
+    .indent = idt(c(1, 1, 1, 0, 1))
   )
 }
 
@@ -1528,7 +1555,7 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
 
   yname <- paste(y, collapse = "_")
   obs_i <- ifelse(has_missing,
-    "obs_{yname}[i, t]",
+    glue::glue("obs_{yname}[i, t]"),
     "i")
   p <- length(y)
   mu <- character(p)
@@ -1570,8 +1597,8 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
       has_random[i],
       ifelse_(
         has_random_intercept[i],
-        glue::glue("rows_dot_product(X[t][{obs_i}, L_random_{yi}], nu_{yname}[{obs_i}, 2:K_random_{yi}])"),
-        glue::glue("rows_dot_product(X[t][{obs_i}, L_random_{yi}], nu_{yname}[{obs_i}, ])")
+        glue::glue("X[t][{obs_i}, L_random_{yi}] * nu_{yi}[{obs_i}, 2:K_random_{yi}]'"),
+        glue::glue("X[t][{obs_i}, L_random_{yi}] * nu_{yi}[{obs_i}, ]'")
       ),
       ""
     )
@@ -1603,7 +1630,7 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
   sd_y <- paste0("sigma_", y)
   mu_y <- paste0("mu_", y)
   paste_rows(
-    "L_{yname} ~ {L_prior_dist};",
+    "L_{yname} ~ lkj_corr_cholesky(1);", #{L_prior_dist};
     "{{",
       "vector[O_{yname}] sigma_{yname} = [{cs(sd_y)}]';",
       "matrix[O_{yname}, O_{yname}] Lsigma = diag_pre_multiply(sigma_{yname}, L_{yname});",
@@ -1611,7 +1638,7 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
         "vector[O_{yname}] mu[n_obs_{yname}[t]];",
         "for (i in 1:n_obs_{yname}[t]) {{",
           "real mu_{y} = {mu};",
-          "mu[i] = [{cs(mu_y)}]'",
+          "mu[i] = [{cs(mu_y)}]';",
         "}}",
         "y_{yname}[t, {obs}] ~ multi_normal_cholesky(mu, Lsigma);",
       "}}",
