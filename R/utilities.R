@@ -348,14 +348,13 @@ rank_ <- function(x) {
 
 #' Intersect matrix columns
 #'
-#' @param ... Arbitrary number of matrices of identical dimensions
-matrix_intersect <- function(...) {
-  dots <- list(...)
-  nc <- ncol(dots[[1L]])
-  nr <- nrow(dots[[1L]])
+#' @param x List of matrices of identical dimensions
+matrix_intersect <- function(x) {
+  nc <- ncol(x[[1L]])
+  nr <- nrow(x[[1L]])
   out <- matrix(0L, nrow = nr, ncol = nc)
   for (i in seq_len(nc)) {
-    tmp <-Reduce(intersect, lapply(dots, function(x) x[,i]))
+    tmp <-Reduce(intersect, lapply(x, function(y) y[,i]))
     out[seq_along(tmp), i] <- tmp
   }
   out
