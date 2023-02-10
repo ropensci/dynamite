@@ -245,8 +245,27 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
         2L,
         function(x) { sum(x > 0L) }
       )
+      O <- length(cg_idx)
+      sampling_vars[[paste0("O_", resp_cg)]] <- O
+      sampling_vars[[paste0("y_", resp_cg)]] <-
+        array(unlist(sampling_vars[paste0("y_", resp_names[cg_idx])]),
+          c(T_full - fixed, N, O))
+      sampling_vars[paste0("y_", resp_names[cg_idx])] <- NULL
       # dformula[cg_idx] : Channels of this group
       # Define priors for multivariate distributions etc.
+      prep <- do.call(
+        paste0("prepare_channel_", family$name),
+        list(
+          y = resp_cg,
+          channel = channel_group,
+          priors = priors
+        )
+      )
+      channel_group <- prep$channel
+      prior_list[["multivariate"]] <- rbind(
+        prior_list[["multivariate"]],
+        prep$priors
+      )
     }
     channel_group_vars[[i]] <- channel_group
   }
@@ -550,12 +569,9 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   }
   out
 }
-
-# Just duplicated for now...
-
 #' @describeIn prepare_channel_default Prepare a Multivariate Gaussian Channel
 #' @noRd
-prepare_channel_mvgaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
+prepare_channel_mvgaussian <- function(y, channel, priors) {
   L_prior <- data.frame(
     parameter = paste0("L_", y),
     response = "",
@@ -564,18 +580,20 @@ prepare_channel_mvgaussian <- function(y, Y, channel, sd_x, resp_class, priors) 
     category = ""
   )
   if (is.null(priors)) {
-    out <- list(priors = L_prior)
+    priors <- L_prior
+    channel$L_prior_distr <- L_prior$prior
   } else {
-    stopifnot_(L_prior$parameter %in% priors$parameter,
+    priors <- priors[priors$response == y, ]
+    pdef <- priors[priors$type == "L", ]
+    stopifnot_(identical(nrow(pdef), 1L),
       c(
         "Argument {.var priors} must contain all relevant parameters:",
         `x` = "Prior for parameter {.var L_{y}} is not defined."
       ))
-    # stopifnot
-    # identical(L_prior[-3], priors)
-    out <- list(priors = priors)
+    # TODO some checks that prior distr makes sense
+    channel$L_prior_distr <- pdef$prior
   }
-  out
+  list(channel = channel, priors = priors)
 }
 
 #' @describeIn prepare_channel_default Prepare a Binomial Channel

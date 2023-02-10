@@ -1551,7 +1551,7 @@ model_lines_gaussian <- function(y, idt, obs, has_fixed, has_varying,
 
 model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
   has_random, has_fixed_intercept, has_varying_intercept, has_random_intercept,
-  has_lfactor, L_prior_dist = "", has_missing, ...) {
+  has_lfactor, L_prior_distr = "", has_missing, ...) {
 
   yname <- paste(y, collapse = "_")
   obs_i <- ifelse(has_missing,
@@ -1630,7 +1630,7 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
   sd_y <- paste0("sigma_", y)
   mu_y <- paste0("mu_", y)
   paste_rows(
-    "L_{yname} ~ lkj_corr_cholesky(1);", #{L_prior_dist};
+    "L_{yname} ~ {L_prior_distr};",
     "{{",
       "vector[O_{yname}] sigma_{yname} = [{cs(sd_y)}]';",
       "matrix[O_{yname}, O_{yname}] Lsigma = diag_pre_multiply(sigma_{yname}, L_{yname});",
