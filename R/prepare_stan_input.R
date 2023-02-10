@@ -521,7 +521,27 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
 #' @describeIn prepare_channel_default Prepare a Multivariate Gaussian Channel
 #' @noRd
 prepare_channel_mvgaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
-  prepare_channel_gaussian(y, Y, channel, sd_x, resp_class, priors)
+
+  L_prior <- data.frame(
+    parameter = paste0("L_", y),
+    response = "",
+    prior = "lkj_corr_cholesky(1)",
+    type = "L",
+    category = ""
+  )
+  if (is.null(priors)) {
+    out <- list(priors = L_prior)
+  } else {
+    stopifnot_(L_prior$parameter %in% priors$parameter,
+      c(
+        "Argument {.var priors} must contain all relevant parameters:",
+        `x` = "Prior for parameter {.var L_{y}} is not defined."
+      ))
+    # stopifnot
+    # identical(L_prior[-3], priors)
+    out <- list(priors = priors)
+  }
+out
 }
 
 #' @describeIn prepare_channel_default Prepare a Binomial Channel
