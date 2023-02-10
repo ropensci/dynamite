@@ -136,14 +136,11 @@ formula_specials <- function(x, original, family) {
     )
   } else {
     y <- as.character(xt_variables[[2]])
-    stopifnot_(
+    x <- ifelse_(
       any_icpt,
-      c(
-        "Invalid formula for response variable {.var {y}}:",
-        `x` = "There are no predictors nor an intercept term."
-      )
+      as.formula(paste0(y, "~ 1")),
+      as.formula(paste0(y, "~ -1"))
     )
-    x <- as.formula(paste0(y, "~ 1"))
   }
   xt <- formula_terms(x)
   list(
