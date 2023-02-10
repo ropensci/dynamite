@@ -1567,9 +1567,6 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
   has_lfactor, L_prior_distr = "", has_missing, ...) {
 
   yname <- paste(y, collapse = "_")
-  obs_i <- ifelse_(has_missing,
-    glue::glue("obs_{yname}[i, t]"),
-    "i")
   n_obs <- ifelse_(has_missing,
     glue::glue("n_obs_{yname}[t]"),
     "N"
@@ -1590,12 +1587,12 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
     )
     intercept_nu <- ifelse_(
       has_random_intercept[i],
-      glue::glue("nu_{yi}[{obs_i}, 1]"),
+      glue::glue("nu_{yi}[{obs}, 1]"),
       ""
     )
     lfactor <- ifelse_(
       has_lfactor[i],
-      glue::glue("lambda_{yi}[{obs_i}] * psi_{yi}[t]"),
+      glue::glue("lambda_{yi}[{obs}] * psi_{yi}[t]"),
       ""
     )
     plus <- ifelse_(nzchar(intercept_alpha) && has_random_intercept[i], " + ", "")
@@ -1614,8 +1611,8 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
       has_random[i],
       ifelse_(
         has_random_intercept[i],
-        glue::glue("X[t][{obs_i}, L_random_{yi}] * nu_{yi}[{obs_i}, 2:K_random_{yi}]'"),
-        glue::glue("X[t][{obs_i}, L_random_{yi}] * nu_{yi}[{obs_i}, ]'")
+        glue::glue("X[t][{obs}, L_random_{yi}] * nu_{yi}[{obs}, 2:K_random_{yi}]'"),
+        glue::glue("X[t][{obs}, L_random_{yi}] * nu_{yi}[{obs}, ]'")
       ),
       ""
     )
@@ -1626,12 +1623,12 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
     )
     fixed_term <- ifelse_(
       has_fixed[i],
-      glue::glue("X[t][{obs_i}, J_fixed_{yi}] * beta_{yi}"),
+      glue::glue("X[t][{obs}, J_fixed_{yi}] * beta_{yi}"),
       ""
     )
     varying_term <- ifelse_(
       has_varying[i],
-      glue::glue("X[t][{obs_i}, J_varying_{yi}] * delta_{yi}[t]"),
+      glue::glue("X[t][{obs}, J_varying_{yi}] * delta_{yi}[t]"),
       ""
     )
 
@@ -1645,7 +1642,7 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
   }
 
   sd_y <- paste0("sigma_", y)
-  mu_y <- paste0("mu_", y)
+  mu_y <- paste0("mu_", y, "[i]")
   paste_rows(
     "L_{yname} ~ {L_prior_distr};",
     "{{",
@@ -1653,8 +1650,8 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
       "matrix[O_{yname}, O_{yname}] Lsigma = diag_pre_multiply(sigma_{yname}, L_{yname});",
       "for (t in 1:T) {{",
         "vector[O_{yname}] mu[{n_obs}];",
+        "vector[O_{yname}] mu_{y} = {mu};",
         "for (i in 1:{n_obs}) {{",
-          "real mu_{y} = {mu};",
           "mu[i] = [{cs(mu_y)}]';",
         "}}",
         "y_{yname}[t, {obs}] ~ multi_normal_cholesky(mu, Lsigma);",
