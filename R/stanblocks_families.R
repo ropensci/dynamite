@@ -1571,8 +1571,8 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
     glue::glue("n_obs_{yname}[t]"),
     "N"
   )
-  p <- length(y)
-  mu <- character(p)
+  O <- length(y)
+  mu <- character(O)
   # create linear predictor mu_t for each dimension
   for(i in seq_along(y)) {
     yi <- y[i]
@@ -1975,42 +1975,56 @@ model_lines_beta <- function(y, idt, obs, has_varying, has_fixed, has_random,
 
 # Generated quantities block ----------------------------------------------
 
-# generated_quantities_lines_default <- function() {
-#   ""
-# }
-#
-# generated_quantities_lines_categorical <- function() {
-#   generated_quantities_lines_default()
-# }
-#
-# generated_quantities_lines_gaussian <- function() {
-#   generated_quantities_lines_default()
-# }
-#
-# generated_quantities_lines_binomial <- function() {
-#   generated_quantities_lines_default()
-# }
-#
-# generated_quantities_lines_bernoulli <- function() {
-#   generated_quantities_lines_default()
-# }
-#
-# generated_quantities_lines_poisson <- function() {
-#   generated_quantities_lines_default()
-# }
-#
-# generated_quantities_lines_negbin <- function() {
-#   generated_quantities_lines_default()
-# }
-#
-# generated_quantities_lines_exponential <- function() {
-#   generated_quantities_lines_default()
-# }
-#
-# generated_quantities_lines_gamma <- function() {
-#   generated_quantities_lines_default()
-# }
-#
-# generated_quantities_lines_beta <- function() {
-#   generated_quantities_lines_default()
-# }
+generated_quantities_lines_default <- function() {
+  ""
+}
+
+generated_quantities_lines_categorical <- function(...) {
+  generated_quantities_lines_default()
+}
+
+generated_quantities_lines_gaussian <- function(...) {
+  generated_quantities_lines_default()
+}
+generated_quantities_lines_mvgaussian <- function(y, idt, ...) {
+  O <- length(y)
+  y <- paste(y, collapse = "_")
+  paste_rows(
+    "corr_matrix[O_{y}] corr_matrix_{y} = ",
+    "multiply_lower_tri_self_transpose(L_{y});",
+    "vector<lower=-1,upper=1>[{(O * (O - 1L)) %/% 2L}] corr_{y};",
+    "for (k in 1:O_{y}) {{",
+    "for (j in 1:(k - 1)) {{",
+    "corr_{y}[choose(k - 1, 2) + j] = corr_matrix_{y}[j, k];",
+    "}}",
+    "}}",
+    .indent = idt(c(1, 2, 1, 1, 2, 3, 2, 1))
+  )
+}
+generated_quantities_lines_binomial <- function(...) {
+  generated_quantities_lines_default()
+}
+
+generated_quantities_lines_bernoulli <- function(...) {
+  generated_quantities_lines_default()
+}
+
+generated_quantities_lines_poisson <- function(...) {
+  generated_quantities_lines_default()
+}
+
+generated_quantities_lines_negbin <- function(...) {
+  generated_quantities_lines_default()
+}
+
+generated_quantities_lines_exponential <- function(...) {
+  generated_quantities_lines_default()
+}
+
+generated_quantities_lines_gamma <- function(...) {
+  generated_quantities_lines_default()
+}
+
+generated_quantities_lines_beta <- function(...) {
+  generated_quantities_lines_default()
+}

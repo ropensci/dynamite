@@ -19,7 +19,7 @@ create_blocks <- function(dformula, ...) {
 #' @param ... Not used.
 #' @noRd
 create_blocks.default <- function(dformula, indent = 2L, cvars, cgvars,
-                                  backend, ...) {
+  backend, ...) {
   idt <- indenter_(indent)
   paste_rows(
     create_functions(dformula, idt, cvars, cgvars),
@@ -487,17 +487,6 @@ create_model <- function(dformula, idt, cvars, cgvars, backend) {
     family <- dformula[[j]]$family$name
     if (is_multivariate(dformula[[j]]$family)) {
       mod[i] <- ""
-      # for (k in cg_idx) {
-      #   line_args <- c(
-      #     list(y = dformula[[cg_idx[k]]]$response, idt = idt, backend = backend),
-      #     cvars[[j]]
-      #   )
-      #   mod[i] <- paste_rows(
-      #     mod[i],
-      #     lines_wrap("model", "default", line_args)
-      #   )
-      # }
-     # y <- paste(get_responses(dformula[cg_idx]), collapse = "_")
       line_args <- c(
         list(y = get_responses(dformula[cg_idx]), idt = idt),
         cgvars[[i]]
@@ -571,16 +560,36 @@ create_generated_quantities <- function(dformula, idt, cvars, cgvars) {
       .indent = idt(c(1, 1, 1, 2, 3, 2, 1))
     )
   }
-  if (any(nzchar(gen_nu)) || any(nzchar(gen_psi))) {
-    paste_rows("generated quantities {", gen_nu, gen_psi, "}", .parse = FALSE)
-  } else {
-    NULL
+  cg <- attr(dformula, "channel_groups")
+  n_cg <- length(unique(cg))
+  gen <- character(n_cg)
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    j <- cg_idx[1L]
+    family <- dformula[[j]]$family$name
+    if (is_multivariate(dformula[[j]]$family)) {
+      gen[i] <- ""
+      line_args <- c(
+        list(y = get_responses(dformula[cg_idx]), idt = idt),
+        cgvars[[i]]
+      )
+      gen[i] <- paste_rows(
+        gen[i],
+        lines_wrap("generated_quantities", family, line_args), .parse = FALSE
+      )
+    } else {
+      family <- dformula[[j]]$family$name
+      line_args <- c(
+        list(y = cvars[[j]]$resp, idt = idt),
+        cvars[[j]]
+      )
+      gen[i] <- lines_wrap("generated_quantities", family, line_args)
+    }
   }
-  # uncomment if needed in the future
-  # gen <- character(length(dformula))
-  # for (i in seq_along(dformula)) {
-  #  family <- dformula[[i]]$family$name
-  #  line_args <- c(list(y = vars[[i]]$resp, idt = idt), vars[[i]])
-  #  gen[i] <- lines_wrap("generated_quantities", family, line_args)
-  # }
+  paste_rows("generated quantities {",
+    gen_nu,
+    gen_psi,
+    gen,
+    "}",
+    .parse = FALSE)
 }
