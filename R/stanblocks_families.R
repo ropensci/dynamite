@@ -692,7 +692,10 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
       .parse = FALSE
     )
     state_omega_alpha_1 <- character(0L)
-    declare_fixed_intercept <- "real alpha_{y} = a_{y};"
+    declare_fixed_intercept <- paste_rows(
+      "real alpha_{y} = a_{y};",
+      .indent = idt(1),
+      .parse = FALSE)
     state_fixed_intercept <- character(0L)
   }
   declare_varying_intercept <- paste_rows(
