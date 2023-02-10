@@ -1,3 +1,9 @@
+# dynamite 1.2.0
+
+  * Added support for the multivariate gaussian distribution via `"mvgaussian"`
+    family in `obs`. See the documentation of `dynamiteformula` for details
+    on how to define multivariate channels.
+
 # dynamite 1.1.2
 
   * The argument `verbose_stan` is now ignored when `backend = "cmdstanr"`.

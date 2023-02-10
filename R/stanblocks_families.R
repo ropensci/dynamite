@@ -307,7 +307,7 @@ data_lines_negbin <- function(y, idt, has_missing, has_offset, ...) {
     "int<lower=0> y_{y}[T, N];",
     "// Offset term",
     onlyif(has_offset, "real offset_{y}[T, N];"),
-    .indent = idt(c(1, 1, 1, 0, 1))
+    .indent = idt(c(1, 1, 1, 0, 1, 1, 1))
   )
 }
 
