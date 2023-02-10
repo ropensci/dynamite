@@ -27,7 +27,11 @@ full_model.matrix <- function(dformula, data, verbose) {
         )
       }
     }
-    model_matrices[[i]] <- do.call(cbind, model_matrices_type[[i]])
+    tmp <- do.call(cbind, model_matrices_type[[i]])
+    ifelse_(identical(length(tmp), 0L),
+      model_matrices[[i]] <- matrix(nrow = nrow(mm), ncol = 0),
+      model_matrices[[i]] <- tmp
+    )
   }
   model_matrix <- do.call(cbind, model_matrices)
   u_names <- setdiff(unique(colnames(model_matrix)), "(Intercept)")

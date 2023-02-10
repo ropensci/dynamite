@@ -168,7 +168,9 @@ test_that("plus method fails for nondynamiteformula", {
 test_that("categorical with random effects fails", {
   expect_error(
     dynamite(obs(y ~ x + random(~1), family = "categorical") + random_spec(),
-      data = data.frame(y = factor(1:4), x = runif(4), id = 1, time = 1:4),
+      data = data.frame(
+        y = factor(1:4), x = runif(4), id = rep(1:2, each = 2), time = 1:4
+        ),
       "time", "id",
       debug = list(no_compile = TRUE)
     ),
@@ -316,6 +318,30 @@ test_that("Latent factor errors with nonlogical value for argument
       debug = list(no_compile = TRUE)
     ),
     "Argument `nonzero_lambda` must be a <logical> vector\\."
+  )
+})
+test_that("Random effect errors with single group", {
+  expect_error(
+    dynamite(
+      obs(y ~ x + random(~1), family = "gaussian"),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      time = "time",
+      group = "id",
+      debug = list(no_compile = TRUE)
+    ),
+    "Cannot estimate random effects using only one group\\."
+  )
+})
+test_that("Latent factor errors with single group", {
+  expect_error(
+    dynamite(
+      obs(y ~ x, family = "gaussian") + lfactor(),
+      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
+      time = "time",
+      group = "id",
+      debug = list(no_compile = TRUE)
+    ),
+    "Cannot estimate latent factors using only one group\\."
   )
 })
 test_that("Latent factor errors with nonlogical value for argument

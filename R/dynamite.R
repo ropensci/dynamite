@@ -235,7 +235,7 @@ dynamite <- function(dformula, data, time, group = NULL,
   dformula <- parse_past(dformula, data, group, time)
   dformulas <- parse_lags(dformula, data, group, time, verbose)
   evaluate_deterministic(dformulas, data, group, time)
-  dformulas <- parse_components(dformulas, data, time)
+  dformulas <- parse_components(dformulas, data, group, time)
   stan_out <- dynamite_stan(
     dformulas,
     data,
@@ -254,6 +254,13 @@ dynamite <- function(dformula, data, time, group = NULL,
   stan_input <- stan_out$stan_input
   model_code <- stan_out$model_code
   stanfit <- stan_out$stanfit
+  dynamite_call <- match.call()
+  if (!is.null(debug) && !is.null(debug$stanfit)) {
+    dynamite_call$debug$stanfit <- NULL
+    if (identical(length(dynamite_call$debug), 0L)) {
+      dynamite_call$debug <- NULL
+    }
+  }
   out <- structure(
     list(
       stanfit = stanfit,
@@ -265,7 +272,7 @@ dynamite <- function(dformula, data, time, group = NULL,
       time_var = time,
       priors = data.table::setDF(data.table::rbindlist(stan_input$priors)),
       backend = backend,
-      call = match.call()
+      call = dynamite_call
     ),
     class = "dynamitefit"
   )
@@ -699,7 +706,6 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
   resp_all <- get_responses(dformula)
   resp_stoch <- resp_all[channels_stoch]
   n_channels <- length(resp_all)
-  max_lag <- 0L
   for (i in seq_len(n_channels)) {
     fix_rhs <- complete_lags(formula_rhs(dformula[[i]]$formula))
     dformula[[i]]$formula <- as.formula(
@@ -782,7 +788,7 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
 #' @inheritParams parse_data
 #' @param dformulas \[`list()`]\cr Output of `parse_lags`.
 #' @noRd
-parse_components <- function(dformulas, data, time_var) {
+parse_components <- function(dformulas, data, group_var, time_var) {
   fixed <- attr(dformulas$all, "max_lag")
   resp <- get_responses(dformulas$stoch)
   families <- unlist(get_families(dformulas$stoch))
@@ -799,26 +805,57 @@ parse_components <- function(dformulas, data, time_var) {
         if (is.null(random_formula)) {
           0L
         } else {
-          #mm <- stats::model.matrix.lm(random_formula, data)
-          #mm <- ifelse_(
-          #  formula$has_random_intercept
-          #)
-          #ncol(mm) + 1L * formula$has_random_intercept
           ncol(stats::model.matrix.lm(random_formula, data))
         }
       },
       integer(1L)
     )
   )
+
+  stopifnot_(n_unique(data[[group_var]]) > 1L || M == 0L,
+    "Cannot estimate random effects using only one group."
+  )
   attr(dformulas$stoch, "random_spec") <- parse_random_spec(
     random_spec_def = attr(dformulas$stoch, "random_spec"),
     M = M
   )
+
   attr(dformulas$stoch, "lfactor") <- parse_lfactor(
     lfactor_def = attr(dformulas$stoch, "lfactor"),
     resp = resp,
     families = families
   )
+  stopifnot_(n_unique(data[[group_var]]) > 1L ||
+      attr(dformulas$stoch, "lfactor")$P == 0L,
+    "Cannot estimate latent factors using only one group."
+  )
+  if (attr(dformulas$stoch, "lfactor")$has_lfactor) {
+    nz <- which(attr(dformulas$stoch, "lfactor")$nonzero_lambda)
+    if (length(nz) > 0L) {
+      lresp <- attr(dformulas$stoch, "lfactor")$responses
+      for (i in nz) {
+        j <- which(resp %in% lresp[i])
+        vicpt <- dformulas$stoch[[j]]$has_varying_intercept
+        if (vicpt) {
+          dformulas$stoch[[j]]$has_varying_intercept <- FALSE
+          warning_(
+            "The common time-varying intercept term of channel {.var {lresp[i]}}
+            was removed as channel predictors contain latent factor specified
+            with {.arg nonzero_lambda} as TRUE.")
+        }
+        ficpt <- dformulas$stoch[[j]]$has_fixed_intercept
+        ricpt <- dformulas$stoch[[j]]$has_random_intercept
+        if (ficpt && ricpt) {
+          dformulas$stoch[[j]]$has_fixed_intercept <- FALSE
+          warning_(
+            "The common time-invariant intercept term of channel {.var {lresp[i]}}
+            was removed as channel predictors contain random intercept and
+            latent factor specified with {.arg nonzero_lambda} as TRUE.")
+        }
+      }
+
+    }
+  }
   dformulas
 }
 
