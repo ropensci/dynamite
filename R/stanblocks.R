@@ -61,9 +61,9 @@ create_data <- function(dformula, idt, cvars, cgvars) {
     .indent = idt(1),
     .parse = FALSE
   )
-  datatext <- character(length(dformula))
   cg <- attr(dformula, "channel_groups")
   n_cg <- length(unique(cg))
+  datatext <- character(n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
     j <- cg_idx[1L]
@@ -180,9 +180,9 @@ create_parameters <- function(dformula, idt, cvars, cgvars) {
     )
   )
 
-  pars <- character(length(dformula))
-  cg <- attr(dformula, "channel_croups")
+  cg <- attr(dformula, "channel_groups")
   n_cg <- length(unique(cg))
+  pars <- character(n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
     j <- cg_idx[1L]
@@ -212,7 +212,7 @@ create_parameters <- function(dformula, idt, cvars, cgvars) {
     } else {
       family <- dformula[[j]]$family$name
       line_args <- c(list(y = dformula[[j]]$response, idt = idt), cvars[[j]])
-      pars[j] <- lines_wrap("parameters", family, line_args)
+      pars[i] <- lines_wrap("parameters", family, line_args)
     }
   }
   paste_rows("parameters {", splinetext, randomtext, lfactortext, pars, "}",
@@ -470,9 +470,9 @@ create_model <- function(dformula, idt, cvars, cgvars, backend) {
       }
     }
   }
-  mod <- character(length(dformula))
-  cg <- attr(dformula, "channel_croups")
+  cg <- attr(dformula, "channel_groups")
   n_cg <- length(unique(cg))
+  mod <- character(n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
     j <- cg_idx[1L]
@@ -496,10 +496,10 @@ create_model <- function(dformula, idt, cvars, cgvars, backend) {
         lines_wrap("parameters", family, line_args)
       )
     } else {
-      family <- dformula[[i]]$family$name
+      family <- dformula[[j]]$family$name
       line_args <- c(
-        list(y = cvars[[i]]$resp, idt = idt, backend = backend),
-        cvars[[i]]
+        list(y = cvars[[j]]$resp, idt = idt, backend = backend),
+        cvars[[j]]
       )
       mod[i] <- lines_wrap("model", family, line_args)
     }
