@@ -1567,9 +1567,13 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
   has_lfactor, L_prior_distr = "", has_missing, ...) {
 
   yname <- paste(y, collapse = "_")
-  obs_i <- ifelse(has_missing,
+  obs_i <- ifelse_(has_missing,
     glue::glue("obs_{yname}[i, t]"),
     "i")
+  n_obs <- ifelse_(has_missing,
+    glue::glue("n_obs_{yname}[t]"),
+    "N"
+  )
   p <- length(y)
   mu <- character(p)
   # create linear predictor mu_t for each dimension
@@ -1648,8 +1652,8 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
       "vector[O_{yname}] sigma_{yname} = [{cs(sd_y)}]';",
       "matrix[O_{yname}, O_{yname}] Lsigma = diag_pre_multiply(sigma_{yname}, L_{yname});",
       "for (t in 1:T) {{",
-        "vector[O_{yname}] mu[n_obs_{yname}[t]];",
-        "for (i in 1:n_obs_{yname}[t]) {{",
+        "vector[O_{yname}] mu[{n_obs}];",
+        "for (i in 1:{n_obs}) {{",
           "real mu_{y} = {mu};",
           "mu[i] = [{cs(mu_y)}]';",
         "}}",
