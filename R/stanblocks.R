@@ -486,22 +486,32 @@ create_model <- function(dformula, idt, cvars, cgvars, backend) {
     j <- cg_idx[1L]
     family <- dformula[[j]]$family$name
     if (is_multivariate(dformula[[j]]$family)) {
+      tmp <- cvars[[j]]
+      tmp$has_fixed_intercept <- vapply(cvars[cg_idx], "[[", logical(1L), "has_fixed_intercept")
+      tmp$has_varying_intercept <- vapply(cvars[cg_idx], "[[", logical(1L), "has_varying_intercept")
+      tmp$has_random_intercept <- vapply(cvars[cg_idx], "[[", logical(1L), "has_random_intercept")
+      tmp$has_fixed <- vapply(cvars[cg_idx], "[[", logical(1L), "has_fixed")
+      tmp$has_varying <- vapply(cvars[cg_idx], "[[", logical(1L), "has_varying")
+      tmp$has_random <- vapply(cvars[cg_idx], "[[", logical(1L), "has_random")
+      tmp$has_lfactor <- vapply(cvars[cg_idx], "[[", logical(1L), "has_lfactor")
       mod[i] <- ""
-      for (k in cg_idx) {
-        line_args <- c(
-          list(y = dformula[[cg_idx[k]]]$response, idt = idt, backend = backend),
-          cvars[[j]]
-        )
-        mod[i] <- paste_rows(
-          mod[i],
-          lines_wrap("model", "default", line_args)
-        )
-      }
-      y <- paste(get_responses(dformula[cg_idx]), collapse = "_")
-      line_args <- c(list(y = y, idt = idt), cvars[[j]])
+      # for (k in cg_idx) {
+      #   line_args <- c(
+      #     list(y = dformula[[cg_idx[k]]]$response, idt = idt, backend = backend),
+      #     cvars[[j]]
+      #   )
+      #   mod[i] <- paste_rows(
+      #     mod[i],
+      #     lines_wrap("model", "default", line_args)
+      #   )
+      # }
+     # y <- paste(get_responses(dformula[cg_idx]), collapse = "_")
+      line_args <- c(
+        list(y = get_responses(dformula[cg_idx]), idt = idt), tmp
+      )
       mod[i] <- paste_rows(
         mod[i],
-        lines_wrap("parameters", family, line_args)
+        lines_wrap("model", family, line_args), .parse = FALSE
       )
     } else {
       family <- dformula[[j]]$family$name

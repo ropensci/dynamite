@@ -115,7 +115,7 @@ data_lines_default <- function(y, idt, has_missing,
                                beta_prior_npars = 1L, delta_prior_npars = 1L,
                                tau_prior_npars = 1L, sigma_nu_prior_npars = 1L,
                                has_random_intercept,
-                               K_fixed, K_varying, K_random) {
+                               K_fixed, K_varying, K_random, ...) {
   icpt <- ifelse(
     has_random_intercept,
     " - 1",
@@ -513,7 +513,7 @@ parameters_lines_gaussian <- function(y, idt, ...) {
 parameters_lines_mvgaussian <- function(y, idt, ...) {
   paste_rows(
     "cholesky_factor_corr[O_{y}] L_{y}; // Cholesky for gaussian",
-    .indent = idt(c(0, 1))
+    .indent = idt(1)
   )
 }
 
@@ -1519,111 +1519,102 @@ model_lines_gaussian <- function(y, idt, obs, has_fixed, has_varying,
   paste_rows(mtext_def$text, mtext, .parse = FALSE)
 }
 
-model_lines_mvgaussian <- function(y, idt, L_prior_dist, ...) {
-  # WIP
-  # model_lines default gives intercept and random parts (why separately..)?
-  # args <- as.list(match.call()[-1L])
-  # args <- args[names(args) %in% names(formals(model_lines_default))]
-  # mtext_def <- do.call(model_lines_default, args = args)
-  # intercept <- mtext_def$intercept
-  # random <- mtext_def$random
+model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
+  has_random, has_fixed_intercept, has_varying_intercept, has_random_intercept,
+  has_lfactor, L_prior_dist = "", has_missing, ...) {
 
+  yname <- paste(y, collapse = "_")
+  obs_i <- ifelse(has_missing,
+    "obs_{yname}[i, t]",
+    "i")
+  p <- length(y)
+  mu <- character(p)
   # create linear predictor mu_t for each dimension
-  mu <- character(length(components))
-  for(i in components) {
+  for(i in seq_along(y)) {
     yi <- y[i]
     intercept_alpha <- ifelse_(
-      has_fixed_intercept,
+      has_fixed_intercept[i],
       glue::glue("alpha_{yi}"),
       ifelse_(
-        has_varying_intercept,
+        has_varying_intercept[i],
         glue::glue("alpha_{yi}[t]"),
         ""
       )
     )
     intercept_nu <- ifelse_(
-      has_random_intercept,
-      ifelse(
-        nzchar(obs),
-        glue::glue("nu_{yi}[{obs}, 1]"),
-        glue::glue("nu_{yi}[, 1]")
-      ),
+      has_random_intercept[i],
+      glue::glue("nu_{yi}[{obs_i}, 1]"),
       ""
     )
     lfactor <- ifelse_(
-      has_lfactor,
-      ifelse(
-        nzchar(obs),
-        glue::glue("lambda_{yi}[{obs}] * psi_{yi}[t]"),
-        glue::glue("lambda_{yi} * psi_{yi}[t]")
-      ),
+      has_lfactor[i],
+      glue::glue("lambda_{yi}[{obs_i}] * psi_{yi}[t]"),
       ""
     )
-    plus <- ifelse_(nzchar(intercept_alpha) && has_random_intercept, " + ", "")
+    plus <- ifelse_(nzchar(intercept_alpha) && has_random_intercept[i], " + ", "")
     intercept <- ifelse_(
-      nzchar(intercept_alpha) || has_random_intercept,
+      nzchar(intercept_alpha) || has_random_intercept[i],
       glue::glue("{intercept_alpha}{plus}{intercept_nu}"),
       "0"
     )
-    plus <- ifelse_(nzchar(intercept) && has_lfactor, " + ", "")
+    plus <- ifelse_(nzchar(intercept) && has_lfactor[i], " + ", "")
     intercept <- ifelse_(
-      nzchar(intercept) || has_lfactor,
+      nzchar(intercept) || has_lfactor[i],
       glue::glue("{intercept}{plus}{lfactor}"),
       ""
     )
     random <- ifelse_(
-      has_random,
+      has_random[i],
       ifelse_(
-        has_random_intercept,
-        glue::glue("rows_dot_product(X[t][{obs}, L_random_{yi}], nu_{y}[{obs}, 2:K_random_{yi}])"),
-        glue::glue("rows_dot_product(X[t][{obs}, L_random_{yi}], nu_{y}[{obs}, ])")
+        has_random_intercept[i],
+        glue::glue("rows_dot_product(X[t][{obs_i}, L_random_{yi}], nu_{yname}[{obs_i}, 2:K_random_{yi}])"),
+        glue::glue("rows_dot_product(X[t][{obs_i}, L_random_{yi}], nu_{yname}[{obs_i}, ])")
       ),
       ""
     )
     plus_re <- ifelse_(
-      has_random && (nchar(intercept) || has_fixed || has_varying),
+      has_random[i] && (nchar(intercept) || has_fixed[i] || has_varying[i]),
       " + ",
       ""
     )
     fixed_term <- ifelse_(
-      has_fixed,
-      glue::glue("X[t][{obs}, J_fixed_{yi}] * beta_{yi}"),
+      has_fixed[i],
+      glue::glue("X[t][{obs_i}, J_fixed_{yi}] * beta_{yi}"),
       ""
     )
     varying_term <- ifelse_(
-      has_varying,
-      glue::glue("X[t][{obs}, J_varying_{yi}] * delta_{yi}[t]"),
+      has_varying[i],
+      glue::glue("X[t][{obs_i}, J_varying_{yi}] * delta_{yi}[t]"),
       ""
     )
 
-    plus_c <- ifelse_(has_fixed && has_varying, " + ", "")
+    plus_c <- ifelse_(has_fixed[i] && has_varying[i], " + ", "")
     plus_ic <- ifelse_(
-      nzchar(intercept) && (has_fixed || has_varying),
+      nzchar(intercept) && (has_fixed[i] || has_varying[i]),
       " + ",
       ""
     )
     mu[i] <- glue::glue("{intercept}{plus_ic}{fixed_term}{plus_c}{varying_term}{plus_re}{random}")
   }
 
-
-  mtext <- paste_rows(
-    "L_{y} ~ {L_prior_dist};",
+  sd_y <- paste0("sigma_", y)
+  mu_y <- paste0("mu_", y)
+  paste_rows(
+    "L_{yname} ~ {L_prior_dist};",
     "{{",
-      #TODO, sigma_{y} is local vector which combines all univariate sigma_ys
-      "vector[O_{y}] sigma_{y} = [cs{sigma_{y}}]';",
-      "matrix[O_{y}, O_{y}] Lsigma = diag_pre_multiply(sigma_{y}, L_{y});",
+      "vector[O_{yname}] sigma_{yname} = [{cs(sd_y)}]';",
+      "matrix[O_{yname}, O_{yname}] Lsigma = diag_pre_multiply(sigma_{yname}, L_{yname});",
       "for (t in 1:T) {{",
-        "vector[O_{y}] mu[N];",
-       #  "mu_{ys} = {mu};",
-        "for (i in 1:N) {{",
-          "mu[i] = [{mu}]'",
+        "vector[O_{yname}] mu[n_obs_{yname}[t]];",
+        "for (i in 1:n_obs_{yname}[t]) {{",
+          "real mu_{y} = {mu};",
+          "mu[i] = [{cs(mu_y)}]'",
         "}}",
-        "y_{y}[t, {obs}] ~ multi_normal_cholesky(mu, L_{y});",
+        "y_{yname}[t, {obs}] ~ multi_normal_cholesky(mu, Lsigma);",
       "}}",
     "}}",
-    .indent = idt(c(1, 1, 2, 2, 2, 3, 3, 4, 3, 3, 2, 1))
+    .indent = idt(c(1, 1, 2, 2, 2, 3, 3, 4, 4, 3, 3, 2, 1))
   )
-  paste_rows(mtext_def$text, mtext, .parse = FALSE)
 }
 
 model_lines_binomial <- function(y, idt, obs, has_varying, has_fixed,
