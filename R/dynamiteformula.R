@@ -254,6 +254,52 @@ aux <- function(formula) {
   dynamiteformula(formula, family = "deterministic")
 }
 
+#' Parse Channel Formulas for `dynamiteformula
+#'
+#' @param x A `formula` object.
+#' @noRd
+parse_formula <- function(x, original, family) {
+  responses <- all.vars(formula_lhs(x))
+  formula_str <- deparse1(formula_rhs(x))
+  formula_parts <- strsplit(formula_str, "|", fixed = TRUE)[[1L]]
+  n_formulas <- length(formula_parts)
+  n_responses <- length(responses)
+  mvf <- is_multivariate(family)
+  mvc <- n_responses > 1L
+  stopifnot_(
+    !mvc || mvf,
+    "A univariate channel must have only one response variable."
+  )
+  stopifnot_(
+    (!mvf && !mvc) || (mvf && mvc),
+    "A multivariate channel must have more than one response variable."
+  )
+  stopifnot_(
+    !mvc || n_formulas == n_responses,
+    "Number of component formulas ({n_formulas}) must be 1 or
+     the number of dimensions: {n_responses}."
+  )
+  formula_parts <- ifelse_(
+    n_formulas == 1L,
+    rep(formula_parts, n_responses),
+    formula_parts
+  )
+  formulas <- lapply(paste0(responses, "~", formula_parts), as.formula)
+  resp_pred <- responses %in%
+    ulapply(formulas, function(y) get_nonlag_terms(y$formula))
+  stopifnot_(
+    !any(resp_pred),
+    "Variable{?s} {cs(responses[resp_pred])} appear{?s}
+     on both sides of the formula for ({cs(responses)})."
+  )
+  out <- vector(mode = "list", length = n_responses)
+  for (i in seq_len(n_responses)) {
+    out[[i]] <- formula_specials(formulas[[i]], original, family)
+  }
+  out
+}
+
+
 #' @rdname dynamiteformula
 #' @param e1 \[`dynamiteformula`]\cr A model formula specification.
 #' @param e2 \[`dynamiteformula`]\cr A model formula specification.
