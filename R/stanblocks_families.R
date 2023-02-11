@@ -1650,14 +1650,14 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
       "matrix[O_{yname}, O_{yname}] Lsigma = diag_pre_multiply(sigma_{yname}, L_{yname});",
       "for (t in 1:T) {{",
         "vector[O_{yname}] mu[{n_obs}];",
-        "vector[O_{yname}] mu_{y} = {mu};",
+        "vector[{n_obs}] mu_{y} = {mu};",
         "for (i in 1:{n_obs}) {{",
           "mu[i] = [{cs(mu_y)}]';",
         "}}",
         "y_{yname}[t, {obs}] ~ multi_normal_cholesky(mu, Lsigma);",
       "}}",
     "}}",
-    .indent = idt(c(1, 1, 2, 2, 2, 3, 3, 4, 4, 3, 3, 2, 1))
+    .indent = idt(c(1, 1, 2, 2, 2, 3, 3, 3, 4, 3, 3, 2, 1))
   )
 }
 
