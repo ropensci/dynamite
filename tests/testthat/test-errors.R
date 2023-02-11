@@ -144,7 +144,12 @@ test_that("cyclic dependency fails", {
     "Cyclic dependency found in model formula\\."
   )
 })
-
+test_that("contemporaneous dependency within multivariate gaussian fails", {
+  expect_error(
+    obs(c(y, x) ~ x | 1, family = "mvgaussian"),
+    "Contemporaneous dependency found within multivariate distribution\\."
+  )
+})
 test_that("adding nondynamiteformula to dynamiteformula fails", {
   expect_error(
     obs_test + 1.0,
