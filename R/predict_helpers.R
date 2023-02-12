@@ -114,7 +114,8 @@ parse_newdata <- function(dformula, newdata, data, type, eval_type,
     if (!setequal(l_orig, l_new)) {
       stopifnot_(
         all(l_new %in% l_orig),
-        c("{.cls factor} variable {.var {i}} in {.arg newdata} has new levels:",
+        c(
+          "{.cls factor} variable {.var {i}} in {.arg newdata} has new levels:",
           `x` = "Level{?s} {.val {setdiff(l_new, l_orig)}} {?is/are}
                  not present in the original data."
         )
@@ -131,6 +132,7 @@ parse_newdata <- function(dformula, newdata, data, type, eval_type,
   data.table::setDT(newdata, key = c(group_var, time_var))
   clear_names <- intersect(names(newdata), clear_names)
   if (length(clear_names) > 0L) {
+    # TODO no need check length when data.table package is updated
     newdata[, (clear_names) := NULL]
   }
   drop_unused(dformula, newdata, group_var, time_var)
@@ -454,12 +456,14 @@ prepare_eval_envs <- function(object, simulated, observed,
                               new_levels, group_var) {
   samples <- rstan::extract(object$stanfit)
   channel_vars <- object$stan$channel_vars
-  n_resp <- length(object$dformulas$all)
-  eval_envs <- vector(mode = "list", length = n_resp)
+  #n_resp <- length(object$dformulas$all)
+  cg <- attr(object$dformulas$all, "model_topology")
+  n_cg <- length(unique(cg))
+  eval_envs <- vector(mode = "list", length = n_cg)
   idx_draws <- seq_len(n_draws)
   nu_channels <- which_random(object$dformulas$all)
   n_group <- n_unique(observed[[group_var]])
-  j <- 0L
+  k <- 0L # index of channel_vars
   if (length(nu_channels) > 0L) {
     orig_ids <- unique(object$data[[group_var]])
     new_ids <- unique(observed[[group_var]])
@@ -494,84 +498,125 @@ prepare_eval_envs <- function(object, simulated, observed,
     Ks <- ulapply(object$stan$channel_vars, "[[", "K_random")
     dimnames(nu_samples)[[3L]] <- make.unique(rep(nus, times = Ks[Ks > 0]))
   }
-  for (i in seq_len(n_resp)) {
-    resp_family <- object$dformulas$all[[i]]$family
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    resp_family <- object$dformulas$all[[cg_idx[1L]]]$family
     if (is_deterministic(resp_family)) {
       eval_envs[[i]] <- list()
       next
     }
-    j <- j + 1L
-    resp <- object$dformulas$all[[i]]$response
-    alpha <- paste0("alpha_", resp)
-    beta <- paste0("beta_", resp)
-    delta <- paste0("delta_", resp)
-    phi <- paste0("phi_", resp)
-    sigma <- paste0("sigma_", resp)
     e <- new.env()
+    e$resp_family <- resp_family
     e$out <- simulated
     e$type <- type
     e$n_group <- n_group
     e$n_draws <- n_draws
     e$k <- n_draws * n_group
-    e$J_fixed <- channel_vars[[j]]$J_fixed
-    e$K_fixed <- channel_vars[[j]]$K_fixed
-    e$J_varying <- channel_vars[[j]]$J_varying
-    e$K_varying <- channel_vars[[j]]$K_varying
-    e$J_random <- channel_vars[[j]]$J_random
-    e$K_random <- channel_vars[[j]]$K_random
-    e$has_random_intercept <- channel_vars[[j]]$has_random_intercept
-    e$resp <- resp
-    e$phi <- c(samples[[phi]][idx_draws])
-    e$sigma <- c(samples[[sigma]][idx_draws])
-    if (resp %in% nu_channels) {
-      nus <- make.unique(rep(paste0("nu_", resp), e$K_random))
-      e$nu <- nu_samples[, , nus, drop = FALSE]
-    }
-    if (is_categorical(resp_family)) {
-      resp_levels <- attr(object$stan$responses, "resp_class")[[resp]] |>
-        attr("levels")
-      e$resp_levels <- resp_levels
-      e$S <- length(resp_levels)
-      if (channel_vars[[j]]$has_fixed_intercept) {
-        e$alpha <- samples[[alpha]][idx_draws, , drop = FALSE]
-      }
-      if (channel_vars[[j]]$has_varying_intercept) {
-        e$alpha <- samples[[alpha]][idx_draws, , , drop = FALSE]
-      }
-      e$beta <- samples[[beta]][idx_draws, , , drop = FALSE]
-      e$delta <- samples[[delta]][idx_draws, , , , drop = FALSE]
-      e$xbeta <- matrix(0.0, e$k, e$S)
+    if (is_multivariate(resp_family)) {
+      # TODO args
+      prepare_eval_env_multivariate(
+        e = e
+      )
     } else {
-      resp_levels <- NULL
-      if (channel_vars[[j]]$has_fixed_intercept) {
-        e$alpha <- array(samples[[alpha]][idx_draws], c(n_draws, 1L))
-      }
-      if (channel_vars[[j]]$has_varying_intercept) {
-        e$alpha <- samples[[alpha]][idx_draws, , drop = FALSE]
-      }
-      e$beta <- samples[[beta]][idx_draws, , drop = FALSE]
-      e$delta <- samples[[delta]][idx_draws, , , drop = FALSE]
-      e$xbeta <- numeric(e$k)
+      j <- cg_idx[1L]
+      k <- k + 1L
+      resp <- object$dformulas$all[[j]]$response
+      e$resp_levels <- onlyif(
+        is_categorical(resp_family),
+        attr(
+          attr(object$stan$responses, "resp_class")[[resp]],
+          "levels"
+        )
+      )
+      prepare_eval_env_univariate(
+        e = e,
+        resp = resp,
+        resp_levels = resp_levels,
+        cvars = channel_vars[[k]],
+        samples = samples,
+        nu_channels = nu_channels,
+        nu_samples = nu_samples,
+        idx = idx_draws,
+        eval_type = eval_type
+      )
     }
-    e$call <- generate_sim_call(
-      resp,
-      resp_levels,
-      resp_family,
-      eval_type,
-      channel_vars[[j]]$has_fixed,
-      channel_vars[[j]]$has_varying,
-      channel_vars[[j]]$has_random,
-      channel_vars[[j]]$has_fixed_intercept,
-      channel_vars[[j]]$has_varying_intercept,
-      channel_vars[[j]]$has_random_intercept,
-      channel_vars[[j]]$has_offset
-    )
     eval_envs[[i]] <- e
   }
   eval_envs
 }
 
-#' Generate a Quoted Expression to Evaluate Predictions or Fitted Values
+#' Prepare a Evaluation Environment for a Univariate Channel
+#'
+#' @noRd
+prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars, samples,
+                                        nu_channels, nu_samples,
+                                        idx, eval_type) {
+  alpha <- paste0("alpha_", resp)
+  beta <- paste0("beta_", resp)
+  delta <- paste0("delta_", resp)
+  phi <- paste0("phi_", resp)
+  sigma <- paste0("sigma_", resp)
+  e$J_fixed <- cvars$J_fixed
+  e$K_fixed <- cvars$K_fixed
+  e$J_varying <- cvars$J_varying
+  e$K_varying <- cvars$K_varying
+  e$J_random <- cvars$J_random
+  e$K_random <- cvars$K_random
+  e$has_random_intercept <- cvars$has_random_intercept
+  e$resp <- resp
+  e$phi <- c(samples[[phi]][idx])
+  e$sigma <- c(samples[[sigma]][idx])
+  if (resp %in% nu_channels) {
+    nus <- make.unique(rep(paste0("nu_", resp), e$K_random))
+    e$nu <- nu_samples[, , nus, drop = FALSE]
+  }
+  if (is_categorical(e$resp_family)) {
+    e$S <- length(e$resp_levels)
+    if (cvars$has_fixed_intercept) {
+      e$alpha <- samples[[alpha]][idx, , drop = FALSE]
+    }
+    if (cvars$has_varying_intercept) {
+      e$alpha <- samples[[alpha]][idx, , , drop = FALSE]
+    }
+    e$beta <- samples[[beta]][idx, , , drop = FALSE]
+    e$delta <- samples[[delta]][idx, , , , drop = FALSE]
+    e$xbeta <- matrix(0.0, e$k, e$S)
+  } else {
+    if (cvars$has_fixed_intercept) {
+      e$alpha <- array(samples[[alpha]][idx], c(e$n_draws, 1L))
+    }
+    if (cvars$has_varying_intercept) {
+      e$alpha <- samples[[alpha]][idx, , drop = FALSE]
+    }
+    e$beta <- samples[[beta]][idx, , drop = FALSE]
+    e$delta <- samples[[delta]][idx, , , drop = FALSE]
+    e$xbeta <- numeric(e$k)
+  }
+  e$call <- generate_sim_call_univariate(
+    resp = resp,
+    resp_levels = e$resp_levels,
+    resp_family = e$resp_family,
+    eval_type = eval_type,
+    has_fixed = cvars$has_fixed,
+    has_varying = cvars$has_varying,
+    has_random = cvars$has_random,
+    has_fixed_intercept = cvars$has_fixed_intercept,
+    has_varying_intercept = cvars$has_varying_intercept,
+    has_random_intercept = cvars$has_random_intercept,
+    has_offset = cvars$has_offset
+  )
+}
+
+#' Prepare a Evaluation Environment for a Multivariate Channel
+#'
+#' @noRd
+prepare_eval_env_multivariate <- function(e, resp, resp_levels, cvars, samples,
+                                          nu_samples, idx, eval_type) {
+  # TODO
+  NULL
+}
+
+#' Generate an Expression to Evaluate Predictions for a Univariate Channel
 #'
 #' @param resp \[`character(1)`]\cr Name of the response.
 #' @param resp_levels \[`character()`]\cr Levels of a categorical response.
@@ -593,12 +638,16 @@ prepare_eval_envs <- function(object, simulated, observed,
 #' @param has_offset \[logical(1)]\cr
 #'   Does the channel have an offset?
 #' @noRd
-generate_sim_call <- function(resp, resp_levels, family, eval_type,
-                              has_fixed, has_varying, has_random,
-                              has_fixed_intercept, has_varying_intercept,
-                              has_random_intercept, has_offset) {
-  if (is_categorical(family)) {
-    glue::glue(
+generate_sim_call_univariate <- function(resp,
+                                         resp_levels, resp_family, eval_type,
+                                         has_fixed, has_varying, has_random,
+                                         has_fixed_intercept,
+                                         has_varying_intercept,
+                                         has_random_intercept,
+                                         has_offset) {
+  out <- ""
+  if (is_categorical(resp_family)) {
+    out <- glue::glue(
       "{{\n",
       paste0(
         "for (j in seq_len(n_group)) {{\n",
@@ -621,9 +670,9 @@ generate_sim_call <- function(resp, resp_levels, family, eval_type,
       ),
       eval(str2lang(glue::glue("{eval_type}_categorical"))),
       "}}"
-    ) |> str2lang()
+    )
   } else {
-    glue::glue(
+    out <- glue::glue(
       "{{\n",
       paste0(
         "for (j in seq_len(n_group)) {{\n",
@@ -651,7 +700,7 @@ generate_sim_call <- function(resp, resp_levels, family, eval_type,
         "{ifelse_(has_random, ",
         "' + .rowSums(
             x = model_matrix[idx_draw, J_random, drop = FALSE] *
-                  nu[, j, (1 + has_random_intercept):K_random],
+                  nu[, j, seq.int(1 + has_random_intercept, K_random)],
             m = n_draws,
             n = K_random - has_random_intercept
           )',
@@ -672,10 +721,26 @@ generate_sim_call <- function(resp, resp_levels, family, eval_type,
         ),
         ""
       ),
-      eval(str2lang(glue::glue("{eval_type}_{family}"))),
+      eval(str2lang(glue::glue("{eval_type}_{resp_family}"))),
       "}}"
-    ) |> str2lang()
+    )
   }
+  str2lang(out)
+}
+
+#' Generate an Expression to Evaluate Predictions for a Multivariate Channel
+#'
+#' @noRd
+generate_sim_call_multivariate <- function(resp,
+                                           resp_levels, resp_family, eval_type,
+                                           has_fixed, has_varying, has_random,
+                                           has_fixed_intercept,
+                                           has_varying_intercept,
+                                           has_random_intercept,
+                                           has_offset) {
+  # TODO
+  out <- ""
+  str2lang(out)
 }
 
 # Fitted expressions ------------------------------------------------------

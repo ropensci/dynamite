@@ -54,18 +54,28 @@ create_data <- function(dformula, idt, cvars, cgvars) {
   mtext <- paste_rows(
     "int<lower=1> T; // number of time points",
     "int<lower=1> N; // number of individuals",
-    onlyif(K > 0,
-      "int<lower=0> K; // total number of covariates across all channels"),
-    onlyif(K > 0,
-      "matrix[N, K] X[T]; // covariates as an array of N x K matrices"),
-    onlyif(K > 0,
-      "row_vector[K] X_m; // Means of all covariates at first time point"),
+    onlyif(
+      K > 0,
+      "int<lower=0> K; // total number of covariates across all channels"
+    ),
+    onlyif(
+      K > 0,
+      "matrix[N, K] X[T]; // covariates as an array of N x K matrices"
+    ),
+    onlyif(
+      K > 0,
+      "row_vector[K] X_m; // Means of all covariates at first time point"
+    ),
     onlyif(has_splines, "int<lower=1> D; // number of B-splines"),
     onlyif(has_splines, "matrix[D, T] Bs; // B-spline basis matrix"),
-    onlyif(M > 0,
-      "int<lower=0> M; // number group-level effects (including intercepts)"),
-    onlyif(P > 0,
-      "int<lower=0> P; // number of channels with latent factor"),
+    onlyif(
+      M > 0,
+      "int<lower=0> M; // number group-level effects (including intercepts)"
+    ),
+    onlyif(
+      P > 0,
+      "int<lower=0> P; // number of channels with latent factor"
+    ),
     .indent = idt(1),
     .parse = FALSE
   )
@@ -81,7 +91,7 @@ create_data <- function(dformula, idt, cvars, cgvars) {
       for (k in cg_idx) {
         line_args <- c(
           list(y = dformula[[k]]$response, idt = idt),
-          cvars[[k]] # TODO is this correct?
+          cvars[[k]]
         )
         datatext[i] <- paste_rows(
           datatext[i],
@@ -99,7 +109,6 @@ create_data <- function(dformula, idt, cvars, cgvars) {
       datatext[i] <- lines_wrap("data", family, line_args)
     }
   }
-
   paste_rows("data {", mtext, datatext, "}", .parse = FALSE)
 }
 
@@ -165,7 +174,10 @@ create_parameters <- function(dformula, idt, cvars, cgvars) {
       "// Random group-level effects",
       onlyif(
         attr(cvars, "random_def")$correlated,
-        "cholesky_factor_corr[M] L_nu; // Cholesky for correlated random effects"
+        paste0(
+          "cholesky_factor_corr[M] L_nu; ",
+          "// Cholesky for correlated random effects"
+        )
       ),
       "vector<lower=0>[M] sigma_nu; // standard deviations of random effects",
       "matrix[N, M] nu_raw;",
@@ -218,12 +230,17 @@ create_parameters <- function(dformula, idt, cvars, cgvars) {
         lines_wrap("parameters", family, line_args)
       )
     } else {
-      family <- dformula[[j]]$family$name
       line_args <- c(list(y = dformula[[j]]$response, idt = idt), cvars[[j]])
       pars[i] <- lines_wrap("parameters", family, line_args)
     }
   }
-  paste_rows("parameters {", splinetext, randomtext, lfactortext, pars, "}",
+  paste_rows(
+    "parameters {",
+    splinetext,
+    randomtext,
+    lfactortext,
+    pars,
+    "}",
     .parse = FALSE
   )
 }
@@ -245,23 +262,26 @@ create_transformed_parameters <- function(dformula, idt, cvars, cgvars) {
         attr(cvars, "random_def")$correlated,
         paste_rows(
           "matrix[N, M] nu = nu_raw * diag_pre_multiply(sigma_nu, L_nu)';",
-          glue::glue("matrix[N, {Ks}] nu_{y} = nu[, {cKs1}:{cKs2}];"),
+          "matrix[N, {Ks}] nu_{y} = nu[, {cKs1}:{cKs2}];",
           .indent = idt(1)
         ),
         paste_rows(
-          glue::glue("matrix[N, {Ks}] nu_{y} = diag_post_multiply(nu_raw[, {cKs1}:{cKs2}], sigma_nu_{y});"),
+          paste0(
+            "matrix[N, {Ks}] nu_{y} = ",
+            "diag_post_multiply(nu_raw[, {cKs1}:{cKs2}], sigma_nu_{y});"
+          ),
           .indent = idt(1)
         )
       )
     } else {
       randomtext <-
         paste_rows(
-          glue::glue("matrix[N, {Ks}] nu_{y} = nu_raw[, {cKs1}:{cKs2}];"),
+          "matrix[N, {Ks}] nu_{y} = nu_raw[, {cKs1}:{cKs2}];",
           .indent = idt(1)
         )
     }
     randomtext <- paste_rows(
-      glue::glue("vector[{Ks}] sigma_nu_{y} = sigma_nu[{cKs1}:{cKs2}];"),
+      "vector[{Ks}] sigma_nu_{y} = sigma_nu[{cKs1}:{cKs2}];",
       randomtext,
       .indent = idt(c(1, 0))
     )
@@ -282,16 +302,16 @@ create_transformed_parameters <- function(dformula, idt, cvars, cgvars) {
         attr(cvars, "lfactor_def")$correlated,
         paste_rows(
           "matrix[P, D - 1] omega_psi = L_lf * omega_raw_psi;",
-          glue::glue(
-            "row_vector[D] omega_psi_{psis} = \\
-            append_col(0, {tau_psi}omega_psi[{1:P}, ]);"
+          paste0(
+            "row_vector[D] omega_psi_{psis} = ",
+            "append_col(0, {tau_psi}omega_psi[{1:P}, ]);"
           ),
           .indent = idt(1)
         ),
         paste_rows(
-          glue::glue(
-            "row_vector[D] omega_psi_{psis} = \\
-            append_col(0, {tau_psi}omega_raw_psi[{1:P}, ]);"
+          paste0(
+            "row_vector[D] omega_psi_{psis} = ",
+            "append_col(0, {tau_psi}omega_raw_psi[{1:P}, ]);"
           ),
           .indent = idt(1)
         )
@@ -299,9 +319,9 @@ create_transformed_parameters <- function(dformula, idt, cvars, cgvars) {
     } else {
       lfactortext <-
         paste_rows(
-          glue::glue(
-            "row_vector[D] omega_psi_{psis} = \\
-             append_col(0, omega_raw_psi[{1:P}, ]);"
+          paste0(
+            "row_vector[D] omega_psi_{psis} = ",
+            "append_col(0, omega_raw_psi[{1:P}, ]);"
           ),
           .indent = idt(1)
         )
@@ -451,9 +471,14 @@ create_model <- function(dformula, idt, cvars, cgvars, backend) {
         )
       } else {
         if (any(attr(cvars, "lfactor_def")$nonzero_lambda)) {
-          tau <- paste0(ifelse(attr(cvars, "lfactor_def")$nonzero_lambda,
-            paste0("tau_psi_", psis), "1"
-          ), collapse = ", ")
+          tau <- paste0(
+            ifelse(
+              attr(cvars, "lfactor_def")$nonzero_lambda,
+              paste0("tau_psi_", psis),
+              "1"
+            ),
+            collapse = ", "
+          )
           lfactortext <- paste_rows(
             "{{",
             "vector[P] tau_psi = [{tau}]';",
@@ -487,27 +512,16 @@ create_model <- function(dformula, idt, cvars, cgvars, backend) {
     family <- dformula[[j]]$family$name
     if (is_multivariate(dformula[[j]]$family)) {
       mod[i] <- ""
-      # for (k in cg_idx) {
-      #   line_args <- c(
-      #     list(y = dformula[[cg_idx[k]]]$response, idt = idt, backend = backend),
-      #     cvars[[j]]
-      #   )
-      #   mod[i] <- paste_rows(
-      #     mod[i],
-      #     lines_wrap("model", "default", line_args)
-      #   )
-      # }
-     # y <- paste(get_responses(dformula[cg_idx]), collapse = "_")
       line_args <- c(
         list(y = get_responses(dformula[cg_idx]), idt = idt),
         cgvars[[i]]
       )
       mod[i] <- paste_rows(
         mod[i],
-        lines_wrap("model", family, line_args), .parse = FALSE
+        lines_wrap("model", family, line_args),
+        .parse = FALSE
       )
     } else {
-      family <- dformula[[j]]$family$name
       line_args <- c(
         list(y = cvars[[j]]$resp, idt = idt, backend = backend),
         cvars[[j]]
@@ -536,7 +550,10 @@ create_generated_quantities <- function(dformula, idt, cvars, cgvars) {
   if (M > 1 && attr(cvars, "random_def")$correlated) {
     # evaluate number of corrs to avoid Stan warning about integer division
     gen_nu <- paste_rows(
-      "corr_matrix[M] corr_matrix_nu = multiply_lower_tri_self_transpose(L_nu);",
+      paste0(
+        "corr_matrix[M] corr_matrix_nu = ",
+        "multiply_lower_tri_self_transpose(L_nu);"
+      ),
       "vector<lower=-1,upper=1>[{(M * (M - 1L)) %/% 2L}] corr_nu;",
       "for (k in 1:M) {{",
       "for (j in 1:(k - 1)) {{",
@@ -560,8 +577,10 @@ create_generated_quantities <- function(dformula, idt, cvars, cgvars) {
       collapse = ", "
     )
     gen_psi <- paste_rows(
-      paste0("corr_matrix[P] corr_matrix_psi = ",
-        "multiply_lower_tri_self_transpose(L_lf);"),
+      paste0(
+        "corr_matrix[P] corr_matrix_psi = ",
+        "multiply_lower_tri_self_transpose(L_lf);"
+      ),
       "vector<lower=-1,upper=1>[{(P * (P - 1L)) %/% 2L}] corr_psi;",
       "for (k in 1:P) {{",
       "for (j in 1:(k - 1)) {{",
