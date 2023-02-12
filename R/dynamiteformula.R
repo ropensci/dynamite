@@ -588,28 +588,26 @@ join_dynamiteformulas <- function(e1, e2) {
     is.null(attr(e1, "random_spec")) || is.null(attr(e2, "random_spec")),
     "Both dynamiteformulas contain a random_spec definition."
   )
-  n_resp <- length(resp_all)
   pred <- c(get_nonlag_terms(e1), get_nonlag_terms(e2))
-  dep <- matrix(
-    0L,
-    nrow = n_resp,
-    ncol = n_resp,
-    dimnames = list(resp_all, resp_all)
-  )
-  for (i in seq_len(n_resp)) {
-    dep[which(resp_all %in% pred[[i]]), resp_all[i]] <- 1L
+  cg1 <- attr(e1, "channel_groups")
+  cg2 <- attr(e2, "channel_groups")
+  cg <-  c(cg1, cg2 + max(cg1))
+  n_cg <- length(unique(cg))
+  dep <- matrix(0L, nrow = n_cg, ncol = n_cg)
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    for (j in cg_idx) {
+      dep[unique(cg[which(resp_all %in% pred[[j]])]), i] <- 1L
+    }
   }
   topo <- topological_order(dep)
   stopifnot_(
     length(topo) > 0L,
     "Cyclic dependency found in model formula."
   )
-  cg1 <- attr(e1, "channel_groups")
-  cg2 <- attr(e2, "channel_groups")
-  cg <-  c(cg1, cg2 + max(cg1))
   attributes(out) <- c(attributes(e1), attributes(e2))
   attr(out, "channel_groups") <- cg
-  attr(out, "model_topology") <- unique(cg[topo])
+  attr(out, "model_topology") <- topo
   class(out) <- "dynamiteformula"
   out
 }
