@@ -9,7 +9,7 @@ lines_wrap <- function(prefix, family, args) {
   do.call(what = paste0(prefix, "_lines_", family), args = args)
 }
 
-#' Is a Prior Definition Vectorizable
+#' Is a Prior Definition Vectorizable?
 #'
 #' @param x A `character` vector of length one.
 #' @noRd
@@ -225,11 +225,17 @@ data_lines_categorical <- function(y, idt,
     ),
     onlyif(
       write_beta && beta_prior_npars > 0L && K_fixed > 0L,
-      "matrix[K_fixed_{y} * (S_{y} - 1), {beta_prior_npars}] beta_prior_pars_{y};"
+      paste0(
+        "matrix[K_fixed_{y} * (S_{y} - 1), {beta_prior_npars}] ",
+        "beta_prior_pars_{y};"
+      )
     ),
     onlyif(
       write_delta && delta_prior_npars > 0L && K_varying > 0L,
-      "matrix[K_varying_{y} * (S_{y} - 1), {delta_prior_npars}] delta_prior_pars_{y};"
+      paste0(
+        "matrix[K_varying_{y} * (S_{y} - 1), {delta_prior_npars}] ",
+        "delta_prior_pars_{y};"
+      )
     ),
     onlyif(
       write_tau && tau_prior_npars > 0L && K_varying > 0L,
@@ -735,7 +741,8 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     declare_fixed_intercept <- paste_rows(
       "real alpha_{y} = a_{y};",
       .indent = idt(1),
-      .parse = FALSE)
+      .parse = FALSE
+    )
     state_fixed_intercept <- character(0L)
   }
   declare_varying_intercept <- paste_rows(
@@ -1025,7 +1032,7 @@ transformed_parameters_lines_gaussian <- function(...) {
 transformed_parameters_lines_mvgaussian <- function(...) {
   args <- as.list(match.call()[-1L])
   args <- args[names(args) %in%
-                 names(formals(transformed_parameters_lines_default))]
+    names(formals(transformed_parameters_lines_default))]
   do.call(what = transformed_parameters_lines_default, args = args)
 }
 
@@ -1101,11 +1108,11 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
                                 psi_prior_distr = "",
                                 tau_psi_prior_distr = "",
                                 K_fixed, K_varying, K_random, J_random, ...) {
-
   mtext_alpha <- "a_{y} ~ {alpha_prior_distr};"
 
   if (vectorizable_prior(sigma_nu_prior_distr)) {
-    dpars_sigma_nu <- ifelse_(sigma_nu_prior_npars > 0L,
+    dpars_sigma_nu <- ifelse_(
+      sigma_nu_prior_npars > 0L,
       paste0(
         "sigma_nu_prior_pars_", y, "[, ", seq_len(sigma_nu_prior_npars), "]",
         collapse = ", "
@@ -1215,7 +1222,8 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
   mtext_fixed_intercept <- mtext_alpha
 
   if (vectorizable_prior(beta_prior_distr)) {
-    dpars_fixed <-  ifelse_(beta_prior_npars > 0L,
+    dpars_fixed <-  ifelse_(
+      beta_prior_npars > 0L,
       paste0(
         "beta_prior_pars_", y, "[, ", seq_len(beta_prior_npars), "]",
         collapse = ", "
@@ -1228,7 +1236,8 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
   }
 
   if (vectorizable_prior(tau_prior_distr)) {
-    dpars_tau <-  ifelse_(tau_prior_npars > 0L,
+    dpars_tau <-  ifelse_(
+      tau_prior_npars > 0L,
       paste0(
         "tau_prior_pars_", y, "[, ", seq_len(tau_prior_npars), "]",
         collapse = ", "
@@ -1283,21 +1292,28 @@ model_lines_default <- function(y, idt, obs, noncentered, shrinkage,
     has_random,
     ifelse_(
       has_random_intercept,
-      glue::glue("rows_dot_product(X[t][{obs}, L_random_{y}], nu_{y}[{obs}, 2:K_random_{y}])"),
+      paste0(
+        glue::glue("rows_dot_product(X[t][{obs}, L_random_{y}], "),
+        glue::glue("nu_{y}[{obs}, 2:K_random_{y}])")
+      ),
       glue::glue("rows_dot_product(X[t][{obs}, L_random_{y}], nu_{y}[{obs}, ])")
     ),
     ""
   )
-  list(text = paste_rows(
-    onlyif(has_lfactor, mtext_lambda),
-    onlyif(has_random_intercept || has_random, mtext_sigma_nu),
-    onlyif(has_fixed_intercept, mtext_fixed_intercept),
-    onlyif(has_varying_intercept, mtext_varying_intercept),
-    onlyif(has_fixed, mtext_fixed),
-    onlyif(has_varying, mtext_varying),
-    onlyif(has_varying, mtext_tau),
-    .indent = idt(c(1, 1, 1, 1, 1, 1, 1))
-  ), intercept = intercept, random = random)
+  list(
+    text = paste_rows(
+      onlyif(has_lfactor, mtext_lambda),
+      onlyif(has_random_intercept || has_random, mtext_sigma_nu),
+      onlyif(has_fixed_intercept, mtext_fixed_intercept),
+      onlyif(has_varying_intercept, mtext_varying_intercept),
+      onlyif(has_fixed, mtext_fixed),
+      onlyif(has_varying, mtext_varying),
+      onlyif(has_varying, mtext_tau),
+      .indent = idt(c(1, 1, 1, 1, 1, 1, 1))
+    ),
+    intercept = intercept,
+    random = random
+  )
 }
 
 model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
@@ -1319,7 +1335,8 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
                                     K_random, L_fixed, L_varying, S, backend,
                                     ...) {
   if (vectorizable_prior(alpha_prior_distr)) {
-    dpars_alpha <- ifelse_(alpha_prior_npars > 0L,
+    dpars_alpha <- ifelse_(
+      alpha_prior_npars > 0L,
       paste0(
         "alpha_prior_pars_", y, "[, ", seq_len(alpha_prior_npars), "]",
         collapse = ", "
@@ -1371,7 +1388,8 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
   )
 
   if (vectorizable_prior(beta_prior_distr)) {
-    dpars_fixed <- ifelse_(beta_prior_npars > 0L,
+    dpars_fixed <- ifelse_(
+      beta_prior_npars > 0L,
       paste0(
         "beta_prior_pars_", y, "[, ", seq_len(beta_prior_npars), "]",
         collapse = ", "
@@ -1547,10 +1565,7 @@ model_lines_gaussian <- function(y, idt, obs, has_fixed, has_varying,
   mtext <- paste_rows(
     "sigma_{y} ~ {sigma_prior_distr};",
     "{{",
-    onlyif(
-      has_fixed || has_varying,
-      "vector[K_{y}] gamma__{y};"
-    ),
+    onlyif(has_fixed || has_varying, "vector[K_{y}] gamma__{y};"),
     onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
     "for (t in 1:T) {{",
     onlyif(has_varying, "gamma__{y}[L_varying_{y}] = delta_{y}[t];"),
@@ -1563,18 +1578,18 @@ model_lines_gaussian <- function(y, idt, obs, has_fixed, has_varying,
 }
 
 model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
-  has_random, has_fixed_intercept, has_varying_intercept, has_random_intercept,
-  has_lfactor, L_prior_distr = "", has_missing, ...) {
-
+                                   has_random, has_fixed_intercept,
+                                   has_varying_intercept, has_random_intercept,
+                                   has_lfactor, L_prior_distr = "",
+                                   has_missing, ...) {
   yname <- paste(y, collapse = "_")
   n_obs <- ifelse_(has_missing,
     glue::glue("n_obs_{yname}[t]"),
     "N"
   )
-  O <- length(y)
-  mu <- character(O)
+  mu <- character(length(y))
   # create linear predictor mu_t for each dimension
-  for(i in seq_along(y)) {
+  for (i in seq_along(y)) {
     yi <- y[i]
     intercept_alpha <- ifelse_(
       has_fixed_intercept[i],
@@ -1595,7 +1610,11 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
       glue::glue("lambda_{yi}[{obs}] * psi_{yi}[t]"),
       ""
     )
-    plus <- ifelse_(nzchar(intercept_alpha) && has_random_intercept[i], " + ", "")
+    plus <- ifelse_(
+      nzchar(intercept_alpha) && has_random_intercept[i],
+      " + ",
+      ""
+    )
     intercept <- ifelse_(
       nzchar(intercept_alpha) || has_random_intercept[i],
       glue::glue("{intercept_alpha}{plus}{intercept_nu}"),
@@ -1611,7 +1630,10 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
       has_random[i],
       ifelse_(
         has_random_intercept[i],
-        glue::glue("X[t][{obs}, L_random_{yi}] * nu_{yi}[{obs}, 2:K_random_{yi}]'"),
+        paste0(
+          glue::glue("X[t][{obs}, L_random_{yi}] * nu_{yi}[{obs}, "),
+          glue::glue("2:K_random_{yi}]'")
+        ),
         glue::glue("X[t][{obs}, L_random_{yi}] * nu_{yi}[{obs}, ]'")
       ),
       ""
@@ -1638,7 +1660,9 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
       " + ",
       ""
     )
-    mu[i] <- glue::glue("{intercept}{plus_ic}{fixed_term}{plus_c}{varying_term}{plus_re}{random}")
+    mu[i] <- glue::glue(
+      "{intercept}{plus_ic}{fixed_term}{plus_c}{varying_term}{plus_re}{random}"
+    )
   }
 
   sd_y <- paste0("sigma_", y)
@@ -1647,7 +1671,10 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
     "L_{yname} ~ {L_prior_distr};",
     "{{",
       "vector[O_{yname}] sigma_{yname} = [{cs(sd_y)}]';",
-      "matrix[O_{yname}, O_{yname}] Lsigma = diag_pre_multiply(sigma_{yname}, L_{yname});",
+      paste0(
+        "matrix[O_{yname}, O_{yname}] Lsigma = ",
+        "diag_pre_multiply(sigma_{yname}, L_{yname});"
+      ),
       "for (t in 1:T) {{",
         "vector[O_{yname}] mu[{n_obs}];",
         "vector[{n_obs}] mu_{y} = {mu};",
@@ -1917,7 +1944,8 @@ model_lines_gamma <- function(y, idt, obs, has_varying, has_fixed, has_random,
   )
   likelihood_term <- paste0(
     "y_{y}[{obs}, t] ~ gamma(phi_{y}, phi_{y} * ",
-    "exp(-({intercept}{plus_ic}{fixed_term}{plus_c}{varying_term}{plus_re}{random})));"
+    "exp(-({intercept}{plus_ic}{fixed_term}{plus_c}",
+    "{varying_term}{plus_re}{random})));"
   )
   mtext <- paste_rows(
     phi_term,
@@ -1960,8 +1988,8 @@ model_lines_beta <- function(y, idt, obs, has_varying, has_fixed, has_random,
   )
   likelihood_term <- paste0(
     "y_{y}[{obs}, t] ~ beta_proportion(",
-    "inv_logit(({intercept}{plus_ic}{fixed_term}{plus_c}{varying_term}{plus_re}{random})), ",
-    "phi_{y});"
+    "inv_logit(({intercept}{plus_ic}{fixed_term}{plus_c}",
+    "{varying_term}{plus_re}{random})), phi_{y});"
   )
   mtext <- paste_rows(
     "phi_{y} ~ {phi_prior_distr};",
