@@ -284,7 +284,7 @@ parse_formula <- function(x, original, family) {
     "A multivariate channel must have more than one response variable."
   )
   stopifnot_(
-    !mvc || n_formulas == n_responses,
+    !mvc || n_formulas == n_responses || n_formulas == 1L,
     "Number of component formulas ({n_formulas}) must be 1 or
      the number of dimensions: {n_responses}."
   )

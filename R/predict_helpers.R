@@ -456,8 +456,7 @@ prepare_eval_envs <- function(object, simulated, observed,
                               new_levels, group_var) {
   samples <- rstan::extract(object$stanfit)
   channel_vars <- object$stan$channel_vars
-  #n_resp <- length(object$dformulas$all)
-  cg <- attr(object$dformulas$all, "model_topology")
+  cg <- attr(object$dformulas$all, "channel_groups")
   n_cg <- length(unique(cg))
   eval_envs <- vector(mode = "list", length = n_cg)
   idx_draws <- seq_len(n_draws)
@@ -513,9 +512,17 @@ prepare_eval_envs <- function(object, simulated, observed,
     e$n_draws <- n_draws
     e$k <- n_draws * n_group
     if (is_multivariate(resp_family)) {
-      # TODO args
+      k <- k + length(cg_idx)
+      resp <- get_responses(object$dformulas$all[cg_idx])
       prepare_eval_env_multivariate(
-        e = e
+        e = e,
+        resp = resp,
+        cvars = channel_vars[cg_idx],
+        samples = samples,
+        nu_channels = nu_channels,
+        nu_samples = nu_samples,
+        idx = idx_draws,
+        eval_type = eval_type
       )
     } else {
       j <- cg_idx[1L]
@@ -605,15 +612,6 @@ prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars, samples,
     has_random_intercept = cvars$has_random_intercept,
     has_offset = cvars$has_offset
   )
-}
-
-#' Prepare a Evaluation Environment for a Multivariate Channel
-#'
-#' @noRd
-prepare_eval_env_multivariate <- function(e, resp, resp_levels, cvars, samples,
-                                          nu_samples, idx, eval_type) {
-  # TODO
-  NULL
 }
 
 #' Generate an Expression to Evaluate Predictions for a Univariate Channel
@@ -728,18 +726,158 @@ generate_sim_call_univariate <- function(resp,
   str2lang(out)
 }
 
+#' Prepare a Evaluation Environment for a Multivariate Channel
+#'
+#' @noRd
+prepare_eval_env_multivariate <- function(e, resp, cvars, samples,
+                                          nu_channels, nu_samples,
+                                          idx, eval_type) {
+  d <- length(resp)
+  e$d <- d
+  e$resp <- resp
+  e$L <- samples[[paste(c("L", resp), collapse = "_")]]
+  e$sigma <- matrix(0.0, e$n_draws, d)
+  has_fixed <- logical(d)
+  has_varying <- logical(d)
+  has_random <- logical(d)
+  has_fixed_intercept <- logical(d)
+  has_varying_intercept <- logical(d)
+  has_random_intercept <- logical(d)
+  has_offset <- logical(d)
+  for (i in seq_len(d)) {
+    yi <- resp[i]
+    alpha <- paste0("alpha_", yi)
+    beta <- paste0("beta_", yi)
+    delta <- paste0("delta_", yi)
+    phi <- paste0("phi_", yi)
+    nu <- paste0("nu_", yi)
+    sigma <- paste0("sigma_", yi)
+    J_fixed <- paste0("J_fixed_", yi)
+    K_fixed <- paste0("K_fixed_", yi)
+    J_varying <- paste0("J_varying_", yi)
+    K_varying <- paste0("K_varying_", yi)
+    J_random <- paste0("J_random_", yi)
+    K_random <- paste0("K_random_", yi)
+    hri <- paste0("has_random_intercept_", yi)
+    has_fixed[i] <- cvars[[i]]$has_fixed
+    has_varying[i] <- cvars[[i]]$has_varying
+    has_random[i] <- cvars[[i]]$has_random
+    has_fixed_intercept[i] <- cvars[[i]]$has_fixed_intercept
+    has_varying_intercept[i] <- cvars[[i]]$has_varying_intercept
+    has_random_intercept[i] <- cvars[[i]]$has_random_intercept
+    has_offset[i] <- cvars[[i]]$has_offset
+    e[[J_fixed]] <- cvars[[i]]$J_fixed
+    e[[K_fixed]] <- cvars[[i]]$K_fixed
+    e[[J_varying]] <- cvars[[i]]$J_varying
+    e[[K_varying]] <- cvars[[i]]$K_varying
+    e[[J_random]] <- cvars[[i]]$J_random
+    e[[K_random]] <- cvars[[i]]$K_randon
+    e[[phi]] <- c(samples[[phi]][idx])
+    e$sigma[, i] <- c(samples[[sigma]][idx])
+    if (yi %in% nu_channels) {
+      nus <- make.unique(rep(paste0("nu_", yi), e[[K_random]]))
+      e[[nu]] <- nu_samples[, , nus, drop = FALSE]
+    }
+    if (cvars[[i]]$has_fixed_intercept) {
+      e[[alpha]] <- array(samples[[alpha]][idx], c(e$n_draws, 1L))
+    }
+    if (cvars[[i]]$has_varying_intercept) {
+      e[[alpha]] <- samples[[alpha]][idx, , drop = FALSE]
+    }
+    e[[beta]] <- samples[[beta]][idx, , drop = FALSE]
+    e[[delta]] <- samples[[delta]][idx, , , drop = FALSE]
+    e$xbeta <- matrix(0.0, nrow = e$k, ncol = d)
+  }
+  e$call <- generate_sim_call_multivariate(
+    d = d,
+    resp = resp,
+    resp_family = e$resp_family,
+    eval_type = eval_type,
+    has_fixed = has_fixed,
+    has_varying = has_varying,
+    has_random = has_random,
+    has_fixed_intercept = has_fixed_intercept,
+    has_varying_intercept = has_varying_intercept,
+    has_random_intercept = has_random_intercept,
+    has_offset = has_offset
+  )
+}
+
 #' Generate an Expression to Evaluate Predictions for a Multivariate Channel
 #'
 #' @noRd
-generate_sim_call_multivariate <- function(resp,
-                                           resp_levels, resp_family, eval_type,
+generate_sim_call_multivariate <- function(d, resp, resp_family, eval_type,
                                            has_fixed, has_varying, has_random,
                                            has_fixed_intercept,
                                            has_varying_intercept,
                                            has_random_intercept,
                                            has_offset) {
-  # TODO
-  out <- ""
+  init_text <- paste0(
+    "for (j in seq_len(n_group)) {",
+    "idx_draw <- seq.int((j - 1L) * n_draws + 1L, j * n_draws)"
+  )
+  xbeta_text <- character(d + 1)
+  for (i in seq_len(d)) {
+    yi <- resp[i]
+    xbeta_text[i] <- glue::glue(
+      "\n\n  xbeta[idx_draw, {i}] <- ",
+      ifelse_(!has_fixed_intercept[i] && !has_varying_inrecept[i], "0", ""),
+      ifelse_(has_fixed_intercept[i], "alpha_{yi}", ""),
+      ifelse_(has_varying_intercept[i], "alpha_{yi}[, a_time]", ""),
+      ifelse_(has_random_intercept[i], "+ nu_{yi}[, j, 1]", ""),
+      ifelse_(
+        has_fixed[i],
+        " + .rowSums(
+          x = model_matrix[idx_draw, J_fixed_{yi}, drop = FALSE] * beta_{yi},
+          m = n_draws,
+          n = K_fixed_{yi}
+        )",
+        ""
+      ),
+      ifelse_(
+        has_varying[i],
+        " + .rowSums(
+          x = model_matrix[idx_draw, J_varying_{yi}, drop = FALSE] *
+                delta[, time, ],
+          m = n_draws,
+          n = K_varying_{yi}
+        )",
+        ""
+      ),
+      ifelse_(
+        has_random[i],
+        " + .rowSums(
+          x = model_matrix[idx_draw, J_random_{yi}, drop = FALSE] *
+            nu_{yi}[, j, seq.int(1 + {has_random_intercept[i]}, K_random_{yi})],
+          m = n_draws,
+          n = K_random - {has_random_intercept[i]}
+        )",
+        ""
+      )
+    )
+  }
+  xbeta_text[d + 1] <- "}"
+  link_text <- character(3L)
+  for (i in seq_len(d)) {
+    link_text[i] <- ifelse_(
+      identical(eval_type, "predicted"),
+      glue::glue(
+        "if (type == 'link') {{",
+        "  data.table::set(",
+        "    x = out,",
+        "    i = idx_data,",
+        "    j = '{yi}_link',",
+        "    value = xbeta[idx_out, {i}]",
+        "  )",
+        "}}"
+      ),
+      ""
+    )
+  }
+  type_text <- glue::glue(
+    eval(str2lang(glue::glue("{eval_type}_{resp_family}")))
+  )
+  out <- paste(c("{", init_text, xbeta_text, type_text, "}"), collapse = "\n")
   str2lang(out)
 }
 
@@ -747,6 +885,17 @@ generate_sim_call_multivariate <- function(resp,
 
 fitted_gaussian <- "
   data.table::set(x = out, i = idx, j = '{resp}_fitted', value = xbeta)
+"
+
+fitted_mvgaussian <- "
+  for (i in seq_len(d)) {{
+    data.table::set(
+      x = out,
+      i = idx,
+      j = paste0(resp[i], '_fitted'),
+      value = xbeta[ ,i]
+    )
+  }}
 "
 
 fitted_categorical <- "
@@ -822,6 +971,32 @@ predicted_gaussian <- "
     j = '{resp}',
     value = rnorm(k, xbeta, sigma)[idx_out]
   )
+"
+
+predicted_mvgaussian <- "
+  error <- matrix(0, k, d)
+  for (j in seq_len(n_group)) {{
+    for (l in seq_len(n_draws)) {{
+      error[(j - 1L) * n_draws + l, seq_len(d)] <-
+        sigma[l, ] * L[l, , ] %*% rnorm(d)
+    }}
+  }}
+  for (i in seq_len(d)) {{
+    if (type == 'mean') {{
+      data.table::set(
+        x = out,
+        i = idx_data,
+        j = paste0(resp[i], 'mean'),
+        value = xbeta[idx_out, i]
+      )
+    }}
+    data.table::set(
+      x = out,
+      i = idx_data,
+      j = resp[i],
+      value = xbeta[idx_out,i] + error[idx_out,i]
+    )
+  }}
 "
 
 predicted_categorical <- "
