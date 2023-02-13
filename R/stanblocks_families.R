@@ -1583,11 +1583,12 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
                                    has_lfactor, L_prior_distr = "",
                                    has_missing, ...) {
   yname <- paste(y, collapse = "_")
-  n_obs <- ifelse_(has_missing,
+  mu <- character(length(y))
+  n_obs <- ifelse_(
+    has_missing,
     glue::glue("n_obs_{yname}[t]"),
     "N"
   )
-  mu <- character(length(y))
   # create linear predictor mu_t for each dimension
   for (i in seq_along(y)) {
     yi <- y[i]
