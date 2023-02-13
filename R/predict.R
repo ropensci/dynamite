@@ -22,7 +22,8 @@
 #'   effects for the new levels must be chosen (argument `new_levels`).
 #'   If the grouping variable of the original data is missing, it is assumed
 #'   that all observations in `newdata` belong to the first group in the
-#'   original data.
+#'   original data. New group levels are not allowed for models using latent
+#'   factors.
 #' @param type \[`character(1)`]\cr Type of prediction,
 #'   `"response"` (default), `"mean"`, or `"link"`.
 #' @param funs \[`list()`]\cr A named list whose names should correspond to the

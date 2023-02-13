@@ -463,9 +463,20 @@ prepare_eval_envs <- function(object, simulated, observed,
   nu_channels <- which_random(object$dformulas$all)
   n_group <- n_unique(observed[[group_var]])
   k <- 0L # index of channel_vars
+  orig_ids <- unique(object$data[[group_var]])
+  new_ids <- unique(observed[[group_var]])
+  extra_levels <- unique(new_ids[!new_ids %in% orig_ids])
+  has_lfactor <- attr(object$dformulas$stoch, "lfactor")$P > 0
+  stopifnot_(identical(length(extra_levels), 0L) || !has_lfactor,
+    c(
+      "Grouping variable {.var {group_var}} contains unknown levels:",
+      `x` = "Level{?s} {.val {as.character(extra_levels)}}
+             {?is/are} not present in the original data.",
+      `i` = "Models with latent factors do not support new levels because of
+             identifiability constraints."
+    )
+  )
   if (length(nu_channels) > 0L) {
-    orig_ids <- unique(object$data[[group_var]])
-    new_ids <- unique(observed[[group_var]])
     n_all_draws <- ndraws(object)
     sigma_nus <- glue::glue("sigma_nu_{nu_channels}")
     sigma_nu <- t(
@@ -494,7 +505,7 @@ prepare_eval_envs <- function(object, simulated, observed,
       new_ids = new_ids,
       new_levels = new_levels
     )
-    Ks <- ulapply(object$stan$channel_vars, "[[", "K_random")
+    Ks <- vapply(object$stan$channel_vars, "[[", integer(1L), "K_random")
     dimnames(nu_samples)[[3L]] <- make.unique(rep(nus, times = Ks[Ks > 0]))
   }
   for (i in seq_len(n_cg)) {
