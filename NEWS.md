@@ -3,6 +3,9 @@
   * Added support for the multivariate gaussian distribution via `"mvgaussian"`
     family in `obs`. See the documentation of `dynamiteformula` for details
     on how to define multivariate channels.
+  * Latent factors were not previously used in predict by error, this is now 
+    fixed. However, due to identifiability constraints no new group levels are 
+    allowed with models using latent factors.
 
 # dynamite 1.1.2
 

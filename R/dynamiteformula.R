@@ -547,9 +547,9 @@ which_stochastic <- function(x) {
 which_random <- function(x) {
   s <- which_stochastic(x)
   resp <- get_responses(x)[s]
-  has_random <- ulapply(x[s], function(z) {
+  has_random <- vapply(x[s], function(z) {
     z$has_random_intercept || length(z$random) > 0
-  })
+  }, logical(1L))
   resp[has_random]
 }
 
