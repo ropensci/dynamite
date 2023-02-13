@@ -563,6 +563,8 @@ prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars, samples,
   delta <- paste0("delta_", resp)
   phi <- paste0("phi_", resp)
   sigma <- paste0("sigma_", resp)
+  lambda <- paste0("lambda_", resp)
+  psi <- paste0("psi_", resp)
   e$J_fixed <- cvars$J_fixed
   e$K_fixed <- cvars$K_fixed
   e$J_varying <- cvars$J_varying
@@ -570,6 +572,7 @@ prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars, samples,
   e$J_random <- cvars$J_random
   e$K_random <- cvars$K_random
   e$has_random_intercept <- cvars$has_random_intercept
+  e$has_lfactor <- cvars$has_lfactor
   e$resp <- resp
   e$phi <- c(samples[[phi]][idx])
   e$sigma <- c(samples[[sigma]][idx])
@@ -599,6 +602,10 @@ prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars, samples,
     e$delta <- samples[[delta]][idx, , , drop = FALSE]
     e$xbeta <- numeric(e$k)
   }
+  if (cvars$has_lfactor) {
+    e$lambda <- samples[[lambda]][idx, , drop = FALSE]
+    e$psi <- samples[[psi]][idx, , drop = FALSE]
+  }
   e$call <- generate_sim_call_univariate(
     resp = resp,
     resp_levels = e$resp_levels,
@@ -610,7 +617,8 @@ prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars, samples,
     has_fixed_intercept = cvars$has_fixed_intercept,
     has_varying_intercept = cvars$has_varying_intercept,
     has_random_intercept = cvars$has_random_intercept,
-    has_offset = cvars$has_offset
+    has_offset = cvars$has_offset,
+    has_lfactor = cvars$has_lfactor
   )
 }
 
@@ -635,6 +643,8 @@ prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars, samples,
 #'   Does the channel have a random intercept?
 #' @param has_offset \[logical(1)]\cr
 #'   Does the channel have an offset?
+#' @param has_lfactor \[logical(1)]\cr
+#'   Does the channel have a latent factor term?
 #' @noRd
 generate_sim_call_univariate <- function(resp,
                                          resp_levels, resp_family, eval_type,
@@ -642,7 +652,7 @@ generate_sim_call_univariate <- function(resp,
                                          has_fixed_intercept,
                                          has_varying_intercept,
                                          has_random_intercept,
-                                         has_offset) {
+                                         has_offset, has_lfactor) {
   out <- ""
   if (is_categorical(resp_family)) {
     out <- glue::glue(
@@ -679,7 +689,8 @@ generate_sim_call_univariate <- function(resp,
         "{ifelse_(!has_fixed_intercept && !has_varying_intercept, '0', '')}",
         "{ifelse_(has_fixed_intercept, 'alpha', '')}",
         "{ifelse_(has_varying_intercept, 'alpha[, a_time]', '')}",
-        "{ifelse_(has_random_intercept, '+ nu[, j, 1]', '')}",
+        "{ifelse_(has_random_intercept, ' + nu[, j, 1]', '')}",
+        "{ifelse_(has_lfactor, ' + lambda[, j] * psi[, time]', '')}",
         "{ifelse_(has_fixed, ",
         "' + .rowSums(
             x = model_matrix[idx_draw, J_fixed, drop = FALSE] * beta,
