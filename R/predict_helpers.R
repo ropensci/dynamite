@@ -1010,7 +1010,8 @@ predicted_mvgaussian <- "
   error <- matrix(0, k, d)
   for (j in seq_len(n_group)) {{
     for (l in seq_len(n_draws)) {{
-      error[(j - 1L) * n_draws + l, ] <- sigma[l, ] * L[l, , ] %*% rnorm(d)
+      error[(j - 1L) * n_draws + l, ] <-
+        (diag(sigma[l, ]) %*% L[l, , ]) %*% rnorm(d)
     }}
   }}
   for (i in seq_len(d)) {{
@@ -1207,9 +1208,10 @@ loglik_mvgaussian <- "
   ll <- numeric(k)
   for (l in seq_len(n_draws)) {{
     idx_group <- seq.int(l, k, by = n_draws)
-    log_det <- 2.0 * sum(log(diag(L[l, , ])))
+    sigma_chol <- diag(sigma[l, ]) %*% L[l, , ]
+    log_det <- 2.0 * sum(log(diag(sigma_chol)))
     diffs <- t(y[idx_group, ] - xbeta[idx_group, ])
-    z <- forwardsolve(sigma[l, ] * L[l, , ], diffs)
+    z <- forwardsolve(sigma_chol, diffs)
     quad <- colSums(z^2)
     ll[idx_group] <- -0.5 * (d * log(2 * pi) + log_det + quad)
   }}
