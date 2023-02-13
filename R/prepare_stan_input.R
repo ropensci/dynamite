@@ -24,13 +24,14 @@
 #' @noRd
 prepare_stan_input <- function(dformula, data, group_var, time_var,
                                priors = NULL, fixed, verbose) {
-  resp_names <- get_responses(dformula)
-  missing_resp <- !(resp_names %in% names(data))
+  resp <- get_responses(dformula)
+  resp_names <- get_names(dformula)
+  resp_missing <- !(resp %in% names(data))
   stopifnot_(
-    all(!missing_resp),
-    "Can't find variable{?s} {.var {resp_names[missing_resp]}} in {.arg data}."
+    all(!resp_missing),
+    "Can't find variable{?s} {.var {resp[resp_missing]}} in {.arg data}."
   )
-  responses <- as.data.frame(data[, .SD, .SDcols = resp_names])
+  responses <- as.data.frame(data[, .SD, .SDcols = resp])
   # Needs lapply instead of apply to keep factors as factors
   attr(responses, "resp_class") <- lapply(responses, function(x) {
     cl <- class(x)
@@ -71,7 +72,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   N <- n_unique(group)
   K <- ncol(model_matrix)
   X <- aperm(
-    array(as.numeric(unlist(split(model_matrix, gl(T_full, 1, N * T_full)))),
+    array(as.numeric(unlist(split(model_matrix, gl(T_full, 1L, N * T_full)))),
       dim = c(N, K, T_full)
     ),
     c(3L, 1L, 2L)
@@ -92,9 +93,10 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   resp_classes <- attr(responses, "resp_class")
   for (i in seq_len(n_channels)) {
     channel <- list()
-    resp <- resp_names[i]
-    resp_split <- split(responses[, resp], group)
-    Y <- array(as.numeric(unlist(resp_split)), dim = c(T_full, N))
+    y <- resp[i]
+    y_name <- resp_names[i]
+    y_split <- split(responses[, y], group)
+    Y <- array(as.numeric(unlist(y_split)), dim = c(T_full, N))
     Y <- Y[T_idx, , drop = FALSE]
     Y_na <- is.na(Y)
     # Separate copy of Y for Stan, so that added zeros do not influence channel
@@ -103,14 +105,12 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     # Placeholder for NAs in Stan
     Y_out[Y_na] <- 0.0
     form_specials <- specials[[i]]
-    channel$resp <- resp
-    # channel$L_fixed <- as.array(match(fixed_pars[[i]], assigned[[i]]))
-    # channel$L_varying <- as.array(match(varying_pars[[i]], assigned[[i]]))
-    # channel$J <- as.array(assigned[[i]])
+    channel$y <- y_name
+    channel$family <- dformula[[i]]$family
     indices <- list(
       K_fixed = length(fixed_pars[[i]]),
       K_varying = length(varying_pars[[i]]),
-      # note! Random intercept is counted to K_random but not to J_random...
+      # Note! Random intercept is counted to K_random but not to J_random...
       K_random = length(random_pars[[i]]) + dformula[[i]]$has_random_intercept,
       K = length(fixed_pars[[i]]) + length(varying_pars[[i]]),
       J_fixed = as.array(fixed_pars[[i]]),
@@ -125,7 +125,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     channel <- c(channel, indices)
     sampling_vars <- c(
       sampling_vars,
-      setNames(indices, paste0(names(indices), "_", resp))
+      setNames(indices, paste0(names(indices), "_", y_name))
     )
     obs_idx <- array(0L, dim = c(N, T_full - fixed))
     obs_len <- integer(T_full - fixed)
@@ -139,12 +139,12 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       obs_len[j] <- obs_XY_len
     }
     channel$has_missing <- any(obs_len < N)
-    sampling_vars[[paste0("obs_", resp)]] <- obs_idx
-    sampling_vars[[paste0("n_obs_", resp)]] <- obs_len
+    sampling_vars[[paste0("obs_", y_name)]] <- obs_idx
+    sampling_vars[[paste0("n_obs_", y_name)]] <- obs_len
     # obs selects complete cases if there are missing observations
     channel$obs <- ifelse_(
       channel$has_missing,
-      glue::glue("obs_{resp}[1:n_obs_{resp}[t], t]"),
+      glue::glue("obs_{resp}[1:n_obs_{y_name}[t], t]"),
       ""
     )
     channel$has_fixed_intercept <- dformula[[i]]$has_fixed_intercept
@@ -158,13 +158,13 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     channel$lb <- spline_def$lb[i]
     channel$shrinkage <- spline_def$shrinkage
     channel$noncentered <- spline_def$noncentered[i]
-    channel$has_lfactor <- resp %in% lfactor_def$responses
+    channel$has_lfactor <- y %in% lfactor_def$responses
     channel$noncentered_psi <- lfactor_def$noncentered_psi
     channel$noncentered_lambda <- lfactor_def$noncentered_lambda[i]
     channel$nonzero_lambda <- lfactor_def$nonzero_lambda[i]
     stopifnot_(
       has_splines || !(channel$has_varying || channel$has_varying_intercept),
-      "Model for response variable {.var {resp}} contains time-varying
+      "Model for response variable {.var {y}} contains time-varying
        definitions but splines have not been defined."
     )
     # evaluate specials such as offset and trials
@@ -172,7 +172,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       if (!is.null(form_specials[[spec]])) {
         spec_split <- split(form_specials[[spec]], group)
         spec_array <- array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
-        sampling_vars[[paste0(spec, "_", resp)]] <-
+        sampling_vars[[paste0(spec, "_", y_name)]] <-
           spec_array[seq.int(fixed + 1L, T_full), , drop = FALSE]
         channel[[paste0("has_", spec)]] <- TRUE
       } else {
@@ -185,7 +185,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
         family != "categorical",
       "Random effects are not (yet) supported for categorical responses."
     )
-    sampling_vars[[paste0("y_", resp)]] <- ifelse_(
+    sampling_vars[[paste0("y_", y_name)]] <- ifelse_(
       family %in% c("gaussian", "gamma", "exponential", "beta"),
       t(Y_out),
       Y_out
@@ -193,17 +193,18 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     prep <- do.call(
       paste0("prepare_channel_", get_univariate(family)),
       list(
-        y = resp,
+        y = y,
+        y_name = y_name,
         Y = Y,
         channel = channel,
         sd_x = sd_x,
-        resp_class = resp_classes[[resp]],
+        resp_class = resp_classes[[y]],
         priors = priors
       )
     )
-    prior_list[[resp]] <- prep$priors
-    channel_vars[[resp]] <- prep$channel
-    vectorizable_priors <- extract_vectorizable_priors(prep$channel, resp)
+    prior_list[[y_name]] <- prep$priors
+    channel_vars[[y_name]] <- prep$channel
+    vectorizable_priors <- extract_vectorizable_priors(prep$channel, y)
     sampling_vars <- c(sampling_vars, prep$sampling_vars, vectorizable_priors)
   }
   merge_has <- c(
@@ -218,44 +219,49 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
     channel_group <- list()
+    y <- resp[cg_idx]
+    y_name <- resp_names[cg_idx]
     if (is_multivariate(dformula[[cg_idx[1L]]]$family)) {
       for (j in merge_has) {
         channel_group[[j]] <- vapply(
           channel_vars[cg_idx], "[[", logical(1L), j
         )
       }
-      channel_group[["has_missing"]] <- any(vapply(
+      channel_group$has_missing <- any(vapply(
         channel_vars[cg_idx], "[[", logical(1L), "has_missing"
       ))
-      resp_cg <- ifelse_(
-        is.null(dformula[[cg_idx[1L]]]$name),
-        paste(resp_names[cg_idx], collapse = "_"),
-        dformula[[cg_idx[1L]]]$name
+      cg_name <- paste(y_name, collapse = "_")
+      channel_group$y <- vapply(
+        channel_vars[cg_idx], "[[", character(1L), "y"
       )
-      channel_group[["obs"]] <- ifelse_(channel_group[["has_missing"]],
-        glue::glue("obs_{resp_cg}[1:n_obs_{resp_cg}[t], t]"),
+      channel_group$y_cg <- cg_name
+      channel_group$obs <- ifelse_(
+        channel_group$has_missing,
+        glue::glue("obs_{cg_name}[1:n_obs_{cg_name}[t], t]"),
         ""
       )
-      sampling_vars[[paste0("obs_", resp_cg)]] <- matrix_intersect(
-        sampling_vars[paste0("obs_", resp_names[cg_idx])]
+      sampling_vars[[paste0("obs_", cg_name)]] <- matrix_intersect(
+        sampling_vars[paste0("obs_", y_name)]
       )
-      sampling_vars[[paste0("n_obs_", resp_cg)]] <- apply(
-        sampling_vars[[paste0("obs_", resp_cg)]],
+      sampling_vars[[paste0("n_obs_", cg_name)]] <- apply(
+        sampling_vars[[paste0("obs_", cg_name)]],
         2L,
         function(x) { sum(x > 0L) }
       )
       O <- length(cg_idx)
-      sampling_vars[[paste0("O_", resp_cg)]] <- O
-      sampling_vars[[paste0("y_", resp_cg)]] <-
-        array(unlist(sampling_vars[paste0("y_", resp_names[cg_idx])]),
-          c(T_full - fixed, N, O))
-      sampling_vars[paste0("y_", resp_names[cg_idx])] <- NULL
+      sampling_vars[[paste0("O_", cg_name)]] <- O
+      sampling_vars[[paste0("y_", cg_name)]] <- array(
+        unlist(sampling_vars[paste0("y_", y_name)]),
+        c(T_full - fixed, N, O)
+      )
+      sampling_vars[paste0("y_", y_name)] <- NULL
       # dformula[cg_idx] : Channels of this group
       # Define priors for multivariate distributions etc.
       prep <- do.call(
         paste0("prepare_channel_", family$name),
         list(
-          y = resp_cg,
+          y = resp[cg_idx],
+          cg_name = cg_name,
           channel = channel_group,
           priors = priors
         )
@@ -300,7 +306,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   )
 }
 
-extract_vectorizable_priors <- function(channel, resp) {
+extract_vectorizable_priors <- function(channel, y_name) {
   priors <- channel[which(
     names(channel) %in% paste0(
       c("alpha", "beta", "delta", "tau", "sigma_nu"), "_prior_pars"
@@ -308,7 +314,7 @@ extract_vectorizable_priors <- function(channel, resp) {
   )]
   ifelse_(
     length(priors) > 0,
-    setNames(priors, paste0(names(priors), "_", resp)),
+    setNames(priors, paste0(names(priors), "_", y_name)),
     NULL
   )
 }
@@ -342,9 +348,8 @@ prepare_prior <- function(ptype, priors, channel) {
 #' @param P Number of channels with latent factor.
 #' @param correlated_lf Does the model contain correlated latent factors?
 #' @noRd
-prepare_common_priors <- function(
-    priors, M, shrinkage, P, correlated_nu,
-    correlated_lf) {
+prepare_common_priors <- function(priors, M, shrinkage, P,
+                                  correlated_nu, correlated_lf) {
   common_priors <- NULL
   if (shrinkage) {
     common_priors <- ifelse_(
@@ -406,6 +411,7 @@ prepare_common_priors <- function(
 #' Stan model code construction, and prior definitions.
 #'
 #' @param y \[`character(1)`]\cr Name of the response variable of the channel.
+#' @param y_name \[`character(1)`]\cr Name of the channel.
 #' @param Y \[`matrix()`]\cr A matrix of values of the response variable.
 #' @param channel \[`list()`]\cr Channel-specific helper variables.
 #' @param mean_gamma \[`numeric(1)`]\cr Prior mean betas and deltas
@@ -423,10 +429,12 @@ prepare_common_priors <- function(
 #' @srrstats {RE1.2} Checks for expected types and classes along with other
 #'   `prepare_channel_*` functions.
 #' @noRd
-prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
+prepare_channel_default <- function(y, y_name, Y, channel, mean_gamma, sd_gamma,
                                     mean_y, sd_y, resp_class, priors) {
   if (is.null(priors)) {
-    out <- default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)
+    out <- default_priors(
+      y, y_name, channel, mean_gamma, sd_gamma, mean_y, sd_y
+    )
     channel <- out$channel
     priors <- out$priors
   } else {
@@ -462,8 +470,8 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
 
 #' @describeIn prepare_channel_default Prepare a Categorical Channel
 #' @noRd
-prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
-                                        priors) {
+prepare_channel_categorical <- function(y, y_name, Y, channel, sd_x,
+                                        resp_class, priors) {
   stopifnot_(
     "factor" %in% resp_class,
     c(
@@ -474,9 +482,9 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
   S_y <- length(attr(resp_class, "levels"))
   channel$S <- S_y
   sampling_vars <- list()
-  sampling_vars[[paste0("S_", y)]] <- S_y
+  sampling_vars[[paste0("S_", y_name)]] <- S_y
   if (is.null(priors)) {
-    out <- default_priors_categorical(y, channel, sd_x, resp_class)
+    out <- default_priors_categorical(y, y_name, channel, sd_x, resp_class)
     channel <- out$channel
     priors <- out$priors
   } else {
@@ -494,7 +502,8 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
       channel$tau_alpha_prior_distr <- pdef$prior
     }
     priors <- check_priors(
-      priors, default_priors_categorical(y, channel, sd_x, resp_class)$priors
+      priors,
+      default_priors_categorical(y, y_name, channel, sd_x, resp_class)$priors
     )
   }
   channel$write_alpha <-
@@ -514,7 +523,8 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x, resp_class,
 
 #' @describeIn prepare_channel_default Prepare a Gaussian Channel
 #' @noRd
-prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
+prepare_channel_gaussian <- function(y, y_name, Y, channel, sd_x,
+                                     resp_class, priors) {
   if ("factor" %in% resp_class) {
     abort_factor(y, "Gaussian", call = rlang::caller_env())
   }
@@ -535,6 +545,7 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
   mean_gamma <- rep(0.0, length(sd_gamma))
   out <- prepare_channel_default(
     y,
+    y_name,
     Y,
     channel,
     mean_gamma,
@@ -545,7 +556,7 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
     priors
   )
   sigma_prior <- data.frame(
-    parameter = paste0("sigma_", y),
+    parameter = paste0("sigma_", y_name),
     response = y,
     prior = paste0("exponential(", signif(1.0 / sd_y, 2L), ")"),
     type = "sigma",
@@ -561,7 +572,9 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
       out$channel$sigma_prior_distr <- pdef$prior
     }
     defaults <- rbind(
-      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
+      default_priors(
+        y, y_name, channel, mean_gamma, sd_gamma, mean_y, sd_y
+      )$priors,
       sigma_prior
     )
     out$priors <- check_priors(priors, defaults)
@@ -570,10 +583,11 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
 }
 #' @describeIn prepare_channel_default Prepare a Multivariate Gaussian Channel
 #' @noRd
-prepare_channel_mvgaussian <- function(y, channel, priors) {
+prepare_channel_mvgaussian <- function(y, cg_name, channel, priors) {
+  resp <- paste0("c(", cs(y), ")")
   L_prior <- data.frame(
-    parameter = paste0("L_", y),
-    response = "",
+    parameter = paste0("L_", cg_name),
+    response = resp,
     prior = "lkj_corr_cholesky(1)",
     type = "L",
     category = ""
@@ -582,12 +596,12 @@ prepare_channel_mvgaussian <- function(y, channel, priors) {
     priors <- L_prior
     channel$L_prior_distr <- L_prior$prior
   } else {
-    priors <- priors[priors$response == y, ]
+    priors <- priors[priors$response == resp, ]
     pdef <- priors[priors$type == "L", ]
     stopifnot_(identical(nrow(pdef), 1L),
       c(
         "Argument {.var priors} must contain all relevant parameters:",
-        `x` = "Prior for parameter {.var L_{y}} is not defined."
+        `x` = "Prior for parameter {.var L_{cg_name}} is not defined."
       ))
     # TODO some checks that prior distr makes sense
     channel$L_prior_distr <- pdef$prior
@@ -597,7 +611,8 @@ prepare_channel_mvgaussian <- function(y, channel, priors) {
 
 #' @describeIn prepare_channel_default Prepare a Binomial Channel
 #' @noRd
-prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
+prepare_channel_binomial <- function(y, y_name, Y, channel,
+                                     sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
     abort_factor(y, "Binomial", call = rlang::caller_env())
   }
@@ -614,6 +629,7 @@ prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
   mean_gamma <- rep(0.0, length(sd_gamma))
   out <- prepare_channel_default(
     y,
+    y_name,
     Y,
     channel,
     mean_gamma,
@@ -626,7 +642,9 @@ prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
   if (is.null(priors)) {
     out$priors <- check_priors(
       out$priors,
-      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
+      default_priors(
+        y, y_name, channel, mean_gamma, sd_gamma, mean_y, sd_y
+      )$priors
     )
   }
   out
@@ -634,8 +652,8 @@ prepare_channel_binomial <- function(y, Y, channel, sd_x, resp_class, priors) {
 
 #' @describeIn prepare_channel_default Prepare a Bernoulli Channel
 #' @noRd
-prepare_channel_bernoulli <- function(y, Y, channel, sd_x, resp_class,
-                                      priors) {
+prepare_channel_bernoulli <- function(y, y_name, Y, channel,
+                                      sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
     abort_factor(y, "Bernoulli", call = rlang::caller_env())
   }
@@ -646,12 +664,13 @@ prepare_channel_bernoulli <- function(y, Y, channel, sd_x, resp_class,
       `x` = "Bernoulli family supports only 0/1 integers."
     ))
   }
-  prepare_channel_binomial(y, Y, channel, sd_x, resp_class, priors)
+  prepare_channel_binomial(y, y_name, Y, channel, sd_x, resp_class, priors)
 }
 
 #' @describeIn prepare_channel_default Prepare a Poisson channel
 #' @noRd
-prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
+prepare_channel_poisson <- function(y, y_name, Y, channel,
+                                    sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
     abort_factor(y, "Poisson", call = rlang::caller_env())
   }
@@ -672,6 +691,7 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
   mean_gamma <- rep(0.0, length(sd_gamma))
   out <- prepare_channel_default(
     y,
+    y_name,
     Y,
     channel,
     mean_gamma,
@@ -684,7 +704,9 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
   if (is.null(priors)) {
     out$priors <- check_priors(
       out$priors,
-      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
+      default_priors(
+        y, y_name, channel, mean_gamma, sd_gamma, mean_y, sd_y
+      )$priors
     )
   }
   out
@@ -692,13 +714,16 @@ prepare_channel_poisson <- function(y, Y, channel, sd_x, resp_class, priors) {
 
 #' @describeIn prepare_channel_default Prepare a Negative Binomial Channel
 #' @noRd
-prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
+prepare_channel_negbin <- function(y, y_name, Y, channel,
+                                   sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
     abort_factor(y, "Negative binomial", call = rlang::caller_env())
   }
   Y_obs <- Y[!is.na(Y)]
   if (any(Y_obs < 0.0) || any(Y_obs != as.integer(Y_obs))) {
-    abort_negative(y, "Negative binomial",
+    abort_negative(
+      y,
+      "Negative binomial",
       type = "integers",
       call = rlang::caller_env()
     )
@@ -716,6 +741,7 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
   mean_gamma <- rep(0.0, length(sd_gamma))
   out <- prepare_channel_default(
     y,
+    y_name,
     Y,
     channel,
     mean_gamma,
@@ -726,13 +752,12 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
     priors
   )
   phi_prior <- data.frame(
-    parameter = paste0("phi_", y),
+    parameter = paste0("phi_", y_name),
     response = y,
     prior = "exponential(1)",
     type = "phi",
     category = ""
   )
-
   if (is.null(priors)) {
     out$channel$phi_prior_distr <- phi_prior$prior
     out$priors <- rbind(out$priors, phi_prior)
@@ -743,7 +768,9 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
       out$channel$phi_prior_distr <- pdef$prior
     }
     defaults <- rbind(
-      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
+      default_priors(
+        y, y_name, channel, mean_gamma, sd_gamma, mean_y, sd_y
+      )$priors,
       phi_prior
     )
     out$priors <- check_priors(priors, defaults)
@@ -753,8 +780,8 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
 
 #' @describeIn prepare_channel_default Prepare an Exponential Channel
 #' @noRd
-prepare_channel_exponential <- function(y, Y, channel, sd_x, resp_class,
-                                        priors) {
+prepare_channel_exponential <- function(y, y_name, Y, channel,
+                                        sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
     abort_factor(y, "Exponential", call = rlang::caller_env())
   }
@@ -778,6 +805,7 @@ prepare_channel_exponential <- function(y, Y, channel, sd_x, resp_class,
   mean_gamma <- rep(0.0, length(sd_gamma))
   out <- prepare_channel_default(
     y,
+    y_name,
     Y,
     channel,
     mean_gamma,
@@ -790,7 +818,9 @@ prepare_channel_exponential <- function(y, Y, channel, sd_x, resp_class,
   if (is.null(priors)) {
     out$priors <- check_priors(
       out$priors,
-      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
+      default_priors(
+        y, y_name, channel, mean_gamma, sd_gamma, mean_y, sd_y
+      )$priors
     )
   }
   out
@@ -798,7 +828,8 @@ prepare_channel_exponential <- function(y, Y, channel, sd_x, resp_class,
 
 #' @describeIn prepare_channel_default Prepare a Gamma channel
 #' @noRd
-prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
+prepare_channel_gamma <- function(y, y_name, Y, channel,
+                                  sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
     abort_factor(y, "Gamma", call = rlang::caller_env())
   }
@@ -819,6 +850,7 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
   mean_gamma <- rep(0.0, length(sd_gamma))
   out <- prepare_channel_default(
     y,
+    y_name,
     Y,
     channel,
     mean_gamma,
@@ -829,13 +861,12 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
     priors
   )
   phi_prior <- data.frame(
-    parameter = paste0("phi_", y),
+    parameter = paste0("phi_", y_name),
     response = y,
     prior = "exponential(1)",
     type = "phi",
     category = ""
   )
-
   if (is.null(priors)) {
     out$channel$phi_prior_distr <- phi_prior$prior
     out$priors <- rbind(out$priors, phi_prior)
@@ -846,7 +877,9 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
       out$channel$phi_prior_distr <- pdef$prior
     }
     defaults <- rbind(
-      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
+      default_priors(
+        y, y_name, channel, mean_gamma, sd_gamma, mean_y, sd_y
+      )$priors,
       phi_prior
     )
     out$priors <- check_priors(priors, defaults)
@@ -856,7 +889,8 @@ prepare_channel_gamma <- function(y, Y, channel, sd_x, resp_class, priors) {
 
 #' @describeIn prepare_channel_default Prepare a Beta Channel
 #' @noRd
-prepare_channel_beta <- function(y, Y, channel, sd_x, resp_class, priors) {
+prepare_channel_beta <- function(y, y_name, Y, channel,
+                                 sd_x, resp_class, priors) {
   if ("factor" %in% resp_class) {
     abort_factor(y, "Beta", call = rlang::caller_env())
   }
@@ -877,6 +911,7 @@ prepare_channel_beta <- function(y, Y, channel, sd_x, resp_class, priors) {
   mean_gamma <- rep(0.0, length(sd_gamma))
   out <- prepare_channel_default(
     y,
+    y_name,
     Y,
     channel,
     mean_gamma,
@@ -887,13 +922,12 @@ prepare_channel_beta <- function(y, Y, channel, sd_x, resp_class, priors) {
     priors
   )
   phi_prior <- data.frame(
-    parameter = paste0("phi_", y),
+    parameter = paste0("phi_", y_name),
     response = y,
     prior = "exponential(1)",
     type = "phi",
     category = ""
   )
-
   if (is.null(priors)) {
     out$channel$phi_prior_distr <- phi_prior$prior
     out$priors <- rbind(out$priors, phi_prior)
@@ -904,7 +938,9 @@ prepare_channel_beta <- function(y, Y, channel, sd_x, resp_class, priors) {
       out$channel$phi_prior_distr <- pdef$prior
     }
     defaults <- rbind(
-      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
+      default_priors(
+        y, y_name, channel, mean_gamma, sd_gamma, mean_y, sd_y
+      )$priors,
       phi_prior
     )
     out$priors <- check_priors(priors, defaults)

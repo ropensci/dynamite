@@ -304,10 +304,10 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     verbose
   )
   model_code <- create_blocks(
-    dformula = dformulas$stoch,
     indent = 2L,
     cvars = stan_input$channel_vars,
     cgvars = stan_input$channel_group_vars,
+    cg = attr(dformulas$stoch, "channel_groups"),
     backend = backend
   )
   sampling_info(dformulas, verbose, debug, backend)
@@ -393,9 +393,6 @@ dynamite_sampling <- function(sampling, backend, model_code, model,
 sampling_info <- function(dformulas, verbose, debug, backend) {
   if (!verbose || !is.null(debug) || isTRUE(debug$no_compile)) {
     return()
-  }
-  if (backend == "rstan") {
-    message_("Compiling Stan model.")
   }
   if (!stan_supports_categorical_logit_glm(backend) &&
     "categorical" %in% get_family_names(dformulas$all)) {

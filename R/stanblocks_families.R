@@ -1,12 +1,18 @@
 #' Wrapper to Parse Stan Model Blocks Based on the Family of the Response
 #'
 #' @param prefix \[`character(1)`]\cr Stan model block name, e.g., "model".
-#' @param family \[`character(1)`]\cr Supported family name
+#' @param family \[`dynamitefamily`, `character(1)`]\cr A family object or a
+#'   supported family name.
 #' @param args Channel specific component of `channel_vars`
 #'   (see [create_blocks()])
 #' @noRd
-lines_wrap <- function(prefix, family, args) {
-  do.call(what = paste0(prefix, "_lines_", family), args = args)
+lines_wrap <- function(prefix, family, args, idt) {
+  args$idt <- idt
+  if (is.dynamitefamily(family)) {
+    do.call(what = paste0(prefix, "_lines_", family$name), args = args)
+  } else {
+    do.call(what = paste0(prefix, "_lines_", family), args = args)
+  }
 }
 
 #' Is a Prior Definition Vectorizable?
@@ -23,7 +29,10 @@ vectorizable_prior <- function(x) {
 #' uses a subset from a  common set of arguments that are documented here.
 #'
 #' @param backend \[`character(1)`]\cr `"rstan"` or `"cmdstanr"`.
-#' @param y \[`character(1)`]\cr The name of the response of the channel.
+#' @param y \[`character(1)`]\cr The name of the channel or vector of
+#'   channel names for multivariate channels.
+#' @param y_cg \[`character(1)`]\cr Name of the channel group for multivariate
+#'   channels.
 #' @param idt \[`function`]\cr An indentation function, see [indenter_()].
 #' @param obs \[`integer()`]\cr A vector of indices indicating non-missing
 #'   values of the channel.
@@ -261,13 +270,13 @@ data_lines_gaussian <- function(y, idt, has_missing, ...) {
   )
 }
 
-data_lines_mvgaussian <- function(y, idt, has_missing, ...) {
+data_lines_mvgaussian <- function(y_cg, idt, has_missing, ...) {
   paste_rows(
     onlyif(has_missing, "// Missing data indicators"),
-    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
-    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
-    "int<lower=0> O_{y};",
-    "vector[O_{y}] y_{y}[T, N];",
+    onlyif(has_missing, "int<lower=0> obs_{y_cg}[N, T];"),
+    onlyif(has_missing, "int<lower=0> n_obs_{y_cg}[T];"),
+    "int<lower=0> O_{y_cg};",
+    "vector[O_{y_cg}] y_{y_cg}[T, N];",
     .indent = idt(1)
   )
 }
@@ -556,9 +565,9 @@ parameters_lines_gaussian <- function(y, idt, ...) {
   )
 }
 
-parameters_lines_mvgaussian <- function(y, idt, ...) {
+parameters_lines_mvgaussian <- function(y_cg, idt, ...) {
   paste_rows(
-    "cholesky_factor_corr[O_{y}] L_{y}; // Cholesky for gaussian",
+    "cholesky_factor_corr[O_{y_cg}] L_{y_cg}; // Cholesky for gaussian",
     .indent = idt(1)
   )
 }
@@ -1577,16 +1586,15 @@ model_lines_gaussian <- function(y, idt, obs, has_fixed, has_varying,
   paste_rows(mtext_def$text, mtext, .parse = FALSE)
 }
 
-model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
+model_lines_mvgaussian <- function(y, y_cg, idt, obs, has_fixed, has_varying,
                                    has_random, has_fixed_intercept,
                                    has_varying_intercept, has_random_intercept,
                                    has_lfactor, L_prior_distr = "",
                                    has_missing, ...) {
-  yname <- paste(y, collapse = "_")
   mu <- character(length(y))
   n_obs <- ifelse_(
     has_missing,
-    glue::glue("n_obs_{yname}[t]"),
+    glue::glue("n_obs_{y_cg}[t]"),
     "N"
   )
   # create linear predictor mu_t for each dimension
@@ -1669,20 +1677,20 @@ model_lines_mvgaussian <- function(y, idt, obs, has_fixed, has_varying,
   sd_y <- paste0("sigma_", y)
   mu_y <- paste0("mu_", y, "[i]")
   paste_rows(
-    "L_{yname} ~ {L_prior_distr};",
+    "L_{y_cg} ~ {L_prior_distr};",
     "{{",
-      "vector[O_{yname}] sigma_{yname} = [{cs(sd_y)}]';",
+      "vector[O_{y_cg}] sigma_{y_cg} = [{cs(sd_y)}]';",
       paste0(
-        "matrix[O_{yname}, O_{yname}] Lsigma = ",
-        "diag_pre_multiply(sigma_{yname}, L_{yname});"
+        "matrix[O_{y_cg}, O_{y_cg}] Lsigma = ",
+        "diag_pre_multiply(sigma_{y_cg}, L_{y_cg});"
       ),
       "for (t in 1:T) {{",
-        "vector[O_{yname}] mu[{n_obs}];",
+        "vector[O_{y_cg}] mu[{n_obs}];",
         "vector[{n_obs}] mu_{y} = {mu};",
         "for (i in 1:{n_obs}) {{",
           "mu[i] = [{cs(mu_y)}]';",
         "}}",
-        "y_{yname}[t, {obs}] ~ multi_normal_cholesky(mu, Lsigma);",
+        "y_{y_cg}[t, {obs}] ~ multi_normal_cholesky(mu, Lsigma);",
       "}}",
     "}}",
     .indent = idt(c(1, 1, 2, 2, 2, 3, 3, 3, 4, 3, 3, 2, 1))
@@ -2015,16 +2023,15 @@ generated_quantities_lines_categorical <- function(...) {
 generated_quantities_lines_gaussian <- function(...) {
   generated_quantities_lines_default()
 }
-generated_quantities_lines_mvgaussian <- function(y, idt, ...) {
+generated_quantities_lines_mvgaussian <- function(y_cg, idt, ...) {
   O <- length(y)
-  y <- paste(y, collapse = "_")
   paste_rows(
-    "corr_matrix[O_{y}] corr_matrix_{y} = ",
-    "multiply_lower_tri_self_transpose(L_{y});",
-    "vector<lower=-1,upper=1>[{(O * (O - 1L)) %/% 2L}] corr_{y};",
-    "for (k in 1:O_{y}) {{",
+    "corr_matrix[O_{y_cg}] corr_matrix_{y_cg} = ",
+    "multiply_lower_tri_self_transpose(L_{y_cg});",
+    "vector<lower=-1,upper=1>[{(O * (O - 1L)) %/% 2L}] corr_{y_cg};",
+    "for (k in 1:O_{y_cg}) {{",
     "for (j in 1:(k - 1)) {{",
-    "corr_{y}[choose(k - 1, 2) + j] = corr_matrix_{y}[j, k];",
+    "corr_{y_cg}[choose(k - 1, 2) + j] = corr_matrix_{y_cg}[j, k];",
     "}}",
     "}}",
     .indent = idt(c(1, 2, 1, 1, 2, 3, 2, 1))

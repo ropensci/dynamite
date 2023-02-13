@@ -165,10 +165,6 @@ dynamiteformula <- function(formula, family) {
     !"I" %in% all.names(formula),
     "{.code I(.)} is not supported by {.fun dynamiteformula}."
   )
-  stopifnot_(
-    checkmate::test_string(x = name, null.ok = TRUE, na.ok = FALSE),
-    "Argument {.arg name} must be a single {.cls character} string or NULL."
-  )
   dims <- dynamiteformula_(
     formula = formula,
     original = formula,
@@ -211,7 +207,7 @@ dynamiteformula_ <- function(formula, original, family, name) {
     out[[1L]]$original <- original
     out[[1L]]$name <- parse_name(resp_parsed$resp)
   } else {
-    out <- parse_formula(formula, original, family, name)
+    out <- parse_formula(formula, original, family)
     if (is_binomial(family)) {
       stopifnot_(
         "trials" %in% names(out[[1L]]$specials),
