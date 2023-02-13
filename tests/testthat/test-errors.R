@@ -144,12 +144,24 @@ test_that("cyclic dependency fails", {
     "Cyclic dependency found in model formula\\."
   )
 })
-test_that("contemporaneous dependency within multivariate gaussian fails", {
+
+test_that("contemporaneous self dependency within a channel fails", {
+  expect_error(
+    obs(y ~ y, family = "gaussian"),
+    paste0(
+      "Contemporaneous self-dependency found in model formula:\n",
+      "x Variable `y` appears on both sides of the formula for \\(y\\)\\."
+    )
+  )
   expect_error(
     obs(c(y, x) ~ x | 1, family = "mvgaussian"),
-    "Contemporaneous dependency found within multivariate distribution\\."
+    paste0(
+      "Contemporaneous self-dependency found in model formula:\n",
+      "x Variable `x` appears on both sides of the formula for \\(y, x\\)\\."
+    )
   )
 })
+
 test_that("adding nondynamiteformula to dynamiteformula fails", {
   expect_error(
     obs_test + 1.0,

@@ -294,12 +294,18 @@ parse_formula <- function(x, original, family) {
     formula_parts
   )
   formulas <- lapply(paste0(responses, "~", formula_parts), as.formula)
-  resp_pred <- responses %in%
-    ulapply(formulas, function(y) get_nonlag_terms(y$formula))
+  predictors <- ulapply(formulas, function(y) {
+    extract_nonlags(attr(terms(y), "term.labels"))
+  })
+  resp_pred <- responses %in% predictors
+  p <- sum(resp_pred)
   stopifnot_(
     !any(resp_pred),
-    "Variable{?s} {cs(responses[resp_pred])} appear{?s}
-     on both sides of the formula for ({cs(responses)})."
+    c(
+      "Contemporaneous self-dependency found in model formula:",
+      `x` = "{cli::qty(p)} Variable{?s} {.arg {cs(responses[resp_pred])}}
+             appear{?s/} on both sides of the formula for ({cs(responses)})."
+    )
   )
   out <- vector(mode = "list", length = n_responses)
   for (i in seq_len(n_responses)) {
@@ -414,14 +420,6 @@ get_nonlag_terms <- function(x) {
     }
   })
 }
-
-# #' Get All Formulas of a `dynamiteformula` Object
-# #'
-# #' @param x A `dynamiteformula` object.
-# #' @noRd
-# get_formulas <- function(x) {
-#   lapply(x, "[[", "formula")
-# }
 
 #' Get Special Type Formula of a Dimension in a `dynamiteformula`
 #'
