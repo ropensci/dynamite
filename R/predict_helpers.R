@@ -977,8 +977,7 @@ predicted_mvgaussian <- "
   error <- matrix(0, k, d)
   for (j in seq_len(n_group)) {{
     for (l in seq_len(n_draws)) {{
-      error[(j - 1L) * n_draws + l, seq_len(d)] <-
-        sigma[l, ] * L[l, , ] %*% rnorm(d)
+      error[(j - 1L) * n_draws + l, ] <- sigma[l, ] * L[l, , ] %*% rnorm(d)
     }}
   }}
   for (i in seq_len(d)) {{
@@ -994,7 +993,7 @@ predicted_mvgaussian <- "
       x = out,
       i = idx_data,
       j = resp[i],
-      value = xbeta[idx_out,i] + error[idx_out,i]
+      value = xbeta[idx_out, i] + error[idx_out, i]
     )
   }}
 "
@@ -1169,6 +1168,28 @@ loglik_gaussian <- "
     j = '{resp}_loglik',
     value = dnorm(y, xbeta, sigma, log = TRUE)
   )
+"
+
+loglik_mvgaussian <- "
+  det <- numeric(k)
+  quad <- numeric(k)
+  for (j in seq_len(n_groups)) {{
+    for (l in seq_len(n_draws)) {{
+      idx_draws <- (j - 1L) * n_draws + l
+      det[idx_draws] <- 2.0 * sum(diag(L[l, , ]))
+      centered <- y[idx_draws, ] - xbeta[idx_draws, ]
+      z <- forwardsolve(sigma[l, ] * L[l, , ], centered)
+      quad[idx_draws] <- crossprod(z, z)
+    }}
+  }}
+  for (i in seq_len(d)) {{
+    data.table::set(
+      x = out,
+      i = idx,
+      j = paste(c(resp, 'loglik', collapse = '_')),
+      value = -0.5 * (d * log(2 * pi) + abs(det) + quad)
+    )
+  }}
 "
 
 loglik_categorical <- "
