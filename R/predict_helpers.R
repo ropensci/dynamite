@@ -1204,23 +1204,21 @@ loglik_gaussian <- "
 "
 
 loglik_mvgaussian <- "
-  det <- numeric(k)
-  quad <- numeric(k)
-  for (j in seq_len(n_group)) {{
-    for (l in seq_len(n_draws)) {{
-      idx_draws <- (j - 1L) * n_draws + l
-      det[idx_draws] <- 2.0 * sum(diag(L[l, , ]))
-      centered <- y[idx_draws, ] - xbeta[idx_draws, ]
-      z <- forwardsolve(sigma[l, ] * L[l, , ], centered)
-      quad[idx_draws] <- crossprod(z, z)
-    }}
+  ll <- numeric(k)
+  for (l in seq_len(n_draws)) {{
+    idx_group <- seq.int(l, k, by = n_draws)
+    log_det <- 2.0 * sum(log(diag(L[l, , ])))
+    diffs <- t(y[idx_group, ] - xbeta[idx_group, ])
+    z <- forwardsolve(sigma[l, ] * L[l, , ], diffs)
+    quad <- colSums(z^2)
+    ll[idx_group] <- -0.5 * (d * log(2 * pi) + log_det + quad)
   }}
   for (i in seq_len(d)) {{
     data.table::set(
       x = out,
       i = idx,
       j = paste(c(resp, 'loglik'), collapse = '_'),
-      value = -0.5 * (d * log(2 * pi) + abs(det) + quad)
+      value = ll
     )
   }}
 "
