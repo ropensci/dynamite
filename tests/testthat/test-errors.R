@@ -1028,7 +1028,22 @@ test_that("new group levels can't be included if new_levels is 'none'", {
     )
   )
 })
-
+test_that("new group levels can't be included if model has latent factor", {
+  nd <- latent_factor_example
+  nd$id[nd$id == 1] <- 100
+  expect_error(
+    predict(
+      latent_factor_example_fit,
+      newdata = nd, n_draws = 2
+    ),
+    paste(
+      "Grouping variable `id` contains unknown levels:\nx Level \"100\"",
+      "is not present in the original data\\.\ni Models with latent",
+      "factors do not support new levels because of identifiability",
+      "constraints\\."
+    )
+  )
+})
 test_that("newdata with unknown factor levels fails", {
   categorical_example_newlevel <- categorical_example |>
     dplyr::mutate(x = dplyr::recode(x, "C" = "D"))
