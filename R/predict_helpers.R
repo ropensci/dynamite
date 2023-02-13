@@ -41,7 +41,7 @@ check_newdata <- function(object, newdata) {
 
 #' Parse And Prepare `newdata` for Prediction
 #'
-#' @param dformula \[`dynamiteformula`]\cr The model formula.
+#' @param dformulas \[`dynamiteformula`]\cr The model formulas.
 #' @param newdata \[`data.frame`]\cr The data to be used for prediction.
 #' @param data \[`data.frame`]\cr The original data used to fit the model.
 #' @param type \[`character`]\cr Either `"response"`, `"mean"`, `"link"`.
@@ -59,9 +59,9 @@ check_newdata <- function(object, newdata) {
 #'   if there is only one group.
 #' @param time_var \[`character(1)`]\cr Time index variable name.
 #' @noRd
-parse_newdata <- function(dformula, newdata, data, type, eval_type,
-                          families_stoch, resp_stoch, categories,
-                          clear_names, new_levels, group_var, time_var) {
+parse_newdata <- function(dformulas, newdata, data, type, eval_type,
+                          resp_stoch, categories, clear_names, new_levels,
+                          group_var, time_var) {
   if (!group_var %in% names(newdata)) {
     orig <- sort(data[[group_var]])[1L]
     data.table::set(x = newdata, j = group_var, value = orig)
@@ -135,27 +135,37 @@ parse_newdata <- function(dformula, newdata, data, type, eval_type,
     # TODO no need check length when data.table package is updated
     newdata[, (clear_names) := NULL]
   }
-  drop_unused(dformula, newdata, group_var, time_var)
+  drop_unused(dformulas$all, newdata, group_var, time_var)
   type <- ifelse_(eval_type %in% c("fitted", "loglik"), eval_type, type)
-  # create separate column for each level of categorical response variables
+  if (identical(type, "loglik")) {
+    cg <- attr(dformulas$stoch, "channel_groups")
+    n_cg <- length(unique(cg))
+    for (i in seq_len(n_cg)) {
+      cg_idx <- which(cg == i)
+      y <- ifelse_(
+        length(cg_idx) > 1L,
+        paste(c(resp_stoch[cg_idx], "loglik"), collapse = "_"),
+        paste0(resp_stoch[cg_idx[1L]], "_loglik")
+      )
+      newdata[, (y) := NA_real_]
+    }
+  }
   for (i in seq_along(resp_stoch)) {
-    resp <- resp_stoch[i]
-    if (identical(type, "loglik")) {
-      newdata[, (glue::glue("{resp}_loglik")) := NA_real_]
-    } else {
-      if (type %in% c("mean", "link", "fitted")) {
-        pred_col <- ifelse_(
-          is_categorical(families_stoch[[i]]),
-          glue::glue("{resp}_{type}_{categories[[resp]]}"),
-          glue::glue("{resp}_{type}")
-        )
-        newdata[, (pred_col) := NA_real_]
-      }
+    y <- resp_stoch[i]
+    if (type %in% c("mean", "link", "fitted")) {
+      # create a separate column for each level of
+      # a categorical response variables
+      pred_col <- ifelse_(
+        is_categorical(dformulas$stoch[[i]]$family),
+        glue::glue("{y}_{type}_{categories[[y]]}"),
+        glue::glue("{y}_{type}")
+      )
+      newdata[, (pred_col) := NA_real_]
     }
     data.table::set(
       x = newdata,
-      j = glue::glue("{resp}_store"),
-      value = newdata[[resp]]
+      j = glue::glue("{y}_store"),
+      value = newdata[[y]]
     )
   }
   newdata
@@ -376,7 +386,7 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
 #'     * `"original"` which will randomly match each new level to one of
 #'       the original levels. The posterior samples of the random effects of
 #'       the matched levels will then be used for the new levels.
-#' @return An n_draws x n_groups x n_intercepts array of random intercepts.
+#' @return An n_draws x n_group x n_intercepts array of random intercepts.
 #' @noRd
 generate_random_effect <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
                                    n_group, orig_ids, new_ids, new_levels) {
@@ -539,13 +549,14 @@ prepare_eval_envs <- function(object, simulated, observed,
       j <- cg_idx[1L]
       k <- k + 1L
       resp <- object$dformulas$all[[j]]$response
-      e$resp_levels <- onlyif(
+      resp_levels <- onlyif(
         is_categorical(resp_family),
         attr(
           attr(object$stan$responses, "resp_class")[[resp]],
           "levels"
         )
       )
+      e$resp_levels <- resp_levels
       prepare_eval_env_univariate(
         e = e,
         resp = resp,
@@ -843,7 +854,7 @@ generate_sim_call_multivariate <- function(d, resp, resp_family, eval_type,
     yi <- resp[i]
     xbeta_text[i] <- glue::glue(
       "\n\n  xbeta[idx_draw, {i}] <- ",
-      ifelse_(!has_fixed_intercept[i] && !has_varying_inrecept[i], "0", ""),
+      ifelse_(!has_fixed_intercept[i] && !has_varying_intercept[i], "0", ""),
       ifelse_(has_fixed_intercept[i], "alpha_{yi}", ""),
       ifelse_(has_varying_intercept[i], "alpha_{yi}[, a_time]", ""),
       ifelse_(has_random_intercept[i], "+ nu_{yi}[, j, 1]", ""),
@@ -1195,7 +1206,7 @@ loglik_gaussian <- "
 loglik_mvgaussian <- "
   det <- numeric(k)
   quad <- numeric(k)
-  for (j in seq_len(n_groups)) {{
+  for (j in seq_len(n_group)) {{
     for (l in seq_len(n_draws)) {{
       idx_draws <- (j - 1L) * n_draws + l
       det[idx_draws] <- 2.0 * sum(diag(L[l, , ]))
@@ -1208,7 +1219,7 @@ loglik_mvgaussian <- "
     data.table::set(
       x = out,
       i = idx,
-      j = paste(c(resp, 'loglik', collapse = '_')),
+      j = paste(c(resp, 'loglik'), collapse = '_'),
       value = -0.5 * (d * log(2 * pi) + abs(det) + quad)
     )
   }}

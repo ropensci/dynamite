@@ -2023,7 +2023,8 @@ generated_quantities_lines_categorical <- function(...) {
 generated_quantities_lines_gaussian <- function(...) {
   generated_quantities_lines_default()
 }
-generated_quantities_lines_mvgaussian <- function(y_cg, idt, ...) {
+
+generated_quantities_lines_mvgaussian <- function(y, y_cg, idt, ...) {
   O <- length(y)
   paste_rows(
     "corr_matrix[O_{y_cg}] corr_matrix_{y_cg} = ",
@@ -2037,6 +2038,7 @@ generated_quantities_lines_mvgaussian <- function(y_cg, idt, ...) {
     .indent = idt(c(1, 2, 1, 1, 2, 3, 2, 1))
   )
 }
+
 generated_quantities_lines_binomial <- function(...) {
   generated_quantities_lines_default()
 }

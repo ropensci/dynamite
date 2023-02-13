@@ -228,12 +228,11 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
     new_levels
   )
   newdata <- parse_newdata(
-    dformula = object$dformulas$all,
+    dformulas = object$dformulas,
     newdata = newdata,
     data = object$data,
     type = type,
     eval_type = eval_type,
-    families_stoch = get_families(object$dformulas$stoch),
     resp_stoch = resp_stoch,
     categories = lapply(
       attr(object$stan$responses, "resp_class"),

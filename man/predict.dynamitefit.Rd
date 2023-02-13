@@ -34,7 +34,8 @@ model contains random effects, an option for the random
 effects for the new levels must be chosen (argument \code{new_levels}).
 If the grouping variable of the original data is missing, it is assumed
 that all observations in \code{newdata} belong to the first group in the
-original data.}
+original data. New group levels are not allowed for models using latent
+factors.}
 
 \item{type}{[\code{character(1)}]\cr Type of prediction,
 \code{"response"} (default), \code{"mean"}, or \code{"link"}.}

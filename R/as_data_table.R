@@ -325,9 +325,9 @@ as_data_table_nu <- function(x, draws, n_draws, response, ...) {
   )
   n_vars <- length(var_names)
   groups <- sort(unique(x$data[[x$group_var]]))
-  n_groups <- length(groups)
+  n_group <- length(groups)
   data.table::data.table(
-    parameter = rep(var_names, each = n_draws * n_groups),
+    parameter = rep(var_names, each = n_draws * n_group),
     value = c(draws),
     group = rep(groups, each = n_draws)
   )

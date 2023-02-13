@@ -5,7 +5,7 @@
 #' @param cvars \[`list()`]\cr The `channel_vars` component of
 #' @param cgvars \[`list()`]\cr The `channel_group_vars` component of
 #'   [prepare_stan_input()] output.
-#' @cg \[`integer()`]\cr The `"channel_groups"` attribute of the `dformula`
+#' @param cg \[`integer()`]\cr The `"channel_groups"` attribute of the `dformula`
 #'   for stochastic channels
 #' @param ... Not used.
 #' @noRd
@@ -77,19 +77,16 @@ create_data <- function(idt, cvars, cgvars, cg) {
     if (is_multivariate(cvars[[j]]$family)) {
       data_text[i] <- ""
       for (k in cg_idx) {
-        #line_args <- c(list(y = cvars[[j]]$y_name, idt = idt), cvars[[k]])
         data_text[i] <- paste_rows(
           data_text[i],
           lines_wrap("data", "default", cvars[[k]], idt)
         )
       }
-      #line_args <- c(list(y = cgvars[[i]]$cg_name, idt = idt), cvars[[j]])
       data_text[i] <- paste_rows(
         data_text[i],
         lines_wrap("data", cvars[[j]]$family, cgvars[[i]], idt)
       )
     } else {
-      #line_args <- c(list(y = cvars[[j]]$y_name, idt = idt), cvars[[j]])
       data_text[i] <- lines_wrap("data", cvars[[j]]$family, cvars[[j]], idt)
     }
   }
@@ -104,7 +101,6 @@ create_transformed_data <- function(idt, cvars, cgvars, cg) {
   declarations <- character(n)
   statements <- character(n)
   for (i in seq_len(n)) {
-    #line_args <- c(list(y = cvars[[i]]$y_name, idt = idt), cvars[[i]])
     tr_data <- lines_wrap(
       "transformed_data",
       cvars[[i]]$family,
@@ -192,7 +188,6 @@ create_parameters <- function(idt, cvars, cgvars, cg) {
     if (is_multivariate(cvars[[j]]$family)) {
       parameters_text[i] <- ""
       for (k in cg_idx) {
-        #line_args <- c(list(y = cvars[[k]]$y_name, idt = idt), cvars[[k]])
         parameters_text[i] <- paste_rows(
           parameters_text[i],
           lines_wrap(
@@ -203,13 +198,11 @@ create_parameters <- function(idt, cvars, cgvars, cg) {
           )
         )
       }
-      #line_args <- c(list(y = cgvars[[i]]$cg_name, idt = idt), cvars[[j]])
       parameters_text[i] <- paste_rows(
         parameters_text[i],
         lines_wrap("parameters", cvars[[j]]$family, cgvars[[i]], idt)
       )
     } else {
-      #line_args <- c(list(y = cvars[[j]]$y_name, idt = idt), cvars[[j]])
       parameters_text[i] <- lines_wrap(
         "parameters",
         cvars[[j]]$family,
@@ -314,7 +307,6 @@ create_transformed_parameters <- function(idt, cvars, cgvars, cg) {
   declarations <- character(n)
   statements <- character(n)
   for (i in seq_len(n)) {
-    #line_args <- c(list(y = cvars[[i]]$y_name, idt = idt), cvars[[i]])
     tr_pars <- lines_wrap(
       "transformed_parameters",
       cvars[[i]]$family,
@@ -492,25 +484,11 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
     cvars[[i]]$backend <- backend
     cg_idx <- which(cg == i)
     j <- cg_idx[1L]
-    if (is_multivariate(cvars[[j]]$family)) {
-      model_text[i] <- ""
-      #y <- vapply(cvars[cg_idx], "[[", "y_name")
-      #line_args <- c(
-      #  list(y = y, y_name = cgvars[[i]]$cg_name, idt = idt),
-      #  cgvars[[i]]
-      #)
-      model_text[i] <- paste_rows(
-        model_text[i],
-        lines_wrap("model", cvars[[j]]$family, cgvars[[i]], idt),
-        .parse = FALSE
-      )
-    } else {
-      #line_args <- c(
-      #  list(y = cvars[[j]]$y_name, idt = idt, backend = backend),
-      #  cvars[[j]]
-      #)
-      model_text[i] <- lines_wrap("model", cvars[[j]]$family, cvars[[j]], idt)
-    }
+    model_text[i] <- ifelse_(
+      is_multivariate(cvars[[j]]$family),
+      lines_wrap("model", cvars[[j]]$family, cgvars[[i]], idt),
+      lines_wrap("model", cvars[[j]]$family, cvars[[j]], idt)
+    )
   }
   paste_rows(
     "model {",
@@ -577,37 +555,28 @@ create_generated_quantities <- function(idt, cvars, cgvars, cg) {
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
     j <- cg_idx[1L]
-    if (is_multivariate(cvars[[j]]$family)) {
-      generated_quantities_text[i] <- ""
-      #y <- vapply(cvars[cg_idx], "[[", character(1L), "y_name")
-      #line_args <- c(
-      #  list(y = y, cg_name = cgvars[[i]]$cg_name, idt = idt),
-      #  cgvars[[i]]
-      #)
-      generated_quantities_text[i] <- paste_rows(
-        generated_quantities_text[i],
-        lines_wrap(
-          "generated_quantities",
-          cvars[[j]]$family,
-          cgvars[[i]],
-          idt
-        ),
-        .parse = FALSE
-      )
-    } else {
-      #line_args <- c(list(y = cvars[[j]]$y_name, idt = idt), cvars[[j]])
-      generated_quantities_text[i] <- lines_wrap(
+    generated_quantities_text[i] <- ifelse_(
+      is_multivariate(cvars[[j]]$family),
+      lines_wrap(
+        "generated_quantities",
+        cvars[[j]]$family,
+        cgvars[[i]],
+        idt
+      ),
+      lines_wrap(
         "generated_quantities",
         cvars[[j]]$family,
         cvars[[j]],
         idt
       )
-    }
+    )
   }
-  paste_rows("generated quantities {",
+  paste_rows(
+    "generated quantities {",
     gen_nu,
     gen_psi,
     generated_quantities_text,
     "}",
-    .parse = FALSE)
+    .parse = FALSE
+  )
 }
