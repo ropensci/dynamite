@@ -15,7 +15,9 @@
 #'   Stan function reference manual (https://mc-stan.org/users/documentation/).
 #' * Gaussian: `gaussian` (identity link, parameterized using mean and standard
 #'   deviation).
-#' * Multivariate Gaussian: `mvgaussian` (identity link, TODO)
+#' * Multivariate Gaussian: `mvgaussian` (identity link, parameterized using
+#'   mean vector, standard deviation vector and the Cholesky decomposition of
+#'   the correlation matrix).
 #' * Poisson: `poisson` (log-link, with an optional known offset variable).
 #' * Negative-binomial: `negbin` (log-link, using mean and dispersion
 #'   parameterization, with an optional known offset variable). See the
@@ -36,6 +38,14 @@
 #' value of `x` (`lag(x)`), and then we add a second channel declaring `x` as
 #' Poisson distributed depending on some exogenous variable `z`
 #' (for which we do not define any distribution).
+#'
+#' Multivariate channels are defined by providing a single formula for all
+#' components or by providing component-specific formulas separated by a `|`.
+#' The response variables that correspond to the components should be joined by
+#' `c()`. For instance, the following would define `c(y1, y2)` as multivariate
+#' gaussian with `x` as a predictor for the mean of the first component and
+#' `x` and `z` as predictors for the mean of the second component:
+#' `obs(c(y1, y2) ~ x | x + z, family = "mvgaussian")`
 #'
 #' In addition to declaring response variables via `obs`, we can also use
 #' the function `aux` to define auxiliary channels which are deterministic
@@ -85,17 +95,15 @@
 #' `random(~1)` leads to a model where in addition to the common intercept,
 #' each individual/group has their own intercept with zero-mean normal prior and
 #' unknown standard deviation analogously with the typical mixed models. An
-#' additional model component [random_spec()] can be used to define whether the
-#' random effects are allowed to correlate within and across channels and
-#' whether to use centered or noncentered parameterization for the random
-#' effects.
+#' additional model component [dynamite::random_spec()] can be used to define
+#' whether the random effects are allowed to correlate within and across
+#' channels and whether to use centered or noncentered parameterization for
+#' the random effects.
 #'
 #' @export
 #' @param formula \[`formula`]\cr An \R formula describing the model.
 #' @param family \[`character(1)`]\cr The family name. See 'Details' for the
 #'   supported families.
-#' @param name \[`character(1)`]\cr Optional name for the channel. By default
-#'   the name is the same as the response variable of `formula`.
 #' @return A `dynamiteformula` object.
 #' @srrstats {G2.3b} Uses tolower.
 #' @srrstats {RE1.0} Uses a formula interface.
@@ -125,7 +133,7 @@
 #'   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
 #'   aux(numeric(logp) ~ log(p + 1))
 #'
-dynamiteformula <- function(formula, family, name = NULL) {
+dynamiteformula <- function(formula, family) {
   stopifnot_(
     !missing(formula),
     "Argument {.arg formula} is missing."
@@ -161,7 +169,11 @@ dynamiteformula <- function(formula, family, name = NULL) {
     checkmate::test_string(x = name, null.ok = TRUE, na.ok = FALSE),
     "Argument {.arg name} must be a single {.cls character} string or NULL."
   )
-  dims <- dynamiteformula_(formula, formula, family)
+  dims <- dynamiteformula_(
+    formula = formula,
+    original = formula,
+    family = family
+  )
   structure(
     lapply(dims, function(x) {
       dynamitechannel(
@@ -169,7 +181,7 @@ dynamiteformula <- function(formula, family, name = NULL) {
         original = x$original,
         family = family,
         response = x$response,
-        name = name,
+        name = x$name,
         fixed = x$fixed,
         varying = x$varying,
         random = x$random,
@@ -190,15 +202,16 @@ dynamiteformula <- function(formula, family, name = NULL) {
 #' @inheritParams dynamiteformula
 #' @param original The original `formula` definition.
 #' @noRd
-dynamiteformula_ <- function(formula, original, family) {
+dynamiteformula_ <- function(formula, original, family, name) {
   if (is_deterministic(family)) {
     out <- list(formula_past(formula))
     resp_parsed <- deterministic_response(deparse1(formula_lhs(formula)))
     out[[1L]]$specials$resp_type <- resp_parsed$type
     out[[1L]]$response <- resp_parsed$resp
     out[[1L]]$original <- original
+    out[[1L]]$name <- parse_name(resp_parsed$resp)
   } else {
-    out <- parse_formula(formula, original, family)
+    out <- parse_formula(formula, original, family, name)
     if (is_binomial(family)) {
       stopifnot_(
         "trials" %in% names(out[[1L]]$specials),
@@ -263,7 +276,7 @@ aux <- function(formula) {
   dynamiteformula(formula, family = "deterministic")
 }
 
-#' Parse Channel Formulas for `dynamiteformula
+#' Parse Channel Formulas for `dynamiteformula`
 #'
 #' @param x A `formula` object.
 #' @noRd
@@ -310,8 +323,17 @@ parse_formula <- function(x, original, family) {
   out <- vector(mode = "list", length = n_responses)
   for (i in seq_len(n_responses)) {
     out[[i]] <- formula_specials(formulas[[i]], original, family)
+    out[[i]]$name <- parse_name(responses[i])
   }
   out
+}
+
+#' Parse a Channel Name for a `dynamiteformula`
+#'
+#' @param x A `character` vector.
+#' @noRd
+parse_name <- function(x) {
+  gsub("[^[:alnum:]_]+", "", x, perl = TRUE)
 }
 
 
@@ -405,6 +427,14 @@ get_responses <- function(x) {
 #' @noRd
 get_predictors <- function(x) {
   vapply(x, function(y) deparse1(formula_rhs(y$formula)), character(1L))
+}
+
+#' Get the Names of a `dynamiteformula` Object
+#'
+#' @param x A `dynamiteformula` object.
+#' @noRd
+get_names <- function(x) {
+  vapply(x, function(y) y$name, character(1L))
 }
 
 #' Get Non-Lagged Terms of All Formulas of a `dynamiteformula` Object
