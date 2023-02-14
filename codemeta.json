@@ -8,7 +8,7 @@
   "codeRepository": "https://github.com/ropensci/dynamite/",
   "issueTracker": "https://github.com/ropensci/dynamite/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -319,27 +319,21 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "4939.444KB",
+  "fileSize": "4938.574KB",
   "citation": [
     {
       "@type": "CreativeWork",
       "datePublished": "2023",
       "author": [
         {
-          "@type": "Organization",
-          "name": "Tikka"
+          "@type": "Person",
+          "givenName": "Santtu",
+          "familyName": "Tikka"
         },
         {
-          "@type": "Organization",
-          "name": "Santtu"
-        },
-        {
-          "@type": "Organization",
-          "name": "Helske"
-        },
-        {
-          "@type": "Organization",
-          "name": "Jouni"
+          "@type": "Person",
+          "givenName": "Jouni",
+          "familyName": "Helske"
         }
       ],
       "name": "dynamite: An R Package for Dynamic Multivariate Panel Models",
@@ -354,16 +348,16 @@
       "author": [
         {
           "@type": "Person",
-          "givenName": "Jouni",
-          "familyName": "Helske"
+          "givenName": "Santtu",
+          "familyName": "Tikka"
         },
         {
           "@type": "Person",
-          "givenName": "Santtu",
-          "familyName": "Tikka"
+          "givenName": "Jouni",
+          "familyName": "Helske"
         }
       ],
-      "name": "Estimating Causal Effects from Panel Data with Dynamic Multivariate Panel Models",
+      "name": "Estimating Causal Effects from Panel Data with Dynamic\n    Multivariate Panel Models",
       "url": "https://osf.io/preprints/socarxiv/mdwu5/"
     },
     {
