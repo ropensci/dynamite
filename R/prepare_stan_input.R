@@ -584,10 +584,9 @@ prepare_channel_gaussian <- function(y, y_name, Y, channel, sd_x,
 #' @describeIn prepare_channel_default Prepare a Multivariate Gaussian Channel
 #' @noRd
 prepare_channel_mvgaussian <- function(y, cg_name, channel, priors) {
-  resp <- paste0("c(", cs(y), ")")
   L_prior <- data.frame(
     parameter = paste0("L_", cg_name),
-    response = resp,
+    response = cg_name,
     prior = "lkj_corr_cholesky(1)",
     type = "L",
     category = ""
@@ -596,7 +595,7 @@ prepare_channel_mvgaussian <- function(y, cg_name, channel, priors) {
     priors <- L_prior
     channel$L_prior_distr <- L_prior$prior
   } else {
-    priors <- priors[priors$response == resp, ]
+    priors <- priors[priors$response == cg_name, ]
     pdef <- priors[priors$type == "L", ]
     stopifnot_(identical(nrow(pdef), 1L),
       c(
