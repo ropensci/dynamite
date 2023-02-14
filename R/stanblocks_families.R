@@ -130,6 +130,7 @@ data_lines_default <- function(y, idt, has_missing,
     " - 1",
     ""
   )
+  re_icpt <- ifelse_(has_random_intercept, 1L, 0L)
   paste_rows(
     "// number of fixed, varying and random coefficients, and related indices",
     onlyif(K_fixed > 0L, "int<lower=0> K_fixed_{y};"),
@@ -145,7 +146,7 @@ data_lines_default <- function(y, idt, has_missing,
     onlyif(K_fixed > 0L, "int J_fixed_{y}[K_fixed_{y}];"),
     onlyif(K_varying > 0L, "int J_varying_{y}[K_varying_{y}];"),
     onlyif(
-      K_random > 1L,
+      K_random > re_icpt,
       "int J_random_{y}[K_random_{y}{icpt}]; // no intercept"
     ),
     onlyif(
@@ -154,7 +155,7 @@ data_lines_default <- function(y, idt, has_missing,
     ),
     onlyif(K_fixed > 0L, "int L_fixed_{y}[K_fixed_{y}];"),
     onlyif(K_varying > 0L, "int L_varying_{y}[K_varying_{y}];"),
-    onlyif(K_random > 1L, "int L_random_{y}[K_random_{y}{icpt}];"),
+    onlyif(K_random > re_icpt, "int L_random_{y}[K_random_{y}{icpt}];"),
     onlyif(
       write_beta || write_delta || write_tau || write_sigma_nu,
       "// Parameters of vectorized priors"
@@ -192,6 +193,7 @@ data_lines_categorical <- function(y, idt,
     " - 1",
     ""
   )
+  re_icpt <- ifelse_(has_random_intercept, 1L, 0L)
   dtext_def <- paste_rows(
     onlyif(has_missing, "// Missing data indicators"),
     onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
@@ -214,7 +216,7 @@ data_lines_categorical <- function(y, idt,
     onlyif(K_fixed > 0L, "int J_fixed_{y}[K_fixed_{y}];"),
     onlyif(K_varying > 0L, "int J_varying_{y}[K_varying_{y}];"),
     onlyif(
-      K_random > 1L,
+      K_random > re_icpt,
       "int J_random_{y}[K_random_{y}{icpt}]; // no intercept"
     ),
     onlyif(
@@ -223,7 +225,7 @@ data_lines_categorical <- function(y, idt,
     ),
     onlyif(K_fixed > 0L, "int L_fixed_{y}[K_fixed_{y}];"),
     onlyif(K_varying > 0L, "int L_varying_{y}[K_varying_{y}];"),
-    onlyif(K_random > 1L, "int L_random_{y}[K_random_{y}{icpt}];"),
+    onlyif(K_random > re_icpt, "int L_random_{y}[K_random_{y}{icpt}];"),
     onlyif(
       write_alpha || write_beta || write_delta || write_tau,
       "// Parameters of vectorized priors"
