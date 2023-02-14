@@ -305,14 +305,14 @@ as_data_table_xi <- function(x, draws, ...) {
 #' @describeIn as_data_table_default Data Table for a "corr_nu" Parameter
 #' @noRd
 as_data_table_corr_nu <- function(x, draws, n_draws, ...) {
-  vars <- vapply(x$stan$channel_vars, function(x) {
+  vars <- ulapply(x$stan$channel_vars, function(x) {
     icpt <- ifelse_(
       x$has_random_intercept,
       "alpha",
       NULL
     )
-    paste0(x$resp, "_", c(icpt, names(x$J_random)))
-  }, character(1L))
+    paste0(x$y, "_", c(icpt, names(x$J_random)))
+  })
 
   pairs <- apply(utils::combn(vars, 2L), 2L, paste, collapse = "__")
   data.table::data.table(
