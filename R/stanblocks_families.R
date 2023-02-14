@@ -1823,7 +1823,8 @@ model_lines_mvgaussian <- function(cvars, cgvars, idt, ...) {
     priors[i] <- paste_rows(
       priors[i],
       glue::glue("sigma_{y[i]} ~ {cvars[[i]]$sigma_prior_distr};"),
-      .indent = idt(c(0, 1))
+      .indent = idt(c(0, 1)),
+      .parse = FALSE
     )
     args <- c(cvars[[i]], idt = idt, glm = FALSE)
     args <- args[names(args) %in% names(formals(intercept_lines))]
