@@ -125,17 +125,15 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
         permuted = FALSE
       )
     }
-    category <- attr(x$stan$responses[[response]], "levels")[-1L]
+    category <- attr(
+      attr(x$stan$responses, "resp_class")[[response]],
+      "levels"
+    )[-1L]
     if (is.null(category)) {
       category <- NA
     }
-    idx <- which(response %in% vapply(x$stan$channel_group_vars,
-      "[[", character(1L), "y_cg"))
-    resps <- ifelse_(
-      identical(length(idx), 0L),
-      NULL,
-      x$stan$channel_group_vars[[idx]]$y
-    )
+    idx <- which(response %in% names(x$stan$responses))
+    resps <- x$stan$responses[[idx]]
     d <- do.call(
       what = paste0("as_data_table_", type),
       args = list(

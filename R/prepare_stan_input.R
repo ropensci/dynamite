@@ -31,18 +31,23 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     all(!resp_missing),
     "Can't find variable{?s} {.var {resp[resp_missing]}} in {.arg data}."
   )
-  responses <- as.data.frame(data[, .SD, .SDcols = resp])
-  # Needs lapply instead of apply to keep factors as factors
-  attr(responses, "resp_class") <- lapply(responses, function(x) {
-    cl <- class(x)
-    attr(cl, "levels") <- levels(x)
-    cl
-  })
   specials <- evaluate_specials(dformula, data)
   model_matrix <- full_model.matrix(dformula, data, verbose)
   cg <- attr(dformula, "channel_groups")
   n_cg <- length(unique(cg))
   n_channels <- length(resp_names)
+  responses <- list()
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    responses[[paste(resp_names[cg_idx], collapse = "_")]] <- resp_names[cg_idx]
+  }
+  attr(responses, "resp_class") <- lapply(data[, .SD, .SDcols = resp],
+    function(x) {
+      cl <- class(x)
+      attr(cl, "levels") <- levels(x)
+      cl
+    }
+  )
   # A list of variables for Stan sampling without grouping by channel
   sampling_vars <- list()
   channel_group_vars <- list()
@@ -95,7 +100,11 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     channel <- list()
     y <- resp[i]
     y_name <- resp_names[i]
-    y_split <- split(responses[, y], group)
+    y_split <- split(
+      data[, .SD, .SDcols = c(y, group_var)],
+      by = group_var,
+      keep.by = FALSE
+    )
     Y <- array(as.numeric(unlist(y_split)), dim = c(T_full, N))
     Y <- Y[T_idx, , drop = FALSE]
     Y_na <- is.na(Y)
