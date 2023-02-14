@@ -372,7 +372,6 @@ print.dynamiteformula <- function(x, ...) {
     "Argument {.arg x} must be a {.cls dynamiteformula} object."
   )
   cg <- attr(x, "channel_groups")
-  u_cg <- which(!duplicated(cg))
   n_cg <- length(unique(cg))
   rn <- character(n_cg)
   out <- data.frame(
@@ -380,10 +379,11 @@ print.dynamiteformula <- function(x, ...) {
     Formula = rep(NA_character_, n_cg)
   )
   for (i in seq_len(n_cg)) {
-    j <- u_cg[[i]]
+    cg_idx <- which(cg == i)
+    j <- cg_idx[1L]
     rn[i] <- ifelse_(
-      is.null(x[[j]]$name),
-      deparse1(formula_lhs(x[[j]]$original)),
+      is_multivariate(x[[j]]$family),
+      paste(get_names(x[cg_idx]), collapse = "_"),
       x[[j]]$name
     )
     out[i, "Family"] <- x[[j]]$family$name
