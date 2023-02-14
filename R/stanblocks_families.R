@@ -1828,6 +1828,7 @@ model_lines_mvgaussian <- function(cvars, cgvars, idt, ...) {
     )
     args <- c(cvars[[i]], idt = idt, glm = FALSE)
     args <- args[names(args) %in% names(formals(intercept_lines))]
+    args$obs <- obs
     mu[i] <- do.call(intercept_lines, args = args)
   }
   sd_y <- paste0("sigma_", y)
