@@ -1622,10 +1622,10 @@ model_lines_bernoulli <- function(y, idt, obs, has_varying, has_fixed, ...) {
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
-      "y_{y}[{obs}, t] ~ bernoulli_logit_glm(X[t][{obs}, J_{y}], ",
+      "y_{y}[t, {obs}] ~ bernoulli_logit_glm(X[t][{obs}, J_{y}], ",
       "{intercept}, gamma__{y});"
     ),
-    "y_{y}[{obs}, t] ~ bernoulli_logit({intercept});"
+    "y_{y}[t, {obs}] ~ bernoulli_logit({intercept});"
   )
   model_text <- paste_rows(
     "{{",
@@ -1654,10 +1654,10 @@ model_lines_poisson <- function(y, idt, obs, has_varying, has_fixed, ...) {
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
-      "y_{y}[{obs}, t] ~ poisson_log_glm(X[t][{obs}, J_{y}], ",
+      "y_{y}[t, {obs}] ~ poisson_log_glm(X[t][{obs}, J_{y}], ",
       "{intercept}, gamma__{y});"
     ),
-    "y_{y}[{obs}, t] ~ poisson_log({intercept});"
+    "y_{y}[t, {obs}] ~ poisson_log({intercept});"
   )
   model_text <- paste_rows(
     "{{",
@@ -1688,10 +1688,10 @@ model_lines_negbin <- function(y, idt, obs, has_varying, has_fixed,
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
-      "y_{y}[{obs}, t] ~ neg_binomial_2_log_glm(X[t][{obs}, J_{y}], ",
+      "y_{y}[t, {obs}] ~ neg_binomial_2_log_glm(X[t][{obs}, J_{y}], ",
       "{intercept}, gamma__{y}, phi_{y});"
     ),
-    "y_{y}[{obs}, t] ~ neg_binomial_2_log({intercept}, phi_{y});"
+    "y_{y}[t, {obs}] ~ neg_binomial_2_log({intercept}, phi_{y});"
   )
   model_text <- paste_rows(
     "phi_{y} ~ {phi_prior_distr};",
@@ -1746,7 +1746,7 @@ model_lines_exponential <- function(y, idt, obs, has_varying, has_fixed, ...) {
   intercept <- do.call(intercept_lines, args = args)
 
   likelihood_term <- paste0(
-    "y_{y}[t, {obs}] ~ exponential(exp(-({intercept})));"
+    "y_{y}[{obs}, t] ~ exponential(exp(-({intercept})));"
   )
   model_text <- paste_rows(
     "for (t in 1:T) {{",
@@ -1769,7 +1769,7 @@ model_lines_gamma <- function(y, idt, obs, has_varying, has_fixed,
   intercept <- do.call(intercept_lines, args = args)
 
   likelihood_term <- paste0(
-    "y_{y}[t, {obs}] ~ gamma(phi_{y}, phi_{y} * exp(-({intercept})));"
+    "y_{y}[{obs}, t] ~ gamma(phi_{y}, phi_{y} * exp(-({intercept})));"
   )
   model_text <- paste_rows(
     "phi_{y} ~ {phi_prior_distr};",
@@ -1793,7 +1793,7 @@ model_lines_beta <- function(y, idt, obs, has_varying, has_fixed,
   intercept <- do.call(intercept_lines, args = args)
 
   likelihood_term <- paste0(
-    "y_{y}[t, {obs}] ~ beta_proportion(inv_logit({intercept}), phi_{y});"
+    "y_{y}[{obs}, t] ~ beta_proportion(inv_logit({intercept}), phi_{y});"
   )
   model_text <- paste_rows(
     "phi_{y} ~ {phi_prior_distr};",
