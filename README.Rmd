@@ -120,7 +120,7 @@ For more examples, see the package vignette and the [blog post about dynamite](h
 - The `dynamite` package uses Stan via [`rstan`](https://CRAN.R-project.org/package=rstan) and [`cmdstanr`](https://mc-stan.org/cmdstanr/) (see also https://mc-stan.org), which is a probabilistic programming language for general Bayesian modelling.
 - The [`brms`](https://CRAN.R-project.org/package=brms) package also uses Stan, and can be used to fit various complex multilevel models.
 - Regression modeling with time-varying coefficients based on kernel smoothing and least squares estimation is available in package [`tvReg`](https://CRAN.R-project.org/package=tvReg). The [`tvem`](https://CRAN.R-project.org/package=tvem) package provides similar functionality for gaussian, binomial and poisson responses with [`mgcv`](https://CRAN.R-project.org/package=mgcv) backend.
-- [`plm`](https://CRAN.R-project.org/package=plm) contains various methods to estimate linear models for panel data, e.g. the fixed effect models.
+- [`plm`](https://CRAN.R-project.org/package=plm) contains various methods to estimate linear models for panel data, e.g., fixed effect models.
 - [`lavaan`](https://CRAN.R-project.org/package=lavaan) provides tools for structural equation modeling, and as such can be used to model various panel data models as well.
 
 ## Contributing

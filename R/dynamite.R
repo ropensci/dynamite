@@ -133,7 +133,12 @@
 #'   extent in the tests and noted here. As the computational algorithms are
 #'   based on Stan, the  scalability of the package depends directly on the
 #'   scalability of Stan.
-#' @references Jouni Helske and Santtu Tikka (2022). Estimating Causal Effects
+#' @references
+#' Santtu Tikka and Jouni Helske (2023). `dynamite`: An \R Package for Dynamic
+#' Multivariate Panel Models. arXiv preprint,
+#' <https://arxiv.org/abs/2302.01607/>.
+#'
+#' Jouni Helske and Santtu Tikka (2022). Estimating Causal Effects
 #' from Panel Data with Dynamic Multivariate Panel Models. SocArxiv preprint,
 #' <https://osf.io/preprints/socarxiv/mdwu5/>.
 #' @examples

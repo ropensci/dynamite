@@ -30,10 +30,10 @@ package and the underlying methodology from many other approaches are:
 - Joint modeling of multiple measurements per individual (multiple
   channels) based directly on the assumed data generating process.
   Individual channels can be univariate or multivariate.
-- Support for non-Gaussian observations: Currently Gaussian,
-  Multivariate Gaussian, Categorical, Poisson, Bernoulli, Binomial,
-  Negative Binomial, Gamma, Exponential, and Beta distributions are
-  available and these can be mixed arbitrarily in multichannel models.
+- Support for various distributions: Currently Gaussian, Multivariate
+  Gaussian, Categorical, Poisson, Bernoulli, Binomial, Negative
+  Binomial, Gamma, Exponential, and Beta distributions are available,
+  and these can be mixed arbitrarily in multichannel models.
 - Allows evaluating realistic long-term counterfactual predictions which
   take into account the dynamic structure of the model by posterior
   predictive distribution simulation.
@@ -94,8 +94,8 @@ gaussian_example_fit
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  4.887  2.736
-#> chain:2  4.893  2.873
+#> chain:1  4.920  2.725
+#> chain:2  4.858  2.865
 #> 
 #> Summary statistics of the time-invariant parameters
 #> (excluding random effects):
@@ -173,8 +173,8 @@ dynamite](https://ropensci.org/blog/2023/01/31/dynamite-r-package/).
   similar functionality for gaussian, binomial and poisson responses
   with [`mgcv`](https://CRAN.R-project.org/package=mgcv) backend.
 - [`plm`](https://CRAN.R-project.org/package=plm) contains various
-  methods to estimate linear models for panel data, e.g. the fixed
-  effect models.
+  methods to estimate linear models for panel data, e.g., fixed effect
+  models.
 - [`lavaan`](https://CRAN.R-project.org/package=lavaan) provides tools
   for structural equation modeling, and as such can be used to model
   various panel data models as well.

@@ -266,8 +266,6 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
         c(T_full - fixed, N, O)
       )
       sampling_vars[paste0("y_", y_name)] <- NULL
-      # dformula[cg_idx] : Channels of this group
-      # Define priors for multivariate distributions etc.
       prep <- do.call(
         paste0("prepare_channel_", family$name),
         list(
@@ -598,7 +596,7 @@ prepare_channel_mvgaussian <- function(y, channel, priors) {
     priors <- L_prior
     channel$L_prior_distr <- L_prior$prior
   } else {
-    priors <- priors[priors$response == cg_name, ]
+    priors <- priors[priors$response == y, ]
     pdef <- priors[priors$type == "L", ]
     stopifnot_(identical(nrow(pdef), 1L),
       c(

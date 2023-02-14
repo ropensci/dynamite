@@ -234,8 +234,8 @@ get_parameter_types.dynamitefit <- function(x, ...) {
 #' denoting the knot number.
 #'
 #' @param x \[`dynamitefit`]\cr The model fit object.
-#' @param types Extract only names of parameter of certain type. See
-#' [dynamite::get_parameter_types()].
+#' @param types \[`character()`]\cr Extract only names of parameter of a
+#'   certain type. See [dynamite::get_parameter_types()].
 #' @param ... Ignored.
 #' @return A `character` vector with parameter names of the input model.
 #' @export
