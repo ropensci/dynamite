@@ -144,7 +144,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     # obs selects complete cases if there are missing observations
     channel$obs <- ifelse_(
       channel$has_missing,
-      glue::glue("obs_{resp}[1:n_obs_{y_name}[t], t]"),
+      glue::glue("obs_{y_name}[1:n_obs_{y_name}[t], t]"),
       ""
     )
     channel$has_fixed_intercept <- dformula[[i]]$has_fixed_intercept
