@@ -231,7 +231,8 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     channel_group <- list()
     y <- resp[cg_idx]
     y_name <- resp_names[cg_idx]
-    if (is_multivariate(dformula[[cg_idx[1L]]]$family)) {
+    family <- dformula[[cg_idx[1L]]]$family
+    if (is_multivariate(family)) {
       for (j in merge_has) {
         channel_group[[j]] <- vapply(
           channel_vars[cg_idx], "[[", logical(1L), j
