@@ -486,7 +486,8 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
     j <- cg_idx[1L]
     model_text[i] <- ifelse_(
       is_multivariate(cvars[[j]]$family),
-      lines_wrap("model", cvars[[j]]$family, cgvars[[i]], idt),
+      lines_wrap("model", cvars[[j]]$family,
+        list(cvars = cvars[cg_idx], cgvars = cgvars[[i]]), idt),
       lines_wrap("model", cvars[[j]]$family, cvars[[j]], idt)
     )
   }
