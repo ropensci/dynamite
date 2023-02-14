@@ -8,6 +8,8 @@
     allowed with models using latent factors.
   * Response variable names of the channels are now processed to avoid
     invalid variable names in the generated Stan code.
+  * Optimized prediction code by removing reduntant expressions and using
+    better indexing.
 
 # dynamite 1.1.2
 
