@@ -7,7 +7,10 @@
     fixed. However, due to identifiability constraints no new group levels are 
     allowed with models using latent factors.
   * Response variable names of the channels are now processed to avoid
-    invalid variable names in the generated Stan code.
+    invalid variable names in the generated Stan code. Note that these
+    variables names should be used when defining priors and when using
+    methods of the `dynamitefit` class. You can use the functions `get_priors`
+    and `get_parameter_names` to see the names that are available, as before.
   * Optimized prediction code by removing redundant expressions and using
     better indexing.
 
@@ -21,10 +24,10 @@
   * The `update` method now checks if the `backend` has changed from the 
     original model fit.
   * The `update` method now properly recompiles the model (if necessary) in 
-    cases where the `update` is used for already updated `dynamitefit` object.
-  * Fixed a bug in the default prior definitions of intercept for families using 
-    log-link which lead to a prior mean -Inf if all observations at the first 
-    time point were zero.
+    cases where `update` is used for already updated `dynamitefit` object.
+  * Fixed a bug in the default prior definitions of intercept for families 
+    using log-link which lead to `-Inf` prior mean if all observations at the 
+    first time point were zero.
   * Fixed some issues in the code generation of latent factor components.
 
 # dynamite 1.1.1

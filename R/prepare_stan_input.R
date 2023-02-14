@@ -39,9 +39,11 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   responses <- list()
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
-    responses[[paste(resp_names[cg_idx], collapse = "_")]] <- resp_names[cg_idx]
+    cg_name <- paste(resp_names[cg_idx], collapse = "_")
+    responses[[cg_name]] <- resp_names[cg_idx]
   }
-  attr(responses, "resp_class") <- lapply(data[, .SD, .SDcols = resp],
+  attr(responses, "resp_class") <- lapply(
+    data[, .SD, .SDcols = resp],
     function(x) {
       cl <- class(x)
       attr(cl, "levels") <- levels(x)

@@ -1,15 +1,13 @@
 #' Create Default Priors for Non-categorical Data
 #'
 #' @param y \[`character(1)`]\cr Name of the response variable of the channel.
-#' @param y_name \[`character(1)`]\cr Name of the channel.
 #' @param channel \[`list()`]\cr Channel-specific helper variables.
 #' @param mean_gamma Prior mean betas and deltas (at time `fixed + 1`).
 #' @param sd_gamma Prior SD betas and deltas (at time `fixed + 1`).
 #' @param mean_y Mean of the response variable at time `fixed + 1`.
 #' @param sd_y Standard deviation of the response variable at time `fixed + 1`.
 #' @noRd
-default_priors <- function(y, y_name, channel,
-                           mean_gamma, sd_gamma, mean_y, sd_y) {
+default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
   mean_y <- signif(mean_y, 2)
   sd_y <- signif(2 * max(1, sd_y), 2)
   mean_gamma <- signif(mean_gamma, 2)
@@ -34,7 +32,7 @@ default_priors <- function(y, y_name, channel,
     channel$sigma_nu_prior_npars <- 2L
     channel$sigma_nu_prior_pars <- cbind(0, s)
     priors$sigma_nu <- data.frame(
-      parameter = paste0("sigma_nu_", y_name, "_", ns),
+      parameter = paste0("sigma_nu_", y, "_", ns),
       response = y,
       prior = paste0("normal(0, ", s, ")"),
       type = "sigma_nu",
@@ -44,7 +42,7 @@ default_priors <- function(y, y_name, channel,
   if (channel$has_lfactor) {
     channel$sigma_lambda_prior_distr <- "normal(0, 1)"
     priors$sigma_lambda <- data.frame(
-      parameter = paste0("sigma_lambda_", y_name),
+      parameter = paste0("sigma_lambda_", y),
       response = y,
       prior = channel$sigma_lambda_prior_distr,
       type = "sigma_lambda",
@@ -53,7 +51,7 @@ default_priors <- function(y, y_name, channel,
     if (channel$nonzero_lambda) {
       channel$tau_psi_prior_distr <- paste0("normal(0, ", sd_y, ")")
       priors$tau_psi <- data.frame(
-        parameter = paste0("tau_psi_", y_name),
+        parameter = paste0("tau_psi_", y),
         response = y,
         prior = channel$tau_psi_prior_distr,
         type = "tau_psi",
@@ -62,7 +60,7 @@ default_priors <- function(y, y_name, channel,
     }
     channel$psi_prior_distr <- "normal(0, 1)"
     priors$psi <- data.frame(
-      parameter = paste0("psi_", y_name),
+      parameter = paste0("psi_", y),
       response = y,
       prior = channel$psi_prior_distr,
       type = "psi",
@@ -72,7 +70,7 @@ default_priors <- function(y, y_name, channel,
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {
     channel$alpha_prior_distr <- paste0("normal(", mean_y, ", ", sd_y, ")")
     priors$alpha <- data.frame(
-      parameter = paste0("alpha_", y_name),
+      parameter = paste0("alpha_", y),
       response = y,
       prior = channel$alpha_prior_distr,
       type = "alpha",
@@ -81,7 +79,7 @@ default_priors <- function(y, y_name, channel,
     if (channel$has_varying_intercept) {
       channel$tau_alpha_prior_distr <- paste0("normal(0, ", sd_y, ")")
       priors$tau_alpha <- data.frame(
-        parameter = paste0("tau_alpha_", y_name),
+        parameter = paste0("tau_alpha_", y),
         response = y,
         prior = channel$tau_alpha_prior_distr,
         type = "tau_alpha",
@@ -96,7 +94,7 @@ default_priors <- function(y, y_name, channel,
     channel$beta_prior_npars <- 2L
     channel$beta_prior_pars <- unname(cbind(m, s))
     priors$beta <- data.frame(
-      parameter = paste0("beta_", y_name, "_", names(s)),
+      parameter = paste0("beta_", y, "_", names(s)),
       response = y,
       prior = paste0("normal(", m, ", ", s, ")"),
       type = "beta",
@@ -110,7 +108,7 @@ default_priors <- function(y, y_name, channel,
     channel$delta_prior_npars <- 2L
     channel$delta_prior_pars <- unname(cbind(m, s))
     priors$delta <- data.frame(
-      parameter = paste0("delta_", y_name, "_", names(s)),
+      parameter = paste0("delta_", y, "_", names(s)),
       response = y,
       prior = paste0("normal(", m, ", ", s, ")"),
       type = "delta",
@@ -120,7 +118,7 @@ default_priors <- function(y, y_name, channel,
     channel$tau_prior_npars <- 2
     channel$tau_prior_pars <- cbind(0, s)
     priors$tau <- data.frame(
-      parameter = paste0("tau_", y_name, "_", names(s)),
+      parameter = paste0("tau_", y, "_", names(s)),
       response = y,
       prior = paste0("normal(0, ", s, ")"),
       type = "tau",
@@ -136,13 +134,12 @@ default_priors <- function(y, y_name, channel,
 #' Create Default Priors for Categorical Data
 #'
 #' @param y \[`character(1)`]\cr Name of the response variable of the channel.
-#' @param y_name \[`character(1)`]\cr Name of the channel.
 #' @param channel \[`list()`]\cr Channel-specific helper variables.
 #' @param sd_x \[`numeric(1)`]\cr
 #'   Standard deviation of the explanatory variables at time `fixed + 1`.
 #' @param resp_class \[`character(1)`]\cr Class of the response variable.
 #' @noRd
-default_priors_categorical <- function(y, y_name, channel, sd_x, resp_class) {
+default_priors_categorical <- function(y, channel, sd_x, resp_class) {
   S_y <- length(attr(resp_class, "levels"))
   # remove the first level which acts as reference
   resp_levels <- attr(resp_class, "levels")[-1]
@@ -155,7 +152,7 @@ default_priors_categorical <- function(y, y_name, channel, sd_x, resp_class) {
     channel$alpha_prior_npars <- 2L
     channel$alpha_prior_pars <- unname(cbind(m, s))
     priors$alpha <- data.frame(
-      parameter = paste0("alpha_", y_name),
+      parameter = paste0("alpha_", y),
       response = y,
       prior = paste0("normal(", m, ", ", s, ")"),
       type = "alpha",
@@ -164,7 +161,7 @@ default_priors_categorical <- function(y, y_name, channel, sd_x, resp_class) {
     if (channel$has_varying_intercept) {
       channel$tau_alpha_prior_distr <- "normal(0, 1)"
       priors$tau_alpha <- data.frame(
-        parameter = paste0("tau_alpha_", y_name),
+        parameter = paste0("tau_alpha_", y),
         response = y,
         prior = "normal(0, 1)",
         type = "tau_alpha",
@@ -179,7 +176,7 @@ default_priors_categorical <- function(y, y_name, channel, sd_x, resp_class) {
     channel$beta_prior_npars <- 2L
     channel$beta_prior_pars <- unname(cbind(m, s))
     priors$beta <- data.frame(
-      parameter = paste0("beta_", y_name, "_", names(s)),
+      parameter = paste0("beta_", y, "_", names(s)),
       response = y,
       prior = paste0("normal(", m, ", ", s, ")"),
       type = "beta",
@@ -193,7 +190,7 @@ default_priors_categorical <- function(y, y_name, channel, sd_x, resp_class) {
     channel$delta_prior_npars <- 2L
     channel$delta_prior_pars <- unname(cbind(m, s))
     priors$delta <- data.frame(
-      parameter = paste0("delta_", y_name, "_", names(s)),
+      parameter = paste0("delta_", y, "_", names(s)),
       response = y,
       prior = paste0("normal(", m, ", ", s, ")"),
       type = "delta",
@@ -204,7 +201,7 @@ default_priors_categorical <- function(y, y_name, channel, sd_x, resp_class) {
     channel$tau_prior_pars <- cbind(0.0, sd_gamma[channel$J_varying])
     priors$tau <- data.frame(
       parameter = paste0(
-        "tau_", y_name, "_", names(sd_gamma[channel$J_varying])
+        "tau_", y, "_", names(sd_gamma[channel$J_varying])
       ),
       response = y,
       prior = paste0("normal(0, ", sd_gamma[channel$J_varying], ")"),
