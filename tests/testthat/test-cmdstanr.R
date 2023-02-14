@@ -3,14 +3,16 @@
 
 run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "true")
 
+stanc_options <- list("O0")
 test_that("cmdstanr backend works for categorical model", {
   skip_if_not(run_extended_tests)
   set.seed(1)
 
   fit_dynamite <- update(
     categorical_example_fit,
-    stanc_options = list("O0"),
-    backend = "cmdstanr"
+    stanc_options = stanc_options,
+    backend = "cmdstanr",
+    show_messages = FALSE
   )
   expect_equal(coef(fit_dynamite)$mean[1], -0.5,
     tolerance = 0.1,
@@ -34,7 +36,8 @@ test_that("stanc_options argument works", {
     chains = 2,
     refresh = 0,
     backend = "cmdstanr",
-    stanc_options = list("O0")
+    stanc_options = stanc_options,
+    show_messages = FALSE
   )
   expect_equal(summary(fit, parameter = "alpha_y")$mean[2], 1.5,
     tolerance = 0.1,
@@ -54,7 +57,8 @@ test_that("LOO and LFO works for AR(1) model estimated with cmdstanr", {
     iter_warmup = 1000,
     refresh = 0,
     backend = "cmdstanr",
-    stanc_options = list("O0")
+    stanc_options = stanc_options,
+    show_messages = FALSE
   )
   l <- loo(fit)
   expect_equal(l$estimates,
