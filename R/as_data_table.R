@@ -86,10 +86,11 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   if (!is.null(parameters)) {
     responses <- types <- NULL
   }
+  all_responses <- unique(c(names(x$stan$responses), unlist(x$stan$responses)))
   if (is.null(responses)) {
-    responses <- setdiff(unique(x$priors$response), "")
+    responses <- all_responses
   } else {
-    z <- responses %in% unique(x$priors$response)
+    z <- responses %in% all_responses
     stopifnot_(
       all(z),
       "Model does not contain response variable{?s} {.var {responses[!z]}}."
@@ -132,8 +133,10 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
     if (is.null(category)) {
       category <- NA
     }
-    idx <- which(response %in% names(x$stan$responses))
-    resps <- x$stan$responses[[idx]]
+    idx <- which(names(x$stan$responses) %in% response)
+    resps <- ifelse_(identical(length(idx), 0L),
+      NULL,
+      x$stan$responses[[idx]])
     d <- do.call(
       what = paste0("as_data_table_", type),
       args = list(
