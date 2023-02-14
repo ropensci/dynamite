@@ -97,11 +97,12 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   }
   all_types <- c(
     "alpha", "beta", "delta", "tau", "tau_alpha", "xi",
-    "sigma_nu", "corr_nu", "sigma", "phi", "nu", "lambda", "sigma_lambda",
-    "psi", "tau_psi", "corr_psi", "omega", "omega_alpha", "omega_psi"
+    "sigma_nu", "sigma", "phi", "nu", "lambda", "sigma_lambda",
+    "psi", "tau_psi", "corr", "corr_psi", "corr_nu",
+    "omega", "omega_alpha", "omega_psi"
   )
   if (is.null(types)) {
-    types <- all_types[seq_len(16L)]
+    types <- all_types[seq_len(17L)]
   } else {
     types <- onlyif(is.character(types), tolower(types))
     types <- try(match.arg(types, all_types, TRUE), silent = TRUE)
@@ -128,6 +129,13 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
     if (is.null(category)) {
       category <- NA
     }
+    idx <- which(response %in% vapply(x$stan$channel_group_vars,
+      "[[", character(1L), "y_cg"))
+    resps <- ifelse_(
+      identical(length(idx), 0L),
+      NULL,
+      x$stan$channel_group_vars[[idx]]$y
+    )
     d <- do.call(
       what = paste0("as_data_table_", type),
       args = list(
@@ -136,7 +144,8 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
         n_draws = prod(dim(draws)[1L:2L]),
         response = response,
         category = category,
-        include_fixed = include_fixed
+        include_fixed = include_fixed,
+        resps = resps
       )
     )
     n_d <- d[, .N]
@@ -192,7 +201,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   rows <- apply(out, 1L, function(y) {
     any(
       grepl(
-        paste0("^", y["parameter"]),
+        paste0("^", y["parameter"], "$"),
         x$stanfit@sim$pars_oi
       )
     )
@@ -276,7 +285,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
 #' @param response \[`character(1)`]\cr Response variable name.
 #' @param categories \[`character()`]\cr Levels of categorical responses.
 #' @noRd
-as_data_table_default <- function(type, draws, response) {
+as_data_table_default <- function(type, draws, response, ...) {
   data.table::data.table(
     parameter = paste0(type, "_", response),
     value = c(draws)
@@ -336,7 +345,7 @@ as_data_table_nu <- function(x, draws, n_draws, response, ...) {
 #' @describeIn as_data_table_default Data Table for a "alpha" Parameter
 #' @noRd
 as_data_table_alpha <- function(x, draws, n_draws,
-                                response, category, include_fixed) {
+                                response, category, include_fixed, ...) {
   n_cat <- length(category)
   fixed <- x$stan$fixed
   all_time_points <- sort(unique(x$data[[x$time_var]]))
@@ -389,7 +398,7 @@ as_data_table_beta <- function(x, draws, n_draws, response, category, ...) {
 #' @describeIn as_data_table_default Data Table for a "delta" Parameter
 #' @noRd
 as_data_table_delta <- function(x, draws, n_draws,
-                                response, category, include_fixed) {
+                                response, category, include_fixed, ...) {
   n_cat <- length(category)
   fixed <- x$stan$fixed
   all_time_points <- sort(unique(x$data[[x$time_var]]))
@@ -527,7 +536,7 @@ as_data_table_sigma_lambda <- function(draws, response, ...) {
 #' @noRd
 as_data_table_psi <- function(
     x, draws, n_draws,
-    response, category, include_fixed) {
+    response, category, include_fixed, ...) {
   n_cat <- length(category)
   fixed <- x$stan$fixed
   all_time_points <- sort(unique(x$data[[x$time_var]]))
@@ -582,6 +591,16 @@ as_data_table_corr_psi <- function(x, draws, n_draws, ...) {
   pairs <- apply(utils::combn(resp, 2L), 2L, paste, collapse = "__")
   data.table::data.table(
     parameter = rep(paste0("corr_psi_", pairs), each = n_draws),
+    value = c(draws)
+  )
+}
+
+#' @describeIn as_data_table_default Data Table for a "corr" Parameter
+#' @noRd
+as_data_table_corr <- function(x, draws, n_draws, resps, ...) {
+  pairs <- apply(utils::combn(resps, 2L), 2L, paste, collapse = "__")
+  data.table::data.table(
+    parameter = rep(paste0("corr_", pairs), each = n_draws),
     value = c(draws)
   )
 }

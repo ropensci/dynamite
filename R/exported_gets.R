@@ -214,8 +214,9 @@ get_parameter_types <- function(x, ...) {
 get_parameter_types.dynamitefit <- function(x, ...) {
   types <- c(
     "alpha", "beta", "delta", "tau", "tau_alpha", "xi",
-    "sigma_nu", "corr_nu", "sigma", "phi", "nu", "lambda", "sigma_lambda",
-    "psi", "tau_psi", "corr_psi", "omega", "omega_alpha", "omega_psi"
+    "sigma_nu", "sigma", "phi", "nu", "lambda", "sigma_lambda",
+    "psi", "tau_psi", "corr", "corr_psi", "corr_nu",
+    "omega", "omega_alpha", "omega_psi"
   )
   d <- as.data.table(x, types =  types)
   unique(d$type)

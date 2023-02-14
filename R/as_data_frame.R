@@ -30,6 +30,7 @@
 #'     Samples of the full correlation matrix can be extracted manually as
 #'     `rstan::extract(fit$stanfit, pars = "corr_matrix_psi")` if necessary.
 #'  * `sigma`\cr Standard deviations of gaussian responses.
+#'  * `corr`\cr Pairwise correlations of multivariate gaussian responses.
 #'  * `phi`\cr Dispersion parameters of negative binomial responses.
 #'  * `omega`\cr Spline coefficients of the regression coefficients `delta`.
 #'  * `omega_alpha`\cr Spline coefficients of time-varying `alpha`.
