@@ -30,8 +30,9 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
       # this sets the env variable to true or false depending on whether the
-      # commit message contains text 'run-extended'
+      # commit message contains texts 'run-extended' and 'run-scaling'
       DYNAMITE_EXTENDED_TESTS: ${{contains(github.event.head_commit.message, 'run-extended')}}
+      DYNAMITE_SCALING_TESTS: ${{contains(github.event.head_commit.message, 'run-scaling')}}
 
     steps:
 
@@ -69,6 +70,7 @@ jobs:
             StanHeaders
             rstan
             cmdstanr
+            plm
 
       - name: Build CmdStan
         run: |
