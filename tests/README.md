@@ -8,5 +8,5 @@ environmental variables `DYNAMITE_EXTENDED_TESTS = "true"` and
 `Sys.setenv("DYNAMITE_EXTENDED_TESTS" = "true")` in R), and on GitHub Actions by 
 adding `run-extended` and `run-scaling` to the commit message respectively.
 
-These extended tests also depend on additional R packages `plm` and `seqHMM` 
-which are not installed automatically when installing `dynamite`.
+These extended tests also depend on additional R package `plm`
+which is not installed automatically when installing `dynamite`.

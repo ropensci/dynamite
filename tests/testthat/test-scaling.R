@@ -12,7 +12,7 @@
 run_scaling_tests <- identical(Sys.getenv("DYNAMITE_SCALING_TESTS"), "true")
 
 test_that("scaling for gaussian model is linear in number of time points", {
-  skip_if_not(run_extended_tests)
+  skip_if_not(run_scaling_tests)
   set.seed(1)
   N <- 10L
   T_ <- 1000L
@@ -52,7 +52,7 @@ test_that("scaling for gaussian model is linear in number of time points", {
 })
 
 test_that("scaling for gaussian model is linear in number of groups", {
-  skip_if_not(run_extended_tests)
+  skip_if_not(run_scaling_tests)
   set.seed(1)
   N <- 5000L
   T_ <- 50L
@@ -93,7 +93,7 @@ test_that("scaling for gaussian model is linear in number of groups", {
 })
 
 test_that("scaling for gamma model is linear in number of time points", {
-  skip_if_not(run_extended_tests)
+  skip_if_not(run_scaling_tests)
   set.seed(1)
   N <- 10L
   T_ <- 1000L
@@ -133,7 +133,7 @@ test_that("scaling for gamma model is linear in number of time points", {
 })
 
 test_that("scaling for gamma model is linear in number of groups", {
-  skip_if_not(run_extended_tests)
+  skip_if_not(run_scaling_tests)
   set.seed(1)
   N <- 5000L
   T_ <- 50L
