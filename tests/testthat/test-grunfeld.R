@@ -47,7 +47,6 @@ test_that("parameters of the Grunfield model are recovered", {
   #   chains = 2, cores = 2, iter = 150000, warmup = 5000,
   #   control = list(adapt_delta = 0.9))
   # brms_est <- round(unname(posterior_summary(fit_brm)[, "Estimate"]), 6)[1:15]
-  plm_est <- coef(fit_pl)
   brms_est <- c(
     -57.917705, 0.109846, 0.308349, 100.941716, 53.086506, -9.896139,
     158.194407, -173.491487, 29.99692, -54.875308, 34.459838, -7.931004,
