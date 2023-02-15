@@ -36,7 +36,8 @@ test_that("stanc_options argument works", {
     refresh = 0,
     backend = "cmdstanr",
     stanc_options = list("O0"),
-    show_messages = FALSE
+    show_messages = FALSE,
+    init = 0
   )
   expect_equal(summary(fit, parameter = "alpha_y")$mean[2], 1.5,
     tolerance = 0.1,
@@ -57,7 +58,8 @@ test_that("LOO and LFO works for AR(1) model estimated with cmdstanr", {
     refresh = 0,
     backend = "cmdstanr",
     stanc_options = list("O0"),
-    show_messages = FALSE
+    show_messages = FALSE,
+    init = 0
   )
   l <- loo(fit)
   expect_equal(l$estimates,
