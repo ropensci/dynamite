@@ -126,7 +126,8 @@ get_code_ <- function(x, blocks = NULL) {
     "transformed data",
     "parameters",
     "transformed parameters",
-    "model"
+    "model",
+    "generated quantities"
   )
   invalid_blocks <- !blocks %in% block_names
   stopifnot_(
