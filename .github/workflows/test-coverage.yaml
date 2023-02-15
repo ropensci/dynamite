@@ -40,7 +40,6 @@ jobs:
             rstan
             StanHeaders
             cmdstanr
-            plm
 
       - name: Build CmdStan
         run: |
