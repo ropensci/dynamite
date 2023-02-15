@@ -427,7 +427,7 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
           lfactor_text <- paste_rows(
             "L_lf ~ {L_prior};",
             "vector[P] omega1 = [{omega1}]';",
-            "omega_raw_psi[, 2] ~ multi_normal_cholesky(omega1, Ltau);",
+            "omega_raw_psi[, 2] ~ multi_normal_cholesky(omega1, L_lf);",
             "for (i in 3:(D - 1)) {{",
             paste0(
               "omega_raw_psi[, i] ~ ",

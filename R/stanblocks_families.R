@@ -703,6 +703,11 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     .parse = FALSE
   )
 
+  psi <- ifelse_(
+    has_lfactor && nonzero_lambda,
+    glue::glue(" - psi_{y}[1]"),
+    ""
+  )
   if (has_fixed || has_varying) {
     declare_omega_alpha_1 <- paste_rows(
       "// Time-varying intercept",
@@ -735,7 +740,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
       "vector[K_{y}] gamma__{y};",
       onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
       onlyif(has_varying, "gamma__{y}[L_varying_{y}] = delta_{y}[1];"),
-      "alpha_{y} = a_{y} - X_m[J_{y}] * gamma__{y};",
+      "alpha_{y} = a_{y} - X_m[J_{y}] * gamma__{y}{psi};",
       "}}",
       .indent = idt(c(1, 1, 2, 2, 2, 2, 1)),
       .parse = FALSE
@@ -750,7 +755,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     )
     state_omega_alpha_1 <- character(0L)
     declare_fixed_intercept <- paste_rows(
-      "real alpha_{y} = a_{y};",
+      "real alpha_{y} = a_{y}{psi};",
       .indent = idt(1),
       .parse = FALSE
     )
@@ -818,21 +823,21 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
   )
   list(
     declarations = paste_rows(
+      onlyif(has_lfactor, declare_psi),
+      onlyif(has_lfactor, declare_lambda),
       onlyif(has_varying && noncentered, declare_omega),
       onlyif(has_varying, declare_delta),
       onlyif(has_fixed_intercept, declare_fixed_intercept),
       onlyif(has_varying_intercept, declare_varying_intercept),
-      onlyif(has_lfactor, declare_psi),
-      onlyif(has_lfactor, declare_lambda),
       .indent = idt(0)
     ),
     statements = paste_rows(
+      onlyif(has_lfactor, state_omega_psi),
+      onlyif(has_lfactor, state_psi),
       onlyif(has_varying && noncentered, state_omega),
       onlyif(has_varying, state_delta),
       onlyif(has_fixed_intercept, state_fixed_intercept),
       onlyif(has_varying_intercept, state_varying_intercept),
-      onlyif(has_lfactor, state_omega_psi),
-      onlyif(has_lfactor, state_psi),
       .indent = idt(0)
     )
   )
