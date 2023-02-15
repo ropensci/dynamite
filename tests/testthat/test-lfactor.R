@@ -60,7 +60,7 @@ test_that("latent factors work", {
         correlated = TRUE, nonzero_lambda = c(TRUE, FALSE)) +
       splines(30),
     data = d, time = "time", group = "id",
-    chains = 1, refresh = 0, seed = 1
+    chains = 1, refresh = 0, seed = 1, init = 0
   )
   fit2 <- dynamite(
     obs(y1 ~ -1 + x, family = "poisson") + obs(y2 ~ x, family = "gaussian") +
@@ -69,7 +69,7 @@ test_that("latent factors work", {
         correlated = TRUE, nonzero_lambda = c(TRUE, FALSE)) +
       splines(30),
     data = d, time = "time", group = "id",
-    chains = 1, refresh = 0, seed = 1
+    chains = 1, refresh = 0, seed = 1, init = 0
   )
 
   fit3 <- dynamite(
@@ -79,7 +79,7 @@ test_that("latent factors work", {
         correlated = FALSE, nonzero_lambda = c(TRUE, FALSE)) +
       splines(30),
     data = d, time = "time", group = "id",
-    chains = 1, refresh = 0, seed = 1
+    chains = 1, refresh = 0, seed = 1, init = 0
   )
 
   expect_equal(
