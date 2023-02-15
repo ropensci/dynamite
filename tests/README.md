@@ -7,6 +7,3 @@ environmental variables `DYNAMITE_EXTENDED_TESTS = "true"` and
 `DYNAMITE_SCALING_TESTS = "true"` (e.g., 
 `Sys.setenv("DYNAMITE_EXTENDED_TESTS" = "true")` in R), and on GitHub Actions by 
 adding `run-extended` and `run-scaling` to the commit message respectively.
-
-These extended tests also depend on additional R package `plm`
-which is not installed automatically when installing `dynamite`.
