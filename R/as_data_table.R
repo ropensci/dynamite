@@ -103,7 +103,11 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
     "omega", "omega_alpha", "omega_psi"
   )
   if (is.null(types)) {
-    types <- all_types[seq_len(17L)]
+    types <- ifelse_(
+      is.null(parameters),
+      all_types[!grepl("omega", all_types, fixed = TRUE)],
+      all_types
+    )
   } else {
     types <- onlyif(is.character(types), tolower(types))
     types <- try(match.arg(types, all_types, TRUE), silent = TRUE)
@@ -192,7 +196,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   }
   tmp <- data.table::as.data.table(
     expand.grid(
-      type = all_types,
+      type = types,
       response = responses,
       stringsAsFactors = FALSE
     )
