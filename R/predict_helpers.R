@@ -424,7 +424,7 @@ generate_random_effect <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
             for (i in seq_len(n_draws)) {
               s <- diag(sigma_nu[, i])
               e <- eigen(s %*% corr_matrix_nu[, , i] %*% s)
-              x[, , i] <- matrix(rnorm(n_new * M), n_nrow = n_new) %*%
+              x[, , i] <- matrix(rnorm(n_new * M), nrow = n_new) %*%
                 diag(sqrt(pmax(e$values, 0)), M) %*%
                 t(e$vectors)
             }
