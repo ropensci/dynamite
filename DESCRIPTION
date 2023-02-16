@@ -29,7 +29,6 @@ Imports:
     glue,
     ggplot2,
     loo,
-    MASS,
     methods,
     patchwork,
     posterior,

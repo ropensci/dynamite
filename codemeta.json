@@ -14,7 +14,7 @@
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.2.1 (2022-06-23 ucrt)",
+  "runtimePlatform": "R version 4.2.2 (2022-10-31 ucrt)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -99,18 +99,6 @@
         "url": "https://cran.r-project.org"
       },
       "sameAs": "https://CRAN.R-project.org/package=knitr"
-    },
-    {
-      "@type": "SoftwareApplication",
-      "identifier": "plm",
-      "name": "plm",
-      "provider": {
-        "@id": "https://cran.r-project.org",
-        "@type": "Organization",
-        "name": "Comprehensive R Archive Network (CRAN)",
-        "url": "https://cran.r-project.org"
-      },
-      "sameAs": "https://CRAN.R-project.org/package=plm"
     },
     {
       "@type": "SoftwareApplication",
@@ -231,22 +219,10 @@
     },
     "8": {
       "@type": "SoftwareApplication",
-      "identifier": "MASS",
-      "name": "MASS",
-      "provider": {
-        "@id": "https://cran.r-project.org",
-        "@type": "Organization",
-        "name": "Comprehensive R Archive Network (CRAN)",
-        "url": "https://cran.r-project.org"
-      },
-      "sameAs": "https://CRAN.R-project.org/package=MASS"
-    },
-    "9": {
-      "@type": "SoftwareApplication",
       "identifier": "methods",
       "name": "methods"
     },
-    "10": {
+    "9": {
       "@type": "SoftwareApplication",
       "identifier": "patchwork",
       "name": "patchwork",
@@ -258,7 +234,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=patchwork"
     },
-    "11": {
+    "10": {
       "@type": "SoftwareApplication",
       "identifier": "posterior",
       "name": "posterior",
@@ -270,7 +246,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=posterior"
     },
-    "12": {
+    "11": {
       "@type": "SoftwareApplication",
       "identifier": "rlang",
       "name": "rlang",
@@ -282,7 +258,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=rlang"
     },
-    "13": {
+    "12": {
       "@type": "SoftwareApplication",
       "identifier": "rstan",
       "name": "rstan",
@@ -294,12 +270,12 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=rstan"
     },
-    "14": {
+    "13": {
       "@type": "SoftwareApplication",
       "identifier": "stats",
       "name": "stats"
     },
-    "15": {
+    "14": {
       "@type": "SoftwareApplication",
       "identifier": "tibble",
       "name": "tibble",
@@ -312,14 +288,14 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=tibble"
     },
-    "16": {
+    "15": {
       "@type": "SoftwareApplication",
       "identifier": "utils",
       "name": "utils"
     },
     "SystemRequirements": null
   },
-  "fileSize": "4938.487KB",
+  "fileSize": "4960.01KB",
   "citation": [
     {
       "@type": "CreativeWork",

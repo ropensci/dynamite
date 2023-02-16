@@ -408,12 +408,14 @@ generate_random_effect <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
         },
         `gaussian` = {
           x <- array(0.0, c(n_new, M, n_draws))
-          zeros <- rep(0.0, M)
           if (is.null(corr_matrix_nu)) {
-            # easy to optimise...
             for (i in seq_len(n_draws)) {
-              s <- diag(sigma_nu[, i]^2, M)
-              x[, , i] <- MASS::mvrnorm(n_new, zeros, s)
+              x[, , i] <- matrix(
+                rnorm(n_new * M, mean = 0.0, sd = sigma_nu[, i]^2),
+                nrow = n_new,
+                ncol = M,
+                byrow = TRUE
+              )
             }
           } else {
             # Could also keep the Cholesky L from the sampling phase if this is
@@ -421,9 +423,10 @@ generate_random_effect <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
             # only done once
             for (i in seq_len(n_draws)) {
               s <- diag(sigma_nu[, i])
-              x[, , i] <- MASS::mvrnorm(
-                n_new, zeros, s %*% corr_matrix_nu[, , i] %*% s
-              )
+              e <- eigen(s %*% corr_matrix_nu[, , i] %*% s)
+              x[, , i] <- matrix(rnorm(n_new * M), n_nrow = n_new) %*%
+                diag(sqrt(pmax(e$values, 0)), M) %*%
+                t(e$vectors)
             }
           }
           aperm(x, c(3L, 1L, 2L))
