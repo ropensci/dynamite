@@ -192,7 +192,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   }
   tmp <- data.table::as.data.table(
     expand.grid(
-      type = types,
+      type = all_types,
       response = responses,
       stringsAsFactors = FALSE
     )
