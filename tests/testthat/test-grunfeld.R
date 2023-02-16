@@ -4,13 +4,9 @@ run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "true")
 
 test_that("parameters of the Grunfield model are recovered", {
   skip_if_not(run_extended_tests)
-  library("plm")
 
-  data(Grunfeld, package = "plm")
-  fit_plm <- plm(inv ~ value + capital,
-    data = Grunfeld,
-    index = c("firm", "year"), effect = "individual", model = "within"
-  )
+  # data from plm package
+  Grunfeld <- readRDS("grunfeld.rds")
 
   set.seed(1)
   # dynamite defines prior for the intercept based on the mean at the first time
@@ -29,7 +25,14 @@ test_that("parameters of the Grunfield model are recovered", {
     chains = 2, cores = 2, iter = 20000, warmup = 1000
   )
 
-  expect_equal(coef(fit_plm), coef(fit)$mean[2:3],
+  # Not run, values are stored
+  # fit_plm <- plm(inv ~ value + capital,
+  #   data = Grunfeld,
+  #   index = c("firm", "year"), effect = "individual", model = "within"
+  # )
+  #plm_est <- dput(coef(fit_plm))
+  plm_est <- c(value = 0.110123804120719, capital = 0.310065341300139)
+  expect_equal(plm_est, coef(fit)$mean[2:3],
     tolerance = 0.01, ignore_attr = TRUE
   )
 

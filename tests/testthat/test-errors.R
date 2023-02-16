@@ -145,6 +145,23 @@ test_that("cyclic dependency fails", {
   )
 })
 
+test_that("contemporaneous self dependency within a channel fails", {
+  expect_error(
+    obs(y ~ y, family = "gaussian"),
+    paste0(
+      "Contemporaneous self-dependency found in model formula:\n",
+      "x Variable `y` appears on both sides of the formula for \\(y\\)\\."
+    )
+  )
+  expect_error(
+    obs(c(y, x) ~ x | 1, family = "mvgaussian"),
+    paste0(
+      "Contemporaneous self-dependency found in model formula:\n",
+      "x Variable `x` appears on both sides of the formula for \\(y, x\\)\\."
+    )
+  )
+})
+
 test_that("adding nondynamiteformula to dynamiteformula fails", {
   expect_error(
     obs_test + 1.0,
@@ -269,7 +286,7 @@ test_that("categorical latent factor fails", {
   )
 })
 
-test_that("Latent factor errors with invalid responses", {
+test_that("latent factor errors with invalid responses", {
   expect_error(
     dynamite(
       obs(y ~ x, family = "gaussian") + lfactor(responses = 1),
@@ -294,8 +311,8 @@ test_that("Latent factor errors with invalid responses", {
     )
   )
 })
-test_that("Latent factor errors with nonlogical value for argument
-  noncentered", {
+
+test_that("latent factor errors with nonlogical value for noncentered", {
   expect_error(
     dynamite(
       obs(y ~ x, family = "gaussian") + lfactor(noncentered_lambda = 1),
@@ -307,8 +324,8 @@ test_that("Latent factor errors with nonlogical value for argument
     "Argument `noncentered_lambda` must be a <logical> vector\\."
   )
 })
-test_that("Latent factor errors with nonlogical value for argument
-  nonzero_lambda", {
+
+test_that("latent factor errors with nonlogical value for nonzero_lambda", {
   expect_error(
     dynamite(
       obs(y ~ x, family = "gaussian") + lfactor(nonzero_lambda = 1),
@@ -320,6 +337,7 @@ test_that("Latent factor errors with nonlogical value for argument
     "Argument `nonzero_lambda` must be a <logical> vector\\."
   )
 })
+
 test_that("Random effect errors with single group", {
   expect_error(
     dynamite(
@@ -332,6 +350,7 @@ test_that("Random effect errors with single group", {
     "Cannot estimate random effects using only one group\\."
   )
 })
+
 test_that("Latent factor errors with single group", {
   expect_error(
     dynamite(
@@ -344,8 +363,8 @@ test_that("Latent factor errors with single group", {
     "Cannot estimate latent factors using only one group\\."
   )
 })
-test_that("Latent factor errors with nonlogical value for argument
-  noncentered_psi", {
+
+test_that("latent factor fails with nonlogical value for noncentered_psi", {
   expect_error(
     dynamite(
       obs(y ~ x, family = "gaussian") + lfactor(noncentered_psi = 1),
@@ -357,7 +376,8 @@ test_that("Latent factor errors with nonlogical value for argument
     "Argument `noncentered_psi` must be a single <logical> value\\."
   )
 })
-test_that("Latent factor errors with nonlogical value for argument correlated", {
+
+test_that("latent factor fails with nonlogical value for correlated", {
   expect_error(
     dynamite(
       obs(y ~ x, family = "gaussian") + lfactor(correlated = 1),
@@ -369,6 +389,7 @@ test_that("Latent factor errors with nonlogical value for argument correlated", 
     "Argument `correlated` must be a single <logical> value\\."
   )
 })
+
 test_that("update fails with incompatible formula", {
   expect_error(
     update(
@@ -379,14 +400,44 @@ test_that("update fails with incompatible formula", {
     "Can't find variable `x` in `data`\\."
   )
 })
+
+test_that("multivariate family fails with single response", {
+  expect_error(
+    obs(y1 ~ x, family = "mvgaussian"),
+    "A multivariate channel must have more than one response variable\\."
+  )
+})
+
+test_that("univariate family fails with multiple response variables", {
+  expect_error(
+    obs(c(y1, y2) ~ x, family = "gaussian"),
+    "A univariate channel must have only one response variable\\."
+  )
+})
+
+test_that("invalid number of multivariate formula components fails", {
+  expect_error(
+    obs(c(y1, y2) ~ x | x | x, family = "mvgaussian"),
+    paste0(
+      "Number of component formulas \\(3\\) must be 1 ",
+      "or the number of dimensions: 2\\."
+    )
+  )
+})
+
 # Formula specials errors -------------------------------------------------
 
-test_that("no intercept or predictors fails", {
+test_that("no intercept or predictors fails if no lfactor", {
   expect_error(
-    obs(y ~ -1, family = "gaussian"),
+    dynamite(
+      obs(y ~ -1, family = "gaussian"),
+      data = gaussian_example,
+      time = "time",
+      group = "id"
+    ),
     paste0(
       "Invalid formula for response variable `y`:\n",
-      "x There are no predictors nor an intercept term\\."
+      "x There are no predictors, intercept terms or latent factors\\."
     )
   )
 })
@@ -977,7 +1028,22 @@ test_that("new group levels can't be included if new_levels is 'none'", {
     )
   )
 })
-
+test_that("new group levels can't be included if model has latent factor", {
+  nd <- latent_factor_example
+  nd$id[nd$id == 1] <- 100
+  expect_error(
+    predict(
+      latent_factor_example_fit,
+      newdata = nd, n_draws = 2
+    ),
+    paste(
+      "Grouping variable `id` contains unknown levels:\nx Level \"100\"",
+      "is not present in the original data\\.\ni Models with latent",
+      "factors do not support new levels because of identifiability",
+      "constraints\\."
+    )
+  )
+})
 test_that("newdata with unknown factor levels fails", {
   categorical_example_newlevel <- categorical_example |>
     dplyr::mutate(x = dplyr::recode(x, "C" = "D"))

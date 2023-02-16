@@ -86,10 +86,11 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   if (!is.null(parameters)) {
     responses <- types <- NULL
   }
+  all_responses <- unique(c(names(x$stan$responses), unlist(x$stan$responses)))
   if (is.null(responses)) {
-    responses <- setdiff(unique(x$priors$response), "")
+    responses <- all_responses
   } else {
-    z <- responses %in% unique(x$priors$response)
+    z <- responses %in% all_responses
     stopifnot_(
       all(z),
       "Model does not contain response variable{?s} {.var {responses[!z]}}."
@@ -97,11 +98,12 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   }
   all_types <- c(
     "alpha", "beta", "delta", "tau", "tau_alpha", "xi",
-    "sigma_nu", "corr_nu", "sigma", "phi", "nu", "lambda", "sigma_lambda",
-    "psi", "tau_psi", "corr_psi", "omega", "omega_alpha", "omega_psi"
+    "sigma_nu", "sigma", "phi", "nu", "lambda", "sigma_lambda",
+    "psi", "tau_psi", "corr", "corr_psi", "corr_nu",
+    "omega", "omega_alpha", "omega_psi"
   )
   if (is.null(types)) {
-    types <- all_types[seq_len(16L)]
+    types <- all_types[seq_len(17L)]
   } else {
     types <- onlyif(is.character(types), tolower(types))
     types <- try(match.arg(types, all_types, TRUE), silent = TRUE)
@@ -124,10 +126,17 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
         permuted = FALSE
       )
     }
-    category <- attr(x$stan$responses[[response]], "levels")[-1L]
+    category <- attr(
+      attr(x$stan$responses, "resp_class")[[response]],
+      "levels"
+    )[-1L]
     if (is.null(category)) {
       category <- NA
     }
+    idx <- which(names(x$stan$responses) %in% response)
+    resps <- ifelse_(identical(length(idx), 0L),
+      NULL,
+      x$stan$responses[[idx]])
     d <- do.call(
       what = paste0("as_data_table_", type),
       args = list(
@@ -136,7 +145,8 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
         n_draws = prod(dim(draws)[1L:2L]),
         response = response,
         category = category,
-        include_fixed = include_fixed
+        include_fixed = include_fixed,
+        resps = resps
       )
     )
     n_d <- d[, .N]
@@ -192,7 +202,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   rows <- apply(out, 1L, function(y) {
     any(
       grepl(
-        paste0("^", y["parameter"]),
+        paste0("^", y["parameter"], "$"),
         x$stanfit@sim$pars_oi
       )
     )
@@ -276,7 +286,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
 #' @param response \[`character(1)`]\cr Response variable name.
 #' @param categories \[`character()`]\cr Levels of categorical responses.
 #' @noRd
-as_data_table_default <- function(type, draws, response) {
+as_data_table_default <- function(type, draws, response, ...) {
   data.table::data.table(
     parameter = paste0(type, "_", response),
     value = c(draws)
@@ -295,14 +305,14 @@ as_data_table_xi <- function(x, draws, ...) {
 #' @describeIn as_data_table_default Data Table for a "corr_nu" Parameter
 #' @noRd
 as_data_table_corr_nu <- function(x, draws, n_draws, ...) {
-  vars <- unlist(lapply(x$stan$model_vars, function(x) {
+  vars <- ulapply(x$stan$channel_vars, function(x) {
     icpt <- ifelse_(
       x$has_random_intercept,
       "alpha",
       NULL
     )
-    paste0(x$resp, "_", c(icpt, names(x$J_random)))
-  }))
+    paste0(x$y, "_", c(icpt, names(x$J_random)))
+  })
 
   pairs <- apply(utils::combn(vars, 2L), 2L, paste, collapse = "__")
   data.table::data.table(
@@ -315,19 +325,19 @@ as_data_table_corr_nu <- function(x, draws, n_draws, ...) {
 #' @noRd
 as_data_table_nu <- function(x, draws, n_draws, response, ...) {
   icpt <- ifelse_(
-    x$stan$model_vars[[response]]$has_random_intercept,
+    x$stan$channel_vars[[response]]$has_random_intercept,
     "alpha",
     NULL
   )
   var_names <- paste0(
     "nu_", response, "_",
-    c(icpt, names(x$stan$model_vars[[response]]$J_random))
+    c(icpt, names(x$stan$channel_vars[[response]]$J_random))
   )
   n_vars <- length(var_names)
   groups <- sort(unique(x$data[[x$group_var]]))
-  n_groups <- length(groups)
+  n_group <- length(groups)
   data.table::data.table(
-    parameter = rep(var_names, each = n_draws * n_groups),
+    parameter = rep(var_names, each = n_draws * n_group),
     value = c(draws),
     group = rep(groups, each = n_draws)
   )
@@ -336,11 +346,11 @@ as_data_table_nu <- function(x, draws, n_draws, response, ...) {
 #' @describeIn as_data_table_default Data Table for a "alpha" Parameter
 #' @noRd
 as_data_table_alpha <- function(x, draws, n_draws,
-                                response, category, include_fixed) {
+                                response, category, include_fixed, ...) {
   n_cat <- length(category)
   fixed <- x$stan$fixed
   all_time_points <- sort(unique(x$data[[x$time_var]]))
-  if (x$stan$model_vars[[response]]$has_varying_intercept) {
+  if (x$stan$channel_vars[[response]]$has_varying_intercept) {
     time_points <- ifelse_(
       include_fixed,
       all_time_points,
@@ -376,7 +386,7 @@ as_data_table_alpha <- function(x, draws, n_draws,
 as_data_table_beta <- function(x, draws, n_draws, response, category, ...) {
   var_names <- paste0(
     "beta_", response, "_",
-    names(x$stan$model_vars[[response]]$J_fixed)
+    names(x$stan$channel_vars[[response]]$J_fixed)
   )
   n_vars <- length(var_names)
   data.table::data.table(
@@ -389,13 +399,13 @@ as_data_table_beta <- function(x, draws, n_draws, response, category, ...) {
 #' @describeIn as_data_table_default Data Table for a "delta" Parameter
 #' @noRd
 as_data_table_delta <- function(x, draws, n_draws,
-                                response, category, include_fixed) {
+                                response, category, include_fixed, ...) {
   n_cat <- length(category)
   fixed <- x$stan$fixed
   all_time_points <- sort(unique(x$data[[x$time_var]]))
   var_names <- paste0(
     "delta_", response, "_",
-    names(x$stan$model_vars[[response]]$J_varying)
+    names(x$stan$channel_vars[[response]]$J_varying)
   )
   n_vars <- length(var_names)
   time_points <- ifelse_(
@@ -427,7 +437,7 @@ as_data_table_delta <- function(x, draws, n_draws,
 as_data_table_tau <- function(x, draws, n_draws, response, ...) {
   var_names <- paste0(
     "tau_", response, "_",
-    names(x$stan$model_vars[[response]]$J_varying)
+    names(x$stan$channel_vars[[response]]$J_varying)
   )
   data.table::data.table(
     parameter = rep(var_names, each = n_draws),
@@ -440,7 +450,7 @@ as_data_table_tau <- function(x, draws, n_draws, response, ...) {
 as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
   n_cat <- length(category)
   D <- x$stan$sampling_vars$D
-  var_names <- names(x$stan$model_vars[[response]]$J_varying)
+  var_names <- names(x$stan$channel_vars[[response]]$J_varying)
   k <- length(var_names)
   data.table::data.table(
     parameter = rep(
@@ -486,13 +496,13 @@ as_data_table_sigma <- function(draws, response, ...) {
 #' @noRd
 as_data_table_sigma_nu <- function(x, draws, n_draws, response, ...) {
   icpt <- ifelse_(
-    x$stan$model_vars[[response]]$has_random_intercept,
+    x$stan$channel_vars[[response]]$has_random_intercept,
     "alpha",
     NULL
   )
   var_names <- paste0(
     "sigma_nu_", response, "_",
-    c(icpt, names(x$stan$model_vars[[response]]$J_random))
+    c(icpt, names(x$stan$channel_vars[[response]]$J_random))
   )
   data.table::data.table(
     parameter = rep(var_names, each = n_draws),
@@ -527,7 +537,7 @@ as_data_table_sigma_lambda <- function(draws, response, ...) {
 #' @noRd
 as_data_table_psi <- function(
     x, draws, n_draws,
-    response, category, include_fixed) {
+    response, category, include_fixed, ...) {
   n_cat <- length(category)
   fixed <- x$stan$fixed
   all_time_points <- sort(unique(x$data[[x$time_var]]))
@@ -582,6 +592,16 @@ as_data_table_corr_psi <- function(x, draws, n_draws, ...) {
   pairs <- apply(utils::combn(resp, 2L), 2L, paste, collapse = "__")
   data.table::data.table(
     parameter = rep(paste0("corr_psi_", pairs), each = n_draws),
+    value = c(draws)
+  )
+}
+
+#' @describeIn as_data_table_default Data Table for a "corr" Parameter
+#' @noRd
+as_data_table_corr <- function(x, draws, n_draws, resps, ...) {
+  pairs <- apply(utils::combn(resps, 2L), 2L, paste, collapse = "__")
+  data.table::data.table(
+    parameter = rep(paste0("corr_", pairs), each = n_draws),
     value = c(draws)
   )
 }

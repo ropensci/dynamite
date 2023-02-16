@@ -92,6 +92,7 @@ Samples of the full correlation matrix can be extracted manually as
 Samples of the full correlation matrix can be extracted manually as
 \code{rstan::extract(fit$stanfit, pars = "corr_matrix_psi")} if necessary.
 \item \code{sigma}\cr Standard deviations of gaussian responses.
+\item \code{corr}\cr Pairwise correlations of multivariate gaussian responses.
 \item \code{phi}\cr Dispersion parameters of negative binomial responses.
 \item \code{omega}\cr Spline coefficients of the regression coefficients \code{delta}.
 \item \code{omega_alpha}\cr Spline coefficients of time-varying \code{alpha}.

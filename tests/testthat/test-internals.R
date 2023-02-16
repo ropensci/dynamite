@@ -1,3 +1,15 @@
+test_that("formula model topology is correct", {
+  f1 <- obs(c(y1, y2) ~ 1 | x, family = "mvgaussian") +
+    obs(x ~ 1 + z, family = "gaussian")
+  f2 <- obs(z ~ w1, family = "gaussian") +
+    obs(c(w1, w2, w3) ~ 1 | y | y, family = "mvgaussian") +
+    obs(y ~ 1, family = "gaussian")
+  expect_identical(attr(f1, "model_topology"), 2:1)
+  expect_identical(attr(f2, "model_topology"), 3:1)
+  expect_identical(attr(f2 + f1, "model_topology"), c(3:1, 5:4))
+  expect_identical(attr(f1 + f2, "model_topology"), 5:1)
+})
+
 test_that("formula parts are correct", {
   f1 <- y ~ x + z * h
   f2 <- ~ x + z * h

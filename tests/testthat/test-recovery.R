@@ -99,7 +99,6 @@ test_that("parameters for poisson mixed model are recovered", {
   y <- rpois(n * k, exp(2 - x + u1 + u2 * x))
   d <- data.frame(year = 1:n, person = rep(1:k, each = n), y = y, x = x)
 
-  # use default priors of brms (except not totally flat for beta)
   p <- data.frame(
     parameter = c(
       "sigma_nu_y_alpha", "sigma_nu_y_x", "alpha_y", "beta_y_x",
@@ -107,29 +106,25 @@ test_that("parameters for poisson mixed model are recovered", {
     ),
     response = "y",
     prior = c(
-      "student_t(3, 0, 2.5)", "student_t(3, 0, 2.5)",
-      "student_t(3, 1.9, 2.5)", "normal(0, 1000)", "lkj_corr_cholesky(1)"
+      "std_normal()", "std_normal()",
+      "student_t(3, 2, 2)", "normal(0, 10)", "lkj_corr_cholesky(1)"
     ),
     type = c("sigma_nu", "sigma_nu", "alpha", "beta", "L"),
     category = ""
   )
   fit_dynamite <- dynamite(
-    obs(y ~ x + random(~ 1 + x), family = "poisson") +
-      random_spec(noncentered = FALSE, correlated = TRUE),
+    obs(y ~ x + random(~ 1 + x), family = "poisson"),
     data = d, time = "year", group = "person", priors = p,
-    chains = 1, iter = 2000, refresh = 0, seed = 1
+    init = 0, chains = 2, cores = 2, iter = 2000, refresh = 0, seed = 1
   )
-  # "ground truth" obtained from one long dynamite run and brms,
-  # note that brms can give few divergences as does dynamite if
-  # noncentered = TRUE
-  expect_equal(coef(fit_dynamite)$mean, c(2.014, -0.9932),
+  # "ground truth" obtained from one long dynamite run
+  expect_equal(coef(fit_dynamite)$mean, c(2, -0.99),
     tolerance = 0.1
   )
   expect_equal(coef(fit_dynamite, type = "nu")$mean,
     c(
-      0.1635, 0.4153, -0.0924, -0.1344, -0.0773, -0.1237, -0.2027,
-      -0.1231, 0.2726, -0.1071, -0.03, 4e-04, 0.0997, -0.1146, -0.0313,
-      0.0146, 0.0407, -0.0169, -0.1407, 0.1635
+      0.17, 0.42, -0.09, -0.13, -0.07, -0.12, -0.2, -0.12, 0.28,
+      -0.1, -0.03, 0, 0.1, -0.11, -0.03, 0.02, 0.04, -0.02, -0.14, 0.16
     ),
     tolerance = 0.1
   )

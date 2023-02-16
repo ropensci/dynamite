@@ -19,11 +19,13 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
       c(alpha = sd_y),
       NULL
     )
-    s <- c(icpt,
+    s <- c(
+      icpt,
       ifelse_(
         channel$has_random,
         sd_gamma[channel$J_random],
-        NULL)
+        NULL
+      )
     )
     ns <- names(s)
     channel$sigma_nu_prior_distr <- "normal"
@@ -198,7 +200,9 @@ default_priors_categorical <- function(y, channel, sd_x, resp_class) {
     channel$tau_prior_npars <- 2L
     channel$tau_prior_pars <- cbind(0.0, sd_gamma[channel$J_varying])
     priors$tau <- data.frame(
-      parameter = paste0("tau_", y, "_", names(sd_gamma[channel$J_varying])),
+      parameter = paste0(
+        "tau_", y, "_", names(sd_gamma[channel$J_varying])
+      ),
       response = y,
       prior = paste0("normal(0, ", sd_gamma[channel$J_varying], ")"),
       type = "tau",

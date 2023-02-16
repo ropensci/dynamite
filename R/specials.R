@@ -2,14 +2,14 @@
 #'
 #' @param x A `formula` object.
 #' @noRd
-formula_specials <- function(x) {
-  out <- list(formula = NULL, specials = NULL, coefs = NULL)
+formula_specials <- function(x, original, family) {
   xt <- terms(x, specials = formula_special_funs)
   xt_specials <- attr(xt, "specials")[formula_special_funs]
   xt_variables <- attr(xt, "variables")
   xt_terms <- attr(xt, "term.labels")
+  specials <- list()
   for (y in formula_special_funs) {
-    out$specials[[y]] <- onlyif(
+    specials[[y]] <- onlyif(
       !is.null(xt_specials[[y]]),
       xt_variables[[xt_specials[[y]] + 1]][[2]]
     )
@@ -97,24 +97,26 @@ formula_specials <- function(x) {
     )
   } else {
     y <- as.character(xt_variables[[2]])
-    stopifnot_(
+    x <- ifelse_(
       any_icpt,
-      c(
-        "Invalid formula for response variable {.var {y}}:",
-        `x` = "There are no predictors nor an intercept term."
-      )
+      as.formula(paste0(y, "~ 1")),
+      as.formula(paste0(y, "~ -1"))
     )
-    x <- as.formula(paste0(y, "~ 1"))
   }
   xt <- formula_terms(x)
-  out$formula <- x
-  out$fixed <- which(xt %in% fixed_terms)
-  out$has_fixed_intercept <- as.logical(fixed_icpt)
-  out$varying <- which(xt %in% varying_terms)
-  out$has_varying_intercept <- as.logical(varying_icpt)
-  out$random <- which(xt %in% random_terms)
-  out$has_random_intercept <- as.logical(random_icpt)
-  out
+  list(
+    response = deparse1(formula_lhs(x)),
+    formula = x,
+    family = family,
+    original = original,
+    specials = specials,
+    fixed = which(xt %in% fixed_terms),
+    has_fixed_intercept = as.logical(fixed_icpt),
+    varying = which(xt %in% varying_terms),
+    has_varying_intercept = as.logical(varying_icpt),
+    random = which(xt %in% random_terms),
+    has_random_intercept = as.logical(random_icpt)
+  )
 }
 
 

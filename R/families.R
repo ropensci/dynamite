@@ -26,10 +26,18 @@ is.dynamitefamily <- function(x) {
 
 #' Check If a Family Is Supported
 #'
-#' @param \[`character(1)`]\cr Name of the family.
+#' @param name \[`character(1)`]\cr Name of the family.
 #' @noRd
 is_supported <- function(name) {
   name %in% supported_families
+}
+
+#' Check If a Family Is Multivariate
+#'
+#' @param x \[`dynamitefamily`]\cr A family object.
+#' @noRd
+is_multivariate <- function(x) {
+  x$name %in% c("mvgaussian")
 }
 
 supported_families <- c(
@@ -38,12 +46,24 @@ supported_families <- c(
   "categorical",
   "negbin",
   "gaussian",
+  "mvgaussian",
   "poisson",
   "deterministic",
   "gamma",
   "exponential",
   "beta"
 )
+
+
+#' Get univariate version of a multivariate family
+#'
+#' @param x \[`dynamitefamily`]\cr A family object.
+#' @noRd
+get_univariate <- function(x) {
+  out <- stats::setNames(supported_families, supported_families)
+  out["mvgaussian"] <- "gaussian"
+  unname(out[x$name])
+}
 
 # Generate `family_` and `is_family` convenience functions
 # for all supported families

@@ -15,6 +15,9 @@
 #'   Stan function reference manual (https://mc-stan.org/users/documentation/).
 #' * Gaussian: `gaussian` (identity link, parameterized using mean and standard
 #'   deviation).
+#' * Multivariate Gaussian: `mvgaussian` (identity link, parameterized using
+#'   mean vector, standard deviation vector and the Cholesky decomposition of
+#'   the correlation matrix).
 #' * Poisson: `poisson` (log-link, with an optional known offset variable).
 #' * Negative-binomial: `negbin` (log-link, using mean and dispersion
 #'   parameterization, with an optional known offset variable). See the
@@ -35,6 +38,14 @@
 #' value of `x` (`lag(x)`), and then we add a second channel declaring `x` as
 #' Poisson distributed depending on some exogenous variable `z`
 #' (for which we do not define any distribution).
+#'
+#' Multivariate channels are defined by providing a single formula for all
+#' components or by providing component-specific formulas separated by a `|`.
+#' The response variables that correspond to the components should be joined by
+#' `c()`. For instance, the following would define `c(y1, y2)` as multivariate
+#' gaussian with `x` as a predictor for the mean of the first component and
+#' `x` and `z` as predictors for the mean of the second component:
+#' `obs(c(y1, y2) ~ x | x + z, family = "mvgaussian")`
 #'
 #' In addition to declaring response variables via `obs`, we can also use
 #' the function `aux` to define auxiliary channels which are deterministic
@@ -84,10 +95,10 @@
 #' `random(~1)` leads to a model where in addition to the common intercept,
 #' each individual/group has their own intercept with zero-mean normal prior and
 #' unknown standard deviation analogously with the typical mixed models. An
-#' additional model component [random_spec()] can be used to define whether the
-#' random effects are allowed to correlate within and across channels and
-#' whether to use centered or noncentered parameterization for the random
-#' effects.
+#' additional model component [dynamite::random_spec()] can be used to define
+#' whether the random effects are allowed to correlate within and across
+#' channels and whether to use centered or noncentered parameterization for
+#' the random effects.
 #'
 #' @export
 #' @param formula \[`formula`]\cr An \R formula describing the model.
@@ -154,14 +165,19 @@ dynamiteformula <- function(formula, family) {
     !"I" %in% all.names(formula),
     "{.code I(.)} is not supported by {.fun dynamiteformula}."
   )
-  x <- dynamiteformula_(formula, formula, family)
+  dims <- dynamiteformula_(
+    formula = formula,
+    original = formula,
+    family = family
+  )
   structure(
-    list(
+    lapply(dims, function(x) {
       dynamitechannel(
         formula = x$formula,
-        original = formula,
-        family = x$family,
+        original = x$original,
+        family = family,
         response = x$response,
+        name = x$name,
         fixed = x$fixed,
         varying = x$varying,
         random = x$random,
@@ -170,8 +186,9 @@ dynamiteformula <- function(formula, family) {
         has_varying_intercept = x$has_varying_intercept,
         has_random_intercept = x$has_random_intercept
       )
-    ),
+    }),
     class = "dynamiteformula",
+    channel_groups = rep(1L, length(dims)),
     model_topology = 1L
   )
 }
@@ -181,24 +198,23 @@ dynamiteformula <- function(formula, family) {
 #' @inheritParams dynamiteformula
 #' @param original The original `formula` definition.
 #' @noRd
-dynamiteformula_ <- function(formula, original, family) {
+dynamiteformula_ <- function(formula, original, family, name) {
   if (is_deterministic(family)) {
-    out <- formula_past(formula)
+    out <- list(formula_past(formula))
     resp_parsed <- deterministic_response(deparse1(formula_lhs(formula)))
-    out$specials$resp_type <- resp_parsed$type
-    out$response <- resp_parsed$resp
+    out[[1L]]$specials$resp_type <- resp_parsed$type
+    out[[1L]]$response <- resp_parsed$resp
+    out[[1L]]$original <- original
+    out[[1L]]$name <- parse_name(resp_parsed$resp)
   } else {
-    out <- formula_specials(formula)
+    out <- parse_formula(formula, original, family)
     if (is_binomial(family)) {
       stopifnot_(
-        "trials" %in% names(out$specials),
+        "trials" %in% names(out[[1L]]$specials),
         "Formula for a binomial channel must include a trials term."
       )
     }
-    out$response <- deparse1(formula_lhs(formula))
   }
-  out$family <- family
-  out$original <- original
   out
 }
 
@@ -216,7 +232,7 @@ dynamiteformula_ <- function(formula, original, family) {
 #' @param has_random_intercept \[`logical(1)`]\cr Does the channel contain random
 #'   group-level intercept term?
 #' @noRd
-dynamitechannel <- function(formula, original = NULL, family, response,
+dynamitechannel <- function(formula, original = NULL, family, response, name = NULL,
                             fixed = integer(0L), varying = integer(0L),
                             random = integer(0L), specials = list(),
                             has_fixed_intercept = FALSE,
@@ -227,6 +243,7 @@ dynamitechannel <- function(formula, original = NULL, family, response,
     original = original,
     family = family,
     response = response,
+    name = name,
     fixed = fixed,
     varying = varying,
     random = random,
@@ -254,6 +271,67 @@ is.dynamiteformula <- function(x) {
 aux <- function(formula) {
   dynamiteformula(formula, family = "deterministic")
 }
+
+#' Parse Channel Formulas for `dynamiteformula`
+#'
+#' @param x A `formula` object.
+#' @noRd
+parse_formula <- function(x, original, family) {
+  responses <- all.vars(formula_lhs(x))
+  formula_str <- deparse1(formula_rhs(x))
+  formula_parts <- strsplit(formula_str, "|", fixed = TRUE)[[1L]]
+  n_formulas <- length(formula_parts)
+  n_responses <- length(responses)
+  mvf <- is_multivariate(family)
+  mvc <- n_responses > 1L
+  stopifnot_(
+    !mvc || mvf,
+    "A univariate channel must have only one response variable."
+  )
+  stopifnot_(
+    (!mvf && !mvc) || (mvf && mvc),
+    "A multivariate channel must have more than one response variable."
+  )
+  stopifnot_(
+    !mvc || n_formulas == n_responses || n_formulas == 1L,
+    "Number of component formulas ({n_formulas}) must be 1 or
+     the number of dimensions: {n_responses}."
+  )
+  formula_parts <- ifelse_(
+    n_formulas == 1L,
+    rep(formula_parts, n_responses),
+    formula_parts
+  )
+  formulas <- lapply(paste0(responses, "~", formula_parts), as.formula)
+  predictors <- ulapply(formulas, function(y) {
+    extract_nonlags(attr(terms(y), "term.labels"))
+  })
+  resp_pred <- responses %in% predictors
+  p <- sum(resp_pred)
+  stopifnot_(
+    !any(resp_pred),
+    c(
+      "Contemporaneous self-dependency found in model formula:",
+      `x` = "{cli::qty(p)} Variable{?s} {.arg {cs(responses[resp_pred])}}
+             appear{?s/} on both sides of the formula for ({cs(responses)})."
+    )
+  )
+  out <- vector(mode = "list", length = n_responses)
+  for (i in seq_len(n_responses)) {
+    out[[i]] <- formula_specials(formulas[[i]], original, family)
+    out[[i]]$name <- parse_name(responses[i])
+  }
+  out
+}
+
+#' Parse a Channel Name for a `dynamiteformula`
+#'
+#' @param x A `character` vector.
+#' @noRd
+parse_name <- function(x) {
+  gsub("[^[:alnum:]_]+", "", x, perl = TRUE)
+}
+
 
 #' @rdname dynamiteformula
 #' @param e1 \[`dynamiteformula`]\cr A model formula specification.
@@ -293,11 +371,25 @@ print.dynamiteformula <- function(x, ...) {
     is.dynamiteformula(x),
     "Argument {.arg x} must be a {.cls dynamiteformula} object."
   )
+  cg <- attr(x, "channel_groups")
+  n_cg <- length(unique(cg))
+  rn <- character(n_cg)
   out <- data.frame(
-    Family = get_family_names(x),
-    Formula = vapply(get_originals(x), function(y) deparse1(y), character(1L))
+    Family = rep(NA_character_, n_cg),
+    Formula = rep(NA_character_, n_cg)
   )
-  rownames(out) <- get_responses(x)
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    j <- cg_idx[1L]
+    rn[i] <- ifelse_(
+      is_multivariate(x[[j]]$family),
+      paste(get_names(x[cg_idx]), collapse = "_"),
+      x[[j]]$name
+    )
+    out[i, "Family"] <- x[[j]]$family$name
+    out[i, "Formula"] <- deparse1(x[[j]]$original)
+  }
+  rownames(out) <- rn
   print.data.frame(out, right = FALSE)
   if (!is.null(attr(x, "lags"))) {
     k <- attr(x, "lags")$k
@@ -333,6 +425,14 @@ get_predictors <- function(x) {
   vapply(x, function(y) deparse1(formula_rhs(y$formula)), character(1L))
 }
 
+#' Get the Names of a `dynamiteformula` Object
+#'
+#' @param x A `dynamiteformula` object.
+#' @noRd
+get_names <- function(x) {
+  vapply(x, function(y) y$name, character(1L))
+}
+
 #' Get Non-Lagged Terms of All Formulas of a `dynamiteformula` Object
 #'
 #' @param x A `dynamiteformula` object.
@@ -347,15 +447,7 @@ get_nonlag_terms <- function(x) {
   })
 }
 
-# #' Get All Formulas of a `dynamiteformula` Object
-# #'
-# #' @param x A `dynamiteformula` object.
-# #' @noRd
-# get_formulas <- function(x) {
-#   lapply(x, "[[", "formula")
-# }
-
-#' Get Special Type Formula of a channel in a `dynamiteformula`
+#' Get Special Type Formula of a Dimension in a `dynamiteformula`
 #'
 #' @param x A channel of a `dynamiteformula`
 #' @noRd
@@ -411,7 +503,7 @@ get_family_names <- function(x) {
 get_quoted <- function(x) {
   resp <- get_responses(x)
   out <- list()
-  for (i in seq_along(resp)) {
+  for (i in seq_along(x)) {
     out[[i]] <- list(name = resp[i], expr = formula_rhs(x[[i]]$formula))
   }
   out
@@ -443,6 +535,7 @@ which_deterministic <- function(x) {
 which_stochastic <- function(x) {
   which(vapply(x, function(y) !is_deterministic(y$family), logical(1L)))
 }
+
 #' Get Responses with Random Effects in a `dynamiteformula` Object
 #'
 #' @param x A `dynamiteformula` object
@@ -450,11 +543,9 @@ which_stochastic <- function(x) {
 which_random <- function(x) {
   s <- which_stochastic(x)
   resp <- get_responses(x)[s]
-  has_random <- unlist(
-    lapply(x[s], function(z) {
-      z$has_random_intercept || length(z$random) > 0
-    })
-  )
+  has_random <- vapply(x[s], function(z) {
+    z$has_random_intercept || length(z$random) > 0
+  }, logical(1L))
   resp[has_random]
 }
 
@@ -521,16 +612,17 @@ join_dynamiteformulas <- function(e1, e2) {
     is.null(attr(e1, "random_spec")) || is.null(attr(e2, "random_spec")),
     "Both dynamiteformulas contain a random_spec definition."
   )
-  n_resp <- length(resp_all)
   pred <- c(get_nonlag_terms(e1), get_nonlag_terms(e2))
-  dep <- matrix(
-    0L,
-    nrow = n_resp,
-    ncol = n_resp,
-    dimnames = list(resp_all, resp_all)
-  )
-  for (i in seq_len(n_resp)) {
-    dep[which(resp_all %in% pred[[i]]), resp_all[i]] <- 1L
+  cg1 <- attr(e1, "channel_groups")
+  cg2 <- attr(e2, "channel_groups")
+  cg <-  c(cg1, cg2 + max(cg1))
+  n_cg <- length(unique(cg))
+  dep <- matrix(0L, nrow = n_cg, ncol = n_cg)
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    for (j in cg_idx) {
+      dep[unique(cg[which(resp_all %in% pred[[j]])]), i] <- 1L
+    }
   }
   topo <- topological_order(dep)
   stopifnot_(
@@ -538,6 +630,7 @@ join_dynamiteformulas <- function(e1, e2) {
     "Cyclic dependency found in model formula."
   )
   attributes(out) <- c(attributes(e1), attributes(e2))
+  attr(out, "channel_groups") <- cg
   attr(out, "model_topology") <- topo
   class(out) <- "dynamiteformula"
   out

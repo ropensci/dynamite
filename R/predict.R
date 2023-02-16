@@ -22,7 +22,8 @@
 #'   effects for the new levels must be chosen (argument `new_levels`).
 #'   If the grouping variable of the original data is missing, it is assumed
 #'   that all observations in `newdata` belong to the first group in the
-#'   original data.
+#'   original data. New group levels are not allowed for models using latent
+#'   factors.
 #' @param type \[`character(1)`]\cr Type of prediction,
 #'   `"response"` (default), `"mean"`, or `"link"`.
 #' @param funs \[`list()`]\cr A named list whose names should correspond to the
@@ -227,12 +228,11 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
     new_levels
   )
   newdata <- parse_newdata(
-    dformula = object$dformulas$all,
+    dformulas = object$dformulas,
     newdata = newdata,
     data = object$data,
     type = type,
     eval_type = eval_type,
-    families_stoch = get_families(object$dformulas$stoch),
     resp_stoch = resp_stoch,
     categories = lapply(
       attr(object$stan$responses, "resp_class"),
@@ -357,6 +357,7 @@ predict_full <- function(object, simulated, observed, type, eval_type,
   resp <- get_responses(object$dformulas$all)
   resp_stoch <- get_responses(object$dformulas$stoch)
   families <- get_families(object$dformulas$all)
+  channel_groups <- attr(object$dformulas$all, "channel_groups")
   model_topology <- attr(object$dformulas$all, "model_topology")
   specials <- evaluate_specials(object$dformulas$all, observed)
   lhs_ld <- get_responses(object$dformulas$lag_det)
@@ -399,14 +400,16 @@ predict_full <- function(object, simulated, observed, type, eval_type,
     assign_lags(simulated, idx, ro_ld, lhs_ld, rhs_ld, skip, n_draws)
     assign_lags(simulated, idx, ro_ls, lhs_ls, rhs_ls, skip, n_draws)
     for (j in model_topology) {
+      cg_idx <- which(channel_groups == j)
+      k <- cg_idx[1L]
       sub <- cbind_datatable(simulated[idx, ], observed[idx_obs, ])
-      if (is_deterministic(families[[j]])) {
+      if (is_deterministic(families[[k]])) {
         assign_deterministic_predict(
           simulated,
           sub,
           idx,
-          resp[j],
-          formula_rhs(object$dformulas$all[[j]]$formula)
+          resp[k],
+          formula_rhs(object$dformulas$all[[k]]$formula)
         )
       } else {
         model_matrix <- full_model.matrix_predict(
@@ -418,9 +421,14 @@ predict_full <- function(object, simulated, observed, type, eval_type,
         e$idx <- idx
         e$time <- time_i
         e$model_matrix <- model_matrix
-        e$offset <- specials[[j]]$offset[idx_obs]
-        e$trials <- specials[[j]]$trials[idx_obs]
-        e$y <- observed[[paste0(resp[j], "_store")]][idx_obs]
+        e$offset <- specials[[k]]$offset[idx_obs]
+        e$trials <- specials[[k]]$trials[idx_obs]
+        y <- paste0(resp[cg_idx], "_store")
+        e$y <- ifelse_(
+          is_multivariate(families[[k]]),
+          as.matrix(observed[, .SD, .SDcols = y])[idx_obs, , drop = FALSE],
+          observed[[y]][idx_obs]
+        )
         e$y <- ifelse_(
           is_categorical(families[[j]]),
           as.integer(e$y),
@@ -428,8 +436,8 @@ predict_full <- function(object, simulated, observed, type, eval_type,
         )
         e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
         if (identical(eval_type, "predicted")) {
-          idx_na <- is.na(simulated[idx, .SD, .SDcols = resp[j]])
-          e$idx_out <- which(idx_na)
+          idx_na <- is.na(simulated[idx, .SD, .SDcols = resp[cg_idx]])
+          e$idx_out <- which(idx_na, arr.ind = TRUE)[, "row"]
           e$idx_data <- idx[e$idx_out]
           if (any(idx_na)) {
             eval(e$call, envir = e)

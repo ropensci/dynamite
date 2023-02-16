@@ -2,9 +2,9 @@
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
 
 name: test-coverage
 
@@ -14,7 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      # this sets the env variable to true or false depending on whether the
+      # commit message contains texts 'run-extended' and 'run-scaling'
       DYNAMITE_EXTENDED_TESTS: ${{contains(github.event.head_commit.message, 'run-extended')}}
+      DYNAMITE_SCALING_TESTS: ${{contains(github.event.head_commit.message, 'run-scaling')}}
 
     steps:
       - uses: actions/checkout@v3

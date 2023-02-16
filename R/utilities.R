@@ -330,6 +330,37 @@ onlyif <- function(test, yes) {
   }
 }
 
+#' Unlist lapply
+#'
+#' @inheritParams base::lapply
+#' @noRd
+ulapply <- function(X, FUN, ...) {
+  unlist(lapply(X, FUN, ...))
+}
+
+#' Actual rank for an increasing sequence
+#'
+#' @param x An increasing `numeric` sequence
+#' @noRd
+rank_ <- function(x) {
+  1L + c(0L, cumsum(diff(x) > 0))
+}
+
+#' Intersect Matrix Columns
+#'
+#' @param x List of matrices of identical dimensions
+#' @noRd
+matrix_intersect <- function(x) {
+  nc <- ncol(x[[1L]])
+  nr <- nrow(x[[1L]])
+  out <- matrix(0L, nrow = nr, ncol = nc)
+  for (i in seq_len(nc)) {
+    tmp <-Reduce(intersect, lapply(x, function(y) y[,i]))
+    out[seq_along(tmp), i] <- tmp
+  }
+  out
+}
+
 #' Number of Unique Values
 #'
 #' @inheritParams data.table::uniqueN

@@ -12,8 +12,8 @@ get_parameter_names(x, types = NULL, ...)
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
-\item{types}{Extract only names of parameter of certain type. See
-\code{\link[=get_parameter_types]{get_parameter_types()}}.}
+\item{types}{[\code{character()}]\cr Extract only names of parameter of a
+certain type. See \code{\link[=get_parameter_types]{get_parameter_types()}}.}
 
 \item{...}{Ignored.}
 }

@@ -207,7 +207,7 @@ test_that("shrinkage is handled correctly", {
             "time",
             "group",
             debug = debug
-          )$stan$model_vars, "[[", "shrinkage"
+          )$stan$channel_vars, "[[", "shrinkage"
         )
       )
     ),
@@ -246,7 +246,7 @@ test_that("noncentered splines are handled correctly", {
             "time",
             "group",
             debug = debug
-          )$stan$model_vars,
+          )$stan$channel_vars,
           "[[",
           "noncentered"
         )
@@ -274,7 +274,7 @@ test_that("lower bounds for tau are handled correctly", {
         test_data,
         "time", "group",
         debug = debug
-      )$stan$model_vars,
+      )$stan$channel_vars,
       "[[",
       "lb"
     ),
