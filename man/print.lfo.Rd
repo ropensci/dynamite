@@ -7,7 +7,7 @@
 \method{print}{lfo}(x, ...)
 }
 \arguments{
-\item{x}{x [\code{lfo}]\cr Output from \code{lfo} function.}
+\item{x}{x [\code{lfo}]\cr Output of the \code{lfo} method.}
 
 \item{...}{Ignored.}
 }
@@ -19,7 +19,7 @@ Prints the summary of the leave-future-out cross-validation.
 }
 \examples{
 \donttest{
-# this gives warnings due to the small number of iterations
+# This gives warnings due to the small number of iterations
 suppressWarnings(lfo(gaussian_example_fit, L = 20))
 }
 

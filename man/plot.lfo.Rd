@@ -16,11 +16,11 @@ A ggplot object.
 }
 \description{
 Plots Pareto k values per each time point (with one point per group),
-together with the horizontal line representing the used threshold.
+together with a horizontal line representing the used threshold.
 }
 \examples{
 \donttest{
-# this gives warnings due to the small number of iterations
+# This gives warnings due to the small number of iterations
 plot(suppressWarnings(lfo(gaussian_example_fit, L = 20)))
 }
 

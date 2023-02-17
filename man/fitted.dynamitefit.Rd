@@ -36,8 +36,9 @@ consists of \code{data.frame} objects, and \code{data.table} objects otherwise.}
 A \code{data.frame} containing the fitted values.
 }
 \description{
-Fitted values for a \code{dynamitefit} object, i.e., \eqn{E(y_t | newdata, \theta)}
-where \eqn{\theta} contains all the model parameters. See also
+Fitted values for a \code{dynamitefit} object, i.e.,
+\eqn{E(y_t | newdata, \theta)} where \eqn{\theta} contains all the
+model parameters. See also
 \code{\link[=predict.dynamitefit]{predict.dynamitefit()}} for multi-step predictions.
 }
 \examples{

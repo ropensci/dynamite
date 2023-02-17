@@ -2,7 +2,7 @@
 % Please edit documentation in R/update.R
 \name{update.dynamitefit}
 \alias{update.dynamitefit}
-\title{Update Dynamite Model}
+\title{Update a Dynamite Model}
 \usage{
 \method{update}{dynamitefit}(
   object,
@@ -27,7 +27,7 @@ the original model are used.}
 
 \item{recompile}{[\code{logical(1)}]\cr Should the model be recompiled? If
 \code{NULL} (default), tries to avoid recompilation. Recompilation is forced when
-the model formula or priors are changed, or if the new data contains
+the model formula or the priors are changed, or if the new data contains
 missing values in a channel which did not contain missing values in the
 original data. Recompilation is also forced in case the backend previous or
 new backend is \code{cmdstanr}.}
@@ -35,11 +35,11 @@ new backend is \code{cmdstanr}.}
 \item{...}{Additional parameters to \code{dynamite}.}
 }
 \value{
-Updated \code{dynamitefit} object.
+An updated \code{dynamitefit} object.
 }
 \description{
 Note that using a different backend for the original model fit and when
-updating can lead to an error due to different naming in  \code{cmdstanr} and
+updating can lead to an error due to different naming in \code{cmdstanr} and
 \code{rstan} sampling arguments.
 }
 \examples{

@@ -26,7 +26,7 @@ computed for missing (\code{NA}) values in the response variable columns, and
 non-missing values are assumed fixed.
 If \code{NULL} (default), the data used in model estimation is used for
 predictions as well, after all values in the response variable columns
-after the first \code{fixed} time points are converted to \code{NA} values.
+after the first \code{fixed} time point are converted to \code{NA} values.
 Missing values in predictor columns can be imputed (argument \code{impute}).
 There should be no new time points that were not present in the data that
 were used to fit the model. New group levels can be included, but if the
@@ -74,7 +74,7 @@ the original levels. The posterior samples of the random effects of
 the matched levels will then be used for the new levels.
 }
 
-This argument is ignored if model does not contain random effects.}
+This argument is ignored if the model does not contain random effects.}
 
 \item{global_fixed}{[\code{logical(1)}]\cr If \code{FALSE} (the default),
 the first non-fixed time point is counted from the the first non-NA
@@ -114,7 +114,7 @@ Obtain counterfactual predictions for a \code{dynamitefit} object.
 Note that forecasting (i.e., predictions for time indices beyond the last
 time index in the original data) is not supported by the \pkg{dynamite}
 package. However, such predictions can be obtained by augmenting the
-original data with NA values before model estimation.
+original data with \code{NA} values before model estimation.
 }
 \examples{
 out <- predict(gaussian_example_fit, type = "response", n_draws = 2L)

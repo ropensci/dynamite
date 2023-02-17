@@ -16,7 +16,7 @@
 \item{...}{Ignored.}
 }
 \value{
-The rows of the resulting matrix will be named using the following
+The rows of the resulting \code{matrix} will be named using the following
 logic: \verb{\{parameter\}_\{time\}_\{category\}_\{group\}} where \code{parameter} is the
 name of the parameter, \code{time} is the time index of the parameter,
 \code{category} specifies the level of the response the parameter

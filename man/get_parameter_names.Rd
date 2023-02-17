@@ -28,8 +28,8 @@ The naming of parameters generally follows style where the name starts with
 the parameter type (e.g. beta for time-invariant regression coefficient),
 followed by underscore and the name of the response variable, and in case of
 time-invariant, time-varying or random effect, the name of the predictor. An
-exception to this is spline coefficients omega, which also contain the number
-denoting the knot number.
+exception to this is spline coefficients omega, which also contain the
+number denoting the knot number.
 }
 \examples{
 get_parameter_names(multichannel_example_fit)

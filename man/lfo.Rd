@@ -15,7 +15,7 @@ should be used for the initial fit.}
 \item{verbose}{[\code{logical(1)}]\cr If \code{TRUE} (default), print the progress of
 the LFO computations to the console.}
 
-\item{k_threshold}{[\code{numeric(1)}]\cr Threshold for the pareto k estimate
+\item{k_threshold}{[\code{numeric(1)}]\cr Threshold for the Pareto k estimate
 triggering refit. Default is 0.7.}
 
 \item{...}{Additional parameters to \code{dynamite}.}

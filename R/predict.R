@@ -5,7 +5,7 @@
 #' Note that forecasting (i.e., predictions for time indices beyond the last
 #' time index in the original data) is not supported by the \pkg{dynamite}
 #' package. However, such predictions can be obtained by augmenting the
-#' original data with NA values before model estimation.
+#' original data with `NA` values before model estimation.
 #'
 #' @export
 #' @param object \[`dynamitefit`]\cr The model fit object.
@@ -14,7 +14,7 @@
 #'   non-missing values are assumed fixed.
 #'   If `NULL` (default), the data used in model estimation is used for
 #'   predictions as well, after all values in the response variable columns
-#'   after the first `fixed` time points are converted to `NA` values.
+#'   after the first `fixed` time point are converted to `NA` values.
 #'   Missing values in predictor columns can be imputed (argument `impute`).
 #'   There should be no new time points that were not present in the data that
 #'   were used to fit the model. New group levels can be included, but if the
@@ -57,7 +57,7 @@
 #'     the original levels. The posterior samples of the random effects of
 #'     the matched levels will then be used for the new levels.
 #'
-#'   This argument is ignored if model does not contain random effects.
+#'   This argument is ignored if the model does not contain random effects.
 #' @param global_fixed \[`logical(1)`]\cr If `FALSE` (the default),
 #'   the first non-fixed time point is counted from the the first non-NA
 #'   observation for each group member separately. Otherwise, the first
@@ -159,13 +159,14 @@ predict.dynamitefit <- function(object, newdata = NULL,
   type <- try(match.arg(type, c("response", "mean", "link")), silent = TRUE)
   stopifnot_(
     !inherits(type, "try-error"),
-    "Argument {.arg type} must be either \"response\", \"mean\", or \"link\"."
+    "Argument {.arg type} must be either
+    {.val response}, {.val mean}, or {.val link}."
   )
   impute <- onlyif(is.character(impute), tolower(impute))
   impute <- try(match.arg(impute, c("none", "locf")), silent = TRUE)
   stopifnot_(
     !inherits(impute, "try-error"),
-    "Argument {.arg type} must be either \"none\", or \"locf\"."
+    "Argument {.arg type} must be either {.val none}, or {.val locf}."
   )
   new_levels <- onlyif(is.character(new_levels), tolower(new_levels))
   new_levels <- try(
@@ -177,8 +178,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
   )
   stopifnot_(
     !inherits(new_levels, "try-error"),
-    "Argument {.arg type} must be either \"none\", \"bootstrap\",
-     \"gaussian\" or \"original\"."
+    "Argument {.arg type} must be either {.val none}, {.val bootstrap},
+    {.val gaussian} or {.val original}."
   )
   stopifnot_(
     checkmate::test_flag(x = global_fixed),
