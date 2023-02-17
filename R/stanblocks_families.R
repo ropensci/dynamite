@@ -1708,9 +1708,9 @@ generated_quantities_lines_gaussian <- function(...) {
 generated_quantities_lines_mvgaussian <- function(y, y_cg, idt, ...) {
   O <- length(y)
   paste_rows(
-    "corr_matrix[O_{y_cg}] corr_matrix_{y_cg} = ",
+    "matrix[O_{y_cg},O_{y_cg}] corr_matrix_{y_cg} = ",
     "multiply_lower_tri_self_transpose(L_{y_cg});",
-    "vector<lower=-1,upper=1>[{(O * (O - 1L)) %/% 2L}] corr_{y_cg};",
+    "vector[{(O * (O - 1L)) %/% 2L}] corr_{y_cg};",
     "for (k in 1:O_{y_cg}) {{",
     "for (j in 1:(k - 1)) {{",
     "corr_{y_cg}[choose(k - 1, 2) + j] = corr_matrix_{y_cg}[j, k];",

@@ -548,10 +548,10 @@ create_generated_quantities <- function(idt, cvars, cgvars, cg) {
     # evaluate number of corrs to avoid Stan warning about integer division
     gen_nu <- paste_rows(
       paste0(
-        "corr_matrix[M] corr_matrix_nu = ",
+        "matrix[M, M] corr_matrix_nu = ",
         "multiply_lower_tri_self_transpose(L_nu);"
       ),
-      "vector<lower=-1,upper=1>[{(M * (M - 1L)) %/% 2L}] corr_nu;",
+      "vector[{(M * (M - 1L)) %/% 2L}] corr_nu;",
       "for (k in 1:M) {{",
       "for (j in 1:(k - 1)) {{",
       "corr_nu[choose(k - 1, 2) + j] = corr_matrix_nu[j, k];",
@@ -575,10 +575,10 @@ create_generated_quantities <- function(idt, cvars, cgvars, cg) {
     )
     gen_psi <- paste_rows(
       paste0(
-        "corr_matrix[P] corr_matrix_psi = ",
+        "matrix[P, P] corr_matrix_psi = ",
         "multiply_lower_tri_self_transpose(L_lf);"
       ),
-      "vector<lower=-1,upper=1>[{(P * (P - 1L)) %/% 2L}] corr_psi;",
+      "vector[{(P * (P - 1L)) %/% 2L}] corr_psi;",
       "for (k in 1:P) {{",
       "for (j in 1:(k - 1)) {{",
       "corr_psi[choose(k - 1, 2) + j] = corr_matrix_psi[j, k];",
