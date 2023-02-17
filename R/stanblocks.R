@@ -50,7 +50,7 @@ create_functions <- function(idt, cvars, cgvars, cg) {
       "for (i in 1:(N - 1)){{",
       "x[i] = x_aux + x_raw[i] * Q[i];",
       "x_aux = x_aux + x_raw[i] * Q[i + N];",
-      "}",
+      "}}",
       "x[N] = x_aux;",
       "return x;",
       "}}",
