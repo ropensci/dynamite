@@ -454,13 +454,16 @@ as_data_table_tau <- function(x, draws, n_draws, response, ...) {
 as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
   n_cat <- length(category)
   D <- x$stan$sampling_vars$D
-  var_names <- names(x$stan$channel_vars[[response]]$J_varying)
+  var_names <- paste0(
+    "omega_", response, "_",
+    names(x$stan$channel_vars[[response]]$J_varying)
+  )
   k <- length(var_names)
   data.table::data.table(
     parameter = rep(
       paste0(
-        "omega_", rep(seq_len(D), each = n_cat * k), "_",
-        rep(var_names, each = n_cat)
+        rep(var_names, each = n_cat),
+        "_d", rep(seq_len(D), each = n_cat * k)
       ),
       each = n_draws
     ),
@@ -471,12 +474,13 @@ as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
 
 #' @describeIn as_data_table_default Data Table for a "omega_alpha" Parameter
 #' @noRd
-as_data_table_omega_alpha <- function(x, draws, n_draws, category, ...) {
+as_data_table_omega_alpha <-function(x, draws, n_draws, response,
+  category, ...) {
   n_cat <- length(category)
   D <- x$stan$sampling_vars$D
   data.table::data.table(
     parameter = rep(
-      paste0("omega_alpha_", seq_len(D)),
+      paste0("omega_alpha_", response, "_d", seq_len(D)),
       each = n_cat * n_draws
     ),
     value = c(draws),
@@ -576,12 +580,13 @@ as_data_table_tau_psi <- function(draws, response, ...) {
 
 #' @describeIn as_data_table_default Data Table for a "omega_psi" Parameter
 #' @noRd
-as_data_table_omega_psi <- function(x, draws, n_draws, category, ...) {
+as_data_table_omega_psi <- function(x, draws, n_draws, response,
+  category, ...) {
   n_cat <- length(category)
   D <- x$stan$sampling_vars$D
   data.table::data.table(
     parameter = rep(
-      paste0("omega_psi_", seq_len(D)),
+      paste0("omega_psi_", response, "_d", seq_len(D)),
       each = n_cat * n_draws
     ),
     value = c(draws),

@@ -4,6 +4,8 @@
     as intended.
   * Added next observation carried backward imputation scheme for fixed
     predictors in predict as option `"nocb"`.
+  * Changed naming of `omega` parameters, they now include also the channel 
+    name.
 
 # dynamite 1.2.0
 
