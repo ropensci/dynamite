@@ -34,7 +34,8 @@ lags <- function(k = 1L, type = c("fixed", "varying", "random")) {
   type <- try(match.arg(type, c("fixed", "varying", "random")), silent = TRUE)
   stopifnot_(
     !inherits(type, "try-error"),
-    "Argument {.arg type} must be \"fixed\", \"varying\", or \"random\"."
+    "Argument {.arg type} must be either
+    {.val fixed}, {.val varying}, or {.val random}."
   )
   stopifnot_(
     checkmate::test_integerish(
@@ -385,8 +386,7 @@ parse_present_lags <- function(dformula, lag_map, y, i, lhs) {
 #' Parse a `lags` Definition in a `dynamiteformula` Object
 #'
 #' @inheritParams parse_lags
-#' @param lag_map \[`data.frame`]\cr
-#'   Output of `extract_lags`.
+#' @param lag_map \[`data.frame`]\cr Output of `extract_lags`.
 #' @param resp_stoch \[`character()`]\cr
 #'   A vector of stochastic response variable names.
 #' @param channels_stoch \[`logical()`]\cr
@@ -443,8 +443,7 @@ parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
 #' Parse Manual Lag Terms in a `dynamiteformula` Object
 #'
 #' @inheritParams parse_lags
-#' @param lag_map \[`data.frame`]\cr
-#'   Output of `extract_lags`.
+#' @param lag_map \[`data.frame`]\cr Output of `extract_lags`.
 #' @param valid_resp \[`character()`]\cr
 #'   A vector of valid LHS variables that can  appear in the model formulas.
 #' @noRd

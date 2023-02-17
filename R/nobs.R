@@ -3,7 +3,7 @@
 #' @export
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param ... Not used.
-#' @return Total number of non-missing observations as an integer.
+#' @return Total number of non-missing observations as an `integer`.
 #' @srrstats {RE4.5} Provides the number of observations.
 #' @examples
 #' nobs(gaussian_example_fit)

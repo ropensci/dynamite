@@ -43,7 +43,7 @@ of the return object to get the column name of the new variable.}
 extracts the full model code.}
 }
 \value{
-The stan model blocks as a \code{character} string.
+The Stan model blocks as a \code{character} string.
 }
 \description{
 Returns the Stan code of the model. Mostly useful for debugging or for

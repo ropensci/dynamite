@@ -3,27 +3,27 @@
 #' This function can be used as part of [dynamite::dynamiteformula()] to define
 #' a common latent factor component. The latent factor is modeled as a spline
 #' similarly as a time-varying intercept, but instead of having equal effect on
-#' each group, there is an additional loading variable for each group so that in
-#' the linear predictor we have a term \eqn{\lambda_i \psi_t} for each group i.
-#' In order to keep the full the factor loadings \eqn{\lambda}, the latent
-#' factor \eqn{\psi} and the full model identifiable, some restrictions are
-#' added to the model. Details will be available in an upcoming paper. This
-#' component should be treated as experimental feature.
+#' each group, there is an additional loading variable for each group so that
+#' in the linear predictor we have a term \eqn{\lambda_i \psi_t} for each
+#' group \eqn{i}. In order to keep the full factor loadings \eqn{\lambda},
+#' the latent factor \eqn{\psi} and the full model identifiable, some
+#' restrictions are added to the model. Details will be available in an
+#' upcoming paper. This component should be treated as experimental feature.
 #'
 #' @export
-#' @param responses \[`character()`]\cr Names of the responses for which the
+#' @param responses \[`character()`]\cr Names of the responses that the
 #'   factor should affect. Default is all responses defined with
-#'   `obs` except categorical response, which does not (yet) support factor
+#'   `obs` except categorical responses, which do not (yet) support the factor
 #'   component.
 #' @param nonzero_lambda \[`logical()`]\cr If `TRUE` (the default), assumes
 #'   that the mean of factor loadings is nonzero or not. Should be a logical
 #'   vector matching the length of `responses` or a single logical value in
 #'   case `responses` is `NULL`. See details.
+#' @param correlated \[`logical()`]\cr If `TRUE` (the default), the latent
+#'   factors are assumed to be correlated between channels.
 #' @param noncentered_psi \[`logical(1)`]\cr If `TRUE`, uses a
 #'   noncentered parametrization for spline coefficients of all the factors.
 #'   The number of knots is based `splines()` call.
-#' @param correlated \[`logical()`]\cr If `TRUE` (the default), the latent
-#'   factors are assumed to be correlated between channels.
 #' @return An object of class `latent_factor`.
 #' @examples
 #' # three channel model with common factor affecting for responses x and y

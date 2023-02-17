@@ -1,6 +1,8 @@
 # dynamite 1.2.1
   * Removed argument `noncentered_lambda` from `lfactor` as this did not work 
     as intended.
+  * Added next observation carried backward imputation scheme for fixed
+    predictors in predict as option `"nocb"`.
 
 # dynamite 1.2.0
 

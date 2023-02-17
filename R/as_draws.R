@@ -1,14 +1,14 @@
 #' Convert `dynamite` Output to `draws_df` Format
 #'
-#' Converts the output from [dynamite::dynamite()] call to a
+#' Converts the output from a [dynamite::dynamite()] call to a
 #' `draws_df` format of the \pkg{posterior} package, enabling the use
 #' of diagnostics and plotting methods of \pkg{posterior} and \pkg{bayesplot}
 #' packages. Note that this function returns variables in a wide format,
 #' whereas [dynamite::as.data.frame()] uses the long format.
 #'
 #' You can use the arguments `parameters`, `responses` and `types` to extract
-#' only a subset of the model parameters (i.e., only certain types of parameters
-#'  related to a certain response variable).
+#' only a subset of the model parameters (i.e., only certain types of
+#' parameters related to a certain response variable).
 #'
 #' See potential values for the types argument in
 #' [dynamite::as.data.frame.dynamitefit()] and
@@ -23,6 +23,9 @@
 #' @return A `draws_df` object.
 #' @examples
 #' as_draws(gaussian_example_fit, types = c("sigma", "beta"))
+#'
+#' # Compute MCMC diagnostics using the posterior package
+#' posterior::summarise_draws(as_draws(gaussian_example_fit))
 #'
 as_draws_df.dynamitefit <- function(x, parameters = NULL, responses = NULL,
   types = NULL, ...) {

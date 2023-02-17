@@ -2,7 +2,7 @@
 % Please edit documentation in R/plot.R
 \name{plot.dynamitefit}
 \alias{plot.dynamitefit}
-\title{Traceplots and Density Plots of a \code{dynamitefit} Object}
+\title{Traceplots and Density Plots for a \code{dynamitefit} Object}
 \usage{
 \method{plot}{dynamitefit}(x, parameters = NULL, type = NULL, responses = NULL, ...)
 }
@@ -10,13 +10,14 @@
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
 \item{parameters}{[\code{charecter()}]\ Parameter name(s) for which the plots
-should be drawn. Possible options can be found with function
-\code{get_parameter_names()}. Default is all parameters of specific type for all
-responses, which can lead to too crowded figure.}
+should be drawn. Possible options can be found with the function
+\code{\link[=get_parameter_names]{get_parameter_names()}}. The default is all parameters ofa
+specific type for all responses, which can lead to too crowded a plot.}
 
 \item{type}{[\code{character(1)}]\cr Type of the parameter for which the plots
-should be drawn. Possible options can be found with function
-\code{get_parameter_types()}. Ignored if the argument \code{parameters} is supplied.}
+should be drawn. Possible options can be found with the function
+\code{\link[=get_parameter_types]{get_parameter_types()}}. Ignored if the argument \code{parameters}
+is supplied.}
 
 \item{responses}{[\code{character()}]\cr Response(s) for which the plots should
 be drawn. Possible options are \code{unique(x$priors$response)}. Default is

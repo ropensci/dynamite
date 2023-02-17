@@ -1,7 +1,7 @@
-#' Update Dynamite Model
+#' Update a Dynamite Model
 #'
 #' Note that using a different backend for the original model fit and when
-#' updating can lead to an error due to different naming in  `cmdstanr` and
+#' updating can lead to an error due to different naming in `cmdstanr` and
 #' `rstan` sampling arguments.
 #'
 #' @param object \[`dynamitefit`]\cr The model fit object.
@@ -14,12 +14,12 @@
 #'   the original model are used.
 #' @param recompile \[`logical(1)`]\cr Should the model be recompiled? If
 #' `NULL` (default), tries to avoid recompilation. Recompilation is forced when
-#'  the model formula or priors are changed, or if the new data contains
+#'  the model formula or the priors are changed, or if the new data contains
 #'  missing values in a channel which did not contain missing values in the
 #'  original data. Recompilation is also forced in case the backend previous or
 #'  new backend is `cmdstanr`.
 #' @param ... Additional parameters to `dynamite`.
-#' @return Updated `dynamitefit` object.
+#' @return An updated `dynamitefit` object.
 #' @export
 #' @examples
 #' \dontrun{

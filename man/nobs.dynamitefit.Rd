@@ -12,7 +12,7 @@
 \item{...}{Not used.}
 }
 \value{
-Total number of non-missing observations as an integer.
+Total number of non-missing observations as an \code{integer}.
 }
 \description{
 Extract the Number of Observations Used to Fit a Dynamite Model

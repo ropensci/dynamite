@@ -2,7 +2,8 @@
 #'
 #' Extracts the priors used in the dynamite model as a data frame. You
 #' can then alter the priors by changing the contents of the `prior` column and
-#' supplying this data frame to `dynamite` function using the argument `priors`.
+#' supplying this data frame to `dynamite` function using the argument
+#' `priors`.
 #'
 #' Note that the prior for the intercept term `alpha` is actually defined
 #' in a centered form, so the prior is related to the `alpha` when the
@@ -67,7 +68,7 @@ get_priors.dynamitefit <- function(x, ...) {
 #' @inheritParams get_priors.dynamiteformula
 #' @param blocks \[`character()`]\cr Stan block names to extract. If `NULL`,
 #'   extracts the full model code.
-#' @return The stan model blocks as a `character` string.
+#' @return The Stan model blocks as a `character` string.
 #' @examples
 #' d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
 #' cat(get_code(obs(y ~ x, family = "gaussian"),
@@ -231,8 +232,8 @@ get_parameter_types.dynamitefit <- function(x, ...) {
 #' the parameter type (e.g. beta for time-invariant regression coefficient),
 #' followed by underscore and the name of the response variable, and in case of
 #' time-invariant, time-varying or random effect, the name of the predictor. An
-#' exception to this is spline coefficients omega, which also contain the number
-#' denoting the knot number.
+#' exception to this is spline coefficients omega, which also contain the
+#' number denoting the knot number.
 #'
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param types \[`character()`]\cr Extract only names of parameter of a

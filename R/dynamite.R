@@ -217,7 +217,7 @@ dynamite <- function(dformula, data, time, group = NULL,
   backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
   stopifnot_(
     !inherits(backend, "try-error"),
-    "Argument {.arg backend} must be \"rstan\" or \"cmdstanr\"."
+    "Argument {.arg backend} must be {.val rstan} or {.val cmdstanr}."
   )
   if (is.null(group)) {
     group <- ".group"

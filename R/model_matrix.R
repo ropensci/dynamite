@@ -121,14 +121,14 @@ test_collinearity <- function(y, mm, data) {
 
 #' A Streamlined Version of `full_model.matrix` for Prediction
 #'
-#' @param formula_list \[`list`]\cr A `list` of `formula` objects.
+#' @param dformula \[`dynamiteformula`]\cr Formulas for stochastic channels.
 #' @param sub \[`data.table`]\cr Subset of data containing
 #'   the variables in the model.
 #' @param u_names \[`character()`]\cr A vector of unique column names of
 #'   the resulting matrix.
 #' @noRd
-full_model.matrix_predict <- function(formula_list, sub, u_names) {
-  model_matrices <- lapply(formula_list, function(x) {
+full_model.matrix_predict <- function(dformula, sub, u_names) {
+  model_matrices <- lapply(dformula, function(x) {
     model_matrices_type <- list()
     for (type in c("fixed", "varying", "random")) {
       type_formula <- get_type_formula(x, type)

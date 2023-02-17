@@ -45,7 +45,8 @@ A \code{data.frame} containing the prior definitions.
 \description{
 Extracts the priors used in the dynamite model as a data frame. You
 can then alter the priors by changing the contents of the \code{prior} column and
-supplying this data frame to \code{dynamite} function using the argument \code{priors}.
+supplying this data frame to \code{dynamite} function using the argument
+\code{priors}.
 }
 \details{
 Note that the prior for the intercept term \code{alpha} is actually defined
