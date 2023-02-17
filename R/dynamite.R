@@ -512,7 +512,6 @@ formula.dynamitefit <- function(x, ...) {
       "lfactor(",
       "responses = ", lfactor_def$responses, ", ",
       "noncentered_psi = ", lfactor_def$noncentered_psi, ", ",
-      "noncentered_lambda = ", lfactor_def$noncentered_lambda, ", ",
       "nonzero_lambda = ", lfactor_def$nonzero_lambda, ", ",
       "correlated = ", lfactor_def$correlated, ")"
     )
@@ -901,13 +900,6 @@ parse_lfactor <- function(lfactor_def, resp, families) {
     out$responses <- lfactor_def$responses
     out$noncentered_psi <- lfactor_def$noncentered_psi
     n_channels <- length(resp)
-    out$noncentered_lambda <- lfactor_def$noncentered_lambda
-    stopifnot_(
-      length(out$noncentered_lambda) %in% c(1L, n_channels),
-      "Length of the {.arg noncentered_lambda} argument of {.fun lfactor}
-      function is not equal to 1 or {n_channels}, the number of the channels."
-    )
-    out$noncentered_lambda <- rep(out$noncentered_lambda, length = n_channels)
     out$nonzero_lambda <- lfactor_def$nonzero_lambda
     stopifnot_(
       length(out$nonzero_lambda) %in% c(1L, n_channels),
@@ -923,7 +915,6 @@ parse_lfactor <- function(lfactor_def, resp, families) {
       has_lfactor = FALSE,
       responses = character(0L),
       noncentered_psi = FALSE,
-      noncentered_lambda = logical(n_channels),
       nonzero_lambda = logical(n_channels),
       correlated = FALSE,
       P = 0

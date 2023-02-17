@@ -312,19 +312,6 @@ test_that("latent factor errors with invalid responses", {
   )
 })
 
-test_that("latent factor errors with nonlogical value for noncentered", {
-  expect_error(
-    dynamite(
-      obs(y ~ x, family = "gaussian") + lfactor(noncentered_lambda = 1),
-      data = data.frame(y = rnorm(4), x = runif(4), id = 1, time = 1:4),
-      time = "time",
-      group = "id",
-      debug = list(no_compile = TRUE)
-    ),
-    "Argument `noncentered_lambda` must be a <logical> vector\\."
-  )
-})
-
 test_that("latent factor errors with nonlogical value for nonzero_lambda", {
   expect_error(
     dynamite(

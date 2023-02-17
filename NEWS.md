@@ -1,3 +1,7 @@
+# dynamite 1.2.1
+  * Removed argument `noncentered_lambda` from `lfactor` as this did not work 
+    as intended.
+
 # dynamite 1.2.0
 
   * Added support for the multivariate gaussian distribution via `"mvgaussian"`

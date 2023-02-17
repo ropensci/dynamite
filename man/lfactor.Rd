@@ -6,10 +6,9 @@
 \usage{
 lfactor(
   responses = NULL,
-  noncentered_lambda = TRUE,
-  noncentered_psi = FALSE,
   nonzero_lambda = TRUE,
-  correlated = TRUE
+  correlated = TRUE,
+  noncentered_psi = FALSE
 )
 }
 \arguments{
@@ -18,18 +17,6 @@ factor should affect. Default is all responses defined with
 \code{obs} except categorical response, which does not (yet) support factor
 component.}
 
-\item{noncentered_lambda}{[\code{logical()}]\cr If \code{TRUE} (the default), use a
-noncentered parametrization for factor loadings. Should be a logical
-vector matching the length of \code{responses} or a single logical value in case
-\code{responses} is \code{NULL}. Try
-changing this if you encounter divergences or other problems in sampling.
-Use \code{splines()} to define whether the spline coefficients of the the
-factors are should be centered or not.}
-
-\item{noncentered_psi}{[\code{logical(1)}]\cr If \code{TRUE}, uses a
-noncentered parametrization for spline coefficients of all the factors.
-The number of knots is based \code{splines()} call.}
-
 \item{nonzero_lambda}{[\code{logical()}]\cr If \code{TRUE} (the default), assumes
 that the mean of factor loadings is nonzero or not. Should be a logical
 vector matching the length of \code{responses} or a single logical value in
@@ -37,6 +24,10 @@ case \code{responses} is \code{NULL}. See details.}
 
 \item{correlated}{[\code{logical()}]\cr If \code{TRUE} (the default), the latent
 factors are assumed to be correlated between channels.}
+
+\item{noncentered_psi}{[\code{logical(1)}]\cr If \code{TRUE}, uses a
+noncentered parametrization for spline coefficients of all the factors.
+The number of knots is based \code{splines()} call.}
 }
 \value{
 An object of class \code{latent_factor}.
@@ -58,8 +49,8 @@ obs(y ~ 1, family = "gaussian") +
   obs(x ~ 1, family = "poisson") +
   obs(z ~ 1, family = "gaussian") +
   lfactor(
-    responses = c("y", "x"), noncentered_lambda = c(FALSE, TRUE),
-    noncentered_psi = FALSE, nonzero_lambda = c(TRUE, FALSE)
+    responses = c("y", "x"), nonzero_lambda = c(TRUE, FALSE),
+    correlated = TRUE, noncentered_psi = FALSE
   )
 
 }
