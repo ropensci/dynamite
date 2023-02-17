@@ -1,18 +1,19 @@
 #' Wrapper to Parse Stan Model Blocks Based on the Family of the Response
 #'
 #' @param prefix \[`character(1)`]\cr Stan model block name, e.g., "model".
-#' @param family \[`dynamitefamily`, `character(1)`]\cr A family object or a
-#'   supported family name.
+#' @param family \[`dynamitefamily`, `character(1)`]\cr A family object, a
+#'   supported family name, or `"default"`.
 #' @param args Channel specific component of `channel_vars`
 #'   (see [create_blocks()])
 #' @noRd
 lines_wrap <- function(prefix, family, args, idt) {
   args$idt <- idt
-  if (is.dynamitefamily(family)) {
-    do.call(what = paste0(prefix, "_lines_", family$name), args = args)
-  } else {
-    do.call(what = paste0(prefix, "_lines_", family), args = args)
-  }
+  suffix <- ifelse_(
+    is.dynamitefamily(family),
+    family$name,
+    family
+  )
+  do.call(what = paste0(prefix, "_lines_", suffix), args = args)
 }
 
 #' Is a Prior Definition Vectorizable?
@@ -23,6 +24,8 @@ vectorizable_prior <- function(x) {
   length(x) == 1L && !grepl("\\(", x)
 }
 
+# Block parameters --------------------------------------------------------
+
 #' Parameters for Stan Code Generation
 #'
 #' Each of the following functions of the form `(stan_block)_lines_(family)`
@@ -31,6 +34,10 @@ vectorizable_prior <- function(x) {
 #' @param backend \[`character(1)`]\cr `"rstan"` or `"cmdstanr"`.
 #' @param y \[`character(1)`]\cr The name of the channel or vector of
 #'   channel names for multivariate channels.
+#' @param default \[`character(1)`]\cr Default channel specifications for the
+#'   block.
+#' @param intercept \[`character(1)`]\cr Model block intercept definitions
+#' @param priors \[`character(1)`]\cr Model block prior definitions
 #' @param y_cg \[`character(1)`]\cr Name of the channel group for multivariate
 #'   channels.
 #' @param idt \[`function`]\cr An indentation function, see [indenter_()].
@@ -259,14 +266,12 @@ data_lines_categorical <- function(y, idt,
   paste_rows(dtext_def, .parse = FALSE)
 }
 
-data_lines_gaussian <- function(y, idt, has_missing, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(data_lines_default))]
+data_lines_gaussian <- function(y, idt, default, has_missing, ...) {
   paste_rows(
     onlyif(has_missing, "// Missing data indicators"),
     onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
     onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
-    do.call(what = data_lines_default, args = args),
+    default,
     "matrix[N, T] y_{y};",
     .indent = idt(c(1, 1, 1, 0, 1))
   )
@@ -283,14 +288,12 @@ data_lines_mvgaussian <- function(y_cg, idt, has_missing, ...) {
   )
 }
 
-data_lines_binomial <- function(y, idt, has_missing, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(data_lines_default))]
+data_lines_binomial <- function(y, idt, default, has_missing, ...) {
   paste_rows(
     onlyif(has_missing, "// Missing data indicators"),
     onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
     onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
-    do.call(what = data_lines_default, args = args),
+    default,
     "int<lower=0> y_{y}[T, N];",
     "// Trials for binomial response {y}",
     "int<lower=1> trials_{y}[T, N];",
@@ -298,27 +301,23 @@ data_lines_binomial <- function(y, idt, has_missing, ...) {
   )
 }
 
-data_lines_bernoulli <- function(y, idt, has_missing, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(data_lines_default))]
+data_lines_bernoulli <- function(y, idt, default, has_missing, ...) {
   paste_rows(
     onlyif(has_missing, "// Missing data indicators"),
     onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
     onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
-    do.call(what = data_lines_default, args = args),
+    default,
     "int<lower=0,upper=1> y_{y}[T, N];",
     .indent = idt(c(1, 1, 1, 0, 1))
   )
 }
 
-data_lines_poisson <- function(y, idt, has_missing, has_offset, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(data_lines_default))]
+data_lines_poisson <- function(y, idt, default, has_missing, has_offset, ...) {
   paste_rows(
     onlyif(has_missing, "// Missing data indicators"),
     onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
     onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
-    do.call(what = data_lines_default, args = args),
+    default,
     "int<lower=0> y_{y}[T, N];",
     "// Offset term",
     onlyif(has_offset, "real offset_{y}[T, N];"),
@@ -326,14 +325,12 @@ data_lines_poisson <- function(y, idt, has_missing, has_offset, ...) {
   )
 }
 
-data_lines_negbin <- function(y, idt, has_missing, has_offset, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(data_lines_default))]
+data_lines_negbin <- function(y, idt, default, has_missing, has_offset, ...) {
   paste_rows(
     onlyif(has_missing, "// Missing data indicators"),
     onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
     onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
-    do.call(what = data_lines_default, args = args),
+    default,
     "int<lower=0> y_{y}[T, N];",
     "// Offset term",
     onlyif(has_offset, "real offset_{y}[T, N];"),
@@ -341,40 +338,34 @@ data_lines_negbin <- function(y, idt, has_missing, has_offset, ...) {
   )
 }
 
-data_lines_exponential <- function(y, idt, has_missing, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(data_lines_default))]
+data_lines_exponential <- function(y, idt, default, has_missing, ...) {
   paste_rows(
     onlyif(has_missing, "// Missing data indicators"),
     onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
     onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
-    do.call(what = data_lines_default, args = args),
+    default,
     "matrix<lower=0>[N, T] y_{y};",
     .indent = idt(c(1, 1, 1, 0, 1))
   )
 }
 
-data_lines_gamma <- function(y, idt, has_missing, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(data_lines_default))]
+data_lines_gamma <- function(y, idt, default, has_missing, ...) {
   paste_rows(
     onlyif(has_missing, "// Missing data indicators"),
     onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
     onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
-    do.call(what = data_lines_default, args = args),
+    default,
     "matrix<lower=0>[N, T] y_{y};",
     .indent = idt(c(1, 1, 1, 0, 1))
   )
 }
 
-data_lines_beta <- function(y, idt, has_missing, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(data_lines_default))]
+data_lines_beta <- function(y, idt, default, has_missing, ...) {
   paste_rows(
     onlyif(has_missing, "// Missing data indicators"),
     onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
     onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
-    do.call(what = data_lines_default, args = args),
+    default,
     "matrix<lower=0, upper=1>[N, T] y_{y};",
     .indent = idt(c(1, 1, 1, 0, 1))
   )
@@ -382,7 +373,7 @@ data_lines_beta <- function(y, idt, has_missing, ...) {
 
 # Transformed data block --------------------------------------------------
 
-transformed_data_lines_default <- function(y, idt) {
+transformed_data_lines_default <- function(y, idt, ...) {
   list(
     declarations = "",
     statements = ""
@@ -411,58 +402,40 @@ transformed_data_lines_categorical <- function(y, idt, write_alpha, write_beta,
   )
 }
 
-transformed_data_lines_gaussian <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(transformed_data_lines_default))]
-  do.call(what = transformed_data_lines_default, args = args)
+transformed_data_lines_gaussian <- function(default, ...) {
+  default
 }
 
-transformed_data_lines_mvgaussian <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(transformed_data_lines_default))]
-  do.call(what = transformed_data_lines_default, args = args)
+transformed_data_lines_mvgaussian <- function(default, ...) {
+  default
 }
 
-transformed_data_lines_binomial <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(transformed_data_lines_default))]
-  do.call(what = transformed_data_lines_default, args = args)
+transformed_data_lines_binomial <- function(default, ...) {
+  default
 }
 
-transformed_data_lines_bernoulli <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(transformed_data_lines_default))]
-  do.call(what = transformed_data_lines_default, args = args)
+transformed_data_lines_bernoulli <- function(default, ...) {
+  default
 }
 
-transformed_data_lines_poisson <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(transformed_data_lines_default))]
-  do.call(what = transformed_data_lines_default, args = args)
+transformed_data_lines_poisson <- function(default, ...) {
+  default
 }
 
-transformed_data_lines_negbin <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(transformed_data_lines_default))]
-  do.call(what = transformed_data_lines_default, args = args)
+transformed_data_lines_negbin <- function(default, ...) {
+  default
 }
 
-transformed_data_lines_exponential <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(transformed_data_lines_default))]
-  do.call(what = transformed_data_lines_default, args = args)
+transformed_data_lines_exponential <- function(default, ...) {
+  default
 }
 
-transformed_data_lines_gamma <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(transformed_data_lines_default))]
-  do.call(what = transformed_data_lines_default, args = args)
+transformed_data_lines_gamma <- function(default, ...) {
+  default
 }
 
-transformed_data_lines_beta <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(transformed_data_lines_default))]
-  do.call(what = transformed_data_lines_default, args = args)
+transformed_data_lines_beta <- function(default, ...) {
+  default
 }
 
 # Parameters block --------------------------------------------------------
@@ -472,7 +445,7 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
                                      has_varying_intercept,
                                      has_lfactor, noncentered_psi,
                                      noncentered_lambda,
-                                     nonzero_lambda) {
+                                     nonzero_lambda, ...) {
   oname <- ifelse_(noncentered, "omega_raw_", "omega_")
 
   # positivity constraint to deal with label-switching
@@ -557,11 +530,9 @@ parameters_lines_categorical <- function(y, idt, noncentered, lb, has_fixed,
   )
 }
 
-parameters_lines_gaussian <- function(y, idt, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(parameters_lines_default))]
+parameters_lines_gaussian <- function(y, idt, default, ...) {
   paste_rows(
-    do.call(what = parameters_lines_default, args = args),
+    default,
     "real<lower=0> sigma_{y}; // SD of the normal distribution",
     .indent = idt(c(0, 1))
   )
@@ -574,55 +545,41 @@ parameters_lines_mvgaussian <- function(y_cg, idt, ...) {
   )
 }
 
-parameters_lines_binomial <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(parameters_lines_default))]
-  do.call(what = parameters_lines_default, args = args)
+parameters_lines_binomial <- function(default, ...) {
+  default
 }
 
-parameters_lines_bernoulli <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(parameters_lines_default))]
-  do.call(what = parameters_lines_default, args = args)
+parameters_lines_bernoulli <- function(default, ...) {
+  default
 }
 
-parameters_lines_poisson <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(parameters_lines_default))]
-  do.call(what = parameters_lines_default, args = args)
+parameters_lines_poisson <- function(default, ...) {
+  default
 }
 
-parameters_lines_negbin <- function(y, idt, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(parameters_lines_default))]
+parameters_lines_negbin <- function(y, idt, default, ...) {
   paste_rows(
-    do.call(what = parameters_lines_default, args = args),
+    default,
     "real<lower=0> phi_{y}; // Dispersion parameter of the NB distribution",
     .indent = idt(c(0, 1))
   )
 }
 
-parameters_lines_exponential <- function(y, idt, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(parameters_lines_default))]
-  do.call(what = parameters_lines_default, args = args)
+parameters_lines_exponential <- function(y, idt, default, ...) {
+  default
 }
 
-parameters_lines_gamma <- function(y, idt, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(parameters_lines_default))]
+parameters_lines_gamma <- function(y, idt, default, ...) {
   paste_rows(
-    do.call(what = parameters_lines_default, args = args),
+    default,
     "real<lower=0> phi_{y}; // Shape parameter of the Gamma distribution",
     .indent = idt(c(0, 1))
   )
 }
 
-parameters_lines_beta <- function(y, idt, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(parameters_lines_default))]
+parameters_lines_beta <- function(y, idt, default, ...) {
   paste_rows(
-    do.call(what = parameters_lines_default, args = args),
+    default,
     "real<lower=0> phi_{y}; // Precision parameter of the Beta distribution",
     .indent = idt(c(0, 1))
   )
@@ -640,7 +597,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
                                                  has_lfactor,
                                                  noncentered_psi,
                                                  noncentered_lambda,
-                                                 nonzero_lambda) {
+                                                 nonzero_lambda, ...) {
   if (noncentered) {
     xi_term <- ifelse_(shrinkage, " * xi[i - 1];", ";")
     declare_omega <- paste_rows(
@@ -1038,93 +995,66 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
   )
 }
 
-transformed_parameters_lines_gaussian <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in%
-    names(formals(transformed_parameters_lines_default))]
-  do.call(what = transformed_parameters_lines_default, args = args)
+transformed_parameters_lines_gaussian <- function(default, ...) {
+  default
 }
 
-transformed_parameters_lines_mvgaussian <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in%
-    names(formals(transformed_parameters_lines_default))]
-  do.call(what = transformed_parameters_lines_default, args = args)
+transformed_parameters_lines_mvgaussian <- function(default, ...) {
+  default
 }
 
-transformed_parameters_lines_binomial <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in%
-    names(formals(transformed_parameters_lines_default))]
-  do.call(what = transformed_parameters_lines_default, args = args)
+transformed_parameters_lines_binomial <- function(default, ...) {
+  default
 }
 
-transformed_parameters_lines_bernoulli <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in%
-    names(formals(transformed_parameters_lines_default))]
-  do.call(what = transformed_parameters_lines_default, args = args)
+transformed_parameters_lines_bernoulli <- function(default, ...) {
+  default
 }
 
-transformed_parameters_lines_poisson <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in%
-    names(formals(transformed_parameters_lines_default))]
-  do.call(what = transformed_parameters_lines_default, args = args)
+transformed_parameters_lines_poisson <- function(default, ...) {
+  default
 }
 
-transformed_parameters_lines_negbin <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in%
-    names(formals(transformed_parameters_lines_default))]
-  do.call(what = transformed_parameters_lines_default, args = args)
+transformed_parameters_lines_negbin <- function(default, ...) {
+  default
 }
 
-transformed_parameters_lines_exponential <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in%
-    names(formals(transformed_parameters_lines_default))]
-  do.call(what = transformed_parameters_lines_default, args = args)
+transformed_parameters_lines_exponential <- function(default, ...) {
+  default
 }
 
-transformed_parameters_lines_gamma <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in%
-    names(formals(transformed_parameters_lines_default))]
-  do.call(what = transformed_parameters_lines_default, args = args)
+transformed_parameters_lines_gamma <- function(default, ...) {
+  default
 }
 
-transformed_parameters_lines_beta <- function(...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in%
-    names(formals(transformed_parameters_lines_default))]
-  do.call(what = transformed_parameters_lines_default, args = args)
+transformed_parameters_lines_beta <- function(default, ...) {
+  default
 }
 
 # Model block -------------------------------------------------------------
 
 # priors which do not depend on family (except categorical)
 prior_lines <- function(y, idt, noncentered, shrinkage,
-  has_varying, has_fixed, has_random,
-  has_fixed_intercept,
-  has_varying_intercept, has_random_intercept,
-  has_lfactor, noncentered_psi,
-  noncentered_lambda, nonzero_lambda,
-  sigma_nu_prior_distr = "",
-  sigma_nu_prior_npars = 1L,
-  alpha_prior_distr = "",
-  tau_alpha_prior_distr = "",
-  lambda_prior_distr = "",
-  beta_prior_distr = "",
-  beta_prior_npars = 1L,
-  delta_prior_distr = "",
-  delta_prior_npars = 1L,
-  tau_prior_distr = "",
-  tau_prior_npars = 1L,
-  sigma_lambda_prior_distr = "",
-  psi_prior_distr = "",
-  tau_psi_prior_distr = "",
-  K_fixed, K_varying, K_random) {
+                        has_varying, has_fixed, has_random,
+                        has_fixed_intercept,
+                        has_varying_intercept, has_random_intercept,
+                        has_lfactor, noncentered_psi,
+                        noncentered_lambda, nonzero_lambda,
+                        sigma_nu_prior_distr = "",
+                        sigma_nu_prior_npars = 1L,
+                        alpha_prior_distr = "",
+                        tau_alpha_prior_distr = "",
+                        lambda_prior_distr = "",
+                        beta_prior_distr = "",
+                        beta_prior_npars = 1L,
+                        delta_prior_distr = "",
+                        delta_prior_npars = 1L,
+                        tau_prior_distr = "",
+                        tau_prior_npars = 1L,
+                        sigma_lambda_prior_distr = "",
+                        psi_prior_distr = "",
+                        tau_psi_prior_distr = "",
+                        K_fixed, K_varying, K_random, ...) {
 
   if (vectorizable_prior(sigma_nu_prior_distr)) {
     dpars_sigma_nu <- ifelse_(
@@ -1277,11 +1207,11 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
 }
 
 # intercept part, or the whole linear predictor in case glm = FALSE
-intercept_lines <- function(y, idt, obs,
-  has_varying, has_fixed, has_random,
-  has_fixed_intercept,
-  has_varying_intercept, has_random_intercept,
-  has_lfactor, has_offset, glm) {
+intercept_lines <- function(y, obs, family,
+                            has_varying, has_fixed, has_random,
+                            has_fixed_intercept,
+                            has_varying_intercept, has_random_intercept,
+                            has_lfactor, has_offset, ...) {
 
   intercept_alpha <- ifelse_(
     has_fixed_intercept,
@@ -1341,7 +1271,8 @@ intercept_lines <- function(y, idt, obs,
     glue::glue(" + X[t][{obs}, J_varying_{y}] * delta_{y}[t]"),
     ""
   )
-  intercept <- ifelse_(glm,
+  intercept <- ifelse_(
+    stan_supports_glm_likelihood(family),
     glue::glue(
       "{intercept_alpha}{offset}{intercept_nu}{random}{lfactor}"
     ),
@@ -1351,7 +1282,6 @@ intercept_lines <- function(y, idt, obs,
   )
   intercept
 }
-# glm likelihoods
 
 # TODO categorical with random effects etc
 model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
@@ -1577,19 +1507,9 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
   )
 }
 
-model_lines_gaussian <- function(y, idt, obs, has_fixed, has_varying,
+model_lines_gaussian <- function(y, idt, priors, intercept,
+                                 obs, has_fixed, has_varying,
                                  sigma_prior_distr = "", ...) {
-
-
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(prior_lines))]
-  priors <- do.call(prior_lines, args = args)
-
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(intercept_lines))]
-  args$glm <- TRUE
-  intercept <- do.call(intercept_lines, args = args)
-
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
@@ -1615,17 +1535,8 @@ model_lines_gaussian <- function(y, idt, obs, has_fixed, has_varying,
 }
 
 
-model_lines_bernoulli <- function(y, idt, obs, has_varying, has_fixed, ...) {
-
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(prior_lines))]
-  priors <- do.call(prior_lines, args = args)
-
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(intercept_lines))]
-  args$glm <- TRUE
-  intercept <- do.call(intercept_lines, args = args)
-
+model_lines_bernoulli <- function(y, idt, priors, intercept,
+                                  obs, has_varying, has_fixed, ...) {
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
@@ -1648,16 +1559,8 @@ model_lines_bernoulli <- function(y, idt, obs, has_varying, has_fixed, ...) {
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_poisson <- function(y, idt, obs, has_varying, has_fixed, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(prior_lines))]
-  priors <- do.call(prior_lines, args = args)
-
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(intercept_lines))]
-  args$glm <- TRUE
-  intercept <- do.call(intercept_lines, args = args)
-
+model_lines_poisson <- function(y, idt, priors, intercept,
+                                obs, has_varying, has_fixed, ...) {
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
@@ -1680,18 +1583,9 @@ model_lines_poisson <- function(y, idt, obs, has_varying, has_fixed, ...) {
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_negbin <- function(y, idt, obs, has_varying, has_fixed,
-  phi_prior_distr, ...) {
-
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(prior_lines))]
-  priors <- do.call(prior_lines, args = args)
-
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(intercept_lines))]
-  args$glm <- TRUE
-  intercept <- do.call(intercept_lines, args = args)
-
+model_lines_negbin <- function(y, idt, priors, intercept,
+                               obs, has_varying, has_fixed,
+                               phi_prior_distr, ...) {
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
@@ -1717,23 +1611,11 @@ model_lines_negbin <- function(y, idt, obs, has_varying, has_fixed,
 
 # non-glm likelihoods
 
-model_lines_binomial <- function(y, idt, obs, has_varying, has_fixed, ...) {
-
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(prior_lines))]
-  priors <- do.call(prior_lines, args = args)
-
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(intercept_lines))]
-  args$glm <- FALSE
-  intercept <- do.call(intercept_lines, args = args)
-
-  likelihood_term <- paste0(
-    "y_{y}[t, {obs}] ~ binomial_logit(trials_{y}[t, {obs}], {intercept});"
-  )
+model_lines_binomial <- function(y, idt, priors, intercept,
+                                 obs, has_varying, has_fixed, ...) {
   model_text <- paste_rows(
     "for (t in 1:T) {{",
-    likelihood_term,
+    "y_{y}[t, {obs}] ~ binomial_logit(trials_{y}[t, {obs}], {intercept});",
     "}}",
     .indent = idt(c(1, 2, 1))
   )
@@ -1741,71 +1623,37 @@ model_lines_binomial <- function(y, idt, obs, has_varying, has_fixed, ...) {
 }
 
 
-model_lines_exponential <- function(y, idt, obs, has_varying, has_fixed, ...) {
-
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(prior_lines))]
-  priors <- do.call(prior_lines, args = args)
-
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(intercept_lines))]
-  args$glm <- FALSE
-  intercept <- do.call(intercept_lines, args = args)
-
-  likelihood_term <- paste0(
-    "y_{y}[{obs}, t] ~ exponential(exp(-({intercept})));"
-  )
+model_lines_exponential <- function(y, idt, priors, intercept,
+                                    obs, has_varying, has_fixed, ...) {
   model_text <- paste_rows(
     "for (t in 1:T) {{",
-    likelihood_term,
+    "y_{y}[{obs}, t] ~ exponential(exp(-({intercept})));",
     "}}",
     .indent = idt(c(1, 2, 1))
   )
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_gamma <- function(y, idt, obs, has_varying, has_fixed,
+model_lines_gamma <- function(y, idt, priors, intercept,
+                              obs, has_varying, has_fixed,
                               phi_prior_distr, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(prior_lines))]
-  priors <- do.call(prior_lines, args = args)
-
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(intercept_lines))]
-  args$glm <- FALSE
-  intercept <- do.call(intercept_lines, args = args)
-
-  likelihood_term <- paste0(
-    "y_{y}[{obs}, t] ~ gamma(phi_{y}, phi_{y} * exp(-({intercept})));"
-  )
   model_text <- paste_rows(
     "phi_{y} ~ {phi_prior_distr};",
     "for (t in 1:T) {{",
-    likelihood_term,
+    "y_{y}[{obs}, t] ~ gamma(phi_{y}, phi_{y} * exp(-({intercept})));",
     "}}",
     .indent = idt(c(1, 1, 2, 1))
   )
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_beta <- function(y, idt, obs, has_varying, has_fixed,
+model_lines_beta <- function(y, idt, priors, intercept,
+                             obs, has_varying, has_fixed,
                              phi_prior_distr, ...) {
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(prior_lines))]
-  priors <- do.call(prior_lines, args = args)
-
-  args <- as.list(match.call()[-1L])
-  args <- args[names(args) %in% names(formals(intercept_lines))]
-  args$glm <- FALSE
-  intercept <- do.call(intercept_lines, args = args)
-
-  likelihood_term <- paste0(
-    "y_{y}[{obs}, t] ~ beta_proportion(inv_logit({intercept}), phi_{y});"
-  )
   model_text <- paste_rows(
     "phi_{y} ~ {phi_prior_distr};",
     "for (t in 1:T) {{",
-    likelihood_term,
+    "y_{y}[{obs}, t] ~ beta_proportion(inv_logit({intercept}), phi_{y});",
     "}}",
     .indent = idt(c(1, 1, 2, 1))
   )
@@ -1868,11 +1716,11 @@ generated_quantities_lines_default <- function() {
 }
 
 generated_quantities_lines_categorical <- function(...) {
-  generated_quantities_lines_default()
+  ""
 }
 
 generated_quantities_lines_gaussian <- function(...) {
-  generated_quantities_lines_default()
+  ""
 }
 
 generated_quantities_lines_mvgaussian <- function(y, y_cg, idt, ...) {
@@ -1891,27 +1739,27 @@ generated_quantities_lines_mvgaussian <- function(y, y_cg, idt, ...) {
 }
 
 generated_quantities_lines_binomial <- function(...) {
-  generated_quantities_lines_default()
+  ""
 }
 
 generated_quantities_lines_bernoulli <- function(...) {
-  generated_quantities_lines_default()
+  ""
 }
 
 generated_quantities_lines_poisson <- function(...) {
-  generated_quantities_lines_default()
+  ""
 }
 
 generated_quantities_lines_negbin <- function(...) {
-  generated_quantities_lines_default()
+  ""
 }
 
 generated_quantities_lines_exponential <- function(...) {
-  generated_quantities_lines_default()
+  ""
 }
 
 generated_quantities_lines_gamma <- function(...) {
-  generated_quantities_lines_default()
+  ""
 }
 
 generated_quantities_lines_beta <- function(...) {

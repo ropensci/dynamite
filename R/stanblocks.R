@@ -87,6 +87,7 @@ create_data <- function(idt, cvars, cgvars, cg) {
         lines_wrap("data", cvars[[j]]$family, cgvars[[i]], idt)
       )
     } else {
+      cvars[[j]]$default <- lines_wrap("data", "default", cvars[[j]], idt)
       data_text[i] <- lines_wrap("data", cvars[[j]]$family, cvars[[j]], idt)
     }
   }
@@ -101,6 +102,12 @@ create_transformed_data <- function(idt, cvars, cgvars, cg) {
   declarations <- character(n)
   statements <- character(n)
   for (i in seq_len(n)) {
+    cvars[[i]]$default <- lines_wrap(
+      "transformed_data",
+      "default",
+      cvars[[i]],
+      idt
+    )
     tr_data <- lines_wrap(
       "transformed_data",
       cvars[[i]]$family,
@@ -188,6 +195,12 @@ create_parameters <- function(idt, cvars, cgvars, cg) {
     if (is_multivariate(cvars[[j]]$family)) {
       parameters_text[i] <- ""
       for (k in cg_idx) {
+        cvars[[k]]$default <- lines_wrap(
+          "parameters",
+          "default",
+          cvars[[k]],
+          idt
+        )
         parameters_text[i] <- paste_rows(
           parameters_text[i],
           lines_wrap(
@@ -198,11 +211,23 @@ create_parameters <- function(idt, cvars, cgvars, cg) {
           )
         )
       }
+      cgvars[[i]]$default <- lines_wrap(
+        "parameters",
+        "default",
+        cgvars[[i]],
+        idt
+      )
       parameters_text[i] <- paste_rows(
         parameters_text[i],
         lines_wrap("parameters", cvars[[j]]$family, cgvars[[i]], idt)
       )
     } else {
+      cvars[[j]]$default <- lines_wrap(
+        "parameters",
+        "default",
+        cvars[[j]],
+        idt
+      )
       parameters_text[i] <- lines_wrap(
         "parameters",
         cvars[[j]]$family,
@@ -307,6 +332,12 @@ create_transformed_parameters <- function(idt, cvars, cgvars, cg) {
   declarations <- character(n)
   statements <- character(n)
   for (i in seq_len(n)) {
+    cvars[[i]]$default <- lines_wrap(
+      "transformed_parameters",
+      "default",
+      cvars[[i]],
+      idt
+    )
     tr_pars <- lines_wrap(
       "transformed_parameters",
       cvars[[i]]$family,
@@ -314,7 +345,7 @@ create_transformed_parameters <- function(idt, cvars, cgvars, cg) {
       idt
     )
     declarations[i] <- tr_pars$declarations
-    statements[i] <- tr_pars$statements
+    statements[i] <-  tr_pars$statements
   }
   paste_rows(
     "transformed parameters {",
@@ -481,13 +512,18 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
   n_cg <- length(unique(cg))
   model_text <- character(n_cg)
   for (i in seq_len(n_cg)) {
-    cvars[[i]]$backend <- backend
     cg_idx <- which(cg == i)
     j <- cg_idx[1L]
+    cvars[[i]]$backend <- backend
+    cvars[[i]]$priors <- do.call(prior_lines, c(cvars[[i]], idt = idt))
+    cvars[[i]]$intercept <- do.call(intercept_lines, cvars[[i]])
     model_text[i] <- ifelse_(
       is_multivariate(cvars[[j]]$family),
-      lines_wrap("model", cvars[[j]]$family,
-        list(cvars = cvars[cg_idx], cgvars = cgvars[[i]]), idt),
+      lines_wrap(
+        "model", cvars[[j]]$family,
+        list(cvars = cvars[cg_idx], cgvars = cgvars[[i]]),
+        idt
+      ),
       lines_wrap("model", cvars[[j]]$family, cvars[[j]], idt)
     )
   }
