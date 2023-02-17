@@ -6,6 +6,8 @@
     predictors in predict as option `"nocb"`.
   * Changed naming of `omega` parameters, they now include also the channel 
     name.
+  * Fixed an issue related to channels with latent factors that did not not 
+    have any other predictors.
 
 # dynamite 1.2.0
 

@@ -1745,5 +1745,5 @@ generated_quantities_lines_gamma <- function(...) {
 }
 
 generated_quantities_lines_beta <- function(...) {
-  generated_quantities_lines_default()
+  ""
 }
