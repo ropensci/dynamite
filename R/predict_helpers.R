@@ -317,15 +317,29 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
 #' @param group_var \[`character(1)`]\cr Grouping variable name.
 #' @noRd
 impute_newdata <- function(newdata, impute, predictors, group_var) {
-  if (identical(impute, "locf")) {
-    newdata[,
-      (predictors) := lapply(.SD, locf),
-      .SDcols = predictors,
-      by = group_var
-      # by = group_var,
-      # env = list(locf = locf)
-    ]
-  }
+  switch(impute,
+    `locf` = {
+      newdata[,
+        (predictors) := lapply(.SD, locf),
+        .SDcols = predictors,
+        by = group_var
+        # by = group_var,
+        # env = list(locf = locf)
+      ]
+    },
+    `nocb` = {
+      newdata[,
+        (predictors) := lapply(.SD, nocb),
+        .SDcols = predictors,
+        by = group_var
+        # by = group_var,
+        # env = list(locf = locf)
+      ]
+    },
+    `none` = {
+      newdata
+    }
+  )
 }
 
 #' Assign NA Values to Time Indices Beyond Fixed Time Points

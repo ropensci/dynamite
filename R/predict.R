@@ -40,8 +40,8 @@
 #'   `dynamite` call).
 #' @param impute \[`character(1)`]\cr Which imputation scheme to use for
 #'   missing exogenous predictor values. Currently supported options are
-#'   no imputation: `"none"` (default), and
-#'   last observation carried forward: `"locf"`.
+#'   no imputation: `"none"` (default), last observation carried forward:
+#'   `"locf"`, and next observation carried backward: `"nocb"`.
 #' @param new_levels \[`character(1)`]\cr
 #'   Defines if and how to sample the random effects for observations whose
 #'   group level was not present in the original data. The options are:
@@ -145,7 +145,8 @@
 #'
 predict.dynamitefit <- function(object, newdata = NULL,
                                 type = c("response", "mean", "link"),
-                                funs = list(), impute = c("none", "locf"),
+                                funs = list(),
+                                impute = c("none", "locf", "nocb"),
                                 new_levels = c(
                                   "none", "bootstrap", "gaussian", "original"
                                 ),
@@ -163,10 +164,11 @@ predict.dynamitefit <- function(object, newdata = NULL,
     {.val response}, {.val mean}, or {.val link}."
   )
   impute <- onlyif(is.character(impute), tolower(impute))
-  impute <- try(match.arg(impute, c("none", "locf")), silent = TRUE)
+  impute <- try(match.arg(impute, c("none", "locf", "nocb")), silent = TRUE)
   stopifnot_(
     !inherits(impute, "try-error"),
-    "Argument {.arg type} must be either {.val none}, or {.val locf}."
+    "Argument {.arg type} must be either
+    {.val none}, {.val locf} or {.val nocb}."
   )
   new_levels <- onlyif(is.character(new_levels), tolower(new_levels))
   new_levels <- try(

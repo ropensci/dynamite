@@ -227,7 +227,7 @@ indenter_ <- function(m = 2L) {
   }
 }
 
-#' Fill Gaps (NAs) in a Vector with the Last Non-NA Observation
+#' Last Observation Carried Forward Imputation for a Vector
 #'
 #' @param x \[`vector()`]\cr A vector possibly containing NA values.
 #' @noRd
@@ -235,6 +235,14 @@ locf <- function(x) {
   non_na <- ifelse_(is.na(x[1L]), c(1L, which(!is.na(x))), which(!is.na(x)))
   fill <- diff(c(non_na, length(x) + 1L))
   rep(x[non_na], fill)
+}
+
+#' Next Observation Carried Backward Imputation for a Vector
+#'
+#' @param x \[`vector()`]\cr A vector possibly containing NA values.
+#' @noRd
+nocb <- function(x) {
+  rev(locf(rev(x)))
 }
 
 #' Computes a Topological Ordering for the Vertices of a DAG.
@@ -257,11 +265,11 @@ topological_order <- function(A) {
     roots <- which(!colSums(A))
     n_roots <- length(roots)
   }
-  if (nrow(A) > 0) {
-    integer(0L)
-  } else {
+  ifelse_(
+    nrow(A) > 0L,
+    integer(0L),
     ord
-  }
+  )
 }
 
 #' Stop Function Execution Without Displaying the Call
@@ -355,7 +363,7 @@ matrix_intersect <- function(x) {
   nr <- nrow(x[[1L]])
   out <- matrix(0L, nrow = nr, ncol = nc)
   for (i in seq_len(nc)) {
-    tmp <-Reduce(intersect, lapply(x, function(y) y[,i]))
+    tmp <- Reduce(intersect, lapply(x, function(y) y[, i]))
     out[seq_along(tmp), i] <- tmp
   }
   out

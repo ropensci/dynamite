@@ -9,7 +9,7 @@
   newdata = NULL,
   type = c("response", "mean", "link"),
   funs = list(),
-  impute = c("none", "locf"),
+  impute = c("none", "locf", "nocb"),
   new_levels = c("none", "bootstrap", "gaussian", "original"),
   global_fixed = FALSE,
   n_draws = NULL,
@@ -55,8 +55,8 @@ if there are multiple individuals (i.e., \code{group} was not \code{NULL} in the
 
 \item{impute}{[\code{character(1)}]\cr Which imputation scheme to use for
 missing exogenous predictor values. Currently supported options are
-no imputation: \code{"none"} (default), and
-last observation carried forward: \code{"locf"}.}
+no imputation: \code{"none"} (default), last observation carried forward:
+\code{"locf"}, and next observation carried backward: \code{"nocb"}.}
 
 \item{new_levels}{[\code{character(1)}]\cr
 Defines if and how to sample the random effects for observations whose

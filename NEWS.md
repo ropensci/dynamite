@@ -1,3 +1,8 @@
+# dynamite 1.2.1
+
+  * Added next observation carried backward imputation scheme for fixed
+    predictors in predict as option `"nocb"`.
+
 # dynamite 1.2.0
 
   * Added support for the multivariate gaussian distribution via `"mvgaussian"`

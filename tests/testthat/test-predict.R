@@ -416,9 +416,22 @@ test_that("imputation works", {
   gaussian_example_impute[mis_x, "x"] <- NA
   gaussian_example_impute[mis_z, "z"] <- NA
   expect_error(
-    predict(gaussian_example_fit,
+    predict(
+      gaussian_example_fit,
       newdata = gaussian_example_impute,
-      type = "response", n_draws = 2L, impute = "locf"
+      type = "response",
+      n_draws = 2L,
+      impute = "locf"
+    ),
+    NA
+  )
+  expect_error(
+    predict(
+      gaussian_example_fit,
+      newdata = gaussian_example_impute,
+      type = "response",
+      n_draws = 2L,
+      impute = "nocb"
     ),
     NA
   )
