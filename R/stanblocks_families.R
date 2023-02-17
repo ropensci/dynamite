@@ -444,7 +444,6 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
                                      has_varying, has_fixed_intercept,
                                      has_varying_intercept,
                                      has_lfactor, noncentered_psi,
-                                     noncentered_lambda,
                                      nonzero_lambda, ...) {
   oname <- ifelse_(noncentered, "omega_raw_", "omega_")
 
@@ -596,7 +595,6 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
                                                  L_fixed, L_varying,
                                                  has_lfactor,
                                                  noncentered_psi,
-                                                 noncentered_lambda,
                                                  nonzero_lambda, ...) {
   if (noncentered) {
     xi_term <- ifelse_(shrinkage, " * xi[i - 1];", ";")
@@ -665,6 +663,12 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     glue::glue(" - psi_{y}[1]"),
     ""
   )
+  declare_fixed_intercept <- paste_rows(
+    "// Time-invariant intercept",
+    "real alpha_{y};",
+    .indent = idt(1),
+    .parse = FALSE
+  )
   if (has_fixed || has_varying) {
     declare_omega_alpha_1 <- paste_rows(
       "// Time-varying intercept",
@@ -683,12 +687,6 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
       "omega_alpha_1_{y} = a_{y} - X_m[J_{y}] * gamma__{y};",
       "}}",
       .indent = idt(c(1, 1, 2, 2, 2, 2, 1)),
-      .parse = FALSE
-    )
-    declare_fixed_intercept <- paste_rows(
-      "// Time-invariant intercept",
-      "real alpha_{y};",
-      .indent = idt(1),
       .parse = FALSE
     )
     state_fixed_intercept <- paste_rows(
@@ -711,12 +709,11 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
       .parse = FALSE
     )
     state_omega_alpha_1 <- character(0L)
-    declare_fixed_intercept <- paste_rows(
-      "real alpha_{y} = a_{y}{psi};",
+    state_fixed_intercept <- paste_rows(
+      "alpha_{y} = a_{y}{psi};",
       .indent = idt(1),
       .parse = FALSE
     )
-    state_fixed_intercept <- character(0L)
   }
   declare_varying_intercept <- paste_rows(
     declare_omega_alpha_1,
@@ -735,22 +732,12 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
   )
 
   m <- ifelse(nonzero_lambda, "1 + ", "")
-  if (noncentered_lambda) {
-    declare_lambda <- paste_rows(
-      "// hard sum-to-zero constraint",
-      "vector[N] lambda_std_{y} = A_qr * lambda_raw_{y};",
-      "vector[N] lambda_{y} = {m}sigma_lambda_{y} * lambda_std_{y};",
-      .indent = idt(1),
-      .parse = FALSE
-    )
-  } else {
-    declare_lambda <- paste_rows(
-      "// hard sum-to-zero constraint",
-      "vector[N] lambda_{y} = {m}sigma_lambda_{y} * A_qr * lambda_raw_{y};",
-      .indent = idt(1),
-      .parse = FALSE
-    )
-  }
+  declare_lambda <- paste_rows(
+    "// hard sum-to-zero constraint",
+    "vector[N] lambda_{y} = {m}sigma_lambda_{y} * A_qr * lambda_raw_{y};",
+    .indent = idt(1),
+    .parse = FALSE
+  )
   if (noncentered_psi) {
     state_omega_psi <- paste_rows(
       "omega_psi_{y}[1] = omega_raw_psi_1_{y};",
@@ -1039,7 +1026,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
                         has_fixed_intercept,
                         has_varying_intercept, has_random_intercept,
                         has_lfactor, noncentered_psi,
-                        noncentered_lambda, nonzero_lambda,
+                        nonzero_lambda,
                         sigma_nu_prior_distr = "",
                         sigma_nu_prior_npars = 1L,
                         alpha_prior_distr = "",
@@ -1055,7 +1042,6 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
                         psi_prior_distr = "",
                         tau_psi_prior_distr = "",
                         K_fixed, K_varying, K_random, ...) {
-
   if (vectorizable_prior(sigma_nu_prior_distr)) {
     dpars_sigma_nu <- ifelse_(
       sigma_nu_prior_npars > 0L,
@@ -1074,11 +1060,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
   if (has_lfactor) {
     m <- ifelse_(nonzero_lambda, "1", "0")
     mtext_lambda <- paste_rows(
-      ifelse_(
-        noncentered_lambda,
-        "lambda_std_{y} ~ normal(0, inv(sqrt(1 - inv(N))));",
-        "lambda_{y} ~ normal({m}, sigma_lambda_{y} * inv(sqrt(1 - inv(N))));"
-      ),
+      "lambda_raw_{y} ~ normal(0, inv(sqrt(1 - inv(N))));",
       "sigma_lambda_{y} ~ {sigma_lambda_prior_distr};",
       onlyif(nonzero_lambda, "tau_psi_{y} ~ {tau_psi_prior_distr};"),
       "omega_raw_psi_1_{y} ~ {psi_prior_distr};",

@@ -55,7 +55,7 @@ supported_families <- c(
 )
 
 
-#' Get univariate version of a multivariate family
+#' Get Univariate Version of a Multivariate Family
 #'
 #' @param x \[`dynamitefamily`]\cr A family object.
 #' @noRd
@@ -63,6 +63,11 @@ get_univariate <- function(x) {
   out <- stats::setNames(supported_families, supported_families)
   out["mvgaussian"] <- "gaussian"
   unname(out[x$name])
+}
+
+#' Is the GLM Likelihood Variant Supported By Stan for a Family
+stan_supports_glm_likelihood <- function(x) {
+  x$name %in% c("bernoulli", "gaussian", "poisson", "negbin")
 }
 
 # Generate `family_` and `is_family` convenience functions

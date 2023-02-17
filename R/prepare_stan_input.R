@@ -171,7 +171,6 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     channel$noncentered <- spline_def$noncentered[i]
     channel$has_lfactor <- y %in% lfactor_def$responses
     channel$noncentered_psi <- lfactor_def$noncentered_psi
-    channel$noncentered_lambda <- lfactor_def$noncentered_lambda[i]
     channel$nonzero_lambda <- lfactor_def$nonzero_lambda[i]
     stopifnot_(
       has_splines || !(channel$has_varying || channel$has_varying_intercept),

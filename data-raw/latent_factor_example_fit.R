@@ -22,7 +22,7 @@ latent_factor_example_fit <- dynamite(
   save_warmup = FALSE,
   pars = c(
     "omega_alpha_1_y", "omega_raw_alpha_y", "omega_raw_psi",
-    "omega_raw_psi_1_y", "L_lf", "lambda_raw_y", "lambda_std_y"
+    "omega_raw_psi_1_y", "L_lf", "lambda_raw_y"
   ),
   include = FALSE
 )
