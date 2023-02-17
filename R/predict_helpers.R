@@ -487,7 +487,8 @@ prepare_eval_envs <- function(object, simulated, observed,
   n_cg <- length(unique(cg))
   eval_envs <- vector(mode = "list", length = n_cg)
   idx_draws <- seq_len(n_draws)
-  nu_channels <- which_random(object$dformulas$all)
+  rand <- which_random(object$dformulas$all)
+  nu_channels <- get_names(object$dformulas$all)[rand]
   n_group <- n_unique(observed[[group_var]])
   k <- 0L # index of channel_vars
   orig_ids <- unique(object$data[[group_var]])
