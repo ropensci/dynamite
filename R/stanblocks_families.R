@@ -706,6 +706,12 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     glue::glue(" - psi_{y}[1]"),
     ""
   )
+  declare_fixed_intercept <- paste_rows(
+    "// Time-invariant intercept",
+    "real alpha_{y};",
+    .indent = idt(1),
+    .parse = FALSE
+  )
   if (has_fixed || has_varying) {
     declare_omega_alpha_1 <- paste_rows(
       "// Time-varying intercept",
@@ -724,12 +730,6 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
       "omega_alpha_1_{y} = a_{y} - X_m[J_{y}] * gamma__{y};",
       "}}",
       .indent = idt(c(1, 1, 2, 2, 2, 2, 1)),
-      .parse = FALSE
-    )
-    declare_fixed_intercept <- paste_rows(
-      "// Time-invariant intercept",
-      "real alpha_{y};",
-      .indent = idt(1),
       .parse = FALSE
     )
     state_fixed_intercept <- paste_rows(
@@ -752,12 +752,11 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
       .parse = FALSE
     )
     state_omega_alpha_1 <- character(0L)
-    declare_fixed_intercept <- paste_rows(
-      "real alpha_{y} = a_{y}{psi};",
+    state_fixed_intercept <- paste_rows(
+      "alpha_{y} = a_{y}{psi};",
       .indent = idt(1),
       .parse = FALSE
     )
-    state_fixed_intercept <- character(0L)
   }
   declare_varying_intercept <- paste_rows(
     declare_omega_alpha_1,
