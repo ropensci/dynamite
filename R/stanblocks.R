@@ -29,7 +29,40 @@ create_blocks <- function(indent = 2L, cvars, cgvars, cg, backend) {
 #' @param idt \[`function`]\cr An indentation function created by [indenter_()]
 #' @noRd
 create_functions <- function(idt, cvars, cgvars, cg) {
-  NULL
+  functions_psi <- ""
+  psis <- attr(cvars, "lfactor_def")$responses
+  P <- attr(cvars, "lfactor_def")$P
+  # From Stan forums https://tinyurl.com/2spznmyv
+  if (P > 0) {
+    functions_psi <- paste_rows(
+      "vector create_Q(int N) {{",
+      "vector[2 * N] Q;",
+      "for (i in 1:N) {{",
+      "Q[i] = -sqrt((N - i)/(N - i + 1.0));",
+      "Q[i + N] = inv_sqrt((N - i) * (N - i + 1));",
+      "}}",
+      "return Q;",
+      "}}",
+      "vector sum_to_zero(vector x_raw, vector Q) {{",
+      "int N = num_elements(x_raw) + 1;",
+      "vector[N] x;",
+      "real x_aux = 0;",
+      "for (i in 1:(N - 1)){{",
+      "x[i] = x_aux + x_raw[i] * Q[i];",
+      "x_aux = x_aux + x_raw[i] * Q[i + N];",
+      "}",
+      "x[N] = x_aux;",
+      "return x;",
+      "}}",
+      .indent = idt(c(1, 2, 2, 3, 3, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 2, 1))
+    )
+  }
+  paste_rows(
+    "functions {",
+    functions_psi,
+    "}",
+    .parse = FALSE
+  )
 }
 
 #' @describeIn create_function Create The 'Data' Block of the Stan Model Code
@@ -117,26 +150,15 @@ create_transformed_data <- function(idt, cvars, cgvars, cg) {
     declarations[i] <- tr_data$declarations
     statements[i] <- tr_data$statements
   }
-  declare_AQR <- "matrix[N, N - 1] A_qr;"
-  state_AQR <- paste_rows(
-    "{",
-    "matrix[N, N] A = diag_matrix(rep_vector(1, N));",
-    "for (i in 1:N - 1) A[N, i] = -1;",
-    "A[N, N] = 0;",
-    "A_qr = qr_Q(A)[ , 1:(N - 1)];",
-    "}",
-    .indent = idt(c(0, 2, 2, 2, 2, 1)),
-    .parse = FALSE
-  )
+  declare_QR <- "vector[2 * K] QR_Q = create_Q(N);"
   has_lfactor <- any(vapply(cvars, "[[", logical(1L), "has_lfactor"))
   paste_rows(
     "transformed data {",
     declarations,
-    onlyif(has_lfactor, declare_AQR),
+    onlyif(has_lfactor, declare_QR),
     statements,
-    onlyif(has_lfactor, state_AQR),
     "}",
-    .indent = idt(c(0, 0, 1, 0, 1, 0)),
+    .indent = idt(c(0, 0, 1, 0, 0)),
     .parse = FALSE
   )
 }

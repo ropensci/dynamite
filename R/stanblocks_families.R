@@ -123,6 +123,51 @@ vectorizable_prior <- function(x) {
 #' @noRd
 NULL
 
+# # Functions block --------------------------------------------------------------
+#
+# functions_lines_default <- function(...) {
+#   ""
+# }
+#
+# functions_lines_categorical <- function(...) {
+#   ""
+# }
+#
+# functions_lines_gaussian <- function(...) {
+#   ""
+# }
+#
+# functions_lines_mvgaussian <- function(...) {
+#  ""
+# }
+#
+# functions_lines_binomial <- function(...) {
+#   ""
+# }
+#
+# functions_lines_bernoulli <- function(...) {
+#   ""
+# }
+#
+# functions_lines_poisson <- function(...) {
+#   ""
+# }
+#
+# functions_lines_negbin <- function(...) {
+#   ""
+# }
+#
+# functions_lines_exponential <- function(...) {
+#   ""
+# }
+#
+# functions_lines_gamma <- function(...) {
+#   ""
+# }
+#
+# functions_lines_beta <- function(...) {
+#   ""
+# }
 # Data block --------------------------------------------------------------
 
 data_lines_default <- function(y, idt, has_missing,
@@ -733,8 +778,11 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
 
   m <- ifelse(nonzero_lambda, "1 + ", "")
   declare_lambda <- paste_rows(
-    "// hard sum-to-zero constraint",
-    "vector[N] lambda_{y} = {m}sigma_lambda_{y} * A_qr * lambda_raw_{y};",
+    "// hard sum constraint",
+    paste0(
+      "vector[N] lambda_{y} = {m}sigma_lambda_{y} * ",
+      "sum_to_zero(lambda_raw_{y}, QR_Q);"
+    ),
     .indent = idt(1),
     .parse = FALSE
   )

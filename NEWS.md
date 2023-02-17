@@ -8,6 +8,8 @@
     name.
   * Fixed an issue related to channels with latent factors that did not not 
     have any other predictors.
+  * Improved efficiency of sum-to-zero constraints based post by @aaronjg on 
+    Stan forums.
 
 # dynamite 1.2.0
 
