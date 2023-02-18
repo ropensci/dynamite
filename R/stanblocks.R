@@ -150,7 +150,7 @@ create_transformed_data <- function(idt, cvars, cgvars, cg) {
     declarations[i] <- tr_data$declarations
     statements[i] <- tr_data$statements
   }
-  declare_QR <- "vector[2 * K] QR_Q = create_Q(N);"
+  declare_QR <- "vector[2 * N] QR_Q = create_Q(N);"
   has_lfactor <- any(vapply(cvars, "[[", logical(1L), "has_lfactor"))
   paste_rows(
     "transformed data {",
