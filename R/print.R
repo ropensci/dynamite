@@ -62,20 +62,11 @@ print.dynamitefit <- function(x, ...) {
     cat("\n\nElapsed time (seconds):\n")
     print(rstan::get_elapsed_time(x$stanfit))
 
-    nu <- ifelse(
-      any(x$priors$type == "sigma_nu"),
-      "\n(excluding random effects)",
-      ""
-    )
     cat(
-      paste0(
-        "\nSummary statistics of the time-invariant parameters",
-        nu,
-        ":\n"
-      )
+      "\nSummary statistics of the time- and group-invariant parameters:\n"
     )
     match_names <- grepl(
-      pattern = "^(?!.*^nu|^omega|.*\\[.*]).*",
+      pattern = "^(?!.*^nu|^omega|^lambda|.*\\[.*]).*",
       x = names(draws),
       perl = TRUE
     )
