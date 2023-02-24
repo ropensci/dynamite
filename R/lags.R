@@ -99,33 +99,37 @@ complete_lags <- function(x) {
   x
 }
 
-#' Find Lag Terms in a Character Vector
+#' Extract Lagged Variables from a Language Object
 #'
-#' @param x \[`character()`]\cr A character vector.
+#' @param x A `language` object
 #' @noRd
 find_lags <- function(x) {
-  grepl("lag\\([^\\)]+\\)", x, perl = TRUE)
+  if (!is.recursive(x)) {
+    return(character(0L))
+  }
+  if (is.call(x)) {
+    if (identical(as.character(x[[1L]]), "lag")) {
+      return(deparse1(x))
+    } else {
+      ulapply(x[-1L], find_lags)
+    }
+  }
 }
 
-#' Extract Non-lag Variables
-#'
-#' @param x \[`character(1)`]\cr A character vector.
-#' @noRd
-extract_nonlags <- function(x) {
-  x[!find_lags(x)]
-}
 
 #' Extract Non-lag Variables from a Language Object
 #'
 #' @param x A `language` object
 #' @noRd
-extract_nonlags_lang <- function(x) {
+find_nonlags <- function(x) {
   if (!is.recursive(x)) {
-    return(as.character(x))
+    out <- as.character(x)
+    # Don't return intercept
+    return(ifelse_(identical(out, "1"), character(0L), out))
   }
   if (is.call(x)) {
     if (!identical(as.character(x[[1L]]), "lag")) {
-      ulapply(x[-1L], extract_nonlags_lang)
+      ulapply(x[-1L], find_nonlags)
     } else {
       character(0L)
     }
@@ -137,16 +141,11 @@ extract_nonlags_lang <- function(x) {
 #' Extract variables and shifts of lagged terms of the form `lag(var, k)`
 #' and return them as a data frame for post processing.
 #'
-#' @param x \[`character()`]\cr a character vector.
+#' @param x \[`list`]\cr A list of `character` vectors.
 #' @noRd
 extract_lags <- function(x) {
-  has_lag <- find_lags(x)
-  lag_terms <- ifelse_(
-    any(has_lag),
-    paste0(x[has_lag], " "),
-    character(0)
-  )
-  lag_regex <- gregexec(
+  lag_terms <- unlist(x)
+  lag_regex <- regexec(
     pattern = paste0(
       "(?<src>lag\\((?<var>[^\\+\\)\\,]+?)",
       "(?:,\\s*(?<k>[0-9]+)){0,1}\\))"
@@ -156,8 +155,8 @@ extract_lags <- function(x) {
   )
   lag_matches <- regmatches(lag_terms, lag_regex)
   if (length(lag_matches) > 0L) {
-    lag_map <- do.call("cbind", args = lag_matches)
-    lag_map <- as.data.frame(t(lag_map)[, -1L, drop = FALSE])
+    lag_map <- do.call("rbind", args = lag_matches)
+    lag_map <- as.data.frame(lag_map[, -1L, drop = FALSE])
     lag_map$k <- as.integer(lag_map$k)
     lag_map$k[is.na(lag_map$k)] <- 1L
     lag_map$present <- TRUE
@@ -262,8 +261,7 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
     identical(length(mis_vars), 0L),
     "Can't find variable{?s} {.var {non_lags[mis_vars]}} in {.arg data}."
   )
-  predictors <- get_predictors(dformula)
-  lag_map <- extract_lags(predictors)
+  lag_map <- extract_lags(get_lag_terms(dformula))
   gl <- parse_global_lags(dformula, lag_map, resp_stoch, channels_stoch)
   dformula <- gl$dformula
   max_lag <- gl$max_lag

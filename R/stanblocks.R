@@ -233,12 +233,6 @@ create_parameters <- function(idt, cvars, cgvars, cg) {
           )
         )
       }
-      cgvars[[i]]$default <- lines_wrap(
-        "parameters",
-        "default",
-        cgvars[[i]],
-        idt
-      )
       parameters_text[i] <- paste_rows(
         parameters_text[i],
         lines_wrap("parameters", cvars[[j]]$family, cgvars[[i]], idt)
@@ -536,18 +530,18 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
     j <- cg_idx[1L]
-    cvars[[i]]$backend <- backend
-    cvars[[i]]$priors <- do.call(prior_lines, c(cvars[[i]], idt = idt))
-    cvars[[i]]$intercept <- do.call(intercept_lines, cvars[[i]])
-    model_text[i] <- ifelse_(
-      is_multivariate(cvars[[j]]$family),
-      lines_wrap(
+    cvars[[j]]$backend <- backend
+    if (is_multivariate(cvars[[j]]$family)) {
+      model_text[i] <- lines_wrap(
         "model", cvars[[j]]$family,
         list(cvars = cvars[cg_idx], cgvars = cgvars[[i]]),
         idt
-      ),
-      lines_wrap("model", cvars[[j]]$family, cvars[[j]], idt)
-    )
+      )
+    } else {
+      cvars[[j]]$priors <- do.call(prior_lines, c(cvars[[j]], idt = idt))
+      cvars[[j]]$intercept <- do.call(intercept_lines, cvars[[j]])
+      model_text[i] <- lines_wrap("model", cvars[[j]]$family, cvars[[j]], idt)
+    }
   }
   paste_rows(
     "model {",

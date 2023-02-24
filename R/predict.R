@@ -363,10 +363,10 @@ predict_full <- function(object, simulated, observed, type, eval_type,
   channel_groups <- attr(object$dformulas$all, "channel_groups")
   model_topology <- attr(object$dformulas$all, "model_topology")
   specials <- evaluate_specials(object$dformulas$all, observed)
-  lhs_ld <- get_responses(object$dformulas$lag_det)
-  rhs_ld <- get_predictors(object$dformulas$lag_det)
   lhs_ls <- get_responses(object$dformulas$lag_stoch)
-  rhs_ls <- get_predictors(object$dformulas$lag_stoch)
+  lhs_ld <- get_responses(object$dformulas$lag_det)
+  rhs_ls <- get_rhs(object$dformulas$lag_stoch)
+  rhs_ld <- get_rhs(object$dformulas$lag_det)
   ro_ld <- onlyif(
     length(lhs_ld) > 0L,
     attr(object$dformulas$lag_det, "rank_order")
@@ -489,9 +489,9 @@ predict_summary <- function(object, storage, observed, type, funs, new_levels,
   model_topology <- attr(object$dformulas$all, "model_topology")
   specials <- evaluate_specials(object$dformulas$all, observed)
   lhs_ld <- get_responses(object$dformulas$lag_det)
-  rhs_ld <- get_predictors(object$dformulas$lag_det)
+  rhs_ld <- get_rhs(object$dformulas$lag_det)
   lhs_ls <- get_responses(object$dformulas$lag_stoch)
-  rhs_ls <- get_predictors(object$dformulas$lag_stoch)
+  rhs_ls <- get_rhs(object$dformulas$lag_stoch)
   ro_ld <- onlyif(
     length(lhs_ld) > 0L,
     attr(object$dformulas$lag_det, "rank_order")

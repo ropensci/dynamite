@@ -304,7 +304,7 @@ parse_formula <- function(x, original, family) {
   )
   formulas <- lapply(paste0(responses, "~", formula_parts), as.formula)
   predictors <- ulapply(formulas, function(y) {
-    extract_nonlags(attr(terms(y), "term.labels"))
+    find_nonlags(formula_rhs(y))
   })
   resp_pred <- responses %in% predictors
   p <- sum(resp_pred)
@@ -421,7 +421,7 @@ get_responses <- function(x) {
 #'
 #' @param x A `dynamiteformula` object.
 #' @noRd
-get_predictors <- function(x) {
+get_rhs <- function(x) {
   vapply(x, function(y) deparse1(formula_rhs(y$formula)), character(1L))
 }
 
@@ -433,17 +433,19 @@ get_names <- function(x) {
   vapply(x, function(y) y$name, character(1L))
 }
 
+get_lag_terms <- function(x) {
+  lapply(x, function(y) {
+    unique(find_lags(formula_rhs(y$formula)))
+  })
+}
+
 #' Get Non-Lagged Terms of All Formulas of a `dynamiteformula` Object
 #'
 #' @param x A `dynamiteformula` object.
 #' @noRd
 get_nonlag_terms <- function(x) {
   lapply(x, function(y) {
-    if (is_deterministic(y$family)) {
-      unique(extract_nonlags_lang(formula_rhs(y$formula)))
-    } else {
-      extract_nonlags(attr(terms(y$formula), "term.labels"))
-    }
+    unique(find_nonlags(formula_rhs(y$formula)))
   })
 }
 

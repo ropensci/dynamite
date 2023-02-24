@@ -21,7 +21,7 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
     )
     data[, (dlp[[i]]$response) := NA]
   }
-  rhs_ls <- get_predictors(dls)
+  rhs_ls <- get_rhs(dls)
   for (i in seq_along(dls)) {
     stopifnot_(
       rhs_ls[i] %in% names(data),
@@ -39,7 +39,7 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
     data.table::set(x = data, j = dd[[i]]$response, value = past)
     data[, dd[[i]]$response := NA]
   }
-  rhs_ld <- get_predictors(dld)
+  rhs_ld <- get_rhs(dld)
   ro_ld <- attr(dld, "rank_order")
   init <- has_past(dld)
   for (k in ro_ld) {
@@ -98,9 +98,9 @@ assign_initial_values <- function(data, idx, dd, dlp, dld, dls,
   resp_lp <- attr(dlp, "original_response")
   k_lp <- attr(dlp, "original_shift")
   lhs_ld <- get_responses(dld)
-  rhs_ld <- get_predictors(dld)
+  rhs_ld <- get_rhs(dld)
   lhs_ls <- get_responses(dls)
-  rhs_ls <- get_predictors(dls)
+  rhs_ls <- get_rhs(dls)
   cl <- get_quoted(dd)
   for (i in ro_lp) {
     k <- k_lp[i]
@@ -242,9 +242,9 @@ evaluate_deterministic <- function(dformulas, data, group_var, time_var) {
     )
     ro_ls <- seq_along(dls)
     lhs_ld <- get_responses(dld)
-    rhs_ld <- get_predictors(dld)
+    rhs_ld <- get_rhs(dld)
     lhs_ls <- get_responses(dls)
-    rhs_ls <- get_predictors(dls)
+    rhs_ls <- get_rhs(dls)
     idx <- idx + fixed + 1L
     for (i in seq.int(fixed + 2L, n_time)) {
       idx <- idx + 1L

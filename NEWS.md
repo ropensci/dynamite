@@ -10,6 +10,10 @@
     have any other predictors.
   * Improved efficiency of sum-to-zero constraints based post by @aaronjg on 
     Stan forums.
+  * Fixed several issues related to Stan code generation for the 
+    multivariate gaussian distribution.
+  * The package no longer uses `gregexec` internally which made it dependent on
+    R version 4.1.0 or greater. 
 
 # dynamite 1.2.0
 
