@@ -13,7 +13,9 @@
   * Fixed several issues related to Stan code generation for the 
     multivariate gaussian distribution.
   * The package no longer uses `gregexec` internally which made it dependent on
-    R version 4.1.0 or greater. 
+    R version 4.1.0 or higher. 
+  * Corrected R version dependency to 3.6.0 or higher based on the package
+    dependencies.
 
 # dynamite 1.2.0
 
