@@ -84,10 +84,11 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     ),
     c(3L, 1L, 2L)
   )[T_idx, , , drop = FALSE]
-  sd_x <- apply(X[1L, , , drop = FALSE], 3L, sd, na.rm = TRUE)
+  x_tmp <- X[1L, , , drop = FALSE]
+  sd_x <- apply(x_tmp, 3L, sd, na.rm = TRUE)
   # needed for default priors, 0.5 is pretty arbitrary
   sd_x <- setNames(pmax(0.5, sd_x, na.rm = TRUE), colnames(model_matrix))
-  x_means <- apply(X[1L, , , drop = FALSE], 3L, mean, na.rm = TRUE)
+  x_means <- colMeans(x_tmp, dims = 2L, na.rm = TRUE)
   # For totally missing covariates
   x_means[is.na(x_means)] <- 0.0
   X_na <- is.na(X)

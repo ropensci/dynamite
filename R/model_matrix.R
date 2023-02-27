@@ -45,12 +45,10 @@ full_model.matrix <- function(dformula, data, verbose) {
   attr(model_matrix, "fixed") <- empty_list
   attr(model_matrix, "varying") <- empty_list
   attr(model_matrix, "random") <- empty_list
-  model_df <- as.data.frame(model_matrix)
   for (i in seq_along(model_matrices)) {
     for (type in types) {
       if (!is.null(model_matrices_type[[i]][[type]])) {
-        model_df_type <- as.data.frame(model_matrices_type[[i]][[type]])
-        cols <- which(model_df %in% model_df_type)
+        cols <- which(u_names %in% colnames(model_matrices_type[[i]][[type]]))
         attr(model_matrix, type)[[i]] <- setNames(cols, u_names[cols])
       } else {
         attr(model_matrix, type)[[i]] <- integer(0L)
