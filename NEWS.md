@@ -1,3 +1,7 @@
+# dynamite 1.3.0
+
+  * Added support for Student's t-distribution via `"student"` family in `obs`.
+
 # dynamite 1.2.1
 
   * Removed argument `noncentered_lambda` from `lfactor` as this did not work 

@@ -51,9 +51,9 @@ supported_families <- c(
   "deterministic",
   "gamma",
   "exponential",
-  "beta"
+  "beta",
+  "student"
 )
-
 
 #' Get Univariate Version of a Multivariate Family
 #'

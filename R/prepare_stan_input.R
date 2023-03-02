@@ -197,7 +197,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       "Random effects are not (yet) supported for categorical responses."
     )
     sampling_vars[[paste0("y_", y_name)]] <- ifelse_(
-      family %in% c("gaussian", "gamma", "exponential", "beta"),
+      family %in% c("gaussian", "gamma", "exponential", "beta", "student"),
       t(Y_out),
       Y_out
     )
@@ -575,13 +575,14 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
       out$channel$sigma_prior_distr <- pdef$prior
     }
     defaults <- rbind(
-      default_priors(y,  channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
+      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       sigma_prior
     )
     out$priors <- check_priors(priors, defaults)
   }
   out
 }
+
 #' @describeIn prepare_channel_default Prepare a Multivariate Gaussian Channel
 #' @noRd
 prepare_channel_mvgaussian <- function(y, channel, priors) {
@@ -928,6 +929,77 @@ prepare_channel_beta <- function(y, Y, channel, sd_x, resp_class, priors) {
   }
   out
 }
+
+#' @describeIn prepare_channel_default Prepare a Student-t Channel
+#' @noRd
+prepare_channel_student <- function(y, Y, channel, sd_x, resp_class, priors) {
+  if ("factor" %in% resp_class) {
+    abort_factor(y, "Student-t", call = rlang::caller_env())
+  }
+  if (ncol(Y) > 1L) {
+    sd_y <- mean(apply(Y, 1L, sd, na.rm = TRUE))
+    mean_y <- mean(Y[1L, ], na.rm = TRUE)
+  } else {
+    sd_y <- sd(Y, na.rm = TRUE)
+    mean_y <- Y[1L]
+  }
+  if (!is.finite(sd_y) || identical(sd_y, 0.0)) {
+    sd_y <- 1.0
+  }
+  if (!is.finite(mean_y)) {
+    mean_y <- 0.0
+  }
+  sd_gamma <- 2.0 * sd_y / sd_x
+  mean_gamma <- rep(0.0, length(sd_gamma))
+  out <- prepare_channel_default(
+    y,
+    Y,
+    channel,
+    mean_gamma,
+    sd_gamma,
+    mean_y,
+    sd_y,
+    resp_class,
+    priors
+  )
+  sigma_prior <- data.frame(
+    parameter = paste0("sigma_", y),
+    response = y,
+    prior = paste0("exponential(", signif(1.0 / sd_y, 2L), ")"),
+    type = "sigma",
+    category = ""
+  )
+  phi_prior <- data.frame(
+    parameter = paste0("phi_", y),
+    response = y,
+    prior = "gamma(2, 0.1)",
+    type = "phi",
+    category = ""
+  )
+  if (is.null(priors)) {
+    out$channel$sigma_prior_distr <- sigma_prior$prior
+    out$channel$phi_prior_distr <- phi_prior$prior
+    out$priors <- rbind(out$priors, sigma_prior, phi_prior)
+  } else {
+    priors <- priors[priors$response == y, ]
+    pdef <- priors[priors$type == "sigma", ]
+    if (identical(nrow(pdef), 1L)) {
+      out$channel$sigma_prior_distr <- pdef$prior
+    }
+    pdef <- priors[priors$type == "phi", ]
+    if (identical(nrow(pdef), 1L)) {
+      out$channel$phi_prior_distr <- pdef$prior
+    }
+    defaults <- rbind(
+      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
+      sigma_prior,
+      phi_prior
+    )
+    out$priors <- check_priors(priors, defaults)
+  }
+  out
+}
+
 #' Raise an error if factor type is not supported by a family
 #'
 #' @param y \[`character(1)`]\cr Response variable the error is related to.

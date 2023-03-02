@@ -416,6 +416,17 @@ data_lines_beta <- function(y, idt, default, has_missing, ...) {
   )
 }
 
+data_lines_student <- function(y, idt, default, has_missing, ...) {
+  paste_rows(
+    onlyif(has_missing, "// Missing data indicators"),
+    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
+    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
+    default,
+    "matrix[N, T] y_{y};",
+    .indent = idt(c(1, 1, 1, 0, 1))
+  )
+}
+
 # Transformed data block --------------------------------------------------
 
 transformed_data_lines_default <- function(y, idt, ...) {
@@ -480,6 +491,10 @@ transformed_data_lines_gamma <- function(default, ...) {
 }
 
 transformed_data_lines_beta <- function(default, ...) {
+  default
+}
+
+transformed_data_lines_student <- function(default, ...) {
   default
 }
 
@@ -626,6 +641,15 @@ parameters_lines_beta <- function(y, idt, default, ...) {
     default,
     "real<lower=0> phi_{y}; // Precision parameter of the Beta distribution",
     .indent = idt(c(0, 1))
+  )
+}
+
+parameters_lines_student <- function(y, idt, default, ...) {
+  paste_rows(
+    default,
+    "real<lower=0> sigma_{y}; // scale of the t-distribution",
+    "real<lower=1> phi_{y}; // Degrees of freedom of the t-distribution",
+    .indent = idt(c(0, 1, 1))
   )
 }
 
@@ -1063,6 +1087,10 @@ transformed_parameters_lines_gamma <- function(default, ...) {
 }
 
 transformed_parameters_lines_beta <- function(default, ...) {
+  default
+}
+
+transformed_parameters_lines_student <- function(default, ...) {
   default
 }
 
@@ -1564,6 +1592,54 @@ model_lines_gaussian <- function(y, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
+model_lines_mvgaussian <- function(cvars, cgvars, idt, ...) {
+  y <- cgvars$y
+  y_cg <- cgvars$y_cg
+  obs <- cgvars$obs
+  mu <- priors <- character(length(y))
+  n_obs <- ifelse_(
+    cgvars$has_missing,
+    glue::glue("n_obs_{y_cg}[t]"),
+    "N"
+  )
+  for (i in seq_along(y)) {
+    args <- c(cvars[[i]], idt = idt)
+    args <- args[names(args) %in% names(formals(prior_lines))]
+    priors[i] <- do.call(prior_lines, args = args)
+    priors[i] <- paste_rows(
+      priors[i],
+      glue::glue("sigma_{y[i]} ~ {cvars[[i]]$sigma_prior_distr};"),
+      .indent = idt(c(0, 1)),
+      .parse = FALSE
+    )
+    args <- c(cvars[[i]], idt = idt, glm = FALSE)
+    args <- args[names(args) %in% names(formals(intercept_lines))]
+    args$obs <- obs
+    mu[i] <- do.call(intercept_lines, args = args)
+  }
+  sd_y <- paste0("sigma_", y)
+  mu_y <- paste0("mu_", y, "[i]")
+  model_text <- paste_rows(
+    "L_{y_cg} ~ {cgvars$L_prior_distr};",
+    "{{",
+    "vector[O_{y_cg}] sigma_{y_cg} = [{cs(sd_y)}]';",
+    paste0(
+      "matrix[O_{y_cg}, O_{y_cg}] Lsigma = ",
+      "diag_pre_multiply(sigma_{y_cg}, L_{y_cg});"
+    ),
+    "for (t in 1:T) {{",
+    "vector[O_{y_cg}] mu[{n_obs}];",
+    "vector[{n_obs}] mu_{y} = {mu};",
+    "for (i in 1:{n_obs}) {{",
+    "mu[i] = [{cs(mu_y)}]';",
+    "}}",
+    "y_{y_cg}[t, {obs}] ~ multi_normal_cholesky(mu, Lsigma);",
+    "}}",
+    "}}",
+    .indent = idt(c(1, 1, 2, 2, 2, 3, 3, 3, 4, 3, 3, 2, 1))
+  )
+  paste_rows(priors, model_text, .parse = FALSE)
+}
 
 model_lines_bernoulli <- function(y, idt, priors, intercept,
                                   obs, has_varying, has_fixed, ...) {
@@ -1639,8 +1715,6 @@ model_lines_negbin <- function(y, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-# non-glm likelihoods
-
 model_lines_binomial <- function(y, idt, priors, intercept,
                                  obs, has_varying, has_fixed, ...) {
   model_text <- paste_rows(
@@ -1690,55 +1764,20 @@ model_lines_beta <- function(y, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-# multivariate likelihoods
-model_lines_mvgaussian <- function(cvars, cgvars, idt, ...) {
-  y <- cgvars$y
-  y_cg <- cgvars$y_cg
-  obs <- cgvars$obs
-  mu <- priors <- character(length(y))
-  n_obs <- ifelse_(
-    cgvars$has_missing,
-    glue::glue("n_obs_{y_cg}[t]"),
-    "N"
-  )
-  for (i in seq_along(y)) {
-    args <- c(cvars[[i]], idt = idt)
-    args <- args[names(args) %in% names(formals(prior_lines))]
-    priors[i] <- do.call(prior_lines, args = args)
-    priors[i] <- paste_rows(
-      priors[i],
-      glue::glue("sigma_{y[i]} ~ {cvars[[i]]$sigma_prior_distr};"),
-      .indent = idt(c(0, 1)),
-      .parse = FALSE
-    )
-    args <- c(cvars[[i]], idt = idt, glm = FALSE)
-    args <- args[names(args) %in% names(formals(intercept_lines))]
-    args$obs <- obs
-    mu[i] <- do.call(intercept_lines, args = args)
-  }
-  sd_y <- paste0("sigma_", y)
-  mu_y <- paste0("mu_", y, "[i]")
-  model_text <- paste_rows(
-    "L_{y_cg} ~ {cgvars$L_prior_distr};",
-    "{{",
-    "vector[O_{y_cg}] sigma_{y_cg} = [{cs(sd_y)}]';",
-    paste0(
-      "matrix[O_{y_cg}, O_{y_cg}] Lsigma = ",
-      "diag_pre_multiply(sigma_{y_cg}, L_{y_cg});"
-    ),
+model_lines_student <- function(y, idt, priors, intercept,
+                                obs, has_varying, has_fixed,
+                                sigma_prior_distr, phi_prior_distr, ...) {
+  model_test <- paste_rows(
+    "sigma_{y} ~ {sigma_prior_distr};",
+    "phi_{y} ~ {phi_prior_distr};",
     "for (t in 1:T) {{",
-    "vector[O_{y_cg}] mu[{n_obs}];",
-    "vector[{n_obs}] mu_{y} = {mu};",
-    "for (i in 1:{n_obs}) {{",
-    "mu[i] = [{cs(mu_y)}]';",
-    "}}",
-    "y_{y_cg}[t, {obs}] ~ multi_normal_cholesky(mu, Lsigma);",
-    "}}",
-    "}}",
-    .indent = idt(c(1, 1, 2, 2, 2, 3, 3, 3, 4, 3, 3, 2, 1))
+    "y_{y}[{obs}, t] ~ student_t(phi_{y}, {intercept}, sigma_{y});",
+    "}}"
   )
-  paste_rows(priors, model_text, .parse = FALSE)
 }
+
+
+
 # Generated quantities block ----------------------------------------------
 
 generated_quantities_lines_default <- function() {
@@ -1793,5 +1832,9 @@ generated_quantities_lines_gamma <- function(...) {
 }
 
 generated_quantities_lines_beta <- function(...) {
+  ""
+}
+
+generated_quantities_lines_student <- function(...) {
   ""
 }
