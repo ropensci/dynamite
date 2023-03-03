@@ -13,12 +13,12 @@ create_blocks <- function(indent = 2L, cvars, cgvars, cg, backend) {
   idt <- indenter_(indent)
   paste_rows(
     create_functions(idt, cvars, cgvars, cg),
-    create_data(idt, cvars, cgvars, cg),
-    create_transformed_data(idt, cvars, cgvars, cg),
-    create_parameters(idt, cvars, cgvars, cg),
-    create_transformed_parameters(idt, cvars, cgvars, cg),
+    create_data(idt, cvars, cgvars, cg, backend),
+    create_transformed_data(idt, cvars, cgvars, cg, backend),
+    create_parameters(idt, cvars, cgvars, cg, backend),
+    create_transformed_parameters(idt, cvars, cgvars, cg, backend),
     create_model(idt, cvars, cgvars, cg, backend),
-    create_generated_quantities(idt, cvars, cgvars, cg),
+    create_generated_quantities(idt, cvars, cgvars, cg, backend),
     .parse = FALSE
   )
 }
@@ -67,7 +67,7 @@ create_functions <- function(idt, cvars, cgvars, cg) {
 
 #' @describeIn create_function Create The 'Data' Block of the Stan Model Code
 #' @noRd
-create_data <- function(idt, cvars, cgvars, cg) {
+create_data <- function(idt, cvars, cgvars, cg, backend) {
   has_splines <- any(vapply(cvars, "[[", logical(1L), "has_varying")) ||
     any(vapply(cvars, "[[", logical(1L), "has_varying_intercept")) ||
     any(vapply(cvars, "[[", logical(1L), "has_lfactor"))
@@ -83,7 +83,14 @@ create_data <- function(idt, cvars, cgvars, cg) {
     ),
     onlyif(
       K > 0,
-      "matrix[N, K] X[T]; // covariates as an array of N x K matrices"
+      stan_array(
+        backend,
+        "matrix",
+        "X",
+        "T",
+        dims = "N, K",
+        comment = "covariates as an array of N x K matrices"
+      )
     ),
     onlyif(
       K > 0,
@@ -111,16 +118,22 @@ create_data <- function(idt, cvars, cgvars, cg) {
         cgvars[[i]]$default <- vapply(
           cvars[cg_idx],
           function(x) {
-            lines_wrap("data", "default", x, idt)
+            lines_wrap("data", "default", x, idt, backend)
           },
           character(1L)
         )
       }
-      data_text[i] <- lines_wrap("data", cgvars[[i]]$family, cgvars[[i]], idt)
+      data_text[i] <- lines_wrap(
+        "data",  cgvars[[i]]$family, cgvars[[i]], idt, backend
+      )
     } else {
       j <- cg_idx[1L]
-      cvars[[j]]$default <- lines_wrap("data", "default", cvars[[j]], idt)
-      data_text[i] <- lines_wrap("data", cvars[[j]]$family, cvars[[j]], idt)
+      cvars[[j]]$default <- lines_wrap(
+        "data", "default", cvars[[j]], idt, backend
+      )
+      data_text[i] <- lines_wrap(
+        "data", cvars[[j]]$family, cvars[[j]], idt, backend
+      )
     }
   }
   paste_rows("data {", init_text, data_text, "}", .parse = FALSE)
@@ -129,7 +142,7 @@ create_data <- function(idt, cvars, cgvars, cg) {
 #' @describeIn create_function Create the 'Transformed Data'
 #'   Block of the Stan Model Code
 #' @noRd
-create_transformed_data <- function(idt, cvars, cgvars, cg) {
+create_transformed_data <- function(idt, cvars, cgvars, cg, backend) {
   n_cg <- length(unique(cg))
   declarations <- character(n_cg)
   statements <- character(n_cg)
@@ -140,28 +153,19 @@ create_transformed_data <- function(idt, cvars, cgvars, cg) {
       cgvars[[i]]$default <- lapply(
         cvars[cg_idx],
         function(x) {
-          lines_wrap("transformed_data", "default", x, idt)
+          lines_wrap("transformed_data", "default", x, idt, backend)
         }
       )
       tr_data <- lines_wrap(
-        "transformed_data",
-        cgvars[[i]]$family,
-        cgvars[[i]],
-        idt
+        "transformed_data", cgvars[[i]]$family, cgvars[[i]], idt, backend
       )
     } else {
       j <- cg_idx[1L]
       cvars[[j]]$default <- lines_wrap(
-        "transformed_data",
-        "default",
-        cvars[[j]],
-        idt
+        "transformed_data", "default", cvars[[j]], idt, backend
       )
       tr_data <- lines_wrap(
-        "transformed_data",
-        cvars[[j]]$family,
-        cvars[[j]],
-        idt
+        "transformed_data", cvars[[j]]$family, cvars[[j]], idt, backend
       )
     }
     declarations[i] <- tr_data$declarations
@@ -183,7 +187,7 @@ create_transformed_data <- function(idt, cvars, cgvars, cg) {
 #' @describeIn create_function Create the 'Parameters'
 #'   Block of the Stan Model Code
 #' @noRd
-create_parameters <- function(idt, cvars, cgvars, cg) {
+create_parameters <- function(idt, cvars, cgvars, cg, backend) {
   spline_def <- attr(cvars, "spline_def")
   spline_text <- ifelse_(
     is.null(spline_def),
@@ -234,10 +238,7 @@ create_parameters <- function(idt, cvars, cgvars, cg) {
       univariate <- ""
       for (j in cg_idx) {
         cvars[[j]]$default <- lines_wrap(
-          "parameters",
-          "default",
-          cvars[[j]],
-          idt
+          "parameters", "default", cvars[[j]], idt, backend
         )
         univariate <- ifelse_(
           has_univariate(cgvars[[i]]$family),
@@ -247,7 +248,8 @@ create_parameters <- function(idt, cvars, cgvars, cg) {
               "parameters",
               get_univariate(cvars[[j]]$family),
               cvars[[j]],
-              idt
+              idt,
+              backend
             )
           ),
           paste_rows(univariate, cvars[[j]]$default)
@@ -255,25 +257,15 @@ create_parameters <- function(idt, cvars, cgvars, cg) {
       }
       cgvars[[i]]$univariate <- univariate
       parameters_text[i] <- lines_wrap(
-        "parameters",
-        cgvars[[i]]$family,
-        cgvars[[i]],
-        idt
+        "parameters", cgvars[[i]]$family, cgvars[[i]], idt, backend
       )
-
     } else {
       j <- cg_idx[1L]
       cvars[[j]]$default <- lines_wrap(
-        "parameters",
-        "default",
-        cvars[[j]],
-        idt
+        "parameters", "default", cvars[[j]], idt, backend
       )
       parameters_text[i] <- lines_wrap(
-        "parameters",
-        cvars[[j]]$family,
-        cvars[[j]],
-        idt
+        "parameters", cvars[[j]]$family, cvars[[j]], idt, backend
       )
     }
   }
@@ -291,7 +283,7 @@ create_parameters <- function(idt, cvars, cgvars, cg) {
 #' @describeIn create_function Create the 'Transformed Parameters'
 #'   Block of the Stan Model Code
 #' @noRd
-create_transformed_parameters <- function(idt, cvars, cgvars, cg) {
+create_transformed_parameters <- function(idt, cvars, cgvars, cg, backend) {
   random_text <- ""
   M <- attr(cvars, "random_def")$M
   if (M > 0L) {
@@ -379,28 +371,19 @@ create_transformed_parameters <- function(idt, cvars, cgvars, cg) {
       cgvars[[i]]$default <- lapply(
         cvars[cg_idx],
         function(x) {
-          lines_wrap("transformed_parameters", "default", x, idt)
+          lines_wrap("transformed_parameters", "default", x, idt, backend)
         }
       )
       tr_pars <- lines_wrap(
-        "transformed_parameters",
-        cgvars[[i]]$family,
-        cgvars[[i]],
-        idt
+        "transformed_parameters", cgvars[[i]]$family, cgvars[[i]], idt, backend
       )
     } else {
       j <- cg_idx[1L]
       cvars[[j]]$default <- lines_wrap(
-        "transformed_parameters",
-        "default",
-        cvars[[j]],
-        idt
+        "transformed_parameters", "default", cvars[[j]], idt, backend
       )
       tr_pars <- lines_wrap(
-        "transformed_parameters",
-        cvars[[j]]$family,
-        cvars[[j]],
-        idt
+        "transformed_parameters", cvars[[j]]$family, cvars[[j]], idt, backend
       )
     }
     declarations[i] <- tr_pars$declarations
@@ -441,7 +424,7 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
         ),
         paste_rows(
           "{{",
-          "row_vector[M] nu_tmp[N];",
+          stan_array(backend, "row_vector", "nu_tmp", "N", dims = "M"),
           "for (i in 1:N) {{",
           "nu_tmp[i] = nu_raw[i, ];",
           "}}",
@@ -577,14 +560,17 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
       model_text[i] <- lines_wrap(
         "model", cgvars[[i]]$family,
         list(cvars = cvars[cg_idx], cgvars = cgvars[[i]]),
-        idt
+        idt,
+        backend
       )
     } else {
       j <- cg_idx[1L]
       cvars[[j]]$backend <- backend
       cvars[[j]]$priors <- do.call(prior_lines, c(cvars[[j]], idt = idt))
       cvars[[j]]$intercept <- do.call(intercept_lines, cvars[[j]])
-      model_text[i] <- lines_wrap("model", cvars[[j]]$family, cvars[[j]], idt)
+      model_text[i] <- lines_wrap(
+        "model", cvars[[j]]$family, cvars[[j]], idt, backend
+      )
     }
   }
   paste_rows(
@@ -601,7 +587,7 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
 #' @describeIn create_function Create the 'Generated Quantities'
 #'   Block of the Stan Model Code
 #' @noRd
-create_generated_quantities <- function(idt, cvars, cgvars, cg) {
+create_generated_quantities <- function(idt, cvars, cgvars, cg, backend) {
   gen_nu <- ""
   M <- attr(cvars, "random_def")$M
   if (M > 1 && attr(cvars, "random_def")$correlated) {
@@ -655,16 +641,10 @@ create_generated_quantities <- function(idt, cvars, cgvars, cg) {
     generated_quantities_text[i] <- ifelse_(
       is_multivariate(cgvars[[i]]$family),
       lines_wrap(
-        "generated_quantities",
-        cgvars[[i]]$family,
-        cgvars[[i]],
-        idt
+        "generated_quantities", cgvars[[i]]$family, cgvars[[i]], idt, backend
       ),
       lines_wrap(
-        "generated_quantities",
-        cvars[[j]]$family,
-        cvars[[j]],
-        idt
+        "generated_quantities", cvars[[j]]$family, cvars[[j]], idt, backend
       )
     )
   }

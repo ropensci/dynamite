@@ -4,10 +4,13 @@
 #' @param family \[`dynamitefamily`, `character(1)`]\cr A family object, a
 #'   supported family name, or `"default"`.
 #' @param args Channel specific component of `channel_vars`
+#' @param idt An indenter function.
+#' @param backend The Stan backend.
 #'   (see [create_blocks()])
 #' @noRd
-lines_wrap <- function(prefix, family, args, idt) {
+lines_wrap <- function(prefix, family, args, idt, backend) {
   args$idt <- idt
+  args$backend <- backend
   suffix <- ifelse_(
     is.dynamitefamily(family),
     family$name,
@@ -170,13 +173,27 @@ NULL
 # }
 # Data block --------------------------------------------------------------
 
+missing_data_lines <- function(y, idt, has_missing, backend) {
+  if (has_missing) {
+    paste_rows(
+      "// Missing data indicators",
+      stan_array(backend, "int", "obs_{y}", "N, T", "lower=0"),
+      stan_array(backend, "int", "n_obs_{y}", "T", "lower=0"),
+      .indent = idt(1),
+      .parse = FALSE
+    )
+  } else {
+    character(0L)
+  }
+}
+
 data_lines_default <- function(y, idt, has_missing,
                                write_beta, write_delta, write_tau,
                                write_sigma_nu,
                                beta_prior_npars = 1L, delta_prior_npars = 1L,
                                tau_prior_npars = 1L, sigma_nu_prior_npars = 1L,
                                has_random_intercept,
-                               K_fixed, K_varying, K_random, ...) {
+                               K_fixed, K_varying, K_random, backend, ...) {
   icpt <- ifelse(
     has_random_intercept,
     " - 1",
@@ -195,26 +212,53 @@ data_lines_default <- function(y, idt, has_missing,
       K_fixed + K_varying > 0L,
       "int<lower=0> K_{y}; // K_fixed + K_varying"
     ),
-    onlyif(K_fixed > 0L, "int J_fixed_{y}[K_fixed_{y}];"),
-    onlyif(K_varying > 0L, "int J_varying_{y}[K_varying_{y}];"),
+    onlyif(
+      K_fixed > 0L,
+      stan_array(backend, "int", "J_fixed_{y}", "K_fixed_{y}")
+    ),
+    onlyif(
+      K_varying > 0L,
+      stan_array(backend, "int", "J_varying_{y}", "K_varying_{y}")
+    ),
     onlyif(
       K_random > re_icpt,
-      "int J_random_{y}[K_random_{y}{icpt}]; // no intercept"
+      stan_array(
+        backend,
+        "int",
+        "J_random_{y}",
+        "K_random_{y}{icpt}",
+        comment = "no intercept"
+      )
     ),
     onlyif(
       K_fixed + K_varying > 0L,
-      "int J_{y}[K_{y}]; // fixed and varying"
+      stan_array(
+        backend,
+        "int",
+        "J_{y}",
+        "K_{y}",
+        comment = "fixed and varying"
+      )
     ),
-    onlyif(K_fixed > 0L, "int L_fixed_{y}[K_fixed_{y}];"),
-    onlyif(K_varying > 0L, "int L_varying_{y}[K_varying_{y}];"),
-    onlyif(K_random > re_icpt, "int L_random_{y}[K_random_{y}{icpt}];"),
+    onlyif(
+      K_fixed > 0L,
+      stan_array(backend, "int", "L_fixed_{y}", "K_fixed_{y}")
+    ),
+    onlyif(
+      K_varying > 0L,
+      stan_array(backend, "int", "L_varying_{y}", "K_varying_{y}")
+    ),
+    onlyif(
+      K_random > re_icpt,
+      stan_array(backend, "int", "L_random_{y}", "K_random_{y}{icpt}")
+    ),
     onlyif(
       write_beta || write_delta || write_tau || write_sigma_nu,
       "// Parameters of vectorized priors"
     ),
     onlyif(
       write_beta && beta_prior_npars > 0L && K_fixed > 0L,
-        "matrix[K_fixed_{y}, {beta_prior_npars}] beta_prior_pars_{y};"
+      "matrix[K_fixed_{y}, {beta_prior_npars}] beta_prior_pars_{y};"
     ),
     onlyif(
       write_delta && delta_prior_npars > 0L && K_varying > 0L,
@@ -232,15 +276,20 @@ data_lines_default <- function(y, idt, has_missing,
   )
 }
 
-data_lines_categorical <- function(y, idt,
-                                   response = "int<lower=0> y_{y}[T, N];",
+data_lines_categorical <- function(y, idt, response = "",
                                    has_missing, write_alpha, write_beta,
                                    write_delta, write_tau,
                                    alpha_prior_npars = 1L,
                                    beta_prior_npars = 1L,
                                    delta_prior_npars = 1L, tau_prior_npars = 1L,
                                    has_random_intercept,
-                                   K_fixed, K_varying, K_random, ...) {
+                                   K_fixed, K_varying, K_random,
+                                   backend, ...) {
+  response <- ifelse_(
+    !nzchar(response),
+    stan_array(backend, "int", "y_{y}", "T, N", "lower=0"),
+    response
+  )
   icpt <- ifelse(
     has_random_intercept,
     " - 1",
@@ -250,8 +299,14 @@ data_lines_categorical <- function(y, idt,
   dtext_def <- paste_rows(
     "int<lower=0> S_{y}; // number of categories",
     onlyif(has_missing, "// Missing data indicators"),
-    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
-    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
+    onlyif(
+      has_missing,
+      stan_array(backend, "int", "obs_{y}", "N, T", "lower=0")
+    ),
+    onlyif(
+      has_missing,
+      stan_array(backend, "int", "n_obs_{y}", "T", "lower=0")
+    ),
     "// number of fixed, varying and random coefficients, and related indices",
     onlyif(K_fixed > 0L, "int<lower=0> K_fixed_{y};"),
     onlyif(K_varying > 0L, "int<lower=0> K_varying_{y};"),
@@ -263,19 +318,46 @@ data_lines_categorical <- function(y, idt,
       K_fixed + K_varying > 0L,
       "int<lower=0> K_{y}; // K_fixed + K_varying"
     ),
-    onlyif(K_fixed > 0L, "int J_fixed_{y}[K_fixed_{y}];"),
-    onlyif(K_varying > 0L, "int J_varying_{y}[K_varying_{y}];"),
+    onlyif(
+      K_fixed > 0L,
+      stan_array(backend, "int", "J_fixed_{y}", "K_fixed_{y}")
+    ),
+    onlyif(
+      K_varying > 0L,
+      stan_array(backend, "int", "J_varying_{y}", "K_varying_{y}")
+    ),
     onlyif(
       K_random > re_icpt,
-      "int J_random_{y}[K_random_{y}{icpt}]; // no intercept"
+      stan_array(
+        backend,
+        "int",
+        "J_random_{y}",
+        "K_random_{y}{icpt}",
+        comment = "no intercept"
+      )
     ),
     onlyif(
       K_fixed + K_varying > 0L,
-      "int J_{y}[K_{y}]; // fixed and varying"
+      stan_array(
+        backend,
+        "int",
+        "J_{y}",
+        "K_{y}",
+        comment = "fixed and varying"
+      )
     ),
-    onlyif(K_fixed > 0L, "int L_fixed_{y}[K_fixed_{y}];"),
-    onlyif(K_varying > 0L, "int L_varying_{y}[K_varying_{y}];"),
-    onlyif(K_random > re_icpt, "int L_random_{y}[K_random_{y}{icpt}];"),
+    onlyif(
+      K_fixed > 0L,
+      stan_array(backend, "int", "L_fixed_{y}", "K_fixed_{y}")
+    ),
+    onlyif(
+      K_varying > 0L,
+      stan_array(backend, "int", "L_varying_{y}", "K_varying_{y}")
+    ),
+    onlyif(
+      K_random > re_icpt,
+      stan_array(backend, "int", "L_random_{y}", "K_random_{y}{icpt}")
+    ),
     onlyif(
       write_alpha || write_beta || write_delta || write_tau,
       "// Parameters of vectorized priors"
@@ -309,128 +391,125 @@ data_lines_categorical <- function(y, idt,
   paste_rows(dtext_def, .parse = FALSE)
 }
 
-data_lines_multinomial <- function(y_cg, ...) {
+data_lines_multinomial <- function(y_cg, backend, ...) {
   args <- list(...)
   args$y <- y_cg
-  args$response <- "int<lower=0> y_{y}[T, N, S_{y}];"
-  #rgs <- args[names(args) %in% names(formals(data_lines_categorical))]
+  args$response <- stan_array(backend, "int", "y_{y}", "T, N, S_{y}", "lower=0")
   do.call(data_lines_categorical, args = args)
 }
 
-data_lines_gaussian <- function(y, idt, default, has_missing, ...) {
+data_lines_gaussian <- function(y, idt, default, has_missing, backend, ...) {
   paste_rows(
-    onlyif(has_missing, "// Missing data indicators"),
-    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
-    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
+    missing_data_lines(y, idt, has_missing, backend),
     default,
     "matrix[N, T] y_{y};",
-    .indent = idt(c(1, 1, 1, 0, 1))
+    .indent = idt(c(0, 0, 1))
   )
 }
 
-data_lines_mvgaussian <- function(y_cg, idt, default, has_missing, ...) {
+data_lines_mvgaussian <- function(y_cg, idt, default, has_missing,
+                                  backend, ...) {
   paste_rows(
     onlyif(has_missing, "// Missing data indicators"),
-    onlyif(has_missing, "int<lower=0> obs_{y_cg}[N, T];"),
-    onlyif(has_missing, "int<lower=0> n_obs_{y_cg}[T];"),
+    onlyif(
+      has_missing,
+      stan_array(backend, "int", "obs_{y_cg}", "N, T", "lower=0")
+    ),
+    onlyif(
+      has_missing,
+      stan_array(backend, "int", "n_obs_{y_cg}", "T", "lower=0")
+    ),
     default,
     "int<lower=0> O_{y_cg};",
-    "vector[O_{y_cg}] y_{y_cg}[T, N];",
+    stan_array(backend, "vector", "y_{y_cg}", "T, N", dims = "O_{y_cg}"),
     .indent = idt(c(1, 1, 1, 0, 1, 1))
   )
 }
 
-data_lines_binomial <- function(y, idt, default, has_missing, ...) {
+data_lines_binomial <- function(y, idt, default, has_missing, backend, ...) {
   paste_rows(
-    onlyif(has_missing, "// Missing data indicators"),
-    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
-    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
+    missing_data_lines(y, idt, has_missing, backend),
     default,
-    "int<lower=0> y_{y}[T, N];",
+    stan_array(backend, "int", "y_{y}", "T, N", "lower=0"),
     "// Trials for binomial response {y}",
-    "int<lower=1> trials_{y}[T, N];",
-    .indent = idt(c(1, 1, 1, 0, 1, 1, 1))
+    stan_array(backend, "int", "trials_{y}", "T, N", "lower=1"),
+    .indent = idt(c(0, 0, 1, 1, 1))
   )
 }
 
-data_lines_bernoulli <- function(y, idt, default, has_missing, ...) {
+data_lines_bernoulli <- function(y, idt, default, has_missing, backend, ...) {
   paste_rows(
-    onlyif(has_missing, "// Missing data indicators"),
-    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
-    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
+    missing_data_lines(y, idt, has_missing, backend),
     default,
-    "int<lower=0,upper=1> y_{y}[T, N];",
-    .indent = idt(c(1, 1, 1, 0, 1))
+    stan_array(backend, "int", "y_{y}", "T, N", "lower=0,upper=1"),
+    .indent = idt(c(0, 0, 1))
   )
 }
 
-data_lines_poisson <- function(y, idt, default, has_missing, has_offset, ...) {
+data_lines_poisson <- function(y, idt, default, has_missing, has_offset,
+                               backend, ...) {
   paste_rows(
-    onlyif(has_missing, "// Missing data indicators"),
-    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
-    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
+    missing_data_lines(y, idt, has_missing, backend),
     default,
-    "int<lower=0> y_{y}[T, N];",
+    stan_array(backend, "int", "y_{y}", "T, N", "lower=0"),
     "// Offset term",
-    onlyif(has_offset, "real offset_{y}[T, N];"),
-    .indent = idt(c(1, 1, 1, 0, 1, 1, 1))
+    onlyif(
+      has_offset,
+      stan_array(backend, "real", "offset_{y}", "T, N")
+    ),
+    .indent = idt(c(0, 0, 1, 1, 1))
   )
 }
 
-data_lines_negbin <- function(y, idt, default, has_missing, has_offset, ...) {
+data_lines_negbin <- function(y, idt, default, has_missing, has_offset,
+                              backend, ...) {
   paste_rows(
-    onlyif(has_missing, "// Missing data indicators"),
-    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
-    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
+    missing_data_lines(y, idt, has_missing, backend),
     default,
-    "int<lower=0> y_{y}[T, N];",
+    stan_array(backend, "int", "y_{y}", "T, N", "lower=0"),
     "// Offset term",
-    onlyif(has_offset, "real offset_{y}[T, N];"),
-    .indent = idt(c(1, 1, 1, 0, 1, 1, 1))
+    onlyif(
+      has_offset,
+      stan_array(backend, "real", "offset_{y}", "T, N")
+    ),
+    .indent = idt(c(0, 0, 1, 1, 1))
   )
 }
 
-data_lines_exponential <- function(y, idt, default, has_missing, ...) {
+data_lines_exponential <- function(y, idt, default, has_missing,
+                                   backend, ...) {
   paste_rows(
-    onlyif(has_missing, "// Missing data indicators"),
-    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
-    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
+    missing_data_lines(y, idt, has_missing, backend),
     default,
     "matrix<lower=0>[N, T] y_{y};",
-    .indent = idt(c(1, 1, 1, 0, 1))
+    .indent = idt(c(0, 0, 1))
   )
 }
 
-data_lines_gamma <- function(y, idt, default, has_missing, ...) {
+data_lines_gamma <- function(y, idt, default, has_missing, backend,  ...) {
   paste_rows(
-    onlyif(has_missing, "// Missing data indicators"),
-    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
-    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
+    missing_data_lines(y, idt, has_missing, backend),
     default,
     "matrix<lower=0>[N, T] y_{y};",
-    .indent = idt(c(1, 1, 1, 0, 1))
+    .indent = idt(c(0, 0, 1))
   )
 }
 
-data_lines_beta <- function(y, idt, default, has_missing, ...) {
+data_lines_beta <- function(y, idt, default, has_missing, backend, ...) {
   paste_rows(
-    onlyif(has_missing, "// Missing data indicators"),
-    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
-    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
+    missing_data_lines(y, idt, has_missing, backend),
     default,
     "matrix<lower=0, upper=1>[N, T] y_{y};",
-    .indent = idt(c(1, 1, 1, 0, 1))
+    .indent = idt(c(0, 0, 1))
   )
 }
 
-data_lines_student <- function(y, idt, default, has_missing, ...) {
+data_lines_student <- function(y, idt, default, has_missing, backend, ...) {
   paste_rows(
-    onlyif(has_missing, "// Missing data indicators"),
-    onlyif(has_missing, "int<lower=0> obs_{y}[N, T];"),
-    onlyif(has_missing, "int<lower=0> n_obs_{y}[T];"),
+    missing_data_lines(y, idt, has_missing, backend),
     default,
     "matrix[N, T] y_{y};",
-    .indent = idt(c(1, 1, 1, 0, 1))
+    .indent = idt(c(0, 0, 1))
   )
 }
 
@@ -561,7 +640,7 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
 
 parameters_lines_categorical <- function(y, idt, noncentered, lb, has_fixed,
                                          has_varying, has_fixed_intercept,
-                                         has_varying_intercept, ...) {
+                                         has_varying_intercept, backend, ...) {
   oname <- ifelse_(noncentered, "omega_raw_", "omega_")
   paste_rows(
     onlyif(
@@ -570,7 +649,14 @@ parameters_lines_categorical <- function(y, idt, noncentered, lb, has_fixed,
     ),
     onlyif(
       has_varying,
-      "matrix[K_varying_{y}, D] {oname}{y}[S_{y} - 1]; // Spline coefficients"
+      stan_array(
+        backend,
+        "martix",
+        "{oname}{y}",
+        "S_{y} - 1",
+        dims = "K_varying_{y}, D",
+        comment = "Spline coefficients"
+      )
     ),
     onlyif(
       has_varying,
@@ -583,9 +669,13 @@ parameters_lines_categorical <- function(y, idt, noncentered, lb, has_fixed,
     ),
     onlyif(
       has_varying_intercept,
-      paste0(
-        "row_vector[D - 1] omega_raw_alpha_{y}[S_{y} - 1]; ",
-        "// Coefficients for alpha"
+      stan_array(
+        backend,
+        "row_vector",
+        "omega_raw_alpha_{y}",
+        "S_{y} - 1",
+        dims = "D - 1",
+        comment = "Coefficients for alpha"
       )
     ),
     onlyif(
@@ -679,7 +769,8 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
                                                  L_fixed, L_varying,
                                                  has_lfactor,
                                                  noncentered_psi,
-                                                 nonzero_lambda, ...) {
+                                                 nonzero_lambda,
+                                                 backend, ...) {
   if (noncentered) {
     xi_term <- ifelse_(shrinkage, " * xi[i - 1];", ";")
     declare_omega <- paste_rows(
@@ -730,7 +821,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
 
   declare_delta <- paste_rows(
     "// Time-varying coefficients",
-    "vector[K_varying_{y}] delta_{y}[T];",
+    stan_array(backend, "vector", "delta_{y}", "T", dims = "K_varying_{y}"),
     .indent = idt(1),
     .parse = FALSE
   )
@@ -756,7 +847,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
   if (has_fixed || has_varying) {
     declare_omega_alpha_1 <- paste_rows(
       "// Time-varying intercept",
-      "real alpha_{y}[T];",
+      stan_array(backend, "real", "alpha_{y}", "T"),
       "// Spline coefficients",
       "real omega_alpha_1_{y};",
       .indent = idt(1),
@@ -787,7 +878,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
   } else {
     declare_omega_alpha_1 <- paste_rows(
       "// Time-invariant intercept",
-      "real alpha_{y}[T];",
+      stan_array(backend, "real", "alpha_{y}", "T"),
       "real omega_alpha_1_{y} = a_{y};",
       .indent = idt(1),
       .parse = FALSE
@@ -881,12 +972,18 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
                                                      has_varying_intercept,
                                                      J, K, K_fixed, K_varying,
                                                      L_fixed, L_varying,
-                                                     S, ...) {
+                                                     S, backend, ...) {
   if (noncentered) {
     xi_term <- ifelse_(shrinkage, " * xi[i - 1];", ";")
     declare_omega <- paste_rows(
       "// Spline coefficients",
-      "matrix[K_varying_{y}, D] omega_{y}[S_{y} - 1];",
+      stan_array(
+        backend,
+        "matrix",
+        "omega_{y}",
+        "S_{y} - 1",
+        dims = "K_varying_{y}, D"
+      ),
       .indent = idt(1),
       .parse = FALSE
     )
@@ -906,7 +1003,13 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
   }
   declare_delta <- paste_rows(
     "// Varying coefficients",
-    "matrix[K_varying_{y}, S_{y} - 1] delta_{y}[T];",
+    stan_array(
+      backend,
+      "matrix",
+      "delta_{y}",
+      "T",
+      dims = "K_varying_{y}, S_{y} - 1"
+    ),
     .indent = idt(1),
     .parse = FALSE
   )
@@ -923,8 +1026,8 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
   if (has_fixed || has_varying) {
     declare_omega_alpha_1 <- paste_rows(
       "// Fixed intercept",
-      "vector[S_{y} - 1] alpha_{y}[T];",
-      "real omega_alpha_1_{y}[S_{y} - 1];",
+      stan_array(backend, "vector", "alpha_{y}", "T", dims = "S_{y} - 1"),
+      stan_array(backend, "real", "omega_alpha_1_{y}", "S_{y} - 1"),
       .indent = idt(1),
       .parse = FALSE
     )
@@ -970,8 +1073,8 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
   } else {
     declare_omega_alpha_1 <- paste_rows(
       "// Fixed intercept",
-      "vector[S_{y} - 1] alpha_{y}[T];",
-      "real omega_alpha_1_{y}[S_{y} - 1];",
+      stan_array(backend, "vector", "alpha_{y}", "T", dims = "S_{y} - 1"),
+      stan_array(backend, "real", "omega_alpha_1_{y}", "S_{y} - 1"),
       .indent = idt(1),
       .parse = FALSE
     )
@@ -1000,7 +1103,13 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
     xi_term <- ifelse_(shrinkage, " * xi[i - 1];", ";")
     declare_omega_alpha <- paste_rows(
       "// Spline coefficients",
-      "row_vector[D] omega_alpha_{y}[S_{y} - 1];",
+      stan_array(
+        backend,
+        "row_vector",
+        "omega_alpha_{y}",
+        "S_{y} - 1",
+        dims = "D"
+      ),
       .indent = idt(1),
       .parse = FALSE
     )
@@ -1020,7 +1129,13 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
   } else {
     declare_omega_alpha <- paste_rows(
       "// Spline coefficients",
-      "row_vector[D] omega_alpha_{y}[S_{y} - 1];",
+      stan_array(
+        backend,
+        "row_vector",
+        "omega_alpha_{y}",
+        "S_{y} - 1",
+        dims = "D"
+      ),
       .indent = idt(1),
       .parse = FALSE
     )

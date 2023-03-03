@@ -3,6 +3,10 @@
   * Added support for Student's t-distribution via `"student"` family in `obs`.
   * Added support for the multinomial distribution via `"multinomial"` family 
     in  `obs`.
+  * The generated Stan code now automatically switches between the array 
+    keyword syntax and the deprecated syntax based on the backend Stan version
+    (see https://mc-stan.org/docs/reference-manual/brackets-array-syntax.html
+    for details).
 
 # dynamite 1.2.1
 
