@@ -31,10 +31,10 @@ package and the underlying methodology from many other approaches are:
   channels) based directly on the assumed data generating process.
   Individual channels can be univariate or multivariate.
 - Support for various distributions: Currently Gaussian, Multivariate
-  Gaussian, Student t, Categorical, Poisson, Bernoulli, Binomial,
-  Negative Binomial, Gamma, Exponential, and Beta distributions are
-  available, and these can be combined arbitrarily in multichannel
-  models.
+  Gaussian, Student t, Categorical, Multinomial, Poisson, Bernoulli,
+  Binomial, Negative Binomial, Gamma, Exponential, and Beta
+  distributions are available, and these can be combined arbitrarily in
+  multichannel models.
 - Allows evaluating realistic long-term counterfactual predictions which
   take into account the dynamic structure of the model by posterior
   predictive distribution simulation.
@@ -95,8 +95,8 @@ gaussian_example_fit
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  4.833  2.656
-#> chain:2  4.805  2.801
+#> chain:1  4.919  2.702
+#> chain:2  4.912  2.869
 #> 
 #> Summary statistics of the time- and group-invariant parameters:
 #> # A tibble: 6 × 10

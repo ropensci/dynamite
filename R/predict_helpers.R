@@ -483,14 +483,15 @@ prepare_eval_envs <- function(object, simulated, observed,
                               new_levels, group_var) {
   samples <- rstan::extract(object$stanfit)
   channel_vars <- object$stan$channel_vars
+  channel_group_vars <- object$stan$channel_group_vars
   cg <- attr(object$dformulas$all, "channel_groups")
   n_cg <- length(unique(cg))
   eval_envs <- vector(mode = "list", length = n_cg)
   idx_draws <- seq_len(n_draws)
   rand <- which_random(object$dformulas$all)
-  nu_channels <- get_names(object$dformulas$all)[rand]
   n_group <- n_unique(observed[[group_var]])
   k <- 0L # index of channel_vars
+  l <- 0L # index of channel_group_vars
   orig_ids <- unique(object$data[[group_var]])
   new_ids <- unique(observed[[group_var]])
   extra_levels <- unique(new_ids[!new_ids %in% orig_ids])
@@ -504,8 +505,29 @@ prepare_eval_envs <- function(object, simulated, observed,
              identifiability constraints."
     )
   )
-  if (length(nu_channels) > 0L) {
+  if (length(rand) > 0L) {
     n_all_draws <- ndraws(object)
+    nu_channels <- c(
+      ulapply(
+        object$stan$channel_vars,
+        function(channel) {
+          onlyif(
+            channel$has_random_intercept || channel$has_random,
+            channel$y
+          )
+        }
+      ),
+      ulapply(
+        object$stan$channel_group_vars,
+        function(channel) {
+          onlyif(
+            !has_univariate(channel$family) &&
+              (channel$has_random_intercept || channel$has_random),
+            channel$y_cg
+          )
+        }
+      )
+    )
     sigma_nus <- glue::glue("sigma_nu_{nu_channels}")
     sigma_nu <- t(
       do.call("cbind", samples[sigma_nus])[idx_draws, , drop = FALSE]
@@ -543,6 +565,7 @@ prepare_eval_envs <- function(object, simulated, observed,
       eval_envs[[i]] <- list()
       next
     }
+    l <- l + 1L
     e <- new.env()
     e$resp_family <- resp_family
     e$out <- simulated
@@ -553,12 +576,26 @@ prepare_eval_envs <- function(object, simulated, observed,
     if (is_multivariate(resp_family)) {
       k <- k + length(cg_idx)
       resp <- get_responses(object$dformulas$all[cg_idx])
+      if (is_multinomial(resp_family)) {
+        e$resp_levels <- resp
+        prepare_eval_env_univariate(
+          e = e,
+          resp = paste(resp, collapse = "_"),
+          cvars = channel_group_vars[[l]],
+          samples = samples,
+          has_random = all(cg_idx %in% rand),
+          nu_samples = nu_samples,
+          idx = idx_draws,
+          type = type,
+          eval_type = eval_type
+        )
+      }
       prepare_eval_env_multivariate(
         e = e,
         resp = resp,
         cvars = channel_vars[cg_idx],
         samples = samples,
-        nu_channels = nu_channels,
+        has_random = cg_idx %in% rand,
         nu_samples = nu_samples,
         idx = idx_draws,
         type = type,
@@ -582,7 +619,7 @@ prepare_eval_envs <- function(object, simulated, observed,
         resp_levels = resp_levels,
         cvars = channel_vars[[k]],
         samples = samples,
-        nu_channels = nu_channels,
+        has_random = j %in% rand,
         nu_samples = nu_samples,
         idx = idx_draws,
         type = type,
@@ -598,7 +635,7 @@ prepare_eval_envs <- function(object, simulated, observed,
 #'
 #' @noRd
 prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars, samples,
-                                        nu_channels, nu_samples,
+                                        has_random, nu_samples,
                                         idx, type, eval_type) {
   alpha <- paste0("alpha_", resp)
   beta <- paste0("beta_", resp)
@@ -618,11 +655,11 @@ prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars, samples,
   e$resp <- resp
   e$phi <- c(samples[[phi]][idx])
   e$sigma <- c(samples[[sigma]][idx])
-  if (resp %in% nu_channels) {
+  if (has_random) {
     nus <- make.unique(rep(paste0("nu_", resp), e$K_random))
     e$nu <- nu_samples[, , nus, drop = FALSE]
   }
-  if (is_categorical(e$resp_family)) {
+  if (is_categorical(e$resp_family) || is_multinomial(e$resp_family)) {
     e$S <- length(e$resp_levels)
     e$link_cols <- paste0(resp, "_link_", resp_levels)
     e$mean_cols <- paste0(resp, "_mean_", resp_levels)
@@ -700,7 +737,7 @@ generate_sim_call_univariate <- function(resp,
                                          has_varying_intercept,
                                          has_random_intercept,
                                          has_offset, has_lfactor) {
-  if (is_categorical(resp_family)) {
+  if (is_categorical(resp_family) || is_multinomial(resp_family)) {
     out <- paste0(
       "{\n",
       "idx_draw <- seq.int(1L, n_draws) - n_draws\n",
@@ -747,11 +784,11 @@ generate_sim_call_univariate <- function(resp,
         ""
       ),
       "\n",
-      glue::glue(predict_expr[[eval_type]]$categorical),
+      glue::glue(predict_expr[[eval_type]][[resp_family$name]]),
       "\n",
       ifelse_(
         identical(type, "mean") && identical(eval_type, "predicted"),
-        glue::glue(predict_expr$mean$categorical),
+        glue::glue(predict_expr$mean[[resp_family$name]]),
         ""
       ),
       "}"
@@ -828,7 +865,7 @@ generate_sim_call_univariate <- function(resp,
 #'
 #' @noRd
 prepare_eval_env_multivariate <- function(e, resp, cvars, samples,
-                                          nu_channels, nu_samples,
+                                          has_random, nu_samples,
                                           idx, type, eval_type) {
   d <- length(resp)
   e$d <- d
@@ -875,7 +912,7 @@ prepare_eval_env_multivariate <- function(e, resp, cvars, samples,
     e[[K_random]] <- cvars[[i]]$K_randon
     e[[phi]] <- c(samples[[phi]][idx])
     e$sigma[, i] <- c(samples[[sigma]][idx])
-    if (yi %in% nu_channels) {
+    if (has_random[i]) {
       nus <- make.unique(rep(paste0("nu_", yi), e[[K_random]]))
       e[[nu]] <- nu_samples[, , nus, drop = FALSE]
     }
@@ -1034,6 +1071,18 @@ predict_expr$fitted$categorical <- "
   }}
 "
 
+predict_expr$fitted$multinomial <- "
+  mval <- exp(xbeta - log_sum_exp_rows(xbeta))
+  for (s in 1:S) {{
+    data.table::set(
+      x = out,
+      i = idx,
+      j = fitted_cols[s],
+      value = n * mval[, s]
+    )
+  }}
+"
+
 predict_expr$fitted$bernoulli <- "
   data.table::set(
     x = out,
@@ -1073,6 +1122,11 @@ predict_expr$fitted$gamma <- "
 predict_expr$fitted$beta <- "
   data.table::set(x = out, i = idx, j = '{resp}_fitted', value = plogis(xbeta))
 "
+
+predict_expr$fitted$student <- "
+  data.table::set(x = out, i = idx, j = '{resp}_fitted', value = xbeta)
+"
+
 # Predicted expressions ---------------------------------------------------
 
 predict_expr$predicted <- list()
@@ -1112,6 +1166,22 @@ predict_expr$predicted$categorical <- "
     j = '{resp}',
     value = max.col(xbeta - log(-log(runif(S * k))))[idx_out]
   )
+"
+
+predict_expr$predicted$multinomial <- "
+  pred <- matrix(0L, k, S)
+  for (j in seq_len(n)) {{
+    s <- max.col(xbeta - log(-log(runif(S * k))))
+    pred[ ,s] <- pred[, s] + 1L
+  }}
+  for (s in seq_len(S)) {{
+    data.table::set(
+      x = out,
+      i = idx_data,
+      j = resp[s],
+      value = pred[idx_out, s]
+    )
+  }}
 "
 
 predict_expr$predicted$binomial <- "
@@ -1182,6 +1252,14 @@ predict_expr$predicted$beta <- "
   )
 "
 
+predict_expr$predicted$student <- "
+  data.table::set(
+    x = out,
+    i = idx_data,
+    j = '{resp}',
+    value = (xbeta + sigma * rt(k, phi))[idx_out]
+  )
+"
 
 # Mean expressions --------------------------------------------------------
 
@@ -1208,9 +1286,19 @@ predict_expr$mean$mvgaussian <- "
 "
 
 predict_expr$mean$categorical <- "
-  mean_cols <- c({
-    paste0('\"', resp, '_mean_', resp_levels, '\"', collapse = ', ')
-  })
+  maxs <- apply(xbeta, 1, max)
+  mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+  for (s in 1:S) {{
+    data.table::set(
+      x = out,
+      i = idx_data,
+      j = mean_cols[s],
+      value = mval[idx_out, s]
+    )
+  }}
+"
+
+predict_expr$mean$multinomial <- "
   maxs <- apply(xbeta, 1, max)
   mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
   for (s in 1:S) {{
@@ -1286,6 +1374,15 @@ predict_expr$mean$beta <- "
   )
 "
 
+predict_expr$mean$student <- "
+  data.table::set(
+    x = out,
+    i = idx_data,
+    j = '{resp}_mean',
+    value = xbeta[idx_out]
+  )
+"
+
 # Log-likelihood expressions ----------------------------------------------
 
 predict_expr$loglik <- list()
@@ -1325,6 +1422,15 @@ predict_expr$loglik$categorical <- "
     x = out,
     i = idx,
     j = '{resp}_loglik',
+    value = xbeta[cbind(seq_along(y), y)] - log_sum_exp_rows(xbeta)
+  )
+"
+
+predict_expr$loglik$multinomial <- "
+  data.table::set(
+    x = out,
+    i = idx,
+    j = paste(c(resp, 'loglik'), collapse = '_'),
     value = xbeta[cbind(seq_along(y), y)] - log_sum_exp_rows(xbeta)
   )
 "
@@ -1394,5 +1500,14 @@ predict_expr$loglik$beta <- "
     i = idx,
     j = '{resp}_loglik',
     value = dbeta(y,  mu * phi, (1 - mu) * phi, log = TRUE)
+  )
+"
+
+predict_expr$loglik$student <- "
+  data.table::set(
+    x = out,
+    i = idx,
+    j = '{resp}_loglik',
+    value = dt((y - xbeta)/sigma, phi, log = TRUE)
   )
 "

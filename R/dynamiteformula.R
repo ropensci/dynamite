@@ -282,6 +282,7 @@ parse_formula <- function(x, original, family) {
   formula_parts <- strsplit(formula_str, "|", fixed = TRUE)[[1L]]
   n_formulas <- length(formula_parts)
   n_responses <- length(responses)
+  mn <- is_multinomial(family)
   mvf <- is_multivariate(family)
   mvc <- n_responses > 1L
   stopifnot_(
@@ -294,9 +295,17 @@ parse_formula <- function(x, original, family) {
   )
   stopifnot_(
     !mvc || n_formulas == n_responses || n_formulas == 1L,
-    "Number of component formulas ({n_formulas}) must be 1 or
-     the number of dimensions: {n_responses}."
+    c(
+      "Number of component formulas must be 1 or
+       the number of dimensions: {n_responses}",
+      `x` = "{n_formulas} formulas were provided."
+    )
   )
+  #stopifnot_(
+  #  (mvf && !mn) || (mn && n_formulas == 1L),
+  #  "Only a single formula must be provided for
+  #   univariate and multinomial channels."
+  #)
   formula_parts <- ifelse_(
     n_formulas == 1L,
     rep(formula_parts, n_responses),

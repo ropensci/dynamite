@@ -406,8 +406,9 @@ test_that("invalid number of multivariate formula components fails", {
   expect_error(
     obs(c(y1, y2) ~ x | x | x, family = "mvgaussian"),
     paste0(
-      "Number of component formulas \\(3\\) must be 1 ",
-      "or the number of dimensions: 2\\."
+      "Number of component formulas must be 1 ",
+      "or the number of dimensions: 2\n",
+      "x 3 formulas were provided."
     )
   )
 })

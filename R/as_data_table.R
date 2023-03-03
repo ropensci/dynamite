@@ -134,6 +134,10 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       attr(x$stan$responses, "resp_class")[[response]],
       "levels"
     )[-1L]
+    channel <- get_channel(x, response)
+    if (is_multinomial(channel$family)) {
+      category <- channel$y[-1L]
+    }
     if (is.null(category)) {
       category <- NA
     }
@@ -280,6 +284,14 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   out
 }
 
+get_channel <- function(x, response) {
+  if (is.null(x$stan$channel_vars[[response]])) {
+    x$stan$channel_group_vars[[response]]
+  } else {
+    x$stan$channel_vars[[response]]
+  }
+}
+
 #' Construct a Data Table for a Parameter Type from a `dynamitefit` Object
 #'
 #' Arguments for all as_data_frame_type functions are documented here.
@@ -329,13 +341,13 @@ as_data_table_corr_nu <- function(x, draws, n_draws, ...) {
 #' @noRd
 as_data_table_nu <- function(x, draws, n_draws, response, ...) {
   icpt <- ifelse_(
-    x$stan$channel_vars[[response]]$has_random_intercept,
+    get_channel(x, response)$has_random_intercept,
     "alpha",
     NULL
   )
   var_names <- paste0(
     "nu_", response, "_",
-    c(icpt, names(x$stan$channel_vars[[response]]$J_random))
+    c(icpt, names(get_channel(x, response)$J_random))
   )
   n_vars <- length(var_names)
   groups <- sort(unique(x$data[[x$group_var]]))
@@ -354,7 +366,7 @@ as_data_table_alpha <- function(x, draws, n_draws,
   n_cat <- length(category)
   fixed <- x$stan$fixed
   all_time_points <- sort(unique(x$data[[x$time_var]]))
-  if (x$stan$channel_vars[[response]]$has_varying_intercept) {
+  if (get_channel(x, response)$has_varying_intercept) {
     time_points <- ifelse_(
       include_fixed,
       all_time_points,
@@ -390,7 +402,7 @@ as_data_table_alpha <- function(x, draws, n_draws,
 as_data_table_beta <- function(x, draws, n_draws, response, category, ...) {
   var_names <- paste0(
     "beta_", response, "_",
-    names(x$stan$channel_vars[[response]]$J_fixed)
+    names(get_channel(x, response)$J_fixed)
   )
   n_vars <- length(var_names)
   data.table::data.table(
@@ -409,7 +421,7 @@ as_data_table_delta <- function(x, draws, n_draws,
   all_time_points <- sort(unique(x$data[[x$time_var]]))
   var_names <- paste0(
     "delta_", response, "_",
-    names(x$stan$channel_vars[[response]]$J_varying)
+    names(get_channel(x, response)$J_varying)
   )
   n_vars <- length(var_names)
   time_points <- ifelse_(
@@ -441,7 +453,7 @@ as_data_table_delta <- function(x, draws, n_draws,
 as_data_table_tau <- function(x, draws, n_draws, response, ...) {
   var_names <- paste0(
     "tau_", response, "_",
-    names(x$stan$channel_vars[[response]]$J_varying)
+    names(get_channel(x, response)$J_varying)
   )
   data.table::data.table(
     parameter = rep(var_names, each = n_draws),
@@ -456,7 +468,7 @@ as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
   D <- x$stan$sampling_vars$D
   var_names <- paste0(
     "omega_", response, "_",
-    names(x$stan$channel_vars[[response]]$J_varying)
+    names(get_channel(x, response)$J_varying)
   )
   k <- length(var_names)
   data.table::data.table(
@@ -504,13 +516,13 @@ as_data_table_sigma <- function(draws, response, ...) {
 #' @noRd
 as_data_table_sigma_nu <- function(x, draws, n_draws, response, ...) {
   icpt <- ifelse_(
-    x$stan$channel_vars[[response]]$has_random_intercept,
+    get_channel(x, response)$has_random_intercept,
     "alpha",
     NULL
   )
   var_names <- paste0(
     "sigma_nu_", response, "_",
-    c(icpt, names(x$stan$channel_vars[[response]]$J_random))
+    c(icpt, names(get_channel(x, response)$J_random))
   )
   data.table::data.table(
     parameter = rep(var_names, each = n_draws),

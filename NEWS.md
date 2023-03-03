@@ -1,6 +1,8 @@
 # dynamite 1.3.0
 
   * Added support for Student's t-distribution via `"student"` family in `obs`.
+  * Added support for the multinomial distribution via `"multinomial"` family 
+    in  `obs`.
 
 # dynamite 1.2.1
 

@@ -34,7 +34,7 @@ The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use i
 
 * Support for regular time-invariant effects, group-level random effects, and time-varying effects modeled via Bayesian P-splines.
 * Joint modeling of multiple measurements per individual (multiple channels) based directly on the assumed data generating process. Individual channels can be univariate or multivariate.
-* Support for various distributions: Currently Gaussian, Multivariate Gaussian, Student t, Categorical, Poisson, Bernoulli, Binomial, Negative Binomial, Gamma, Exponential, and Beta distributions are available, and these can be combined arbitrarily in multichannel models.
+* Support for various distributions: Currently Gaussian, Multivariate Gaussian, Student t, Categorical, Multinomial, Poisson, Bernoulli, Binomial, Negative Binomial, Gamma, Exponential, and Beta distributions are available, and these can be combined arbitrarily in multichannel models.
 * Allows evaluating realistic long-term counterfactual predictions which take into account the dynamic structure of the model by posterior predictive distribution simulation.
 * Transparent quantification of parameter and predictive uncertainty due to a fully Bayesian approach.
 * User-friendly and efficient R interface with state-of-the-art estimation via Stan. Both `rstan` and `cmdstanr` backends are supported.

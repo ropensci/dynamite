@@ -1,12 +1,14 @@
 set.seed(1)
 n_id <- 100L
 n_time <- 20L
+
 d <- data.frame(
   y = sample(factor(c("a", "b", "c")), size = n_id, replace = TRUE),
   x = sample(factor(c("A", "B", "C")), size = n_id, replace = TRUE),
   time = 1,
   id = seq_len(n_id)
 )
+
 d <- dplyr::right_join(
   d,
   data.frame(
@@ -16,6 +18,7 @@ d <- dplyr::right_join(
 )
 
 d$z <- rnorm(nrow(d))
+
 f <- obs(x ~ z + lag(x) + lag(y), family = "categorical") +
   obs(y ~ z + lag(x) + lag(y), family = "categorical")
 

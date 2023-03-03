@@ -139,10 +139,9 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y) {
 #'   Standard deviation of the explanatory variables at time `fixed + 1`.
 #' @param resp_class \[`character(1)`]\cr Class of the response variable.
 #' @noRd
-default_priors_categorical <- function(y, channel, sd_x, resp_class) {
-  S_y <- length(attr(resp_class, "levels"))
+default_priors_categorical <- function(y, channel, sd_x, S_y, resp_levels) {
   # remove the first level which acts as reference
-  resp_levels <- attr(resp_class, "levels")[-1]
+  resp_levels <- resp_levels[-1L]
   sd_gamma <- signif(pmax(2 / sd_x, 1), 2)
   priors <- list()
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {

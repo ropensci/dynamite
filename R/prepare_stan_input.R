@@ -39,8 +39,8 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   responses <- list()
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
-    cg_name <- paste(resp_names[cg_idx], collapse = "_")
-    responses[[cg_name]] <- resp_names[cg_idx]
+    y_cg <- paste(resp_names[cg_idx], collapse = "_")
+    responses[[y_cg]] <- resp_names[cg_idx]
   }
   attr(responses, "resp_class") <- lapply(
     data[, .SD, .SDcols = resp],
@@ -100,7 +100,6 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   random_pars <- attr(model_matrix, "random")
   resp_classes <- attr(responses, "resp_class")
   for (i in seq_len(n_channels)) {
-    channel <- list()
     y <- resp[i]
     y_name <- resp_names[i]
     y_split <- split(
@@ -110,177 +109,102 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     )
     Y <- array(as.numeric(unlist(y_split)), dim = c(T_full, N))
     Y <- Y[T_idx, , drop = FALSE]
-    Y_na <- is.na(Y)
-    # Separate copy of Y for Stan, so that added zeros do not influence channel
-    # preparation nor influence other checks related to response variables.
-    Y_out <- Y
-    # Placeholder for NAs in Stan
-    Y_out[Y_na] <- 0.0
-    form_specials <- specials[[i]]
-    channel$y <- y_name
-    channel$family <- dformula[[i]]$family
-    indices <- list(
-      K_fixed = length(fixed_pars[[i]]),
-      K_varying = length(varying_pars[[i]]),
-      # Note! Random intercept is counted to K_random but not to J_random...
-      K_random = length(random_pars[[i]]) + dformula[[i]]$has_random_intercept,
-      K = length(fixed_pars[[i]]) + length(varying_pars[[i]]),
-      J_fixed = as.array(fixed_pars[[i]]),
-      J_varying = as.array(varying_pars[[i]]),
-      J = as.array(c(fixed_pars[[i]], varying_pars[[i]])),
-      J_random = as.array(random_pars[[i]]),
-      L_fixed = as.array(seq_along(fixed_pars[[i]])),
-      L_varying =
-        as.array(length(fixed_pars[[i]]) + seq_along(varying_pars[[i]])),
-      L_random = as.array(seq_along(random_pars[[i]]))
+    tmp <- initialize_univariate_channel(
+      dformula = dformula[[i]],
+      specials = specials[[i]],
+      fixed_pars = fixed_pars[[i]],
+      varying_pars = varying_pars[[i]],
+      random_pars = random_pars[[i]],
+      Y = Y,
+      y = y,
+      y_name = y_name,
+      group = group,
+      fixed = fixed,
+      T_full = T_full,
+      N = N,
+      X_na = X_na,
+      lb = spline_def$lb[i],
+      shrinkage = spline_def$shrinkage,
+      noncentered = spline_def$noncentered[i],
+      has_splines = has_splines,
+      has_lfactor = y %in% lfactor_def$responses,
+      noncentered_psi = lfactor_def$noncentered_psi,
+      nonzero_lambda = lfactor_def$nonzero_lambda[i]
     )
-    channel <- c(channel, indices)
-    sampling_vars <- c(
-      sampling_vars,
-      setNames(indices, paste0(names(indices), "_", y_name))
-    )
-    obs_idx <- array(0L, dim = c(N, T_full - fixed))
-    obs_len <- integer(T_full - fixed)
-    for (j in seq_len(T_full - fixed)) {
-      x_na <- X_na[j, , channel$J, drop = FALSE]
-      dim(x_na) <- c(N, channel$K)
-      y_na <- Y_na[j, ]
-      obs_XY <- which(apply(x_na, 1L, function(z) all(!z)) & !y_na)
-      obs_XY_len <- length(obs_XY)
-      obs_idx[, j] <- c(obs_XY, rep(0L, N - obs_XY_len))
-      obs_len[j] <- obs_XY_len
-    }
-    channel$has_missing <- any(obs_len < N)
-    sampling_vars[[paste0("obs_", y_name)]] <- obs_idx
-    sampling_vars[[paste0("n_obs_", y_name)]] <- obs_len
-    # obs selects complete cases if there are missing observations
-    channel$obs <- ifelse_(
-      channel$has_missing,
-      glue::glue("obs_{y_name}[1:n_obs_{y_name}[t], t]"),
-      ""
-    )
-    channel$has_fixed_intercept <- dformula[[i]]$has_fixed_intercept
-    channel$has_varying_intercept <- dformula[[i]]$has_varying_intercept
-    channel$has_random_intercept <- dformula[[i]]$has_random_intercept
-    channel$has_fixed <- channel$K_fixed > 0L
-    channel$has_varying <- channel$K_varying > 0L
-    # note! Random intercept is counted to K_random above, while has_random is
-    # for checking non-intercept terms....
-    channel$has_random <- channel$K_random > channel$has_random_intercept
-    channel$lb <- spline_def$lb[i]
-    channel$shrinkage <- spline_def$shrinkage
-    channel$noncentered <- spline_def$noncentered[i]
-    channel$has_lfactor <- y %in% lfactor_def$responses
-    channel$noncentered_psi <- lfactor_def$noncentered_psi
-    channel$nonzero_lambda <- lfactor_def$nonzero_lambda[i]
-    stopifnot_(
-      has_splines || !(channel$has_varying || channel$has_varying_intercept),
-      "Model for response variable {.var {y}} contains time-varying
-       definitions but splines have not been defined."
-    )
-    # evaluate specials such as offset and trials
-    for (spec in formula_special_funs) {
-      if (!is.null(form_specials[[spec]])) {
-        spec_split <- split(form_specials[[spec]], group)
-        spec_array <- array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
-        sampling_vars[[paste0(spec, "_", y_name)]] <-
-          spec_array[seq.int(fixed + 1L, T_full), , drop = FALSE]
-        channel[[paste0("has_", spec)]] <- TRUE
-      } else {
-        channel[[paste0("has_", spec)]] <- FALSE
-      }
-    }
-    family <- dformula[[i]]$family
-    stopifnot_(
-      !(channel$has_random || channel$has_random_intercept) ||
-        family != "categorical",
-      "Random effects are not (yet) supported for categorical responses."
-    )
-    sampling_vars[[paste0("y_", y_name)]] <- ifelse_(
-      family %in% c("gaussian", "gamma", "exponential", "beta", "student"),
-      t(Y_out),
-      Y_out
-    )
-    prep <- do.call(
-      paste0("prepare_channel_", get_univariate(family)),
-      list(
-        y = y_name,
-        Y = Y,
-        channel = channel,
-        sd_x = sd_x,
-        resp_class = resp_classes[[y]],
-        priors = priors
-      )
-    )
-    prior_list[[y_name]] <- prep$priors
-    channel_vars[[y_name]] <- prep$channel
-    vectorizable_priors <- extract_vectorizable_priors(prep$channel, y_name)
-    sampling_vars <- c(sampling_vars, prep$sampling_vars, vectorizable_priors)
-  }
-  merge_has <- c(
-    "has_fixed_intercept",
-    "has_varying_intercept",
-    "has_random_intercept",
-    "has_fixed",
-    "has_varying",
-    "has_random",
-    "has_lfactor"
-  )
-  for (i in seq_len(n_cg)) {
-    cg_idx <- which(cg == i)
-    channel_group <- list()
-    y <- resp[cg_idx]
-    y_name <- resp_names[cg_idx]
-    family <- dformula[[cg_idx[1L]]]$family
-    if (is_multivariate(family)) {
-      for (j in merge_has) {
-        channel_group[[j]] <- vapply(
-          channel_vars[cg_idx], "[[", logical(1L), j
-        )
-      }
-      channel_group$has_missing <- any(vapply(
-        channel_vars[cg_idx], "[[", logical(1L), "has_missing"
-      ))
-      cg_name <- paste(y_name, collapse = "_")
-      channel_group$y <- vapply(
-        channel_vars[cg_idx], "[[", character(1L), "y"
-      )
-      channel_group$y_cg <- cg_name
-      channel_group$obs <- ifelse_(
-        channel_group$has_missing,
-        glue::glue("obs_{cg_name}[1:n_obs_{cg_name}[t], t]"),
-        ""
-      )
-      sampling_vars[[paste0("obs_", cg_name)]] <- matrix_intersect(
-        sampling_vars[paste0("obs_", y_name)]
-      )
-      sampling_vars[[paste0("n_obs_", cg_name)]] <- apply(
-        sampling_vars[[paste0("obs_", cg_name)]],
-        2L,
-        function(x) { sum(x > 0L) }
-      )
-      O <- length(cg_idx)
-      sampling_vars[[paste0("O_", cg_name)]] <- O
-      sampling_vars[[paste0("y_", cg_name)]] <- array(
-        unlist(sampling_vars[paste0("y_", y_name)]),
-        c(T_full - fixed, N, O)
-      )
-      sampling_vars[paste0("y_", y_name)] <- NULL
+    if (has_univariate(dformula[[i]]$family)) {
       prep <- do.call(
-        paste0("prepare_channel_", family$name),
+        paste0("prepare_channel_", get_univariate(dformula[[i]]$family)),
         list(
-          y = cg_name,
-          channel = channel_group,
+          y = y_name,
+          Y = Y,
+          channel = tmp$channel,
+          sd_x = sd_x,
+          resp_class = resp_classes[[y]],
           priors = priors
         )
       )
-      channel_group <- prep$channel
-      prior_list[["multivariate"]] <- rbind(
-        prior_list[["multivariate"]],
-        prep$priors
+      prior_list[[y_name]] <- prep$priors
+      channel_vars[[y_name]] <- prep$channel
+      vectorizable_priors <- extract_vectorizable_priors(prep$channel, y_name)
+      sampling_vars <- c(
+        sampling_vars,
+        tmp$sampling,
+        prep$sampling,
+        vectorizable_priors
+      )
+    } else {
+      channel_vars[[y_name]] <- tmp$channel
+      sampling_vars <- c(sampling_vars, tmp$sampling)
+    }
+  }
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    j <- cg_idx[1L]
+    family <- dformula[[j]]$family
+    channel <- list(family = family)
+    y <- resp[cg_idx]
+    y_name <- resp_names[cg_idx]
+    y_cg <- paste(y_name, collapse = "_")
+    if (is_multivariate(family)) {
+      tmp <- initialize_multivariate_channel(
+        y = y,
+        y_cg = y_cg,
+        y_name = y_name,
+        cg_idx = cg_idx,
+        channel = channel,
+        family = family,
+        dims = c(T_full - fixed, N),
+        channel_vars = channel_vars,
+        sampling_vars = sampling_vars
+      )
+      prep <- do.call(
+        paste0("prepare_channel_", family$name),
+        list(
+          y = y_name,
+          y_cg = y_cg,
+          Y = tmp$sampling[[paste0("y_", y_cg)]],
+          channel = tmp$channel,
+          sd_x = sd_x,
+          resp_class = resp_classes[y],
+          priors = priors
+        )
+      )
+      vectorizable_priors <- extract_vectorizable_priors(prep$channel, y_cg)
+      sampling_vars[paste0("y_", y_name)] <- NULL
+      sampling_vars <- c(
+        sampling_vars,
+        tmp$sampling,
+        prep$sampling,
+        vectorizable_priors
+      )
+      channel <- prep$channel
+      prior_list[[y_cg]] <- prep$priors
+      prior_list$multivariate <- rbind(
+        prior_list$multivariate,
+        prep$mvpriors
       )
     }
-    channel_group_vars[[i]] <- channel_group
+    channel_group_vars[[y_cg]] <- channel
   }
   sampling_vars$N <- N
   sampling_vars$K <- K
@@ -312,6 +236,179 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     u_names = colnames(model_matrix),
     fixed = fixed
   )
+}
+
+initialize_univariate_channel <- function(dformula, specials, fixed_pars,
+                                          varying_pars, random_pars,
+                                          Y, y, y_name, group, fixed,
+                                          T_full, N, X_na, lb,
+                                          shrinkage, noncentered,
+                                          has_lfactor, has_splines,
+                                          noncentered_psi, nonzero_lambda) {
+  channel <- list()
+  Y_na <- is.na(Y)
+  # Separate copy of Y for Stan, so that added zeros do not influence channel
+  # preparation nor influence other checks related to response variables.
+  Y_out <- Y
+  # Placeholder for NAs in Stan
+  Y_out[Y_na] <- 0.0
+  channel$y <- y_name
+  channel$family <- dformula$family
+  indices <- list(
+    K_fixed = length(fixed_pars),
+    K_varying = length(varying_pars),
+    # Note! Random intercept is counted to K_random but not to J_random...
+    K_random = length(random_pars) + dformula$has_random_intercept,
+    K = length(fixed_pars) + length(varying_pars),
+    J_fixed = as.array(fixed_pars),
+    J_varying = as.array(varying_pars),
+    J = as.array(c(fixed_pars, varying_pars)),
+    J_random = as.array(random_pars),
+    L_fixed = as.array(seq_along(fixed_pars)),
+    L_varying = as.array(length(fixed_pars) + seq_along(varying_pars)),
+    L_random = as.array(seq_along(random_pars))
+  )
+  channel <- c(channel, indices)
+  sampling <- setNames(indices, paste0(names(indices), "_", y_name))
+  obs_idx <- array(0L, dim = c(N, T_full - fixed))
+  obs_len <- integer(T_full - fixed)
+  for (j in seq_len(T_full - fixed)) {
+    x_na <- X_na[j, , channel$J, drop = FALSE]
+    dim(x_na) <- c(N, channel$K)
+    y_na <- Y_na[j, ]
+    obs_XY <- which(apply(x_na, 1L, function(z) all(!z)) & !y_na)
+    obs_XY_len <- length(obs_XY)
+    obs_idx[, j] <- c(obs_XY, rep(0L, N - obs_XY_len))
+    obs_len[j] <- obs_XY_len
+  }
+  channel$has_missing <- any(obs_len < N)
+  sampling[[paste0("obs_", y_name)]] <- obs_idx
+  sampling[[paste0("n_obs_", y_name)]] <- obs_len
+  # obs selects complete cases if there are missing observations
+  channel$obs <- ifelse_(
+    channel$has_missing,
+    glue::glue("obs_{y_name}[1:n_obs_{y_name}[t], t]"),
+    ""
+  )
+  channel$has_fixed_intercept <- dformula$has_fixed_intercept
+  channel$has_varying_intercept <- dformula$has_varying_intercept
+  channel$has_random_intercept <- dformula$has_random_intercept
+  channel$has_fixed <- channel$K_fixed > 0L
+  channel$has_varying <- channel$K_varying > 0L
+  # note! Random intercept is counted to K_random above, while has_random is
+  # for checking non-intercept terms....
+  channel$has_random <- channel$K_random > channel$has_random_intercept
+  channel$lb <- lb
+  channel$shrinkage <- shrinkage
+  channel$noncentered <- noncentered
+  channel$has_lfactor <- has_lfactor
+  channel$noncentered_psi <- noncentered_psi
+  channel$nonzero_lambda <- nonzero_lambda
+  stopifnot_(
+    has_splines || !(channel$has_varying || channel$has_varying_intercept),
+    "Model for response variable {.var {y}} contains time-varying
+     definitions but splines have not been defined."
+  )
+  # evaluate specials such as offset and trials
+  for (spec in formula_special_funs) {
+    if (!is.null(specials[[spec]])) {
+      spec_split <- split(specials[[spec]], group)
+      spec_array <- array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
+      sampling[[paste0(spec, "_", y_name)]] <-
+        spec_array[seq.int(fixed + 1L, T_full), , drop = FALSE]
+      channel[[paste0("has_", spec)]] <- TRUE
+    } else {
+      channel[[paste0("has_", spec)]] <- FALSE
+    }
+  }
+  stopifnot_(
+    !(channel$has_random || channel$has_random_intercept) ||
+      dformula$family != "categorical",
+    "Random effects are not (yet) supported for categorical responses."
+  )
+  sampling[[paste0("y_", y_name)]] <- ifelse_(
+    dformula$family %in%
+      c("gaussian", "gamma", "exponential", "beta", "student"),
+    t(Y_out),
+    Y_out
+  )
+  list(channel = channel, sampling = sampling)
+}
+
+initialize_multivariate_channel <- function(y, y_cg, y_name, cg_idx,
+                                            channel, family, dims,
+                                            channel_vars, sampling_vars) {
+  sampling <- list()
+  merge_has <- c(
+    "has_fixed_intercept",
+    "has_varying_intercept",
+    "has_random_intercept",
+    "has_fixed",
+    "has_varying",
+    "has_random",
+    "has_lfactor"
+  )
+  for (has in merge_has) {
+    channel[[has]] <- unname(vapply(
+      channel_vars[cg_idx], "[[", logical(1L), has
+    ))
+  }
+  channel$has_missing <- any(vapply(
+    channel_vars[cg_idx], "[[", logical(1L), "has_missing"
+  ))
+  channel$y <- unname(vapply(
+    channel_vars[cg_idx], "[[", character(1L), "y"
+  ))
+  channel$y_cg <- y_cg
+  channel$obs <- ifelse_(
+    channel$has_missing,
+    glue::glue("obs_{y_cg}[1:n_obs_{y_cg}[t], t]"),
+    ""
+  )
+  sampling[[paste0("obs_", y_cg)]] <- matrix_intersect(
+    sampling_vars[paste0("obs_", y_name)]
+  )
+  sampling[[paste0("n_obs_", y_cg)]] <- apply(
+    sampling[[paste0("obs_", y_cg)]],
+    2L,
+    function(x) { sum(x > 0L) }
+  )
+  O <- length(cg_idx)
+  sampling[[paste0("O_", y_cg)]] <- O
+  sampling[[paste0("y_", y_cg)]] <- array(
+    unlist(sampling_vars[paste0("y_", y_name)]),
+    c(dims, O)
+  )
+  if (is_multinomial(family)) {
+    copy_indices <- c(
+      "K_fixed",
+      "K_varying",
+      "K_random",
+      "K",
+      "J_fixed",
+      "J_varying",
+      "J",
+      "J_random",
+      "L_fixed",
+      "L_varying",
+      "L_random"
+      )
+    z <- y_name[cg_idx[1L]]
+    copy_channel <- setdiff(
+      names(channel_vars[[z]]),
+      names(channel)
+    )
+    for (var in copy_channel) {
+      channel[[var]] <- channel_vars[[z]][[var]]
+    }
+    for (idx in copy_indices) {
+      sampling[[paste0(idx, "_", y_cg)]] <- sampling_vars[[paste0(idx, "_", z)]]
+    }
+    for (has in merge_has) {
+      channel[[has]] <- channel[[has]][1L]
+    }
+  }
+  list(channel = channel, sampling = sampling)
 }
 
 extract_vectorizable_priors <- function(channel, y) {
@@ -484,12 +581,13 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x,
       `x` = "Categorical family supports only {.cls factor} variables."
     )
   )
-  S_y <- length(attr(resp_class, "levels"))
+  resp_levels <- attr(resp_class, "levels")
+  S_y <- length(resp_levels)
   channel$S <- S_y
-  sampling_vars <- list()
-  sampling_vars[[paste0("S_", y)]] <- S_y
+  sampling <- list()
+  sampling[[paste0("S_", y)]] <- S_y
   if (is.null(priors)) {
-    out <- default_priors_categorical(y, channel, sd_x, resp_class)
+    out <- default_priors_categorical(y, channel, sd_x, S_y, resp_levels)
     channel <- out$channel
     priors <- out$priors
   } else {
@@ -523,7 +621,63 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x,
   channel$write_sigma_nu <-
     (channel$has_random || channel$has_random_intercept) &&
       identical(length(channel$sigma_nu_prior_distr), 1L)
-  list(channel = channel, sampling_vars = sampling_vars, priors = priors)
+  list(channel = channel, sampling = sampling, priors = priors)
+}
+
+prepare_channel_multinomial <- function(y, y_cg, Y, channel, sd_x,
+                                        resp_class, priors) {
+  if (any("factor" %in% unlist(resp_class))) {
+    abort_factor(y_cg, "Multinomial", call = rlang::caller_env())
+  }
+  Y_obs <- Y[!is.na(Y)]
+  if (any(Y_obs < 0.0) || any(Y_obs != as.integer(Y_obs))) {
+    abort_negative(
+      y_cg,
+      "Multinomial",
+      type = "integers",
+      call = rlang::caller_env()
+    )
+  }
+  S_y <- dim(Y)[3L]
+  channel$S <- S_y
+  sampling <- list()
+  sampling[[paste0("S_", y_cg)]] <- S_y
+  if (is.null(priors)) {
+    out <- default_priors_categorical(y_cg, channel, sd_x, S_y, y)
+    channel <- out$channel
+    priors <- out$priors
+  } else {
+    priors <- priors[priors$response == y_cg, ]
+    types <- priors$type
+    loop_types <- intersect(
+      types,
+      c("alpha", "beta", "delta", "tau", "sigma_nu", "psi")
+    )
+    for (ptype in loop_types) {
+      channel <- prepare_prior(ptype, priors, channel)
+    }
+    if ("tau_alpha" %in% types) {
+      pdef <- priors[priors$type == "tau_alpha", ]
+      channel$tau_alpha_prior_distr <- pdef$prior
+    }
+    priors <- check_priors(
+      priors,
+      default_priors_categorical(y_cg, channel, sd_x, S_y, y)$priors
+    )
+  }
+  channel$write_alpha <-
+    (channel$has_fixed_intercept || channel$has_varying_intercept) &&
+    identical(length(channel$alpha_prior_distr), 1L)
+  channel$write_beta <- channel$has_fixed &&
+    identical(length(channel$beta_prior_distr), 1L)
+  channel$write_delta <- channel$has_varying &&
+    identical(length(channel$delta_prior_distr), 1L)
+  channel$write_tau <- channel$has_varying &&
+    identical(length(channel$tau_prior_distr), 1L)
+  channel$write_sigma_nu <-
+    (channel$has_random || channel$has_random_intercept) &&
+    identical(length(channel$sigma_nu_prior_distr), 1L)
+  list(channel = channel, sampling = sampling, priors = priors)
 }
 
 #' @describeIn prepare_channel_default Prepare a Gaussian Channel
@@ -585,29 +739,29 @@ prepare_channel_gaussian <- function(y, Y, channel, sd_x, resp_class, priors) {
 
 #' @describeIn prepare_channel_default Prepare a Multivariate Gaussian Channel
 #' @noRd
-prepare_channel_mvgaussian <- function(y, channel, priors) {
+prepare_channel_mvgaussian <- function(y_cg, channel, priors, ...) {
   L_prior <- data.frame(
-    parameter = paste0("L_", y),
-    response = y,
+    parameter = paste0("L_", y_cg),
+    response = y_cg,
     prior = "lkj_corr_cholesky(1)",
     type = "L",
     category = ""
   )
   if (is.null(priors)) {
-    priors <- L_prior
+    mvpriors <- L_prior
     channel$L_prior_distr <- L_prior$prior
   } else {
-    priors <- priors[priors$response == y, ]
+    mvpriors <- priors[priors$response == y_cg, ]
     pdef <- priors[priors$type == "L", ]
     stopifnot_(identical(nrow(pdef), 1L),
       c(
         "Argument {.var priors} must contain all relevant parameters:",
-        `x` = "Prior for parameter {.var L_{y}} is not defined."
+        `x` = "Prior for parameter {.var L_{y_cg}} is not defined."
       ))
     # TODO some checks that prior distr makes sense
     channel$L_prior_distr <- pdef$prior
   }
-  list(channel = channel, priors = priors)
+  list(channel = channel, mvpriors = mvpriors)
 }
 
 #' @describeIn prepare_channel_default Prepare a Binomial Channel
@@ -723,11 +877,11 @@ prepare_channel_negbin <- function(y, Y, channel, sd_x, resp_class, priors) {
     )
   }
   sd_y <- 1.0
-  if (ncol(Y) > 1L) {
-    mean_y <- log(mean(Y[1L, ], na.rm = TRUE))
-  } else {
-    mean_y <- log(Y[1L])
-  }
+  mean_y <- ifelse_(
+    ncol(Y) > 1L,
+    log(mean(Y[1L, ], na.rm = TRUE)),
+    log(Y[1L])
+  )
   if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }

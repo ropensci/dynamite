@@ -37,13 +37,14 @@ is_supported <- function(name) {
 #' @param x \[`dynamitefamily`]\cr A family object.
 #' @noRd
 is_multivariate <- function(x) {
-  x$name %in% c("mvgaussian")
+  x$name %in% c("mvgaussian", "multinomial")
 }
 
 supported_families <- c(
   "binomial",
   "bernoulli", # separate as Stan has more efficient pmf for it
   "categorical",
+  "multinomial",
   "negbin",
   "gaussian",
   "mvgaussian",
@@ -54,6 +55,14 @@ supported_families <- c(
   "beta",
   "student"
 )
+
+#' Test If Multivariate Family Uses Univariate Components
+#'
+#' @param x \[`dynamitefamily`]\cr A family object.
+#' @noRd
+has_univariate <- function(x) {
+  x$name %in% setdiff(supported_families, "multinomial")
+}
 
 #' Get Univariate Version of a Multivariate Family
 #'
