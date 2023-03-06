@@ -436,9 +436,9 @@ stan_version <- function(backend) {
 #' Row-wise log-sum-exp
 #'
 #' @noRd
-log_sum_exp_rows <- function(x) {
+log_sum_exp_rows <- function(x, m, n) {
   maxs <- apply(x, 1L, max)
-  maxs + log(rowSums(exp(x - maxs)))
+  maxs + log(.rowSums(exp(x - maxs), m, n))
 }
 
 # Placeholder for future

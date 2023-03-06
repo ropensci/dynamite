@@ -223,7 +223,11 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           # env = list(time = time, timepoints = timepoints, i = i)
         ]
         elpds[[i - L + 1L]] <-
-          log_sum_exp_rows(t(lw) + matrix(ll, ncol = n_draws))
+          log_sum_exp_rows(
+            t(lw) + matrix(ll, ncol = n_draws),
+            ncol(lw),
+            n_draws
+          )
       }
     } else {
       # no observations

@@ -1060,7 +1060,7 @@ predict_expr$fitted$mvgaussian <- "
 "
 
 predict_expr$fitted$categorical <- "
-  mval <- exp(xbeta - log_sum_exp_rows(xbeta))
+  mval <- exp(xbeta - log_sum_exp_rows(xbeta, k, S))
   for (s in 1:S) {{
     data.table::set(
       x = out,
@@ -1072,13 +1072,13 @@ predict_expr$fitted$categorical <- "
 "
 
 predict_expr$fitted$multinomial <- "
-  mval <- exp(xbeta - log_sum_exp_rows(xbeta))
+  mval <- exp(xbeta - log_sum_exp_rows(xbeta, k, S))
   for (s in 1:S) {{
     data.table::set(
       x = out,
       i = idx,
-      j = fitted_cols[s],
-      value = n * mval[, s]
+      j = paste0(resp[i], '_fitted'),
+      value = trials * mval[, s]
     )
   }}
 "
@@ -1170,9 +1170,10 @@ predict_expr$predicted$categorical <- "
 
 predict_expr$predicted$multinomial <- "
   pred <- matrix(0L, k, S)
+  n <- max(trials)
   for (j in seq_len(n)) {{
     s <- max.col(xbeta - log(-log(runif(S * k))))
-    pred[ ,s] <- pred[, s] + 1L
+    pred[trials <= n, s] <- pred[trials <= n, s] + 1L
   }}
   for (s in seq_len(S)) {{
     data.table::set(
@@ -1286,8 +1287,7 @@ predict_expr$mean$mvgaussian <- "
 "
 
 predict_expr$mean$categorical <- "
-  maxs <- apply(xbeta, 1, max)
-  mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+  mval <- exp(xbeta - log_sum_exp_rows(xbeta, k, S))
   for (s in 1:S) {{
     data.table::set(
       x = out,
@@ -1299,14 +1299,13 @@ predict_expr$mean$categorical <- "
 "
 
 predict_expr$mean$multinomial <- "
-  maxs <- apply(xbeta, 1, max)
-  mval <- exp(xbeta - (maxs + log(rowSums(exp(xbeta - maxs)))))
+  mval <- exp(xbeta - log_sum_exp_rows(xbeta, k, S))
   for (s in 1:S) {{
     data.table::set(
       x = out,
       i = idx_data,
-      j = mean_cols[s],
-      value = mval[idx_out, s]
+      j = paste0(resp[i], '_mean'),
+      value = trials * mval[idx_out, s]
     )
   }}
 "
@@ -1422,7 +1421,7 @@ predict_expr$loglik$categorical <- "
     x = out,
     i = idx,
     j = '{resp}_loglik',
-    value = xbeta[cbind(seq_along(y), y)] - log_sum_exp_rows(xbeta)
+    value = xbeta[cbind(seq_along(y), y)] - log_sum_exp_rows(xbeta, k, S)
   )
 "
 
@@ -1430,8 +1429,9 @@ predict_expr$loglik$multinomial <- "
   data.table::set(
     x = out,
     i = idx,
-    j = paste(c(resp, 'loglik'), collapse = '_'),
-    value = xbeta[cbind(seq_along(y), y)] - log_sum_exp_rows(xbeta)
+    j = '{resp}_loglik',
+    value = lgamma(n + 1) - .rowSums(lgamma(y + 1), k, S) +
+      y * xbeta - log_sum_exp_rows(xbeta, k, S)
   )
 "
 

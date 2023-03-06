@@ -214,6 +214,13 @@ dynamiteformula_ <- function(formula, original, family, name) {
         "Formula for a binomial channel must include a trials term."
       )
     }
+    if (is_multinomial(family)) {
+      if (!"trials" %in% names(out[[1L]]$specials)) {
+        out[[1L]]$specials$trials <- str2lang(
+          paste(get_responses(out), collapse = " + ")
+        )
+      }
+    }
   }
   out
 }

@@ -59,6 +59,12 @@ test_that("single channel models are valid", {
     obs_beta <- obs(y9 ~ x3, family = "beta"), NA
   )
   expect_error(
+    obs_student <- obs(y2 ~ x2, family = "student"), NA
+  )
+  expect_error(
+    obs_multinomial <- obs(c(y3, y4, y5) ~ x2, family = "multinomial"), NA
+  )
+  expect_error(
     dynamite(obs_categorical, test_data, "time", "group", debug = debug), NA
   )
   expect_error(
@@ -84,6 +90,12 @@ test_that("single channel models are valid", {
   )
   expect_error(
     dynamite(obs_beta, test_data, "time", "group", debug = debug), NA
+  )
+  expect_error(
+    dynamite(obs_student, test_data, "time", "group", debug = debug), NA
+  )
+  expect_error(
+    dynamite(obs_multinomial, test_data, "time", "group", debug = debug), NA
   )
 })
 
