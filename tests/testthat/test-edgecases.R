@@ -219,7 +219,7 @@ test_that("shrinkage is handled correctly", {
       test_data,
       "time",
       "group"
-    )$parameter[58],
+    )$parameter[76],
     "xi"
   )
 })

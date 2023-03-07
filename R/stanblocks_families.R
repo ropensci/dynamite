@@ -1566,7 +1566,7 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
     )
   )
   if (vectorizable_prior(tau_alpha_prior_distr)) {
-    dpars_tau <- ifelse_(tau_alpha_prior_npars > 0L,
+    dpars_tau_alpha <- ifelse_(tau_alpha_prior_npars > 0L,
       paste0(
         "tau_alpha_prior_pars_", y, "[, ", seq_len(tau_alpha_prior_npars), "]",
         collapse = ", "
