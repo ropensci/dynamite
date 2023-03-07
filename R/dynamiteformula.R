@@ -481,7 +481,7 @@ get_lag_terms <- function(x) {
 #' @noRd
 get_nonlag_terms <- function(x) {
   lapply(x, function(y) {
-    unique(find_nonlags(formula_rhs(y$formula)))
+    unique(find_nonlags(formula_rhs(y$original)))
   })
 }
 

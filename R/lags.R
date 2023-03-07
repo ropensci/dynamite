@@ -123,9 +123,9 @@ find_lags <- function(x) {
 #' @noRd
 find_nonlags <- function(x) {
   if (!is.recursive(x)) {
-    out <- as.character(x)
-    # Don't return intercept
-    return(ifelse_(identical(out, "1"), character(0L), out))
+    if (is.name(x)) {
+      return(as.character(x))
+    }
   }
   if (is.call(x)) {
     if (!identical(as.character(x[[1L]]), "lag")) {

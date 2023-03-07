@@ -479,7 +479,7 @@ test_that("multiple special components fail", {
 test_that("specials that cannot be evaluated fail", {
   expect_error(
     dynamite(
-      obs(y ~ 1 + trials(n), family = "binomial"),
+      obs(y ~ 1 + trials(log(-lag(y))), family = "binomial"),
       data = data.frame(y = 1:3, z = 1:3),
       time = "z"
     ),
@@ -490,7 +490,7 @@ test_that("specials that cannot be evaluated fail", {
   )
   expect_error(
     dynamite(
-      obs(y ~ 1 + offset(x), family = "poisson"),
+      obs(y ~ 1 + offset(log(-lag(x))), family = "poisson"),
       data = data.frame(y = 1:3, z = 1:3),
       time = "z"
     ),

@@ -219,40 +219,41 @@ deterministic_response <- function(y) {
 
 #' Computes All Specials Defined in a Formula in the Context of the Data
 #'
-#' @param dformula \[`dformula`]\cr The model formula object.
+#' @param dformula \[`dformula`]\cr A model formula object
 #' @param data \[`data.table`]\cr Data containing the variables used for
 #'   the special definitions in the formula.
+#' @param check \[`logical(1)`]\cr Should the evaluated specials be checked
+#'   for validity?
 #' @noRd
-evaluate_specials <- function(dformula, data) {
-  lapply(seq_along(dformula), function(i) {
-    if (length(dformula[[i]]$specials) > 0L) {
-      out <- list()
-      y <- dformula[[i]]$name
-      for (spec in formula_special_funs) {
-        spec_formula <- dformula[[i]]$specials[[spec]]
-        if (!is.null(spec_formula)) {
-          spec_eval <- tryCatch(
-            data[, eval(spec_formula)],
-            error = function(e) e,
-            warning = function(w) w
-          )
-          stopifnot_(
-            !inherits(spec_eval, c("warning", "error")),
-            c(
-              "Unable to evaluate {.fun {spec}} for response variable
-               {.var {y}}:",
-              `x` = spec_eval$message
-            )
-          )
-          do.call(paste0("check_", spec), args = list(y = y, x = spec_eval))
-          out[[spec]] <- spec_eval
-        }
+evaluate_specials <- function(dformula, data, check = TRUE) {
+  if (length(dformula$specials) == 0L) {
+    return(NULL)
+  }
+  out <- list()
+  y <- dformula$name
+  for (spec in formula_special_funs) {
+    spec_formula <- dformula$specials[[spec]]
+    if (!is.null(spec_formula)) {
+      spec_eval <- tryCatch(
+        data[, eval(spec_formula)],
+        error = function(e) e,
+        warning = function(w) w
+      )
+      stopifnot_(
+        !inherits(spec_eval, c("warning", "error")),
+        c(
+          "Unable to evaluate {.fun {spec}} for response variable
+           {.var {y}}:",
+          `x` = spec_eval$message
+        )
+      )
+      if (check) {
+        do.call(paste0("check_", spec), args = list(y = y, x = spec_eval))
       }
-      out
-    } else {
-      NULL
+      out[[spec]] <- spec_eval
     }
-  })
+  }
+  out
 }
 
 #' Check that a number of trials definition is valid

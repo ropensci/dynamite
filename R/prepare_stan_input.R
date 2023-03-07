@@ -31,7 +31,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     all(!resp_missing),
     "Can't find variable{?s} {.var {resp[resp_missing]}} in {.arg data}."
   )
-  specials <- evaluate_specials(dformula, data)
+  specials <- lapply(dformula, evaluate_specials, data = data)
   model_matrix <- full_model.matrix(dformula, data, verbose)
   cg <- attr(dformula, "channel_groups")
   n_cg <- length(unique(cg))

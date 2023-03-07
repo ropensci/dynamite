@@ -7,6 +7,8 @@
     keyword syntax and the deprecated syntax based on the backend Stan version
     (see https://mc-stan.org/docs/reference-manual/brackets-array-syntax.html
     for details).
+  * The presence of variables in data used in `trials()` and `offset` is now
+    properly checked.
   * The model components `trials()` and `offset()` now function correctly in 
     `predict()` when they contain response variables of the model.
 

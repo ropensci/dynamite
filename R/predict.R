@@ -461,7 +461,11 @@ predict_ <- function(object, simulated, storage, observed,
           formula_rhs(object$dformulas$all[[k]]$formula)
         )
       } else {
-        specials <- evaluate_specials(object$dformulas$all[k], sub)
+        specials <- evaluate_specials(
+          dformula = object$dformulas$all[[k]],
+          data = sub,
+          check = FALSE
+        )
         model_matrix <- full_model.matrix_predict(
           formulas_stoch,
           sub,
