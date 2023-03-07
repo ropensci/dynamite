@@ -278,10 +278,11 @@ data_lines_default <- function(y, idt, has_missing,
 
 data_lines_categorical <- function(y, idt, response = "",
                                    has_missing, write_alpha, write_beta,
-                                   write_delta, write_tau,
+                                   write_delta, write_tau, write_tau_alpha,
                                    alpha_prior_npars = 1L,
                                    beta_prior_npars = 1L,
                                    delta_prior_npars = 1L, tau_prior_npars = 1L,
+                                   tau_alpha_prior_npars = 1L,
                                    has_random_intercept,
                                    K_fixed, K_varying, K_random,
                                    backend, ...) {
@@ -383,6 +384,10 @@ data_lines_categorical <- function(y, idt, response = "",
     onlyif(
       write_tau && tau_prior_npars > 0L && K_varying > 0L,
       "matrix[K_varying_{y}, {tau_prior_npars}] tau_prior_pars_{y};"
+    ),
+    onlyif(
+      write_tau_alpha && tau_alpha_prior_npars > 0L,
+      "matrix[S_{y} - 1, {tau_alpha_prior_npars}] tau_alpha_prior_pars_{y};"
     ),
     "// Response",
     response,
@@ -1502,6 +1507,7 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
                                     alpha_prior_distr = "",
                                     alpha_prior_npars = 1L,
                                     tau_alpha_prior_distr = "",
+                                    tau_alpha_prior_npars = 1L,
                                     lambda_prior_distr = "",
                                     beta_prior_distr = "",
                                     beta_prior_npars = 1L,
