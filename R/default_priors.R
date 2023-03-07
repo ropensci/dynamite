@@ -158,13 +158,15 @@ default_priors_categorical <- function(y, channel, sd_x, S_y, resp_levels) {
       category = resp_levels
     )
     if (channel$has_varying_intercept) {
-      channel$tau_alpha_prior_distr <- "normal(0, 1)"
+      channel$tau_alpha_prior_distr <- "normal"
+      channel$tau_alpha_prior_npars <- 2L
+      channel$tau_alpha_prior_pars <- cbind(m, 1)
       priors$tau_alpha <- data.frame(
         parameter = paste0("tau_alpha_", y),
         response = y,
         prior = "normal(0, 1)",
         type = "tau_alpha",
-        category = ""
+        category = resp_levels
       )
     }
   }
@@ -197,15 +199,13 @@ default_priors_categorical <- function(y, channel, sd_x, S_y, resp_levels) {
     )
     channel$tau_prior_distr <- "normal"
     channel$tau_prior_npars <- 2L
-    channel$tau_prior_pars <- cbind(0.0, sd_gamma[channel$J_varying])
+    channel$tau_prior_pars <- cbind(0.0, s)
     priors$tau <- data.frame(
-      parameter = paste0(
-        "tau_", y, "_", names(sd_gamma[channel$J_varying])
-      ),
+      parameter = paste0("tau_", y, "_", names(s)),
       response = y,
-      prior = paste0("normal(0, ", sd_gamma[channel$J_varying], ")"),
+      prior = paste0("normal(0, ", s, ")"),
       type = "tau",
-      category = ""
+      category = rep(resp_levels, each = channel$K_varying)
     )
   }
   list(

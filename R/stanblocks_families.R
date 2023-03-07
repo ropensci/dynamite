@@ -651,7 +651,7 @@ parameters_lines_categorical <- function(y, idt, noncentered, lb, has_fixed,
       has_varying,
       stan_array(
         backend,
-        "martix",
+        "matrix",
         "{oname}{y}",
         "S_{y} - 1",
         dims = "K_varying_{y}, D",
@@ -660,7 +660,15 @@ parameters_lines_categorical <- function(y, idt, noncentered, lb, has_fixed,
     ),
     onlyif(
       has_varying,
-      "vector<lower={lb}>[K_varying_{y}] tau_{y};  // SDs for the random walks"
+      stan_array(
+        backend,
+        "vector",
+        "tau_{y}",
+        "S_{y} - 1",
+        "lower={lb}",
+        "K_varying_{y}",
+        comment = "SDs for the random walks"
+      )
     ),
     ifelse_(
       has_fixed_intercept || has_varying_intercept,
@@ -1265,8 +1273,9 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
     )
     mtext_sigma_nu <- "sigma_nu_{y} ~ {sigma_nu_prior_distr}({dpars_sigma_nu});"
   } else {
-    mtext_sigma_nu <-
-      "sigma_nu_{y}[{{{cs(1:K_random)}}}] ~ {sigma_nu_prior_distr};"
+    mtext_sigma_nu <- glue::glue(
+      "sigma_nu_{y}[{1:K_random}] ~ {sigma_nu_prior_distr};"
+    )
   }
 
   if (has_lfactor) {
@@ -1294,8 +1303,9 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
       mtext_varying <-
         "omega_raw_{y}[, 1] ~ {delta_prior_distr}({dpars_varying});"
     } else {
-      mtext_varying <-
-        "omega_raw_{y}[{{{cs(1:K_varying)}}}, 1] ~ {delta_prior_distr};"
+      mtext_varying <- glue::glue(
+        "omega_raw_{y}[{1:K_varying}, 1] ~ {delta_prior_distr};"
+      )
     }
     mtext_varying <- paste_rows(
       mtext_varying,
@@ -1331,8 +1341,9 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
       mtext_varying <-
         "omega_{y}[, 1] ~ {delta_prior_distr}({dpars_varying});"
     } else {
-      mtext_varying <-
-        "omega_{y}[{{{cs(1:K_varying)}}}, 1] ~ {delta_prior_distr};"
+      mtext_varying <- glue::glue(
+        "omega_{y}[{1:K_varying}, 1] ~ {delta_prior_distr};"
+      )
     }
     mtext_varying <- paste_rows(
       mtext_varying,
@@ -1372,7 +1383,9 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
     )
     mtext_fixed <- "beta_{y} ~ {beta_prior_distr}({dpars_fixed});"
   } else {
-    mtext_fixed <- "beta_{y}[{{{cs(1:K_fixed)}}}] ~ {beta_prior_distr};"
+    mtext_fixed <- glue::glue(
+      "beta_{y}[{1:K_fixed}] ~ {beta_prior_distr};"
+    )
   }
 
   if (vectorizable_prior(tau_prior_distr)) {
@@ -1386,7 +1399,9 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
     )
     mtext_tau <- "tau_{y} ~ {tau_prior_distr}({dpars_tau});"
   } else {
-    mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {tau_prior_distr};"
+    mtext_tau <- glue::glue(
+      "tau_{y}[{1:K_varying}] ~ {tau_prior_distr};"
+    )
   }
   paste_rows(
     onlyif(has_lfactor, mtext_lambda),
@@ -1509,7 +1524,9 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
     mtext_alpha <- "to_vector(a_{y}) ~ {alpha_prior_distr}({dpars_alpha});"
   } else {
     s <- seq_len(S - 1L)
-    mtext_alpha <- "a_{y}[{s}] ~ {alpha_prior_distr};"
+    mtext_alpha <- glue::glue(
+      "a_{y}[{s}] ~ {alpha_prior_distr};"
+      )
   }
   mtext_fixed_intercept <- mtext_alpha
 
@@ -1528,13 +1545,13 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
       "for (s in 1:(S_{y} - 1)) {{",
       paste0(
         "omega_raw_alpha_{y}[s, 1] ~ normal(omega_alpha_1_{y}[s], ",
-        "tau_alpha_{y}{xi_term1});"
+        "tau_alpha_{y}[s]{xi_term1});"
       ),
       "for (i in 2:(D - 1)) {{",
       paste0(
         "omega_raw_alpha_{y}[s, i] ~ ",
         "normal(omega_raw_alpha_{y}[s, i - 1], ",
-        "tau_alpha_{y}{xi_term});"
+        "tau_alpha_{y}[s]{xi_term});"
       ),
       "}}",
       "}}",
@@ -1542,11 +1559,26 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
       .parse = FALSE
     )
   )
+  if (vectorizable_prior(tau_alpha_prior_distr)) {
+    dpars_tau <- ifelse_(tau_alpha_prior_npars > 0L,
+      paste0(
+        "tau_alpha_prior_pars_", y, "[, ", seq_len(tau_alpha_prior_npars), "]",
+        collapse = ", "
+      ),
+      "")
+    mtext_tau_alpha <- paste0(
+      "to_vector(tau_alpha_{y}) ~ ",
+      "{tau_alpha_prior_distr}({dpars_tau_alpha});"
+    )
+  } else {
+    mtext_tau_alpha <- glue::glue(
+      "tau_alpha_{y}[s,{1:K_varying}] ~ {tau_alpha_prior_distr};"
+    )
+  }
   mtext_varying_intercept <- paste_rows(
     mtext_alpha,
     mtext_omega,
-    "tau_alpha_{y} ~ {tau_alpha_prior_distr};",
-    .indent = idt(c(0, 0, 1)),
+    mtext_tau_alpha,
     .parse = FALSE
   )
 
@@ -1614,9 +1646,9 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
         shrinkage,
         paste0(
           "omega_{y}[s, , i] ~ normal(omega_{y}[s, , i - 1], ",
-          "xi[i - 1] * tau_{y});"
+          "xi[i - 1] * tau_{y}[s]);"
         ),
-        "omega_{y}[s, , i] ~ normal(omega_{y}[s, , i - 1], tau_{y});"
+        "omega_{y}[s, , i] ~ normal(omega_{y}[s, , i - 1], tau_{y}[s]);"
       ),
       "}}",
       "}}",
@@ -1631,9 +1663,11 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
         collapse = ", "
       ),
       "")
-    mtext_tau <- "tau_{y} ~ {tau_prior_distr}({dpars_tau});"
+    mtext_tau <- "to_vector(tau_{y}) ~ {tau_prior_distr}({dpars_tau});"
   } else {
-    mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {tau_prior_distr};"
+    mtext_tau <- glue::glue(
+      "tau_{y}[s,{1:K_varying}] ~ {tau_prior_distr};"
+    )
   }
 
   intercept <- ifelse_(

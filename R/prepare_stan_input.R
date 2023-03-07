@@ -606,7 +606,7 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x,
     }
     priors <- check_priors(
       priors,
-      default_priors_categorical(y, channel, sd_x, resp_class)$priors
+      default_priors_categorical(y, channel, sd_x, S_y, resp_levels)$priors
     )
   }
   channel$write_alpha <-
@@ -618,6 +618,8 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x,
     identical(length(channel$delta_prior_distr), 1L)
   channel$write_tau <- channel$has_varying &&
     identical(length(channel$tau_prior_distr), 1L)
+  channel$write_tau_alpha <- channel$has_varying_intercept &&
+    identical(length(channel$tau_alpha_prior_distr), 1L)
   channel$write_sigma_nu <-
     (channel$has_random || channel$has_random_intercept) &&
       identical(length(channel$sigma_nu_prior_distr), 1L)
@@ -674,6 +676,8 @@ prepare_channel_multinomial <- function(y, y_cg, Y, channel, sd_x,
     identical(length(channel$delta_prior_distr), 1L)
   channel$write_tau <- channel$has_varying &&
     identical(length(channel$tau_prior_distr), 1L)
+  channel$write_tau_alpha <- channel$has_varying_intercept &&
+    identical(length(channel$tau_alpha_prior_distr), 1L)
   channel$write_sigma_nu <-
     (channel$has_random || channel$has_random_intercept) &&
     identical(length(channel$sigma_nu_prior_distr), 1L)
