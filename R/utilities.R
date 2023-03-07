@@ -386,9 +386,21 @@ n_unique <- data.table::uniqueN
 
 # Placeholder for future
 # Startup message for the package
-# .onAttach <- function(libname, pkgname) {
-#   #invisible(NULL)
-# }
+.onAttach <- function(libname, pkgname) {
+  if (!stan_rstan_is_functional()) {
+    packageStartupMessage(
+      "Please update your `rstan` and `StanHeaders` installations before ",
+      "using `dynamite` with the `rstan` backend by running:",
+      "\n\n",
+      "  remove.packages(c(\"rstan\", \"StanHeaders\"))\n",
+      "  install.packages(\"rstan\", ",
+      "repos = c(\"https://mc-stan.org/r-packages/\", getOption(\"repos\")))",
+      "\n\n",
+      "See https://github.com/stan-dev/rstan/wiki/Configuring",
+      "-C---Toolchain-for-Windows for further information."
+    )
+  }
+}
 
 # Placeholder for future
 # Code to execute when loading the package

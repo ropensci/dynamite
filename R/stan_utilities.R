@@ -54,6 +54,13 @@ stan_supports_categorical_logit_glm <- function(backend) {
   utils::compareVersion(stan_version(backend), "2.23") >= 0
 }
 
+stan_rstan_is_functional <- function() {
+  if (!identical(.Platform$OS.type, "windows") || getRversion() < "4.2.0") {
+    return(TRUE)
+  }
+  utils::compareVersion(stan_version("rstan"), "2.26") >= 0
+}
+
 #' Get Stan Version
 #'
 #' @param backend Either `"rstan"` or `"cmdstanr"`.
