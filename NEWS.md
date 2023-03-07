@@ -8,7 +8,7 @@
     (see https://mc-stan.org/docs/reference-manual/brackets-array-syntax.html
     for details).
   * The model components `trials()` and `offset()` now function correctly in 
-    `predict()` when they contain  response variables of the model.
+    `predict()` when they contain response variables of the model.
 
 # dynamite 1.2.1
 

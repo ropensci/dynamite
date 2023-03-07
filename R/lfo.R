@@ -264,7 +264,8 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
 #'
 print.lfo <- function(x, ...) {
   cat("\nApproximate LFO starting from time point", x$L)
-  cat("\nModel was re-estimated at time points ",
+  cat(
+    "\nModel was re-estimated at time points ",
     paste(x$refit_times, collapse = ", "),
     " (Based on Pareto k threshold of ", x$k_threshold, ")\n",
     sep = ""

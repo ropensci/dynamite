@@ -68,7 +68,9 @@ test_that("perfect collinearity warns", {
 test_that("too few observations warns", {
   f <- obs(y ~ x + z + w, family = "gaussian")
   test_data <- data.frame(
-    y = rnorm(3), x = rnorm(3), z = rnorm(3),
+    y = rnorm(3),
+    x = rnorm(3),
+    z = rnorm(3),
     w = rnorm(3)
   )
   expect_warning(
@@ -114,7 +116,6 @@ test_that("deterministic channel insufficient initial values warns", {
   )
 })
 
-
 # Specials warnings -------------------------------------------------------
 
 test_that("multiple intercept warns", {
@@ -126,31 +127,52 @@ test_that("multiple intercept warns", {
     )
   )
 })
-test_data <- data.frame(y = rnorm(10), x = rnorm(10), time = 1:5,
-  id = rep(1:2, each = 5))
+
+test_data <- data.frame(
+  y = rnorm(10),
+  x = rnorm(10),
+  time = 1:5,
+  id = rep(1:2, each = 5)
+)
 debug <- list(no_compile = TRUE)
+
 test_that("time-varying intercept is removed", {
   expect_warning(
-    dynamite(obs(y ~ -1 + x + varying(~1), family = "gaussian") + lfactor() +
+    dynamite(
+      obs(y ~ -1 + x + varying(~1), family = "gaussian") +
+        lfactor() +
         splines(4),
-      test_data, "time", "id", debug = debug),
-    paste0("The common time-varying intercept term of channel `y` was removed ",
+      test_data,
+      "time",
+      "id",
+      debug = debug
+    ),
+    paste0(
+      "The common time-varying intercept term of channel `y` was removed ",
       "as channel predictors contain latent factor specified with ",
-      "`nonzero_lambda` as TRUE\\.")
+      "`nonzero_lambda` as TRUE\\."
+    )
   )
 })
 
 test_that("time-varying intercept is removed", {
   expect_warning(
-    dynamite(obs(y ~ x + random(~1), family = "gaussian") + lfactor() +
+    dynamite(
+      obs(y ~ x + random(~1), family = "gaussian") +
+        lfactor() +
         splines(4),
-      test_data, "time", "id", debug = debug),
-    paste0("The common time-invariant intercept term of channel `y` was ",
+      test_data,
+      "time",
+      "id",
+      debug = debug
+    ),
+    paste0(
+      "The common time-invariant intercept term of channel `y` was ",
       "removed as channel predictors contain random intercept and latent ",
-      "factor specified with `nonzero_lambda` as TRUE\\.")
+      "factor specified with `nonzero_lambda` as TRUE\\."
+    )
   )
 })
-
 
 test_that("untyped deterministic warns", {
   expect_warning(
@@ -158,6 +180,18 @@ test_that("untyped deterministic warns", {
     paste0(
       "No type specified for deterministic channel `y`:\n",
       "i Assuming type is <numeric>\\."
+    )
+  )
+})
+
+test_that("multinomial without trials warns", {
+  expect_warning(
+    obs(c(y1, y2) ~ 1, family = "multinomial"),
+    paste0(
+      "The model contains a multinomial channel without a trials term\\.\n",
+      "i The model fit will assume number of trials = sum of observations, ",
+      "but prediction will not work for this channel unless the number trials ",
+      "is explicitly specified\\."
     )
   )
 })

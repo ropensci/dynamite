@@ -74,11 +74,6 @@ get_univariate <- function(x) {
   unname(out[x$name])
 }
 
-#' Is the GLM Likelihood Variant Supported By Stan for a Family
-stan_supports_glm_likelihood <- function(x) {
-  x$name %in% c("bernoulli", "gaussian", "poisson", "negbin")
-}
-
 # Generate `family_` and `is_family` convenience functions
 # for all supported families
 for (family in supported_families) {

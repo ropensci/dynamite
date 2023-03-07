@@ -369,70 +369,6 @@ matrix_intersect <- function(x) {
   out
 }
 
-#' Number of Unique Values
-#'
-#' @inheritParams data.table::uniqueN
-#' @noRd
-n_unique <- data.table::uniqueN
-
-#' Create A Backward Compatible Stan Array Declaration
-#'
-#' @noRd
-stan_array <- function(backend, type, name, arr_dims,
-                       bounds = "", dims = "", comment = "") {
-  dims <- ifelse_(
-    nzchar(dims),
-    paste0("[", dims, "]"),
-    ""
-  )
-  bounds <- ifelse_(
-    nzchar(bounds),
-    paste0("<", bounds, ">"),
-    ""
-  )
-  comment <- ifelse_(
-    nzchar(comment),
-    paste0(" // ", comment),
-    ""
-  )
-  ifelse_(
-    stan_supports_array_keyword(backend),
-    paste0(
-      "array[", arr_dims, "] ", type, bounds, dims, " ", name, ";", comment
-    ),
-    paste0(
-      type, dims, bounds, " ", name, "[", arr_dims, "];", comment
-    )
-  )
-}
-
-#' Is Array Keyword Syntax Supported By Current Stan Version
-#'
-#' @param backend Either `"rstan"` or `"cmdstanr"`.
-#' @noRd
-stan_supports_array_keyword <- function(backend) {
-  utils::compareVersion(stan_version(backend), "2.26") >= 0
-}
-
-#' Is Categorical Logit GLM Supported By Current Stan Version
-#'
-#' @noRd
-stan_supports_categorical_logit_glm <- function(backend) {
-  utils::compareVersion(stan_version(backend), "2.23") >= 0
-}
-
-#' Get Stan Version
-#'
-#' @param backend Either `"rstan"` or `"cmdstanr"`.
-#' @noRd
-stan_version <- function(backend) {
-  ifelse_(
-    backend == "rstan",
-    as.character(rstan::stan_version()),
-    as.character(cmdstanr::cmdstan_version())
-  )
-}
-
 #' Row-wise log-sum-exp
 #'
 #' @noRd
@@ -440,6 +376,13 @@ log_sum_exp_rows <- function(x, m, n) {
   maxs <- apply(x, 1L, max)
   maxs + log(.rowSums(exp(x - maxs), m, n))
 }
+
+#' Number of Unique Values
+#'
+#' @inheritParams data.table::uniqueN
+#' @noRd
+n_unique <- data.table::uniqueN
+
 
 # Placeholder for future
 # Startup message for the package

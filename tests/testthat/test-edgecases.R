@@ -30,12 +30,16 @@ test_data <- data.frame(
 
 debug <- list(no_compile = TRUE)
 
-test_that("single channel models are valid", {
+test_that("family-specific model formulas are valid", {
+  # Model formulas
   expect_error(
     obs_categorical <- obs(y1 ~ x1, family = "categorical"), NA
   )
   expect_error(
     obs_gaussian <- obs(y2 ~ x2, family = "gaussian"), NA
+  )
+  expect_error(
+    obs_mvgaussian <- obs(c(y2, y8) ~ x2, family = "mvgaussian"), NA
   )
   expect_error(
     obs_binomial <- obs(y3 ~ x3 + trials(trials), family = "binomial"), NA
@@ -62,13 +66,21 @@ test_that("single channel models are valid", {
     obs_student <- obs(y2 ~ x2, family = "student"), NA
   )
   expect_error(
-    obs_multinomial <- obs(c(y3, y4, y5) ~ x2, family = "multinomial"), NA
+    obs_multinomial <- obs(
+      c(y3, y4, y5) ~ x2 + trials(trials),
+      family = "multinomial"
+    ),
+    NA
   )
+  # Stan data
   expect_error(
     dynamite(obs_categorical, test_data, "time", "group", debug = debug), NA
   )
   expect_error(
     dynamite(obs_gaussian, test_data, "time", "group", debug = debug), NA
+  )
+  expect_error(
+    dynamite(obs_mvgaussian, test_data, "time", "group", debug = debug), NA
   )
   expect_error(
     dynamite(obs_binomial, test_data, "time", "group", debug = debug), NA
@@ -320,6 +332,7 @@ test_that("latent factors are handled correctly", {
     ]
   )
 })
+
 # Lag edgecases -----------------------------------------------------------
 
 test_that("lags are parsed", {

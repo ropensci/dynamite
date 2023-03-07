@@ -38,7 +38,7 @@
 #' @export
 #' @rdname dynamite
 #' @param dformula \[`dynamiteformula`]\cr The model formula.
-#'   See [dynamiteformula()] and 'Details'.
+#'   See [dynamite::dynamiteformula()] and 'Details'.
 #' @param data
 #'   \[`data.frame`, `tibble::tibble`, or `data.table::data.table`]\cr
 #'   The data that contains the variables in the

@@ -13,6 +13,7 @@
 #' * Categorical: `categorical` (with a softmax link using the first category
 #'   as reference). See the documentation of the `categorical_logit_glm` in the
 #'   Stan function reference manual (https://mc-stan.org/users/documentation/).
+#' * Multinomial: `multinomial` (softmax link, first category is reference).
 #' * Gaussian: `gaussian` (identity link, parameterized using mean and standard
 #'   deviation).
 #' * Multivariate Gaussian: `mvgaussian` (identity link, parameterized using
@@ -27,6 +28,8 @@
 #' * Exponential: `exponential` (log-link).
 #' * Gamma: `gamma` (log-link, using mean and shape parameterization).
 #' * Beta: `beta` (logit-link, using mean and precision parameterization).
+#' * Student t: `student` (identity link, parametrized using degrees of
+#'   freedon, location and scale)
 #'
 #' The models in the \pkg{dynamite} package are defined by combining the
 #' channel-specific formulas defined via \R formula syntax.
@@ -39,13 +42,21 @@
 #' Poisson distributed depending on some exogenous variable `z`
 #' (for which we do not define any distribution).
 #'
+#' Number of trials for binomial channels should be defined via a `trials`
+#' model component, e.g., `obs(y ~ x + trials(n), family = "binomial")`,
+#' where `n` is a data variable defining the number of trials. For multinomial
+#' channels, the number of trials is automatically defined to be the sum
+#' of the observations over the categories, but can also be defined using
+#' the `trials` component, for example for prediction.
+#'
 #' Multivariate channels are defined by providing a single formula for all
 #' components or by providing component-specific formulas separated by a `|`.
 #' The response variables that correspond to the components should be joined by
 #' `c()`. For instance, the following would define `c(y1, y2)` as multivariate
 #' gaussian with `x` as a predictor for the mean of the first component and
 #' `x` and `z` as predictors for the mean of the second component:
-#' `obs(c(y1, y2) ~ x | x + z, family = "mvgaussian")`
+#' `obs(c(y1, y2) ~ x | x + z, family = "mvgaussian")`. A multinomial channel
+#' should only have a single formula.
 #'
 #' In addition to declaring response variables via `obs`, we can also use
 #' the function `aux` to define auxiliary channels which are deterministic
@@ -216,6 +227,15 @@ dynamiteformula_ <- function(formula, original, family, name) {
     }
     if (is_multinomial(family)) {
       if (!"trials" %in% names(out[[1L]]$specials)) {
+        warning_(
+          c(
+            "The model contains a multinomial channel without
+             a trials term.",
+            `i` = "The model fit will assume number of trials = sum of
+                   observations, but prediction will not work for this channel
+                   unless the number trials is explicitly specified."
+          )
+        )
         out[[1L]]$specials$trials <- str2lang(
           paste(get_responses(out), collapse = " + ")
         )

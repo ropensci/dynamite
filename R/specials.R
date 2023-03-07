@@ -207,10 +207,12 @@ deterministic_response <- function(y) {
       resp = gsub("logical\\((.*)\\)", "\\1", y, perl = TRUE)
     )
   } else {
-    warning_(c(
-      "No type specified for deterministic channel {.var {y}}:",
-      `i` = "Assuming type is {.cls numeric}."
-    ))
+    warning_(
+      c(
+        "No type specified for deterministic channel {.var {y}}:",
+        `i` = "Assuming type is {.cls numeric}."
+      )
+    )
     list(type = "numeric", resp = y)
   }
 }
@@ -225,10 +227,25 @@ evaluate_specials <- function(dformula, data) {
   lapply(seq_along(dformula), function(i) {
     if (length(dformula[[i]]$specials) > 0L) {
       out <- list()
+      y <- dformula[[i]]$name
       for (spec in formula_special_funs) {
         spec_formula <- dformula[[i]]$specials[[spec]]
         if (!is.null(spec_formula)) {
-          out[[spec]] <- data[, eval(spec_formula)]
+          spec_eval <- tryCatch(
+            data[, eval(spec_formula)],
+            error = function(e) e,
+            warning = function(w) w
+          )
+          stopifnot_(
+            !inherits(spec_eval, c("warning", "error")),
+            c(
+              "Unable to evaluate {.fun {spec}} for response variable
+               {.var {y}}:",
+              `x` = spec_eval$message
+            )
+          )
+          do.call(paste0("check_", spec), args = list(y = y, x = spec_eval))
+          out[[spec]] <- spec_eval
         }
       }
       out
@@ -238,6 +255,50 @@ evaluate_specials <- function(dformula, data) {
   })
 }
 
+#' Check that a number of trials definition is valid
+#'
+#' @param y \[`character(1)`]\cr Name of the response variable.
+#' @param x \[`character(1)`]\cr Values of the trials specification.
+#' @noRd
+check_trials <- function(y, x) {
+  stopifnot_(
+    !inherits(x, "factor"),
+    c(
+      "Invalid {.fun trials} definition for response variable {.var {y}}:",
+      `x` = "Number of trials cannot be a {.cls factor}."
+    )
+  )
+  stopifnot_(
+    all(x >= 1.0) && all(x == as.integer(x)),
+    c(
+      "Invalid {.fun trials} definition for response variable {.var {y}}:",
+      `x` = "Number of trials must contain only positive integers."
+    )
+  )
+}
+
+#' Check that an offset definition is valid
+#'
+#' @param y \[`character(1)`]\cr Name of the response variable.
+#' @param x \[`character(1)`]\cr Values of the offset specification.
+#' @noRd
+check_offset <- function(y, x) {
+  stopifnot_(
+    !inherits(x, "factor"),
+    c(
+      "Invalid {.fun offset} definition for response variable {.var {y}}:",
+      `x` = "Offset cannot be a {.cls factor}."
+    )
+  )
+  stopifnot_(
+    all(x > 0.0),
+    c(
+      "Invalid {.fun offset} definition for response variable {.var {y}}:",
+      `x` = "Offset must contain only positive values."
+    )
+  )
+}
+
 #' Retrieve the Corresponding Term of a Special Variable in a Formula
 #'
 #' @param special \[`integer()`]\cr A vector of special variable indices.
@@ -245,7 +306,6 @@ evaluate_specials <- function(dformula, data) {
 #'   The `"variables"` attribute of a `terms` object.
 #' @param term_labels \[`character()`]\cr
 #'   The `"term.labels"` attribute of a `terms` object.
-#'
 #' @noRd
 get_special_term_indices <- function(special, vars, term_labels) {
   out <- integer(length(special))
