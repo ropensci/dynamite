@@ -5,6 +5,7 @@
 #' can be either time-varying or time-invariant.
 #'
 #' @export
+#' @family formulas
 #' @param k \[`integer()`]\cr
 #'   Values lagged by `k` units of time of each observed response variable
 #'   will be added as a predictor for each channel. Should be a positive

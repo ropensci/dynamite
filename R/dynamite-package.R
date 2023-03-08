@@ -56,6 +56,7 @@ NULL
 #' intercept, and time-invariant effect of covariate z. The time-varying
 #' coefficients vary according to a spline with 20 degrees of freedom.
 #'
+#' @family examples
 #' @source The data was generated according to a script in
 #' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/gaussian_example.R}
 #' @format A data frame with 3000 rows and 5 variables:
@@ -94,6 +95,7 @@ NULL
 #' )
 #' }
 #' Note the very small number of samples due to size restrictions on CRAN.
+#' @family examples
 #' @source The data was generated according to a script in
 #' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/gaussian_example_fit.R}
 #' @format A `dynamitefit` object.
@@ -104,6 +106,7 @@ NULL
 #' A simulated multichannel data containing multiple individuals with multiple
 #' response variables of different distributions.
 #'
+#' @family examples
 #' @source The data was generated according to a script in
 #' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/multichannel_example.R}
 #' @format A data frame with 3000 rows and 5 variables:
@@ -143,6 +146,7 @@ NULL
 #' )
 #' }
 #' Note the small number of samples due to size restrictions on CRAN.
+#' @family examples
 #' @source Script in
 #' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/multichannel_example_fit.R}
 #' @format A `dynamitefit` object.
@@ -153,6 +157,7 @@ NULL
 #' A simulated data containing multiple individuals with two categorical
 #' response variables.
 #'
+#' @family examples
 #' @source The data was generated according to a script in
 #' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/categorical_example.R}
 #' @format A data frame with 2000 rows and 5 variables:
@@ -186,6 +191,7 @@ NULL
 #' )
 #' }
 #' Note the small number of samples due to size restrictions on CRAN.
+#' @family examples
 #' @source Script in
 #' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/categorical_example_fit.R}
 #' @format A `dynamitefit` object.
@@ -195,6 +201,7 @@ NULL
 #' A simulated single-channel data containing multiple individuals whose
 #' trajectories are defined by a latent factor and random intercept terms.
 #'
+#' @family examples
 #' @source The data was generated according to a script in
 #' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/latent_factor_example.R}
 #' @format A data frame with 2000 rows and 3 variables:
@@ -230,6 +237,7 @@ NULL
 #' )
 #' }
 #' Note the very small number of samples due to size restrictions on CRAN.
+#' @family examples
 #' @source Script in
 #' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/latent_factor_example_fit.R}
 #' @format A `dynamitefit` object.

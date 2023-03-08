@@ -5,6 +5,7 @@
 #' `summary = TRUE`.
 #'
 #' @export
+#' @family output
 #' @rdname dynamite
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @return `summary` returns a `data.frame`.

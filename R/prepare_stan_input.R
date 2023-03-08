@@ -615,7 +615,7 @@ prepare_channel_categorical <- function(y, Y, channel, sampling,
     }
     priors <- check_priors(
       priors,
-      default_priors_categorical(y, channel, sd_x, resp_class)$priors
+      default_priors_categorical(y, channel, sd_x, S_y, resp_levels)$priors
     )
   }
   channel$write_alpha <-

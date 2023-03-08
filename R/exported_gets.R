@@ -18,6 +18,7 @@
 #' the user-defined priors for the `dynamite`.
 #'
 #' @export
+#' @family fitting
 #' @rdname get_priors
 #' @param x \[`dynamiteformula` or `dynamitefit`]\cr The model formula or an
 #'   existing `dynamitefit` object. See [dynamiteformula()] and [dynamite()].
@@ -64,6 +65,7 @@ get_priors.dynamitefit <- function(x, ...) {
 #' building a customized version of the model.
 #'
 #' @export
+#' @family output
 #' @rdname get_code
 #' @inheritParams get_priors.dynamiteformula
 #' @param blocks \[`character()`]\cr Stan block names to extract. If `NULL`,
@@ -159,6 +161,7 @@ get_code_ <- function(x, blocks = NULL) {
 #' Returns the input data to the Stan model. Mostly useful for debugging.
 #'
 #' @export
+#' @family output
 #' @rdname get_data
 #' @inheritParams get_priors.dynamiteformula
 #' @return A `list` containing the input data to Stan.
@@ -204,6 +207,7 @@ get_data.dynamitefit <- function(x, ...) {
 #' @param ... Ignored.
 #' @return A `character` vector with all parameter types of the input model.
 #' @export
+#' @family output
 #' @examples
 #' get_parameter_types(multichannel_example_fit)
 #'
@@ -241,6 +245,7 @@ get_parameter_types.dynamitefit <- function(x, ...) {
 #' @param ... Ignored.
 #' @return A `character` vector with parameter names of the input model.
 #' @export
+#' @family output
 #' @examples
 #' get_parameter_names(multichannel_example_fit)
 #'

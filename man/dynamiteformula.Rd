@@ -186,3 +186,12 @@ x <- obs(y ~ x + random(~ 1 + lag(d)), family = "gaussian") +
 print(x)
 
 }
+\seealso{
+Model formula construction
+\code{\link{dynamite}()},
+\code{\link{lags}()},
+\code{\link{lfactor}()},
+\code{\link{random_spec}()},
+\code{\link{splines}()}
+}
+\concept{formulas}

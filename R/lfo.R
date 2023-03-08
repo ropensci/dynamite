@@ -10,6 +10,7 @@
 #'
 #' @export
 #' @export lfo
+#' @family diagnostics
 #' @aliases lfo
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param L  \[`integer(1)`]\cr Positive integer defining how many time points

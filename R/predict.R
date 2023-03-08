@@ -8,6 +8,7 @@
 #' original data with `NA` values before model estimation.
 #'
 #' @export
+#' @family prediction
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param newdata \[`data.frame`]\cr Data used in predictions. Predictions are
 #'   computed for missing (`NA`) values in the response variable columns, and

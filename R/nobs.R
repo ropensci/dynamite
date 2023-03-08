@@ -1,6 +1,7 @@
 #' Extract the Number of Observations Used to Fit a Dynamite Model
 #'
 #' @export
+#' @family output
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param ... Not used.
 #' @return Total number of non-missing observations as an `integer`.

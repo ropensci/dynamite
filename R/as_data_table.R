@@ -5,6 +5,7 @@
 #'
 #' @export
 #' @export as.data.table
+#' @family output
 #' @aliases as.data.table
 #' @importFrom data.table as.data.table
 #' @param keep.rownames \[`logical(1)`]\cr Not used.

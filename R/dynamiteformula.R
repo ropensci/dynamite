@@ -112,6 +112,7 @@
 #' the random effects.
 #'
 #' @export
+#' @family formulas
 #' @param formula \[`formula`]\cr An \R formula describing the model.
 #' @param family \[`character(1)`]\cr The family name. See 'Details' for the
 #'   supported families.

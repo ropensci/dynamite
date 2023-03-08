@@ -36,6 +36,7 @@
 #' shape of the posterior), this can vary greatly.
 #'
 #' @export
+#' @family fitting
 #' @rdname dynamite
 #' @param dformula \[`dynamiteformula`]\cr The model formula.
 #'   See [dynamite::dynamiteformula()] and 'Details'.
@@ -446,6 +447,7 @@ remove_redundant_parameters <- function(stan_input, backend,
 #' @rdname dynamite
 #' @param x \[`dynamitefit`\]\cr The model fit object.
 #' @return `formula` returns a quoted expression.
+#' @family formulas
 #' @export
 #' @examples
 #' formula(gaussian_example_fit)

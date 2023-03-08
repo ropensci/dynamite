@@ -32,8 +32,11 @@ test_that("parameters of the Grunfield model are recovered", {
   # )
   #plm_est <- dput(coef(fit_plm))
   plm_est <- c(value = 0.110123804120719, capital = 0.310065341300139)
-  expect_equal(plm_est, coef(fit)$mean[2:3],
-    tolerance = 0.01, ignore_attr = TRUE
+  expect_equal(
+    plm_est,
+    coef(fit)$mean[2:3],
+    tolerance = 0.01,
+    ignore_attr = TRUE
   )
 
   # Not run, values are stored
@@ -59,8 +62,12 @@ test_that("parameters of the Grunfield model are recovered", {
     posterior::default_summary_measures()
   )
   for (i in 1:15) {
-    expect_equal(sumr$mean[i], brms_est[i],
-      tolerance = 100 * sumr$mcse_mean[i], label = sumr$variable[i]
+    expect_equal(
+      sumr$mean[i],
+      brms_est[i],
+      tolerance = 100 * sumr$mcse_mean[i],
+      label = sumr$variable[i],
+      ignore_attr = TRUE
     )
   }
 })

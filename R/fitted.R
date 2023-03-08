@@ -6,6 +6,7 @@
 #' [dynamite::predict.dynamitefit()] for multi-step predictions.
 #'
 #' @export
+#' @family prediction
 #' @inheritParams predict.dynamitefit
 #' @param newdata \[`data.frame`]\cr Data used in predictions.
 #'   If `NULL` (default), the data used in model estimation is used for

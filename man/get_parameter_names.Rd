@@ -35,3 +35,18 @@ number denoting the knot number.
 get_parameter_names(multichannel_example_fit)
 
 }
+\seealso{
+Model outputs
+\code{\link{as.data.frame.dynamitefit}()},
+\code{\link{as.data.table.dynamitefit}()},
+\code{\link{as_draws_df.dynamitefit}()},
+\code{\link{coef.dynamitefit}()},
+\code{\link{confint.dynamitefit}()},
+\code{\link{dynamite}()},
+\code{\link{get_code}()},
+\code{\link{get_data}()},
+\code{\link{get_parameter_types}()},
+\code{\link{ndraws.dynamitefit}()},
+\code{\link{nobs.dynamitefit}()}
+}
+\concept{output}

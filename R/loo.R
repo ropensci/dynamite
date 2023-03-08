@@ -5,6 +5,7 @@
 #'
 #' @export
 #' @export loo
+#' @family diagnostics
 #' @aliases loo
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param separate_channels \[`logical(1)`]\cr If `TRUE`, computes LOO

@@ -3,6 +3,7 @@
 #' Extracts credible intervals from `dynamitefit` object.
 #'
 #' @export
+#' @family output
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param parm Ignored.
 #' @param level \[`numeric(1)`]\cr Credible interval width.
