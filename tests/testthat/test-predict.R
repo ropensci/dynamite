@@ -496,3 +496,89 @@ test_that("predict with loglik works", {
     dplyr::pull(y_loglik)
   expect_equal(manual, automatic)
 })
+
+test_that("predict with random variable trials works", {
+  skip_if_not(run_extended_tests)
+
+  set.seed(1)
+  N <- 100
+  T_ <- 50
+  S <- crossprod(matrix(rnorm(4), 2, 2))
+  y <- matrix(0, N, T_)
+  n <- matrix(0, N, T_)
+  for(t in 2:T_) {
+    for(i in 1:N) {
+      n[i, t] <- rpois(1, 5)
+      lp <- -3.0 + 1.25 * y[i, t-1]
+      y[i, t] <- rbinom(1, 1 + n[i, t], plogis(lp))
+    }
+  }
+  d <- data.frame(
+    n = c(n),
+    y = c(y),
+    t = rep(1:T_, each = N),
+    id = 1:N
+  )
+  f <- obs(n ~ 1, family = "poisson") +
+    aux(integer(nn) ~ n + 1) +
+    obs(y ~ lag(y) + trials(nn), family = "binomial")
+  fit <- dynamite(
+    dformula = f,
+    data = d,
+    time = "t",
+    group = "id",
+    chains = 1,
+    iter = 2000,
+    refresh = 0
+  )
+  expect_error(sumr <- summary(fit), NA)
+  expect_equal(sumr$mean, c(log(5), -3.0, 1.25), tolerance = 0.1)
+  expect_error(predict(fit, n_draws = 5), NA)
+})
+
+test_that("multivariate gaussian predict works", {
+  skip_if_not(run_extended_tests)
+
+  set.seed(1)
+  N <- 100
+  T_ <- 50
+  S <- crossprod(matrix(rnorm(4), 2, 2))
+  L <- t(chol(S))
+  y1 <- matrix(0, N, T_)
+  y2 <- matrix(0, N, T_)
+  x <- matrix(0, N, T_)
+  for (t in 2:T_) {
+    for (i in 1:N){
+      mu <- c(0.7 * y1[i, t-1], 0.4 * y2[i, t-1] - 0.2 * y1[i, t-1])
+      y <- mu + L %*% rnorm(2)
+      y1[i, t] <- y[1]
+      y2[i, t] <- y[2]
+      x[i, t] <- rnorm(1, c(0.5 * y1[i, t-1]), 0.5)
+    }
+  }
+  d <- data.frame(
+    y1 = c(y1),
+    y2 = c(y2),
+    x = c(x),
+    t = rep(1:T_, each = N),
+    id = 1:N
+  )
+  f <- obs(c(y1, y2) ~ -1 + lag(y1) | -1 + lag(y1) + lag(y2), "mvgaussian") +
+    obs(x ~ -1 + lag(y1), "gaussian")
+  fit <- dynamite(
+    dformula = f,
+    data = d,
+    time = "t",
+    group = "id",
+    chains = 1,
+    iter = 2000,
+    refresh = 0
+  )
+  expect_error(sumr <- summary(fit, type = "corr"), NA)
+  expect_equal(sumr$mean, cov2cor(S)[2, 1], tolerance = 0.1)
+  expect_error(sumr <- summary(fit, type = "sigma"), NA)
+  expect_equal(sumr$mean, c(0.5, sqrt(diag(S))), tolerance = 0.1)
+  expect_error(sumr <- summary(fit, type = "beta"), NA)
+  expect_equal(sumr$mean, c(0.5, 0.7, -0.2, 0.4), tolerance = 0.1)
+  expect_error(predict(fit, n_draws = 5), NA)
+})

@@ -11,6 +11,8 @@
     properly checked.
   * The model components `trials()` and `offset()` now function correctly in 
     `predict()` when they contain response variables of the model.
+  * Fixed the number of observations calculation in `nobs()` for models
+    that have multivariate channels.
 
 # dynamite 1.2.1
 

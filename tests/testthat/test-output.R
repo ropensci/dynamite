@@ -206,13 +206,25 @@ test_that("credible intervals can be computed", {
 
 test_that("number of observations can be extracted", {
   expect_error(
-    nobs(gaussian_example_fit),
+    n <- nobs(gaussian_example_fit),
     NA
   )
+  expect_equal(n, 1450L)
   expect_error(
-    nobs(gaussian_example_single_fit),
+    n <- nobs(gaussian_example_single_fit),
     NA
   )
+  expect_equal(n, 29L)
+  expect_error(
+    n <- nobs(multichannel_example_fit),
+    NA
+  )
+  expect_equal(n, 2850L)
+  expect_error(
+    n <- nobs(categorical_example_fit),
+    NA
+  )
+  expect_equal(n, 3800L)
 })
 
 test_that("summary can be extracted", {
