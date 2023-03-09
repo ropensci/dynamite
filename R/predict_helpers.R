@@ -1440,14 +1440,12 @@ predict_expr$loglik$multinomial <- "
     x = out,
     i = idx,
     j = '{resp}_loglik',
-    value = sum(
-      lgamma(trials + 1) +
-        .rowSums(
-          y * (xbeta - log_sum_exp_rows(xbeta, k, S)) - lgamma(y + 1),
-          k,
-          S
-        )
-    )
+    value = lgamma(trials + 1) +
+      .rowSums(
+        y * (xbeta - log_sum_exp_rows(xbeta, k, S)) - lgamma(y + 1),
+        k,
+        S
+      )
   )
 "
 
