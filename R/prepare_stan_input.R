@@ -638,7 +638,8 @@ prepare_channel_multinomial <- function(y, y_cg, Y, channel, sampling,
   if (any("factor" %in% unlist(resp_class))) {
     abort_factor(y_cg, "Multinomial", call = rlang::caller_env())
   }
-  Y_obs <- Y[!is.na(Y)]
+  obs <- sampling[[paste0("n_obs_", y_cg)]] > 0L
+  Y_obs <- Y[obs, , ,drop = FALSE]
   if (any(Y_obs < 0.0) || any(Y_obs != as.integer(Y_obs))) {
     abort_negative(
       y_cg,
@@ -647,16 +648,18 @@ prepare_channel_multinomial <- function(y, y_cg, Y, channel, sampling,
       call = rlang::caller_env()
     )
   }
-  trials <- sampling[[paste0("trials_", y_cg)]]
-  trial_idx <- which(
-    apply(Y, c(1L, 2L), sum, na.rm = TRUE) < trials,
-    arr.ind = TRUE
-  )
-  stopifnot_(
-    nrow(trial_idx) == 0L,
-    "Invalid number of trials at time index {trial_idx[1, 1]} for group
-     {trial_idx[1, 2]}."
-  )
+  trials <- sampling[[paste0("trials_", y_cg)]][obs, , drop = FALSE]
+  if (any(obs)) {
+    trial_idx <- which(
+      apply(Y, c(1L, 2L), sum, na.rm = TRUE) < trials,
+      arr.ind = TRUE
+    )
+    stopifnot_(
+      nrow(trial_idx) == 0L,
+      "Invalid number of trials at time index {trial_idx[1, 1]} for group
+       {trial_idx[1, 2]}."
+    )
+  }
   S_y <- dim(Y)[3L]
   channel$S <- S_y
   sampling[[paste0("S_", y_cg)]] <- S_y

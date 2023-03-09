@@ -582,3 +582,70 @@ test_that("multivariate gaussian predict works", {
   expect_equal(sumr$mean, c(0.5, 0.7, -0.2, 0.4), tolerance = 0.1)
   expect_error(predict(fit, n_draws = 5), NA)
 })
+
+test_that("multinomial predict works", {
+  skip_if_not(run_extended_tests)
+
+  set.seed(1)
+  n_id <- 100L
+  n_time <- 20L
+
+  d <- data.frame(
+    y1 = sample(10, size = n_id, replace = TRUE),
+    y2 = sample(12, size = n_id, replace = TRUE),
+    y3 = sample(15, size = n_id, replace = TRUE),
+    time = 1,
+    id = seq_len(n_id)
+  )
+  d$n <- d$y1 + d$y2 + d$y3
+
+  d <- dplyr::right_join(
+    d,
+    data.frame(
+      time = rep(seq_len(n_time), each = n_id),
+      id = seq_len(n_id)
+    )
+  )
+
+  d$z <- rnorm(nrow(d))
+  d$n[is.na(d$n)] <- sample(37, size = sum(is.na(d$n)), replace = TRUE)
+
+  f <- obs(
+    c(y1, y2, y3) ~ z + lag(y1) + lag(y2) + lag(y3) + trials(n),
+    family = "multinomial"
+  )
+
+  init <- list(
+    beta_y1_y2_y3 = matrix(
+      c(
+        1.2, 0.8, 0.2, 0.1,
+        1,   0.5, 0.6, 0.3
+      ),
+      nrow = 4,
+      ncol = 2
+    ),
+    a_y1_y2_y3 = c(-0.1, 0.2)
+  )
+
+  expect_error(
+    fit <- dynamite(
+      dformula = f,
+      data = d,
+      time = "time",
+      group = "id",
+      chains = 1,
+      iter = 1,
+      algorithm = "Fixed_param",
+      init = list(init),
+    ),
+    NA
+  )
+  expect_error(
+    pred <- predict(fit, type = "response"),
+    NA
+  )
+  expect_identical(
+    pred$y1_new + pred$y2_new + pred$y3_new,
+    pred$n
+  )
+})

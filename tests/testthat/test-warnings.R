@@ -241,3 +241,31 @@ test_that("gaps in newdata with exogenous predictors and no impute warns", {
     )
   )
 })
+
+# Stan warnings -----------------------------------------------------------
+
+test_that("categorical non-glm availability warns", {
+  mockery::stub(sampling_info, "stan_supports_categorical_logit_glm", FALSE)
+  mockery::stub(sampling_info, "get_family_names", "categorical")
+  expect_warning(
+    sampling_info(NULL, TRUE, NULL, "rstan"),
+    paste0(
+      "Efficient GLM variant of the categorical likelihood is not available ",
+      "in this version of rstan\\.\n",
+      "i For more efficient sampling, please install ",
+      "a newer version of rstan\\."
+    )
+  )
+})
+
+test_that("windows and old rstan warns on attach", {
+  mockery::stub(startup, "stan_rstan_is_functional", FALSE)
+  out <- capture.output(startup(), type = "message")
+  expect_match(
+    out[1],
+    paste0(
+      "Please update your `rstan` and `StanHeaders` installations before ",
+      "using `dynamite` with the `rstan` backend by running:"
+    )
+  )
+})

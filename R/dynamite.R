@@ -404,10 +404,10 @@ sampling_info <- function(dformulas, verbose, debug, backend) {
     "categorical" %in% get_family_names(dformulas$all)) {
     warning_(
       c(
-        "Efficient glm-variant of the categorical likelihood is not
-         available in this version of {.pkg rstan} or {.pkg cmdstanr}.",
+        "Efficient GLM variant of the categorical likelihood is not
+         available in this version of {.pkg {backend}}.",
         `i` = "For more efficient sampling, please install a newer version
-               of {.pkg rstan} or {.pkg cmdstanr}."
+               of {.pkg {backend}}."
       )
     )
   }

@@ -383,10 +383,10 @@ log_sum_exp_rows <- function(x, m, n) {
 #' @noRd
 n_unique <- data.table::uniqueN
 
-
-# Placeholder for future
-# Startup message for the package
-.onAttach <- function(libname, pkgname) {
+#' Package startup functionality
+#'
+#' @noRd
+startup <- function() {
   if (!stan_rstan_is_functional()) {
     packageStartupMessage(
       "Please update your `rstan` and `StanHeaders` installations before ",
@@ -400,6 +400,12 @@ n_unique <- data.table::uniqueN
       "-C---Toolchain-for-Windows for further information."
     )
   }
+}
+
+# Placeholder for future
+# Startup message for the package
+.onAttach <- function(libname, pkgname) {
+  startup()
 }
 
 # Placeholder for future
