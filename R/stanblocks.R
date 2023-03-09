@@ -486,8 +486,8 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
             "vector[P] tau_psi = [{tau}]';",
             "matrix[P, P] Ltau = diag_pre_multiply(tau_psi, L_lf);",
             "vector[P] omega1 = [{omega1}]';",
-            "omega_raw_psi[, 2] ~ multi_normal_cholesky(omega1, Ltau);",
-            "for (i in 3:(D - 1)) {{",
+            "omega_raw_psi[, 1] ~ multi_normal_cholesky(omega1, Ltau);",
+            "for (i in 2:(D - 1)) {{",
             paste0(
               "omega_raw_psi[, i] ~ ",
               "multi_normal_cholesky(omega_raw_psi[, i - 1], Ltau);"
@@ -500,8 +500,8 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
           lfactor_text <- paste_rows(
             "L_lf ~ {L_prior};",
             "vector[P] omega1 = [{omega1}]';",
-            "omega_raw_psi[, 2] ~ multi_normal_cholesky(omega1, L_lf);",
-            "for (i in 3:(D - 1)) {{",
+            "omega_raw_psi[, 1] ~ multi_normal_cholesky(omega1, L_lf);",
+            "for (i in 2:(D - 1)) {{",
             paste0(
               "omega_raw_psi[, i] ~ ",
               "multi_normal_cholesky(omega_raw_psi[, i - 1], L_lf);"
@@ -531,8 +531,8 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
             "{{",
             "vector[P] tau_psi = [{tau}]';",
             "vector[P] omega1 = [{omega1}]';",
-            "omega_raw_psi[, 2] ~ normal(omega1, tau_psi);",
-            "for (i in 3:(D - 1)) {{",
+            "omega_raw_psi[, 1] ~ normal(omega1, tau_psi);",
+            "for (i in 2:(D - 1)) {{",
             "omega_raw_psi[, i] ~ normal(omega_raw_psi[, i - 1], tau_psi);",
             "}}",
             "}}",
@@ -541,8 +541,8 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
         } else {
           lfactor_text <- paste_rows(
             "vector[P] omega1 = [{omega1}]';",
-            "omega_raw_psi[, 2] ~ normal(omega1, 1);",
-            "for (i in 3:(D - 1)) {{",
+            "omega_raw_psi[, 1] ~ normal(omega1, 1);",
+            "for (i in 2:(D - 1)) {{",
             "omega_raw_psi[, i] ~ normal(omega_raw_psi[, i - 1], 1);",
             "}}",
             .indent = idt(c(1, 1, 1, 2, 1))
