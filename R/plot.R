@@ -350,9 +350,11 @@ plot_nus <- function(x, parameters = NULL, responses = NULL, level = 0.05,
     !inherits(coefs, "try-error"),
     "The model does not contain random effects nu."
   )
-  if (!is.null(groups)) {
-    coefs <- coefs[coefs$group %in% groups, ]
-  }
+  coefs <- ifelse_(
+    is.null(groups),
+    coefs,
+    coefs[coefs$group %in% groups, ]
+  )
   # avoid NSE notes from R CMD check
   mean <- parameter <- NULL
   coefs$parameter <- glue::glue("{coefs$parameter}_{coefs$group}")

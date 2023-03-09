@@ -1062,7 +1062,7 @@ predict_expr$fitted$mvgaussian <- "
       x = out,
       i = idx,
       j = paste0(resp[i], '_fitted'),
-      value = xbeta[ ,i]
+      value = xbeta[, i]
     )
   }}
 "
@@ -1171,7 +1171,7 @@ predict_expr$predicted$categorical <- "
   data.table::set(
     x = out,
     i = idx_data,
-    j = resp,
+    j = '{resp}',
     value = max.col(xbeta - log(-log(runif(S * k))))[idx_out]
   )
 "
@@ -1200,7 +1200,7 @@ predict_expr$predicted$binomial <- "
   data.table::set(
     x = out,
     i = idx_data,
-    j = resp,
+    j = '{resp}',
     value = rbinom(k, trials, prob)[idx_out]
   )
 "
@@ -1210,7 +1210,7 @@ predict_expr$predicted$bernoulli <- "
   data.table::set(
     x = out,
     i = idx_data,
-    j = resp,
+    j = '{resp}',
     value = rbinom(k, 1, prob)[idx_out]
   )
 "
@@ -1220,7 +1220,7 @@ predict_expr$predicted$poisson <- "
   data.table::set(
     x = out,
     i = idx_data,
-    j = resp,
+    j = '{resp}',
     value = rpois(k, exp_xbeta)[idx_out]
   )
 "
@@ -1230,7 +1230,7 @@ predict_expr$predicted$negbin <- "
   data.table::set(
     x = out,
     i = idx_data,
-    j = resp,
+    j = '{resp}',
     value = rnbinom(k, size = phi, mu = exp_xbeta)[idx_out]
   )
 "
@@ -1239,7 +1239,7 @@ predict_expr$predicted$exponential <- "
   data.table::set(
     x = out,
     i = idx_data,
-    j = resp,
+    j = '{resp}',
     value = rexp(k, rate = exp(-xbeta))[idx_out]
   )
 "
@@ -1248,7 +1248,7 @@ predict_expr$predicted$gamma <- "
   data.table::set(
     x = out,
     i = idx_data,
-    j = resp,
+    j = '{resp}',
     value = rgamma(k, shape = phi, rate = phi * exp(-xbeta))[idx_out]
   )
 "
@@ -1258,7 +1258,7 @@ predict_expr$predicted$beta <- "
   data.table::set(
     x = out,
     i = idx_data,
-    j = resp,
+    j = '{resp}',
     value = rbeta(k,  mu * phi, (1 - mu) * phi)[idx_out]
   )
 "
@@ -1267,7 +1267,7 @@ predict_expr$predicted$student <- "
   data.table::set(
     x = out,
     i = idx_data,
-    j = resp,
+    j = '{resp}',
     value = (xbeta + sigma * rt(k, phi))[idx_out]
   )
 "
@@ -1315,7 +1315,7 @@ predict_expr$mean$multinomial <- "
       x = out,
       i = idx_data,
       j = mean_cols[s],
-      value = trials * mval[idx_out, s]
+      value = trials[idx_out] * mval[idx_out, s]
     )
   }}
 "
@@ -1440,8 +1440,14 @@ predict_expr$loglik$multinomial <- "
     x = out,
     i = idx,
     j = '{resp}_loglik',
-    value = lgamma(n + 1) - .rowSums(lgamma(y + 1), k, S) +
-      y * xbeta - log_sum_exp_rows(xbeta, k, S)
+    value = sum(
+      lgamma(trials + 1) +
+        .rowSums(
+          y * (xbeta - log_sum_exp_rows(xbeta, k, S)) - lgamma(y + 1),
+          k,
+          S
+        )
+    )
   )
 "
 

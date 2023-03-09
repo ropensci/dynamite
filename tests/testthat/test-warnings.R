@@ -259,7 +259,9 @@ test_that("categorical non-glm availability warns", {
 })
 
 test_that("windows and old rstan warns on attach", {
-  mockery::stub(startup, "stan_rstan_is_functional", FALSE)
+  mockery::stub(startup, "stan_version", "2.23", depth = 2)
+  mockery::stub(startup, "is_windows", TRUE, depth = 2)
+  mockery::stub(startup, "getRversion", "4.2.0", depth = 2)
   out <- capture.output(startup(), type = "message")
   expect_match(
     out[1],

@@ -383,6 +383,13 @@ log_sum_exp_rows <- function(x, m, n) {
 #' @noRd
 n_unique <- data.table::uniqueN
 
+#' Is the OS Windows?
+#'
+#' @noRd
+is_windows <- function() {
+  identical(.Platform$OS.type, "windows")
+}
+
 #' Package startup functionality
 #'
 #' @noRd
@@ -402,8 +409,6 @@ startup <- function() {
   }
 }
 
-# Placeholder for future
-# Startup message for the package
 .onAttach <- function(libname, pkgname) {
   startup()
 }

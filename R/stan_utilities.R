@@ -9,7 +9,7 @@
 #' @param dims \[`character(1)`]\cr Dimensions of the array elements
 #'   (without brackets).
 #' @param comment \[`character(1)`]\cr Comment string to append to the end of
-#'   the line (wihtout // prefix).
+#'   the line (without // prefix).
 #' @noRd
 stan_array <- function(backend, type, name, arr_dims,
                        bounds = "", dims = "", comment = "") {
@@ -55,7 +55,7 @@ stan_supports_categorical_logit_glm <- function(backend) {
 }
 
 stan_rstan_is_functional <- function() {
-  if (!identical(.Platform$OS.type, "windows") || getRversion() < "4.2.0") {
+  if (!is_windows() || getRversion() < "4.2.0") {
     return(TRUE)
   }
   utils::compareVersion(stan_version("rstan"), "2.26") >= 0

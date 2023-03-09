@@ -312,9 +312,13 @@ as_data_table_default <- function(type, draws, response, ...) {
 
 #' @describeIn as_data_table_default Data Table for a "xi" Parameter
 #' @noRd
-as_data_table_xi <- function(x, draws, ...) {
+as_data_table_xi <- function(x, draws, n_draws, ...) {
+  D <- x$stan$sampling_vars$D
   data.table::data.table(
-    parameter = "xi",
+    parameter = rep(
+      paste0("xi_d", seq_len(D - 1L)),
+      each = n_draws
+    ),
     value = c(draws)
   )
 }

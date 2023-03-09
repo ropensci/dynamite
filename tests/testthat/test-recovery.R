@@ -165,7 +165,8 @@ test_that("LOO works for AR(1) model", {
     refresh = 0
   )
   l <- loo(fit)
-  expect_equal(l$estimates,
+  expect_equal(
+    l$estimates,
     structure(
       c(
         -107.877842970846, 2.86041434691809, 215.755685941693,
@@ -177,6 +178,50 @@ test_that("LOO works for AR(1) model", {
     tolerance = 1
   )
   expect_error(plot(l), NA)
+})
+
+test_that("LOO works with separate channels", {
+  set.seed(1)
+  expect_error(
+    l <- loo(multichannel_example_fit, separate_channels = TRUE),
+    NA
+  )
+  expect_equal(
+    l$g_loglik$estimates,
+    structure(
+      c(
+        127.7731689, 3.9598420, -255.5463377,
+        21.1943047,  0.2433661,   42.3886094
+      ),
+      dim = 3:2,
+      dimnames = list(c("elpd_loo", "p_loo", "looic"), c("Estimate", "SE"))
+    ),
+    tolerance = 1
+  )
+  expect_equal(
+    l$p_loglik$estimates,
+    structure(
+      c(
+        -2128.5452197, 4.5260226, 4257.0904393,
+        26.5452884,    0.3107372, 53.0905768
+      ),
+      dim = 3:2,
+      dimnames = list(c("elpd_loo", "p_loo", "looic"), c("Estimate", "SE"))
+    ),
+    tolerance = 1
+  )
+  expect_equal(
+    l$b_loglik$estimates,
+    structure(
+      c(
+        -583.3724555, 6.8573891, 1166.7449111,
+        12.1459613,   0.3097697, 24.2919227
+      ),
+      dim = 3:2,
+      dimnames = list(c("elpd_loo", "p_loo", "looic"), c("Estimate", "SE"))
+    ),
+    tolerance = 1
+  )
 })
 
 test_that("LFO works for AR(1) model", {
@@ -195,6 +240,7 @@ test_that("LFO works for AR(1) model", {
   expect_equal(l$ELPD, -90.4188604974201, tolerance = 1)
   expect_equal(l$ELPD_SE, 7.58842574523583, tolerance = 1)
   expect_error(plot(l), NA)
+  expect_error(print(l), NA)
 })
 
 test_that("parameters of a time-varying gaussian model are recovered", {
