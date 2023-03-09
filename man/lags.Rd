@@ -40,3 +40,12 @@ obs(x ~ z, family = "categorical") +
   lags(type = "fixed")
 
 }
+\seealso{
+Model formula construction
+\code{\link{dynamiteformula}()},
+\code{\link{dynamite}()},
+\code{\link{lfactor}()},
+\code{\link{random_spec}()},
+\code{\link{splines}()}
+}
+\concept{formulas}

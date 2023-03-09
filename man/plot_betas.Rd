@@ -39,3 +39,12 @@ Plot Time-invariant Regression Coefficients of a Dynamite Model
 plot_betas(gaussian_example_fit, level = 0.1)
 
 }
+\seealso{
+Drawing plots
+\code{\link{plot.dynamitefit}()},
+\code{\link{plot_deltas}()},
+\code{\link{plot_lambdas}()},
+\code{\link{plot_nus}()},
+\code{\link{plot_psis}()}
+}
+\concept{plotting}

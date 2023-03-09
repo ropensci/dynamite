@@ -25,4 +25,15 @@ multichannel_example
 A simulated multichannel data containing multiple individuals with multiple
 response variables of different distributions.
 }
+\seealso{
+Example models
+\code{\link{categorical_example_fit}},
+\code{\link{categorical_example}},
+\code{\link{gaussian_example_fit}},
+\code{\link{gaussian_example}},
+\code{\link{latent_factor_example_fit}},
+\code{\link{latent_factor_example}},
+\code{\link{multichannel_example_fit}}
+}
+\concept{examples}
 \keyword{datasets}

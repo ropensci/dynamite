@@ -3,6 +3,7 @@
 #' Extracts either time-varying or time-invariant parameters of the model.
 #'
 #' @export
+#' @family output
 #' @param object \[`dynamitefit`]\cr The model fit object.
 #' @param type  \[`character(1)`]\cr Either `beta` (the default) for
 #'   time-invariant coefficients, `delta` for time-varying coefficients,

@@ -56,3 +56,9 @@ Paul-Christian Bürkner, Jonah Gabry, and Aki Vehtari (2020).
 Approximate leave-future-out cross-validation for Bayesian time series
 models, Journal of Statistical Computation and Simulation, 90:14, 2499-2523.
 }
+\seealso{
+Model diagnostics
+\code{\link{loo.dynamitefit}()},
+\code{\link{mcmc_diagnostics}()}
+}
+\concept{diagnostics}

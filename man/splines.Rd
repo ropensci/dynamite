@@ -69,3 +69,12 @@ obs(y ~ 1, family = "gaussian") + obs(x ~ 1, family = "gaussian") +
   )
 
 }
+\seealso{
+Model formula construction
+\code{\link{dynamiteformula}()},
+\code{\link{dynamite}()},
+\code{\link{lags}()},
+\code{\link{lfactor}()},
+\code{\link{random_spec}()}
+}
+\concept{formulas}

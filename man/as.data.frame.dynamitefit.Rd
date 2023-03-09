@@ -93,7 +93,13 @@ Samples of the full correlation matrix can be extracted manually as
 \code{rstan::extract(fit$stanfit, pars = "corr_matrix_psi")} if necessary.
 \item \code{sigma}\cr Standard deviations of gaussian responses.
 \item \code{corr}\cr Pairwise correlations of multivariate gaussian responses.
-\item \code{phi}\cr Dispersion parameters of negative binomial responses.
+\item \code{phi}\cr Describes various distributional parameters, such as:
+\itemize{
+\item Dispersion parameter of the Negative Binomial distribution.
+\item Shape parameter of the Gamma distribution.
+\item Precision parameter of the Beta distribution.
+\item Degrees of freedom of the Student t-distribution.
+}
 \item \code{omega}\cr Spline coefficients of the regression coefficients \code{delta}.
 \item \code{omega_alpha}\cr Spline coefficients of time-varying \code{alpha}.
 \item \code{omega_psi}\cr Spline coefficients of the latent factors \code{psi}.
@@ -130,3 +136,18 @@ as.data.frame(
 )
 
 }
+\seealso{
+Model outputs
+\code{\link{as.data.table.dynamitefit}()},
+\code{\link{as_draws_df.dynamitefit}()},
+\code{\link{coef.dynamitefit}()},
+\code{\link{confint.dynamitefit}()},
+\code{\link{dynamite}()},
+\code{\link{get_code}()},
+\code{\link{get_data}()},
+\code{\link{get_parameter_names}()},
+\code{\link{get_parameter_types}()},
+\code{\link{ndraws.dynamitefit}()},
+\code{\link{nobs.dynamitefit}()}
+}
+\concept{output}

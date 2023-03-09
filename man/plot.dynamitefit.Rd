@@ -35,3 +35,12 @@ Produces the traceplots and the density plots of the model parameters.
 plot(gaussian_example_fit, type = "beta")
 
 }
+\seealso{
+Drawing plots
+\code{\link{plot_betas}()},
+\code{\link{plot_deltas}()},
+\code{\link{plot_lambdas}()},
+\code{\link{plot_nus}()},
+\code{\link{plot_psis}()}
+}
+\concept{plotting}

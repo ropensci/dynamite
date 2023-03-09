@@ -52,3 +52,9 @@ if (.Platform$OS.type == "windows") {
 }
 
 }
+\seealso{
+Model fitting
+\code{\link{dynamite}()},
+\code{\link{get_priors}()}
+}
+\concept{fitting}

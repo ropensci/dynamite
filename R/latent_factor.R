@@ -11,6 +11,7 @@
 #' upcoming paper. This component should be treated as experimental feature.
 #'
 #' @export
+#' @family formulas
 #' @param responses \[`character()`]\cr Names of the responses that the
 #'   factor should affect. Default is all responses defined with
 #'   `obs` except categorical responses, which do not (yet) support the factor

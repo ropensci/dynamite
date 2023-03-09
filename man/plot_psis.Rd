@@ -34,3 +34,12 @@ A \code{ggplot} object.
 \description{
 Plot Latent Factors of a Dynamite Model
 }
+\seealso{
+Drawing plots
+\code{\link{plot.dynamitefit}()},
+\code{\link{plot_betas}()},
+\code{\link{plot_deltas}()},
+\code{\link{plot_lambdas}()},
+\code{\link{plot_nus}()}
+}
+\concept{plotting}

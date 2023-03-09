@@ -196,3 +196,31 @@ Jouni Helske and Santtu Tikka (2022). Estimating Causal Effects
 from Panel Data with Dynamic Multivariate Panel Models. SocArxiv preprint,
 \url{https://osf.io/preprints/socarxiv/mdwu5/}.
 }
+\seealso{
+Model fitting
+\code{\link{get_priors}()},
+\code{\link{update.dynamitefit}()}
+
+Model formula construction
+\code{\link{dynamiteformula}()},
+\code{\link{lags}()},
+\code{\link{lfactor}()},
+\code{\link{random_spec}()},
+\code{\link{splines}()}
+
+Model outputs
+\code{\link{as.data.frame.dynamitefit}()},
+\code{\link{as.data.table.dynamitefit}()},
+\code{\link{as_draws_df.dynamitefit}()},
+\code{\link{coef.dynamitefit}()},
+\code{\link{confint.dynamitefit}()},
+\code{\link{get_code}()},
+\code{\link{get_data}()},
+\code{\link{get_parameter_names}()},
+\code{\link{get_parameter_types}()},
+\code{\link{ndraws.dynamitefit}()},
+\code{\link{nobs.dynamitefit}()}
+}
+\concept{fitting}
+\concept{formulas}
+\concept{output}

@@ -15,6 +15,7 @@
 #' [dynamite::get_parameter_names()] for potential values for `parameters`
 #' argument.
 #' @export
+#' @family output
 #' @aliases as_draws_df
 #' @export as_draws_df
 #' @rdname as_draws-dynamitefit

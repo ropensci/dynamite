@@ -4,6 +4,7 @@
 #' splines used for the time-varying coefficients \eqn{\delta}.
 #'
 #' @export
+#' @family formulas
 #' @param df \[`integer(1)`]\cr Degrees of freedom, i.e., the total number of
 #'   spline coefficients. See [splines::bs()]. Note that the knots are always
 #'   defined as an equidistant sequence on the interval starting from the first

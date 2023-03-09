@@ -25,4 +25,15 @@ categorical_example
 A simulated data containing multiple individuals with two categorical
 response variables.
 }
+\seealso{
+Example models
+\code{\link{categorical_example_fit}},
+\code{\link{gaussian_example_fit}},
+\code{\link{gaussian_example}},
+\code{\link{latent_factor_example_fit}},
+\code{\link{latent_factor_example}},
+\code{\link{multichannel_example_fit}},
+\code{\link{multichannel_example}}
+}
+\concept{examples}
 \keyword{datasets}
