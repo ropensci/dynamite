@@ -163,8 +163,13 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     family <- dformula[[j]]$family
     channel <- list(family = family)
     y <- resp[cg_idx]
-    y_name <- resp_names[cg_idx]
-    y_cg <- paste(y_name, collapse = "_")
+    if (is_categorical(family)) {
+      y_name <- attr(resp_classes[[y]], "levels")
+      y_cg <- y
+    } else {
+      y_name <- resp_names[cg_idx]
+      y_cg <- paste(y_name, collapse = "_")
+    }
     if (is_multivariate(family)) {
       tmp <- initialize_multivariate_channel(
         y = y,
@@ -600,15 +605,17 @@ prepare_channel_categorical <- function(y, y_cg, Y, channel, sd_x,
   stopifnot_(
     "factor" %in% resp_class,
     c(
-      "Response variable {.var {y}} is invalid:",
+      "Response variable {.var {y_cg}} is invalid:",
       `x` = "Categorical family supports only {.cls factor} variables."
     )
   )
   resp_levels <- attr(resp_class, "levels")
-  S_y <- length(resp_levels)
-  channel$S <- S_y
+  S <- length(resp_levels)
+  channel$S <- S
+  channel$K <- length(sd_x)
   sampling <- list()
-  sampling[[paste0("S_", y)]] <- S_y
+  sampling[[paste0("S_", y_cg)]] <- S
+  sampling[[paste0("K_", y_cg)]] <- K
   list(channel = channel, sampling = sampling, priors = priors)
 }
 

@@ -150,10 +150,14 @@ create_transformed_data <- function(idt, cvars, cgvars, cg, backend) {
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
     if (is_multivariate(cgvars[[i]]$family)) {
+      fun <- ifelse_(is_categorical(cgvars[[i]]$family),
+        "category",
+        "default"
+      )
       cgvars[[i]]$default <- lapply(
         cvars[cg_idx],
         function(x) {
-          lines_wrap("transformed_data", "default", x, idt, backend)
+          lines_wrap("transformed_data", fun, x, idt, backend)
         }
       )
       tr_data <- lines_wrap(
