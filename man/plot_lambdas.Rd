@@ -22,3 +22,12 @@ A \code{ggplot} object.
 \description{
 Plot Factor Loadings of a Dynamite Model
 }
+\seealso{
+Drawing plots
+\code{\link{plot.dynamitefit}()},
+\code{\link{plot_betas}()},
+\code{\link{plot_deltas}()},
+\code{\link{plot_nus}()},
+\code{\link{plot_psis}()}
+}
+\concept{plotting}

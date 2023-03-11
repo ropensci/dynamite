@@ -3,6 +3,7 @@
 #' Produces the traceplots and the density plots of the model parameters.
 #'
 #' @export
+#' @family plotting
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param parameters \[`charecter()`]\ Parameter name(s) for which the plots
 #'   should be drawn. Possible options can be found with the function
@@ -75,6 +76,7 @@ plot.dynamitefit <- function(x, parameters = NULL, type = NULL,
 #' Plot Time-varying Regression Coefficients of a Dynamite Model
 #'
 #' @export
+#' @family plotting
 #' @param x \[`dynamitefit`]\cr The model fit object
 #' @param parameters \[`charecter()`]\ Parameter name(s) for which the plots
 #'   should be drawn. Possible options can be found with function
@@ -198,6 +200,7 @@ plot_deltas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
 #' Plot Time-invariant Regression Coefficients of a Dynamite Model
 #'
 #' @export
+#' @family plotting
 #' @inheritParams plot_deltas
 #' @param parameters \[`charecter()`]\ Parameter name(s) for which the plots
 #'   should be drawn. Possible options can be found with function
@@ -291,6 +294,7 @@ plot_betas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
 #' groups, the plot will become messy with large number of groups.
 #'
 #' @export
+#' @family plotting
 #' @inheritParams plot_deltas
 #' @param groups Group name(s) for which the plots should be drawn.
 #'   Default is all groups.
@@ -370,6 +374,7 @@ plot_nus <- function(x, parameters = NULL, responses = NULL, level = 0.05,
 #' Plot Factor Loadings of a Dynamite Model
 #'
 #' @export
+#' @family plotting
 #' @inheritParams plot_deltas
 #' @return A `ggplot` object.
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
@@ -417,6 +422,7 @@ plot_lambdas <- function(x, responses = NULL, level = 0.05) {
 #' Plot Latent Factors of a Dynamite Model
 #'
 #' @export
+#' @family plotting
 #' @param x \[`dynamitefit`]\cr The model fit object
 #' @param responses  \[`character()`]\cr Response(s) for which the coefficients
 #'   should be drawn. Possible options are elements of

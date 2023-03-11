@@ -13,6 +13,7 @@
 #' variation (sigma) in the Gaussian case.
 #'
 #' @export
+#' @family formulas
 #' @param correlated \[`logical(1)`]\cr If `TRUE` (the default), correlations
 #'   of random effects are modeled as multivariate normal.
 #' @param noncentered \[`logical(1)`]\cr If `TRUE` (the default), use a

@@ -313,6 +313,7 @@ data_lines_categorical <- function(y_cg, idt, default, has_missing,
 data_lines_multinomial <- function(y_cg, backend, ...) {
   args <- list(...)
   args$y <- y_cg
+  args$backend <- backend
   args$response <- stan_array(backend, "int", "y_{y}", "T, N, S_{y}", "lower=0")
   do.call(data_lines_categorical, args = args)
 }

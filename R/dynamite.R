@@ -36,9 +36,10 @@
 #' shape of the posterior), this can vary greatly.
 #'
 #' @export
+#' @family fitting
 #' @rdname dynamite
 #' @param dformula \[`dynamiteformula`]\cr The model formula.
-#'   See [dynamiteformula()] and 'Details'.
+#'   See [dynamite::dynamiteformula()] and 'Details'.
 #' @param data
 #'   \[`data.frame`, `tibble::tibble`, or `data.table::data.table`]\cr
 #'   The data that contains the variables in the
@@ -403,10 +404,10 @@ sampling_info <- function(dformulas, verbose, debug, backend) {
     "categorical" %in% get_family_names(dformulas$all)) {
     warning_(
       c(
-        "Efficient glm-variant of the categorical likelihood is not
-         available in this version of {.pkg rstan} or {.pkg cmdstanr}.",
+        "Efficient GLM variant of the categorical likelihood is not
+         available in this version of {.pkg {backend}}.",
         `i` = "For more efficient sampling, please install a newer version
-               of {.pkg rstan} or {.pkg cmdstanr}."
+               of {.pkg {backend}}."
       )
     )
   }
@@ -446,6 +447,7 @@ remove_redundant_parameters <- function(stan_input, backend,
 #' @rdname dynamite
 #' @param x \[`dynamitefit`\]\cr The model fit object.
 #' @return `formula` returns a quoted expression.
+#' @family formulas
 #' @export
 #' @examples
 #' formula(gaussian_example_fit)

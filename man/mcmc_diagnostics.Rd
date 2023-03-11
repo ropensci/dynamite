@@ -28,3 +28,9 @@ sizes and largest Rhat values. See \code{\link[rstan:check_hmc_diagnostics]{rsta
 mcmc_diagnostics(gaussian_example_fit)
 
 }
+\seealso{
+Model diagnostics
+\code{\link{lfo}()},
+\code{\link{loo.dynamitefit}()}
+}
+\concept{diagnostics}

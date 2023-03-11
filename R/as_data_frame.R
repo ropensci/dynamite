@@ -31,12 +31,17 @@
 #'     `rstan::extract(fit$stanfit, pars = "corr_matrix_psi")` if necessary.
 #'  * `sigma`\cr Standard deviations of gaussian responses.
 #'  * `corr`\cr Pairwise correlations of multivariate gaussian responses.
-#'  * `phi`\cr Dispersion parameters of negative binomial responses.
+#'  * `phi`\cr Describes various distributional parameters, such as:
+#'    - Dispersion parameter of the Negative Binomial distribution.
+#'    - Shape parameter of the Gamma distribution.
+#'    - Precision parameter of the Beta distribution.
+#'    - Degrees of freedom of the Student t-distribution.
 #'  * `omega`\cr Spline coefficients of the regression coefficients `delta`.
 #'  * `omega_alpha`\cr Spline coefficients of time-varying `alpha`.
 #'  * `omega_psi`\cr Spline coefficients of the latent factors `psi`.
 #'
 #' @export
+#' @family output
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param row.names Ignored.
 #' @param optional Ignored.

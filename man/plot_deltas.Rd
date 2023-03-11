@@ -48,3 +48,12 @@ plot_deltas(gaussian_example_fit, level = 0.025, scales = "free") +
   ggplot2::theme_minimal()
 
 }
+\seealso{
+Drawing plots
+\code{\link{plot.dynamitefit}()},
+\code{\link{plot_betas}()},
+\code{\link{plot_lambdas}()},
+\code{\link{plot_nus}()},
+\code{\link{plot_psis}()}
+}
+\concept{plotting}

@@ -80,3 +80,8 @@ if (requireNamespace("dplyr") &&
 }
 
 }
+\seealso{
+Obtaining predictions
+\code{\link{predict.dynamitefit}()}
+}
+\concept{prediction}

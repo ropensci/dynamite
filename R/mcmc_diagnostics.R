@@ -5,6 +5,7 @@
 #' [posterior::default_convergence_measures()] for details.
 #'
 #' @export
+#' @family diagnostics
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param n \[`integer(1)`]\cr How many rows to print in
 #'   parameter-specific convergence measures. The default is 3. Should be a

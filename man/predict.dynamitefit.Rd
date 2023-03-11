@@ -170,3 +170,8 @@ ggplot2::ggplot(pp, ggplot2::aes(time, y_new, group = .draw)) +
 }
 
 }
+\seealso{
+Obtaining predictions
+\code{\link{fitted.dynamitefit}()}
+}
+\concept{prediction}

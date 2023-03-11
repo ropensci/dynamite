@@ -476,6 +476,78 @@ test_that("multiple special components fail", {
   )
 })
 
+test_that("specials that cannot be evaluated fail", {
+  expect_error(
+    dynamite(
+      obs(y ~ 1 + trials(log(-lag(y))), family = "binomial"),
+      data = data.frame(y = 1:3, z = 1:3),
+      time = "z"
+    ),
+    paste0(
+      "Unable to evaluate `trials\\(\\)` for response variable `y`:\n",
+      "x .+"
+    )
+  )
+  expect_error(
+    dynamite(
+      obs(y ~ 1 + offset(log(-lag(x))), family = "poisson"),
+      data = data.frame(y = 1:3, z = 1:3),
+      time = "z"
+    ),
+    paste0(
+      "Unable to evaluate `offset\\(\\)` for response variable `y`:\n",
+      "x .+"
+    )
+  )
+})
+
+test_that("test that specials with invalid values fail", {
+  expect_error(
+    dynamite(
+      obs(y ~ 1 + trials(n), family = "binomial"),
+      data = data.frame(y = 1:3, z = 1:3, n = factor(1:3)),
+      time = "z"
+    ),
+    paste0(
+      "Invalid `trials\\(\\)` definition for response variable `y`:\n",
+      "x Number of trials cannot be a <factor>\\."
+    )
+  )
+  expect_error(
+    dynamite(
+      obs(y ~ 1 + trials(n), family = "binomial"),
+      data = data.frame(y = 1:3, z = 1:3, n = -(1:3)),
+      time = "z"
+    ),
+    paste0(
+      "Invalid `trials\\(\\)` definition for response variable `y`:\n",
+      "x Number of trials must contain only positive integers\\."
+    )
+  )
+  expect_error(
+    dynamite(
+      obs(y ~ 1 + offset(n), family = "poisson"),
+      data = data.frame(y = 1:3, z = 1:3, n = factor(1:3)),
+      time = "z"
+    ),
+    paste0(
+      "Invalid `offset\\(\\)` definition for response variable `y`:\n",
+      "x Offset cannot be a <factor>\\."
+    )
+  )
+  expect_error(
+    dynamite(
+      obs(y ~ 1 + offset(n), family = "poisson"),
+      data = data.frame(y = 1:3, z = 1:3, n = -(1:3)),
+      time = "z"
+    ),
+    paste0(
+      "Invalid `offset\\(\\)` definition for response variable `y`:\n",
+      "x Offset must contain only positive values\\."
+    )
+  )
+})
+
 # Data errors -------------------------------------------------------------
 
 test_that("missing data object fails", {
@@ -684,10 +756,22 @@ test_that("non-factor categorical response fails", {
 })
 
 test_that("factor types for non-categorical families fails", {
-  test_data <- data.frame(y = factor(c(0, 1)), x = c(1, 1), z = c(1, 2))
+  test_data <- data.frame(
+    y = factor(c(0, 1)),
+    w = c(1, 2),
+    x = c(1, 1),
+    z = c(1, 2)
+  )
   families <- c(
-    "gaussian", "exponential", "gamma", "beta",
-    "bernoulli", "binomial", "poisson", "negbin"
+    "gaussian",
+    "exponential",
+    "gamma",
+    "beta",
+    "bernoulli",
+    "binomial",
+    "poisson",
+    "negbin",
+    "student"
   )
   for (f in families) {
     form <- ifelse_(identical(f, "binomial"), y ~ 1 + trials(x), y ~ 1)
@@ -705,11 +789,41 @@ test_that("factor types for non-categorical families fails", {
       )
     )
   }
+  mvfamilies <- c(
+    "mvgaussian",
+    "multinomial"
+  )
+  for (f in mvfamilies) {
+    form <- ifelse_(
+      identical(f, "multinomial"),
+      c(y, w) ~ 1 + trials(x),
+      c(y, w) ~ 1
+    )
+    expect_error(
+      dynamite(
+        dformula = obs(form, family = f),
+        data = test_data,
+        time = "z",
+        group = "x",
+        debug = list(no_compile = TRUE)
+      ),
+      paste0(
+        "Response variable `.+` is invalid:\n",
+        "x .+ family is not supported for <factor> variables\\."
+      )
+    )
+  }
 })
 
 test_that("negative values for distributions with positive support fails", {
-  test_data <- data.frame(y = c(-1, -2), x = c(1, 1), z = c(1, 2))
-  families <- c("exponential", "gamma", "binomial", "negbin", "poisson")
+  test_data <- data.frame(y = c(-1, -2), w = c(1, 2), x = c(1, 1), z = c(1, 2))
+  families <- c(
+    "exponential",
+    "gamma",
+    "binomial",
+    "negbin",
+    "poisson"
+  )
   for (f in families) {
     form <- ifelse_(identical(f, "binomial"), y ~ 1 + trials(x), y ~ 1)
     expect_error(
@@ -726,6 +840,19 @@ test_that("negative values for distributions with positive support fails", {
       )
     )
   }
+  expect_error(
+    dynamite(
+      dformula = obs(c(y, w) ~ 1 + trials(c(2, 3)), family = "multinomial"),
+      data = test_data,
+      time = "z",
+      group = "x",
+      debug = list(no_compile = TRUE)
+    ),
+    paste0(
+      "Response variable `y_w` is invalid:\n",
+      "x Multinomial family supports only non-negative .+\\."
+    )
+  )
 })
 
 test_that("bernoulli without 0/1 values fails", {

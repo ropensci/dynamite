@@ -21,6 +21,7 @@
 #' @param ... Additional parameters to `dynamite`.
 #' @return An updated `dynamitefit` object.
 #' @export
+#' @family fitting
 #' @examples
 #' \dontrun{
 #' # re-estimate the example fit without thinning:

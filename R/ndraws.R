@@ -2,6 +2,7 @@
 #'
 #' @export
 #' @export ndraws
+#' @family output
 #' @aliases ndraws
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @return Number of posterior draws as a single `integer` value.

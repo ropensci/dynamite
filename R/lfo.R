@@ -10,6 +10,7 @@
 #'
 #' @export
 #' @export lfo
+#' @family diagnostics
 #' @aliases lfo
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param L  \[`integer(1)`]\cr Positive integer defining how many time points
@@ -223,7 +224,11 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           # env = list(time = time, timepoints = timepoints, i = i)
         ]
         elpds[[i - L + 1L]] <-
-          log_sum_exp_rows(t(lw) + matrix(ll, ncol = n_draws))
+          log_sum_exp_rows(
+            t(lw) + matrix(ll, ncol = n_draws),
+            ncol(lw),
+            n_draws
+          )
       }
     } else {
       # no observations
@@ -260,7 +265,8 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
 #'
 print.lfo <- function(x, ...) {
   cat("\nApproximate LFO starting from time point", x$L)
-  cat("\nModel was re-estimated at time points ",
+  cat(
+    "\nModel was re-estimated at time points ",
     paste(x$refit_times, collapse = ", "),
     " (Based on Pareto k threshold of ", x$k_threshold, ")\n",
     sep = ""
