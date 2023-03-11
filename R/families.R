@@ -37,7 +37,7 @@ is_supported <- function(name) {
 #' @param x \[`dynamitefamily`]\cr A family object.
 #' @noRd
 is_multivariate <- function(x) {
-  x$name %in% c("mvgaussian", "multinomial")
+  x$name %in% c("mvgaussian", "multinomial", "categorical")
 }
 
 supported_families <- c(
@@ -71,6 +71,7 @@ has_univariate <- function(x) {
 get_univariate <- function(x) {
   out <- stats::setNames(supported_families, supported_families)
   out["mvgaussian"] <- "gaussian"
+  out["categorical"] <- "category"
   unname(out[x$name])
 }
 

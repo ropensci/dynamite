@@ -321,11 +321,6 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
       channel[[paste0("has_", spec)]] <- FALSE
     }
   }
-  stopifnot_(
-    !(channel$has_random || channel$has_random_intercept) ||
-      dformula$family != "categorical",
-    "Random effects are not (yet) supported for categorical responses."
-  )
   sampling[[paste0("y_", y_name)]] <- ifelse_(
     dformula$family %in%
       c("gaussian", "gamma", "exponential", "beta", "student"),
@@ -569,11 +564,39 @@ prepare_channel_default <- function(y, Y, channel, mean_gamma, sd_gamma,
       identical(length(channel$sigma_nu_prior_distr), 1L)
   list(channel = channel, priors = priors)
 }
+#' @describeIn prepare_channel_default Prepare a Category of Categorical Channel
+#' @noRd
+prepare_channel_category <- function(y, Y, channel, sd_x, resp_class, priors) {
 
+  sd_y <- 1
+  mean_y <- 0.0
+  sd_gamma <- 2.0 / sd_x
+  mean_gamma <- rep(0.0, length(sd_gamma))
+  out <- prepare_channel_default(
+    y,
+    Y,
+    channel,
+    mean_gamma,
+    sd_gamma,
+    mean_y,
+    sd_y,
+    resp_class,
+    priors
+  )
+  if (is.null(priors)) {
+    out$priors <- check_priors(
+      out$priors,
+      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
+    )
+  }
+  out
+
+}
 #' @describeIn prepare_channel_default Prepare a Categorical Channel
 #' @noRd
-prepare_channel_categorical <- function(y, Y, channel, sd_x,
-                                        resp_class, priors) {
+prepare_channel_categorical <- function(y, y_cg, Y, channel, sd_x,
+  resp_class, priors) {
+
   stopifnot_(
     "factor" %in% resp_class,
     c(
@@ -586,43 +609,6 @@ prepare_channel_categorical <- function(y, Y, channel, sd_x,
   channel$S <- S_y
   sampling <- list()
   sampling[[paste0("S_", y)]] <- S_y
-  if (is.null(priors)) {
-    out <- default_priors_categorical(y, channel, sd_x, S_y, resp_levels)
-    channel <- out$channel
-    priors <- out$priors
-  } else {
-    priors <- priors[priors$response == y, ]
-    types <- priors$type
-    loop_types <- intersect(
-      types,
-      c("alpha", "beta", "delta", "tau", "sigma_nu", "psi")
-    )
-    for (ptype in loop_types) {
-      channel <- prepare_prior(ptype, priors, channel)
-    }
-    if ("tau_alpha" %in% types) {
-      pdef <- priors[priors$type == "tau_alpha", ]
-      channel$tau_alpha_prior_distr <- pdef$prior
-    }
-    priors <- check_priors(
-      priors,
-      default_priors_categorical(y, channel, sd_x, S_y, resp_levels)$priors
-    )
-  }
-  channel$write_alpha <-
-    (channel$has_fixed_intercept || channel$has_varying_intercept) &&
-      identical(length(channel$alpha_prior_distr), 1L)
-  channel$write_beta <- channel$has_fixed &&
-    identical(length(channel$beta_prior_distr), 1L)
-  channel$write_delta <- channel$has_varying &&
-    identical(length(channel$delta_prior_distr), 1L)
-  channel$write_tau <- channel$has_varying &&
-    identical(length(channel$tau_prior_distr), 1L)
-  channel$write_tau_alpha <- channel$has_varying_intercept &&
-    identical(length(channel$tau_alpha_prior_distr), 1L)
-  channel$write_sigma_nu <-
-    (channel$has_random || channel$has_random_intercept) &&
-      identical(length(channel$sigma_nu_prior_distr), 1L)
   list(channel = channel, sampling = sampling, priors = priors)
 }
 
@@ -644,43 +630,6 @@ prepare_channel_multinomial <- function(y, y_cg, Y, channel, sd_x,
   channel$S <- S_y
   sampling <- list()
   sampling[[paste0("S_", y_cg)]] <- S_y
-  if (is.null(priors)) {
-    out <- default_priors_categorical(y_cg, channel, sd_x, S_y, y)
-    channel <- out$channel
-    priors <- out$priors
-  } else {
-    priors <- priors[priors$response == y_cg, ]
-    types <- priors$type
-    loop_types <- intersect(
-      types,
-      c("alpha", "beta", "delta", "tau", "sigma_nu", "psi")
-    )
-    for (ptype in loop_types) {
-      channel <- prepare_prior(ptype, priors, channel)
-    }
-    if ("tau_alpha" %in% types) {
-      pdef <- priors[priors$type == "tau_alpha", ]
-      channel$tau_alpha_prior_distr <- pdef$prior
-    }
-    priors <- check_priors(
-      priors,
-      default_priors_categorical(y_cg, channel, sd_x, S_y, y)$priors
-    )
-  }
-  channel$write_alpha <-
-    (channel$has_fixed_intercept || channel$has_varying_intercept) &&
-    identical(length(channel$alpha_prior_distr), 1L)
-  channel$write_beta <- channel$has_fixed &&
-    identical(length(channel$beta_prior_distr), 1L)
-  channel$write_delta <- channel$has_varying &&
-    identical(length(channel$delta_prior_distr), 1L)
-  channel$write_tau <- channel$has_varying &&
-    identical(length(channel$tau_prior_distr), 1L)
-  channel$write_tau_alpha <- channel$has_varying_intercept &&
-    identical(length(channel$tau_alpha_prior_distr), 1L)
-  channel$write_sigma_nu <-
-    (channel$has_random || channel$has_random_intercept) &&
-    identical(length(channel$sigma_nu_prior_distr), 1L)
   list(channel = channel, sampling = sampling, priors = priors)
 }
 

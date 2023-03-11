@@ -290,7 +290,7 @@ parse_formula <- function(x, original, family) {
     "A univariate channel must have only one response variable."
   )
   stopifnot_(
-    (!mvf && !mvc) || (mvf && mvc),
+    (!mvf && !mvc) || (mvf && mvc) || is_categorical(family),
     "A multivariate channel must have more than one response variable."
   )
   stopifnot_(
