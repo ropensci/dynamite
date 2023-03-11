@@ -462,7 +462,7 @@ get_nonlag_terms <- function(x) {
 #'
 #' @param x A channel of a `dynamiteformula`
 #' @noRd
-get_type_formula <- function(x, type = c("fixed", "varying", "ranodm")) {
+get_type_formula <- function(x, type = c("fixed", "varying", "random")) {
   has_icpt <- ifelse_(
     type %in% c("fixed", "varying"),
     x$has_fixed_intercept || x$has_varying_intercept,
