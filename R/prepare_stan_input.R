@@ -144,6 +144,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
           priors = priors
         )
       )
+
       prior_list[[y_name]] <- prep$priors
       channel_vars[[y_name]] <- prep$channel
       vectorizable_priors <- extract_vectorizable_priors(prep$channel, y_name)
@@ -545,6 +546,7 @@ prepare_common_priors <- function(priors, M, shrinkage, P,
 prepare_channel_default <- function(y, Y, channel, sampling,
                                     mean_gamma, sd_gamma, mean_y, sd_y,
                                     resp_class, priors) {
+
   if (is.null(priors)) {
     out <- default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)
     channel <- out$channel
@@ -581,7 +583,8 @@ prepare_channel_default <- function(y, Y, channel, sampling,
 }
 #' @describeIn prepare_channel_default Prepare a Category of Categorical Channel
 #' @noRd
-prepare_channel_category <- function(y, Y, channel, sd_x, resp_class, priors) {
+prepare_channel_category <- function(y, Y, channel, sampling,
+                                     sd_x, resp_class, priors, ...) {
 
   sd_y <- 1
   mean_y <- 0.0
@@ -591,6 +594,7 @@ prepare_channel_category <- function(y, Y, channel, sd_x, resp_class, priors) {
     y,
     Y,
     channel,
+    sampling,
     mean_gamma,
     sd_gamma,
     mean_y,

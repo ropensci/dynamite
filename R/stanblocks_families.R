@@ -1411,10 +1411,6 @@ intercept_lines <- function(y, obs, family,
   intercept
 }
 
-model_lines_category <- function(...) {
-  #TODO
-}
-
 model_lines_categorical <- function(cvars, cgvars, idt,
                                     multinomial = FALSE,
                                     ...) {
