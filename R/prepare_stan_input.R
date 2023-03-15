@@ -594,6 +594,7 @@ prepare_channel_categorical <- function(y, Y, channel, sampling,
   resp_levels <- attr(resp_class, "levels")
   S_y <- length(resp_levels)
   channel$S <- S_y
+  channel$categories <- resp_levels
   sampling[[paste0("S_", y)]] <- S_y
   if (is.null(priors)) {
     out <- default_priors_categorical(y, channel, sd_x, S_y, resp_levels)

@@ -134,9 +134,6 @@ create_data_lines <- function(idt, backend, cvars, cgvars) {
       )
     }
     lines_wrap("data", family, idt, backend, cgvars)
-  } else if (is_categorical(family)) {
-    cvars[[1L]]$default <- 0L # TODO
-    lines_wrap("data", family, idt, backend, cvars[[1L]])
   } else {
     cvars[[1L]]$default <- lines_wrap(
       "data", "default", idt, backend, cvars[[1L]]
@@ -186,11 +183,7 @@ create_transformed_data_lines <- function(idt, backend, cvars, cgvars) {
       }
     )
     tr_data <- lines_wrap("transformed_data", family, idt, backend, cgvars)
-  } else if (is_categorical(family)) {
-    cvars[[1L]]$default <- 0L # TODO
-    lines_wrap("transformed_data", family, idt, backend, cvars[[1L]])
-  }
-  else {
+  } else {
     cvars[[1L]]$default <- lines_wrap(
       "transformed_data", "default", idt, backend, cvars[[1L]]
     )
@@ -292,7 +285,16 @@ create_parameters_lines <- function(idt, backend, cvars, cgvars) {
     cgvars$univariate <- univariate
     lines_wrap("parameters", family, idt, backend, cgvars)
   } else if (is_categorical(family)) {
-    cvars[[1L]]$default <- 0L # TODO
+    cvars[[1]]$default <- lapply(
+      cvars[[1]]$categories[-cvars[[1]]$S],
+      function(i) {
+        cvars[[1]]$ydim <- cvars[[1]]$y
+        cvars[[1]]$y <- i
+        lines_wrap(
+          "parameters", "default", idt, backend, cvars[[1L]]
+        )
+      }
+    )
     lines_wrap("parameters", family, idt, backend, cvars[[1L]])
   } else {
     cvars[[1]]$default <- lines_wrap(
@@ -305,7 +307,7 @@ create_parameters_lines <- function(idt, backend, cvars, cgvars) {
 #' @describeIn create_function Create the 'Transformed Parameters'
 #'   Block of the Stan Model Code
 #' @noRd
-create_transformed_parameters <- function(idt, cvars, cgvars, cg, backend) {
+create_transformed_parameters <- function(idt, backend, cg, cvars, cgvars) {
   random_text <- ""
   M <- attr(cvars, "random_def")$M
   if (M > 0L) {
@@ -390,7 +392,7 @@ create_transformed_parameters <- function(idt, cvars, cgvars, cg, backend) {
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
     tr_pars <- create_transformed_parameters_lines(
-      idt, backend, cvars[cg_idx], cgvars[[i]],
+      idt, backend, cvars[cg_idx], cgvars[[i]]
     )
     declarations[i] <- tr_pars$declarations
     statements[i] <-  tr_pars$statements
@@ -420,7 +422,16 @@ create_transformed_parameters_lines <- function(idt, backend, cvars, cgvars) {
     )
     lines_wrap("transformed_parameters", family, idt, backend, cgvars)
   } else if (is_categorical(family)) {
-    cvars[[1L]]$default <- 0 # TODO
+    cvars[[1]]$default <- lapply(
+      cvars[[1]]$categories[-cvars[[1]]$S],
+      function(i) {
+        cvars[[1]]$ydim <- cvars[[1]]$y
+        cvars[[1]]$y <- i
+        lines_wrap(
+          "transformed_parameters", "default", idt, backend, cvars[[1L]]
+        )
+      }
+    )
     lines_wrap(
       "transformed_parameters", family, idt, backend, cvars[[1L]]
     )
@@ -434,7 +445,7 @@ create_transformed_parameters_lines <- function(idt, backend, cvars, cgvars) {
 
 #' @describeIn create_function Create the 'Model' Block of the Stan Model Code
 #' @noRd
-create_model <- function(idt, cvars, cgvars, cg, backend) {
+create_model <- function(idt, backend, cg, cvars, cgvars) {
   spline_def <- attr(cvars, "spline_def")
   spline_text <- ""
   if (!is.null(spline_def) && spline_def$shrinkage) {
@@ -618,9 +629,22 @@ create_model_lines <- function(idt, backend, cvars, cgvars) {
     )
   } else if (is_categorical(family)) {
     # TODO
-    cvars[[1L]]$backend <- backend
-    cvars[[1L]]$priors <- do.call(prior_lines, c(cvars[[1L]], idt = idt))
-    cvars[[1L]]$intercept <- do.call(intercept_lines, cvars[[1L]])
+    cvars[[1L]]$priors <- lapply(
+      cvars[[1]]$categories[-cvars[[1]]$S],
+      function(i) {
+        cvars[[1]]$ydim <- cvars[[1]]$y
+        cvars[[1]]$y <- i
+        do.call(prior_lines, c(cvars[[1L]], idt = idt))
+      }
+    )
+    cvars[[1L]]$intercept <- lapply(
+      cvars[[1]]$categories[-cvars[[1]]$S],
+      function(i) {
+        cvars[[1]]$ydim <- cvars[[1]]$y
+        cvars[[1]]$y <- i
+        do.call(intercept_lines, cvars[[1L]])
+      }
+    )
     lines_wrap("model", family, idt, backend, cvars[[1L]])
   } else {
     cvars[[1L]]$backend <- backend
@@ -633,7 +657,7 @@ create_model_lines <- function(idt, backend, cvars, cgvars) {
 #' @describeIn create_function Create the 'Generated Quantities'
 #'   Block of the Stan Model Code
 #' @noRd
-create_generated_quantities <- function(idt, cvars, cgvars, cg, backend) {
+create_generated_quantities <- function(idt, backend, cvars, cgvars, cg) {
   gen_nu <- ""
   M <- attr(cvars, "random_def")$M
   if (M > 1 && attr(cvars, "random_def")$correlated) {
@@ -703,5 +727,5 @@ create_generated_quantities_lines <- function(idt, backend, cvars, cgvars) {
     lines_wrap("generated_quantities", family, idt, backend, cgvars)
   } else {
     lines_wrap("generated_quantities", family, idt, backend, cvars[[1L]])
-  )
+  }
 }
