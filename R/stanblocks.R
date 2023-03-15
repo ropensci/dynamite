@@ -109,7 +109,7 @@ create_data <- function(idt, cvars, cgvars, cg, backend) {
     .indent = idt(1),
     .parse = FALSE
   )
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   data_text <- character(n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
@@ -143,7 +143,7 @@ create_data <- function(idt, cvars, cgvars, cg, backend) {
 #'   Block of the Stan Model Code
 #' @noRd
 create_transformed_data <- function(idt, cvars, cgvars, cg, backend) {
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   declarations <- character(n_cg)
   statements <- character(n_cg)
   tr_data <- list()
@@ -230,7 +230,7 @@ create_parameters <- function(idt, cvars, cgvars, cg, backend) {
       .indent = idt(c(1, 1, 1))
     )
   )
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   parameters_text <- character(n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
@@ -361,7 +361,7 @@ create_transformed_parameters <- function(idt, cvars, cgvars, cg, backend) {
         )
     }
   }
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   declarations <- character(n_cg)
   statements <- character(n_cg)
   tr_pars <- list()
@@ -551,7 +551,7 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
       }
     }
   }
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   model_text <- character(n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
@@ -633,7 +633,7 @@ create_generated_quantities <- function(idt, cvars, cgvars, cg, backend) {
       .indent = idt(c(1, 1, 1, 2, 3, 2, 1))
     )
   }
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   generated_quantities_text <- character(n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)

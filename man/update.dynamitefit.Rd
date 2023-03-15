@@ -46,7 +46,7 @@ updating can lead to an error due to different naming in \code{cmdstanr} and
 \dontrun{
 # re-estimate the example fit without thinning:
 # As the model is compiled on Windows, this will fail on other platforms
-if (.Platform$OS.type == "windows") {
+if (identical(.Platform$OS.type, "windows")) {
   fit <- update(gaussian_example_fit, thin = 1)
 }
 }

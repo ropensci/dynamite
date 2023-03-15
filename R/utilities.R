@@ -383,27 +383,35 @@ log_sum_exp_rows <- function(x, m, n) {
 #' @noRd
 n_unique <- data.table::uniqueN
 
+#' Is the OS Windows?
+#'
+#' @noRd
+is_windows <- function() {
+  identical(.Platform$OS.type, "windows")
+}
+
 #' Package startup functionality
 #'
 #' @noRd
 startup <- function() {
-  if (!stan_rstan_is_functional()) {
-    packageStartupMessage(
-      "Please update your `rstan` and `StanHeaders` installations before ",
-      "using `dynamite` with the `rstan` backend by running:",
-      "\n\n",
-      "  remove.packages(c(\"rstan\", \"StanHeaders\"))\n",
-      "  install.packages(\"rstan\", ",
-      "repos = c(\"https://mc-stan.org/r-packages/\", getOption(\"repos\")))",
-      "\n\n",
-      "See https://github.com/stan-dev/rstan/wiki/Configuring",
-      "-C---Toolchain-for-Windows for further information."
-    )
+  if (!is_windows() ||
+      getRversion() < "4.2.0" ||
+      utils::compareVersion(stan_version("rstan"), "2.26") >= 0) {
+    return()
   }
+  packageStartupMessage(
+    "Please update your `rstan` and `StanHeaders` installations before ",
+    "using `dynamite` with the `rstan` backend by running:",
+    "\n\n",
+    "  remove.packages(c(\"rstan\", \"StanHeaders\"))\n",
+    "  install.packages(\"rstan\", ",
+    "repos = c(\"https://mc-stan.org/r-packages/\", getOption(\"repos\")))",
+    "\n\n",
+    "See https://github.com/stan-dev/rstan/wiki/Configuring",
+    "-C---Toolchain-for-Windows for further information."
+  )
 }
 
-# Placeholder for future
-# Startup message for the package
 .onAttach <- function(libname, pkgname) {
   startup()
 }

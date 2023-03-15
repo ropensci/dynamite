@@ -34,7 +34,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   specials <- lapply(dformula, evaluate_specials, data = data)
   model_matrix <- full_model.matrix(dformula, data, verbose)
   cg <- attr(dformula, "channel_groups")
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   n_channels <- length(resp_names)
   responses <- list()
   for (i in seq_len(n_cg)) {
