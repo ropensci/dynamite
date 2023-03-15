@@ -2,23 +2,23 @@
 #'
 #' @param indent \[`integer(1)`] How many units of indentation to use for the
 #'   code generation. One unit is equal to one space.
+#' @param cg \[`integer()`]\cr The `"channel_groups"` attribute of the `dformula`
+#'   for stochastic channels
 #' @param cvars \[`list()`]\cr The `channel_vars` component of
 #' @param cgvars \[`list()`]\cr The `channel_group_vars` component of
 #'   [prepare_stan_input()] output.
-#' @param cg \[`integer()`]\cr The `"channel_groups"` attribute of the `dformula`
-#'   for stochastic channels
 #' @param ... Not used.
 #' @noRd
-create_blocks <- function(indent = 2L, cvars, cgvars, cg, backend) {
+create_blocks <- function(indent = 2L, backend, cg, cvars, cgvars) {
   idt <- indenter_(indent)
   paste_rows(
-    create_functions(idt, cvars, cgvars, cg),
-    create_data(idt, cvars, cgvars, cg, backend),
-    create_transformed_data(idt, cvars, cgvars, cg, backend),
-    create_parameters(idt, cvars, cgvars, cg, backend),
-    create_transformed_parameters(idt, cvars, cgvars, cg, backend),
-    create_model(idt, cvars, cgvars, cg, backend),
-    create_generated_quantities(idt, cvars, cgvars, cg, backend),
+    create_functions(idt, cg, cvars, cgvars),
+    create_data(idt, backend, cg, cvars, cgvars),
+    create_transformed_data(idt, backend, cg, cvars, cgvars),
+    create_parameters(idt, backend, cg, cvars, cgvars),
+    create_transformed_parameters(idt, backend, cg, cvars, cgvars),
+    create_model(idt, backend, cg, cvars, cgvars),
+    create_generated_quantities(idt, backend, cg, cvars, cgvars),
     .parse = FALSE
   )
 }
@@ -28,7 +28,7 @@ create_blocks <- function(indent = 2L, cvars, cgvars, cg, backend) {
 #' @inheritParams create_blocks
 #' @param idt \[`function`]\cr An indentation function created by [indenter_()]
 #' @noRd
-create_functions <- function(idt, cvars, cgvars, cg) {
+create_functions <- function(idt, cg, cvars, cgvars) {
   functions_psi <- ""
   psis <- attr(cvars, "lfactor_def")$responses
   P <- attr(cvars, "lfactor_def")$P
@@ -67,7 +67,7 @@ create_functions <- function(idt, cvars, cgvars, cg) {
 
 #' @describeIn create_function Create The 'Data' Block of the Stan Model Code
 #' @noRd
-create_data <- function(idt, cvars, cgvars, cg, backend) {
+create_data <- function(idt, backend, cg, cvars, cgvars) {
   has_splines <- any(vapply(cvars, "[[", logical(1L), "has_varying")) ||
     any(vapply(cvars, "[[", logical(1L), "has_varying_intercept")) ||
     any(vapply(cvars, "[[", logical(1L), "has_lfactor"))
@@ -113,61 +113,50 @@ create_data <- function(idt, cvars, cgvars, cg, backend) {
   data_text <- character(n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
-    if (is_multivariate(cgvars[[i]]$family)) {
-      if (has_univariate(cgvars[[i]]$family)) {
-        cgvars[[i]]$default <- vapply(
-          cvars[cg_idx],
-          function(x) {
-            lines_wrap("data", "default", x, idt, backend)
-          },
-          character(1L)
-        )
-      }
-      data_text[i] <- lines_wrap(
-        "data",  cgvars[[i]]$family, cgvars[[i]], idt, backend
-      )
-    } else {
-      j <- cg_idx[1L]
-      cvars[[j]]$default <- lines_wrap(
-        "data", "default", cvars[[j]], idt, backend
-      )
-      data_text[i] <- lines_wrap(
-        "data", cvars[[j]]$family, cvars[[j]], idt, backend
-      )
-    }
+    data_text[i] <- create_data_lines(idt, backend, cvars[cg_idx], cgvars[[i]])
   }
   paste_rows("data {", init_text, data_text, "}", .parse = FALSE)
+}
+
+#' Create Data Lines for a Distribution
+#'
+#' @noRd
+create_data_lines <- function(idt, backend, cvars, cgvars) {
+  family <- cgvars$family
+  if (is_multivariate(family)) {
+    if (has_univariate(family)) {
+      cgvars$default <- vapply(
+        cvars,
+        function(x) {
+          lines_wrap("data", "default", idt, backend, x)
+        },
+        character(1L)
+      )
+    }
+    lines_wrap("data", family, idt, backend, cgvars)
+  } else if (is_categorical(family)) {
+    cvars[[1L]]$default <- 0L # TODO
+    lines_wrap("data", family, idt, backend, cvars[[1L]])
+  } else {
+    cvars[[1L]]$default <- lines_wrap(
+      "data", "default", idt, backend, cvars[[1L]]
+    )
+    lines_wrap("data", family, idt, backend, cvars[[1L]])
+  }
 }
 
 #' @describeIn create_function Create the 'Transformed Data'
 #'   Block of the Stan Model Code
 #' @noRd
-create_transformed_data <- function(idt, cvars, cgvars, cg, backend) {
+create_transformed_data <- function(idt, backend, cg, cvars, cgvars) {
   n_cg <- n_unique(cg)
   declarations <- character(n_cg)
   statements <- character(n_cg)
-  tr_data <- list()
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
-    if (is_multivariate(cgvars[[i]]$family)) {
-      cgvars[[i]]$default <- lapply(
-        cvars[cg_idx],
-        function(x) {
-          lines_wrap("transformed_data", "default", x, idt, backend)
-        }
-      )
-      tr_data <- lines_wrap(
-        "transformed_data", cgvars[[i]]$family, cgvars[[i]], idt, backend
-      )
-    } else {
-      j <- cg_idx[1L]
-      cvars[[j]]$default <- lines_wrap(
-        "transformed_data", "default", cvars[[j]], idt, backend
-      )
-      tr_data <- lines_wrap(
-        "transformed_data", cvars[[j]]$family, cvars[[j]], idt, backend
-      )
-    }
+    tr_data <- create_transformed_data_lines(
+      idt, backend, cvars[cg_idx], cgvars[[i]]
+    )
     declarations[i] <- tr_data$declarations
     statements[i] <- tr_data$statements
   }
@@ -184,10 +173,35 @@ create_transformed_data <- function(idt, cvars, cgvars, cg, backend) {
   )
 }
 
+#' Create Transformed Data Lines for a Distribution
+#'
+#' @noRd
+create_transformed_data_lines <- function(idt, backend, cvars, cgvars) {
+  family <- cgvars$family
+  if (is_multivariate(family)) {
+    cgvars$default <- lapply(
+      cvars,
+      function(x) {
+        lines_wrap("transformed_data", "default", idt, backend, x)
+      }
+    )
+    tr_data <- lines_wrap("transformed_data", family, idt, backend, cgvars)
+  } else if (is_categorical(family)) {
+    cvars[[1L]]$default <- 0L # TODO
+    lines_wrap("transformed_data", family, idt, backend, cvars[[1L]])
+  }
+  else {
+    cvars[[1L]]$default <- lines_wrap(
+      "transformed_data", "default", idt, backend, cvars[[1L]]
+    )
+    lines_wrap("transformed_data", family, idt, backend, cvars[[1L]])
+  }
+}
+
 #' @describeIn create_function Create the 'Parameters'
 #'   Block of the Stan Model Code
 #' @noRd
-create_parameters <- function(idt, cvars, cgvars, cg, backend) {
+create_parameters <- function(idt, backend, cg, cvars, cgvars) {
   spline_def <- attr(cvars, "spline_def")
   spline_text <- ifelse_(
     is.null(spline_def),
@@ -234,40 +248,9 @@ create_parameters <- function(idt, cvars, cgvars, cg, backend) {
   parameters_text <- character(n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
-    if (is_multivariate(cgvars[[i]]$family)) {
-      univariate <- ""
-      for (j in cg_idx) {
-        cvars[[j]]$default <- lines_wrap(
-          "parameters", "default", cvars[[j]], idt, backend
-        )
-        univariate <- ifelse_(
-          has_univariate(cgvars[[i]]$family),
-          paste_rows(
-            univariate,
-            lines_wrap(
-              "parameters",
-              get_univariate(cvars[[j]]$family),
-              cvars[[j]],
-              idt,
-              backend
-            )
-          ),
-          paste_rows(univariate, cvars[[j]]$default)
-        )
-      }
-      cgvars[[i]]$univariate <- univariate
-      parameters_text[i] <- lines_wrap(
-        "parameters", cgvars[[i]]$family, cgvars[[i]], idt, backend
-      )
-    } else {
-      j <- cg_idx[1L]
-      cvars[[j]]$default <- lines_wrap(
-        "parameters", "default", cvars[[j]], idt, backend
-      )
-      parameters_text[i] <- lines_wrap(
-        "parameters", cvars[[j]]$family, cvars[[j]], idt, backend
-      )
-    }
+    parameters_text[i] <- create_parameters_lines(
+      idt, backend, cvars[cg_idx], cgvars[[i]]
+    )
   }
   paste_rows(
     "parameters {",
@@ -278,6 +261,45 @@ create_parameters <- function(idt, cvars, cgvars, cg, backend) {
     "}",
     .parse = FALSE
   )
+}
+
+#' Create Parameters Lines for a Distribution
+#'
+#' @noRd
+create_parameters_lines <- function(idt, backend, cvars, cgvars) {
+  family <- cgvars$family
+  if (is_multivariate(family)) {
+    univariate <- ""
+    for (j in seq_along(cvars)) {
+      cvars[[j]]$default <- lines_wrap(
+        "parameters", "default", idt, backend, cvars[[j]]
+      )
+      univariate <- ifelse_(
+        has_univariate(family),
+        paste_rows(
+          univariate,
+          lines_wrap(
+            "parameters",
+            get_univariate(family),
+            idt,
+            backend,
+            cvars[[j]]
+          )
+        ),
+        paste_rows(univariate, cvars[[j]]$default)
+      )
+    }
+    cgvars$univariate <- univariate
+    lines_wrap("parameters", family, idt, backend, cgvars)
+  } else if (is_categorical(family)) {
+    cvars[[1L]]$default <- 0L # TODO
+    lines_wrap("parameters", family, idt, backend, cvars[[1L]])
+  } else {
+    cvars[[1]]$default <- lines_wrap(
+      "parameters", "default", idt, backend, cvars[[1L]]
+    )
+    lines_wrap("parameters", family, idt, backend, cvars[[1L]])
+  }
 }
 
 #' @describeIn create_function Create the 'Transformed Parameters'
@@ -367,25 +389,9 @@ create_transformed_parameters <- function(idt, cvars, cgvars, cg, backend) {
   tr_pars <- list()
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
-    if (is_multivariate(cgvars[[i]]$family)) {
-      cgvars[[i]]$default <- lapply(
-        cvars[cg_idx],
-        function(x) {
-          lines_wrap("transformed_parameters", "default", x, idt, backend)
-        }
-      )
-      tr_pars <- lines_wrap(
-        "transformed_parameters", cgvars[[i]]$family, cgvars[[i]], idt, backend
-      )
-    } else {
-      j <- cg_idx[1L]
-      cvars[[j]]$default <- lines_wrap(
-        "transformed_parameters", "default", cvars[[j]], idt, backend
-      )
-      tr_pars <- lines_wrap(
-        "transformed_parameters", cvars[[j]]$family, cvars[[j]], idt, backend
-      )
-    }
+    tr_pars <- create_transformed_parameters_lines(
+      idt, backend, cvars[cg_idx], cgvars[[i]],
+    )
     declarations[i] <- tr_pars$declarations
     statements[i] <-  tr_pars$statements
   }
@@ -398,6 +404,32 @@ create_transformed_parameters <- function(idt, cvars, cgvars, cg, backend) {
     "}",
     .parse = FALSE
   )
+}
+
+#' Create Transformed Parameters Lines for a Distribution
+#'
+#' @noRd
+create_transformed_parameters_lines <- function(idt, backend, cvars, cgvars) {
+  family <- cgvars$family
+  if (is_multivariate(family)) {
+    cgvars$default <- lapply(
+      cvars,
+      function(x) {
+        lines_wrap("transformed_parameters", "default", idt, backend, x)
+      }
+    )
+    lines_wrap("transformed_parameters", family, idt, backend, cgvars)
+  } else if (is_categorical(family)) {
+    cvars[[1L]]$default <- 0 # TODO
+    lines_wrap(
+      "transformed_parameters", family, idt, backend, cvars[[1L]]
+    )
+  } else {
+    cvars[[1L]]$default <- lines_wrap(
+      "transformed_parameters", "default", idt, backend, cvars[[1L]]
+    )
+    lines_wrap("transformed_parameters", family, idt, backend, cvars[[1L]])
+  }
 }
 
 #' @describeIn create_function Create the 'Model' Block of the Stan Model Code
@@ -555,23 +587,9 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
   model_text <- character(n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
-    if (is_multivariate(cgvars[[i]]$family)) {
-      cgvars[[i]]$backend <- backend
-      model_text[i] <- lines_wrap(
-        "model", cgvars[[i]]$family,
-        list(cvars = cvars[cg_idx], cgvars = cgvars[[i]]),
-        idt,
-        backend
-      )
-    } else {
-      j <- cg_idx[1L]
-      cvars[[j]]$backend <- backend
-      cvars[[j]]$priors <- do.call(prior_lines, c(cvars[[j]], idt = idt))
-      cvars[[j]]$intercept <- do.call(intercept_lines, cvars[[j]])
-      model_text[i] <- lines_wrap(
-        "model", cvars[[j]]$family, cvars[[j]], idt, backend
-      )
-    }
+    model_text[i] <- create_model_lines(
+      idt, backend, cvars[cg_idx], cgvars[[i]]
+    )
   }
   paste_rows(
     "model {",
@@ -582,6 +600,34 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
     "}",
     .parse = FALSE
   )
+}
+
+#' Create Model Lines for a Distribution
+#'
+#' @noRd
+create_model_lines <- function(idt, backend, cvars, cgvars) {
+  family <- cgvars$family
+  if (is_multivariate(family)) {
+    cgvars$backend <- backend
+    lines_wrap(
+      "model",
+      family,
+      list(cvars = cvars, cgvars = cgvars),
+      idt,
+      backend
+    )
+  } else if (is_categorical(family)) {
+    # TODO
+    cvars[[1L]]$backend <- backend
+    cvars[[1L]]$priors <- do.call(prior_lines, c(cvars[[1L]], idt = idt))
+    cvars[[1L]]$intercept <- do.call(intercept_lines, cvars[[1L]])
+    lines_wrap("model", family, idt, backend, cvars[[1L]])
+  } else {
+    cvars[[1L]]$backend <- backend
+    cvars[[1L]]$priors <- do.call(prior_lines, c(cvars[[1L]], idt = idt))
+    cvars[[1L]]$intercept <- do.call(intercept_lines, cvars[[1L]])
+    lines_wrap("model", family, idt, backend, cvars[[1L]])
+  }
 }
 
 #' @describeIn create_function Create the 'Generated Quantities'
@@ -637,15 +683,8 @@ create_generated_quantities <- function(idt, cvars, cgvars, cg, backend) {
   generated_quantities_text <- character(n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
-    j <- cg_idx[1L]
-    generated_quantities_text[i] <- ifelse_(
-      is_multivariate(cgvars[[i]]$family),
-      lines_wrap(
-        "generated_quantities", cgvars[[i]]$family, cgvars[[i]], idt, backend
-      ),
-      lines_wrap(
-        "generated_quantities", cvars[[j]]$family, cvars[[j]], idt, backend
-      )
+    generated_quantities_text[i] <- create_generated_quantities_lines(
+      idt, backend, cvars[cg_idx], cgvars[[i]],
     )
   }
   paste_rows(
@@ -655,5 +694,14 @@ create_generated_quantities <- function(idt, cvars, cgvars, cg, backend) {
     generated_quantities_text,
     "}",
     .parse = FALSE
+  )
+}
+
+create_generated_quantities_lines <- function(idt, backend, cvars, cgvars) {
+  family <- cgvars$family
+  if (is_multivariate(family)) {
+    lines_wrap("generated_quantities", family, idt, backend, cgvars)
+  } else {
+    lines_wrap("generated_quantities", family, idt, backend, cvars[[1L]])
   )
 }

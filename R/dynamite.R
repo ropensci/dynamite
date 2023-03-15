@@ -311,10 +311,10 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
   )
   model_code <- create_blocks(
     indent = 2L,
-    cvars = stan_input$channel_vars,
-    cgvars = stan_input$channel_group_vars,
+    backend = backend,
     cg = attr(dformulas$stoch, "channel_groups"),
-    backend = backend
+    cvars = stan_input$channel_vars,
+    cgvars = stan_input$channel_group_vars
   )
   sampling_info(dformulas, verbose, debug, backend)
   # if debug$stanfit exists (from the update method) then don't recompile

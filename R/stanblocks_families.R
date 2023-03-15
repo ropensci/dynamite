@@ -8,7 +8,7 @@
 #' @param backend The Stan backend.
 #'   (see [create_blocks()])
 #' @noRd
-lines_wrap <- function(prefix, family, args, idt, backend) {
+lines_wrap <- function(prefix, family, idt, backend, args) {
   args$idt <- idt
   args$backend <- backend
   suffix <- ifelse_(
