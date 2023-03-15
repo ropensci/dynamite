@@ -1183,6 +1183,18 @@ transformed_parameters_lines_categorical <- function(y, idt, noncentered,
       .indent = idt(0)
     )
   )
+  # list(
+  #   declarations = paste_rows(
+  #     ulapply(default, "[[", "declarations"),
+  #     .parse = FALSE,
+  #     .indent = idt(0)
+  #   ),
+  #   statements = paste_rows(
+  #     ulapply(default, "[[", "statements"),
+  #     .parse = FALSE,
+  #     .indent = idt(0)
+  #   )
+  # )
 }
 
 transformed_parameters_lines_multinomial <- function(y_cg, ...) {
@@ -1195,8 +1207,19 @@ transformed_parameters_lines_gaussian <- function(default, ...) {
   default
 }
 
-transformed_parameters_lines_mvgaussian <- function(default, ...) {
-  default[[1L]]
+transformed_parameters_lines_mvgaussian <- function(default, idt, ...) {
+  list(
+    declarations = paste_rows(
+      ulapply(default, "[[", "declarations"),
+      .parse = FALSE,
+      .indent = idt(0)
+    ),
+    statements = paste_rows(
+      ulapply(default, "[[", "statements"),
+      .parse = FALSE,
+      .indent = idt(0)
+    )
+  )
 }
 
 transformed_parameters_lines_binomial <- function(default, ...) {
@@ -1267,7 +1290,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
     mtext_sigma_nu <- "sigma_nu_{y} ~ {sigma_nu_prior_distr}({dpars_sigma_nu});"
   } else {
     mtext_sigma_nu <-
-      "sigma_nu_{y}[{{{cs(1:K_random)}}}] ~ {sigma_nu_prior_distr};"
+      glue::glue("sigma_nu_{y}[{1:K_random}] ~ {sigma_nu_prior_distr};")
   }
 
   if (has_lfactor) {
@@ -1296,7 +1319,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
         "omega_raw_{y}[, 1] ~ {delta_prior_distr}({dpars_varying});"
     } else {
       mtext_varying <-
-        "omega_raw_{y}[{{{cs(1:K_varying)}}}, 1] ~ {delta_prior_distr};"
+        glue::glue("omega_raw_{y}[{1:K_varying)}, 1] ~ {delta_prior_distr};")
     }
     mtext_varying <- paste_rows(
       mtext_varying,
@@ -1333,7 +1356,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
         "omega_{y}[, 1] ~ {delta_prior_distr}({dpars_varying});"
     } else {
       mtext_varying <-
-        "omega_{y}[{{{cs(1:K_varying)}}}, 1] ~ {delta_prior_distr};"
+        glue::glue("omega_{y}[{1:K_varying}, 1] ~ {delta_prior_distr};")
     }
     mtext_varying <- paste_rows(
       mtext_varying,
@@ -1373,7 +1396,9 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
     )
     mtext_fixed <- "beta_{y} ~ {beta_prior_distr}({dpars_fixed});"
   } else {
-    mtext_fixed <- "beta_{y}[{{{cs(1:K_fixed)}}}] ~ {beta_prior_distr};"
+    mtext_fixed <- glue::glue(
+      "beta_{y}[{1:K_fixed}] ~ {beta_prior_distr};"
+    )
   }
 
   if (vectorizable_prior(tau_prior_distr)) {
@@ -1387,7 +1412,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
     )
     mtext_tau <- "tau_{y} ~ {tau_prior_distr}({dpars_tau});"
   } else {
-    mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {tau_prior_distr};"
+    mtext_tau <- glue::glue("tau_{y}[{1:K_varying}] ~ {tau_prior_distr};")
   }
   paste_rows(
     onlyif(has_lfactor, mtext_lambda),
@@ -1634,7 +1659,7 @@ model_lines_categorical <- function(y, idt, obs, noncentered, shrinkage,
       "")
     mtext_tau <- "tau_{y} ~ {tau_prior_distr}({dpars_tau});"
   } else {
-    mtext_tau <- "tau_{y}[{{{cs(1:K_varying)}}}] ~ {tau_prior_distr};"
+    mtext_tau <- glue::glue("tau_{y}[{1:K_varying}] ~ {tau_prior_distr};")
   }
 
   intercept <- ifelse_(

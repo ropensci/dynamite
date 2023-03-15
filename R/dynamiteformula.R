@@ -409,7 +409,7 @@ print.dynamiteformula <- function(x, ...) {
     "Argument {.arg x} must be a {.cls dynamiteformula} object."
   )
   cg <- attr(x, "channel_groups")
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   rn <- character(n_cg)
   out <- data.frame(
     Family = rep(NA_character_, n_cg),
@@ -490,7 +490,7 @@ get_nonlag_terms <- function(x) {
 #'
 #' @param x A channel of a `dynamiteformula`
 #' @noRd
-get_type_formula <- function(x, type = c("fixed", "varying", "ranodm")) {
+get_type_formula <- function(x, type = c("fixed", "varying", "random")) {
   has_icpt <- ifelse_(
     type %in% c("fixed", "varying"),
     x$has_fixed_intercept || x$has_varying_intercept,
@@ -659,7 +659,7 @@ join_dynamiteformulas <- function(e1, e2) {
   cg1 <- attr(e1, "channel_groups")
   cg2 <- attr(e2, "channel_groups")
   cg <-  c(cg1, cg2 + max(cg1))
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   dep <- matrix(0L, nrow = n_cg, ncol = n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)

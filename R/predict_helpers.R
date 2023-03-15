@@ -139,7 +139,7 @@ parse_newdata <- function(dformulas, newdata, data, type, eval_type,
   type <- ifelse_(eval_type %in% c("fitted", "loglik"), eval_type, type)
   if (identical(type, "loglik")) {
     cg <- attr(dformulas$stoch, "channel_groups")
-    n_cg <- length(unique(cg))
+    n_cg <- n_unique(cg)
     for (i in seq_len(n_cg)) {
       cg_idx <- which(cg == i)
       y <- ifelse_(
@@ -485,7 +485,7 @@ prepare_eval_envs <- function(object, simulated, observed,
   channel_vars <- object$stan$channel_vars
   channel_group_vars <- object$stan$channel_group_vars
   cg <- attr(object$dformulas$all, "channel_groups")
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   eval_envs <- vector(mode = "list", length = n_cg)
   idx_draws <- seq_len(n_draws)
   rand <- which_random(object$dformulas$all)

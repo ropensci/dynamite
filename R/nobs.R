@@ -19,7 +19,7 @@ nobs.dynamitefit <- function(object, ...) {
     "Argument {.var object} must be a {.cls dynamitefit} object."
   )
   cg <- attr(object$dformulas$all, "channel_groups")
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   n_obs <- 0L
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
