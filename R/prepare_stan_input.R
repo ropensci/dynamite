@@ -34,22 +34,9 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   specials <- lapply(dformula, evaluate_specials, data = data)
   model_matrix <- full_model.matrix(dformula, data, verbose)
   cg <- attr(dformula, "channel_groups")
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   n_channels <- length(resp_names)
-  responses <- list()
-  for (i in seq_len(n_cg)) {
-    cg_idx <- which(cg == i)
-    y_cg <- paste(resp_names[cg_idx], collapse = "_")
-    responses[[y_cg]] <- resp_names[cg_idx]
-  }
-  attr(responses, "resp_class") <- lapply(
-    data[, .SD, .SDcols = resp],
-    function(x) {
-      cl <- class(x)
-      attr(cl, "levels") <- levels(x)
-      cl
-    }
-  )
+  responses <- prepare_responses(dformula, data)
   # A list of variables for Stan sampling without grouping by channel
   sampling_vars <- list()
   channel_group_vars <- list()
@@ -109,7 +96,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     )
     Y <- array(as.numeric(unlist(y_split)), dim = c(T_full, N))
     Y <- Y[T_idx, , drop = FALSE]
-    tmp <- initialize_univariate_channel(
+    tmp <- initialize_channel(
       dformula = dformula[[i]],
       specials = specials[[i]],
       fixed_pars = fixed_pars[[i]],
@@ -131,32 +118,26 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       noncentered_psi = lfactor_def$noncentered_psi,
       nonzero_lambda = lfactor_def$nonzero_lambda[i]
     )
-    if (has_univariate(dformula[[i]]$family)) {
-      prep <- do.call(
-        paste0("prepare_channel_", get_univariate(dformula[[i]]$family)),
-        list(
-          y = y_name,
-          Y = Y,
-          channel = tmp$channel,
-          sampling = tmp$sampling,
-          sd_x = sd_x,
-          resp_class = resp_classes[[y]],
-          priors = priors
-        )
+    prep <- do.call(
+      paste0("prepare_channel_", get_component(dformula[[i]]$family)),
+      list(
+        y = y_name,
+        Y = Y,
+        channel = tmp$channel,
+        sampling = tmp$sampling,
+        sd_x = sd_x,
+        resp_class = resp_classes[[y]],
+        priors = priors
       )
-
-      prior_list[[y_name]] <- prep$priors
-      channel_vars[[y_name]] <- prep$channel
-      vectorizable_priors <- extract_vectorizable_priors(prep$channel, y_name)
-      sampling_vars <- c(
-        sampling_vars,
-        prep$sampling,
-        vectorizable_priors
-      )
-    } else {
-      channel_vars[[y_name]] <- tmp$channel
-      sampling_vars <- c(sampling_vars, tmp$sampling)
-    }
+    )
+    prior_list[[y_name]] <- prep$priors
+    channel_vars[[y_name]] <- prep$channel
+    vectorizable_priors <- extract_vectorizable_priors(prep$channel, y_name)
+    sampling_vars <- c(
+      sampling_vars,
+      prep$sampling,
+      vectorizable_priors
+    )
   }
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
@@ -165,14 +146,16 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     channel <- list(family = family)
     y <- resp[cg_idx]
     if (is_categorical(family)) {
-      y_name <- attr(resp_classes[[y]], "levels")
-      y_cg <- y
+      y_name <- resp_names[j]
+      y_cg <- y_name
+      #y_name <- attr(resp_classes[[y]], "levels")
+      #y_cg <- y
     } else {
       y_name <- resp_names[cg_idx]
       y_cg <- paste(y_name, collapse = "_")
     }
-    if (is_multivariate(family)) {
-      tmp <- initialize_multivariate_channel(
+    if (is_multiformula(family)) {
+      tmp <- initialize_multiformula_channel(
         y = y,
         y_cg = y_cg,
         y_name = y_name,
@@ -244,7 +227,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   )
 }
 
-initialize_univariate_channel <- function(dformula, specials, fixed_pars,
+initialize_channel <- function(dformula, specials, fixed_pars,
                                           varying_pars, random_pars,
                                           Y, y, y_name, group, fixed,
                                           T_full, N, X_na, lb,
@@ -336,7 +319,7 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
   list(channel = channel, sampling = sampling)
 }
 
-initialize_multivariate_channel <- function(y, y_cg, y_name, cg_idx,
+initialize_multiformula_channel <- function(y, y_cg, y_name, cg_idx,
                                             channel, family, dims,
                                             channel_vars, sampling_vars) {
   j <- cg_idx[1L]
@@ -433,6 +416,32 @@ extract_vectorizable_priors <- function(channel, y) {
     NULL
   )
 }
+
+#' Prepare Response Variable Classes
+#'
+#' @inheritParams dynamite
+prepare_responses <- function(dformula, data) {
+  resp <- get_responses(dformula)
+  resp_names <- get_names(dformula)
+  cg <- attr(dformula, "channel_groups")
+  n_cg <- n_unique(cg)
+  responses <- list()
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    y_cg <- cg_name(resp_names[cg_idx], dformula[[i]]$family)
+    responses[[y_cg]] <- resp_names[cg_idx]
+  }
+  attr(responses, "resp_class") <- lapply(
+    data[, .SD, .SDcols = unique(resp)],
+    function(x) {
+      cl <- class(x)
+      attr(cl, "levels") <- levels(x)
+      cl
+    }
+  )
+  responses
+}
+
 #' Construct a Prior Definition for a Regression Parameters
 #'
 #' @param ptype \[character(1L)]\cr Type of the parameter.
@@ -613,8 +622,8 @@ prepare_channel_category <- function(y, Y, channel, sampling,
 }
 #' @describeIn prepare_channel_default Prepare a Categorical Channel
 #' @noRd
-prepare_channel_categorical <- function(y, y_cg, Y, channel, sd_x,
-  resp_class, priors) {
+prepare_channel_categorical <- function(y, y_cg, Y, channel, sampling,
+                                        sd_x, resp_class, priors) {
 
   stopifnot_(
     "factor" %in% resp_class,
@@ -629,7 +638,7 @@ prepare_channel_categorical <- function(y, y_cg, Y, channel, sd_x,
   channel$K <- length(sd_x)
   sampling <- list()
   sampling[[paste0("S_", y_cg)]] <- S
-  sampling[[paste0("K_", y_cg)]] <- K
+  sampling[[paste0("K_", y_cg)]] <- channel$K
   list(channel = channel, sampling = sampling, priors = priors)
 }
 

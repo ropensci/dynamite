@@ -480,7 +480,7 @@ predict_ <- function(object, simulated, storage, observed,
         e$trials <- specials$trials
         y <- paste0(resp[cg_idx], "_store")
         e$y <- ifelse_(
-          is_multivariate(families[[k]]),
+          is_multiformula(families[[k]]),
           as.matrix(observed[, .SD, .SDcols = y])[idx_obs, , drop = FALSE],
           observed[[y]][idx_obs]
         )

@@ -109,20 +109,20 @@ create_data <- function(idt, cvars, cgvars, cg, backend) {
     .indent = idt(1),
     .parse = FALSE
   )
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   data_text <- character(n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
-    if (is_multivariate(cgvars[[i]]$family)) {
-      if (has_univariate(cgvars[[i]]$family)) {
-        cgvars[[i]]$default <- vapply(
-          cvars[cg_idx],
-          function(x) {
-            lines_wrap("data", "default", x, idt, backend)
-          },
-          character(1L)
-        )
-      }
+    if (is_multiformula(cgvars[[i]]$family)) {
+      #if (has_univariate(cgvars[[i]]$family)) {
+      cgvars[[i]]$default <- vapply(
+        cvars[cg_idx],
+        function(x) {
+          lines_wrap("data", "default", x, idt, backend)
+        },
+        character(1L)
+      )
+      #}
       data_text[i] <- lines_wrap(
         "data",  cgvars[[i]]$family, cgvars[[i]], idt, backend
       )
@@ -143,13 +143,13 @@ create_data <- function(idt, cvars, cgvars, cg, backend) {
 #'   Block of the Stan Model Code
 #' @noRd
 create_transformed_data <- function(idt, cvars, cgvars, cg, backend) {
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   declarations <- character(n_cg)
   statements <- character(n_cg)
   tr_data <- list()
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
-    if (is_multivariate(cgvars[[i]]$family)) {
+    if (is_multiformula(cgvars[[i]]$family)) {
       fun <- ifelse_(is_categorical(cgvars[[i]]$family),
         "category",
         "default"
@@ -234,32 +234,28 @@ create_parameters <- function(idt, cvars, cgvars, cg, backend) {
       .indent = idt(c(1, 1, 1))
     )
   )
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   parameters_text <- character(n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
-    if (is_multivariate(cgvars[[i]]$family)) {
-      univariate <- ""
+    if (is_multiformula(cgvars[[i]]$family)) {
+      components <- ""
       for (j in cg_idx) {
         cvars[[j]]$default <- lines_wrap(
           "parameters", "default", cvars[[j]], idt, backend
         )
-        univariate <- ifelse_(
-          has_univariate(cgvars[[i]]$family),
-          paste_rows(
-            univariate,
-            lines_wrap(
-              "parameters",
-              get_univariate(cvars[[j]]$family),
-              cvars[[j]],
-              idt,
-              backend
-            )
-          ),
-          paste_rows(univariate, cvars[[j]]$default)
+        components <- paste_rows(
+          components,
+          lines_wrap(
+            "parameters",
+            get_component(cvars[[j]]$family),
+            cvars[[j]],
+            idt,
+            backend
+          )
         )
       }
-      cgvars[[i]]$univariate <- univariate
+      cgvars[[i]]$components <- components
       parameters_text[i] <- lines_wrap(
         "parameters", cgvars[[i]]$family, cgvars[[i]], idt, backend
       )
@@ -365,13 +361,13 @@ create_transformed_parameters <- function(idt, cvars, cgvars, cg, backend) {
         )
     }
   }
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   declarations <- character(n_cg)
   statements <- character(n_cg)
   tr_pars <- list()
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
-    if (is_multivariate(cgvars[[i]]$family)) {
+    if (is_multiformula(cgvars[[i]]$family)) {
       cgvars[[i]]$default <- lapply(
         cvars[cg_idx],
         function(x) {
@@ -555,11 +551,11 @@ create_model <- function(idt, cvars, cgvars, cg, backend) {
       }
     }
   }
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   model_text <- character(n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
-    if (is_multivariate(cgvars[[i]]$family)) {
+    if (is_multiformula(cgvars[[i]]$family)) {
       cgvars[[i]]$backend <- backend
       model_text[i] <- lines_wrap(
         "model", cgvars[[i]]$family,
@@ -637,13 +633,13 @@ create_generated_quantities <- function(idt, cvars, cgvars, cg, backend) {
       .indent = idt(c(1, 1, 1, 2, 3, 2, 1))
     )
   }
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   generated_quantities_text <- character(n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
     j <- cg_idx[1L]
     generated_quantities_text[i] <- ifelse_(
-      is_multivariate(cgvars[[i]]$family),
+      is_multiformula(cgvars[[i]]$family),
       lines_wrap(
         "generated_quantities", cgvars[[i]]$family, cgvars[[i]], idt, backend
       ),

@@ -584,9 +584,10 @@ parameters_lines_category <- function(default, ...) {
   default
 }
 
-parameters_lines_categorical <- function(y_cg, idt, univariate, ...) {
-  paste_rows(univariate,
-             .indent = idt(0)
+parameters_lines_categorical <- function(y_cg, idt, components, ...) {
+  paste_rows(
+    components,
+    .indent = idt(0)
   )
 }
 
@@ -605,9 +606,9 @@ parameters_lines_gaussian <- function(y, idt, default, ...) {
   )
 }
 
-parameters_lines_mvgaussian <- function(y_cg, idt, univariate, ...) {
+parameters_lines_mvgaussian <- function(y_cg, idt, components, ...) {
   paste_rows(
-    univariate,
+    components,
     "cholesky_factor_corr[O_{y_cg}] L_{y_cg}; // Cholesky for gaussian",
     .indent = idt(c(0, 1))
   )
@@ -1411,7 +1412,7 @@ intercept_lines <- function(y, obs, family,
   intercept
 }
 
-model_lines_categorical <- function(cvars, cgvars, idt,
+model_lines_categorical <- function(cvars, cgvars, idt, backend,
                                     multinomial = FALSE,
                                     ...) {
 
@@ -1543,7 +1544,6 @@ model_lines_multinomial <- function(cvars, cgvars, idt, ...) {
   args <- c(cgvars, idt = idt)
   args$y <- args$y_cg
   args$multinomial <- TRUE
-  #args <- args[names(args) %in% names(formals(intercept_lines))]
   do.call(model_lines_categorical, args = args)
 }
 

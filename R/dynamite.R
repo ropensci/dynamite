@@ -238,6 +238,7 @@ dynamite <- function(dformula, data, time, group = NULL,
     )
   }
   data <- parse_data(dformula, data, group, time, verbose)
+  dformula <- parse_multiformula(dformula, data)
   dformula <- parse_past(dformula, data, group, time)
   dformulas <- parse_lags(dformula, data, group, time, verbose)
   evaluate_deterministic(dformulas, data, group, time)
@@ -640,6 +641,44 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
   drop_unused(dformula, data, group_var, time_var)
   data.table::setkeyv(data, c(group_var, time_var))
   data
+}
+
+parse_multiformula <- function(dformula, data) {
+  cg <- attr(dformula, "channel_groups")
+  n_cg <- n_unique(cg)
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    if (identical(length(cg_idx), 1L)) {
+      j <- cg_idx[1L]
+      if (is_categorical(dformula[[i]]$family)) {
+        s <- unique(data[[dformula[[i]]$response]])
+        n_s <- length(s)
+        idx_head <- seq_len(i - 1L)
+        idx_tail <- ifelse_(
+          i < n_cg,
+          seq_int(i + 1L, n_cg),
+          integer(0L)
+        )
+        dform_head <- dformula[idx_head]
+        dform_multi <- dformula[rep(i, n_s)]
+        dform_tail <- dformula[idx_tail]
+        for (k in seq_len(n_s - 1L)) {
+          dform_multi[[k + 1]]$name <- paste0(
+            dform_multi[[1]]$name,
+            "_",
+            s[k + 1]
+          )
+        }
+        dform_new <- c(dform_head, dform_multi, dform_tail)
+        attributes(dform_new) <- attributes(dformula)
+        attr(dform_new, "channel_groups") <- c(
+          cg[idx_head], rep(j, n_s), cg[idx_tail]
+        )
+        return(parse_multiformula(dform_new, data))
+      }
+    }
+  }
+  dformula
 }
 
 #' Evaluate Past Value Definitions of Each Deterministic Channel

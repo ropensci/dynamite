@@ -32,11 +32,11 @@ is_supported <- function(name) {
   name %in% supported_families
 }
 
-#' Check If a Family Is Multivariate
+#' Check If a Family Uses Multiple Formulas
 #'
 #' @param x \[`dynamitefamily`]\cr A family object.
 #' @noRd
-is_multivariate <- function(x) {
+is_multiformula <- function(x) {
   x$name %in% c("mvgaussian", "multinomial", "categorical")
 }
 
@@ -56,22 +56,23 @@ supported_families <- c(
   "student"
 )
 
-#' Test If Multivariate Family Uses Univariate Components
-#'
-#' @param x \[`dynamitefamily`]\cr A family object.
-#' @noRd
-has_univariate <- function(x) {
-  x$name %in% setdiff(supported_families, "multinomial")
-}
+# #' Test If Multivariate Family Uses Univariate Components
+# #'
+# #' @param x \[`dynamitefamily`]\cr A family object.
+# #' @noRd
+# has_univariate <- function(x) {
+#   x$name %in% setdiff(supported_families)
+# }
 
-#' Get Univariate Version of a Multivariate Family
+#' Get a Component of a Multiformula Family
 #'
 #' @param x \[`dynamitefamily`]\cr A family object.
 #' @noRd
-get_univariate <- function(x) {
+get_component <- function(x) {
   out <- stats::setNames(supported_families, supported_families)
   out["mvgaussian"] <- "gaussian"
   out["categorical"] <- "category"
+  out["multinomial"] <- "category"
   unname(out[x$name])
 }
 

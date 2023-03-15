@@ -311,7 +311,7 @@ parse_formula <- function(x, original, family) {
   n_formulas <- length(formula_parts)
   n_responses <- length(responses)
   mn <- is_multinomial(family)
-  mvf <- is_multivariate(family)
+  mvf <- is_multiformula(family)
   mvc <- n_responses > 1L
   stopifnot_(
     !mvc || mvf,
@@ -409,7 +409,7 @@ print.dynamiteformula <- function(x, ...) {
     "Argument {.arg x} must be a {.cls dynamiteformula} object."
   )
   cg <- attr(x, "channel_groups")
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   rn <- character(n_cg)
   out <- data.frame(
     Family = rep(NA_character_, n_cg),
@@ -418,11 +418,7 @@ print.dynamiteformula <- function(x, ...) {
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
     j <- cg_idx[1L]
-    rn[i] <- ifelse_(
-      is_multivariate(x[[j]]$family),
-      paste(get_names(x[cg_idx]), collapse = "_"),
-      x[[j]]$name
-    )
+    rn[i] <- cg_name(get_names(x[cg_idx], x[[j]]$family))
     out[i, "Family"] <- x[[j]]$family$name
     out[i, "Formula"] <- deparse1(x[[j]]$original)
   }
@@ -444,6 +440,18 @@ print.dynamiteformula <- function(x, ...) {
     )
   }
   invisible(x)
+}
+
+#' Construct a Channel Group Name
+#'
+#' @param x Names of the channels
+#' @param family Family of the channel
+#' @noRd
+cg_name <- function(x, family) {
+  if (is_categorical(family)) {
+    return(x[1L])
+  }
+  paste(x, collapse = "_")
 }
 
 #' Get All Response Variables of a `dynamiteformula` Object
@@ -659,7 +667,7 @@ join_dynamiteformulas <- function(e1, e2) {
   cg1 <- attr(e1, "channel_groups")
   cg2 <- attr(e2, "channel_groups")
   cg <-  c(cg1, cg2 + max(cg1))
-  n_cg <- length(unique(cg))
+  n_cg <- n_unique(cg)
   dep <- matrix(0L, nrow = n_cg, ncol = n_cg)
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
