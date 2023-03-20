@@ -468,14 +468,15 @@ prepare_channel_default <- function(y, Y, channel, sampling,
       pdef <- priors[priors$type == ptype, ]
       channel[["prior_distr"]][[paste0(ptype, "_prior_distr")]] <- pdef$prior
     }
-    loop_types <- intersect(
-      types,
-      c("beta", "delta", "tau", "sigma_nu")
-    )
+    loop_types <- c("beta", "delta", "tau", "sigma_nu")
     for (ptype in loop_types) {
-      channel[["prior_distr"]] <- c(
-        channel[["prior_distr"]],
-        create_vectorized_prior(ptype, priors, channel)
+      ifelse_(
+        ptype %in% types,
+        channel[["prior_distr"]] <- c(
+          channel[["prior_distr"]],
+          create_vectorized_prior(ptype, priors, channel)
+        ),
+        channel[["prior_distr"]][[paste0("vectorized_", ptype)]] <- FALSE
       )
     }
   }
@@ -569,7 +570,7 @@ prepare_channel_multinomial <- function(y, y_cg, Y, channel, sampling,
   channel$S <- S_y
   sampling[[paste0("S_", y_cg)]] <- S_y
   if (is.null(priors)) {
-    out <- default_priors_categorical(y_cg, channel, sd_x, S_y, y)
+    out <- default_priors(y_cg, channel, sd_x, S_y, y)
     channel <- out$channel
     priors <- out$priors
   } else {
@@ -588,7 +589,7 @@ prepare_channel_multinomial <- function(y, y_cg, Y, channel, sampling,
     }
     priors <- check_priors(
       priors,
-      default_priors_categorical(y_cg, channel, sd_x, S_y, y)$priors
+      default_priors(y_cg, channel, sd_x, S_y, y)$priors
     )
   }
   channel$write_alpha <-

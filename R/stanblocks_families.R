@@ -184,36 +184,43 @@ prior_data_lines <- function(y, idt, prior_distr,
     paste0(y, ".", category),
     "y"
   )
+  vectorize_beta <-
+    K_fixed > 0L &&
+    prior_distr$vectorized_beta &&
+    prior_distr$beta_prior_npars > 0L
+  vectorize_delta <-
+    K_varying > 0L &&
+    prior_distr$vectorized_delta &&
+    prior_distr$delta_prior_npars > 0L
+  vectorize_tau <-
+    K_varying > 0L &&
+    prior_distr$vectorized_tau &&
+    prior_distr$tau_prior_npars > 0L
+  vectorize_sigma_nu <-
+    K_random > 0L &&
+    prior_distr$vectorized_sigma_nu &&
+    prior_distr$sigma_nu_prior_npars > 0L
+
+  any_vectorized <-
+    vectorize_beta ||
+    vectorize_delta ||
+    vectorize_tau ||
+    vectorize_sigma_nu
   paste_rows(
-    onlyif(
-      prior_distr$vectorized_beta ||
-        prior_distr$vectorized_delta ||
-        prior_distr$vectorized_tau ||
-        prior_distr$vectorized_sigma_nu,
+    onlyif(any_vectorized,
       "// Parameters of vectorized priors"
     ),
-    onlyif(
-      K_fixed > 0L &&
-        prior_distr$vectorized_beta &&
-        prior_distr$beta_prior_npars > 0L,
+    onlyif(vectorize_beta,
       "matrix[K_fixed_{y}, {prior_distr$beta_prior_npars}] beta_prior_pars_{ycat};"
     ),
     onlyif(
-      K_varying > 0L &&
-        prior_distr$vectorized_delta &&
-        prior_distr$delta_prior_npars > 0L,
+      vectorize_delta,
       "matrix[K_varying_{y}, {prior_distr$delta_prior_npars}] delta_prior_pars_{ycat};"
     ),
-    onlyif(
-      K_varying > 0L &&
-        prior_distr$vectorized_tau &&
-        prior_distr$tau_prior_npars > 0L,
+    onlyif(vectorize_tau,
       "matrix[K_varying_{y}, {prior_distr$tau_prior_npars}] tau_prior_pars_{ycat};"
     ),
-    onlyif(
-      K_random > 0L &&
-        prior_distr$vectorized_sigma_nu &&
-        prior_distr$sigma_nu_prior_npars > 0L,
+    onlyif(vectorize_sigma_nu,
       "matrix[K_random_{y}, {prior_distr$sigma_nu_prior_npars}] sigma_nu_prior_pars_{ycat};"
     ),
     .indent = idt(1)

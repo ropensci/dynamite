@@ -30,15 +30,6 @@ test_that("extracted priors match initial priors", {
   expect_identical(get_priors(fit), p)
 })
 
-test_that("prior order does not matter", {
-  p2 <- p[seq.int(nrow(p), 1L), ]
-  fit2 <- dynamite(f,
-    data = gaussian_example, time = "time", group = "id",
-    priors = p2, debug = list(no_compile = TRUE)
-  )
-  expect_identical(get_priors(fit2), p)
-})
-
 test_that("inserting a valid prior works", {
   p$prior[2] <- "cauchy(0, 2)"
   p$prior[5:6] <- "std_normal()"

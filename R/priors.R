@@ -274,8 +274,8 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
 #' This function makes a crude check that the user-supplied prior distributions
 #' are valid. The actual syntax is later tested automatically during
 #' compilation, this is mainly for checking the support of the distribution,
-#' so that the users don't supply constrained priors for coefficients, and for
-#' ordering the corresponding data frame coherently.
+#' so that the users don't supply constrained priors for coefficients, and that
+#' all parameters have (exactly one) prior.
 #'
 #' @param priors A data frame of prior definitions.
 #' @param defaults A data frame of default prior definitions.
@@ -314,9 +314,6 @@ check_priors <- function(priors, defaults) {
              {?a/} parameter{?s}."
     )
   )
-  # order to match the code generation
-  prior_order <- match(priors$parameter, defaults$parameter)
-  priors <- priors[order(prior_order), ]
   unconstrained_dists <- c(
     "normal", "student_t", "double_exponential", "cauchy", "exp_mod_normal",
     "skew_normal", "logistic", "gumbel", "skew_double_exponential", "std_normal"
