@@ -287,9 +287,9 @@ create_parameters_lines <- function(idt, backend, cvars, cgvars) {
   } else if (is_categorical(family)) {
     cvars[[1]]$default <- lapply(
       cvars[[1]]$categories[-cvars[[1]]$S],
-      function(i) {
+      function(s) {
         cvars[[1]]$ydim <- cvars[[1]]$y
-        cvars[[1]]$y <- i
+        cvars[[1]]$y <- paste0(cvars[[1]]$y, ".", s)
         lines_wrap(
           "parameters", "default", idt, backend, cvars[[1L]]
         )
@@ -424,9 +424,9 @@ create_transformed_parameters_lines <- function(idt, backend, cvars, cgvars) {
   } else if (is_categorical(family)) {
     cvars[[1]]$default <- lapply(
       cvars[[1]]$categories[-cvars[[1]]$S],
-      function(i) {
+      function(s) {
         cvars[[1]]$ydim <- cvars[[1]]$y
-        cvars[[1]]$y <- i
+        cvars[[1]]$y <- paste0(cvars[[1]]$y, ".", s)
         lines_wrap(
           "transformed_parameters", "default", idt, backend, cvars[[1L]]
         )
@@ -628,20 +628,19 @@ create_model_lines <- function(idt, backend, cvars, cgvars) {
       backend
     )
   } else if (is_categorical(family)) {
-    # TODO
     cvars[[1L]]$priors <- lapply(
       cvars[[1]]$categories[-cvars[[1]]$S],
-      function(i) {
-        cvars[[1]]$ydim <- cvars[[1]]$y
-        cvars[[1]]$y <- i
+      function(s) {
+        cvars[[1]]$y <- paste0(cvars[[1]]$y, ".", s)
+        cvars[[1]]$prior_distr <- cvars[[1]]$prior_distr[[s]]
         do.call(prior_lines, c(cvars[[1L]], idt = idt))
       }
     )
     cvars[[1L]]$intercept <- lapply(
       cvars[[1]]$categories[-cvars[[1]]$S],
-      function(i) {
+      function(s) {
         cvars[[1]]$ydim <- cvars[[1]]$y
-        cvars[[1]]$y <- i
+        cvars[[1]]$y <- paste0(cvars[[1]]$y, ".", s)
         do.call(intercept_lines, cvars[[1L]])
       }
     )
@@ -657,7 +656,7 @@ create_model_lines <- function(idt, backend, cvars, cgvars) {
 #' @describeIn create_function Create the 'Generated Quantities'
 #'   Block of the Stan Model Code
 #' @noRd
-create_generated_quantities <- function(idt, backend, cvars, cgvars, cg) {
+create_generated_quantities <- function(idt, backend, cg, cvars, cgvars) {
   gen_nu <- ""
   M <- attr(cvars, "random_def")$M
   if (M > 1 && attr(cvars, "random_def")$correlated) {
@@ -708,7 +707,7 @@ create_generated_quantities <- function(idt, backend, cvars, cgvars, cg) {
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
     generated_quantities_text[i] <- create_generated_quantities_lines(
-      idt, backend, cvars[cg_idx], cgvars[[i]],
+      idt, backend, cvars[cg_idx], cgvars[[i]]
     )
   }
   paste_rows(

@@ -420,104 +420,7 @@ initialize_multivariate_channel <- function(y, y_cg, y_name, cg_idx,
   list(channel = channel, sampling = sampling)
 }
 
-extract_vectorizable_priors <- function(channel, y) {
-  priors <- channel[which(
-    names(channel) %in% paste0(
-      c("alpha", "beta", "delta", "tau", "sigma_nu"), "_prior_pars"
-    )
-  )]
-  ifelse_(
-    length(priors) > 0,
-    setNames(priors, paste0(names(priors), "_", y)),
-    NULL
-  )
-}
-#' Construct a Prior Definition for a Regression Parameters
-#'
-#' @param ptype \[character(1L)]\cr Type of the parameter.
-#' @param priors \[`data.frame`]\cr Prior definitions.
-#' @param channel \[`list()`]\cr Channel-specific variables for Stan sampling
-#' @noRd
-prepare_prior <- function(ptype, priors, channel) {
-  pdef <- priors[priors$type == ptype, ]
-  channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
-  dists <- sub("\\(.*", "", pdef$prior)
-  if (nrow(pdef) > 0L && identical(n_unique(dists), 1L)) {
-    pars <- strsplit(sub(".*\\((.*)\\).*", "\\1", pdef$prior), ",")
-    pars <- do.call("rbind", lapply(pars, as.numeric))
-    channel[[paste0(ptype, "_prior_distr")]] <- dists[1L]
-    channel[[paste0(ptype, "_prior_npars")]] <- ncol(pars)
-    channel[[paste0(ptype, "_prior_pars")]] <- pars
-  }
-  channel
-}
 
-#' Construct Common Priors among Channels
-#'
-#' @inheritParams splines
-#' @param priors Custom prior definitions or `NULL` if not specified.
-#' @param M Number of random effects.
-#' @param shrinkage Does the model contain shrinkage parameter?
-#' @param correlated_nu Does the model contain correlated random effects?
-#' @param P Number of channels with latent factor.
-#' @param correlated_lf Does the model contain correlated latent factors?
-#' @noRd
-prepare_common_priors <- function(priors, M, shrinkage, P,
-                                  correlated_nu, correlated_lf) {
-  common_priors <- NULL
-  if (shrinkage) {
-    common_priors <- ifelse_(
-      is.null(priors),
-      data.frame(
-        parameter = "xi",
-        response = "",
-        prior = "normal(0, 1)",
-        type = "xi",
-        category = ""
-      ),
-      priors[priors$type == "xi", ]
-    )
-  }
-  if (M > 1L && correlated_nu) {
-    common_priors <- ifelse_(
-      is.null(priors),
-      rbind(
-        common_priors,
-        data.frame(
-          parameter = "L_nu",
-          response = "",
-          prior = "lkj_corr_cholesky(1)",
-          type = "L",
-          category = ""
-        )
-      ),
-      rbind(
-        common_priors,
-        priors[priors$parameter == "L_nu", ]
-      )
-    )
-  }
-  if (P > 1L && correlated_lf) {
-    common_priors <- ifelse_(
-      is.null(priors),
-      rbind(
-        common_priors,
-        data.frame(
-          parameter = "L_lf",
-          response = "",
-          prior = "lkj_corr_cholesky(1)",
-          type = "L",
-          category = ""
-        )
-      ),
-      rbind(
-        common_priors,
-        priors[priors$parameter == "L_lf", ]
-      )
-    )
-  }
-  common_priors
-}
 
 #' Default channel preparation
 #'
@@ -535,7 +438,6 @@ prepare_common_priors <- function(priors, M, shrinkage, P,
 #'   (at time `fixed + 1`).
 #' @param sd_y \[`numeric(1)`]\cr  SD of the response variable
 #'   (at time `fixed + 1`).
-#' @param resp_class \[`character()`]\cr Class(es) of the response `Y`.
 #' @param priors \[`data.frame`]\cr Prior definitions, or `NULL`, in which case
 #'   the default priors are used.
 #'
@@ -544,13 +446,19 @@ prepare_common_priors <- function(priors, M, shrinkage, P,
 #' @noRd
 prepare_channel_default <- function(y, Y, channel, sampling,
                                     mean_gamma, sd_gamma, mean_y, sd_y,
-                                    resp_class, priors) {
+                                    priors, category = "") {
+  ycat <- ifelse(
+    nchar(category) > 0L,
+    paste0(".", category),
+    ""
+  )
   if (is.null(priors)) {
-    out <- default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)
-    channel <- out$channel
+    out <- default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y, category)
     priors <- out$priors
+    channel[["prior_distr"]] <- out$prior_distributions
   } else {
-    priors <- priors[priors$response == y, ]
+    priors <- priors[priors$response == y & priors$category == category, ]
+    channel[["prior_distr"]] <- list()
     types <- priors$type
     loop_types <- intersect(
       types,
@@ -558,25 +466,19 @@ prepare_channel_default <- function(y, Y, channel, sampling,
     )
     for (ptype in loop_types) {
       pdef <- priors[priors$type == ptype, ]
-      channel[[paste0(ptype, "_prior_distr")]] <- pdef$prior
+      channel[["prior_distr"]][[paste0(ptype, "_prior_distr")]] <- pdef$prior
     }
     loop_types <- intersect(
       types,
       c("beta", "delta", "tau", "sigma_nu")
     )
     for (ptype in loop_types) {
-      channel <- prepare_prior(ptype, priors, channel)
+      channel[["prior_distr"]] <- c(
+        channel[["prior_distr"]],
+        create_vectorized_prior(ptype, priors, channel)
+      )
     }
   }
-  channel$write_beta <- channel$has_fixed &&
-    identical(length(channel$beta_prior_distr), 1L)
-  channel$write_delta <- channel$has_varying &&
-    identical(length(channel$delta_prior_distr), 1L)
-  channel$write_tau <- channel$has_varying &&
-    identical(length(channel$tau_prior_distr), 1L)
-  channel$write_sigma_nu <-
-    (channel$has_random || channel$has_random_intercept) &&
-      identical(length(channel$sigma_nu_prior_distr), 1L)
   list(channel = channel, sampling = sampling, priors = priors)
 }
 
@@ -596,42 +498,44 @@ prepare_channel_categorical <- function(y, Y, channel, sampling,
   channel$S <- S_y
   channel$categories <- resp_levels
   sampling[[paste0("S_", y)]] <- S_y
+
+  sd_y <- 1
+  mean_y <- 0.0
+  sd_gamma <- 2.0 / sd_x
+  mean_gamma <- rep(0.0, length(sd_gamma))
+  outcat <- lapply(
+    resp_levels[-S_y],
+    function(s) {
+      prepare_channel_default(
+        y,
+        Y,
+        channel,
+        sampling,
+        mean_gamma,
+        sd_gamma,
+        mean_y,
+        sd_y,
+        priors,
+        category = s
+      )
+    }
+  )
+  out <- outcat[[1]]
+  out$priors <- data.table::setDF(data.table::rbindlist(lapply(outcat, "[[", "priors")))
+  out$channel$prior_distr <- lapply(outcat, function(x) x$channel$prior_distr)
+  names(out$channel$prior_distr) <- resp_levels[-S_y]
   if (is.null(priors)) {
-    out <- default_priors_categorical(y, channel, sd_x, S_y, resp_levels)
-    channel <- out$channel
-    priors <- out$priors
-  } else {
-    priors <- priors[priors$response == y, ]
-    types <- priors$type
-    loop_types <- intersect(
-      types,
-      c("alpha", "beta", "delta", "tau", "sigma_nu", "psi")
+    defaults <- data.table::rbindlist(
+      lapply(
+        resp_levels[-S_y],
+        function(s) {
+          default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y, category = s)$priors
+        }
+      )
     )
-    for (ptype in loop_types) {
-      channel <- prepare_prior(ptype, priors, channel)
-    }
-    if ("tau_alpha" %in% types) {
-      pdef <- priors[priors$type == "tau_alpha", ]
-      channel$tau_alpha_prior_distr <- pdef$prior
-    }
-    priors <- check_priors(
-      priors,
-      default_priors_categorical(y, channel, sd_x, S_y, resp_levels)$priors
-    )
+    check_priors(out$priors, defaults)
   }
-  channel$write_alpha <-
-    (channel$has_fixed_intercept || channel$has_varying_intercept) &&
-      identical(length(channel$alpha_prior_distr), 1L)
-  channel$write_beta <- channel$has_fixed &&
-    identical(length(channel$beta_prior_distr), 1L)
-  channel$write_delta <- channel$has_varying &&
-    identical(length(channel$delta_prior_distr), 1L)
-  channel$write_tau <- channel$has_varying &&
-    identical(length(channel$tau_prior_distr), 1L)
-  channel$write_sigma_nu <-
-    (channel$has_random || channel$has_random_intercept) &&
-      identical(length(channel$sigma_nu_prior_distr), 1L)
-  list(channel = channel, sampling = sampling, priors = priors)
+  list(channel = out$channel, sampling = out$sampling, priors = out$priors)
 }
 
 prepare_channel_multinomial <- function(y, y_cg, Y, channel, sampling,
@@ -676,7 +580,7 @@ prepare_channel_multinomial <- function(y, y_cg, Y, channel, sampling,
       c("alpha", "beta", "delta", "tau", "sigma_nu", "psi")
     )
     for (ptype in loop_types) {
-      channel <- prepare_prior(ptype, priors, channel)
+      channel <- create_vectorized_prior(ptype, priors, channel)
     }
     if ("tau_alpha" %in% types) {
       pdef <- priors[priors$type == "tau_alpha", ]
@@ -733,7 +637,6 @@ prepare_channel_gaussian <- function(y, Y, channel, sampling,
     sd_gamma,
     mean_y,
     sd_y,
-    resp_class,
     priors
   )
   sigma_prior <- data.frame(
@@ -756,7 +659,7 @@ prepare_channel_gaussian <- function(y, Y, channel, sampling,
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       sigma_prior
     )
-    out$priors <- check_priors(priors, defaults)
+    check_priors(priors, defaults)
   }
   out
 }
@@ -830,7 +733,7 @@ prepare_channel_binomial <- function(y, Y, channel, sampling,
     priors
   )
   if (is.null(priors)) {
-    out$priors <- check_priors(
+    check_priors(
       out$priors,
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
     )
@@ -889,8 +792,8 @@ prepare_channel_poisson <- function(y, Y, channel, sampling,
     resp_class,
     priors
   )
-  if (is.null(priors)) {
-    out$priors <- check_priors(
+  if (!is.null(priors)) {
+    check_priors(
       out$priors,
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
     )
@@ -957,7 +860,7 @@ prepare_channel_negbin <- function(y, Y, channel, sampling,
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       phi_prior
     )
-    out$priors <- check_priors(priors, defaults)
+   check_priors(priors, defaults)
   }
   out
 }
@@ -1001,8 +904,8 @@ prepare_channel_exponential <- function(y, Y, channel, sampling,
     resp_class,
     priors
   )
-  if (is.null(priors)) {
-    out$priors <- check_priors(
+  if (!is.null(priors)) {
+    check_priors(
       out$priors,
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
     )
@@ -1064,7 +967,7 @@ prepare_channel_gamma <- function(y, Y, channel, sampling,
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       phi_prior
     )
-    out$priors <- check_priors(priors, defaults)
+    check_priors(priors, defaults)
   }
   out
 }
@@ -1123,7 +1026,7 @@ prepare_channel_beta <- function(y, Y, channel, sampling,
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       phi_prior
     )
-    out$priors <- check_priors(priors, defaults)
+    check_priors(priors, defaults)
   }
   out
 }
@@ -1195,7 +1098,7 @@ prepare_channel_student <- function(y, Y, channel, sampling,
       sigma_prior,
       phi_prior
     )
-    out$priors <- check_priors(priors, defaults)
+    check_priors(priors, defaults)
   }
   out
 }
