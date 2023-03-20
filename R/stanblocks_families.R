@@ -334,7 +334,7 @@ data_lines_gaussian <- function(y, idt, default, has_missing, backend,
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     "matrix[N, T] y_{y};",
-    .indent = idt(c(0, 0, 1))
+    .indent = idt(c(0, 0, 0, 1))
   )
 }
 
@@ -355,7 +355,7 @@ data_lines_mvgaussian <- function(y_cg, idt, default, has_missing,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     "int<lower=0> O_{y_cg};",
     stan_array(backend, "vector", "y_{y_cg}", "T, N", dims = "O_{y_cg}"),
-    .indent = idt(c(1, 1, 1, 0, 1, 1))
+    .indent = idt(c(1, 1, 1, 0, 0, 1, 1))
   )
 }
 
@@ -369,7 +369,7 @@ data_lines_binomial <- function(y, idt, default, has_missing, backend,
     stan_array(backend, "int", "y_{y}", "T, N", "lower=0"),
     "// Trials for binomial response {y}",
     stan_array(backend, "int", "trials_{y}", "T, N", "lower=1"),
-    .indent = idt(c(0, 0, 1, 1, 1))
+    .indent = idt(c(0, 0, 0, 1, 1, 1))
   )
 }
 
@@ -381,7 +381,7 @@ data_lines_bernoulli <- function(y, idt, default, has_missing, backend,
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     stan_array(backend, "int", "y_{y}", "T, N", "lower=0,upper=1"),
-    .indent = idt(c(0, 0, 1))
+    .indent = idt(c(0, 0, 0, 1))
   )
 }
 
@@ -398,7 +398,7 @@ data_lines_poisson <- function(y, idt, default, has_missing, has_offset,
       has_offset,
       stan_array(backend, "real", "offset_{y}", "T, N")
     ),
-    .indent = idt(c(0, 0, 1, 1, 1))
+    .indent = idt(c(0, 0, 0, 1, 1, 1))
   )
 }
 
@@ -415,7 +415,7 @@ data_lines_negbin <- function(y, idt, default, has_missing, has_offset,
       has_offset,
       stan_array(backend, "real", "offset_{y}", "T, N")
     ),
-    .indent = idt(c(0, 0, 1, 1, 1))
+    .indent = idt(c(0, 0, 0, 1, 1, 1))
   )
 }
 
@@ -427,7 +427,7 @@ data_lines_exponential <- function(y, idt, default, has_missing,
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     "matrix<lower=0>[N, T] y_{y};",
-    .indent = idt(c(0, 0, 1))
+    .indent = idt(c(0, 0, 0, 1))
   )
 }
 
@@ -438,7 +438,7 @@ data_lines_gamma <- function(y, idt, default, has_missing, backend,
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     "matrix<lower=0>[N, T] y_{y};",
-    .indent = idt(c(0, 0, 1))
+    .indent = idt(c(0, 0, 0, 1))
   )
 }
 
@@ -449,7 +449,7 @@ data_lines_beta <- function(y, idt, default, has_missing, backend, prior_distr,
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     "matrix<lower=0, upper=1>[N, T] y_{y};",
-    .indent = idt(c(0, 0, 1))
+    .indent = idt(c(0, 0, 0, 1))
   )
 }
 
@@ -460,7 +460,7 @@ data_lines_student <- function(y, idt, default, has_missing, backend,
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     "matrix[N, T] y_{y};",
-    .indent = idt(c(0, 0, 1))
+    .indent = idt(c(0, 0, 0, 1))
   )
 }
 

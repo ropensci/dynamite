@@ -729,7 +729,6 @@ prepare_channel_binomial <- function(y, Y, channel, sampling,
     sd_gamma,
     mean_y,
     sd_y,
-    resp_class,
     priors
   )
   if (is.null(priors)) {
@@ -789,7 +788,6 @@ prepare_channel_poisson <- function(y, Y, channel, sampling,
     sd_gamma,
     mean_y,
     sd_y,
-    resp_class,
     priors
   )
   if (!is.null(priors)) {
@@ -837,7 +835,6 @@ prepare_channel_negbin <- function(y, Y, channel, sampling,
     sd_gamma,
     mean_y,
     sd_y,
-    resp_class,
     priors
   )
   phi_prior <- data.frame(
@@ -901,7 +898,6 @@ prepare_channel_exponential <- function(y, Y, channel, sampling,
     sd_gamma,
     mean_y,
     sd_y,
-    resp_class,
     priors
   )
   if (!is.null(priors)) {
@@ -944,7 +940,6 @@ prepare_channel_gamma <- function(y, Y, channel, sampling,
     sd_gamma,
     mean_y,
     sd_y,
-    resp_class,
     priors
   )
   phi_prior <- data.frame(
@@ -1003,7 +998,6 @@ prepare_channel_beta <- function(y, Y, channel, sampling,
     sd_gamma,
     mean_y,
     sd_y,
-    resp_class,
     priors
   )
   phi_prior <- data.frame(
@@ -1062,7 +1056,6 @@ prepare_channel_student <- function(y, Y, channel, sampling,
     sd_gamma,
     mean_y,
     sd_y,
-    resp_class,
     priors
   )
   sigma_prior <- data.frame(
