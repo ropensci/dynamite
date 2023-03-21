@@ -13,6 +13,8 @@
     `predict()` when they contain response variables of the model.
   * Fixed the number of observations calculation in `nobs()` for models
     that have multivariate channels.
+  * Fixed an issue with `predict()` with models that contained multivariate
+    channels with random effects.
 
 # dynamite 1.2.1
 

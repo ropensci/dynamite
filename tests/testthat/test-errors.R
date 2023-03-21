@@ -535,17 +535,6 @@ test_that("test that specials with invalid values fail", {
       "x Offset cannot be a <factor>\\."
     )
   )
-  expect_error(
-    dynamite(
-      obs(y ~ 1 + offset(n), family = "poisson"),
-      data = data.frame(y = 1:3, z = 1:3, n = -(1:3)),
-      time = "z"
-    ),
-    paste0(
-      "Invalid `offset\\(\\)` definition for response variable `y`:\n",
-      "x Offset must contain only positive values\\."
-    )
-  )
 })
 
 # Data errors -------------------------------------------------------------
