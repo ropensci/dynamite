@@ -584,7 +584,7 @@ prepare_eval_envs <- function(object, simulated, observed,
           resp_levels = resp,
           cvars = channel_group_vars[[l]],
           samples = samples,
-          has_random = all(cg_idx %in% rand),
+          has_random_effects = all(cg_idx %in% rand),
           nu_samples = nu_samples,
           idx = idx_draws,
           type = type,
@@ -596,7 +596,7 @@ prepare_eval_envs <- function(object, simulated, observed,
           resp = resp,
           cvars = channel_vars[cg_idx],
           samples = samples,
-          has_random = cg_idx %in% rand,
+          has_random_effects = cg_idx %in% rand,
           nu_samples = nu_samples,
           idx = idx_draws,
           type = type,
@@ -621,7 +621,7 @@ prepare_eval_envs <- function(object, simulated, observed,
         resp_levels = resp_levels,
         cvars = channel_vars[[k]],
         samples = samples,
-        has_random = j %in% rand,
+        has_random_effects = j %in% rand,
         nu_samples = nu_samples,
         idx = idx_draws,
         type = type,
@@ -637,7 +637,7 @@ prepare_eval_envs <- function(object, simulated, observed,
 #'
 #' @noRd
 prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars, samples,
-                                        has_random, nu_samples,
+                                        has_random_effects, nu_samples,
                                         idx, type, eval_type) {
   alpha <- paste0("alpha_", resp)
   beta <- paste0("beta_", resp)
@@ -657,7 +657,7 @@ prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars, samples,
   e$resp <- resp
   e$phi <- c(samples[[phi]][idx])
   e$sigma <- c(samples[[sigma]][idx])
-  if (has_random) {
+  if (has_random_effects) {
     nus <- make.unique(rep(paste0("nu_", resp), e$K_random))
     e$nu <- nu_samples[, , nus, drop = FALSE]
   }
@@ -873,7 +873,7 @@ generate_sim_call_univariate <- function(resp, resp_levels,
 #'
 #' @noRd
 prepare_eval_env_multivariate <- function(e, resp, cvars, samples,
-                                          has_random, nu_samples,
+                                          has_random_effects, nu_samples,
                                           idx, type, eval_type) {
   d <- length(resp)
   e$d <- d
@@ -917,10 +917,10 @@ prepare_eval_env_multivariate <- function(e, resp, cvars, samples,
     e[[J_varying]] <- cvars[[i]]$J_varying
     e[[K_varying]] <- cvars[[i]]$K_varying
     e[[J_random]] <- cvars[[i]]$J_random
-    e[[K_random]] <- cvars[[i]]$K_randon
+    e[[K_random]] <- cvars[[i]]$K_random
     e[[phi]] <- c(samples[[phi]][idx])
     e$sigma[, i] <- c(samples[[sigma]][idx])
-    if (has_random[i]) {
+    if (has_random_effects[i]) {
       nus <- make.unique(rep(paste0("nu_", yi), e[[K_random]]))
       e[[nu]] <- nu_samples[, , nus, drop = FALSE]
     }
