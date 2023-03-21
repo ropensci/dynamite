@@ -1298,7 +1298,7 @@ model_lines_multinomial <- function(cvars, cgvars, idt, ...) {
 
 model_lines_gaussian <- function(y, idt, priors, intercept,
                                  obs, has_fixed, has_varying,
-                                 sigma_prior_distr = "", ...) {
+                                 prior_distr, ...) {
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
@@ -1309,7 +1309,7 @@ model_lines_gaussian <- function(y, idt, priors, intercept,
   )
 
   model_text <- paste_rows(
-    "sigma_{y} ~ {sigma_prior_distr};",
+    "sigma_{y} ~ {prior_distr$sigma_prior_distr};",
     "{{",
     onlyif(has_fixed || has_varying, "vector[K_{y}] gamma__{y};"),
     onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
@@ -1351,7 +1351,7 @@ model_lines_mvgaussian <- function(cvars, cgvars, idt, ...) {
   sd_y <- paste0("sigma_", y)
   mu_y <- paste0("mu_", y, "[i]")
   model_text <- paste_rows(
-    "L_{y_cg} ~ {cgvars$L_prior_distr};",
+    "L_{y_cg} ~ {cgvars$prior_distr$L_prior_distr};",
     "{{",
     "vector[O_{y_cg}] sigma_{y_cg} = [{cs(sd_y)}]';",
     paste0(
@@ -1422,7 +1422,7 @@ model_lines_poisson <- function(y, idt, priors, intercept,
 
 model_lines_negbin <- function(y, idt, priors, intercept,
                                obs, has_varying, has_fixed,
-                               phi_prior_distr, ...) {
+                               prior_distr, ...) {
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
@@ -1432,7 +1432,7 @@ model_lines_negbin <- function(y, idt, priors, intercept,
     "y_{y}[t, {obs}] ~ neg_binomial_2_log({intercept}, phi_{y});"
   )
   model_text <- paste_rows(
-    "phi_{y} ~ {phi_prior_distr};",
+    "phi_{y} ~ {prior_distr$phi_prior_distr};",
     "{{",
     onlyif(has_fixed || has_varying, "vector[K_{y}] gamma__{y};"),
     onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
@@ -1471,9 +1471,9 @@ model_lines_exponential <- function(y, idt, priors, intercept,
 
 model_lines_gamma <- function(y, idt, priors, intercept,
                               obs, has_varying, has_fixed,
-                              phi_prior_distr, ...) {
+                              prior_distr, ...) {
   model_text <- paste_rows(
-    "phi_{y} ~ {phi_prior_distr};",
+    "phi_{y} ~ {prior_distr$phi_prior_distr};",
     "for (t in 1:T) {{",
     "y_{y}[{obs}, t] ~ gamma(phi_{y}, phi_{y} * exp(-({intercept})));",
     "}}",
@@ -1484,9 +1484,9 @@ model_lines_gamma <- function(y, idt, priors, intercept,
 
 model_lines_beta <- function(y, idt, priors, intercept,
                              obs, has_varying, has_fixed,
-                             phi_prior_distr, ...) {
+                             prior_distr, ...) {
   model_text <- paste_rows(
-    "phi_{y} ~ {phi_prior_distr};",
+    "phi_{y} ~ {prior_distr$phi_prior_distr};",
     "for (t in 1:T) {{",
     "y_{y}[{obs}, t] ~ beta_proportion(inv_logit({intercept}), phi_{y});",
     "}}",
@@ -1497,10 +1497,10 @@ model_lines_beta <- function(y, idt, priors, intercept,
 
 model_lines_student <- function(y, idt, priors, intercept,
                                 obs, has_varying, has_fixed,
-                                sigma_prior_distr, phi_prior_distr, ...) {
+                                prior_distr, ...) {
   model_test <- paste_rows(
-    "sigma_{y} ~ {sigma_prior_distr};",
-    "phi_{y} ~ {phi_prior_distr};",
+    "sigma_{y} ~ {prior_distr$sigma_prior_distr};",
+    "phi_{y} ~ {prior_distr$phi_prior_distr};",
     "for (t in 1:T) {{",
     "y_{y}[{obs}, t] ~ student_t(phi_{y}, {intercept}, sigma_{y});",
     "}}"
