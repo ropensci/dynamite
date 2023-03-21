@@ -198,6 +198,45 @@ get_data.dynamitefit <- function(x, ...) {
   x$stan$sampling_vars
 }
 
+#' Get Parameter Dimensions of the Dynamite Model
+#'
+#' Extracts the names and dimensions of all parameters used in the
+#' `dynamitefit` object. See also [dynamite::get_parameter_types()] and
+#' [dynamite::get_parameter_names()]. The returned dimensions match those of
+#' the `stanfit` element of the `dynamitefit` object.
+#'
+#' @param x \[`dynamitefit`]\cr The model fit object.
+#' @param ... Ignored
+#' @return A named list with all parameter dimensions of the input model.
+#' @export
+#' @family output
+#' @examples
+#' get_parameter_dimensions(multichannel_example_fit)
+get_parameter_dimensions <- function(x, ...) {
+  UseMethod("get_parameter_dimensions", x)
+}
+
+#' @rdname get_parameter_dimensions
+#' @export
+get_parameter_dimensions.dynamitefit <- function(x, ...) {
+  stopifnot_(
+    !is.null(x$stanfit),
+    "No Stan model fit is available."
+  )
+  draws <- rstan::extract(
+    x$stanfit,
+    pars = "lp__",
+    include = FALSE
+  )
+  lapply(
+    draws,
+    function(y) {
+      d <- dim(y)
+      ifelse_(length(d) == 1L, 1L, d[-1L])
+    }
+  )
+}
+
 #' Get Parameter Types of the Dynamite Model
 #'
 #' Extracts all parameter types of used in the `dynamitefit` object. See
