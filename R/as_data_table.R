@@ -207,10 +207,16 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       )
     )
   }
-  categories <- c("", ulapply(
+  categories <- ulapply(
     attr(x$stan$responses, "resp_class"),
     function(y) attr(y, "levels")[-1]
-  ))
+  )
+  categories <- c("",
+                  onlyif(
+                    length(categories) > 0L,
+                    paste0("_", categories)
+                  )
+  )
   tmp <- data.table::as.data.table(
     expand.grid(
       type = types,
@@ -221,7 +227,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   )
 
   tmp[, parameter := as.character(
-    glue::glue("{tmp$type}_{tmp$response}_{tmp$category}")
+    glue::glue("{tmp$type}_{tmp$response}{tmp$category}")
     )]
   out <- data.table::rbindlist(list(out_all, tmp))
   rows <- apply(out, 1L, function(y) {
