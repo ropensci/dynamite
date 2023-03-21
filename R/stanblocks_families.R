@@ -1016,7 +1016,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
       )
     } else {
       mtext_varying <-
-        glue::glue("omega_raw_{y}[{1:K_varying)}, 1] ~ {prior_distr$delta_prior_distr};")
+        glue::glue("omega_raw_{y}[{1:K_varying}, 1] ~ {prior_distr$delta_prior_distr};")
     }
     mtext_varying <- paste_rows(
       mtext_varying,
