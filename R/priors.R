@@ -27,27 +27,29 @@ create_vectorized_prior <- function(ptype, priors, channel, category = "") {
   }
   vectorized_prior
 }
-#' Find Vectorizable Priors
+#' Find And Rename Vectorizable Priors for Stan
 #' @param priors \[`data.frame`]\cr Prior definitions.
 #' @param y \[`character(1)`]\cr Name of the response variable.
-#' @param category \[character(1L)]\cr Category of the categorical response.
 #' @noRd
-extract_vectorizable_priors <- function(priors, y, category = "") {
-  ycat <- ifelse(
-    nchar(category) > 0L,
-    paste0(".", category),
-    ""
+extract_vectorizable_priors <- function(priors, y) {
+  priors_for_stan <- list()
+  onlyif(
+    priors$vectorized_beta,
+    priors_for_stan[[paste0("beta_prior_pars_", y)]] <- priors$beta_prior_pars
   )
-  priors <- priors[which(
-    names(priors) %in% paste0(
-      c("alpha", "beta", "delta", "tau", "sigma_nu"), "_prior_pars", ycat
-    )
-  )]
-  ifelse_(
-    length(priors) > 0,
-    setNames(priors, paste0(names(priors), "_", y, ycat)),
-    NULL
+  onlyif(
+    priors$vectorized_delta,
+    priors_for_stan[[paste0("delta_prior_pars_", y)]] <- priors$delta_prior_pars
   )
+  onlyif(
+    priors$vectorized_tau,
+    priors_for_stan[[paste0("tau_prior_pars_", y)]] <- priors$tau_prior_pars
+  )
+  onlyif(
+    priors$vectorized_sigma_nu,
+    priors_for_stan[[paste0("sigma_nu_prior_pars_", y)]] <- priors$sigma_nu_prior_pars
+  )
+  priors_for_stan
 }
 #' Construct Common Priors among Channels
 #'
@@ -130,7 +132,7 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
                            category = "") {
   ycat <- ifelse(
     nchar(category) > 0L,
-    paste0(".", category),
+    paste0("_", category),
     ""
   )
   mean_y <- signif(mean_y, 2)

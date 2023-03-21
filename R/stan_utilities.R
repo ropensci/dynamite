@@ -50,8 +50,9 @@ stan_supports_array_keyword <- function(backend) {
 #' Is Categorical Logit GLM Supported By Current Stan Version
 #'
 #' @noRd
-stan_supports_categorical_logit_glm <- function(backend) {
-  utils::compareVersion(stan_version(backend), "2.23") >= 0
+stan_supports_categorical_logit_glm <- function(backend,
+                                                common_intercept = TRUE) {
+  utils::compareVersion(stan_version(backend), "2.23") >= 0 && common_intercept
 }
 
 #' Get Stan Version
@@ -68,8 +69,15 @@ stan_version <- function(backend) {
 
 #' Is the GLM Likelihood Variant Supported By Stan for a Family
 #'
-#' @param x \[`dynamitefamily`]\cr A family object.
+#' @param family \[`dynamitefamily`]\cr A family object.
+#' @param backend Either `"rstan"` or `"cmdstanr"`.
+#' @param common_intercept \[`logical(1)`]\cr Does the intercept vary between
+#'   groups?
 #' @noRd
-stan_supports_glm_likelihood <- function(x) {
-  x$name %in% c("bernoulli", "gaussian", "poisson", "negbin")
+stan_supports_glm_likelihood <- function(family, backend, common_intercept) {
+  ifelse_(
+    is_categorical(family),
+    stan_supports_categorical_logit_glm(backend, common_intercept),
+    family$name %in% c("bernoulli", "gaussian", "poisson", "negbin")
+  )
 }

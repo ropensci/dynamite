@@ -181,7 +181,7 @@ prior_data_lines <- function(y, idt, prior_distr,
                              K_fixed, K_varying, K_random, category = "") {
   ycat <- ifelse(
     nchar(category) > 0L,
-    paste0(y, ".", category),
+    paste0(y, "_", category),
     "y"
   )
   vectorize_beta <-
@@ -299,7 +299,7 @@ data_lines_categorical <- function(y, idt, default, response = "",
     response
   )
   prior_data <- lapply(
-    categories[-length(categories)],
+    categories[-1],
     function(s) {
       prior_data_lines(y, idt, prior_distr[[s]], K_fixed, K_varying, K_random,
                        category = s)
@@ -1127,12 +1127,12 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
   )
 }
 
-# intercept part, or the whole linear predictor in case glm = FALSE
+# intercept part, or the whole linear predictor in case no glm
 intercept_lines <- function(y, obs, family,
                             has_varying, has_fixed, has_random,
                             has_fixed_intercept,
                             has_varying_intercept, has_random_intercept,
-                            has_lfactor, has_offset, ydim = y, ...) {
+                            has_lfactor, has_offset, backend, ydim = y, ...) {
 
   intercept_alpha <- ifelse_(
     has_fixed_intercept,
@@ -1192,8 +1192,10 @@ intercept_lines <- function(y, obs, family,
     glue::glue(" + X[t][{obs}, J_varying_{ydim}] * delta_{y}[t]"),
     ""
   )
+  common_intercept <- !has_random && !has_lfactor
+  glm <- stan_supports_glm_likelihood(family, backend, common_intercept)
   intercept <- ifelse_(
-    stan_supports_glm_likelihood(family),
+    glm,
     glue::glue(
       "{intercept_alpha}{offset}{intercept_nu}{random}{lfactor}"
     ),
@@ -1201,56 +1203,87 @@ intercept_lines <- function(y, obs, family,
       "{intercept_alpha}{offset}{intercept_nu}{random}{lfactor}{fixed}{varying}"
     )
   )
+  attr(intercept, "glm") <- glm
   intercept
 }
 
 model_lines_categorical <- function(y, idt, priors, intercept,
                                     obs, has_fixed, has_varying,
-                                    backend, multinomial = FALSE, ...) {
+                                    multinomial = FALSE, categories, ...) {
 
-  # TODO, combine intercepts and gammas
-  # by creating intercept vector of length S
-  # and S x K matrix for gamma
-  # above for glm case i.e. rstan version ok and no random or lfactor terms.
   distr <- ifelse_(multinomial, "multinomial", "categorical")
   category_dim <- ifelse_(multinomial, ", ", "")
-  likelihood_term <- ifelse_(
-    stan_supports_categorical_logit_glm(backend) && !multinomial,
-    ifelse_(
+  glm <- attr(intercept[[1]], "glm")
+  if (glm && !multinomial) {
+    # combine intercepts and gammas
+    S <- length(categories)
+    icpt_y <- c("0", paste0("intercept_", categories[2:S]))
+    icpt <- paste_rows(
+      "real intercept_{categories[2:S]} = {unlist(intercept)};",
+      "vector[S_{y}] intercept_{y} = [{cs(icpt_y)}]';",
+      .indent = idt(2)
+    )
+    gamma <- onlyif(
+      has_fixed || has_varying,
+      paste_rows(
+        "matrix[K_{y}, S_{y}] gamma__{y};",
+        "gamma__{y}[, 1] = zeros_K_{y};",
+        .indent = idt(2)
+      )
+    )
+    beta <- onlyif(
+      has_fixed,
+      "gamma__{y}[L_fixed_{y}, {2:S}] = beta_{y}_{categories[2:S]};"
+    )
+    delta <- onlyif(
+      has_varying,
+      "gamma__{y}[L_varying_{y}, {2:S}] = delta_{y}_{categories[2:S]}[t];"
+    )
+    likelihood_term <- ifelse_(
       has_fixed || has_varying,
       paste0(
         "y_{y}[t, {obs}] ~ categorical_logit_glm(X[t][{obs}, J_{y}], ",
-        "{intercept}, append_col(zeros_K_{y}, gamma__{y}));"
+        "intercept_{y}, gamma__{y});"
       ),
-      "y_{y}[t, {obs}] ~ categorical_logit({intercept});"
-    ),
-    ifelse_(
-      has_fixed || has_varying,
-      paste_rows(
-        ifelse_(nzchar(obs), "for (i in {obs}) {{", "for (i in 1:N) {{"),
-        paste0(
-          "y_{y}[t, i{category_dim}] ~ {distr}_logit({intercept} + ",
-          "to_vector(X[t][i, J_{y}] * ",
-          "append_col(zeros_K_{y}, gamma__{y})));"
-        ),
-        "}}",
-        .indent = idt(c(0, 1, 0)),
-        .parse = FALSE
-      ),
-      "y_{y}[t, {obs}{category_dim}] ~ {distr}_logit({intercept});"
+      "y_{y}[t, {obs}] ~ categorical_logit(intercept_{y});"
     )
-  )
-  model_text <- paste_rows(
-    "{{",
-    onlyif(has_fixed || has_varying, "vector[K_{y}] gamma__{y};"),
-    onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
-    "for (t in 1:T) {{",
-    onlyif(has_varying, "gamma__{y}[L_varying_{y}] = delta_{y}[t];"),
-    likelihood_term,
-    "}}",
-    "}}",
-    .indent = idt(c(1, 2, 2, 2, 3, 3, 2, 1))
-  )
+    model_text <- paste_rows(
+      "{{",
+      icpt,
+      gamma,
+      beta,
+      "for (t in 1:T) {{",
+      delta,
+      likelihood_term,
+      "}}",
+      "}}",
+      .indent = idt(c(1, 0, 0, 2, 2, 3, 3, 2, 1))
+    )
+  } else {
+    # combine intercepts
+    S <- length(categories)
+    icpt_y <- c("0", paste0("intercept_", categories[2:S]))
+    icpt <- paste_rows(
+      "real intercept_{categories[2:S]} = {unlist(intercept)};",
+      "intercept_{y} = [{cs(icpt_y)}]';",
+      .indent = idt(3)
+    )
+
+    likelihood_term <-
+      "y_{y}[t, {obs}{category_dim}] ~ {distr}_logit(intercept_{y});"
+
+    model_text <- paste_rows(
+      "{{",
+      "vector[S_{y}] intercept_{y};",
+      "for (t in 1:T) {{",
+      icpt,
+      likelihood_term,
+      "}}",
+      "}}",
+      .indent = idt(c(1, 2, 2, 0, 3, 2, 1))
+    )
+  }
+
   paste_rows(priors, model_text, .parse = FALSE)
 
 }
