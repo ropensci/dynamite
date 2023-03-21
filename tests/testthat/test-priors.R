@@ -118,7 +118,7 @@ test_that("manual priors for multinomial channel works", {
   )
   expect_identical(
     p$parameter,
-    c("alpha_y1_y2", "tau_alpha_y1_y2", "delta_y1_y2_x", "tau_y1_y2_x")
+    c("alpha_y2", "tau_alpha_y2", "delta_y2_x", "tau_y2_x")
   )
   expect_error(
     fit <- dynamite(

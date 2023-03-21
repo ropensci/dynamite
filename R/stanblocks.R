@@ -262,44 +262,58 @@ create_parameters <- function(idt, backend, cg, cvars, cgvars) {
 create_parameters_lines <- function(idt, backend, cvars, cgvars) {
   family <- cgvars$family
   if (is_multivariate(family)) {
-    univariate <- ""
-    for (j in seq_along(cvars)) {
-      cvars[[j]]$default <- lines_wrap(
-        "parameters", "default", idt, backend, cvars[[j]]
-      )
-      univariate <- ifelse_(
-        has_univariate(family),
-        paste_rows(
-          univariate,
+    if (is_multinomial(family)) {
+      cgvars$univariate <- ulapply(
+        cgvars$y[-1],
+        function(s) {
+          cvars[[1]]$ydim <- cgvars$y_cg
+          cvars[[1]]$y <- s
           lines_wrap(
-            "parameters",
-            get_univariate(family),
-            idt,
-            backend,
-            cvars[[j]]
+            "parameters", "default", idt, backend, cvars[[1L]]
           )
-        ),
-        paste_rows(univariate, cvars[[j]]$default)
+        }
       )
-    }
-    cgvars$univariate <- univariate
-    lines_wrap("parameters", family, idt, backend, cgvars)
-  } else if (is_categorical(family)) {
-    cvars[[1]]$default <- lapply(
-      cvars[[1]]$categories[-1],
-      function(s) {
-        cvars[[1]]$ydim <- cvars[[1]]$y
-        cvars[[1]]$y <- paste0(cvars[[1]]$y, "_", s)
-        lines_wrap(
-          "parameters", "default", idt, backend, cvars[[1L]]
+    } else {
+      univariate <- ""
+      for (j in seq_along(cvars)) {
+        cvars[[j]]$default <- lines_wrap(
+          "parameters", "default", idt, backend, cvars[[j]]
+        )
+        univariate <- ifelse_(
+          has_univariate(family),
+          paste_rows(
+            univariate,
+            lines_wrap(
+              "parameters",
+              get_univariate(family),
+              idt,
+              backend,
+              cvars[[j]]
+            )
+          ),
+          paste_rows(univariate, cvars[[j]]$default)
         )
       }
-    )
-    lines_wrap("parameters", family, idt, backend, cvars[[1L]])
+      cgvars$univariate <- univariate
+    }
+    lines_wrap("parameters", family, idt, backend, cgvars)
   } else {
-    cvars[[1]]$default <- lines_wrap(
-      "parameters", "default", idt, backend, cvars[[1L]]
-    )
+    if (is_categorical(family)) {
+      cvars[[1]]$default <- lapply(
+        cvars[[1]]$categories[-1],
+        function(s) {
+          cvars[[1]]$ydim <- cvars[[1]]$y
+          cvars[[1]]$y <- paste0(cvars[[1]]$y, "_", s)
+          lines_wrap(
+            "parameters", "default", idt, backend, cvars[[1L]]
+          )
+        }
+      )
+    } else {
+      cvars[[1]]$default <- lines_wrap(
+        "parameters", "default", idt, backend, cvars[[1L]]
+      )
+    }
     lines_wrap("parameters", family, idt, backend, cvars[[1L]])
   }
 }
@@ -414,31 +428,43 @@ create_transformed_parameters <- function(idt, backend, cg, cvars, cgvars) {
 create_transformed_parameters_lines <- function(idt, backend, cvars, cgvars) {
   family <- cgvars$family
   if (is_multivariate(family)) {
-    cgvars$default <- lapply(
-      cvars,
-      function(x) {
-        lines_wrap("transformed_parameters", "default", idt, backend, x)
-      }
-    )
+    if (is_multinomial(family)) {
+      cgvars$default <- lapply(
+        cgvars$y[-1],
+        function(s) {
+          cvars[[1]]$ydim <- cgvars$y_cg
+          cvars[[1]]$y <- s
+          lines_wrap(
+        "transformed_parameters", "default", idt, backend, cvars[[1L]]
+          )
+        }
+      )
+    } else {
+      cgvars$default <- lapply(
+        cvars,
+        function(x) {
+          lines_wrap("transformed_parameters", "default", idt, backend, x)
+        }
+      )
+    }
     lines_wrap("transformed_parameters", family, idt, backend, cgvars)
-  } else if (is_categorical(family)) {
-    cvars[[1]]$default <- lapply(
-      cvars[[1]]$categories[-1],
-      function(s) {
-        cvars[[1]]$ydim <- cvars[[1]]$y
-        cvars[[1]]$y <- paste0(cvars[[1]]$y, "_", s)
-        lines_wrap(
-          "transformed_parameters", "default", idt, backend, cvars[[1L]]
-        )
-      }
-    )
-    lines_wrap(
-      "transformed_parameters", family, idt, backend, cvars[[1L]]
-    )
   } else {
-    cvars[[1L]]$default <- lines_wrap(
-      "transformed_parameters", "default", idt, backend, cvars[[1L]]
-    )
+    if (is_categorical(family)) {
+      cvars[[1]]$default <- lapply(
+        cvars[[1]]$categories[-1],
+        function(s) {
+          cvars[[1]]$ydim <- cvars[[1]]$y
+          cvars[[1]]$y <- paste0(cvars[[1]]$y, "_", s)
+          lines_wrap(
+            "transformed_parameters", "default", idt, backend, cvars[[1L]]
+          )
+        }
+      )
+    } else {
+      cvars[[1L]]$default <- lines_wrap(
+        "transformed_parameters", "default", idt, backend, cvars[[1L]]
+      )
+    }
     lines_wrap("transformed_parameters", family, idt, backend, cvars[[1L]])
   }
 }
@@ -627,29 +653,30 @@ create_model_lines <- function(idt, backend, cvars, cgvars) {
       backend,
       list(cvars = cvars, cgvars = cgvars)
     )
-  } else if (is_categorical(family)) {
-    cvars[[1L]]$priors <- lapply(
-      cvars[[1]]$categories[-1],
-      function(s) {
-        cvars[[1]]$y <- paste0(cvars[[1]]$y, "_", s)
-        cvars[[1]]$prior_distr <- cvars[[1]]$prior_distr[[s]]
-        do.call(prior_lines, c(cvars[[1L]], idt = idt))
-      }
-    )
-    cvars[[1L]]$backend <- backend
-    cvars[[1L]]$intercept <- lapply(
-      cvars[[1]]$categories[-1],
-      function(s) {
-        cvars[[1]]$ydim <- cvars[[1]]$y
-        cvars[[1]]$y <- paste0(cvars[[1]]$y, "_", s)
-        do.call(intercept_lines, cvars[[1L]])
-      }
-    )
-    lines_wrap("model", family, idt, backend, cvars[[1L]])
   } else {
     cvars[[1L]]$backend <- backend
-    cvars[[1L]]$priors <- do.call(prior_lines, c(cvars[[1L]], idt = idt))
-    cvars[[1L]]$intercept <- do.call(intercept_lines, cvars[[1L]])
+    if (is_categorical(family)) {
+      cvars[[1L]]$priors <- lapply(
+        cvars[[1]]$categories[-1],
+        function(s) {
+          cvars[[1]]$y <- paste0(cvars[[1]]$y, "_", s)
+          cvars[[1]]$prior_distr <- cvars[[1]]$prior_distr[[s]]
+          do.call(prior_lines, c(cvars[[1L]], idt = idt))
+        }
+      )
+      cvars[[1L]]$backend <- backend
+      cvars[[1L]]$intercept <- lapply(
+        cvars[[1]]$categories[-1],
+        function(s) {
+          cvars[[1]]$ydim <- cvars[[1]]$y
+          cvars[[1]]$y <- paste0(cvars[[1]]$y, "_", s)
+          do.call(intercept_lines, cvars[[1L]])
+        }
+      )
+    } else {
+      cvars[[1L]]$priors <- do.call(prior_lines, c(cvars[[1L]], idt = idt))
+      cvars[[1L]]$intercept <- do.call(intercept_lines, cvars[[1L]])
+    }
     lines_wrap("model", family, idt, backend, cvars[[1L]])
   }
 }

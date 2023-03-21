@@ -554,6 +554,7 @@ prepare_channel_categorical <- function(y, Y, channel, sampling,
 
 prepare_channel_multinomial <- function(y, y_cg, Y, channel, sampling,
                                         sd_x, resp_class, priors) {
+
   if (any("factor" %in% unlist(resp_class))) {
     abort_factor(y_cg, "Multinomial", call = rlang::caller_env())
   }
@@ -582,42 +583,43 @@ prepare_channel_multinomial <- function(y, y_cg, Y, channel, sampling,
   S_y <- dim(Y)[3L]
   channel$S <- S_y
   sampling[[paste0("S_", y_cg)]] <- S_y
+
+  sd_y <- 1
+  mean_y <- 0.0
+  sd_gamma <- 2.0 / sd_x
+  mean_gamma <- rep(0.0, length(sd_gamma))
+  outcat <- lapply(
+    y[-1],
+    function(s) {
+      prepare_channel_default(
+        s,
+        Y,
+        channel,
+        sampling,
+        mean_gamma,
+        sd_gamma,
+        mean_y,
+        sd_y,
+        priors
+      )
+    }
+  )
+  out <- outcat[[1]]
+  out$priors <- data.table::setDF(data.table::rbindlist(lapply(outcat, "[[", "priors")))
+  out$channel$prior_distr <- lapply(outcat, function(x) x$channel$prior_distr)
+  names(out$channel$prior_distr) <- y[-1]
   if (is.null(priors)) {
-    out <- default_priors(y_cg, channel, sd_x, S_y, y)
-    channel <- out$channel
-    priors <- out$priors
-  } else {
-    priors <- priors[priors$response == y_cg, ]
-    types <- priors$type
-    loop_types <- intersect(
-      types,
-      c("alpha", "beta", "delta", "tau", "sigma_nu", "psi")
+    defaults <- data.table::rbindlist(
+      lapply(
+        y[-1],
+        function(s) {
+          default_priors(s, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
+        }
+      )
     )
-    for (ptype in loop_types) {
-      channel <- create_vectorized_prior(ptype, priors, channel)
-    }
-    if ("tau_alpha" %in% types) {
-      pdef <- priors[priors$type == "tau_alpha", ]
-      channel$tau_alpha_prior_distr <- pdef$prior
-    }
-    priors <- check_priors(
-      priors,
-      default_priors(y_cg, channel, sd_x, S_y, y)$priors
-    )
+    check_priors(out$priors, defaults)
   }
-  channel$write_alpha <-
-    (channel$has_fixed_intercept || channel$has_varying_intercept) &&
-    identical(length(channel$alpha_prior_distr), 1L)
-  channel$write_beta <- channel$has_fixed &&
-    identical(length(channel$beta_prior_distr), 1L)
-  channel$write_delta <- channel$has_varying &&
-    identical(length(channel$delta_prior_distr), 1L)
-  channel$write_tau <- channel$has_varying &&
-    identical(length(channel$tau_prior_distr), 1L)
-  channel$write_sigma_nu <-
-    (channel$has_random || channel$has_random_intercept) &&
-    identical(length(channel$sigma_nu_prior_distr), 1L)
-  list(channel = channel, sampling = sampling, priors = priors)
+  list(channel = out$channel, sampling = out$sampling, priors = out$priors)
 }
 
 #' @describeIn prepare_channel_default Prepare a Gaussian Channel

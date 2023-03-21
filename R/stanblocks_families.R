@@ -178,10 +178,15 @@ missing_data_lines <- function(y, idt, has_missing, backend) {
 }
 
 prior_data_lines <- function(y, idt, prior_distr,
-                             K_fixed, K_varying, K_random, category = "") {
+                             K_fixed, K_varying, K_random, category = "",
+                             multinomial = FALSE) {
   ycat <- ifelse(
     nchar(category) > 0L,
-    paste0(y, "_", category),
+    ifelse_(
+      multinomial,
+      category,
+      paste0(y, "_", category)
+    ),
     "y"
   )
   vectorize_beta <-
@@ -290,14 +295,10 @@ data_lines_default <- function(y, idt, has_missing, has_random_intercept,
   )
 }
 
-data_lines_categorical <- function(y, idt, default, response = "",
-                                   has_missing, backend, prior_distr,
-                                   K_fixed, K_varying, K_random, categories, ...) {
-  response <- ifelse_(
-    !nzchar(response),
-    stan_array(backend, "int", "y_{y}", "T, N", "lower=0"),
-    response
-  )
+data_lines_categorical <- function(y, idt, default, has_missing, backend,
+                                   prior_distr, K_fixed, K_varying, K_random,
+                                   categories, ...) {
+
   prior_data <- lapply(
     categories[-1],
     function(s) {
@@ -320,18 +321,45 @@ data_lines_categorical <- function(y, idt, default, response = "",
     default,
     prior_data,
     "// Response",
-    response,
+    stan_array(backend, "int", "y_{y}", "T, N", "lower=0"),
     .indent = idt(1)
   )
   paste_rows(dtext_def, .parse = FALSE)
 }
 
-data_lines_multinomial <- function(y_cg, backend, ...) {
-  args <- list(...)
-  args$y <- y_cg
-  args$backend <- backend
-  args$response <- stan_array(backend, "int", "y_{y}", "T, N, S_{y}", "lower=0")
-  do.call(data_lines_categorical, args = args)
+data_lines_multinomial <- function(y_cg, idt, default, has_missing, backend,
+                                   prior_distr, K_fixed, K_varying, K_random,
+                                   y, has_random_intercept, ...) {
+
+  default <- data_lines_default(y_cg, idt, has_missing, has_random_intercept,
+                                 K_fixed, K_varying, K_random, backend)
+
+  prior_data <- ulapply(
+    y[-1],
+    function(s) {
+      prior_data_lines(y_cg, idt, prior_distr[[s]], K_fixed, K_varying, K_random,
+                       category = s, multinomial = TRUE)
+    }
+  )
+
+  dtext_def <- paste_rows(
+    "int<lower=0> S_{y_cg}; // number of categories",
+    onlyif(has_missing, "// Missing data indicators"),
+    onlyif(
+      has_missing,
+      stan_array(backend, "int", "obs_{y_cg}", "N, T", "lower=0")
+    ),
+    onlyif(
+      has_missing,
+      stan_array(backend, "int", "n_obs_{y_cg}", "T", "lower=0")
+    ),
+    default,
+    prior_data,
+    "// Response",
+    stan_array(backend, "int", "y_{y_cg}", "T, N, S_{y_cg}", "lower=0"),
+    .indent = idt(1)
+  )
+  paste_rows(dtext_def, .parse = FALSE)
 }
 
 data_lines_gaussian <- function(y, idt, default, has_missing, backend,
@@ -493,7 +521,6 @@ transformed_data_lines_multinomial <- function(y_cg, idt, K, S, ...) {
   list(
     declarations = paste_rows(
       onlyif(K > 0L, "vector[{K}] zeros_K_{y_cg} = rep_vector(0, {K});"),
-      "vector[{S}] zeros_S_{y_cg} = rep_vector(0, {S});",
       .indent = idt(1)
     ),
     statements = ""
@@ -603,10 +630,11 @@ parameters_lines_categorical <- function(y, idt, default, ...) {
   )
 }
 
-parameters_lines_multinomial <- function(y_cg, ...) {
-  args <- list(...)
-  args$y <- y_cg
-  do.call(parameters_lines_categorical, args = args)
+parameters_lines_multinomial <- function(y_cg, idt, univariate, ...) {
+  paste_rows(
+    univariate,
+    .indent = idt(1)
+  )
 }
 
 
@@ -897,10 +925,19 @@ transformed_parameters_lines_categorical <- function(default, idt, ...) {
   )
 }
 
-transformed_parameters_lines_multinomial <- function(y_cg, ...) {
-  args <- list(...)
-  args$y <- y_cg
-  do.call(transformed_parameters_lines_categorical, args = args)
+transformed_parameters_lines_multinomial <- function(default, idt, ...) {
+  list(
+    declarations = paste_rows(
+      ulapply(default, "[[", "declarations"),
+      .parse = FALSE,
+      .indent = idt(0)
+    ),
+    statements = paste_rows(
+      ulapply(default, "[[", "statements"),
+      .parse = FALSE,
+      .indent = idt(0)
+    )
+  )
 }
 
 transformed_parameters_lines_gaussian <- function(default, ...) {
@@ -1288,11 +1325,28 @@ model_lines_categorical <- function(y, idt, priors, intercept,
 }
 
 model_lines_multinomial <- function(cvars, cgvars, idt, ...) {
-  args <- c(cgvars, idt = idt)
-  args$y <- args$y_cg
-  args$multinomial <- TRUE
-  #args <- args[names(args) %in% names(formals(intercept_lines))]
-  do.call(model_lines_categorical, args = args)
+  cgvars$priors <- lapply(
+    cgvars$y[-1],
+    function(s) {
+      cvars[[s]]$y <- s
+      cvars[[s]]$prior_distr <- cgvars$prior_distr[[s]]
+      do.call(prior_lines, c(cvars[[s]], idt = idt))
+    }
+  )
+  cgvars$intercept <- lapply(
+    cgvars$y[-1],
+    function(s) {
+      cvars[[s]]$y <- s
+      do.call(intercept_lines, c(
+        cvars[[s]], idt = idt, backend = cgvars$backend, ydim = cgvars$y_cg
+      ))
+    }
+  )
+  cgvars$categories <- cgvars$y
+  cgvars$y <- cgvars$y_cg
+  cgvars$multinomial <- TRUE
+
+  do.call(model_lines_categorical, args = c(cgvars, idt = idt))
 }
 
 model_lines_gaussian <- function(y, idt, priors, intercept,
