@@ -465,11 +465,6 @@ initialize_multivariate_channel <- function(y, y_cg, y_name, cg_idx,
 prepare_channel_default <- function(y, Y, channel, sampling,
                                     mean_gamma, sd_gamma, mean_y, sd_y,
                                     priors, category = "") {
-  ycat <- ifelse(
-    nchar(category) > 0L,
-    paste0("_", category),
-    ""
-  )
   if (is.null(priors)) {
     out <- default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y, category)
     priors <- out$priors
@@ -665,15 +660,14 @@ prepare_channel_gaussian <- function(y, Y, channel, sampling,
     type = "sigma",
     category = ""
   )
+
   if (is.null(priors)) {
-    out$channel$sigma_prior_distr <- sigma_prior$prior
+    out$channel$prior_distr$sigma_prior_distr <- sigma_prior$prior
     out$priors <- rbind(out$priors, sigma_prior)
   } else {
     priors <- priors[priors$response == y, ]
     pdef <- priors[priors$type == "sigma", ]
-    if (identical(nrow(pdef), 1L)) {
-      out$channel$sigma_prior_distr <- pdef$prior
-    }
+    out$channel$prior_distr$sigma_prior_distr <- pdef$prior
     defaults <- rbind(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       sigma_prior
@@ -695,7 +689,7 @@ prepare_channel_mvgaussian <- function(y_cg, channel, sampling, priors, ...) {
   )
   if (is.null(priors)) {
     mvpriors <- L_prior
-    channel$L_prior_distr <- L_prior$prior
+    channel$prior_distr$L_prior_distr <- L_prior$prior
   } else {
     mvpriors <- priors[priors$response == y_cg, ]
     pdef <- priors[priors$type == "L", ]
@@ -705,7 +699,7 @@ prepare_channel_mvgaussian <- function(y_cg, channel, sampling, priors, ...) {
         `x` = "Prior for parameter {.var L_{y_cg}} is not defined."
       ))
     # TODO some checks that prior distr makes sense
-    channel$L_prior_distr <- pdef$prior
+    channel$prior_distr$L_prior_distr <- pdef$prior
   }
   list(channel = channel, sampling = sampling, mvpriors = mvpriors)
 }
@@ -864,14 +858,12 @@ prepare_channel_negbin <- function(y, Y, channel, sampling,
     category = ""
   )
   if (is.null(priors)) {
-    out$channel$phi_prior_distr <- phi_prior$prior
+    out$channel$prior_distr$phi_prior_distr <- phi_prior$prior
     out$priors <- rbind(out$priors, phi_prior)
   } else {
     priors <- priors[priors$response == y, ]
     pdef <- priors[priors$type == "phi", ]
-    if (identical(nrow(pdef), 1L)) {
-      out$channel$phi_prior_distr <- pdef$prior
-    }
+    out$channel$prior_distr$phi_prior_distr <- pdef$prior
     defaults <- rbind(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       phi_prior
@@ -969,14 +961,12 @@ prepare_channel_gamma <- function(y, Y, channel, sampling,
     category = ""
   )
   if (is.null(priors)) {
-    out$channel$phi_prior_distr <- phi_prior$prior
+    out$channel$prior_distr$phi_prior_distr <- phi_prior$prior
     out$priors <- rbind(out$priors, phi_prior)
   } else {
     priors <- priors[priors$response == y, ]
     pdef <- priors[priors$type == "phi", ]
-    if (identical(nrow(pdef), 1L)) {
-      out$channel$phi_prior_distr <- pdef$prior
-    }
+    out$channel$prior_distr$phi_prior_distr <- pdef$prior
     defaults <- rbind(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       phi_prior
@@ -1027,14 +1017,12 @@ prepare_channel_beta <- function(y, Y, channel, sampling,
     category = ""
   )
   if (is.null(priors)) {
-    out$channel$phi_prior_distr <- phi_prior$prior
+    out$channel$prior_distr$phi_prior_distr <- phi_prior$prior
     out$priors <- rbind(out$priors, phi_prior)
   } else {
     priors <- priors[priors$response == y, ]
     pdef <- priors[priors$type == "phi", ]
-    if (identical(nrow(pdef), 1L)) {
-      out$channel$phi_prior_distr <- pdef$prior
-    }
+    out$channel$prior_distr$phi_prior_distr <- pdef$prior
     defaults <- rbind(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       phi_prior
@@ -1092,19 +1080,15 @@ prepare_channel_student <- function(y, Y, channel, sampling,
     category = ""
   )
   if (is.null(priors)) {
-    out$channel$sigma_prior_distr <- sigma_prior$prior
-    out$channel$phi_prior_distr <- phi_prior$prior
+    out$channel$prior_distr$sigma_prior_distr <- sigma_prior$prior
+    out$channel$prior_distr$phi_prior_distr <- phi_prior$prior
     out$priors <- rbind(out$priors, sigma_prior, phi_prior)
   } else {
     priors <- priors[priors$response == y, ]
     pdef <- priors[priors$type == "sigma", ]
-    if (identical(nrow(pdef), 1L)) {
-      out$channel$sigma_prior_distr <- pdef$prior
-    }
+    out$channel$prior_distr$sigma_prior_distr <- pdef$prior
     pdef <- priors[priors$type == "phi", ]
-    if (identical(nrow(pdef), 1L)) {
-      out$channel$phi_prior_distr <- pdef$prior
-    }
+    out$channel$prior_distr$phi_prior_distr <- pdef$prior
     defaults <- rbind(
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       sigma_prior,

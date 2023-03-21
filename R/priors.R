@@ -34,19 +34,19 @@ create_vectorized_prior <- function(ptype, priors, channel, category = "") {
 extract_vectorizable_priors <- function(priors, y) {
   priors_for_stan <- list()
   onlyif(
-    priors$vectorized_beta,
+    isTRUE(priors$vectorized_beta),
     priors_for_stan[[paste0("beta_prior_pars_", y)]] <- priors$beta_prior_pars
   )
   onlyif(
-    priors$vectorized_delta,
+    isTRUE(priors$vectorized_delta),
     priors_for_stan[[paste0("delta_prior_pars_", y)]] <- priors$delta_prior_pars
   )
   onlyif(
-    priors$vectorized_tau,
+    isTRUE(priors$vectorized_tau),
     priors_for_stan[[paste0("tau_prior_pars_", y)]] <- priors$tau_prior_pars
   )
   onlyif(
-    priors$vectorized_sigma_nu,
+    isTRUE(priors$vectorized_sigma_nu),
     priors_for_stan[[paste0("sigma_nu_prior_pars_", y)]] <- priors$sigma_nu_prior_pars
   )
   priors_for_stan
