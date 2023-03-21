@@ -117,7 +117,12 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       "Argument {.arg type} contains unknown types."
     )
   }
-  values <- function(type, response) {
+  values <- function(type, response, category) {
+    ycat <- ifelse_(
+      nchar(category) > 0L,
+      paste0("_", category),
+      ""
+    )
     if (type %in% c("xi", "corr_nu", "corr_psi")) {
       draws <- rstan::extract(
         x$stanfit,
@@ -127,21 +132,21 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
     } else {
       draws <- rstan::extract(
         x$stanfit,
-        pars = paste0(type, "_", response),
+        pars = paste0(type, "_", response, ycat),
         permuted = FALSE
       )
     }
-    category <- attr(
-      attr(x$stan$responses, "resp_class")[[response]],
-      "levels"
-    )[-1L]
+    # category <- attr(
+    #   attr(x$stan$responses, "resp_class")[[response]],
+    #   "levels"
+    # )[-1L]
     channel <- get_channel(x, response)
-    if (is_multinomial(channel$family)) {
-      category <- channel$y[-1L]
-    }
-    if (is.null(category)) {
-      category <- NA
-    }
+    # if (is_multinomial(channel$family)) {
+    #   category <- channel$y[-1L]
+    # }
+    # if (is.null(category)) {
+    #   category <- NA
+    # }
     idx <- which(names(x$stan$responses) %in% response)
     resps <- ifelse_(identical(length(idx), 0L),
       NULL,
@@ -176,6 +181,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
     out_all <- data.table::data.table(
       type = "xi",
       response = "",
+      category = "",
       parameter = "xi"
     )
   }
@@ -185,6 +191,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       data.table::data.table(
         type = "corr_nu",
         response = "",
+        category = "",
         parameter = "corr_nu"
       )
     )
@@ -195,18 +202,27 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       data.table::data.table(
         type = "corr_psi",
         response = "",
+        category = "",
         parameter = "corr_psi"
       )
     )
   }
+  categories <- c("", ulapply(
+    attr(x$stan$responses, "resp_class"),
+    function(y) attr(y, "levels")[-1]
+  ))
   tmp <- data.table::as.data.table(
     expand.grid(
       type = types,
       response = responses,
+      category = categories,
       stringsAsFactors = FALSE
     )
   )
-  tmp[, parameter := as.character(glue::glue("{tmp$type}_{tmp$response}"))]
+
+  tmp[, parameter := as.character(
+    glue::glue("{tmp$type}_{tmp$response}_{tmp$category}")
+    )]
   out <- data.table::rbindlist(list(out_all, tmp))
   rows <- apply(out, 1L, function(y) {
     any(
@@ -216,7 +232,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       )
     )
   })
-  out <- out[rows, c("response", "type")]
+  out <- out[rows, c("response", "category", "type")]
   n_pars <- nrow(out)
   stopifnot_(
     n_pars > 0L,
@@ -243,7 +259,11 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   )
   all_values[seq.int(2L, n_pars + 1L)] <- .mapply(
     values,
-    dots = list(type = out$type, response = out$response),
+    dots = list(
+      type = out$type,
+      response = out$response,
+      category = out$category
+    ),
     MoreArgs = NULL
   )
   out <- data.table::rbindlist(all_values, fill = TRUE)
