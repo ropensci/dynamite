@@ -650,7 +650,7 @@ create_model_lines <- function(idt, backend, cvars, cgvars) {
     cvars[[1L]]$backend <- backend
     cvars[[1L]]$priors <- do.call(prior_lines, c(cvars[[1L]], idt = idt))
     cvars[[1L]]$intercept <- do.call(intercept_lines, cvars[[1L]])
-    lines_wrap("model", family, idt, cvars[[1L]])
+    lines_wrap("model", family, idt, backend, cvars[[1L]])
   }
 }
 
