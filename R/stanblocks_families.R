@@ -359,10 +359,9 @@ data_lines_mvgaussian <- function(y_cg, idt, default, has_missing,
       stan_array(backend, "int", "n_obs_{y_cg}", "T", "lower=0")
     ),
     default,
-    prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     "int<lower=0> O_{y_cg};",
     stan_array(backend, "vector", "y_{y_cg}", "T, N", dims = "O_{y_cg}"),
-    .indent = idt(c(1, 1, 1, 0, 0, 1, 1))
+    .indent = idt(c(1, 1, 1, 0, 1, 1))
   )
 }
 

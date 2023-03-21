@@ -623,9 +623,9 @@ create_model_lines <- function(idt, backend, cvars, cgvars) {
     lines_wrap(
       "model",
       family,
-      list(cvars = cvars, cgvars = cgvars),
       idt,
-      backend
+      backend,
+      list(cvars = cvars, cgvars = cgvars)
     )
   } else if (is_categorical(family)) {
     cvars[[1L]]$priors <- lapply(
