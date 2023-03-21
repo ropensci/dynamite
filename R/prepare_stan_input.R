@@ -156,6 +156,10 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
             )
           }
         ), recursive = FALSE
+        ),
+        extract_vectorizable_priors(
+          prep$channel$prior_distr,
+          y_name
         )
       )
       sampling_vars <- c(
