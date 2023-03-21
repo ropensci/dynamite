@@ -195,6 +195,17 @@ test_that("gets can be got", {
     get_parameter_types(latent_factor_example_fit),
     c("alpha", "sigma", "lambda", "sigma_lambda", "psi", "tau_psi", "omega_psi")
   )
+  expect_equal(
+    get_parameter_dimensions(categorical_example_fit),
+    list(
+      beta_x = c(5L, 2L),
+      a_x = 2L,
+      beta_y = c(5L, 2L),
+      a_y = 2L,
+      alpha_x = 2L,
+      alpha_y = 2L
+    )
+  )
 })
 
 test_that("credible intervals can be computed", {
