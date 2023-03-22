@@ -211,14 +211,14 @@ get_data.dynamitefit <- function(x, ...) {
 #' @export
 #' @family output
 #' @examples
-#' get_parameter_dimensions(multichannel_example_fit)
-get_parameter_dimensions <- function(x, ...) {
-  UseMethod("get_parameter_dimensions", x)
+#' get_parameter_dims(multichannel_example_fit)
+get_parameter_dims <- function(x, ...) {
+  UseMethod("get_parameter_dims", x)
 }
 
-#' @rdname get_parameter_dimensions
+#' @rdname get_parameter_dims
 #' @export
-get_parameter_dimensions.dynamitefit <- function(x, ...) {
+get_parameter_dims.dynamitefit <- function(x, ...) {
   stopifnot_(
     !is.null(x$stanfit),
     "No Stan model fit is available."
