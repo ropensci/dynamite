@@ -573,56 +573,49 @@ prepare_eval_envs <- function(object, simulated, observed,
     e$n_group <- n_group
     e$n_draws <- n_draws
     e$k <- n_draws * n_group
-    if (is_multivariate(family)) {
+    if (is_multivariate(family) || is_categorical(family)) {
       k <- k + length(cg_idx)
       resp <- get_responses(object$dformulas$all[cg_idx])
-      if (is_multinomial(family)) {
-        e$resp_levels <- resp
-        prepare_eval_env_univariate(
-          e = e,
-          resp = paste(resp, collapse = "_"),
-          resp_levels = resp,
-          cvars = channel_group_vars[[l]],
-          samples = samples,
-          has_random = all(cg_idx %in% rand),
-          nu_samples = nu_samples,
-          idx = idx_draws,
-          type = type,
-          eval_type = eval_type
-        )
-      } else {
-        prepare_eval_env_multivariate(
-          e = e,
-          resp = resp,
-          cvars = channel_vars[cg_idx],
-          samples = samples,
-          has_random = cg_idx %in% rand,
-          nu_samples = nu_samples,
-          idx = idx_draws,
-          type = type,
-          eval_type = eval_type
-        )
-      }
-    } else {
-      j <- cg_idx[1L]
-      k <- k + 1L
-      resp <- object$dformulas$all[[j]]$response
-      resp_levels <- onlyif(
+      resp_levels <- ifelse_(
         is_categorical(family),
         attr(
           attr(object$stan$responses, "resp_class")[[resp]],
           "levels"
-        )
+        ),
+        resp
       )
-      e$resp_levels <- resp_levels
-      prepare_eval_env_univariate(
+      prepare_eval_env_multivariate(
         e = e,
         resp = resp,
         resp_levels = resp_levels,
+        cvars = channel_vars[cg_idx],
+        samples = samples,
+        nu_samples = nu_samples,
+        has_random_effects = cg_idx %in% rand,
+        idx = idx_draws,
+        type = type,
+        eval_type = eval_type
+      )
+    } else {
+      j <- cg_idx[1L]
+      k <- k + 1L
+      resp <- object$dformulas$all[[j]]$response
+      #resp_levels <- onlyif(
+      #  is_categorical(family),
+      #  attr(
+      #    attr(object$stan$responses, "resp_class")[[resp]],
+      #    "levels"
+      #  )
+      #)
+      #e$resp_levels <- resp_levels
+      prepare_eval_env_univariate(
+        e = e,
+        resp = resp,
+        #resp_levels = resp_levels,
         cvars = channel_vars[[k]],
         samples = samples,
-        has_random = j %in% rand,
         nu_samples = nu_samples,
+        has_random_effects = j %in% rand,
         idx = idx_draws,
         type = type,
         eval_type = eval_type
@@ -636,8 +629,8 @@ prepare_eval_envs <- function(object, simulated, observed,
 #' Prepare a Evaluation Environment for a Univariate Channel
 #'
 #' @noRd
-prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars, samples,
-                                        has_random, nu_samples,
+prepare_eval_env_univariate <- function(e, resp, cvars, samples, nu_samples,
+                                        has_random_effects,
                                         idx, type, eval_type) {
   alpha <- paste0("alpha_", resp)
   beta <- paste0("beta_", resp)
@@ -657,49 +650,25 @@ prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars, samples,
   e$resp <- resp
   e$phi <- c(samples[[phi]][idx])
   e$sigma <- c(samples[[sigma]][idx])
-  if (has_random) {
+  if (has_random_effects) {
     nus <- make.unique(rep(paste0("nu_", resp), e$K_random))
     e$nu <- nu_samples[, , nus, drop = FALSE]
   }
-  if (is_categorical(e$family) || is_multinomial(e$family)) {
-    e$S <- length(e$resp_levels)
-    if (is_categorical(e$family)) {
-      e$link_cols <- paste0(resp, "_link_", resp_levels)
-      e$mean_cols <- paste0(resp, "_mean_", resp_levels)
-      e$fitted_cols <- paste0(resp, "_fitted_", resp_levels)
-    }
-    if (is_multinomial(e$family)) {
-      e$link_cols <- paste0(resp_levels, "_link")
-      e$mean_cols <- paste0(resp_levels, "_mean")
-      e$fitted_cols <- paste0(resp_levels, "_fitted")
-    }
-    if (cvars$has_fixed_intercept) {
-      e$alpha <- samples[[alpha]][idx, , drop = FALSE]
-    }
-    if (cvars$has_varying_intercept) {
-      e$alpha <- samples[[alpha]][idx, , , drop = FALSE]
-    }
-    e$beta <- samples[[beta]][idx, , , drop = FALSE]
-    e$delta <- samples[[delta]][idx, , , , drop = FALSE]
-    e$xbeta <- matrix(0.0, e$k, e$S)
-  } else {
-    if (cvars$has_fixed_intercept) {
-      e$alpha <- array(samples[[alpha]][idx], c(e$n_draws, 1L))
-    }
-    if (cvars$has_varying_intercept) {
-      e$alpha <- samples[[alpha]][idx, , drop = FALSE]
-    }
-    e$beta <- samples[[beta]][idx, , drop = FALSE]
-    e$delta <- samples[[delta]][idx, , , drop = FALSE]
-    e$xbeta <- numeric(e$k)
+  if (cvars$has_fixed_intercept) {
+    e$alpha <- array(samples[[alpha]][idx], c(e$n_draws, 1L))
+  }
+  if (cvars$has_varying_intercept) {
+    e$alpha <- samples[[alpha]][idx, , drop = FALSE]
   }
   if (cvars$has_lfactor) {
     e$lambda <- samples[[lambda]][idx, , drop = FALSE]
     e$psi <- samples[[psi]][idx, , drop = FALSE]
   }
+  e$beta <- samples[[beta]][idx, , drop = FALSE]
+  e$delta <- samples[[delta]][idx, , , drop = FALSE]
+  e$xbeta <- numeric(e$k)
   e$call <- generate_sim_call_univariate(
     resp = resp,
-    resp_levels = e$resp_levels,
     family = e$family,
     type = type,
     eval_type = eval_type,
@@ -738,147 +707,107 @@ prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars, samples,
 #' @param has_lfactor \[logical(1)]\cr
 #'   Does the channel have a latent factor term?
 #' @noRd
-generate_sim_call_univariate <- function(resp, resp_levels,
-                                         family, type, eval_type,
+generate_sim_call_univariate <- function(resp, family, type, eval_type,
                                          has_fixed, has_varying, has_random,
                                          has_fixed_intercept,
                                          has_varying_intercept,
                                          has_random_intercept,
                                          has_offset, has_lfactor) {
-  if (is_categorical(family) || is_multinomial(family)) {
-    out <- paste0(
-      "{\n",
-      "idx_draw <- seq.int(1L, n_draws) - n_draws\n",
-      "for (j in seq_len(n_group)) {\n",
-      "  idx_draw <- idx_draw + n_draws\n",
-      "  for (s in seq_len(S - 1)) {\n",
-      "    xbeta[idx_draw, s + 1] <- ",
-      ifelse_(!has_fixed_intercept && !has_varying_intercept, "0", ""),
-      ifelse_(has_fixed_intercept, "alpha[, s]", ""),
-      ifelse_(has_varying_intercept, "alpha[, a_time, s]", ""),
-      ifelse_(
-        has_fixed,
-        " + .rowSums(
-          x = model_matrix[idx_draw, J_fixed, drop = FALSE] * beta[, , s],
-          m = n_draws,
-          n = K_fixed
-        )",
-        ""
+
+  out <- paste0(
+    "{\n",
+    "idx_draw <- seq.int(1L, n_draws) - n_draws\n",
+    "for (j in seq_len(n_group)) {\n",
+    "  idx_draw <- idx_draw + n_draws\n",
+    "  xbeta[idx_draw] <- ",
+    ifelse_(!has_fixed_intercept && !has_varying_intercept, "0", ""),
+    ifelse_(has_fixed_intercept, "alpha", ""),
+    ifelse_(has_varying_intercept, "alpha[, a_time]", ""),
+    ifelse_(has_random_intercept, " + nu[, j, 1]", ""),
+    ifelse_(has_lfactor, " + lambda[, j] * psi[, time]", ""),
+    ifelse_(
+      has_fixed,
+      " + .rowSums(
+        x = model_matrix[idx_draw, J_fixed, drop = FALSE] * beta,
+        m = n_draws,
+        n = K_fixed
+      )",
+      ""
+    ),
+    ifelse_(
+      has_varying,
+      " + .rowSums(
+        x = model_matrix[idx_draw, J_varying, drop = FALSE] *
+              delta[, time, ],
+        m = n_draws,
+        n = K_varying
+      )",
+      ""
+    ),
+    ifelse_(
+      has_random,
+      " + .rowSums(
+        x = model_matrix[idx_draw, J_random, drop = FALSE] *
+              nu[, j, seq.int(1 + has_random_intercept, K_random)],
+        m = n_draws,
+        n = K_random - has_random_intercept
+      )",
+      ""
+    ),
+    "}\n",
+    ifelse_(
+      identical(type, "link") && identical(eval_type, "predicted"),
+      glue::glue(
+        "data.table::set(",
+        "  x = out,",
+        "  i = idx_data,",
+        "  j = '{resp}_link',",
+        "  value = xbeta[idx_out]",
+        ")",
       ),
-      ifelse_(
-        has_varying,
-        " + .rowSums(
-          x = model_matrix[idx_draw, J_varying, drop = FALSE] *
-            delta[, time, , s],
-          m = n_draws,
-          n = K_varying
-        )",
-        ""
-      ),
-      "}\n",
-      "}\n",
-      ifelse_(
-        identical(type, "link") && identical(eval_type, "predicted"),
-        glue::glue("
-          for (s in 1:S) {{
-            data.table::set(
-              x = out,
-              i = idx_data,
-              j = link_cols[s],
-              value = xbeta[idx_out, s]
-            )
-          }}"
-        ),
-        ""
-      ),
-      "\n",
-      glue::glue(predict_expr[[eval_type]][[family$name]]),
-      "\n",
-      ifelse_(
-        identical(type, "mean") && identical(eval_type, "predicted"),
-        glue::glue(predict_expr$mean[[family$name]]),
-        ""
-      ),
-      "}"
-    )
-  } else {
-    out <- paste0(
-      "{\n",
-      "idx_draw <- seq.int(1L, n_draws) - n_draws\n",
-      "for (j in seq_len(n_group)) {\n",
-      "  idx_draw <- idx_draw + n_draws\n",
-      "  xbeta[idx_draw] <- ",
-      ifelse_(!has_fixed_intercept && !has_varying_intercept, "0", ""),
-      ifelse_(has_fixed_intercept, "alpha", ""),
-      ifelse_(has_varying_intercept, "alpha[, a_time]", ""),
-      ifelse_(has_random_intercept, " + nu[, j, 1]", ""),
-      ifelse_(has_lfactor, " + lambda[, j] * psi[, time]", ""),
-      ifelse_(
-        has_fixed,
-        " + .rowSums(
-          x = model_matrix[idx_draw, J_fixed, drop = FALSE] * beta,
-          m = n_draws,
-          n = K_fixed
-        )",
-        ""
-      ),
-      ifelse_(
-        has_varying,
-        " + .rowSums(
-          x = model_matrix[idx_draw, J_varying, drop = FALSE] *
-                delta[, time, ],
-          m = n_draws,
-          n = K_varying
-        )",
-        ""
-      ),
-      ifelse_(
-        has_random,
-        " + .rowSums(
-          x = model_matrix[idx_draw, J_random, drop = FALSE] *
-                nu[, j, seq.int(1 + has_random_intercept, K_random)],
-          m = n_draws,
-          n = K_random - has_random_intercept
-        )",
-        ""
-      ),
-      "}\n",
-      ifelse_(
-        identical(type, "link") && identical(eval_type, "predicted"),
-        glue::glue(
-          "data.table::set(",
-          "  x = out,",
-          "  i = idx_data,",
-          "  j = '{resp}_link',",
-          "  value = xbeta[idx_out]",
-          ")",
-        ),
-        ""
-      ),
-      "\n",
-      glue::glue(predict_expr[[eval_type]][[family$name]]),
-      "\n",
-      ifelse_(
-        identical(type, "mean") && identical(eval_type, "predicted"),
-        glue::glue(predict_expr$mean[[family$name]]),
-        ""
-      ),
-      "}"
-    )
-  }
+      ""
+    ),
+    "\n",
+    glue::glue(predict_expr[[eval_type]][[family$name]]),
+    "\n",
+    ifelse_(
+      identical(type, "mean") && identical(eval_type, "predicted"),
+      glue::glue(predict_expr$mean[[family$name]]),
+      ""
+    ),
+    "}"
+  )
   str2lang(out)
 }
 
 #' Prepare a Evaluation Environment for a Multivariate Channel
 #'
 #' @noRd
-prepare_eval_env_multivariate <- function(e, resp, cvars, samples,
-                                          has_random, nu_samples,
+prepare_eval_env_multivariate <- function(e, resp, resp_levels, cvars,
+                                          samples, nu_samples,
+                                          has_random_effects,
                                           idx, type, eval_type) {
-  d <- length(resp)
+  dims <- ifelse_(
+    is_multivariate(e$family) && !is_multinomial(e$family),
+    seq_len(length(resp)),
+    seq.int(2L, length(resp_levels))
+  )
+  d <- ifelse_(
+    is_multivariate(e$family) && !is_multinomial(e$family),
+    length(dims),
+    length(resp_levels)
+  )
+  e$dims <- dims
   e$d <- d
   e$resp <- resp
   e$L <- samples[[paste(c("L", resp), collapse = "_")]]
+  e$link_cols <- ifelse_(
+    is_multivariate(e$family) && !is_multinomial(e$family),
+    paste0(resp, "_link"),
+    paste0(resp, "_link_", resp_levels)
+  )
+  e$mean_cols <- paste0(resp, "_mean_", resp_levels)
+  e$fitted_cols <- paste0(resp, "_fitted_", resp_levels)
   e$sigma <- matrix(0.0, e$n_draws, d)
   has_fixed <- logical(d)
   has_varying <- logical(d)
@@ -888,8 +817,13 @@ prepare_eval_env_multivariate <- function(e, resp, cvars, samples,
   has_random_intercept <- logical(d)
   has_offset <- logical(d)
   has_lfactor <- logical(d)
-  for (i in seq_len(d)) {
-    yi <- resp[i]
+  for (i in dims) {
+    yi <- ifelse_(
+      is_categorical(e$family),
+      paste0(resp, "_", resp_levels[i]),
+      resp[i]
+    )
+    j <- ifelse_(is_categorical(e$family) || is_multinomial(e$family), 1L, i)
     alpha <- paste0("alpha_", yi)
     beta <- paste0("beta_", yi)
     delta <- paste0("delta_", yi)
@@ -904,23 +838,24 @@ prepare_eval_env_multivariate <- function(e, resp, cvars, samples,
     K_varying <- paste0("K_varying_", yi)
     J_random <- paste0("J_random_", yi)
     K_random <- paste0("K_random_", yi)
-    has_fixed[i] <- cvars[[i]]$has_fixed
-    has_varying[i] <- cvars[[i]]$has_varying
-    has_random[i] <- cvars[[i]]$has_random
-    has_fixed_intercept[i] <- cvars[[i]]$has_fixed_intercept
-    has_varying_intercept[i] <- cvars[[i]]$has_varying_intercept
-    has_random_intercept[i] <- cvars[[i]]$has_random_intercept
-    has_offset[i] <- cvars[[i]]$has_offset
-    has_lfactor[i] <- cvars[[i]]$has_lfactor
-    e[[J_fixed]] <- cvars[[i]]$J_fixed
-    e[[K_fixed]] <- cvars[[i]]$K_fixed
-    e[[J_varying]] <- cvars[[i]]$J_varying
-    e[[K_varying]] <- cvars[[i]]$K_varying
-    e[[J_random]] <- cvars[[i]]$J_random
-    e[[K_random]] <- cvars[[i]]$K_randon
-    e[[phi]] <- c(samples[[phi]][idx])
-    e$sigma[, i] <- c(samples[[sigma]][idx])
-    if (has_random[i]) {
+    has_fixed[i] <- cvars[[j]]$has_fixed
+    has_varying[i] <- cvars[[j]]$has_varying
+    has_random[i] <- cvars[[j]]$has_random
+    has_fixed_intercept[i] <- cvars[[j]]$has_fixed_intercept
+    has_varying_intercept[i] <- cvars[[j]]$has_varying_intercept
+    has_random_intercept[i] <- cvars[[j]]$has_random_intercept
+    has_offset[i] <- cvars[[j]]$has_offset
+    has_lfactor[i] <- cvars[[j]]$has_lfactor
+    e[[J_fixed]] <- cvars[[j]]$J_fixed
+    e[[K_fixed]] <- cvars[[j]]$K_fixed
+    e[[J_varying]] <- cvars[[j]]$J_varying
+    e[[K_varying]] <- cvars[[j]]$K_varying
+    e[[J_random]] <- cvars[[j]]$J_random
+    e[[K_random]] <- cvars[[j]]$K_randon
+    onlyif(!is.null(samples[[phi]]),e[[phi]] <- c(samples[[phi]][idx]))
+    onlyif(!is.null(samples[[sigma]]), e$sigma[, i] <- c(samples[[sigma]][idx]))
+    # index j here, not from cvars
+    if (has_random_effects[j]) {
       nus <- make.unique(rep(paste0("nu_", yi), e[[K_random]]))
       e[[nu]] <- nu_samples[, , nus, drop = FALSE]
     }
@@ -940,7 +875,9 @@ prepare_eval_env_multivariate <- function(e, resp, cvars, samples,
   }
   e$call <- generate_sim_call_multivariate(
     d = d,
+    dims = dims,
     resp = resp,
+    resp_levels = resp_levels,
     family = e$family,
     type = type,
     eval_type = eval_type,
@@ -958,7 +895,7 @@ prepare_eval_env_multivariate <- function(e, resp, cvars, samples,
 #' Generate an Expression to Evaluate Predictions for a Multivariate Channel
 #'
 #' @noRd
-generate_sim_call_multivariate <- function(d, resp,
+generate_sim_call_multivariate <- function(d, dims, resp, resp_levels,
                                            family, type, eval_type,
                                            has_fixed, has_varying, has_random,
                                            has_fixed_intercept,
@@ -971,8 +908,12 @@ generate_sim_call_multivariate <- function(d, resp,
     "  idx_draw <- idx_draw + n_draws\n"
   )
   xbeta_text <- character(d + 1)
-  for (i in seq_len(d)) {
-    yi <- resp[i]
+  for (i in dims) {
+    yi <- ifelse_(
+      is_categorical(family),
+      paste0(resp, "_", resp_levels[i]),
+      resp[i]
+    )
     xbeta_text[i] <- glue::glue(
       "\n\n  xbeta[idx_draw, {i}] <- ",
       ifelse_(!has_fixed_intercept[i] && !has_varying_intercept[i], "0", ""),
@@ -1012,18 +953,18 @@ generate_sim_call_multivariate <- function(d, resp,
     )
   }
   xbeta_text[d + 1] <- "}"
-  link_text <- character(3L)
+  link_text <- character(0L)
   if (identical(type, "link") && identical(eval_type, "predicted")) {
-    for (i in seq_len(d)) {
-      link_text[i] <- glue::glue(
-        "data.table::set(",
-        "  x = out,",
-        "  i = idx_data,",
-        "  j = '{yi}_link',",
-        "  value = xbeta[idx_out, {i}]",
-        ")"
-      )
-    }
+    link_text <- glue::glue(
+      "for (i in seq_len(d)) {{\n",
+      "  data.table::set(\n",
+      "    x = out,\n",
+      "    i = idx_data,\n",
+      "    j = link_cols[i],\n",
+      "    value = xbeta[idx_out, i]\n",
+      "  )\n",
+      "}}"
+    )
   }
   eval_type_text <- glue::glue(predict_expr[[eval_type]][[family$name]])
   type_text <- ifelse_(
@@ -1068,8 +1009,8 @@ predict_expr$fitted$mvgaussian <- "
 "
 
 predict_expr$fitted$categorical <- "
-  mval <- exp(xbeta - log_sum_exp_rows(xbeta, k, S))
-  for (s in 1:S) {{
+  mval <- exp(xbeta - log_sum_exp_rows(xbeta, k, d))
+  for (s in 1:d) {{
     data.table::set(
       x = out,
       i = idx,
@@ -1080,8 +1021,8 @@ predict_expr$fitted$categorical <- "
 "
 
 predict_expr$fitted$multinomial <- "
-  mval <- exp(xbeta - log_sum_exp_rows(xbeta, k, S))
-  for (s in 1:S) {{
+  mval <- exp(xbeta - log_sum_exp_rows(xbeta, k, d))
+  for (s in 1:d) {{
     data.table::set(
       x = out,
       i = idx,
@@ -1172,7 +1113,7 @@ predict_expr$predicted$categorical <- "
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = max.col(xbeta - log(-log(runif(S * k))))[idx_out]
+    value = max.col(xbeta - log(-log(runif(k * d))))[idx_out]
   )
 "
 
@@ -1297,8 +1238,8 @@ predict_expr$mean$mvgaussian <- "
 "
 
 predict_expr$mean$categorical <- "
-  mval <- exp(xbeta - log_sum_exp_rows(xbeta, k, S))
-  for (s in 1:S) {{
+  mval <- exp(xbeta - log_sum_exp_rows(xbeta, k, d))
+  for (s in 1:d) {{
     data.table::set(
       x = out,
       i = idx_data,
@@ -1309,8 +1250,8 @@ predict_expr$mean$categorical <- "
 "
 
 predict_expr$mean$multinomial <- "
-  mval <- exp(xbeta - log_sum_exp_rows(xbeta, k, S))
-  for (s in 1:S) {{
+  mval <- exp(xbeta - log_sum_exp_rows(xbeta, k, d))
+  for (s in 1:d) {{
     data.table::set(
       x = out,
       i = idx_data,
@@ -1431,7 +1372,7 @@ predict_expr$loglik$categorical <- "
     x = out,
     i = idx,
     j = '{resp}_loglik',
-    value = xbeta[cbind(seq_along(y), y)] - log_sum_exp_rows(xbeta, k, S)
+    value = xbeta[cbind(seq_along(y), y)] - log_sum_exp_rows(xbeta, k, d)
   )
 "
 
@@ -1442,9 +1383,7 @@ predict_expr$loglik$multinomial <- "
     j = '{resp}_loglik',
     value = lgamma(trials + 1) +
       .rowSums(
-        y * (xbeta - log_sum_exp_rows(xbeta, k, S)) - lgamma(y + 1),
-        k,
-        S
+        y * (xbeta - log_sum_exp_rows(xbeta, k, S)) - lgamma(y + 1), k, d
       )
   )
 "

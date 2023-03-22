@@ -196,14 +196,20 @@ test_that("gets can be got", {
     c("alpha", "sigma", "lambda", "sigma_lambda", "psi", "tau_psi", "omega_psi")
   )
   expect_equal(
-    get_parameter_dimensions(categorical_example_fit),
+    get_parameter_dims(categorical_example_fit),
     list(
-      beta_x = c(5L, 2L),
-      a_x = 2L,
-      beta_y = c(5L, 2L),
-      a_y = 2L,
-      alpha_x = 2L,
-      alpha_y = 2L
+      beta_x_B = 5L,
+      a_x_B = 1L,
+      beta_x_C = 5L,
+      a_x_C = 1L,
+      beta_y_b = 5L,
+      a_y_b = 1L,
+      beta_y_c = 5L,
+      a_y_c = 1L,
+      alpha_x_B = 1L,
+      alpha_x_C = 1L,
+      alpha_y_b = 1L,
+      alpha_y_c = 1L
     )
   )
 })

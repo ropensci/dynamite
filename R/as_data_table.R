@@ -119,7 +119,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   }
   values <- function(type, response, category) {
     ycat <- ifelse_(
-      nchar(category) > 0L,
+      nzchar(category) & !is.na(category),
       paste0("_", category),
       ""
     )
@@ -148,9 +148,11 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
     #   category <- NA
     # }
     idx <- which(names(x$stan$responses) %in% response)
-    resps <- ifelse_(identical(length(idx), 0L),
+    resps <- ifelse_(
+      identical(length(idx), 0L),
       NULL,
-      x$stan$responses[[idx]])
+      x$stan$responses[[idx]]
+    )
     d <- do.call(
       what = paste0("as_data_table_", type),
       args = list(
@@ -181,7 +183,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
     out_all <- data.table::data.table(
       type = "xi",
       response = "",
-      category = "",
+      category = NA_character_,
       parameter = "xi"
     )
   }
@@ -191,7 +193,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       data.table::data.table(
         type = "corr_nu",
         response = "",
-        category = "",
+        category = NA_character_,
         parameter = "corr_nu"
       )
     )
@@ -202,12 +204,12 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       data.table::data.table(
         type = "corr_psi",
         response = "",
-        category = "",
+        category = NA_character_,
         parameter = "corr_psi"
       )
     )
   }
-  categories <- c("", ulapply(
+  categories <- c(NA_character_, ulapply(
     attr(x$stan$responses, "resp_class"),
     function(y) attr(y, "levels")[-1]
   ))
@@ -220,11 +222,15 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       stringsAsFactors = FALSE
     )
   )
-  tmp[, iscat := ifelse(nchar(category) > 0L, "_", "")]
+  tmp[, catstr := ifelse(
+    nzchar(category) & !is.na(category),
+    glue::glue("_{tmp$category}"),
+    ""
+  )]
   tmp[, parameter := as.character(
-    glue::glue("{tmp$type}_{tmp$response}{tmp$iscat}{tmp$category}")
-    )]
-  tmp[, iscat := NULL]
+    glue::glue("{tmp$type}_{tmp$response}{tmp$catstr}")
+  )]
+  tmp[, catstr := NULL]
   out <- data.table::rbindlist(list(out_all, tmp))
   rows <- apply(out, 1L, function(y) {
     any(
