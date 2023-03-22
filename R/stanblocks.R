@@ -128,7 +128,11 @@ create_data_lines <- function(idt, backend, cvars, cgvars) {
       cgvars$default <- vapply(
         cvars,
         function(x) {
-          lines_wrap("data", "default", idt, backend, x)
+          paste_rows(
+            lines_wrap("data", "default", idt, backend, x),
+            do.call("prior_data_lines", c(idt = idt, x)),
+            .indent = idt(0), .parse = FALSE
+          )
         },
         character(1L)
       )

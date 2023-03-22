@@ -179,7 +179,7 @@ missing_data_lines <- function(y, idt, has_missing, backend) {
 
 prior_data_lines <- function(y, idt, prior_distr,
                              K_fixed, K_varying, K_random, category = "",
-                             multinomial = FALSE) {
+                             multinomial = FALSE, ...) {
   ycat <- ifelse(
     nchar(category) > 0L,
     ifelse_(
@@ -1298,16 +1298,20 @@ model_lines_categorical <- function(y, idt, priors, intercept,
   } else {
     # combine intercepts
     S <- length(categories)
-    icpt_y <- c("0", paste0("intercept_", categories[2:S]))
-    icpt <- paste_rows(
-      "real intercept_{categories[2:S]} = {unlist(intercept)};",
-      "intercept_{y} = [{cs(icpt_y)}]';",
-      .indent = idt(3)
-    )
-
+    if (multinomial) {
+      #TODO, or move to own model_lines_multinomial
+    } else {
+      icpt_y <- c("0", paste0("intercept_", categories[2:S]))
+      icpt <- paste_rows(
+        "real intercept_{categories[2:S]} = {unlist(intercept)};",
+        "intercept_{y} = [{cs(icpt_y)}]';",
+        .indent = idt(3)
+      )
+    }
     likelihood_term <-
       "y_{y}[t, {obs}{category_dim}] ~ {distr}_logit(intercept_{y});"
 
+    # TODO: in case of multinomial or non-glm categorical we need to loop over N
     model_text <- paste_rows(
       "{{",
       "vector[S_{y}] intercept_{y};",
