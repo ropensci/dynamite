@@ -187,7 +187,7 @@ prior_data_lines <- function(y, idt, prior_distr,
       category,
       paste0(y, "_", category)
     ),
-    "y"
+    y
   )
   vectorize_beta <-
     K_fixed > 0L &&
