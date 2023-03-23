@@ -329,7 +329,14 @@ create_transformed_parameters <- function(idt, backend, cg, cvars, cgvars) {
   random_text <- ""
   M <- attr(cvars, "random_def")$M
   if (M > 0L) {
-    Ks <- vapply(cvars, "[[", integer(1L), "K_random")
+   # Ks <- vapply(cvars, "[[", integer(1L), "K_random")
+    Ks <- unlist(unname(lapply(cvars, function(x) {
+      ifelse_(
+        is_categorical(x$family),
+        setNames(rep(x$K_random, x$S - 1), paste0(x$y, "_", x$categories[-1])),
+        x$K_random
+        )
+    })))
     Ks <- Ks[Ks > 0]
     y <- names(Ks)
     cKs1 <- cumsum(c(1, Ks[-length(Ks)]))

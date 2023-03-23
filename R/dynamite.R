@@ -711,7 +711,12 @@ parse_components <- function(dformulas, data, group_var, time_var) {
         if (is.null(random_formula)) {
           0L
         } else {
-          ncol(stats::model.matrix.lm(random_formula, data))
+          cats <- ifelse_(
+            is_categorical(formula$family),
+            length(levels(data[[formula$response]])) - 1L,
+            1L
+          )
+          cats * ncol(stats::model.matrix.lm(random_formula, data))
         }
       },
       integer(1L)
