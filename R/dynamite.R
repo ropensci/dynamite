@@ -864,17 +864,10 @@ parse_random_spec <- function(random_spec_def, M) {
 parse_lfactor <- function(lfactor_def, resp, families) {
   out <- list()
   if (!is.null(lfactor_def)) {
-    valid_channels <- resp[!(families %in% "categorical")]
+    valid_channels <- resp
     # default, use all channels except categorical
     if (is.null(lfactor_def$responses)) {
       lfactor_def$responses <- valid_channels
-      stopifnot_(
-        length(valid_channels) > 0L,
-        c(
-          "No valid responses for latent factor component:",
-          `x` = "Latent factors are not supported for the categorical family."
-        )
-      )
     } else {
       psi_channels <- lfactor_def$responses %in% resp
       stopifnot_(
@@ -883,15 +876,6 @@ parse_lfactor <- function(lfactor_def, resp, families) {
           "Argument {.arg responses} of {.fun lfactor} contains variable{?s}
           {.var {cs(lfactor_def$responses[!psi_channels])}}:",
           `x` = "No such response variables in the model."
-        )
-      )
-      psi_channels <- lfactor_def$responses %in% valid_channels
-      stopifnot_(
-        all(psi_channels),
-        c(
-          "Latent factors are not supported for the categorical family:",
-          `x` = "Found latent factor declaration for categorical variable{?s}
-                {.var {cs(valid_channels[psi_channels])}}."
         )
       )
     }

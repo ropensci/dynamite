@@ -1228,7 +1228,7 @@ intercept_lines <- function(y, obs, family,
     glue::glue(" + X[t][{obs}, J_varying_{ydim}] * delta_{y}[t]"),
     ""
   )
-  common_intercept <- !has_random && !has_lfactor
+  common_intercept <- !has_random && !has_random_intercept && !has_lfactor
   glm <- stan_supports_glm_likelihood(family, backend, common_intercept)
   intercept <- ifelse_(
     glm,
@@ -1245,12 +1245,9 @@ intercept_lines <- function(y, obs, family,
 
 model_lines_categorical <- function(y, idt, priors, intercept,
                                     obs, has_fixed, has_varying,
-                                    multinomial = FALSE, categories, ...) {
+                                    categories, multinomial = FALSE, ...) {
 
-  distr <- ifelse_(multinomial, "multinomial", "categorical")
-  category_dim <- ifelse_(multinomial, ", ", "")
-  glm <- attr(intercept[[1]], "glm")
-  if (glm && !multinomial) {
+  if (attr(intercept[[1]], "glm") && !multinomial) {
     # combine intercepts and gammas
     S <- length(categories)
     icpt_y <- c("0", paste0("intercept_", categories[2:S]))
@@ -1296,31 +1293,42 @@ model_lines_categorical <- function(y, idt, priors, intercept,
       .indent = idt(c(1, 0, 0, 2, 2, 3, 3, 2, 1))
     )
   } else {
-    # combine intercepts
-    S <- length(categories)
-    if (multinomial) {
-      #TODO, or move to own model_lines_multinomial
-    } else {
-      icpt_y <- c("0", paste0("intercept_", categories[2:S]))
-      icpt <- paste_rows(
-        "real intercept_{categories[2:S]} = {unlist(intercept)};",
-        "intercept_{y} = [{cs(icpt_y)}]';",
-        .indent = idt(3)
-      )
-    }
-    likelihood_term <-
-      "y_{y}[t, {obs}{category_dim}] ~ {distr}_logit(intercept_{y});"
+    distr <- ifelse_(multinomial, "multinomial", "categorical")
+    category_dim <- ifelse_(multinomial, ", ", "")
 
-    # TODO: in case of multinomial or non-glm categorical we need to loop over N
+    S <- length(categories)
+
+    icpt_y <- c("0", paste0("intercept_", categories[2:S], "[i]"))
+    icpt <- paste_rows(
+      ifelse_(
+        nchar(obs),
+        "vector[n_obs_{y}[t]] intercept_{categories[2:S]} = {unlist(intercept)};",
+        "vector[N] intercept_{categories[2:S]} = {unlist(intercept)};"
+      ),
+      .indent = idt(3)
+    )
+    likelihood_term <- ifelse_(
+      nchar(obs),
+      "y_{y}[t, obs_{y}[i, t]{category_dim}] ~ {distr}_logit(intercept_{y});",
+      "y_{y}[t, i{category_dim}] ~ {distr}_logit(intercept_{y});"
+    )
+
     model_text <- paste_rows(
       "{{",
       "vector[S_{y}] intercept_{y};",
       "for (t in 1:T) {{",
       icpt,
+      ifelse_(
+        nchar(obs),
+        "for (i in 1:n_obs_{y}[t]) {{",
+        "for (i in 1:N) {{"
+      ),
+      "intercept_{y} = [{cs(icpt_y)}]';",
       likelihood_term,
       "}}",
       "}}",
-      .indent = idt(c(1, 2, 2, 0, 3, 2, 1))
+      "}}",
+      .indent = idt(c(1, 2, 2, 0, 3, 4, 4, 3, 2, 1))
     )
   }
 
@@ -1349,7 +1357,6 @@ model_lines_multinomial <- function(cvars, cgvars, idt, ...) {
   cgvars$categories <- cgvars$y
   cgvars$y <- cgvars$y_cg
   cgvars$multinomial <- TRUE
-
   do.call(model_lines_categorical, args = c(cgvars, idt = idt))
 }
 

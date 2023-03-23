@@ -339,11 +339,6 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
       channel[[paste0("has_", spec)]] <- FALSE
     }
   }
-  stopifnot_(
-    !(channel$has_random || channel$has_random_intercept) ||
-      dformula$family != "categorical",
-    "Random effects are not (yet) supported for categorical responses."
-  )
   sampling[[paste0("y_", y_name)]] <- ifelse_(
     dformula$family %in%
       c("gaussian", "gamma", "exponential", "beta", "student"),

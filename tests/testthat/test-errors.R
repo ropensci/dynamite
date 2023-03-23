@@ -182,19 +182,6 @@ test_that("plus method fails for nondynamiteformula", {
   )
 })
 
-test_that("categorical with random effects fails", {
-  expect_error(
-    dynamite(obs(y ~ x + random(~1), family = "categorical") + random_spec(),
-      data = data.frame(
-        y = factor(1:4), x = runif(4), id = rep(1:2, each = 2), time = 1:4
-        ),
-      "time", "id",
-      debug = list(no_compile = TRUE)
-    ),
-    "Random effects are not \\(yet\\) supported for categorical responses."
-  )
-})
-
 test_that("negative lb_tau fails", {
   expect_error(
     obs_test + splines(lb_tau = -1.0),
@@ -267,22 +254,6 @@ test_that("pure deterministic formula to dynamite fails", {
       time = "z"
     ),
     "Argument `dformula` must contain at least one stochastic channel\\."
-  )
-})
-
-test_that("categorical latent factor fails", {
-  expect_error(
-    dynamite(
-      obs(y ~ x, family = "categorical") + lfactor(),
-      data = data.frame(y = factor(1:4), x = runif(4), id = 1, time = 1:4),
-      time = "time",
-      group = "id",
-      debug = list(no_compile = TRUE)
-    ),
-    paste0(
-      "No valid responses for latent factor component:\n",
-      "x Latent factors are not supported for the categorical family\\."
-    )
   )
 })
 
