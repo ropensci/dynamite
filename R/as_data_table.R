@@ -360,9 +360,16 @@ as_data_table_corr_nu <- function(x, draws, n_draws, ...) {
       "alpha",
       NULL
     )
-    paste0(x$y, "_", c(icpt, names(x$J_random)))
+    vars <- paste0(x$y, "_", c(icpt, names(x$J_random)))
+    ifelse_(
+      is_categorical(x$family),
+      paste0(
+        rep(vars, x$S - 1L),
+        "_",
+        rep(x$categories[-1L], each = x$K_random)),
+      vars
+    )
   })
-
   pairs <- apply(utils::combn(vars, 2L), 2L, paste, collapse = "__")
   data.table::data.table(
     parameter = rep(paste0("corr_nu_", pairs), each = n_draws),
@@ -372,7 +379,7 @@ as_data_table_corr_nu <- function(x, draws, n_draws, ...) {
 
 #' @describeIn as_data_table_default Data Table for a "nu" Parameter
 #' @noRd
-as_data_table_nu <- function(x, draws, n_draws, response, ...) {
+as_data_table_nu <- function(x, draws, n_draws, response, category, ...) {
   icpt <- ifelse_(
     get_channel(x, response)$has_random_intercept,
     "alpha",
@@ -388,7 +395,8 @@ as_data_table_nu <- function(x, draws, n_draws, response, ...) {
   data.table::data.table(
     parameter = rep(var_names, each = n_draws * n_group),
     value = c(draws),
-    group = rep(groups, each = n_draws)
+    group = rep(groups, each = n_draws),
+    category = category
   )
 }
 
@@ -396,7 +404,6 @@ as_data_table_nu <- function(x, draws, n_draws, response, ...) {
 #' @noRd
 as_data_table_alpha <- function(x, draws, n_draws,
                                 response, category, include_fixed, ...) {
-  n_cat <- length(category)
   fixed <- x$stan$fixed
   all_time_points <- sort(unique(x$data[[x$time_var]]))
   if (get_channel(x, response)$has_varying_intercept) {
@@ -408,24 +415,20 @@ as_data_table_alpha <- function(x, draws, n_draws,
     n_na <- include_fixed * fixed * n_draws
     n_time <- length(time_points)
     n_time2 <- n_time - include_fixed * fixed
-    data.table::rbindlist(
-      lapply(seq_len(n_cat), function(i) {
-        data.table::data.table(
-          parameter = paste0("alpha_", response),
-          value = c(
-            rep(NA, n_na),
-            c(draws[, , (i - 1L) * n_time2 + seq_len(n_time2)])
-          ),
-          time = rep(time_points, each = n_draws),
-          category = category[i]
-        )
-      })
+    data.table::data.table(
+      parameter = paste0("alpha_", response),
+      value = c(
+        rep(NA, n_na),
+        c(draws[, , seq_len(n_time2)])
+      ),
+      time = rep(time_points, each = n_draws),
+      category = category
     )
   } else {
     data.table::data.table(
       parameter = paste0("alpha_", response),
       value = c(draws),
-      category = rep(category, each = n_draws)
+      category = category
     )
   }
 }
@@ -441,7 +444,7 @@ as_data_table_beta <- function(x, draws, n_draws, response, category, ...) {
   data.table::data.table(
     parameter = rep(var_names, each = n_draws),
     value = c(draws),
-    category = rep(category, each = n_vars * n_draws)
+    category = category
   )
 }
 
@@ -449,7 +452,6 @@ as_data_table_beta <- function(x, draws, n_draws, response, category, ...) {
 #' @noRd
 as_data_table_delta <- function(x, draws, n_draws,
                                 response, category, include_fixed, ...) {
-  n_cat <- length(category)
   fixed <- x$stan$fixed
   all_time_points <- sort(unique(x$data[[x$time_var]]))
   var_names <- paste0(
@@ -465,19 +467,17 @@ as_data_table_delta <- function(x, draws, n_draws,
   n_na <- include_fixed * fixed * n_draws
   n_time <- length(time_points)
   n_time2 <- n_time - include_fixed * fixed
-  data.table::rbindlist(lapply(seq_len(n_cat), function(j) {
-    data.table::rbindlist(lapply(seq_len(n_vars), function(i) {
-      idx <- (j - 1L) * n_time2 * n_vars + (i - 1L) * n_time2 + seq_len(n_time2)
-      data.table::data.table(
-        parameter = var_names[i],
-        value = c(
-          rep(NA, n_na),
-          c(draws[, , idx])
-        ),
-        time = rep(time_points, each = n_draws),
-        category = rep(category[j], each = n_time * n_draws)
-      )
-    }))
+  data.table::rbindlist(lapply(seq_len(n_vars), function(i) {
+    idx <- (i - 1L) * n_time2 + seq_len(n_time2)
+    data.table::data.table(
+      parameter = var_names[i],
+      value = c(
+        rep(NA, n_na),
+        c(draws[, , idx])
+      ),
+      time = rep(time_points, each = n_draws),
+      category = category
+    )
   }))
 }
 
@@ -506,14 +506,11 @@ as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
   k <- length(var_names)
   data.table::data.table(
     parameter = rep(
-      paste0(
-        rep(var_names, each = n_cat),
-        "_d", rep(seq_len(D), each = n_cat * k)
-      ),
+      paste0(var_names, "_d", rep(seq_len(D), each = k)),
       each = n_draws
     ),
     value = c(draws),
-    category = rep(category, each = n_draws)
+    category = category
   )
 }
 
@@ -521,15 +518,14 @@ as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
 #' @noRd
 as_data_table_omega_alpha <-function(x, draws, n_draws, response,
   category, ...) {
-  n_cat <- length(category)
   D <- x$stan$sampling_vars$D
   data.table::data.table(
     parameter = rep(
       paste0("omega_alpha_", response, "_d", seq_len(D)),
-      each = n_cat * n_draws
+      each = n_draws
     ),
     value = c(draws),
-    category = rep(category, each = n_draws)
+    category = category
   )
 }
 
@@ -547,7 +543,7 @@ as_data_table_sigma <- function(draws, response, ...) {
 
 #' @describeIn as_data_table_default Data Table for a "sigma_nu" Parameter
 #' @noRd
-as_data_table_sigma_nu <- function(x, draws, n_draws, response, ...) {
+as_data_table_sigma_nu <- function(x, draws, n_draws, response, category, ...) {
   icpt <- ifelse_(
     get_channel(x, response)$has_random_intercept,
     "alpha",
@@ -559,7 +555,8 @@ as_data_table_sigma_nu <- function(x, draws, n_draws, response, ...) {
   )
   data.table::data.table(
     parameter = rep(var_names, each = n_draws),
-    value = c(draws)
+    value = c(draws),
+    category = category
   )
 }
 
@@ -591,7 +588,6 @@ as_data_table_sigma_lambda <- function(draws, response, ...) {
 as_data_table_psi <- function(
     x, draws, n_draws,
     response, category, include_fixed, ...) {
-  n_cat <- length(category)
   fixed <- x$stan$fixed
   all_time_points <- sort(unique(x$data[[x$time_var]]))
   time_points <- ifelse_(
@@ -602,18 +598,14 @@ as_data_table_psi <- function(
   n_na <- include_fixed * fixed * n_draws
   n_time <- length(time_points)
   n_time2 <- n_time - include_fixed * fixed
-  data.table::rbindlist(
-    lapply(seq_len(n_cat), function(i) {
-      data.table::data.table(
-        parameter = paste0("psi_", response),
-        value = c(
-          rep(NA, n_na),
-          c(draws[, , (i - 1L) * n_time2 + seq_len(n_time2)])
-        ),
-        time = rep(time_points, each = n_draws),
-        category = category[i]
-      )
-    })
+  data.table::data.table(
+    parameter = paste0("psi_", response),
+    value = c(
+      rep(NA, n_na),
+      c(draws[, , seq_len(n_time2)])
+    ),
+    time = rep(time_points, each = n_draws),
+    category = category
   )
 }
 
@@ -627,15 +619,14 @@ as_data_table_tau_psi <- function(draws, response, ...) {
 #' @noRd
 as_data_table_omega_psi <- function(x, draws, n_draws, response,
   category, ...) {
-  n_cat <- length(category)
   D <- x$stan$sampling_vars$D
   data.table::data.table(
     parameter = rep(
       paste0("omega_psi_", response, "_d", seq_len(D)),
-      each = n_cat * n_draws
+      each =  n_draws
     ),
     value = c(draws),
-    category = rep(category, each = n_draws)
+    category = category
   )
 }
 
