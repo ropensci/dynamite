@@ -104,7 +104,7 @@ test_that("parameters for poisson mixed model are recovered", {
       "sigma_nu_y_alpha", "sigma_nu_y_x", "alpha_y", "beta_y_x",
       "L_nu"
     ),
-    response = "y",
+    response = c(rep("y", 4), ""),
     prior = c(
       "std_normal()", "std_normal()",
       "student_t(3, 2, 2)", "normal(0, 10)", "lkj_corr_cholesky(1)"
