@@ -43,7 +43,7 @@ Suggests:
     covr,
     dplyr,
     knitr,
-    mockery,
+    mockthat,
     rmarkdown,
     testthat (>= 3.0.0),
     tidyr

@@ -177,7 +177,8 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   }
   # avoid NSE notes from R CMD check
   .chain <- .draw <- .iteration <- NULL
-  category <- group <- parameter <- response <- time <- type <- value <- NULL
+  category <- group <- parameter <- response <- NULL
+  catstr <- time <- type <- value <- NULL
   out_all <- NULL
   if ("xi" %in% types) {
     out_all <- data.table::data.table(
@@ -211,7 +212,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   }
   categories <- c(NA_character_, ulapply(
     attr(x$stan$responses, "resp_class"),
-    function(y) attr(y, "levels")[-1]
+    function(y) attr(y, "levels")[-1L]
   ))
 
   tmp <- data.table::as.data.table(
@@ -248,7 +249,8 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       "No parameters of type {.var ",
       paste(types, collapse = "}, {.var "),
       "} found for any of the response channels {.var ",
-      paste(responses, collapse = "}, {.var "), "}."
+      paste(responses, collapse = "}, {.var "),
+      "}."
     )
   )
   all_values <- vector(mode = "list", length = n_pars + 1L)

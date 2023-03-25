@@ -232,7 +232,7 @@ test_that("gaps in newdata with exogenous predictors and no impute warns", {
     predict(gaussian_example_single_fit, newdata = newdata, ndraws = 1)
   )
   expect_match(
-    w[1],
+    w[1L],
     paste0(
       "Time index variable `time` of `newdata` has gaps:\n",
       "i Filling the `newdata` to regular time points\\. This will lead to ",
@@ -245,10 +245,12 @@ test_that("gaps in newdata with exogenous predictors and no impute warns", {
 # Stan warnings -----------------------------------------------------------
 
 test_that("categorical non-glm availability warns", {
-  mockery::stub(sampling_info, "stan_supports_categorical_logit_glm", FALSE)
-  mockery::stub(sampling_info, "get_family_names", "categorical")
   expect_warning(
-    sampling_info(NULL, TRUE, NULL, "rstan"),
+    mockthat::with_mock(
+      stan_supports_categorical_logit_glm = function(...) FALSE,
+      get_family_names = function(...) "categorical",
+      sampling_info(NULL, TRUE, NULL, "rstan")
+    ),
     paste0(
       "Efficient GLM variant of the categorical likelihood is not available ",
       "in this version of rstan\\.\n",
@@ -259,12 +261,14 @@ test_that("categorical non-glm availability warns", {
 })
 
 test_that("windows and old rstan warns on attach", {
-  mockery::stub(startup, "stan_version", "2.23")
-  mockery::stub(startup, "is_windows", TRUE)
-  mockery::stub(startup, "getRversion", "4.2.0")
-  out <- capture.output(startup(), type = "message")
+  out <- mockthat::with_mock(
+    stan_version = function(...) "2.23",
+    is_windows = function(...) TRUE,
+    R_version = function(...) "4.2.0",
+     capture.output(startup(), type = "message")
+  )
   expect_match(
-    out[1],
+    out[1L],
     paste0(
       "Please update your `rstan` and `StanHeaders` installations before ",
       "using `dynamite` with the `rstan` backend by running:"

@@ -5,7 +5,7 @@
 #' @param name \[`character(1)`]\cr Name of the family.
 #' @noRd
 dynamitefamily <- function(name) {
-  name <- tolower(as.character(name)[1])
+  name <- tolower(as.character(name)[1L])
   stopifnot_(
     is_supported(name),
     "{.val {name}} is not a supported family."

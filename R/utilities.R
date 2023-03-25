@@ -390,13 +390,18 @@ is_windows <- function() {
   identical(.Platform$OS.type, "windows")
 }
 
+#' R version (for mocking)
+#'
+#' @noRd
+R_version <- function() {
+  getRversion()
+}
+
 #' Package startup functionality
 #'
 #' @noRd
 startup <- function() {
-  if (!is_windows() ||
-      getRversion() < "4.2.0" ||
-      utils::compareVersion(stan_version("rstan"), "2.26") >= 0) {
+  if (stan_version_is_functional()) {
     return()
   }
   packageStartupMessage(

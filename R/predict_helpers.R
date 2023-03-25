@@ -1118,15 +1118,15 @@ predict_expr$predicted$categorical <- "
 "
 
 predict_expr$predicted$multinomial <- "
-  pred <- matrix(0L, k, S)
+  pred <- matrix(0L, k, d)
   n <- max(trials)
   for (j in seq_len(n)) {{
     rows <- which(j <= trials)
-    cols <- max.col(xbeta[rows, ] - log(-log(runif(S * length(rows)))))
+    cols <- max.col(xbeta[rows, ] - log(-log(runif(d * length(rows)))))
     trial_idx <- cbind(rows, cols)
     pred[trial_idx] <- pred[trial_idx] + 1L
   }}
-  for (s in seq_len(S)) {{
+  for (s in seq_len(d)) {{
     data.table::set(
       x = out,
       i = idx_data,

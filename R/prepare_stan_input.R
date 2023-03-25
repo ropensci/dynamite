@@ -148,14 +148,16 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       channel_vars[[y_name]] <- prep$channel
       vectorizable_priors <- ifelse_(
         is_categorical(dformula[[i]]$family),
-        unlist(lapply(
-          prep$channel$categories[-1], function(s) {
-            extract_vectorizable_priors(
-              prep$channel$prior_distr[[s]],
-              paste0(y_name, "_", s)
-            )
-          }
-        ), recursive = FALSE
+        unlist(
+          lapply(
+            prep$channel$categories[-1L], function(s) {
+              extract_vectorizable_priors(
+                prep$channel$prior_distr[[s]],
+                paste0(y_name, "_", s)
+              )
+            }
+          ),
+          recursive = FALSE
         ),
         extract_vectorizable_priors(
           prep$channel$prior_distr,
@@ -205,9 +207,24 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
           priors = priors
         )
       )
-      vectorizable_priors <- extract_vectorizable_priors(
-        prep$channel$prior_distr,
-        y_cg
+      vectorizable_priors <- ifelse_(
+        is_multinomial(dformula[[i]]$family),
+        unlist(
+          lapply(
+            y_name[-1L],
+            function(s) {
+              extract_vectorizable_priors(
+                prep$channel$prior_distr[[s]],
+                s
+              )
+            }
+          ),
+          recursive = FALSE
+        ),
+        extract_vectorizable_priors(
+          prep$channel$prior_distr,
+          y_name
+        )
       )
       sampling_vars[paste0("y_", y_name)] <- NULL
       sampling_vars <- c(
@@ -513,7 +530,7 @@ prepare_channel_categorical <- function(y, Y, channel, sampling,
   sd_gamma <- 2.0 / sd_x
   mean_gamma <- rep(0.0, length(sd_gamma))
   outcat <- lapply(
-    resp_levels[-1],
+    resp_levels[-1L],
     function(s) {
       prepare_channel_default(
         y,
@@ -529,16 +546,28 @@ prepare_channel_categorical <- function(y, Y, channel, sampling,
       )
     }
   )
-  out <- outcat[[1]]
-  out$priors <- data.table::setDF(data.table::rbindlist(lapply(outcat, "[[", "priors")))
+  out <- outcat[[1L]]
+  out$priors <- data.table::setDF(
+    data.table::rbindlist(
+      lapply(outcat, "[[", "priors")
+    )
+  )
   out$channel$prior_distr <- lapply(outcat, function(x) x$channel$prior_distr)
-  names(out$channel$prior_distr) <- resp_levels[-1]
+  names(out$channel$prior_distr) <- resp_levels[-1L]
   if (is.null(priors)) {
     defaults <- data.table::rbindlist(
       lapply(
-        resp_levels[-1],
+        resp_levels[-1L],
         function(s) {
-          default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y, category = s)$priors
+          default_priors(
+            y,
+            channel,
+            mean_gamma,
+            sd_gamma,
+            mean_y,
+            sd_y,
+            category = s
+          )$priors
         }
       )
     )
@@ -584,7 +613,7 @@ prepare_channel_multinomial <- function(y, y_cg, Y, channel, sampling,
   sd_gamma <- 2.0 / sd_x
   mean_gamma <- rep(0.0, length(sd_gamma))
   outcat <- lapply(
-    y[-1],
+    y[-1L],
     function(s) {
       prepare_channel_default(
         s,
@@ -599,14 +628,18 @@ prepare_channel_multinomial <- function(y, y_cg, Y, channel, sampling,
       )
     }
   )
-  out <- outcat[[1]]
-  out$priors <- data.table::setDF(data.table::rbindlist(lapply(outcat, "[[", "priors")))
+  out <- outcat[[1L]]
+  out$priors <- data.table::setDF(
+    data.table::rbindlist(
+      lapply(outcat, "[[", "priors")
+    )
+  )
   out$channel$prior_distr <- lapply(outcat, function(x) x$channel$prior_distr)
-  names(out$channel$prior_distr) <- y[-1]
+  names(out$channel$prior_distr) <- y[-1L]
   if (is.null(priors)) {
     defaults <- data.table::rbindlist(
       lapply(
-        y[-1],
+        y[-1L],
         function(s) {
           default_priors(s, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
         }

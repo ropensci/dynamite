@@ -67,6 +67,15 @@ stan_version <- function(backend) {
   )
 }
 
+#' Check That Stan Installation Is Functional
+#'
+#' @noRd
+stan_version_is_functional <- function() {
+  !is_windows() ||
+    R_version() < "4.2.0" ||
+    utils::compareVersion(stan_version("rstan"), "2.26") >= 0
+}
+
 #' Is the GLM Likelihood Variant Supported By Stan for a Family
 #'
 #' @param family \[`dynamitefamily`]\cr A family object.

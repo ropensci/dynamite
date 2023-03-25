@@ -20,19 +20,19 @@ test_that("formula parts are correct", {
 
 test_that("formula incrementation logic is correct", {
   obs_list <- list(
-    obs(y ~ 1, family = "gaussian")[[1]],
-    obs(y ~ -1 + varying(~1), family = "gaussian")[[1]],
-    obs(y ~ x, family = "gaussian")[[1]],
-    obs(y ~ -1 + varying(~x), family = "gaussian")[[1]],
-    obs(y ~ -1 + x + varying(~z), family = "gaussian")[[1]],
-    obs(y ~ x + varying(~ -1 + z), family = "gaussian")[[1]],
-    obs(y ~ -1 + varying(~ x + z), family = "gaussian")[[1]],
-    obs(y ~ -1 + random(~1), family = "gaussian")[[1]],
-    obs(y ~ -1 + random(~x), family = "gaussian")[[1]],
-    obs(y ~ -1 + x + random(~z), family = "gaussian")[[1]],
-    obs(y ~ x + random(~ -1 + z), family = "gaussian")[[1]],
-    obs(y ~ -1 + random(~ x + z), family = "gaussian")[[1]],
-    obs(y ~ 1 + varying(~ -1 + x) + random(~ -1 + z), family = "gaussian")[[1]]
+    obs(y ~ 1, family = "gaussian")[[1L]],
+    obs(y ~ -1 + varying(~1), family = "gaussian")[[1L]],
+    obs(y ~ x, family = "gaussian")[[1L]],
+    obs(y ~ -1 + varying(~x), family = "gaussian")[[1L]],
+    obs(y ~ -1 + x + varying(~z), family = "gaussian")[[1L]],
+    obs(y ~ x + varying(~ -1 + z), family = "gaussian")[[1L]],
+    obs(y ~ -1 + varying(~ x + z), family = "gaussian")[[1L]],
+    obs(y ~ -1 + random(~1), family = "gaussian")[[1L]],
+    obs(y ~ -1 + random(~x), family = "gaussian")[[1L]],
+    obs(y ~ -1 + x + random(~z), family = "gaussian")[[1L]],
+    obs(y ~ x + random(~ -1 + z), family = "gaussian")[[1L]],
+    obs(y ~ -1 + random(~ x + z), family = "gaussian")[[1L]],
+    obs(y ~ 1 + varying(~ -1 + x) + random(~ -1 + z), family = "gaussian")[[1L]]
   )
   out_list <- list(
     list(
