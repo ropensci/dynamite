@@ -334,7 +334,7 @@ create_transformed_parameters <- function(idt, backend, cg, cvars, cgvars) {
       ifelse_(
         is_categorical(x$family),
         setNames(rep(x$K_random, x$S - 1), paste0(x$y, "_", x$categories[-1])),
-        x$K_random
+        setNames(x$K_random, x$y)
         )
     })))
     Ks <- Ks[Ks > 0]
