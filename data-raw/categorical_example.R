@@ -23,24 +23,14 @@ f <- obs(x ~ z + lag(x) + lag(y), family = "categorical") +
   obs(y ~ z + lag(x) + lag(y), family = "categorical")
 
 init <- list(
-  beta_x = matrix(
-    c(
-      2, 0.8, 0.2, 0, 0,
-      1, 0.5, 2, 0.2, 0.1
-    ),
-    nrow = 5,
-    ncol = 2
-  ),
-  a_x = c(-0.1, 0.2),
-  beta_y = matrix(
-    c(
-      0, 1, 0.8, 0.3, 0.5,
-      1, 0.2, 0, 0.3, -0.5
-    ),
-    nrow = 5,
-    ncol = 2
-  ),
-  a_y = c(0.1, -0.5)
+  beta_x_B = c(2, 0.8, 0.2, 0, 0),
+  beta_x_C = c(1, 0.5, 2, 0.2, 0.1),
+  a_x_B = -0.1,
+  a_x_C = 0.2,
+  beta_y_b = c(0, 1, 0.8, 0.3, 0.5),
+  beta_y_c = c(1, 0.2, 0, 0.3, -0.5),
+  a_y_b = 0.1,
+  a_y_c = -0.5
 )
 
 fit <- dynamite(
