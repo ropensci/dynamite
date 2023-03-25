@@ -317,11 +317,6 @@ data_lines_categorical <- function(y, idt, default, has_missing, backend,
     onlyif(has_missing, "// Missing data indicators"),
     onlyif(
       has_missing,
-
-
-
-
-
       stan_array(backend, "int", "obs_{y}", "N, T", "lower=0")
     ),
     onlyif(
@@ -367,9 +362,6 @@ data_lines_multinomial <- function(y_cg, idt, default, has_missing, backend,
       has_missing,
       stan_array(backend, "int", "n_obs_{y_cg}", "T", "lower=0")
     ),
-
-
-
     default,
     prior_data,
     "// Response",
