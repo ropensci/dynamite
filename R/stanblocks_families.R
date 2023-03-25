@@ -1363,6 +1363,7 @@ model_lines_multinomial <- function(cvars, cgvars, idt, ...) {
     cgvars$y[-1],
     function(s) {
       cvars[[s]]$y <- s
+      cvars[[s]]$obs <- cgvars$obs
       do.call(intercept_lines, c(
         cvars[[s]], idt = idt, backend = cgvars$backend, ydim = cgvars$y_cg
       ))
