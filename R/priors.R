@@ -1,9 +1,9 @@
 #' Construct a Vectorized Priors
 #'
-#' @param ptype \[character(1L)]\cr Type of the parameter.
+#' @param ptype \[character(1)]\cr Type of the parameter.
 #' @param priors \[`data.frame`]\cr Prior definitions.
 #' @param channel \[`list()`]\cr Channel-specific variables for Stan sampling
-#' @param category \[character(1L)]\cr Category of the categorical response.
+#' @param category \[`character(1)`]\cr Category of the categorical response.
 #' @noRd
 create_vectorized_prior <- function(ptype, priors, channel, category = "") {
   ycat <- ifelse(
@@ -27,7 +27,9 @@ create_vectorized_prior <- function(ptype, priors, channel, category = "") {
   }
   vectorized_prior
 }
+
 #' Find And Rename Vectorizable Priors for Stan
+#'
 #' @param priors \[`data.frame`]\cr Prior definitions.
 #' @param y \[`character(1)`]\cr Name of the response variable.
 #' @noRd
@@ -35,22 +37,27 @@ extract_vectorizable_priors <- function(priors, y) {
   priors_for_stan <- list()
   onlyif(
     isTRUE(priors$vectorized_beta),
-    priors_for_stan[[paste0("beta_prior_pars_", y)]] <- priors$beta_prior_pars
+    priors_for_stan[[paste0("beta_prior_pars_", y)]] <-
+      priors$beta_prior_pars
   )
   onlyif(
     isTRUE(priors$vectorized_delta),
-    priors_for_stan[[paste0("delta_prior_pars_", y)]] <- priors$delta_prior_pars
+    priors_for_stan[[paste0("delta_prior_pars_", y)]] <-
+      priors$delta_prior_pars
   )
   onlyif(
     isTRUE(priors$vectorized_tau),
-    priors_for_stan[[paste0("tau_prior_pars_", y)]] <- priors$tau_prior_pars
+    priors_for_stan[[paste0("tau_prior_pars_", y)]] <-
+      priors$tau_prior_pars
   )
   onlyif(
     isTRUE(priors$vectorized_sigma_nu),
-    priors_for_stan[[paste0("sigma_nu_prior_pars_", y)]] <- priors$sigma_nu_prior_pars
+    priors_for_stan[[paste0("sigma_nu_prior_pars_", y)]] <-
+      priors$sigma_nu_prior_pars
   )
   priors_for_stan
 }
+
 #' Construct Common Priors among Channels
 #'
 #' @inheritParams splines
@@ -180,7 +187,8 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
       category = category
     )
     if (channel$nonzero_lambda) {
-      prior_distributions$tau_psi_prior_distr <- paste0("normal(0, ", sd_y, ")")
+      prior_distributions$tau_psi_prior_distr <-
+        paste0("normal(0, ", sd_y, ")")
       priors$tau_psi <- data.frame(
         parameter = paste0("tau_psi_", y, ycat),
         response = y,
@@ -209,7 +217,8 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
       category = category
     )
     if (channel$has_varying_intercept) {
-      prior_distributions$tau_alpha_prior_distr <- paste0("normal(0, ", sd_y, ")")
+      prior_distributions$tau_alpha_prior_distr <-
+        paste0("normal(0, ", sd_y, ")")
       priors$tau_alpha <- data.frame(
         parameter = paste0("tau_alpha_", y, ycat),
         response = y,
@@ -318,7 +327,8 @@ check_priors <- function(priors, defaults) {
   )
   unconstrained_dists <- c(
     "normal", "student_t", "double_exponential", "cauchy", "exp_mod_normal",
-    "skew_normal", "logistic", "gumbel", "skew_double_exponential", "std_normal"
+    "skew_normal", "logistic", "gumbel", "skew_double_exponential",
+    "std_normal"
   )
   positive_dists <- c(
     "gamma", "exponential", "lognormal", "chi_square", "inv_chi_square",

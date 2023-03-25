@@ -80,15 +80,10 @@ test_that("multinomial fit and predict work", {
   )
 
   init <- list(
-    beta_y1_y2_y3 = matrix(
-      c(
-        1.2, 0.8, 0.2, 0.1,
-        1,   0.5, 0.6, 0.3
-      ),
-      nrow = 4,
-      ncol = 2
-    ),
-    a_y1_y2_y3 = c(-0.1, 0.2)
+    beta_y2 = c(1.2, 0.8, 0.2, 0.1),
+    beta_y3 = c(1, 0.5, 0.6, 0.3),
+    a_y2 = -0.1,
+    a_y3 = 0.2
   )
 
   expect_error(

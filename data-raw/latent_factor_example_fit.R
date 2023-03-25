@@ -6,10 +6,9 @@ library(dynamite)
 # restrictions in CRAN.
 set.seed(1)
 latent_factor_example_fit <- dynamite(
-  dformula =
-    obs(y ~ 1, family = "gaussian") +
-      lfactor() +
-      splines(df = 10),
+  dformula = obs(y ~ 1, family = "gaussian") +
+    lfactor() +
+    splines(df = 10),
   data = latent_factor_example,
   group = "id",
   time = "time",

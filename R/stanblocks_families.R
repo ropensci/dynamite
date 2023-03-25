@@ -29,6 +29,14 @@ lines_wrap <- function(prefix, family, idt, backend, args) {
 #' @param backend \[`character(1)`]\cr `"rstan"` or `"cmdstanr"`.
 #' @param y \[`character(1)`]\cr The name of the channel or vector of
 #'   channel names for multivariate channels.
+#' @param t \[`character(1)`]\cr  The time index. Either `"t"` if there
+#'   are observations at every time point, otherwise a channel-specific
+#'   vector of indices with at least one observation.
+#' @param obs \[`character(1)`]\cr A vector of indices indicating non-missing
+#'   values of the channel.
+#' @param t_obs \[`character(1)`]\cr Either `"T"` if the are observations
+#'   at every time point, otherwise a channel specific integer that represents
+#'   the number of time points with at least one observation for the channel.
 #' @param default \[`character(1)`]\cr Default channel specifications for the
 #'   block.
 #' @param intercept \[`character(1)`]\cr Model block intercept definitions
@@ -36,10 +44,10 @@ lines_wrap <- function(prefix, family, idt, backend, args) {
 #' @param y_cg \[`character(1)`]\cr Name of the channel group for multivariate
 #'   channels.
 #' @param idt \[`function`]\cr An indentation function, see [indenter_()].
-#' @param obs \[`integer()`]\cr A vector of indices indicating non-missing
-#'   values of the channel.
 #' @param has_missing \[`logical(1)`]\cr Does the channel contain missing
 #'   observations?
+#' @param has_fully_missing \[`logical(1)`]\cr Does the channel have time
+#'   points with zero observations?
 #' @param has_offset \[`logical(1)`]\cr Does the channel contain an offset term
 #' @param has_fixed \[`logical(1)`]\cr Does the channel have time-invariant
 #'   predictors?
@@ -163,18 +171,33 @@ NULL
 # }
 # Data block --------------------------------------------------------------
 
-missing_data_lines <- function(y, idt, has_missing, backend) {
+missing_data_lines <- function(y, idt,
+                               has_missing, has_fully_missing, backend) {
+  mis <- character(0L)
+  full_mis <- character(0L)
   if (has_missing) {
-    paste_rows(
+    mis <- paste_rows(
       "// Missing data indicators",
       stan_array(backend, "int", "obs_{y}", "N, T", "lower=0"),
       stan_array(backend, "int", "n_obs_{y}", "T", "lower=0"),
       .indent = idt(1),
-      .parse = FALSE
+      .parse = TRUE
     )
-  } else {
-    character(0L)
   }
+  if (has_fully_missing) {
+    full_mis <- paste_rows(
+      "int<lower=0> T_obs_{y};",
+      stan_array(backend, "int", "t_obs_{y}", "T_obs_{y}", "lower=0"),
+      .indent = idt(1),
+      .parse = TRUE
+    )
+  }
+  paste_rows(
+    mis,
+    full_mis,
+    .indent = idt(0),
+    .parse = FALSE
+  )
 }
 
 prior_data_lines <- function(y, idt, prior_distr,
@@ -235,7 +258,8 @@ prior_data_lines <- function(y, idt, prior_distr,
     .indent = idt(1)
   )
 }
-data_lines_default <- function(y, idt, has_missing, has_random_intercept,
+
+data_lines_default <- function(y, idt, has_random_intercept,
                                K_fixed, K_varying, K_random, backend, ...) {
   icpt <- ifelse(
     has_random_intercept,
@@ -299,10 +323,10 @@ data_lines_default <- function(y, idt, has_missing, has_random_intercept,
   )
 }
 
-data_lines_categorical <- function(y, idt, default, has_missing, backend,
-                                   prior_distr, K_fixed, K_varying, K_random,
-                                   categories, ...) {
-
+data_lines_categorical <- function(y, idt, default, has_missing,
+                                   has_fully_missing, prior_distr,
+                                   K_fixed, K_varying, K_random,
+                                   categories, backend, ...) {
   prior_data <- lapply(
     categories[-1L],
     function(s) {
@@ -311,35 +335,25 @@ data_lines_categorical <- function(y, idt, default, has_missing, backend,
       )
     }
   )
-
-  dtext_def <- paste_rows(
+  paste_rows(
     "int<lower=0> S_{y}; // number of categories",
-    onlyif(has_missing, "// Missing data indicators"),
-    onlyif(
-      has_missing,
-      stan_array(backend, "int", "obs_{y}", "N, T", "lower=0")
-    ),
-    onlyif(
-      has_missing,
-
-      stan_array(backend, "int", "n_obs_{y}", "T", "lower=0")
-    ),
+    missing_data_lines(y, idt, has_missing, has_fully_missing, backend),
     default,
     prior_data,
     "// Response",
     stan_array(backend, "int", "y_{y}", "T, N", "lower=0"),
-    .indent = idt(1)
+    .indent = idt(c(1, 0, 0, 0, 1, 1))
   )
-  paste_rows(dtext_def, .parse = FALSE)
 }
 
-data_lines_multinomial <- function(y_cg, idt, default, has_missing, backend,
-                                   prior_distr, K_fixed, K_varying, K_random,
-                                   y, has_random_intercept, ...) {
+data_lines_multinomial <- function(y_cg, idt, default, has_missing,
+                                   has_fully_missing, prior_distr,
+                                   K_fixed, K_varying, K_random,
+                                   y, has_random_intercept, backend, ...) {
 
-  default <- data_lines_default(y_cg, idt, has_missing, has_random_intercept,
-                                 K_fixed, K_varying, K_random, backend)
-
+  default <- data_lines_default(
+    y_cg, idt, has_random_intercept, K_fixed, K_varying, K_random, backend
+  )
   prior_data <- ulapply(
     y[-1L],
     function(s) {
@@ -350,31 +364,22 @@ data_lines_multinomial <- function(y_cg, idt, default, has_missing, backend,
       )
     }
   )
-
-  dtext_def <- paste_rows(
+  paste_rows(
     "int<lower=0> S_{y_cg}; // number of categories",
-    onlyif(has_missing, "// Missing data indicators"),
-    onlyif(
-      has_missing,
-      stan_array(backend, "int", "obs_{y_cg}", "N, T", "lower=0")
-    ),
-    onlyif(
-      has_missing,
-      stan_array(backend, "int", "n_obs_{y_cg}", "T", "lower=0")
-    ),
+    missing_data_lines(y_cg, idt, has_missing, has_fully_missing, backend),
     default,
     prior_data,
     "// Response",
     stan_array(backend, "int", "y_{y_cg}", "T, N, S_{y_cg}", "lower=0"),
-    .indent = idt(1)
+    .indent = idt(c(1, 0, 0, 0, 1, 1))
   )
-  paste_rows(dtext_def, .parse = FALSE)
 }
 
-data_lines_gaussian <- function(y, idt, default, has_missing, backend,
-                                prior_distr, K_fixed, K_varying, K_random, ...) {
+data_lines_gaussian <- function(y, idt, default, has_missing,
+                                has_fully_missing, prior_distr,
+                                K_fixed, K_varying, K_random, backend, ...) {
   paste_rows(
-    missing_data_lines(y, idt, has_missing, backend),
+    missing_data_lines(y, idt, has_missing, has_fully_missing, backend),
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     "matrix[N, T] y_{y};",
@@ -383,30 +388,22 @@ data_lines_gaussian <- function(y, idt, default, has_missing, backend,
 }
 
 data_lines_mvgaussian <- function(y_cg, idt, default, has_missing,
-                                  backend, prior_distr,
-                                  K_fixed, K_varying, K_random, ...) {
+                                  has_fully_missing, prior_distr,
+                                  K_fixed, K_varying, K_random, backend, ...) {
   paste_rows(
-    onlyif(has_missing, "// Missing data indicators"),
-    onlyif(
-      has_missing,
-      stan_array(backend, "int", "obs_{y_cg}", "N, T", "lower=0")
-    ),
-    onlyif(
-      has_missing,
-      stan_array(backend, "int", "n_obs_{y_cg}", "T", "lower=0")
-    ),
+    missing_data_lines(y_cg, idt, has_missing, has_fully_missing, backend),
     default,
     "int<lower=0> O_{y_cg};",
     stan_array(backend, "vector", "y_{y_cg}", "T, N", dims = "O_{y_cg}"),
-    .indent = idt(c(1, 1, 1, 0, 1, 1))
+    .indent = idt(c(0, 0, 1, 1))
   )
 }
 
-data_lines_binomial <- function(y, idt, default, has_missing, backend,
-                                prior_distr,
-                                K_fixed, K_varying, K_random, ...) {
+data_lines_binomial <- function(y, idt, default, has_missing,
+                                has_fully_missing, prior_distr,
+                                K_fixed, K_varying, K_random, backend, ...) {
   paste_rows(
-    missing_data_lines(y, idt, has_missing, backend),
+    missing_data_lines(y, idt, has_missing, has_fully_missing, backend),
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     stan_array(backend, "int", "y_{y}", "T, N", "lower=0"),
@@ -416,11 +413,11 @@ data_lines_binomial <- function(y, idt, default, has_missing, backend,
   )
 }
 
-data_lines_bernoulli <- function(y, idt, default, has_missing, backend,
-                                 prior_distr,
-                                 K_fixed, K_varying, K_random, ...) {
+data_lines_bernoulli <- function(y, idt, default, has_missing,
+                                 has_fully_missing, prior_distr,
+                                 K_fixed, K_varying, K_random,  backend, ...) {
   paste_rows(
-    missing_data_lines(y, idt, has_missing, backend),
+    missing_data_lines(y, idt, has_missing, has_fully_missing, backend),
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     stan_array(backend, "int", "y_{y}", "T, N", "lower=0,upper=1"),
@@ -428,11 +425,11 @@ data_lines_bernoulli <- function(y, idt, default, has_missing, backend,
   )
 }
 
-data_lines_poisson <- function(y, idt, default, has_missing, has_offset,
-                               backend, prior_distr,
-                               K_fixed, K_varying, K_random, ...) {
+data_lines_poisson <- function(y, idt, default, has_missing,
+                               has_fully_missing, has_offset, prior_distr,
+                               K_fixed, K_varying, K_random, backend, ...) {
   paste_rows(
-    missing_data_lines(y, idt, has_missing, backend),
+    missing_data_lines(y, idt, has_missing,has_fully_missing, backend),
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     stan_array(backend, "int", "y_{y}", "T, N", "lower=0"),
@@ -445,11 +442,11 @@ data_lines_poisson <- function(y, idt, default, has_missing, has_offset,
   )
 }
 
-data_lines_negbin <- function(y, idt, default, has_missing, has_offset,
-                              backend, prior_distr,
-                              K_fixed, K_varying, K_random, ...) {
+data_lines_negbin <- function(y, idt, default, has_missing,
+                              has_fully_missing, has_offset, prior_distr,
+                              K_fixed, K_varying, K_random, backend, ...) {
   paste_rows(
-    missing_data_lines(y, idt, has_missing, backend),
+    missing_data_lines(y, idt, has_missing, has_fully_missing, backend),
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     stan_array(backend, "int", "y_{y}", "T, N", "lower=0"),
@@ -463,10 +460,11 @@ data_lines_negbin <- function(y, idt, default, has_missing, has_offset,
 }
 
 data_lines_exponential <- function(y, idt, default, has_missing,
-                                   backend, prior_distr,
-                                   K_fixed, K_varying, K_random, ...) {
+                                   has_fully_missing, prior_distr,
+                                   K_fixed, K_varying, K_random,
+                                   backend, ...) {
   paste_rows(
-    missing_data_lines(y, idt, has_missing, backend),
+    missing_data_lines(y, idt, has_missing, has_fully_missing, backend),
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     "matrix<lower=0>[N, T] y_{y};",
@@ -474,10 +472,11 @@ data_lines_exponential <- function(y, idt, default, has_missing,
   )
 }
 
-data_lines_gamma <- function(y, idt, default, has_missing, backend,
-                             prior_distr, K_fixed, K_varying, K_random, ...) {
+data_lines_gamma <- function(y, idt, default, has_missing,
+                             has_fully_missing, prior_distr,
+                             K_fixed, K_varying, K_random, backend, ...) {
   paste_rows(
-    missing_data_lines(y, idt, has_missing, backend),
+    missing_data_lines(y, idt, has_missing, has_fully_missing, backend),
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     "matrix<lower=0>[N, T] y_{y};",
@@ -485,10 +484,11 @@ data_lines_gamma <- function(y, idt, default, has_missing, backend,
   )
 }
 
-data_lines_beta <- function(y, idt, default, has_missing, backend, prior_distr,
-                            K_fixed, K_varying, K_random, ...) {
+data_lines_beta <- function(y, idt, default, has_missing,
+                            has_fully_missing, prior_distr,
+                            K_fixed, K_varying, K_random, backend, ...) {
   paste_rows(
-    missing_data_lines(y, idt, has_missing, backend),
+    missing_data_lines(y, idt, has_missing, has_fully_missing, backend),
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     "matrix<lower=0, upper=1>[N, T] y_{y};",
@@ -496,10 +496,11 @@ data_lines_beta <- function(y, idt, default, has_missing, backend, prior_distr,
   )
 }
 
-data_lines_student <- function(y, idt, default, has_missing, backend,
-                               prior_distr, K_fixed, K_varying, K_random, ...) {
+data_lines_student <- function(y, idt, default, has_missing,
+                               has_fully_missing, prior_distr,
+                               K_fixed, K_varying, K_random, backend, ...) {
   paste_rows(
-    missing_data_lines(y, idt, has_missing, backend),
+    missing_data_lines(y, idt, has_missing, has_fully_missing, backend),
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     "matrix[N, T] y_{y};",
@@ -589,7 +590,10 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
   # positivity constraint to deal with label-switching
   tr <- ifelse(has_lfactor && !nonzero_lambda, "<lower=0>", "")
   paste_rows(
-    onlyif(has_fixed, "vector[K_fixed_{ydim}] beta_{y}; // Fixed coefficients"),
+    onlyif(
+      has_fixed,
+      "vector[K_fixed_{ydim}] beta_{y}; // Fixed coefficients"
+    ),
     onlyif(
       has_varying,
       "matrix[K_varying_{ydim}, D] {oname}{y}; // Spline coefficients"
@@ -599,7 +603,7 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
       "vector<lower={lb}>[K_varying_{ydim}] tau_{y}; // SDs for the random walks"
     ),
     ifelse_(
-      (has_fixed_intercept || has_varying_intercept),
+      has_fixed_intercept || has_varying_intercept,
       "real a_{y}; // Mean of the first time point",
       ""
     ),
@@ -642,7 +646,7 @@ parameters_lines_categorical <- function(y, idt, default, ...) {
 parameters_lines_multinomial <- function(y_cg, idt, univariate, ...) {
   paste_rows(
     univariate,
-    .indent = idt(1)
+    .indent = idt(0)
   )
 }
 
@@ -1173,7 +1177,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
 }
 
 # intercept part, or the whole linear predictor in case no glm
-intercept_lines <- function(y, obs, family,
+intercept_lines <- function(y, t, obs, t_obs, family,
                             has_varying, has_fixed, has_random,
                             has_fixed_intercept,
                             has_varying_intercept, has_random_intercept,
@@ -1242,8 +1246,6 @@ intercept_lines <- function(y, obs, family,
   glm <- stan_supports_glm_likelihood(family, backend, common_intercept)
   intercept <- ifelse_(
     glm,
-
-
     glue::glue(
       "{intercept_alpha}{offset}{intercept_nu}{random}{lfactor}"
     ),
@@ -1255,8 +1257,8 @@ intercept_lines <- function(y, obs, family,
   intercept
 }
 
-model_lines_categorical <- function(y, idt, priors, intercept,
-                                    obs, has_fixed, has_varying,
+model_lines_categorical <- function(y, t, obs, t_obs, idt, priors, intercept,
+                                    has_fixed, has_varying,
                                     categories, multinomial = FALSE, ...) {
 
   if (attr(intercept[[1]], "glm") && !multinomial) {
@@ -1280,11 +1282,11 @@ model_lines_categorical <- function(y, idt, priors, intercept,
     )
     beta <- onlyif(
       has_fixed,
-      "gamma__{y}[L_fixed_{y}, {seq.int(2L, S)}] = beta_{y}_{categories[2L:S]};"
+      "gamma__{y}[L_fixed_{y}, {seq.int(2L, S)}] = beta_{y}_{categories[seq.int(2L, S)]};"
     )
     delta <- onlyif(
       has_varying,
-      "gamma__{y}[L_varying_{y}, {seq.int(2L, S)}] = delta_{y}_{categories[2L:S]}[t];"
+      "gamma__{y}[L_varying_{y}, {seq.int(2L, S)}] = delta_{y}_{categories[seq.int(2L, S)]}[t];"
     )
     likelihood_term <- ifelse_(
       has_fixed || has_varying,
@@ -1299,7 +1301,7 @@ model_lines_categorical <- function(y, idt, priors, intercept,
       icpt,
       gamma,
       beta,
-      "for (t in 1:T) {{",
+      "for (t in {t_obs}) {{",
       delta,
       likelihood_term,
       "}}",
@@ -1316,8 +1318,8 @@ model_lines_categorical <- function(y, idt, priors, intercept,
     icpt <- paste_rows(
       ifelse_(
         nchar(obs),
-        "vector[n_obs_{y}[t]] intercept_{categories[2:S]} = {unlist(intercept)};",
-        "vector[N] intercept_{categories[2:S]} = {unlist(intercept)};"
+        "vector[n_obs_{y}[t]] intercept_{categories[seq.int(2L, S)]} = {unlist(intercept)};",
+        "vector[N] intercept_{categories[seq.int(2, S)]} = {unlist(intercept)};"
       ),
       .indent = idt(3)
     )
@@ -1330,7 +1332,7 @@ model_lines_categorical <- function(y, idt, priors, intercept,
     model_text <- paste_rows(
       "{{",
       "vector[S_{y}] intercept_{y};",
-      "for (t in 1:T) {{",
+      "for (t in {t_obs}) {{",
       icpt,
       ifelse_(
         nchar(obs),
@@ -1363,10 +1365,15 @@ model_lines_multinomial <- function(cvars, cgvars, idt, ...) {
     cgvars$y[-1],
     function(s) {
       cvars[[s]]$y <- s
+      cvars[[s]]$t <- cgvars$t
       cvars[[s]]$obs <- cgvars$obs
-      do.call(intercept_lines, c(
-        cvars[[s]], idt = idt, backend = cgvars$backend, ydim = cgvars$y_cg
-      ))
+      cvars[[s]]$t_obs <- cgvars$t_obs
+      do.call(
+        intercept_lines,
+        c(
+          cvars[[s]], idt = idt, backend = cgvars$backend, ydim = cgvars$y_cg
+        )
+      )
     }
   )
   cgvars$categories <- cgvars$y
@@ -1375,8 +1382,8 @@ model_lines_multinomial <- function(cvars, cgvars, idt, ...) {
   do.call(model_lines_categorical, args = c(cgvars, idt = idt))
 }
 
-model_lines_gaussian <- function(y, idt, priors, intercept,
-                                 obs, has_fixed, has_varying,
+model_lines_gaussian <- function(y, t, obs, t_obs, idt, priors, intercept,
+                                 has_fixed, has_varying,
                                  prior_distr, ...) {
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
@@ -1392,7 +1399,7 @@ model_lines_gaussian <- function(y, idt, priors, intercept,
     "{{",
     onlyif(has_fixed || has_varying, "vector[K_{y}] gamma__{y};"),
     onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
-    "for (t in 1:T) {{",
+    "for (t in {t_obs}) {{",
     onlyif(has_varying, "gamma__{y}[L_varying_{y}] = delta_{y}[t];"),
     likelihood_term,
     "}}",
@@ -1406,6 +1413,8 @@ model_lines_mvgaussian <- function(cvars, cgvars, idt, ...) {
   y <- cgvars$y
   y_cg <- cgvars$y_cg
   obs <- cgvars$obs
+  t <- cgvars$t
+  t_obs <- cgvars$t_obs
   mu <- priors <- character(length(y))
   n_obs <- ifelse_(
     cgvars$has_missing,
@@ -1435,7 +1444,7 @@ model_lines_mvgaussian <- function(cvars, cgvars, idt, ...) {
       "matrix[O_{y_cg}, O_{y_cg}] Lsigma = ",
       "diag_pre_multiply(sigma_{y_cg}, L_{y_cg});"
     ),
-    "for (t in 1:T) {{",
+    "for (t in {t_obs}) {{",
     "vector[O_{y_cg}] mu[{n_obs}];",
     "vector[{n_obs}] mu_{y} = {mu};",
     "for (i in 1:{n_obs}) {{",
@@ -1449,8 +1458,8 @@ model_lines_mvgaussian <- function(cvars, cgvars, idt, ...) {
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_bernoulli <- function(y, idt, priors, intercept,
-                                  obs, has_varying, has_fixed, ...) {
+model_lines_bernoulli <- function(y, t, obs, t_obs, idt, priors, intercept,
+                                  has_varying, has_fixed, ...) {
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
@@ -1463,7 +1472,7 @@ model_lines_bernoulli <- function(y, idt, priors, intercept,
     "{{",
     onlyif(has_fixed || has_varying, "vector[K_{y}] gamma__{y};"),
     onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
-    "for (t in 1:T) {{",
+    "for (t in {t_obs}) {{",
     onlyif(has_varying, "gamma__{y}[L_varying_{y}] = delta_{y}[t];"),
     likelihood_term,
     "}}",
@@ -1473,8 +1482,8 @@ model_lines_bernoulli <- function(y, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_poisson <- function(y, idt, priors, intercept,
-                                obs, has_varying, has_fixed, ...) {
+model_lines_poisson <- function(y, t, obs, t_obs, idt, priors, intercept,
+                                has_varying, has_fixed, ...) {
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
@@ -1487,7 +1496,7 @@ model_lines_poisson <- function(y, idt, priors, intercept,
     "{{",
     onlyif(has_fixed || has_varying, "vector[K_{y}] gamma__{y};"),
     onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
-    "for (t in 1:T) {{",
+    "for (t in {t_obs}) {{",
     onlyif(has_varying, "gamma__{y}[L_varying_{y}] = delta_{y}[t];"),
     likelihood_term,
     "}}",
@@ -1497,8 +1506,8 @@ model_lines_poisson <- function(y, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_negbin <- function(y, idt, priors, intercept,
-                               obs, has_varying, has_fixed,
+model_lines_negbin <- function(y, t, obs, t_obs, idt, priors, intercept,
+                               has_varying, has_fixed,
                                prior_distr, ...) {
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
@@ -1513,7 +1522,7 @@ model_lines_negbin <- function(y, idt, priors, intercept,
     "{{",
     onlyif(has_fixed || has_varying, "vector[K_{y}] gamma__{y};"),
     onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
-    "for (t in 1:T) {{",
+    "for (t in {t_obs}) {{",
     onlyif(has_varying, "gamma__{y}[L_varying_{y}] = delta_{y}[t];"),
     likelihood_term,
     "}}",
@@ -1523,10 +1532,10 @@ model_lines_negbin <- function(y, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_binomial <- function(y, idt, priors, intercept,
-                                 obs, has_varying, has_fixed, ...) {
+model_lines_binomial <- function(y, t, obs, t_obs, idt, priors, intercept,
+                                 has_varying, has_fixed, ...) {
   model_text <- paste_rows(
-    "for (t in 1:T) {{",
+    "for (t in {t_obs}) {{",
     "y_{y}[t, {obs}] ~ binomial_logit(trials_{y}[t, {obs}], {intercept});",
     "}}",
     .indent = idt(c(1, 2, 1))
@@ -1535,10 +1544,10 @@ model_lines_binomial <- function(y, idt, priors, intercept,
 }
 
 
-model_lines_exponential <- function(y, idt, priors, intercept,
-                                    obs, has_varying, has_fixed, ...) {
+model_lines_exponential <- function(y, t, obs, t_obs, idt, priors, intercept,
+                                    has_varying, has_fixed, ...) {
   model_text <- paste_rows(
-    "for (t in 1:T) {{",
+    "for (t in 1:{t_obs}) {{",
     "y_{y}[{obs}, t] ~ exponential(exp(-({intercept})));",
     "}}",
     .indent = idt(c(1, 2, 1))
@@ -1546,12 +1555,12 @@ model_lines_exponential <- function(y, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_gamma <- function(y, idt, priors, intercept,
-                              obs, has_varying, has_fixed,
+model_lines_gamma <- function(y, t, obs, t_obs, idt, priors, intercept,
+                              has_varying, has_fixed,
                               prior_distr, ...) {
   model_text <- paste_rows(
     "phi_{y} ~ {prior_distr$phi_prior_distr};",
-    "for (t in 1:T) {{",
+    "for (t in {t_obs}) {{",
     "y_{y}[{obs}, t] ~ gamma(phi_{y}, phi_{y} * exp(-({intercept})));",
     "}}",
     .indent = idt(c(1, 1, 2, 1))
@@ -1559,12 +1568,12 @@ model_lines_gamma <- function(y, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_beta <- function(y, idt, priors, intercept,
-                             obs, has_varying, has_fixed,
+model_lines_beta <- function(y, t, obs, t_obs, idt, priors, intercept,
+                             has_varying, has_fixed,
                              prior_distr, ...) {
   model_text <- paste_rows(
     "phi_{y} ~ {prior_distr$phi_prior_distr};",
-    "for (t in 1:T) {{",
+    "for (t in {t_obs}) {{",
     "y_{y}[{obs}, t] ~ beta_proportion(inv_logit({intercept}), phi_{y});",
     "}}",
     .indent = idt(c(1, 1, 2, 1))
@@ -1572,13 +1581,13 @@ model_lines_beta <- function(y, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_student <- function(y, idt, priors, intercept,
-                                obs, has_varying, has_fixed,
+model_lines_student <- function(y, t, obs, t_obs, idt, priors, intercept,
+                                has_varying, has_fixed,
                                 prior_distr, ...) {
   model_test <- paste_rows(
     "sigma_{y} ~ {prior_distr$sigma_prior_distr};",
     "phi_{y} ~ {prior_distr$phi_prior_distr};",
-    "for (t in 1:T) {{",
+    "for (t in {t_obs}) {{",
     "y_{y}[{obs}, t] ~ student_t(phi_{y}, {intercept}, sigma_{y});",
     "}}"
   )

@@ -317,8 +317,16 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
     obs_len[j] <- obs_XY_len
   }
   channel$has_missing <- any(obs_len < N)
+  channel$has_fully_missing <- any(obs_len == 0L)
   sampling[[paste0("obs_", y_name)]] <- obs_idx
   sampling[[paste0("n_obs_", y_name)]] <- obs_len
+  sampling[[paste0("t_obs_", y_name)]] <- which(obs_len > 0L)
+  sampling[[paste0("T_obs_", y_name)]] <- length(which(obs_len > 0L))
+  channel$t_obs <- ifelse_(
+    channel$has_fully_missing,
+    glue::glue("t_obs_{y_name}"),
+    "1:T"
+  )
   # obs selects complete cases if there are missing observations
   channel$obs <- ifelse_(
     channel$has_missing,
@@ -384,13 +392,19 @@ initialize_multivariate_channel <- function(y, y_cg, y_name, cg_idx,
       channel_vars[cg_idx], "[[", logical(1L), has
     ))
   }
-  channel$has_missing <- any(vapply(
-    channel_vars[cg_idx], "[[", logical(1L), "has_missing"
-  ))
-  channel$y <- unname(vapply(
-    channel_vars[cg_idx], "[[", character(1L), "y"
-  ))
+  channel$has_missing <- any(
+    vapply(channel_vars[cg_idx], "[[", logical(1L), "has_missing")
+  )
+  channel$has_fully_missing <- any(
+    vapply(channel_vars[cg_idx], "[[", logical(1L), "has_fully_missing")
+  )
+  channel$y <- unname(vapply(channel_vars[cg_idx], "[[", character(1L), "y"))
   channel$y_cg <- y_cg
+  channel$t_obs <- ifelse_(
+    channel$has_fully_missing,
+    glue::glue("t_obs_{y_cg}"),
+    "1:T"
+  )
   channel$obs <- ifelse_(
     channel$has_missing,
     glue::glue("obs_{y_cg}[1:n_obs_{y_cg}[t], t]"),
@@ -413,6 +427,12 @@ initialize_multivariate_channel <- function(y, y_cg, y_name, cg_idx,
     2L,
     function(x) { sum(x > 0L) }
   )
+  sampling[[paste0("t_obs_", y_cg)]] <- which(
+    sampling[[paste0("n_obs_", y_cg)]] > 0L
+  )
+  sampling[[paste0("T_obs_", y_cg)]] <- length(
+    sampling[[paste0("t_obs_", y_cg)]]
+  )
   O <- length(cg_idx)
   sampling[[paste0("O_", y_cg)]] <- O
   sampling[[paste0("y_", y_cg)]] <- array(
@@ -432,7 +452,7 @@ initialize_multivariate_channel <- function(y, y_cg, y_name, cg_idx,
       "L_fixed",
       "L_varying",
       "L_random"
-      )
+    )
     copy_channel <- setdiff(
       names(channel_vars[[z]]),
       names(channel)

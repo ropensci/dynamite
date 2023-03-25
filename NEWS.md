@@ -2,17 +2,19 @@
 
   * Added support for Student's t-distribution via `"student"` family in `obs`.
   * Added support for the multinomial distribution via `"multinomial"` family 
-    in  `obs`.
+    in `obs`.
   * The generated Stan code now automatically switches between the array 
     keyword syntax and the deprecated syntax based on the backend Stan version
     (see https://mc-stan.org/docs/reference-manual/brackets-array-syntax.html
     for details).
-  * The presence of variables in data used in `trials()` and `offset` is now
-    properly checked.
+  * The presence of variables used in `trials()` and `offset` is now
+    properly checked in the data.
   * The model components `trials()` and `offset()` now function correctly in 
     `predict()` when they contain response variables of the model.
   * Fixed the number of observations calculation in `nobs()` for models
     that have multivariate channels.
+  * Scenarios that have zero non-missing observations at specific time indices
+    are now handled properly.
 
 # dynamite 1.2.1
 
