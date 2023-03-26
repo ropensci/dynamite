@@ -600,18 +600,9 @@ prepare_eval_envs <- function(object, simulated, observed,
       j <- cg_idx[1L]
       k <- k + 1L
       resp <- object$dformulas$all[[j]]$response
-      #resp_levels <- onlyif(
-      #  is_categorical(family),
-      #  attr(
-      #    attr(object$stan$responses, "resp_class")[[resp]],
-      #    "levels"
-      #  )
-      #)
-      #e$resp_levels <- resp_levels
       prepare_eval_env_univariate(
         e = e,
         resp = resp,
-        #resp_levels = resp_levels,
         cvars = channel_vars[[k]],
         samples = samples,
         nu_samples = nu_samples,

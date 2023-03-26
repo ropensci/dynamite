@@ -291,13 +291,6 @@ check_offset <- function(y, x) {
       `x` = "Offset cannot be a {.cls factor}."
     )
   )
-  stopifnot_(
-    all(x > 0.0),
-    c(
-      "Invalid {.fun offset} definition for response variable {.var {y}}:",
-      `x` = "Offset must contain only positive values."
-    )
-  )
 }
 
 #' Retrieve the Corresponding Term of a Special Variable in a Formula

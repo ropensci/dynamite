@@ -13,8 +13,13 @@
     `predict()` when they contain response variables of the model.
   * Fixed the number of observations calculation in `nobs()` for models
     that have multivariate channels.
+  * Fixed an issue with `predict()` with models that contained multivariate
+    channels with random effects.
   * Scenarios that have zero non-missing observations at specific time indices
     are now handled properly.
+  * The names of additional arguments passed to `rstan::sampling` and the
+    `sample` method of the `cmdstanr` Stan model via `...` in the call
+    to `dynamite` are now checked and unrecognized arguments will be ignored.
 
 # dynamite 1.2.1
 
