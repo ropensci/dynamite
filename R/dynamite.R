@@ -328,13 +328,15 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     ),
     debug$stanfit
   )
+  dots <- remove_redundant_parameters(stan_input, backend, verbose_stan, ...)
+  dots <- check_stan_args(dots, verbose, backend)
   stanfit <- dynamite_sampling(
     sampling = !isTRUE(debug$no_compile) && !isTRUE(debug$no_sampling),
     backend = backend,
     model_code = model_code,
     model = model,
     sampling_vars = stan_input$sampling_vars,
-    dots = remove_redundant_parameters(stan_input, backend, verbose_stan, ...)
+    dots = dots
   )
   list(
     stan_input = stan_input,
@@ -411,6 +413,45 @@ sampling_info <- function(dformulas, verbose, debug, backend) {
       )
     )
   }
+}
+
+#' Check Arguments Names Of `...` for Stan Sampling
+#'
+#' @inheritParams dynamite_stan
+#' @param dots The `...` arguments of `dynamite` as a `list`
+#' @noRd
+check_stan_args <- function(dots, verbose, backend) {
+  dots_names <- names(dots)
+  args <- ifelse_(
+    identical(backend, "rstan"),
+    c(
+      "pars", "chains", "iter", "warmup", "thin", "seed", "init", "check_data",
+      "sample_file", "diagnostic_file", "verbose", "algorithm", "control",
+      "include", "cores", "open_progress", "show_messages", "chain_id",
+      "init_r", "test_grad", "append_samples", "refresh", "enable_random_init"
+    ),
+    c(
+      "seed", "refresh", "init", "save_latent_dynamics", "output_dir",
+      "output_basename", "sig_figs", "chains", "parallel_chains", "chain_ids",
+      "threads_per_chain", "opencl_ids", "iter_warmup", "iter_sampling",
+      "save_warmup", "thin", "max_treedepth", "adapt_engaged", "adapt_delta",
+      "step_size", "metric", "metric_file", "inv_metric", "init_buffer",
+      "term_buffer", "window", "fixed_param", "show_messages", "diagnostics",
+      "cores", "num_cores", "num_chains", "num_warmup", "num_samples",
+      "validate_csv", "save_extra_diagnostics", "max_depth", "stepsize",
+    )
+  )
+  valid_args <- dots_names %in% args
+  invalid_args <- dots_names[!valid_args]
+  dots <- dots[valid_args]
+  if (verbose && any(!valid_args)) {
+    warning_(
+      "{cli::qty(invalid_args)}
+       Argument{?s} {.arg {invalid_args}} passed to {backend} sampling function
+       {cli::qty(invalid_args)}{?is/are} not recognized and will be ignored."
+    )
+  }
+  dots
 }
 
 #' Remove Redundant Parameters When Using `rstan`

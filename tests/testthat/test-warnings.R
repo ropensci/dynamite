@@ -134,6 +134,7 @@ test_data <- data.frame(
   time = 1:5,
   id = rep(1:2, each = 5)
 )
+
 debug <- list(no_compile = TRUE)
 
 test_that("time-varying intercept is removed", {
@@ -243,6 +244,25 @@ test_that("gaps in newdata with exogenous predictors and no impute warns", {
 })
 
 # Stan warnings -----------------------------------------------------------
+
+test_that("unrecognized arguments warns", {
+  expect_warning(
+    dynamite(
+      obs(y ~ x, family = "gaussian") +
+        splines(4),
+      test_data,
+      "time",
+      "id",
+      debug = debug,
+      strange_arg1 = 1L,
+      strange_arg2 = 1L,
+    ),
+    paste0(
+      "Arguments `strange_arg1` and `strange_arg2` passed to rstan sampling ",
+      "function are not recognized and will be ignored\\."
+    )
+  )
+})
 
 test_that("categorical non-glm availability warns", {
   expect_warning(
