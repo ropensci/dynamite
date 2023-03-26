@@ -72,7 +72,7 @@ print.dynamitefit <- function(x, ...) {
     )
     print(posterior::summarise_draws(draws[, match_names]), ...)
   } else {
-    cat("No Stan model fit is available.")
+    cat("No Stan model fit is available.\n")
   }
   invisible(x)
 }
