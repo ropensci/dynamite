@@ -514,7 +514,7 @@ create_model <- function(idt, backend, cg, cvars, cgvars) {
       )
     } else {
       M <- attr(cvars, "random_def")$M
-      Ks <- vapply(cvars, "[[", integer(1L), "K_random")
+      Ks <- get_random_effect_counts(cg, cvars, cgvars)
       y <- names(Ks[Ks > 0])
       random_text <- ifelse_(
         attr(cvars, "random_def")$noncentered,

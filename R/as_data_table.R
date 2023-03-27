@@ -349,7 +349,7 @@ as_data_table_corr_nu <- function(x, draws, n_draws, ...) {
   vars <- ulapply(
     x$stan$channel_vars,
     function(y) {
-      if (y$has_random) {
+      if (y$has_random || y$has_random_intercept) {
         icpt <- ifelse_(
           y$has_random_intercept,
           "alpha",

@@ -439,7 +439,7 @@ check_stan_args <- function(dots, verbose, backend) {
       "step_size", "metric", "metric_file", "inv_metric", "init_buffer",
       "term_buffer", "window", "fixed_param", "show_messages", "diagnostics",
       "cores", "num_cores", "num_chains", "num_warmup", "num_samples",
-      "validate_csv", "save_extra_diagnostics", "max_depth", "stepsize",
+      "validate_csv", "save_extra_diagnostics", "max_depth", "stepsize"
     )
   )
   valid_args <- dots_names %in% args

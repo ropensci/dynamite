@@ -208,9 +208,8 @@ get_data.dynamitefit <- function(x, ...) {
 #' `dynamiteformula` objects, the model is compiled and sampled for 1 iteration
 #' to get the parameter dimensions.
 #'
-#' @param x \[`dynamitefit`, `dynamiteformula`]\cr A model fit object, or
-#'   a model formula object.
-#' @param ... Ignored
+#' @rdname get_parameter_dims
+#' @inheritParams get_priors.dynamiteformula
 #' @return A named list with all parameter dimensions of the input model.
 #' @export
 #' @family output

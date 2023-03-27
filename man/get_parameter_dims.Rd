@@ -13,18 +13,42 @@ get_parameter_dims(x, ...)
 \method{get_parameter_dims}{dynamitefit}(x, ...)
 }
 \arguments{
-\item{x}{[\code{dynamitefit}]\cr The model fit object.}
+\item{x}{[\code{dynamiteformula} or \code{dynamitefit}]\cr The model formula or an
+existing \code{dynamitefit} object. See \code{\link[=dynamiteformula]{dynamiteformula()}} and \code{\link[=dynamite]{dynamite()}}.}
 
-\item{...}{Ignored}
+\item{...}{Ignored.}
+
+\item{data}{[\code{data.frame}, \code{tibble::tibble}, or \code{data.table::data.table}]\cr
+The data that contains the variables in the
+model. Supported column types are \code{integer}, \code{logical}, \code{double}, and
+\code{factor}. Columns of type \code{character} will be converted to factors.
+Unused factor levels will be dropped. The \code{data} can contain missing
+values which will simply be ignored in the estimation in a case-wise
+fashion (per time-point and per channel). Input \code{data} is converted to
+channel specific matrix representations via \code{\link[stats:model.matrix]{stats::model.matrix.lm()}}.}
+
+\item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
+time index of observations. If this variable is a factor, the integer
+representation of its levels are used internally for defining the time
+indexing.}
+
+\item{group}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
+unique groups or \code{NULL} corresponding to a scenario without any groups.
+If \code{group} is \code{NULL}, a new column \code{.group} is created with constant
+value \code{1L} is created indicating that all observations belong to the same
+group. In case of name conflicts with \code{data}, see the \code{group_var} element
+of the return object to get the column name of the new variable.}
 }
 \value{
 A named list with all parameter dimensions of the input model.
 }
 \description{
 Extracts the names and dimensions of all parameters used in the
-\code{dynamitefit} object. See also \code{\link[=get_parameter_types]{get_parameter_types()}} and
+\code{dynamite} model. See also \code{\link[=get_parameter_types]{get_parameter_types()}} and
 \code{\link[=get_parameter_names]{get_parameter_names()}}. The returned dimensions match those of
-the \code{stanfit} element of the \code{dynamitefit} object.
+the \code{stanfit} element of the \code{dynamitefit} object. When applied to
+\code{dynamiteformula} objects, the model is compiled and sampled for 1 iteration
+to get the parameter dimensions.
 }
 \examples{
 get_parameter_dims(multichannel_example_fit)
