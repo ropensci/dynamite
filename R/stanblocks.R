@@ -71,7 +71,11 @@ create_data <- function(idt, backend, cg, cvars, cgvars) {
   has_splines <- any(vapply(cvars, "[[", logical(1L), "has_varying")) ||
     any(vapply(cvars, "[[", logical(1L), "has_varying_intercept")) ||
     any(vapply(cvars, "[[", logical(1L), "has_lfactor"))
-  K <- sum(vapply(cvars, "[[", integer(1), "K"))
+  # Note: this is not the actual value of K in sampling_vars
+  K <- sum(
+    vapply(cvars, "[[", integer(1L), "K"),
+    vapply(cvars, "[[", integer(1L), "K_random")
+  )
   M <- attr(cvars, "random_def")$M
   P <- attr(cvars, "lfactor_def")$P
   init_text <- paste_rows(
@@ -329,26 +333,10 @@ create_transformed_parameters <- function(idt, backend, cg, cvars, cgvars) {
   random_text <- ""
   M <- attr(cvars, "random_def")$M
   if (M > 0L) {
-    Ks <- unlist(
-      unname(
-        lapply(
-          cvars,
-          function(x) {
-            ifelse_(
-              is_categorical(x$family),
-              stats::setNames(
-                rep(x$K_random, x$S - 1),
-                paste0(x$y, "_", x$categories[-1])
-              ),
-              stats::setNames(x$K_random, x$y)
-            )
-          }
-        )
-      )
-    )
-    Ks <- Ks[Ks > 0]
+    Ks <- get_random_effect_counts(cg, cvars, cgvars)
+    Ks <- Ks[Ks > 0L]
     y <- names(Ks)
-    cKs1 <- cumsum(c(1, Ks[-length(Ks)]))
+    cKs1 <- cumsum(c(1L, Ks[-length(Ks)]))
     cKs2 <- cumsum(Ks)
     if (attr(cvars, "random_def")$noncentered) {
       random_text <- ifelse_(
@@ -773,4 +761,59 @@ create_generated_quantities_lines <- function(idt, backend, cvars, cgvars) {
   } else {
     lines_wrap("generated_quantities", family, idt, backend, cvars[[1L]])
   }
+}
+
+get_random_effect_counts <- function(cg, cvars, cgvars) {
+  n_cg <- n_unique(cg)
+  out <- character(0L)
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    j <- cg_idx[1L]
+    family <- cgvars[[i]]$family
+    if (is_multivariate(family)) {
+      if (is_multinomial(family)) {
+        out <- c(
+          out,
+          stats::setNames(
+            rep(cvars[[j]]$K_random, length(cg_idx) - 1L),
+            vapply(cvars[cg_idx][-1L], "[[", character(1L), "y")
+          )
+        )
+      } else {
+        for (k in cg_idx) {
+          out <- c(out, stats::setNames(cvars[[k]]$K_random, cvars[[k]]$y))
+        }
+      }
+    } else {
+      if (is_categorical(family)) {
+        out <- c(
+          out,
+          stats::setNames(
+            rep(cvars[[j]]$K_random, cvars[[j]]$S - 1L),
+            paste0(cvars[[j]]$y, "_", cvars[[j]]$categories[-1L])
+          )
+        )
+      } else {
+        out <- c(out, stats::setNames(cvars[[j]]$K_random, cvars[[j]]$y))
+      }
+    }
+  }
+  out
+  #unlist(
+  #  unname(
+  #    lapply(
+  #      cvars,
+  #      function(x) {
+  #        ifelse_(
+  #          is_categorical(x$family),
+  #          stats::setNames(
+  #            rep(x$K_random, x$S - 1),
+  #            paste0(x$y, "_", x$categories[-1])
+  #          ),
+  #          stats::setNames(x$K_random, x$y)
+  #        )
+  #      }
+  #    )
+  #  )
+  #)
 }

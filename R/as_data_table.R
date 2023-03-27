@@ -346,22 +346,28 @@ as_data_table_xi <- function(x, draws, n_draws, ...) {
 #' @describeIn as_data_table_default Data Table for a "corr_nu" Parameter
 #' @noRd
 as_data_table_corr_nu <- function(x, draws, n_draws, ...) {
-  vars <- ulapply(x$stan$channel_vars, function(x) {
-    icpt <- ifelse_(
-      x$has_random_intercept,
-      "alpha",
-      NULL
-    )
-    vars <- paste0(x$y, "_", c(icpt, names(x$J_random)))
-    ifelse_(
-      is_categorical(x$family),
-      paste0(
-        rep(vars, x$S - 1L),
-        "_",
-        rep(x$categories[-1L], each = x$K_random)),
-      vars
-    )
-  })
+  vars <- ulapply(
+    x$stan$channel_vars,
+    function(y) {
+      if (y$has_random) {
+        icpt <- ifelse_(
+          y$has_random_intercept,
+          "alpha",
+          NULL
+        )
+        vars <- paste0(y$y, "_", c(icpt, names(y$J_random)))
+        ifelse_(
+          is_categorical(y$family),
+          paste0(
+            rep(vars, y$S - 1L),
+            "_",
+            rep(y$categories[-1L], each = y$K_random)
+          ),
+          vars
+        )
+      }
+    }
+  )
   pairs <- apply(utils::combn(vars, 2L), 2L, paste, collapse = "__")
   data.table::data.table(
     parameter = rep(paste0("corr_nu_", pairs), each = n_draws),

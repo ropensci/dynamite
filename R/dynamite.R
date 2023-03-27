@@ -455,6 +455,55 @@ check_stan_args <- function(dots, verbose, backend) {
   dots
 }
 
+#' Count The Number of Random Effects in a `dynamiteformula`
+#'
+#' @inheritParams dynamite
+#' @noRd
+count_random_effects <- function(dformula, data) {
+  cg <- attr(dformula, "channel_groups")
+  n_cg <- n_unique(cg)
+  M <- 0L
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    j <- cg_idx[1L]
+    family <- dformula[[j]]$family
+    if (is_multivariate(family)) {
+      if (is_multinomial(family)) {
+        random_formula <- get_type_formula(dformula[[j]], type = "random")
+        cats <- length(cg_idx) - 1L
+        M <- M + ifelse_(
+          is.null(random_formula),
+          0L,
+          cats * ncol(stats::model.matrix.lm(random_formula, data))
+        )
+      } else {
+        for (k in cg_idx) {
+          random_formula <- get_type_formula(dformula[[k]], type = "random")
+          M <- M + ifelse_(
+            is.null(random_formula),
+            0L,
+            ncol(stats::model.matrix.lm(random_formula, data))
+          )
+        }
+      }
+    } else {
+      random_formula <- get_type_formula(dformula[[j]], type = "random")
+      cats <- ifelse_(
+        is_categorical(family),
+        length(levels(data[[dformula[[j]]$response]])) - 1L,
+        1L
+      )
+      M <- M + ifelse_(
+        is.null(random_formula),
+        0L,
+        cats * ncol(stats::model.matrix.lm(random_formula, data))
+      )
+    }
+  }
+  M
+}
+
+
 #' Remove Redundant Parameters When Using `rstan`
 #'
 #' @param stan_input Output from `prepare_stan_input`.
@@ -466,15 +515,16 @@ remove_redundant_parameters <- function(stan_input, backend,
   # could also remove omega_raw
   dots <- list(...)
   dots$verbose <- onlyif(backend == "rstan", verbose_stan)
-  if (is.null(dots$pars) &&
-    stan_input$sampling_vars$M > 0 &&
-    backend == "rstan") {
+  if (identical(dots$algorithm, "Fixed_param")) {
+    return(dots)
+  }
+  M <- stan_input$sampling_vars$M
+  if (is.null(dots$pars) && M > 0 && backend == "rstan") {
     dots$pars <- c("nu_raw", "nu", "L")
     dots$include <- FALSE
   }
-  if (is.null(dots$pars) &&
-    stan_input$sampling_vars$P > 0 &&
-    backend == "rstan") {
+  P <- stan_input$sampling_vars$P
+  if (is.null(dots$pars) && P > 0 && backend == "rstan") {
     # many more, but depends on the channel names
     dots$pars <- c("omega_raw_psi", "L_lf")
     dots$include <- FALSE
@@ -743,25 +793,7 @@ parse_components <- function(dformulas, data, group_var, time_var) {
     resp = resp,
     times = seq.int(fixed + 1L, n_unique(data[[time_var]]))
   )
-  M <- sum(
-    vapply(
-      dformulas$stoch,
-      function(formula) {
-        random_formula <- get_type_formula(formula, type = "random")
-        if (is.null(random_formula)) {
-          0L
-        } else {
-          cats <- ifelse_(
-            is_categorical(formula$family),
-            length(levels(data[[formula$response]])) - 1L,
-            1L
-          )
-          cats * ncol(stats::model.matrix.lm(random_formula, data))
-        }
-      },
-      integer(1L)
-    )
-  )
+  M <- count_random_effects(dformulas$stoch, data)
   stopifnot_(
     n_unique(data[[group_var]]) > 1L || M == 0L,
     "Cannot estimate random effects using only one group."

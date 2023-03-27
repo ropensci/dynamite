@@ -107,6 +107,10 @@ get_code.dynamiteformula <- function(x, data, time,
 #' @rdname get_code
 #' @export
 get_code.dynamitefit <- function(x, blocks = NULL, ...) {
+  stopifnot_(
+    !is.null(x$stanfit),
+    "No Stan model fit is available."
+  )
   get_code_(x$stanfit@stanmodel@model_code, blocks)
 }
 
@@ -178,16 +182,13 @@ get_data <- function(x, ...) {
 #' @rdname get_data
 #' @export
 get_data.dynamiteformula <- function(x, data, time, group = NULL, ...) {
-  out <- do.call(
-    "dynamite",
-    list(
-      dformula = x,
-      data = data,
-      time = time,
-      group = group,
-      debug = list(no_compile = TRUE, sampling_vars = TRUE),
-      ...
-    )
+  out <- dynamite(
+    dformula = x,
+    data = data,
+    time = time,
+    group = group,
+    debug = list(no_compile = TRUE, sampling_vars = TRUE),
+    ...
   )
   out$stan$sampling_vars
 }
@@ -201,11 +202,14 @@ get_data.dynamitefit <- function(x, ...) {
 #' Get Parameter Dimensions of the Dynamite Model
 #'
 #' Extracts the names and dimensions of all parameters used in the
-#' `dynamitefit` object. See also [dynamite::get_parameter_types()] and
+#' `dynamite` model. See also [dynamite::get_parameter_types()] and
 #' [dynamite::get_parameter_names()]. The returned dimensions match those of
-#' the `stanfit` element of the `dynamitefit` object.
+#' the `stanfit` element of the `dynamitefit` object. When applied to
+#' `dynamiteformula` objects, the model is compiled and sampled for 1 iteration
+#' to get the parameter dimensions.
 #'
-#' @param x \[`dynamitefit`]\cr The model fit object.
+#' @param x \[`dynamitefit`, `dynamiteformula`]\cr A model fit object, or
+#'   a model formula object.
 #' @param ... Ignored
 #' @return A named list with all parameter dimensions of the input model.
 #' @export
@@ -214,6 +218,33 @@ get_data.dynamitefit <- function(x, ...) {
 #' get_parameter_dims(multichannel_example_fit)
 get_parameter_dims <- function(x, ...) {
   UseMethod("get_parameter_dims", x)
+}
+
+#' @rdname get_parameter_dims
+#' @export
+get_parameter_dims.dynamiteformula <- function(x, data, time,
+                                               group = NULL, ...) {
+  # use capture.output to make Stan silent, maybe
+  utils::capture.output(
+    utils::capture.output(
+      out <- dynamite(
+        dformula = x,
+        data = data,
+        time = time,
+        group = group,
+        algorithm = "Fixed_param",
+        chains = 1,
+        iter = 1,
+        refresh = -1,
+        backend = "rstan",
+        verbose_stan = FALSE,
+        ...
+      ),
+      type = "message"
+    ),
+    type = "output"
+  )
+  get_parameter_dims(out)
 }
 
 #' @rdname get_parameter_dims
@@ -236,6 +267,7 @@ get_parameter_dims.dynamitefit <- function(x, ...) {
     }
   )
 }
+
 
 #' Get Parameter Types of the Dynamite Model
 #'

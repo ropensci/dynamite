@@ -2,10 +2,13 @@
 % Please edit documentation in R/exported_gets.R
 \name{get_parameter_dims}
 \alias{get_parameter_dims}
+\alias{get_parameter_dims.dynamiteformula}
 \alias{get_parameter_dims.dynamitefit}
 \title{Get Parameter Dimensions of the Dynamite Model}
 \usage{
 get_parameter_dims(x, ...)
+
+\method{get_parameter_dims}{dynamiteformula}(x, data, time, group = NULL, ...)
 
 \method{get_parameter_dims}{dynamitefit}(x, ...)
 }

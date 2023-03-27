@@ -131,3 +131,22 @@ test_that("non-glm categorical fit works", {
     NA
   )
 })
+
+test_that("get_parameter_dims works for dynamiteformula", {
+  skip_if_not(run_extended_tests)
+
+  expect_error(
+    dims <- get_parameter_dims(
+      x = obs(x ~ z + lag(x) + lag(y), family = "categorical") +
+        obs(y ~ z + lag(x) + lag(y), family = "categorical"),
+      data = categorical_example,
+      time = "time",
+      group = "id"
+    ),
+    NA
+  )
+  expect_identical(
+    dims,
+    get_parameter_dims(categorical_example_fit)
+  )
+})

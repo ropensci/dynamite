@@ -455,6 +455,64 @@ generate_random_effect <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
   out
 }
 
+#' Get Random Effects Across Channels
+#'
+#' @param x The `stan` components of a `dynamitefit` object.
+#' @noRd
+get_random_effect <- function(cg, cvars, cgvars) {
+  n_cg <- n_unique(cg)
+  out <- c()
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    j <- cg_idx[1L]
+    family <- cgvars[[i]]$family
+    if (is_multivariate(family)) {
+      if (is_multinomial(family)) {
+        out <- c(
+          out,
+          ifelse_(
+            cgvars[[i]]$has_random_intercept || cgvars[[i]]$has_random,
+            cgvars[[i]]$y[-1L],
+            character(0L)
+          )
+        )
+      } else {
+        for (k in cg_idx) {
+          out <- c(
+            out,
+            ifelse_(
+              cvars[[k]]$has_random_intercept || cvars[[k]]$has_random,
+              cvars[[k]]$y,
+              character(0L)
+            )
+          )
+        }
+      }
+    } else {
+      if (is_categorical(family)) {
+        out <- c(
+          out,
+          ifelse_(
+            cvars[[j]]$has_random_intercept || cvars[[j]]$has_random,
+            paste0(cvars[[j]]$y, "_", cvars[[j]]$categories[-1L]),
+            character(0L)
+          )
+        )
+      } else {
+        out <- c(
+          out,
+          ifelse_(
+            cvars[[j]]$has_random_intercept || cvars[[j]]$has_random,
+            cvars[[j]]$y,
+            character(0L)
+          )
+        )
+      }
+    }
+  }
+  out
+}
+
 #' Expand the Prediction Data Frame to Include All Covariates
 #'
 #' @param x Object returned by `predict.dynamitefit`.
@@ -507,26 +565,10 @@ prepare_eval_envs <- function(object, simulated, observed,
   )
   if (length(rand) > 0L) {
     n_all_draws <- ndraws(object)
-    nu_channels <- c(
-      ulapply(
-        object$stan$channel_vars,
-        function(channel) {
-          onlyif(
-            channel$has_random_intercept || channel$has_random,
-            channel$y
-          )
-        }
-      ),
-      ulapply(
-        object$stan$channel_group_vars,
-        function(channel) {
-          onlyif(
-            !has_univariate(channel$family) &&
-              (channel$has_random_intercept || channel$has_random),
-            channel$y_cg
-          )
-        }
-      )
+    nu_channels <- get_random_effect(
+      cg = attr(object$dformulas$stoch, "channel_groups"),
+      cvars = object$stan$channel_vars,
+      cgvars = object$stan$channel_group_vars
     )
     sigma_nus <- glue::glue("sigma_nu_{nu_channels}")
     sigma_nu <- t(
@@ -555,7 +597,11 @@ prepare_eval_envs <- function(object, simulated, observed,
       new_ids = new_ids,
       new_levels = new_levels
     )
-    Ks <- vapply(object$stan$channel_vars, "[[", integer(1L), "K_random")
+    Ks <- get_random_effect_counts(
+      cg = attr(object$dformulas$stoch, "channel_groups"),
+      cvars = object$stan$channel_vars,
+      cgvars = object$stan$channel_group_vars
+    )
     dimnames(nu_samples)[[3L]] <- make.unique(rep(nus, times = Ks[Ks > 0]))
   }
   for (i in seq_len(n_cg)) {
@@ -837,12 +883,13 @@ prepare_eval_env_multivariate <- function(e, resp, resp_levels, cvars,
     has_random_intercept[i] <- cvars[[j]]$has_random_intercept
     has_offset[i] <- cvars[[j]]$has_offset
     has_lfactor[i] <- cvars[[j]]$has_lfactor
+    # Note: these will be the same for all yi for categorical and multinomial
     e[[J_fixed]] <- cvars[[j]]$J_fixed
     e[[K_fixed]] <- cvars[[j]]$K_fixed
     e[[J_varying]] <- cvars[[j]]$J_varying
     e[[K_varying]] <- cvars[[j]]$K_varying
     e[[J_random]] <- cvars[[j]]$J_random
-    e[[K_random]] <- cvars[[j]]$K_randon
+    e[[K_random]] <- cvars[[j]]$K_random
     onlyif(!is.null(samples[[phi]]),e[[phi]] <- c(samples[[phi]][idx]))
     onlyif(!is.null(samples[[sigma]]), e$sigma[, i] <- c(samples[[sigma]][idx]))
     # index j here, not from cvars
@@ -925,7 +972,7 @@ generate_sim_call_multivariate <- function(d, dims, resp, resp_levels,
         has_varying[i],
         " + .rowSums(
           x = model_matrix[idx_draw, J_varying_{yi}, drop = FALSE] *
-                delta[, time, ],
+                delta_{yi}[, time, ],
           m = n_draws,
           n = K_varying_{yi}
         )",
@@ -937,7 +984,7 @@ generate_sim_call_multivariate <- function(d, dims, resp, resp_levels,
           x = model_matrix[idx_draw, J_random_{yi}, drop = FALSE] *
             nu_{yi}[, j, seq.int(1 + {has_random_intercept[i]}, K_random_{yi})],
           m = n_draws,
-          n = K_random - {has_random_intercept[i]}
+          n = K_random_{yi} - {has_random_intercept[i]}
         )",
         ""
       )

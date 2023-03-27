@@ -185,17 +185,6 @@ test_that("untyped deterministic warns", {
   )
 })
 
-test_that("multinomial without trials warns", {
-  expect_warning(
-    obs(c(y1, y2) ~ 1, family = "multinomial"),
-    paste0(
-      "The model contains a multinomial channel without a trials term\\.\n",
-      "i The model fit will assume number of trials = sum of observations, ",
-      "but prediction will not work for this channel unless the number trials ",
-      "is explicitly specified\\."
-    )
-  )
-})
 
 # Predict warnings --------------------------------------------------------
 

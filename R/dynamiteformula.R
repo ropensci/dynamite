@@ -220,27 +220,11 @@ dynamiteformula_ <- function(formula, original, family, name) {
     out[[1L]]$name <- parse_name(resp_parsed$resp)
   } else {
     out <- parse_formula(formula, original, family)
-    if (is_binomial(family)) {
+    if (is_binomial(family) || is_multinomial(family)) {
       stopifnot_(
         "trials" %in% names(out[[1L]]$specials),
-        "Formula for a binomial channel must include a trials term."
+        "Formula for a {family$name} channel must include a trials term."
       )
-    }
-    if (is_multinomial(family)) {
-      if (!"trials" %in% names(out[[1L]]$specials)) {
-        warning_(
-          c(
-            "The model contains a multinomial channel without
-             a trials term.",
-            `i` = "The model fit will assume number of trials = sum of
-                   observations, but prediction will not work for this channel
-                   unless the number trials is explicitly specified."
-          )
-        )
-        out[[1L]]$specials$trials <- str2lang(
-          paste(get_responses(out), collapse = " + ")
-        )
-      }
     }
   }
   out

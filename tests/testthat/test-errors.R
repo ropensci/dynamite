@@ -408,6 +408,13 @@ test_that("binomial channel without a trials term fails", {
   )
 })
 
+test_that("multinomial channel without a trials term fails", {
+  expect_error(
+    obs(c(y1, y2) ~ 1, family = "multinomial"),
+    "Formula for a multinomial channel must include a trials term\\."
+  )
+})
+
 test_that("deterministic fixed fails", {
   expect_error(
     aux(numeric(y) ~ fixed(~x)),
