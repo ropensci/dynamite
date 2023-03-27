@@ -66,6 +66,11 @@ cbind_datatable <- function(...) {
   )
 }
 
+#* Data Table rbindlist With Data Frame Output
+rbindlist_ <- function(x) {
+  data.table::setDF(data.table::rbindlist(x))
+}
+
 #' Drops Variables from the Data That Are Not Used by Any Model Formula
 #'
 #' @inheritParams dynamite

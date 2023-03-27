@@ -276,7 +276,7 @@ dynamite <- function(dformula, data, time, group = NULL,
       stan = stan_input,
       group_var = group,
       time_var = time,
-      priors = data.table::setDF(data.table::rbindlist(stan_input$priors)),
+      priors = rbindlist_(stan_input$priors),
       backend = backend,
       call = dynamite_call
     ),
@@ -428,7 +428,8 @@ check_stan_args <- function(dots, verbose, backend) {
       "pars", "chains", "iter", "warmup", "thin", "seed", "init", "check_data",
       "sample_file", "diagnostic_file", "verbose", "algorithm", "control",
       "include", "cores", "open_progress", "show_messages", "chain_id",
-      "init_r", "test_grad", "append_samples", "refresh", "enable_random_init"
+      "init_r", "test_grad", "append_samples", "refresh", "save_warmup",
+      "enable_random_init"
     ),
     c(
       "seed", "refresh", "init", "save_latent_dynamics", "output_dir",
@@ -728,8 +729,6 @@ parse_past <- function(dformula, data, group_var, time_var) {
   dformula
 }
 
-
-
 #' Parse Additional Model Formula Components
 #'
 #' @inheritParams parse_data
@@ -763,15 +762,14 @@ parse_components <- function(dformulas, data, group_var, time_var) {
       integer(1L)
     )
   )
-
-  stopifnot_(n_unique(data[[group_var]]) > 1L || M == 0L,
+  stopifnot_(
+    n_unique(data[[group_var]]) > 1L || M == 0L,
     "Cannot estimate random effects using only one group."
   )
   attr(dformulas$stoch, "random_spec") <- parse_random_spec(
     random_spec_def = attr(dformulas$stoch, "random_spec"),
     M = M
   )
-
   attr(dformulas$stoch, "lfactor") <- parse_lfactor(
     lfactor_def = attr(dformulas$stoch, "lfactor"),
     resp = resp,
@@ -790,7 +788,7 @@ parse_components <- function(dformulas, data, group_var, time_var) {
         !empty,
         c(
           "Invalid formula for response variable {.var {y}}:",
-          `x` = "There are no predictors, intercept terms or latent factors."
+          `x` = "There are no predictors, intercept terms, or latent factors."
         )
       )
     }
@@ -810,18 +808,20 @@ parse_components <- function(dformulas, data, group_var, time_var) {
         if (vicpt) {
           dformulas$stoch[[j]]$has_varying_intercept <- FALSE
           warning_(
-            "The common time-varying intercept term of channel {.var {lresp[i]}}
-            was removed as channel predictors contain latent factor specified
-            with {.arg nonzero_lambda} as TRUE.")
+            "The common time-varying intercept term of channel
+            {.var {lresp[i]}} was removed as channel predictors
+            contain latent factor specified with {.arg nonzero_lambda}
+            as TRUE.")
         }
         ficpt <- dformulas$stoch[[j]]$has_fixed_intercept
         ricpt <- dformulas$stoch[[j]]$has_random_intercept
         if (ficpt && ricpt) {
           dformulas$stoch[[j]]$has_fixed_intercept <- FALSE
           warning_(
-            "The common time-invariant intercept term of channel {.var {lresp[i]}}
-            was removed as channel predictors contain random intercept and
-            latent factor specified with {.arg nonzero_lambda} as TRUE.")
+            "The common time-invariant intercept term of channel
+            {.var {lresp[i]}} was removed as channel predictors
+            contain random intercept and latent factor specified
+            with {.arg nonzero_lambda} as TRUE.")
         }
       }
 
@@ -901,6 +901,7 @@ parse_random_spec <- function(random_spec_def, M) {
   out$M <- M
   out
 }
+
 #' Parse Latent Factor Definitions
 #'
 #' @param lfactor_def An `lfactor` object.
@@ -985,33 +986,33 @@ fill_time <- function(data, group_var, time_var) {
   )
   time_ivals <- diff(time)
   time_scale <- min(diff(time))
-  if (any(time_ivals[!is.na(time_ivals)] %% time_scale > 0)) {
-    stop_("Observations must occur at regular time intervals.")
-  } else {
-    full_time <- seq(time[1L], time[length(time)], by = time_scale)
-    # time_missing <- data[,
-    #  !identical(time_var, full_time),
-    #  by = group_var,
-    #  env = list(time_var = time_var, full_time = full_time)
-    # ]$V1
-    time_missing <- unlist(
-      lapply(split_data, function(x) !identical(x[[time_var]], full_time))
+  stopifnot_(
+    all(time_ivals[!is.na(time_ivals)] %% time_scale == 0),
+    "Observations must occur at regular time intervals."
+  )
+  full_time <- seq(time[1L], time[length(time)], by = time_scale)
+  # time_missing <- data[,
+  #  !identical(time_var, full_time),
+  #  by = group_var,
+  #  env = list(time_var = time_var, full_time = full_time)
+  # ]$V1
+  time_missing <- unlist(
+    lapply(split_data, function(x) !identical(x[[time_var]], full_time))
+  )
+  if (any(time_missing)) {
+    full_data_template <- data.table::as.data.table(
+      expand.grid(
+        time = full_time,
+        group = unique(data[[group_var]])
+      )
     )
-    if (any(time_missing)) {
-      full_data_template <- data.table::as.data.table(
-        expand.grid(
-          time = full_time,
-          group = unique(data[[group_var]])
-        )
-      )
-      names(full_data_template) <- c(time_var, group_var)
-      data <- data.table::merge.data.table(
-        full_data_template,
-        data,
-        by = c(time_var, group_var),
-        all.x = TRUE
-      )
-    }
+    names(full_data_template) <- c(time_var, group_var)
+    data <- data.table::merge.data.table(
+      full_data_template,
+      data,
+      by = c(time_var, group_var),
+      all.x = TRUE
+    )
   }
   data
 }

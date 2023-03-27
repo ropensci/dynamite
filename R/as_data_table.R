@@ -136,17 +136,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
         permuted = FALSE
       )
     }
-    # category <- attr(
-    #   attr(x$stan$responses, "resp_class")[[response]],
-    #   "levels"
-    # )[-1L]
     channel <- get_channel(x, response)
-    # if (is_multinomial(channel$family)) {
-    #   category <- channel$y[-1L]
-    # }
-    # if (is.null(category)) {
-    #   category <- NA
-    # }
     idx <- which(names(x$stan$responses) %in% response)
     resps <- ifelse_(
       identical(length(idx), 0L),
@@ -210,11 +200,13 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       )
     )
   }
-  categories <- c(NA_character_, ulapply(
-    attr(x$stan$responses, "resp_class"),
-    function(y) attr(y, "levels")[-1L]
-  ))
-
+  categories <- c(
+    NA_character_,
+    ulapply(
+      attr(x$stan$responses, "resp_class"),
+      function(y) attr(y, "levels")[-1L]
+    )
+  )
   tmp <- data.table::as.data.table(
     expand.grid(
       type = types,
@@ -245,13 +237,8 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   n_pars <- nrow(out)
   stopifnot_(
     n_pars > 0L,
-    paste0(
-      "No parameters of type {.var ",
-      paste(types, collapse = "}, {.var "),
-      "} found for any of the response channels {.var ",
-      paste(responses, collapse = "}, {.var "),
-      "}."
-    )
+    "No parameters of type {.var {types}} found for any of the response
+     channels {.var {responses}}."
   )
   all_values <- vector(mode = "list", length = n_pars + 1L)
   # template for rbindlist
@@ -292,8 +279,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   }
   if (summary) {
     pars <- unique(out$parameter)
-    out <- out[
-      ,
+    out <- out[,
       parameter := factor(parameter, levels = pars, ordered = TRUE)
     ][,
       {
@@ -304,8 +290,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
         c(list(mean = mean, sd = sd), tmp)
       },
       by = list(parameter, time, group, category, response, type)
-    ][
-      ,
+    ][,
       parameter := as.character(parameter)
     ]
     pnames <- c("time", "group", "category", "response", "type")
@@ -315,6 +300,11 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   out
 }
 
+#' Get Channel Variables or Channel Group Variables
+#'
+#' @param x A `dynamitefit` object.
+#' @param response The response variable name.
+#' @noRd
 get_channel <- function(x, response) {
   if (is.null(x$stan$channel_vars[[response]])) {
     x$stan$channel_group_vars[[response]]
@@ -587,9 +577,8 @@ as_data_table_sigma_lambda <- function(draws, response, ...) {
 
 #' @describeIn as_data_table_default Data Table for a "psi" Parameter
 #' @noRd
-as_data_table_psi <- function(
-    x, draws, n_draws,
-    response, category, include_fixed, ...) {
+as_data_table_psi <- function(x, draws, n_draws, response,
+                              category, include_fixed, ...) {
   fixed <- x$stan$fixed
   all_time_points <- sort(unique(x$data[[x$time_var]]))
   time_points <- ifelse_(
@@ -620,7 +609,7 @@ as_data_table_tau_psi <- function(draws, response, ...) {
 #' @describeIn as_data_table_default Data Table for a "omega_psi" Parameter
 #' @noRd
 as_data_table_omega_psi <- function(x, draws, n_draws, response,
-  category, ...) {
+                                    category, ...) {
   D <- x$stan$sampling_vars$D
   data.table::data.table(
     parameter = rep(

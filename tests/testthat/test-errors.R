@@ -396,7 +396,7 @@ test_that("no intercept or predictors fails if no lfactor", {
     ),
     paste0(
       "Invalid formula for response variable `y`:\n",
-      "x There are no predictors, intercept terms or latent factors\\."
+      "x There are no predictors, intercept terms, or latent factors\\."
     )
   )
 })
@@ -1323,7 +1323,7 @@ test_that("plot errors when no variable is found ", {
     plot(categorical_example_fit, type = "delta"),
     paste0(
       "No parameters of type `delta` found for any of the response ",
-      "channels `x`, `y`."
+      "channels `x` and `y`."
     )
   )
 })

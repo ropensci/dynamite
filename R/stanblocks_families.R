@@ -3,7 +3,7 @@
 #' @param prefix \[`character(1)`]\cr Stan model block name, e.g., "model".
 #' @param family \[`dynamitefamily`, `character(1)`]\cr A family object, a
 #'   supported family name, or `"default"`.
-#' @param args Channel specific component of `channel_vars`
+#' @param args Channel specific component of `channel_vars`.
 #' @param idt An indenter function.
 #' @param backend The Stan backend.
 #'   (see [create_blocks()])
@@ -87,14 +87,14 @@ lines_wrap <- function(prefix, family, idt, backend, args) {
 #' @param write_alpha \[`logical(1)`]\cr If `TRUE`, use vectorized prior for
 #'   `alpha` parameters of the model by hard-coding the parameters of the prior
 #'   distribution to the model code?
-#' @param vectorized_beta \[`logical(1)`]\cr If `TRUE`, use vectorized prior for
-#'   time-invariant predictors `beta`.
-#' @param vectorized_delta \[`logical(1)`]\cr If `TRUE`, use vectorized prior for
-#'   time-varying predictors `delta`.
-#' @param vectorized_tau \[`logical(1)`]\cr If `TRUE`, use vectorized prior for
-#'   `tau` parameters.
-#' @param vectorized_sigma_nu \[`logical(1)`]\cr If `TRUE`, use vectorized prior for
-#'   `sigma_nu` parameters.
+#' @param vectorized_beta \[`logical(1)`]\cr If `TRUE`, use a vectorized prior
+#'   for time-invariant predictors `beta`.
+#' @param vectorized_delta \[`logical(1)`]\cr If `TRUE`, use a vectorized prior
+#'   for time-varying predictors `delta`.
+#' @param vectorized_tau \[`logical(1)`]\cr If `TRUE`, use a vectorized prior
+#'   for `tau` parameters.
+#' @param vectorized_sigma_nu \[`logical(1)`]\cr If `TRUE`, use a vectorized
+#'   prior for `sigma_nu` parameters.
 #' @param sigma_prior_distr \[`character(1)`]\cr `sigma` parameter prior
 #'   specification.
 #' @param sigma_nu_prior_distr \[`character(1)`]\cr `sigma_nu` parameter prior
@@ -124,7 +124,7 @@ lines_wrap <- function(prefix, family, idt, backend, args) {
 #' @noRd
 NULL
 
-# # Functions block --------------------------------------------------------------
+# # Functions block -----------------------------------------------------------
 #
 # functions_lines_default <- function(...) {
 #   ""
@@ -204,7 +204,7 @@ prior_data_lines <- function(y, idt, prior_distr,
                              K_fixed, K_varying, K_random, category = "",
                              multinomial = FALSE, ...) {
   ycat <- ifelse(
-    nchar(category) > 0L,
+    nzchar(category),
     ifelse_(
       multinomial,
       category,
@@ -241,19 +241,31 @@ prior_data_lines <- function(y, idt, prior_distr,
     ),
     onlyif(
       vectorize_beta,
-      "matrix[K_fixed_{y}, {prior_distr$beta_prior_npars}] beta_prior_pars_{ycat};"
+      paste0(
+        "matrix[K_fixed_{y}, {prior_distr$beta_prior_npars}] ",
+        "beta_prior_pars_{ycat};"
+      )
     ),
     onlyif(
       vectorize_delta,
-      "matrix[K_varying_{y}, {prior_distr$delta_prior_npars}] delta_prior_pars_{ycat};"
+      paste0(
+        "matrix[K_varying_{y}, {prior_distr$delta_prior_npars}] ",
+        "delta_prior_pars_{ycat};"
+      )
     ),
     onlyif(
       vectorize_tau,
-      "matrix[K_varying_{y}, {prior_distr$tau_prior_npars}] tau_prior_pars_{ycat};"
+      paste0(
+        "matrix[K_varying_{y}, {prior_distr$tau_prior_npars}] ",
+        "tau_prior_pars_{ycat};"
+      )
     ),
     onlyif(
       vectorize_sigma_nu,
-      "matrix[K_random_{y}, {prior_distr$sigma_nu_prior_npars}] sigma_nu_prior_pars_{ycat};"
+      paste0(
+        "matrix[K_random_{y}, {prior_distr$sigma_nu_prior_npars}] ",
+        "sigma_nu_prior_pars_{ycat};"
+      )
     ),
     .indent = idt(1)
   )
@@ -261,11 +273,7 @@ prior_data_lines <- function(y, idt, prior_distr,
 
 data_lines_default <- function(y, idt, has_random_intercept,
                                K_fixed, K_varying, K_random, backend, ...) {
-  icpt <- ifelse(
-    has_random_intercept,
-    " - 1",
-    ""
-  )
+  icpt <- ifelse_(has_random_intercept, " - 1", "")
   re_icpt <- ifelse_(has_random_intercept, 1L, 0L)
   paste_rows(
     "// number of fixed, varying and random coefficients, and related indices",
@@ -600,7 +608,10 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
     ),
     onlyif(
       has_varying,
-      "vector<lower={lb}>[K_varying_{ydim}] tau_{y}; // SDs for the random walks"
+      paste0(
+        "vector<lower={lb}>[K_varying_{ydim}] tau_{y}; ",
+        "// SDs for the random walks"
+      )
     ),
     ifelse_(
       has_fixed_intercept || has_varying_intercept,
@@ -629,7 +640,10 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
     ),
     onlyif(
       has_lfactor,
-      "real{tr} omega_raw_psi_1_{y}; // factor spline coef for first time point"
+      paste0(
+        "real{tr} omega_raw_psi_1_{y}; ",
+        "// factor spline coef for first time point"
+      )
     ),
     .indent = idt(1)
   )
@@ -863,7 +877,6 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     .indent = idt(c(0, 0, 1, 2, 1)),
     .parse = FALSE
   )
-
   m <- ifelse(nonzero_lambda, "1 + ", "")
   declare_lambda <- paste_rows(
     "// hard sum constraint",
@@ -1030,7 +1043,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
       )
   } else {
     mtext_sigma_nu <-
-      glue::glue("sigma_nu_{y}[{1:K_random}] ~ {prior_distr$sigma_nu_prior_distr};")
+      "sigma_nu_{y}[{1:K_random}] ~ {prior_distr$sigma_nu_prior_distr};"
   }
 
   if (has_lfactor) {
@@ -1051,7 +1064,8 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
   if (noncentered) {
     mtext_omega <- "omega_raw_alpha_{y} ~ std_normal();"
     if (prior_distr$vectorized_delta) {
-      dpars_varying <- ifelse_(prior_distr$delta_prior_npars > 0L,
+      dpars_varying <- ifelse_(
+        prior_distr$delta_prior_npars > 0L,
         paste0(
           "delta_prior_pars_", y, "[, ",
           seq_len(prior_distr$delta_prior_npars), "]",
@@ -1065,7 +1079,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
       )
     } else {
       mtext_varying <-
-        glue::glue("omega_raw_{y}[{1:K_varying}, 1] ~ {prior_distr$delta_prior_distr};")
+        "omega_raw_{y}[{1:K_varying}, 1] ~ {prior_distr$delta_prior_distr};"
     }
     mtext_varying <- paste_rows(
       mtext_varying,
@@ -1091,7 +1105,8 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
       .parse = FALSE
     )
     if (prior_distr$vectorized_delta) {
-      dpars_varying <- ifelse_(prior_distr$delta_prior_npars > 0L,
+      dpars_varying <- ifelse_(
+        prior_distr$delta_prior_npars > 0L,
         paste0(
           "delta_prior_pars_", y, "[, ",
           seq_len(prior_distr$delta_prior_npars), "]",
@@ -1105,7 +1120,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
       )
     } else {
       mtext_varying <-
-        glue::glue("omega_{y}[{1:K_varying}, 1] ~ {prior_distr$delta_prior_distr};")
+        "omega_{y}[{1:K_varying}, 1] ~ {prior_distr$delta_prior_distr};"
     }
     mtext_varying <- paste_rows(
       mtext_varying,
@@ -1146,13 +1161,11 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
     )
     mtext_fixed <- "beta_{y} ~ {prior_distr$beta_prior_distr}({dpars_fixed});"
   } else {
-    mtext_fixed <- glue::glue(
-      "beta_{y}[{1:K_fixed}] ~ {prior_distr$beta_prior_distr};"
-    )
+    mtext_fixed <- "beta_{y}[{1:K_fixed}] ~ {prior_distr$beta_prior_distr};"
   }
 
   if (prior_distr$vectorized_tau) {
-    dpars_tau <-  ifelse_(
+    dpars_tau <- ifelse_(
       prior_distr$tau_prior_npars > 0L,
       paste0(
         "tau_prior_pars_", y, "[, ", seq_len(prior_distr$tau_prior_npars), "]",
@@ -1162,7 +1175,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
     )
     mtext_tau <- "tau_{y} ~ {prior_distr$tau_prior_distr}({dpars_tau});"
   } else {
-    mtext_tau <- glue::glue("tau_{y}[{1:K_varying}] ~ {prior_distr$tau_prior_distr};")
+    mtext_tau <- "tau_{y}[{1:K_varying}] ~ {prior_distr$tau_prior_distr};"
   }
   paste_rows(
     onlyif(has_lfactor, mtext_lambda),
@@ -1230,7 +1243,6 @@ intercept_lines <- function(y, t, obs, t_obs, family,
     ),
     ""
   )
-
   fixed <- ifelse_(
     has_fixed,
     glue::glue(" + X[t][{obs}, J_fixed_{ydim}] * beta_{y}"),
@@ -1260,15 +1272,13 @@ intercept_lines <- function(y, t, obs, t_obs, family,
 model_lines_categorical <- function(y, t, obs, t_obs, idt, priors, intercept,
                                     has_fixed, has_varying,
                                     categories, multinomial = FALSE, ...) {
-
+  S <- length(categories)
+  cats <- categories[seq.int(2L, S)]
   if (attr(intercept[[1]], "glm") && !multinomial) {
-
-
     # combine intercepts and gammas
-    S <- length(categories)
-    icpt_y <- c("0", paste0("intercept_", categories[seq.int(2L, S)]))
+    icpt_y <- c("0", paste0("intercept_", cats))
     icpt <- paste_rows(
-      "real intercept_{categories[seq.int(2L, S)]} = {unlist(intercept)};",
+      "real intercept_{cats} = {unlist(intercept)};",
       "vector[S_{y}] intercept_{y} = [{cs(icpt_y)}]';",
       .indent = idt(2)
     )
@@ -1282,11 +1292,17 @@ model_lines_categorical <- function(y, t, obs, t_obs, idt, priors, intercept,
     )
     beta <- onlyif(
       has_fixed,
-      "gamma__{y}[L_fixed_{y}, {seq.int(2L, S)}] = beta_{y}_{categories[seq.int(2L, S)]};"
+      paste0(
+        "gamma__{y}[L_fixed_{y}, {seq.int(2L, S)}] = ",
+        "beta_{y}_{cats};"
+      )
     )
     delta <- onlyif(
       has_varying,
-      "gamma__{y}[L_varying_{y}, {seq.int(2L, S)}] = delta_{y}_{categories[seq.int(2L, S)]}[t];"
+      paste0(
+        "gamma__{y}[L_varying_{y}, {seq.int(2L, S)}] = ",
+        "delta_{y}_{cats}[t];"
+      )
     )
     likelihood_term <- ifelse_(
       has_fixed || has_varying,
@@ -1311,31 +1327,27 @@ model_lines_categorical <- function(y, t, obs, t_obs, idt, priors, intercept,
   } else {
     distr <- ifelse_(multinomial, "multinomial", "categorical")
     category_dim <- ifelse_(multinomial, ", ", "")
-
-    S <- length(categories)
-
-    icpt_y <- c("0", paste0("intercept_", categories[2:S], "[i]"))
+    icpt_y <- c("0", paste0("intercept_", cats, "[i]"))
     icpt <- paste_rows(
       ifelse_(
-        nchar(obs),
-        "vector[n_obs_{y}[t]] intercept_{categories[seq.int(2L, S)]} = {unlist(intercept)};",
-        "vector[N] intercept_{categories[seq.int(2, S)]} = {unlist(intercept)};"
+        nzchar(obs),
+        "vector[n_obs_{y}[t]] intercept_{cats} = {unlist(intercept)};",
+        "vector[N] intercept_{cats} = {unlist(intercept)};"
       ),
       .indent = idt(3)
     )
     likelihood_term <- ifelse_(
-      nchar(obs),
+      nzchar(obs),
       "y_{y}[t, obs_{y}[i, t]{category_dim}] ~ {distr}_logit(intercept_{y});",
       "y_{y}[t, i{category_dim}] ~ {distr}_logit(intercept_{y});"
     )
-
     model_text <- paste_rows(
       "{{",
       "vector[S_{y}] intercept_{y};",
       "for (t in {t_obs}) {{",
       icpt,
       ifelse_(
-        nchar(obs),
+        nzchar(obs),
         "for (i in 1:n_obs_{y}[t]) {{",
         "for (i in 1:N) {{"
       ),
@@ -1354,7 +1366,7 @@ model_lines_categorical <- function(y, t, obs, t_obs, idt, priors, intercept,
 
 model_lines_multinomial <- function(cvars, cgvars, idt, ...) {
   cgvars$priors <- lapply(
-    cgvars$y[-1],
+    cgvars$y[-1L],
     function(s) {
       cvars[[s]]$y <- s
       cvars[[s]]$prior_distr <- cgvars$prior_distr[[s]]
@@ -1362,7 +1374,7 @@ model_lines_multinomial <- function(cvars, cgvars, idt, ...) {
     }
   )
   cgvars$intercept <- lapply(
-    cgvars$y[-1],
+    cgvars$y[-1L],
     function(s) {
       cvars[[s]]$y <- s
       cvars[[s]]$t <- cgvars$t
@@ -1371,7 +1383,10 @@ model_lines_multinomial <- function(cvars, cgvars, idt, ...) {
       do.call(
         intercept_lines,
         c(
-          cvars[[s]], idt = idt, backend = cgvars$backend, ydim = cgvars$y_cg
+          cvars[[s]],
+          idt = idt,
+          backend = cgvars$backend,
+          ydim = cgvars$y_cg
         )
       )
     }
@@ -1393,7 +1408,6 @@ model_lines_gaussian <- function(y, t, obs, t_obs, idt, priors, intercept,
     ),
     "y_{y}[{obs}, t] ~ normal({intercept}, sigma_{y});"
   )
-
   model_text <- paste_rows(
     "sigma_{y} ~ {prior_distr$sigma_prior_distr};",
     "{{",
@@ -1507,8 +1521,7 @@ model_lines_poisson <- function(y, t, obs, t_obs, idt, priors, intercept,
 }
 
 model_lines_negbin <- function(y, t, obs, t_obs, idt, priors, intercept,
-                               has_varying, has_fixed,
-                               prior_distr, ...) {
+                               has_varying, has_fixed, prior_distr, ...) {
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
     paste0(
@@ -1543,7 +1556,6 @@ model_lines_binomial <- function(y, t, obs, t_obs, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-
 model_lines_exponential <- function(y, t, obs, t_obs, idt, priors, intercept,
                                     has_varying, has_fixed, ...) {
   model_text <- paste_rows(
@@ -1556,8 +1568,7 @@ model_lines_exponential <- function(y, t, obs, t_obs, idt, priors, intercept,
 }
 
 model_lines_gamma <- function(y, t, obs, t_obs, idt, priors, intercept,
-                              has_varying, has_fixed,
-                              prior_distr, ...) {
+                              has_varying, has_fixed, prior_distr, ...) {
   model_text <- paste_rows(
     "phi_{y} ~ {prior_distr$phi_prior_distr};",
     "for (t in {t_obs}) {{",
@@ -1569,8 +1580,7 @@ model_lines_gamma <- function(y, t, obs, t_obs, idt, priors, intercept,
 }
 
 model_lines_beta <- function(y, t, obs, t_obs, idt, priors, intercept,
-                             has_varying, has_fixed,
-                             prior_distr, ...) {
+                             has_varying, has_fixed, prior_distr, ...) {
   model_text <- paste_rows(
     "phi_{y} ~ {prior_distr$phi_prior_distr};",
     "for (t in {t_obs}) {{",
@@ -1582,8 +1592,7 @@ model_lines_beta <- function(y, t, obs, t_obs, idt, priors, intercept,
 }
 
 model_lines_student <- function(y, t, obs, t_obs, idt, priors, intercept,
-                                has_varying, has_fixed,
-                                prior_distr, ...) {
+                                has_varying, has_fixed, prior_distr, ...) {
   model_test <- paste_rows(
     "sigma_{y} ~ {prior_distr$sigma_prior_distr};",
     "phi_{y} ~ {prior_distr$phi_prior_distr};",
@@ -1592,8 +1601,6 @@ model_lines_student <- function(y, t, obs, t_obs, idt, priors, intercept,
     "}}"
   )
 }
-
-
 
 # Generated quantities block ----------------------------------------------
 

@@ -131,7 +131,8 @@ create_data_lines <- function(idt, backend, cvars, cgvars) {
           paste_rows(
             lines_wrap("data", "default", idt, backend, x),
             do.call("prior_data_lines", c(idt = idt, x)),
-            .indent = idt(0), .parse = FALSE
+            .indent = idt(0),
+            .parse = FALSE
           )
         },
         character(1L)
@@ -161,12 +162,11 @@ create_transformed_data <- function(idt, backend, cg, cvars, cgvars) {
     declarations[i] <- tr_data$declarations
     statements[i] <- tr_data$statements
   }
-  declare_QR <- "vector[2 * N] QR_Q = create_Q(N);"
   has_lfactor <- any(vapply(cvars, "[[", logical(1L), "has_lfactor"))
   paste_rows(
     "transformed data {",
     declarations,
-    onlyif(has_lfactor, declare_QR),
+    onlyif(has_lfactor, "vector[2 * N] QR_Q = create_Q(N);"),
     statements,
     "}",
     .indent = idt(c(0, 0, 1, 0, 0)),
@@ -329,14 +329,23 @@ create_transformed_parameters <- function(idt, backend, cg, cvars, cgvars) {
   random_text <- ""
   M <- attr(cvars, "random_def")$M
   if (M > 0L) {
-   # Ks <- vapply(cvars, "[[", integer(1L), "K_random")
-    Ks <- unlist(unname(lapply(cvars, function(x) {
-      ifelse_(
-        is_categorical(x$family),
-        setNames(rep(x$K_random, x$S - 1), paste0(x$y, "_", x$categories[-1])),
-        setNames(x$K_random, x$y)
+    Ks <- unlist(
+      unname(
+        lapply(
+          cvars,
+          function(x) {
+            ifelse_(
+              is_categorical(x$family),
+              stats::setNames(
+                rep(x$K_random, x$S - 1),
+                paste0(x$y, "_", x$categories[-1])
+              ),
+              stats::setNames(x$K_random, x$y)
+            )
+          }
         )
-    })))
+      )
+    )
     Ks <- Ks[Ks > 0]
     y <- names(Ks)
     cKs1 <- cumsum(c(1, Ks[-length(Ks)]))
@@ -358,11 +367,10 @@ create_transformed_parameters <- function(idt, backend, cg, cvars, cgvars) {
         )
       )
     } else {
-      random_text <-
-        paste_rows(
-          "matrix[N, {Ks}] nu_{y} = nu_raw[, {cKs1}:{cKs2}];",
-          .indent = idt(1)
-        )
+      random_text <- paste_rows(
+        "matrix[N, {Ks}] nu_{y} = nu_raw[, {cKs1}:{cKs2}];",
+        .indent = idt(1)
+      )
     }
     random_text <- paste_rows(
       "vector[{Ks}] sigma_nu_{y} = sigma_nu[{cKs1}:{cKs2}];",
@@ -400,14 +408,13 @@ create_transformed_parameters <- function(idt, backend, cg, cvars, cgvars) {
         )
       )
     } else {
-      lfactor_text <-
-        paste_rows(
-          paste0(
-            "row_vector[D] omega_psi_{psis} = ",
-            "append_col(0, omega_raw_psi[{1:P}, ]);"
-          ),
-          .indent = idt(1)
-        )
+      lfactor_text <- paste_rows(
+        paste0(
+          "row_vector[D] omega_psi_{psis} = ",
+          "append_col(0, omega_raw_psi[{1:P}, ]);"
+        ),
+        .indent = idt(1)
+      )
     }
   }
   n_cg <- n_unique(cg)
@@ -446,7 +453,7 @@ create_transformed_parameters_lines <- function(idt, backend, cvars, cgvars) {
           cvars[[1L]]$ydim <- cgvars$y_cg
           cvars[[1L]]$y <- s
           lines_wrap(
-        "transformed_parameters", "default", idt, backend, cvars[[1L]]
+            "transformed_parameters", "default", idt, backend, cvars[[1L]]
           )
         }
       )
@@ -680,7 +687,6 @@ create_model_lines <- function(idt, backend, cvars, cgvars) {
         cvars[[1L]]$categories[-1L],
         function(s) {
           cvars[[1L]]$ydim <- cvars[[1L]]$y
-          #check? cvars[[1L]]$obs <- glue::glue("obs_{cvars[[1]]$y}[i, t]")
           cvars[[1L]]$y <- paste0(cvars[[1L]]$y, "_", s)
           do.call(intercept_lines, cvars[[1L]])
         }

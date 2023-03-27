@@ -7,7 +7,7 @@
 #' @noRd
 create_vectorized_prior <- function(ptype, priors, channel, category = "") {
   ycat <- ifelse(
-    nchar(category) > 0L,
+    nzchar(category),
     paste0("_", category),
     ""
   )
@@ -138,7 +138,7 @@ prepare_common_priors <- function(priors, M, shrinkage, P,
 default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
                            category = "") {
   ycat <- ifelse(
-    nchar(category) > 0L,
+    nzchar(category),
     paste0("_", category),
     ""
   )
@@ -276,7 +276,7 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
   }
   list(
     prior_distributions = prior_distributions,
-    priors = data.table::setDF(data.table::rbindlist(priors))
+    priors = rbindlist_(priors)
   )
 }
 
@@ -292,7 +292,6 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
 #' @param defaults A data frame of default prior definitions.
 #' @noRd
 check_priors <- function(priors, defaults) {
-
   dupl <- duplicated(priors$parameter)
   stopifnot_(
     all(!dupl),
@@ -302,8 +301,7 @@ check_priors <- function(priors, defaults) {
              {.var {priors$parameter[dupl]}}."
     )
   )
-  not_found <-
-    defaults$parameter[which(!(defaults$parameter %in% priors$parameter))]
+  not_found <- defaults$parameter[!defaults$parameter %in% priors$parameter]
   not_found_len <- length(not_found)
   stopifnot_(
     identical(not_found_len, 0L),
@@ -313,8 +311,7 @@ check_priors <- function(priors, defaults) {
              {.var {not_found}} {?is/are} not defined."
     )
   )
-  extras <-
-    priors$parameter[which(!(priors$parameter %in% defaults$parameter))]
+  extras <- priors$parameter[!priors$parameter %in% defaults$parameter]
   extras_len <- length(extras)
   stopifnot_(
     identical(extras_len, 0L),
@@ -336,7 +333,7 @@ check_priors <- function(priors, defaults) {
   )
   all_dists <- c(unconstrained_dists, positive_dists)
   dists <- sub("\\(.*", "", priors$prior)
-  unsupported <- unique(dists[which(!(dists %in% all_dists))])
+  unsupported <- unique(dists[!dists %in% all_dists])
   unsupported_len <- length(unsupported)
   stopifnot_(
     identical(unsupported_len, 0L),
