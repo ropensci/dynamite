@@ -1,0 +1,152 @@
+---
+title: "Simulating data from a dynamic multivariate panel model"
+link-citations: yes
+output:
+  bookdown::html_document2:
+    base_format: rmarkdown::html_vignette
+pkgdown:
+  as_is: true
+bibliography: dynamite.bib
+vignette: >
+  %\VignetteIndexEntry{Simulating data from a dynamic multivariate panel model} 
+  %\VignetteEngine{knitr::rmarkdown} 
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(dynamite)
+```
+
+# Using dynamite to generate panel data
+
+Dynamic multivariate panel models (DMPM) are conceptually challenging due to their multichannel and multivariate nature. These models can also contain a large number of various parameters, especially when the model contains time-varying effects or group-level random effects. This poses a challenge for users that wish to generate data according to such models, as manual specification of the parameters becomes cumbersome. 
+
+While the main purpose of `dynamite()` is to fit dynamic multivariate panel models to data and to obtain predictions, the package can fortunately also be used to generate data according to a specified model. The used need only specify the model formula, which along with data on the fixed covariates can be used the obtain the dimensions of all parameters in the model via the `get_parameter_dims()` function. As the name suggests, this function will return the names and dimensions of all parameters in the model which need to be specified for data simulation. However, in practice it is not necessary to define values for all parameters, as Stan will automatically generate random initial values for any missing parameters.
+
+After the user has specified the parameter values, they should be supplied to `dynamite()` as a list via the argument `init`, which will be used by Stan to initialize the parameters in the underlying Stan model. Further, the number of iterations should be set to 1 and the simulation algorithm to `"Fixed_param"`, so that no posterior sampling is carried out. This will result in a `dynamitefit` object that can be subsequently used in `predict` to obtain the desired simulated data.
+
+# Simulating categorical data
+
+As an illustration, the approach described in this vignette was used to generate the package data `categorical_example` as follows. First, we define the data for the first time index:
+```{r categinit, eval=FALSE, echo=TRUE}
+library(dynamite)
+set.seed(1)
+n_id <- 100L
+n_time <- 20L
+
+d <- data.frame(
+  y = sample(factor(c("a", "b", "c")), size = n_id, replace = TRUE),
+  x = sample(factor(c("A", "B", "C")), size = n_id, replace = TRUE),
+  time = 1,
+  id = seq_len(n_id)
+)
+```
+Based on this initial data, our goal is to generate categorical responses for two channels, `y` and `x`, for 100 individuals over 20 time points. We expand the initial data with missing values for the remaining time points. We also add a random noise variable `z` that is observed for each individual at each time index.
+```{r categexpand, eval=FALSE, echo=TRUE}
+d <- dplyr::right_join(
+  d,
+  data.frame(
+    time = rep(seq_len(n_time), each = n_id),
+    id = seq_len(n_id)
+  )
+)
+d$z <- rnorm(nrow(d))
+```
+Next, we define the model formula for the DMPM of the response variables
+```{r categform, eval=FALSE, echo=TRUE}
+f <- obs(x ~ z + lag(x) + lag(y), family = "categorical") +
+  obs(y ~ z + lag(x) + lag(y), family = "categorical")
+```
+Based on this formula, we now need to define the values of the parameters of the model that it implies. First, we must determine what the parameters are called and what their dimensions are via `get_parameter_dims()`.
+For `dynamiteformula` objects, this method should be provided the same arguments as `dynamite`: the model formula, the data, the time index variable and the optional grouping variable. This function fits a temporary Stan model to define the required parameters, meaning that it may take a few seconds to obtain the result.
+```{r categdimsecho, eval=FALSE, echo=TRUE}
+get_parameter_dims(x = f, data = d, time = "time", group = "id")
+```
+```{r categdimseval, eval=TRUE, echo=FALSE}
+# This is actually computed
+get_parameter_dims(categorical_example_fit)
+```
+Now we have the required information to specify the parameters of the model. The actual values to be chosen for the parameters naturally depends on the scenario and is up to the user. We set the following values for the simulation as the list `init`.
+```{r categparamvals, eval=FALSE, echo=TRUE}
+init <- list(
+  beta_x_B = c(2, 0.8, 0.2, 0, 0),
+  beta_x_C = c(1, 0.5, 2, 0.2, 0.1),
+  a_x_B = -0.1,
+  a_x_C = 0.2,
+  beta_y_b = c(0, 1, 0.8, 0.3, 0.5),
+  beta_y_c = c(1, 0.2, 0, 0.3, -0.5),
+  a_y_b = 0.1,
+  a_y_c = -0.5
+)
+```
+We fit the model with these fixed values as follows
+```{r categfit, eval=FALSE, echo=TRUE}
+fit <- dynamite(
+  dformula = f,
+  data = d,
+  time = "time",
+  group = "id",
+  chains = 1,
+  iter = 1,
+  algorithm = "Fixed_param",
+  init = list(init),
+)
+```
+The `categorical_example` data of the package can now be obtained with a simple call to `predict()`. Finally, we simply rename the simulated values of the responses, and select the variables of interest.
+```{r categpred, eval=FALSE, echo=TRUE}
+categorical_example <- predict(fit, type = "response") |>
+  dplyr::mutate(x = x_new, y = y_new) |>
+  dplyr::select(id, time, x, y, z)
+```
+
+# Model with time-varying effects
+
+As mentioned earlier, simulation from a model with time-varying effects is more challenging due to the inclusion of p-splines. We consider a single-channel model with a gaussian response that has a time-varying effect on a single covariate.
+
+```{r gaussiainit}
+library(dynamite)
+set.seed(1)
+n_id <- 100L
+n_time <- 20L
+
+d <- data.frame(
+  y = rnorm(n_id, 1, 0.5),
+  time = 1,
+  id = seq_len(n_id)
+)
+```
+We again expand the data with missing values to the full time period and add a fixed covariate `x`.
+```{r gaussianexpand}
+d <- dplyr::right_join(
+  d,
+  data.frame(
+    time = rep(seq_len(n_time), each = n_id),
+    id = seq_len(n_id)
+  )
+)
+d$x <- rnorm(nrow(d))
+```
+Next, we define the model formula for the DMPM of the response variable `y` and define the splines of the time-varying effects.
+```{r gaussianform}
+f <- obs(y ~ 1 + varying(~ -1 + x + lag(y)), family = "gaussian") +
+  splines(df = 10)
+```
+Again, we apply the `get_parameter_dims()` function to get the model parameters and their dimensions.
+```{r gaussiandimseval, eval=TRUE, echo=FALSE}
+list(
+  omega_y = c(2L, 10L),
+  tau_y = c(2L, 10L),
+  a_y = 1L,
+  sigma_y = c(1L),
+  delta_y = c(19L, 2L),
+  alpha_y = 1L
+)
+```
+```{r gaussiandimsecho, eval=FALSE, echo=TRUE}
+get_parameter_dims(x = f, data = d, time = "time", group = "id")
+```
+Here, the parameters `omega_y` define the spline coefficients for the 

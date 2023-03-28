@@ -2,3 +2,5 @@
 .Rhistory
 inst/doc
 tests/testthat/Rplots.pdf
+/doc/
+/Meta/

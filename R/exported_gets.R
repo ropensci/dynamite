@@ -253,16 +253,14 @@ get_parameter_dims.dynamitefit <- function(x, ...) {
     !is.null(x$stanfit),
     "No Stan model fit is available."
   )
-  draws <- rstan::extract(
-    x$stanfit,
-    pars = "lp__",
-    include = FALSE
-  )
+  out <- rstan::get_inits(x$stanfit)[[1L]]
+  #pars <- "(a_|beta_|nu_raw|phi_|sigma_|tau_|omega_|L_|xi).+"
+  #out <- out[grepl(pars, names(out))]
   lapply(
-    draws,
+    out,
     function(y) {
       d <- dim(y)
-      ifelse_(length(d) == 1L, 1L, d[-1L])
+      ifelse_(is.null(d), 1L, d)
     }
   )
 }
