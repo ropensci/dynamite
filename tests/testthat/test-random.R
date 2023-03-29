@@ -190,7 +190,8 @@ test_that("random effects for categorical distribution work", {
         iter = 2000,
         refresh = 0
       )
-    )
+    ),
+    silent = TRUE
   )
   expect_false(inherits(fit, "try-error"))
   expect_error(
@@ -271,7 +272,8 @@ test_that("random effects for multivariate gaussian distribution work", {
         iter = 2000,
         refresh = 0
       )
-    )
+    ),
+    silent = TRUE
   )
   expect_false(inherits(fit, "try-error"))
   expect_error(
