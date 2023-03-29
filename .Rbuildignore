@@ -7,3 +7,5 @@
 ^codemeta\.json$
 ^data-raw$
 ^_pkgdown.yml$
+^doc$
+^Meta$

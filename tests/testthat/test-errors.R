@@ -182,19 +182,6 @@ test_that("plus method fails for nondynamiteformula", {
   )
 })
 
-test_that("categorical with random effects fails", {
-  expect_error(
-    dynamite(obs(y ~ x + random(~1), family = "categorical") + random_spec(),
-      data = data.frame(
-        y = factor(1:4), x = runif(4), id = rep(1:2, each = 2), time = 1:4
-        ),
-      "time", "id",
-      debug = list(no_compile = TRUE)
-    ),
-    "Random effects are not \\(yet\\) supported for categorical responses."
-  )
-})
-
 test_that("negative lb_tau fails", {
   expect_error(
     obs_test + splines(lb_tau = -1.0),
@@ -267,22 +254,6 @@ test_that("pure deterministic formula to dynamite fails", {
       time = "z"
     ),
     "Argument `dformula` must contain at least one stochastic channel\\."
-  )
-})
-
-test_that("categorical latent factor fails", {
-  expect_error(
-    dynamite(
-      obs(y ~ x, family = "categorical") + lfactor(),
-      data = data.frame(y = factor(1:4), x = runif(4), id = 1, time = 1:4),
-      time = "time",
-      group = "id",
-      debug = list(no_compile = TRUE)
-    ),
-    paste0(
-      "No valid responses for latent factor component:\n",
-      "x Latent factors are not supported for the categorical family\\."
-    )
   )
 })
 
@@ -402,14 +373,25 @@ test_that("univariate family fails with multiple response variables", {
   )
 })
 
-test_that("invalid number of multivariate formula components fails", {
+test_that("invalid number of formula components fails", {
   expect_error(
     obs(c(y1, y2) ~ x | x | x, family = "mvgaussian"),
     paste0(
       "Number of component formulas must be 1 ",
       "or the number of dimensions: 2\n",
-      "x 3 formulas were provided."
+      "x 3 formulas were provided\\."
     )
+  )
+  expect_error(
+    obs(y1 ~ x | x, family = "gaussian"),
+    "A univariate channel must have only one formula component\\."
+  )
+})
+
+test_that("multinomial family fails with multiple formula components", {
+  expect_error(
+    obs(c(y1, y2, y3) ~ 1 + trials(n) | x | x, family = "multinomial"),
+    "A multinomial channel must have only one formula component\\."
   )
 })
 
@@ -425,7 +407,7 @@ test_that("no intercept or predictors fails if no lfactor", {
     ),
     paste0(
       "Invalid formula for response variable `y`:\n",
-      "x There are no predictors, intercept terms or latent factors\\."
+      "x There are no predictors, intercept terms, or latent factors\\."
     )
   )
 })
@@ -434,6 +416,13 @@ test_that("binomial channel without a trials term fails", {
   expect_error(
     obs(y ~ x, family = "binomial"),
     "Formula for a binomial channel must include a trials term\\."
+  )
+})
+
+test_that("multinomial channel without a trials term fails", {
+  expect_error(
+    obs(c(y1, y2) ~ 1, family = "multinomial"),
+    "Formula for a multinomial channel must include a trials term\\."
   )
 })
 
@@ -1352,7 +1341,7 @@ test_that("plot errors when no variable is found ", {
     plot(categorical_example_fit, type = "delta"),
     paste0(
       "No parameters of type `delta` found for any of the response ",
-      "channels `x`, `y`."
+      "channels `x` and `y`."
     )
   )
 })

@@ -3,16 +3,7 @@
 #' Extracts the priors used in the dynamite model as a data frame. You
 #' can then alter the priors by changing the contents of the `prior` column and
 #' supplying this data frame to `dynamite` function using the argument
-#' `priors`.
-#'
-#' Note that the prior for the intercept term `alpha` is actually defined
-#' in a centered form, so the prior is related to the `alpha` when the
-#' covariates at the first time point are centered around their means. In other
-#' words, the prior is defined for `alpha + x_m * gamma` where `x_m` is vector
-#' of covariate means and gamma contains the corresponding coefficients (`beta`
-#' and `delta_1`). If you want to use prior directly on `alpha`, remove
-#' intercept from the formula and add a dummy covariate consisting of ones to
-#' the model.
+#' `priors`. See vignettes for details.
 #'
 #' @note Only the `prior` column of the output should be altered when defining
 #' the user-defined priors for the `dynamite`.
@@ -107,6 +98,10 @@ get_code.dynamiteformula <- function(x, data, time,
 #' @rdname get_code
 #' @export
 get_code.dynamitefit <- function(x, blocks = NULL, ...) {
+  stopifnot_(
+    !is.null(x$stanfit),
+    "No Stan model fit is available."
+  )
   get_code_(x$stanfit@stanmodel@model_code, blocks)
 }
 
@@ -178,16 +173,13 @@ get_data <- function(x, ...) {
 #' @rdname get_data
 #' @export
 get_data.dynamiteformula <- function(x, data, time, group = NULL, ...) {
-  out <- do.call(
-    "dynamite",
-    list(
-      dformula = x,
-      data = data,
-      time = time,
-      group = group,
-      debug = list(no_compile = TRUE, sampling_vars = TRUE),
-      ...
-    )
+  out <- dynamite(
+    dformula = x,
+    data = data,
+    time = time,
+    group = group,
+    debug = list(no_compile = TRUE, sampling_vars = TRUE),
+    ...
   )
   out$stan$sampling_vars
 }
@@ -197,6 +189,97 @@ get_data.dynamiteformula <- function(x, data, time, group = NULL, ...) {
 get_data.dynamitefit <- function(x, ...) {
   x$stan$sampling_vars
 }
+
+#' Get Parameter Dimensions of the Dynamite Model
+#'
+#' Extracts the names and dimensions of all parameters used in the
+#' `dynamite` model. See also [dynamite::get_parameter_types()] and
+#' [dynamite::get_parameter_names()]. The returned dimensions match those of
+#' the `stanfit` element of the `dynamitefit` object. When applied to
+#' `dynamiteformula` objects, the model is compiled and sampled for 1 iteration
+#' to get the parameter dimensions.
+#'
+#' @rdname get_parameter_dims
+#' @inheritParams get_priors.dynamiteformula
+#' @return A named list with all parameter dimensions of the input model.
+#' @export
+#' @family output
+#' @examples
+#' get_parameter_dims(multichannel_example_fit)
+#'
+get_parameter_dims <- function(x, ...) {
+  UseMethod("get_parameter_dims", x)
+}
+
+#' @rdname get_parameter_dims
+#' @export
+get_parameter_dims.dynamiteformula <- function(x, data, time,
+                                               group = NULL, ...) {
+  out <- try(
+    suppressWarnings(
+      dynamite(
+        dformula = x,
+        data = data,
+        time = time,
+        group = group,
+        algorithm = "Fixed_param",
+        chains = 1,
+        iter = 1,
+        refresh = 0,
+        backend = "rstan",
+        verbose_stan = FALSE,
+        ...
+      )
+    ),
+    silent = TRUE
+  )
+  stopifnot_(
+    !inherits(out, "try-error"),
+    c(
+      "Unable to determine parameter dimensions:",
+      `x` = attr(out, "condition")$message
+    )
+  )
+  get_parameter_dims(out)
+}
+
+#' @rdname get_parameter_dims
+#' @export
+get_parameter_dims.dynamitefit <- function(x, ...) {
+  stopifnot_(
+    !is.null(x$stanfit),
+    "No Stan model fit is available."
+  )
+  pars_text <- get_code(x, blocks = "parameters")
+  pars <- get_parameters(pars_text)
+  out <- rstan::get_inits(x$stanfit)[[1L]]
+  out <- out[names(out) %in% pars]
+  lapply(
+    out,
+    function(y) {
+      d <- dim(y)
+      ifelse_(is.null(d), 1L, d)
+    }
+  )
+}
+
+#' Internal Parameter Block Variable Name Extraction
+#'
+#' @param x \[`character(1L)`]\cr The Stan model code string of the
+#'   "Parameters" block.
+#' @noRd
+get_parameters <- function(x) {
+  x <- strsplit(x, split = "\n")[[1L]]
+  x <- x[grepl(";", x)]
+  par_regex <- regexec(
+    pattern = "^.+\\s([^\\s]+);.*$",
+    text = x,
+    perl = TRUE
+  )
+  par_matches <- regmatches(x, par_regex)
+  vapply(par_matches, "[[", character(1L), 2L)
+}
+
 
 #' Get Parameter Types of the Dynamite Model
 #'

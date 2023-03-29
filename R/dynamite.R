@@ -5,29 +5,7 @@
 #' distributions and allows the user to flexibly customize the priors for the
 #' model parameters. The dynamite model is specified using standard \R formula
 #' syntax via [dynamite::dynamiteformula()]. For more information and examples,
-#' see 'Details' and the package vignette.
-#'
-#' Any univariate unbounded continuous distributions supported by Stan can be
-#' used as a prior for model parameters (the distribution is automatically
-#' truncated to positive side for constrained parameters). In addition, any
-#' univariate distribution bounded to the positive real line can be used as a
-#' prior for parameters constrained to be positive.
-#' See Stan function reference at
-#' \url{https://mc-stan.org/users/documentation/} for details. For custom
-#' priors, you should first get the default priors with [dynamite::get_priors()]
-#' function, and then modify the `priors` column of the obtained data frame
-#' before supplying it to the `dynamite` function.
-#'
-#' The default priors for regression coefficients are based on the standard
-#' deviation of the covariates at the first non-fixed time point. In case this
-#' is 0 or NA, it is transformed to (arbitrary) 0.5. The final prior is then
-#' normal distribution with zero mean and two times this standard deviation.
-#'
-#' The prior for the correlation structure of the random intercepts is defined
-#' via the Cholesky decomposition of the correlation matrix, as
-#' `lkj_corr_cholesky(1)`. See
-#' \url{https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html}
-#' for details.
+#' see 'Details' and the package vignettes.
 #'
 #' The best-case scalability of `dynamite` in terms of data size should be
 #' approximately linear in terms of number of time points and and number of
@@ -276,7 +254,7 @@ dynamite <- function(dformula, data, time, group = NULL,
       stan = stan_input,
       group_var = group,
       time_var = time,
-      priors = data.table::setDF(data.table::rbindlist(stan_input$priors)),
+      priors = rbindlist_(stan_input$priors),
       backend = backend,
       call = dynamite_call
     ),
@@ -311,10 +289,11 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
   )
   model_code <- create_blocks(
     indent = 2L,
+    backend = backend,
+    cg = attr(dformulas$stoch, "channel_groups"),
     cvars = stan_input$channel_vars,
     cgvars = stan_input$channel_group_vars,
-    cg = attr(dformulas$stoch, "channel_groups"),
-    backend = backend
+    mvars = stan_input$model_vars
   )
   sampling_info(dformulas, verbose, debug, backend)
   # if debug$stanfit exists (from the update method) then don't recompile
@@ -328,13 +307,15 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     ),
     debug$stanfit
   )
+  dots <- remove_redundant_parameters(stan_input, backend, verbose_stan, ...)
+  dots <- check_stan_args(dots, verbose, backend)
   stanfit <- dynamite_sampling(
     sampling = !isTRUE(debug$no_compile) && !isTRUE(debug$no_sampling),
     backend = backend,
     model_code = model_code,
     model = model,
     sampling_vars = stan_input$sampling_vars,
-    dots = remove_redundant_parameters(stan_input, backend, verbose_stan, ...)
+    dots = dots
   )
   list(
     stan_input = stan_input,
@@ -413,6 +394,95 @@ sampling_info <- function(dformulas, verbose, debug, backend) {
   }
 }
 
+#' Check Arguments Names Of `...` for Stan Sampling
+#'
+#' @inheritParams dynamite_stan
+#' @param dots The `...` arguments of `dynamite` as a `list`
+#' @noRd
+check_stan_args <- function(dots, verbose, backend) {
+  dots_names <- names(dots)
+  args <- ifelse_(
+    identical(backend, "rstan"),
+    c(
+      "pars", "chains", "iter", "warmup", "thin", "seed", "init", "check_data",
+      "sample_file", "diagnostic_file", "verbose", "algorithm", "control",
+      "include", "cores", "open_progress", "show_messages", "chain_id",
+      "init_r", "test_grad", "append_samples", "refresh", "save_warmup",
+      "enable_random_init"
+    ),
+    c(
+      "seed", "refresh", "init", "save_latent_dynamics", "output_dir",
+      "output_basename", "sig_figs", "chains", "parallel_chains", "chain_ids",
+      "threads_per_chain", "opencl_ids", "iter_warmup", "iter_sampling",
+      "save_warmup", "thin", "max_treedepth", "adapt_engaged", "adapt_delta",
+      "step_size", "metric", "metric_file", "inv_metric", "init_buffer",
+      "term_buffer", "window", "fixed_param", "show_messages", "diagnostics",
+      "cores", "num_cores", "num_chains", "num_warmup", "num_samples",
+      "validate_csv", "save_extra_diagnostics", "max_depth", "stepsize"
+    )
+  )
+  valid_args <- dots_names %in% args
+  invalid_args <- dots_names[!valid_args]
+  dots <- dots[valid_args]
+  if (verbose && any(!valid_args)) {
+    warning_(
+      "{cli::qty(invalid_args)}
+       Argument{?s} {.arg {invalid_args}} passed to {backend} sampling function
+       {cli::qty(invalid_args)}{?is/are} not recognized and will be ignored."
+    )
+  }
+  dots
+}
+
+#' Count The Number of Random Effects in a `dynamiteformula`
+#'
+#' @inheritParams dynamite
+#' @noRd
+count_random_effects <- function(dformula, data) {
+  cg <- attr(dformula, "channel_groups")
+  n_cg <- n_unique(cg)
+  M <- 0L
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    j <- cg_idx[1L]
+    family <- dformula[[j]]$family
+    if (is_multivariate(family)) {
+      if (is_multinomial(family)) {
+        random_formula <- get_type_formula(dformula[[j]], type = "random")
+        cats <- length(cg_idx) - 1L
+        M <- M + ifelse_(
+          is.null(random_formula),
+          0L,
+          cats * ncol(stats::model.matrix.lm(random_formula, data))
+        )
+      } else {
+        for (k in cg_idx) {
+          random_formula <- get_type_formula(dformula[[k]], type = "random")
+          M <- M + ifelse_(
+            is.null(random_formula),
+            0L,
+            ncol(stats::model.matrix.lm(random_formula, data))
+          )
+        }
+      }
+    } else {
+      random_formula <- get_type_formula(dformula[[j]], type = "random")
+      cats <- ifelse_(
+        is_categorical(family),
+        length(levels(data[[dformula[[j]]$response]])) - 1L,
+        1L
+      )
+      M <- M + ifelse_(
+        is.null(random_formula),
+        0L,
+        cats * ncol(stats::model.matrix.lm(random_formula, data))
+      )
+    }
+  }
+  M
+}
+
+
 #' Remove Redundant Parameters When Using `rstan`
 #'
 #' @param stan_input Output from `prepare_stan_input`.
@@ -424,15 +494,16 @@ remove_redundant_parameters <- function(stan_input, backend,
   # could also remove omega_raw
   dots <- list(...)
   dots$verbose <- onlyif(backend == "rstan", verbose_stan)
-  if (is.null(dots$pars) &&
-    stan_input$sampling_vars$M > 0 &&
-    backend == "rstan") {
+  if (identical(dots$algorithm, "Fixed_param")) {
+    return(dots)
+  }
+  M <- stan_input$sampling_vars$M
+  if (is.null(dots$pars) && M > 0 && backend == "rstan") {
     dots$pars <- c("nu_raw", "nu", "L")
     dots$include <- FALSE
   }
-  if (is.null(dots$pars) &&
-    stan_input$sampling_vars$P > 0 &&
-    backend == "rstan") {
+  P <- stan_input$sampling_vars$P
+  if (is.null(dots$pars) && P > 0 && backend == "rstan") {
     # many more, but depends on the channel names
     dots$pars <- c("omega_raw_psi", "L_lf")
     dots$include <- FALSE
@@ -687,8 +758,6 @@ parse_past <- function(dformula, data, group_var, time_var) {
   dformula
 }
 
-
-
 #' Parse Additional Model Formula Components
 #'
 #' @inheritParams parse_data
@@ -703,29 +772,15 @@ parse_components <- function(dformulas, data, group_var, time_var) {
     resp = resp,
     times = seq.int(fixed + 1L, n_unique(data[[time_var]]))
   )
-  M <- sum(
-    vapply(
-      dformulas$stoch,
-      function(formula) {
-        random_formula <- get_type_formula(formula, type = "random")
-        if (is.null(random_formula)) {
-          0L
-        } else {
-          ncol(stats::model.matrix.lm(random_formula, data))
-        }
-      },
-      integer(1L)
-    )
-  )
-
-  stopifnot_(n_unique(data[[group_var]]) > 1L || M == 0L,
+  M <- count_random_effects(dformulas$stoch, data)
+  stopifnot_(
+    n_unique(data[[group_var]]) > 1L || M == 0L,
     "Cannot estimate random effects using only one group."
   )
   attr(dformulas$stoch, "random_spec") <- parse_random_spec(
     random_spec_def = attr(dformulas$stoch, "random_spec"),
     M = M
   )
-
   attr(dformulas$stoch, "lfactor") <- parse_lfactor(
     lfactor_def = attr(dformulas$stoch, "lfactor"),
     resp = resp,
@@ -744,7 +799,7 @@ parse_components <- function(dformulas, data, group_var, time_var) {
         !empty,
         c(
           "Invalid formula for response variable {.var {y}}:",
-          `x` = "There are no predictors, intercept terms or latent factors."
+          `x` = "There are no predictors, intercept terms, or latent factors."
         )
       )
     }
@@ -764,18 +819,20 @@ parse_components <- function(dformulas, data, group_var, time_var) {
         if (vicpt) {
           dformulas$stoch[[j]]$has_varying_intercept <- FALSE
           warning_(
-            "The common time-varying intercept term of channel {.var {lresp[i]}}
-            was removed as channel predictors contain latent factor specified
-            with {.arg nonzero_lambda} as TRUE.")
+            "The common time-varying intercept term of channel
+            {.var {lresp[i]}} was removed as channel predictors
+            contain latent factor specified with {.arg nonzero_lambda}
+            as TRUE.")
         }
         ficpt <- dformulas$stoch[[j]]$has_fixed_intercept
         ricpt <- dformulas$stoch[[j]]$has_random_intercept
         if (ficpt && ricpt) {
           dformulas$stoch[[j]]$has_fixed_intercept <- FALSE
           warning_(
-            "The common time-invariant intercept term of channel {.var {lresp[i]}}
-            was removed as channel predictors contain random intercept and
-            latent factor specified with {.arg nonzero_lambda} as TRUE.")
+            "The common time-invariant intercept term of channel
+            {.var {lresp[i]}} was removed as channel predictors
+            contain random intercept and latent factor specified
+            with {.arg nonzero_lambda} as TRUE.")
         }
       }
 
@@ -855,6 +912,7 @@ parse_random_spec <- function(random_spec_def, M) {
   out$M <- M
   out
 }
+
 #' Parse Latent Factor Definitions
 #'
 #' @param lfactor_def An `lfactor` object.
@@ -864,17 +922,10 @@ parse_random_spec <- function(random_spec_def, M) {
 parse_lfactor <- function(lfactor_def, resp, families) {
   out <- list()
   if (!is.null(lfactor_def)) {
-    valid_channels <- resp[!(families %in% "categorical")]
+    valid_channels <- resp
     # default, use all channels except categorical
     if (is.null(lfactor_def$responses)) {
       lfactor_def$responses <- valid_channels
-      stopifnot_(
-        length(valid_channels) > 0L,
-        c(
-          "No valid responses for latent factor component:",
-          `x` = "Latent factors are not supported for the categorical family."
-        )
-      )
     } else {
       psi_channels <- lfactor_def$responses %in% resp
       stopifnot_(
@@ -883,15 +934,6 @@ parse_lfactor <- function(lfactor_def, resp, families) {
           "Argument {.arg responses} of {.fun lfactor} contains variable{?s}
           {.var {cs(lfactor_def$responses[!psi_channels])}}:",
           `x` = "No such response variables in the model."
-        )
-      )
-      psi_channels <- lfactor_def$responses %in% valid_channels
-      stopifnot_(
-        all(psi_channels),
-        c(
-          "Latent factors are not supported for the categorical family:",
-          `x` = "Found latent factor declaration for categorical variable{?s}
-                {.var {cs(valid_channels[psi_channels])}}."
         )
       )
     }
@@ -955,33 +997,33 @@ fill_time <- function(data, group_var, time_var) {
   )
   time_ivals <- diff(time)
   time_scale <- min(diff(time))
-  if (any(time_ivals[!is.na(time_ivals)] %% time_scale > 0)) {
-    stop_("Observations must occur at regular time intervals.")
-  } else {
-    full_time <- seq(time[1L], time[length(time)], by = time_scale)
-    # time_missing <- data[,
-    #  !identical(time_var, full_time),
-    #  by = group_var,
-    #  env = list(time_var = time_var, full_time = full_time)
-    # ]$V1
-    time_missing <- unlist(
-      lapply(split_data, function(x) !identical(x[[time_var]], full_time))
+  stopifnot_(
+    all(time_ivals[!is.na(time_ivals)] %% time_scale == 0),
+    "Observations must occur at regular time intervals."
+  )
+  full_time <- seq(time[1L], time[length(time)], by = time_scale)
+  # time_missing <- data[,
+  #  !identical(time_var, full_time),
+  #  by = group_var,
+  #  env = list(time_var = time_var, full_time = full_time)
+  # ]$V1
+  time_missing <- unlist(
+    lapply(split_data, function(x) !identical(x[[time_var]], full_time))
+  )
+  if (any(time_missing)) {
+    full_data_template <- data.table::as.data.table(
+      expand.grid(
+        time = full_time,
+        group = unique(data[[group_var]])
+      )
     )
-    if (any(time_missing)) {
-      full_data_template <- data.table::as.data.table(
-        expand.grid(
-          time = full_time,
-          group = unique(data[[group_var]])
-        )
-      )
-      names(full_data_template) <- c(time_var, group_var)
-      data <- data.table::merge.data.table(
-        full_data_template,
-        data,
-        by = c(time_var, group_var),
-        all.x = TRUE
-      )
-    }
+    names(full_data_template) <- c(time_var, group_var)
+    data <- data.table::merge.data.table(
+      full_data_template,
+      data,
+      by = c(time_var, group_var),
+      all.x = TRUE
+    )
   }
   data
 }

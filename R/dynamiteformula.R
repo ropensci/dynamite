@@ -220,27 +220,11 @@ dynamiteformula_ <- function(formula, original, family, name) {
     out[[1L]]$name <- parse_name(resp_parsed$resp)
   } else {
     out <- parse_formula(formula, original, family)
-    if (is_binomial(family)) {
+    if (is_binomial(family) || is_multinomial(family)) {
       stopifnot_(
         "trials" %in% names(out[[1L]]$specials),
-        "Formula for a binomial channel must include a trials term."
+        "Formula for a {family$name} channel must include a trials term."
       )
-    }
-    if (is_multinomial(family)) {
-      if (!"trials" %in% names(out[[1L]]$specials)) {
-        warning_(
-          c(
-            "The model contains a multinomial channel without
-             a trials term.",
-            `i` = "The model fit will assume number of trials = sum of
-                   observations, but prediction will not work for this channel
-                   unless the number trials is explicitly specified."
-          )
-        )
-        out[[1L]]$specials$trials <- str2lang(
-          paste(get_responses(out), collapse = " + ")
-        )
-      }
     }
   }
   out
@@ -310,30 +294,36 @@ parse_formula <- function(x, original, family) {
   formula_parts <- strsplit(formula_str, "|", fixed = TRUE)[[1L]]
   n_formulas <- length(formula_parts)
   n_responses <- length(responses)
-  mn <- is_multinomial(family)
-  mvf <- is_multivariate(family)
-  mvc <- n_responses > 1L
-  stopifnot_(
-    !mvc || mvf,
-    "A univariate channel must have only one response variable."
-  )
-  stopifnot_(
-    (!mvf && !mvc) || (mvf && mvc),
-    "A multivariate channel must have more than one response variable."
-  )
-  stopifnot_(
-    !mvc || n_formulas == n_responses || n_formulas == 1L,
-    c(
-      "Number of component formulas must be 1 or
-       the number of dimensions: {n_responses}",
-      `x` = "{n_formulas} formulas were provided."
+  if (is_multivariate(family)) {
+    stopifnot_(
+      n_responses > 1L,
+      "A multivariate channel must have more than one response variable."
     )
-  )
-  #stopifnot_(
-  #  (mvf && !mn) || (mn && n_formulas == 1L),
-  #  "Only a single formula must be provided for
-  #   univariate and multinomial channels."
-  #)
+    if (is_multinomial(family)) {
+      stopifnot_(
+        n_formulas == 1L,
+        "A multinomial channel must have only one formula component."
+      )
+    } else {
+      stopifnot_(
+        n_formulas == n_responses || n_formulas == 1L,
+        c(
+          "Number of component formulas must be 1 or
+           the number of dimensions: {n_responses}",
+          `x` = "{n_formulas} formulas were provided."
+        )
+      )
+    }
+  } else {
+    stopifnot_(
+      n_responses == 1L,
+      "A univariate channel must have only one response variable."
+    )
+    stopifnot_(
+      n_formulas == 1L,
+      "A univariate channel must have only one formula component."
+    )
+  }
   formula_parts <- ifelse_(
     n_formulas == 1L,
     rep(formula_parts, n_responses),

@@ -176,7 +176,7 @@ extract_lags <- function(x) {
       )
       expanded[[i]] <- full[full$k %in% tmp$k, ] <- tmp
     }
-    lag_map <- do.call("rbind", args = expanded)
+    lag_map <- rbindlist_(expanded)
   } else {
     data.frame(
       src = character(0L),

@@ -3,7 +3,6 @@
 #' @srrstats {G5.4} Predict and fitted method produce results identical with
 #'   "manual" computation based on the same posterior samples.
 #'
-run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "true")
 
 test_that("predictions are on the same scale as input data", {
   expect_error(
@@ -127,7 +126,7 @@ test_that("fitted works", {
   expect_error(fitg <- fitted(gaussian_example_fit, n_draws = 2), NA)
 
   # first chain, second draw (permuted)
-  iter <- gaussian_example_fit$stanfit@sim$permutation[[1]][2]
+  iter <- gaussian_example_fit$stanfit@sim$permutation[[1L]][2L]
   xzy <- gaussian_example_fit$data |> dplyr::filter(id == 5 & time == 20)
   manual <- as_draws(gaussian_example_fit) |>
     dplyr::filter(.iteration == iter & .chain == 1) |>
@@ -142,7 +141,7 @@ test_that("fitted works", {
 
   expect_error(fitc <- fitted(categorical_example_fit, n_draws = 2), NA)
   # first chain, second draw (permuted)
-  iter <- categorical_example_fit$stanfit@sim$permutation[[1]][2]
+  iter <- categorical_example_fit$stanfit@sim$permutation[[1L]][2L]
   xzy <- categorical_example_fit$data |> dplyr::filter(id == 5 & time == 20)
   manual <- as_draws(categorical_example_fit) |>
     dplyr::filter(.iteration == iter & .chain == 1) |>
@@ -167,7 +166,7 @@ test_that("categorical predict with type = link works", {
   )
 
   # first chain, second draw (permuted)
-  iter <- categorical_example_fit$stanfit@sim$permutation[[1]][2]
+  iter <- categorical_example_fit$stanfit@sim$permutation[[1L]][2L]
   xzy <- categorical_example_fit$data |> dplyr::filter(id == 5 & time == 2)
   manual <- as_draws(categorical_example_fit) |>
     dplyr::filter(.iteration == iter & .chain == 1) |>
@@ -332,82 +331,6 @@ test_that("new group levels can be included in newdata", {
   )
 })
 
-test_that("predict with multiple random effects work", {
-  skip_if_not(run_extended_tests)
-
-  set.seed(1)
-  n <- 40
-  k <- 10
-  x <- rnorm(n * k)
-  u1 <- rep(rnorm(k, sd = 0.2), each = n)
-  u2 <- 0.5 * u1 + rep(rnorm(k, sd = 0.1), each = n)
-  u3 <- 0.2 * u1 + rep(rnorm(k, sd = 0.3), each = n)
-  y1 <- rbinom(n * k, size = 20, prob = plogis(x + u1 + u2 * x))
-  y2 <- rnorm(n * k, u3 + 2 * x)
-  d <- data.frame(
-    year = 1:n, person = rep(1:k, each = n),
-    y1 = y1, y2 = y2, x = x, tr = 20
-  )
-
-  fit <- dynamite(
-    obs(y1 ~ x + trials(tr) + random(~x), family = "binomial") +
-      obs(y2 ~ x + random(~1), family = "gaussian") +
-      random_spec(),
-    data = d, time = "year", group = "person",
-    chains = 1, iter = 2000, refresh = 0
-  )
-
-  expect_error(
-    sumr <- summary(fit, type = "sigma_nu"),
-    NA
-  )
-  expect_equal(sumr$mean, c(0.2338, 0.1331, 0.3339), tolerance = 0.2)
-
-  expect_error(
-    sumr <- summary(fit, type = "corr_nu"),
-    NA
-  )
-  expect_equal(sumr$mean, c(0.336, -0.0522, -0.0712), tolerance = 0.2)
-
-  expect_error(
-    predict(fit, n_draws = 5),
-    NA
-  )
-
-  newdata <- rbind(
-    d[(n + 1):nrow(d), ], # remove one person and add two
-    data.frame(
-      y1 = c(4, rep(NA, n - 1), 4, rep(NA, n - 1)),
-      y2 = c(0, rep(NA, n - 1), 0.5, rep(NA, n - 1)),
-      x = rnorm(2 * n),
-      person = rep(c(226L, 500L), each = n),
-      year = seq.int(1, n),
-      tr = rep(c(10, 25), each = n)
-    )
-  )
-  expect_error(
-    predict(fit,
-      newdata = newdata,
-      type = "response", n_draws = 5, new_levels = "bootstrap"
-    ),
-    NA
-  )
-  expect_error(
-    predict(fit,
-      newdata = newdata,
-      type = "response", n_draws = 5, new_levels = "gaussian"
-    ),
-    NA
-  )
-  expect_error(
-    predict(fit,
-      newdata = newdata,
-      type = "response", n_draws = 2, new_levels = "original"
-    ),
-    NA
-  )
-})
-
 test_that("imputation works", {
   set.seed(0)
   mis_x <- sample(seq_len(nrow(gaussian_example)), 150, replace = FALSE)
@@ -465,21 +388,24 @@ test_that("summarising via funs is equivalent to manual summary", {
 })
 
 test_that("predict with loglik works", {
-  out <- expect_error(initialize_predict(
-    gaussian_example_fit,
-    newdata = NULL,
-    type = "mean",
-    eval_type = "loglik",
-    funs = list(),
-    impute = "none",
-    new_levels = "none",
-    global_fixed = FALSE,
-    n_draws = NULL,
-    expand = FALSE,
-    df = TRUE
-  )$simulated, NA)
+  out <- expect_error(
+    initialize_predict(
+      gaussian_example_fit,
+      newdata = NULL,
+      type = "mean",
+      eval_type = "loglik",
+      funs = list(),
+      impute = "none",
+      new_levels = "none",
+      global_fixed = FALSE,
+      n_draws = NULL,
+      expand = FALSE,
+      df = TRUE
+    )$simulated,
+    NA
+  )
 
-  iter <- gaussian_example_fit$stanfit@sim$permutation[[1]][2]
+  iter <- gaussian_example_fit$stanfit@sim$permutation[[1L]][2L]
   xzy <- gaussian_example_fit$data |> dplyr::filter(id == 5 & time == 20)
 
   manual <- as_draws(gaussian_example_fit) |>
@@ -495,157 +421,4 @@ test_that("predict with loglik works", {
     dplyr::filter(id == 5 & time == 20 & .draw == 2) |>
     dplyr::pull(y_loglik)
   expect_equal(manual, automatic)
-})
-
-test_that("predict with random variable trials works", {
-  skip_if_not(run_extended_tests)
-
-  set.seed(1)
-  N <- 100
-  T_ <- 50
-  S <- crossprod(matrix(rnorm(4), 2, 2))
-  y <- matrix(0, N, T_)
-  n <- matrix(0, N, T_)
-  for(t in 2:T_) {
-    for(i in 1:N) {
-      n[i, t] <- rpois(1, 5)
-      lp <- -3.0 + 1.25 * y[i, t-1]
-      y[i, t] <- rbinom(1, 1 + n[i, t], plogis(lp))
-    }
-  }
-  d <- data.frame(
-    n = c(n),
-    y = c(y),
-    t = rep(1:T_, each = N),
-    id = 1:N
-  )
-  f <- obs(n ~ 1, family = "poisson") +
-    aux(integer(nn) ~ n + 1) +
-    obs(y ~ lag(y) + trials(nn), family = "binomial")
-  fit <- dynamite(
-    dformula = f,
-    data = d,
-    time = "t",
-    group = "id",
-    chains = 1,
-    iter = 2000,
-    refresh = 0
-  )
-  expect_error(sumr <- summary(fit), NA)
-  expect_equal(sumr$mean, c(log(5), -3.0, 1.25), tolerance = 0.1)
-  expect_error(predict(fit, n_draws = 5), NA)
-})
-
-test_that("multivariate gaussian predict works", {
-  skip_if_not(run_extended_tests)
-
-  set.seed(1)
-  N <- 100
-  T_ <- 50
-  S <- crossprod(matrix(rnorm(4), 2, 2))
-  L <- t(chol(S))
-  y1 <- matrix(0, N, T_)
-  y2 <- matrix(0, N, T_)
-  x <- matrix(0, N, T_)
-  for (t in 2:T_) {
-    for (i in 1:N){
-      mu <- c(0.7 * y1[i, t-1], 0.4 * y2[i, t-1] - 0.2 * y1[i, t-1])
-      y <- mu + L %*% rnorm(2)
-      y1[i, t] <- y[1]
-      y2[i, t] <- y[2]
-      x[i, t] <- rnorm(1, c(0.5 * y1[i, t-1]), 0.5)
-    }
-  }
-  d <- data.frame(
-    y1 = c(y1),
-    y2 = c(y2),
-    x = c(x),
-    t = rep(1:T_, each = N),
-    id = 1:N
-  )
-  f <- obs(c(y1, y2) ~ -1 + lag(y1) | -1 + lag(y1) + lag(y2), "mvgaussian") +
-    obs(x ~ -1 + lag(y1), "gaussian")
-  fit <- dynamite(
-    dformula = f,
-    data = d,
-    time = "t",
-    group = "id",
-    chains = 1,
-    iter = 2000,
-    refresh = 0
-  )
-  expect_error(sumr <- summary(fit, type = "corr"), NA)
-  expect_equal(sumr$mean, cov2cor(S)[2, 1], tolerance = 0.1)
-  expect_error(sumr <- summary(fit, type = "sigma"), NA)
-  expect_equal(sumr$mean, c(0.5, sqrt(diag(S))), tolerance = 0.1)
-  expect_error(sumr <- summary(fit, type = "beta"), NA)
-  expect_equal(sumr$mean, c(0.5, 0.7, -0.2, 0.4), tolerance = 0.1)
-  expect_error(predict(fit, n_draws = 5), NA)
-})
-
-test_that("multinomial predict works", {
-  skip_if_not(run_extended_tests)
-
-  set.seed(1)
-  n_id <- 100L
-  n_time <- 20L
-
-  d <- data.frame(
-    y1 = sample(10, size = n_id, replace = TRUE),
-    y2 = sample(12, size = n_id, replace = TRUE),
-    y3 = sample(15, size = n_id, replace = TRUE),
-    time = 1,
-    id = seq_len(n_id)
-  )
-  d$n <- d$y1 + d$y2 + d$y3
-
-  d <- dplyr::right_join(
-    d,
-    data.frame(
-      time = rep(seq_len(n_time), each = n_id),
-      id = seq_len(n_id)
-    )
-  )
-
-  d$z <- rnorm(nrow(d))
-  d$n[is.na(d$n)] <- sample(37, size = sum(is.na(d$n)), replace = TRUE)
-
-  f <- obs(
-    c(y1, y2, y3) ~ z + lag(y1) + lag(y2) + lag(y3) + trials(n),
-    family = "multinomial"
-  )
-
-  init <- list(
-    beta_y1_y2_y3 = matrix(
-      c(
-        1.2, 0.8, 0.2, 0.1,
-        1,   0.5, 0.6, 0.3
-      ),
-      nrow = 4,
-      ncol = 2
-    ),
-    a_y1_y2_y3 = c(-0.1, 0.2)
-  )
-
-  expect_error(
-    fit <- dynamite(
-      dformula = f,
-      data = d,
-      time = "time",
-      group = "id",
-      chains = 1,
-      iter = 1,
-      algorithm = "Fixed_param",
-      init = list(init),
-    ),
-    NA
-  )
-  expect_error(
-    pred <- predict(fit, type = "response"),
-    NA
-  )
-  expect_identical(
-    pred$y1_new + pred$y2_new + pred$y3_new,
-    pred$n
-  )
 })

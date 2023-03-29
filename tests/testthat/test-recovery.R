@@ -104,7 +104,7 @@ test_that("parameters for poisson mixed model are recovered", {
       "sigma_nu_y_alpha", "sigma_nu_y_x", "alpha_y", "beta_y_x",
       "L_nu"
     ),
-    response = "y",
+    response = c(rep("y", 4), ""),
     prior = c(
       "std_normal()", "std_normal()",
       "student_t(3, 2, 2)", "normal(0, 10)", "lkj_corr_cholesky(1)"
@@ -142,13 +142,13 @@ test_that("parameters for an AR(1) model are recovered as with arima", {
     refresh = 0
   )
   fit_arima <- arima(LakeHuron, c(1, 0, 0))
-  expect_equal(coef(fit)$mean[2], coef(fit_arima)[1],
+  expect_equal(coef(fit)$mean[2], coef(fit_arima)[1L],
     tolerance = 0.01,
     ignore_attr = TRUE
   )
   expect_equal(
-    coef(fit)$mean[1],
-    coef(fit_arima)[2] * (1 - coef(fit_arima)[1]),
+    coef(fit)$mean[1L],
+    coef(fit_arima)[2L] * (1 - coef(fit_arima)[1L]),
     tolerance = 1, ignore_attr = TRUE
   )
 })
@@ -352,8 +352,8 @@ test_that("prior parameters are recovered with zero observations", {
     dplyr::filter(parameter == "alpha_y") |>
     dplyr::select(mean, sd, q5, q95)
 
-  m <- 2 - d$x[1] * 5
-  s <- sqrt(0.1^2 + d$x[1]^2 * 0.5^2)
+  m <- 2 - d$x[1L] * 5
+  s <- sqrt(0.1^2 + d$x[1L]^2 * 0.5^2)
   expect_equal(
     unlist(sumr[1, 2:5]),
     c(m, s, qnorm(c(0.05, 0.95), m, s)),

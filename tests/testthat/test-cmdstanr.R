@@ -13,7 +13,7 @@ test_that("cmdstanr backend works for categorical model", {
     backend = "cmdstanr",
     show_messages = FALSE
   )
-  expect_equal(coef(fit_dynamite)$mean[1], -0.5,
+  expect_equal(coef(fit_dynamite)$mean[1L], -0.5,
     tolerance = 0.1,
     ignore_attr = TRUE
   )

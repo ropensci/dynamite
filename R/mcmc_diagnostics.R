@@ -59,7 +59,7 @@ mcmc_diagnostics.dynamitefit <- function(x, n = 3L) {
         ""
       )
       cat(div_str)
-      mt <- x$stanfit@stan_args[[1]]$control$max_treedepth
+      mt <- x$stanfit@stan_args[[1L]]$control$max_treedepth
       mt <- ifelse_(is.null(mt), 10, mt)
       trees_str <- ifelse_(
         n_trees > 0L,

@@ -85,6 +85,7 @@ Model outputs
 \code{\link{dynamite}()},
 \code{\link{get_code}()},
 \code{\link{get_data}()},
+\code{\link{get_parameter_dims}()},
 \code{\link{get_parameter_names}()},
 \code{\link{get_parameter_types}()},
 \code{\link{ndraws.dynamitefit}()},

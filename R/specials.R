@@ -119,7 +119,6 @@ formula_specials <- function(x, original, family) {
   )
 }
 
-
 #' Process Formulas for Deterministic Channels and Get Past Value Definitions
 #'
 #' @param x A `formula` object.

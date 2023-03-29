@@ -1,5 +1,5 @@
 ---
-title: "dynamite"
+title: "dynamite: An R Package for Dynamic Multivariate Panel Models"
 link-citations: yes
 output:
   bookdown::html_document2:
@@ -8,7 +8,7 @@ pkgdown:
   as_is: true
 bibliography: dynamite.bib
 vignette: >
-  %\VignetteIndexEntry{dynamite} 
+  %\VignetteIndexEntry{dynamite: An R Package for Dynamic Multivariate Panel Models} 
   %\VignetteEngine{knitr::rmarkdown} 
   %\VignetteEncoding{UTF-8}
 ---

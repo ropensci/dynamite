@@ -66,6 +66,11 @@ cbind_datatable <- function(...) {
   )
 }
 
+#* Data Table rbindlist With Data Frame Output
+rbindlist_ <- function(x) {
+  data.table::setDF(data.table::rbindlist(x))
+}
+
 #' Drops Variables from the Data That Are Not Used by Any Model Formula
 #'
 #' @inheritParams dynamite
@@ -390,13 +395,18 @@ is_windows <- function() {
   identical(.Platform$OS.type, "windows")
 }
 
+#' R version (for mocking)
+#'
+#' @noRd
+R_version <- function() {
+  getRversion()
+}
+
 #' Package startup functionality
 #'
 #' @noRd
 startup <- function() {
-  if (!is_windows() ||
-      getRversion() < "4.2.0" ||
-      utils::compareVersion(stan_version("rstan"), "2.26") >= 0) {
+  if (stan_version_is_functional()) {
     return()
   }
   packageStartupMessage(
