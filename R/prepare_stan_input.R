@@ -786,7 +786,7 @@ prepare_channel_binomial <- function(y, Y, channel, sampling,
     mean(Y[1L, ], na.rm = TRUE),
     Y[1L]
   )
-  mean_y <- qlogis(pmin(0.99, pmax(0.01, mean_y)))
+  mean_y <- stats::qlogis(pmin(0.99, pmax(0.01, mean_y)))
   if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }
@@ -1069,7 +1069,7 @@ prepare_channel_beta <- function(y, Y, channel, sampling,
     mean(Y[1L, ], na.rm = TRUE),
     Y[1L]
   )
-  mean_y <- qlogis(pmin(0.99, pmax(0.01, mean_y)))
+  mean_y <- stats::qlogis(pmin(0.99, pmax(0.01, mean_y)))
   if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }

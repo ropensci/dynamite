@@ -29,7 +29,7 @@
 #' @importFrom stats formula model.matrix model.matrix.lm na.exclude
 #' @importFrom stats quantile coef setNames as.formula fitted na.pass terms
 #' @importFrom stats plogis rbinom reformulate rnbinom rnorm rpois runif sd
-#' @importFrom stats nobs update
+#' @importFrom stats nobs qlogis update
 #'
 #' @srrstats {G2.0, G2.0a, G2.1, G2.1a, G2.2, G2.3, G2.3a, G2.3b}
 #'   Input types are asserted and appropriately restricted and tested
