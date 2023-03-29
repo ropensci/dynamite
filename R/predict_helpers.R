@@ -508,7 +508,7 @@ prepare_eval_envs <- function(object, simulated, observed,
   if (length(rand) > 0L) {
     n_all_draws <- ndraws(object)
     Ks <- object$stan$model_vars$Ks
-    nu_channels <- names(Ks)
+    nu_channels <- names(Ks[Ks > 0L])
     sigma_nus <- glue::glue("sigma_nu_{nu_channels}")
     sigma_nu <- t(
       do.call("cbind", samples[sigma_nus])[idx_draws, , drop = FALSE]
@@ -519,13 +519,12 @@ prepare_eval_envs <- function(object, simulated, observed,
       unlist(samples[nus]),
       c(n_all_draws, length(orig_ids), M)
     )[idx_draws, , , drop = FALSE]
-    if (attr(object$dformulas$stoch, "random_spec")$correlated) {
-      corr_matrix_nu <- aperm(
+    corr_matrix_nu <- onlyif(
+      attr(object$dformulas$stoch, "random_spec")$correlated,
+      aperm(
         samples[["corr_matrix_nu"]][idx_draws, , , drop = FALSE]
       )
-    } else {
-      corr_matrix_nu <- NULL
-    }
+    )
     nu_samples <- generate_random_effect(
       nu = nu_samples,
       sigma_nu = sigma_nu,

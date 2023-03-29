@@ -2,7 +2,7 @@
 #'
 #' @param indent \[`integer(1)`]\cr How many units of indentation to use for
 #'   the code generation. One unit is equal to one space.
-#' @backend \[`character(1)`]\cr Either `"rstan"` or `"cmdstanr"`.
+#' @param backend \[`character(1)`]\cr Either `"rstan"` or `"cmdstanr"`.
 #' @param cg \[`integer()`]\cr The `"channel_groups"` attribute of the
 #'   `dformula` for stochastic channels.
 #' @param cvars \[`list()`]\cr The `channel_vars` component of

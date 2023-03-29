@@ -150,3 +150,41 @@ test_that("get_parameter_dims works for dynamiteformula", {
     get_parameter_dims(categorical_example_fit)
   )
 })
+
+test_that("predict with random variable trials works", {
+  skip_if_not(run_extended_tests)
+
+  set.seed(1)
+  N <- 100
+  T_ <- 50
+  y <- matrix(0, N, T_)
+  n <- matrix(0, N, T_)
+  for(t in 2:T_) {
+    for(i in 1:N) {
+      n[i, t] <- rpois(1, 5)
+      lp <- -3.0 + 1.25 * y[i, t-1]
+      y[i, t] <- rbinom(1, 1 + n[i, t], plogis(lp))
+    }
+  }
+  d <- data.frame(
+    n = c(n),
+    y = c(y),
+    t = rep(1:T_, each = N),
+    id = 1:N
+  )
+  f <- obs(n ~ 1, family = "poisson") +
+    aux(integer(nn) ~ n + 1) +
+    obs(y ~ lag(y) + trials(nn), family = "binomial")
+  fit <- dynamite(
+    dformula = f,
+    data = d,
+    time = "t",
+    group = "id",
+    chains = 1,
+    iter = 2000,
+    refresh = 0
+  )
+  expect_error(sumr <- summary(fit), NA)
+  expect_equal(sumr$mean, c(log(5), -3.0, 1.25), tolerance = 0.1)
+  expect_error(predict(fit, n_draws = 5), NA)
+})

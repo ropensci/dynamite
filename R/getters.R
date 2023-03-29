@@ -215,6 +215,7 @@ get_data.dynamitefit <- function(x, ...) {
 #' @family output
 #' @examples
 #' get_parameter_dims(multichannel_example_fit)
+#'
 get_parameter_dims <- function(x, ...) {
   UseMethod("get_parameter_dims", x)
 }
@@ -223,10 +224,9 @@ get_parameter_dims <- function(x, ...) {
 #' @export
 get_parameter_dims.dynamiteformula <- function(x, data, time,
                                                group = NULL, ...) {
-  # use capture.output to make Stan silent, maybe
-  utils::capture.output(
-    utils::capture.output(
-      out <- dynamite(
+  out <- try(
+    suppressWarnings(
+      dynamite(
         dformula = x,
         data = data,
         time = time,
@@ -234,14 +234,20 @@ get_parameter_dims.dynamiteformula <- function(x, data, time,
         algorithm = "Fixed_param",
         chains = 1,
         iter = 1,
-        refresh = -1,
+        refresh = 0,
         backend = "rstan",
         verbose_stan = FALSE,
         ...
-      ),
-      type = "message"
+      )
     ),
-    type = "output"
+    silent = TRUE
+  )
+  stopifnot_(
+    !inherits(out, "try-error"),
+    c(
+      "Unable to determine parameter dimensions:",
+      `x` = attr(out, "condition")$message
+    )
   )
   get_parameter_dims(out)
 }

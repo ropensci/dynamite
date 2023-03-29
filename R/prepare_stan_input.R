@@ -608,7 +608,7 @@ prepare_channel_categorical <- function(y, Y, channel, sampling,
     )
     check_priors(out$priors, defaults)
   }
-  out$channel$Ks <- vapply(outcat, function(x) x$channel$Ks, integer(1L))
+  out$channel$Ks <- ulapply(outcat, function(x) x$channel$Ks)
   list(channel = out$channel, sampling = out$sampling, priors = out$priors)
 }
 
