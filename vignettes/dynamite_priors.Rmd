@@ -1,5 +1,5 @@
 ---
-title: "Priors for DMPMs"
+title: "Priors for dynamic multivariate panel models"
 link-citations: yes
 output:
   bookdown::html_document2:
@@ -8,7 +8,7 @@ pkgdown:
   as_is: true
 bibliography: dynamite.bib
 vignette: >
-  %\VignetteIndexEntry{dynamite_priors} 
+  %\VignetteIndexEntry{Priors for dynamic multivariate panel models} 
   %\VignetteEngine{knitr::rmarkdown} 
   %\VignetteEncoding{UTF-8}
 ---
@@ -55,14 +55,13 @@ $2\sigma_y/\sigma_x$. The two maximums used in definitions of $\sigma_y$ and $\s
 
 ## Intercept
 
-As the posterior correlations between the intercept $\alpha$ term and the regression coefficients $\beta$ and $\delta$ can be cause computational inefficiencies with gradient based sampling algorithms of Stan, sampling of the intercept is performed indirectly via parameter $a$, so that the 
-intercept $\alpha$ (or $\alpha_1$ in case of time-varying intercept) is constructed as 
+As the posterior correlations between the intercept $\alpha$ term and the regression coefficients $\beta$ and $\delta$ can be cause computational inefficiencies with gradient based sampling algorithms of Stan, sampling of the intercept is performed indirectly via parameter $a$, so that the intercept $\alpha$ (or $\alpha_1$ in case of time-varying intercept) is constructed as 
 \[
 \alpha = a - \bar X^\beta_1\beta - \bar X_1^\delta\delta_1,
 \]
 where $\bar X^\beta$ and $\bar X^\delta$ are the means of the corresponding predictors at first (non-fixed) time point. The prior is then defined for $a$ as
 \[
-a \sim N(\bar y, 2\sigma_y),
+a \sim \mbox{N}(\bar y, 2\sigma_y),
 \]
 where $\bar y$ is mean of the response variable values at first time point after applying the link function to them (except in case of categorical and multinomial case where $\bar y$ is set to zero).
 
@@ -72,23 +71,23 @@ The prior for the standard deviation parameter $\tau$ of random walk prior of th
 
 ## Correlation matrices
 
-The correlation matrix of the random effects uses LKJ(1) prior using the cholesky parameterization, see Stan documentation of `lkj_cholesky_corr` for details^[https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html].
+The correlation matrix of the random effects uses LKJ(1) prior using the Cholesky parameterization, see Stan documentation of `lkj_cholesky_corr` for details^[https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html].
 
 ## Family-specific parameters
 
-For standard deviation parameter of gaussian and student responses, we use exponential prior with rate parameter $\frac{1}{2\max(1,\sigma_y)}$. The degrees-of-freedom parameter of the student's $t$-distribution has a $gamma(2, 0.1)$ prior, whereas other family specific parameters $\phi \sim Exponential(1)$.
+For standard deviation parameter of gaussian and student responses, we use exponential prior with rate parameter $\frac{1}{2\max(1,\sigma_y)}$. The degrees-of-freedom parameter of the student's $t$-distribution has a $\mbox{Gamma}(2, 0.1)$ prior, whereas other family specific parameters $\phi \sim \mbox{Exponential}(1)$.
 
 # Defining priors of dynamite models
 
-While dynamite can be used with default prior choices, we recommend to check whether the defaults make sense for your particular problem and modify them accordingly based on the domain knowledge. 
+While `dynamite()` can be used with default prior choices, we recommend to check whether the defaults make sense for your particular problem and modify them accordingly based on the domain knowledge. 
 
 Any univariate unbounded continuous distributions supported by Stan can be used as a prior for univariate model parameters (in case the parameter is constrained to be positive, the distribution is automatically truncated). Naturally, any univariate distribution bounded to the positive real line can be used as a prior for parameters constrained to be positive (e.g. standard deviation parameter).
 See Stan function reference at \url{https://mc-stan.org/users/documentation/} for possible distribution. 
-For custom priors, you should first get the default priors with `get_priors()` function, and then modify the `priors` column of the obtained data frame before supplying it to the `dynamite` function:
+For custom priors, you should first get the default priors with `get_priors()` function, and then modify the `priors` column of the obtained data frame before supplying it to the `dynamite()` function:
 
 ```{r}
 f <- obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1 + z), "gaussian") +
-    random_spec(correlated = TRUE) + splines(df = 20)
+  random_spec(correlated = TRUE) + splines(df = 20)
 p <- get_priors(f, data = gaussian_example, time = "time", group = "id")
 p
 ```

@@ -121,11 +121,10 @@ test_that("non-glm categorical fit works", {
         data = categorical_example,
         time = "time",
         group = "id",
+        iter = 2000,
         chains = 1,
         refresh = 0,
-        thin = 5,
-        verbose = FALSE,
-        save_warmup = FALSE
+        verbose = FALSE
       )
     ),
     NA

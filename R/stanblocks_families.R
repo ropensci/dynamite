@@ -441,7 +441,10 @@ data_lines_poisson <- function(y, idt, default, has_missing,
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     stan_array(backend, "int", "y_{y}", "T, N", "lower=0"),
-    "// Offset term",
+    onlyif(
+      has_offset,
+      "// Offset term"
+    ),
     onlyif(
       has_offset,
       stan_array(backend, "real", "offset_{y}", "T, N")
@@ -458,7 +461,10 @@ data_lines_negbin <- function(y, idt, default, has_missing,
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     stan_array(backend, "int", "y_{y}", "T, N", "lower=0"),
-    "// Offset term",
+    onlyif(
+      has_offset,
+      "// Offset term"
+    ),
     onlyif(
       has_offset,
       stan_array(backend, "real", "offset_{y}", "T, N")

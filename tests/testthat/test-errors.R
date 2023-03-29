@@ -373,14 +373,25 @@ test_that("univariate family fails with multiple response variables", {
   )
 })
 
-test_that("invalid number of multivariate formula components fails", {
+test_that("invalid number of formula components fails", {
   expect_error(
     obs(c(y1, y2) ~ x | x | x, family = "mvgaussian"),
     paste0(
       "Number of component formulas must be 1 ",
       "or the number of dimensions: 2\n",
-      "x 3 formulas were provided."
+      "x 3 formulas were provided\\."
     )
+  )
+  expect_error(
+    obs(y1 ~ x | x, family = "gaussian"),
+    "A univariate channel must have only one formula component\\."
+  )
+})
+
+test_that("multinomial family fails with multiple formula components", {
+  expect_error(
+    obs(c(y1, y2, y3) ~ 1 + trials(n) | x | x, family = "multinomial"),
+    "A multinomial channel must have only one formula component\\."
   )
 })
 

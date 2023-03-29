@@ -3,7 +3,7 @@
   * Added support for Student's t-distribution via `"student"` family 
     in `obs()`.
   * Added support for the multinomial distribution via `"multinomial"` family 
-    in `obs()`.
+    in `obs()`. A `trials()` term is now mandatory for multinomial channels.
   * The generated Stan code now automatically switches between the array 
     keyword syntax and the deprecated syntax based on the backend Stan version
     (see https://mc-stan.org/docs/reference-manual/brackets-array-syntax.html
@@ -12,8 +12,6 @@
     properly checked in the data.
   * The model components `trials()` and `offset()` now function correctly in 
     `predict()` when they contain response variables of the model.
-  * A `trials()` term is now mandatory for multinomial channels for ensuring
-    that `predict()` works correctly for such channels.
   * Fixed the calculation of the number of observations in `nobs()` for models
     that have multivariate channels.
   * Fixed an issue in `predict()` with models that contained multivariate
@@ -22,12 +20,16 @@
     are now handled properly in the Stan code generation.
   * The names of additional arguments passed to `rstan::sampling()` and the
     `sample()` method of the `cmdstanr` Stan model via `...` in the call
-    to `dynamite` are now checked, and unrecognized arguments will be ignored.
+    to `dynamite` are now checked and unrecognized arguments will be ignored.
   * Added a new function `get_parameter_dims()` that returns the parameter
     dimensions of the Stan model for `"dynamitefit"` and `"dynamiteformula"`
     objects.
   * Group-level random effects are now supported also for categorical and
     multinomial channels.
+  * Added a new vignette that describes how the package can be used
+    to simulate data from a dynamic multivariate panel model.
+  * Added a new vignette that describes how the default priors of the model
+    parameters are defined.
 
 # dynamite 1.2.1
 

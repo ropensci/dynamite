@@ -100,10 +100,9 @@ test_that("centered and noncentered parameterization for random effects work", {
   x <- rnorm(n * k)
   u1 <- rep(rnorm(k, sd = 0.2), each = n)
   u2 <- rep(rnorm(k, sd = 0.1), each = n)
-  mu <- exp(4 +x + u1 + u2 * x)
+  mu <- exp(4 + x + u1 + u2 * x)
   phi <- 50
   y <- rnbinom(n * k, mu = mu, size = phi)
-  hist(y)
   d <- data.frame(year = 1:n, person = rep(1:k, each = n), y = y, x = x)
 
   fit_centered <- dynamite(
@@ -156,7 +155,7 @@ test_that("centered and noncentered parameterization for random effects work", {
     )$mean,
     summary(
       fit_noncentered_nocorr,
-      types = c("alpha", "beta","sigma_nu", "nu")
+      types = c("alpha", "beta", "sigma_nu", "nu")
     )$mean,
     tolerance = 0.1
   )
@@ -167,7 +166,7 @@ test_that("centered and noncentered parameterization for random effects work", {
     )$mean,
     summary(
       fit_noncentered_nocorr,
-      types = c("alpha", "beta","sigma_nu", "nu")
+      types = c("alpha", "beta", "sigma_nu", "nu")
     )$mean,
     tolerance = 0.1
   )
@@ -180,6 +179,7 @@ test_that("random effects for categorical distribution work", {
   f <- obs(x ~  lag(x) + lag(y) + random(~1 + z), family = "categorical") +
     obs(y ~ -1 + lag(x) + lag(y) + random(~z), family = "categorical")
   fit <- try(
+    # Suppress, as this produces divergences
     suppressWarnings(
       dynamite(
         dformula = f,
@@ -212,6 +212,7 @@ test_that("random effects for multinomial distribution work", {
   d$n <- d$y1 + d$y2 + d$y3
 
   fit <- try(
+    # Suppress, as this produces divergences
     suppressWarnings(
       dynamite(
         obs(c(y1, y2, y3) ~ 1 + random(~ -1 + x) + trials(n), "multinomial"),
@@ -260,6 +261,7 @@ test_that("random effects for multivariate gaussian distribution work", {
     id = 1:N
   )
   fit <- try(
+    # Suppress, as this produces divergences
     suppressWarnings(
       dynamite(
         dformula =

@@ -588,7 +588,7 @@ prepare_channel_categorical <- function(y, Y, channel, sampling,
   out$channel$prior_distr <- lapply(outcat, function(x) x$channel$prior_distr)
   names(out$channel$prior_distr) <- resp_levels[-1L]
   if (is.null(priors)) {
-    defaults <- data.table::rbindlist(
+    defaults <- rbindlist_(
       lapply(
         resp_levels[-1L],
         function(s) {
@@ -662,15 +662,11 @@ prepare_channel_multinomial <- function(y, y_cg, Y, channel, sampling,
     }
   )
   out <- outcat[[1L]]
-  out$priors <- data.table::setDF(
-    data.table::rbindlist(
-      lapply(outcat, "[[", "priors")
-    )
-  )
+  out$priors <- rbindlist_(lapply(outcat, "[[", "priors"))
   out$channel$prior_distr <- lapply(outcat, function(x) x$channel$prior_distr)
   names(out$channel$prior_distr) <- y[-1L]
   if (is.null(priors)) {
-    defaults <- data.table::rbindlist(
+    defaults <- rbindlist_(
       lapply(
         y[-1L],
         function(s) {
@@ -818,7 +814,7 @@ prepare_channel_binomial <- function(y, Y, channel, sampling,
     sd_y,
     priors
   )
-  if (is.null(priors)) {
+  if (!is.null(priors)) {
     check_priors(
       out$priors,
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
@@ -946,7 +942,7 @@ prepare_channel_negbin <- function(y, Y, channel, sampling,
       default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
       phi_prior
     )
-   check_priors(priors, defaults)
+    check_priors(priors, defaults)
   }
   out
 }
