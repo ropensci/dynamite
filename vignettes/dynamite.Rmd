@@ -290,7 +290,8 @@ Currently, the package supports the following distributions for the observations
 - *Exponential* (`"exponential"`) log-link.
 - *Gamma* (`"gamma"`) log-link, using mean and shape parameterization.
 - *Beta* (`"beta"`) logit-link, using mean and precision parameterization.
-
+- *Multivariate Gaussian* (`"mvgaussian"`) identity link, parameterized using means, standard deviations and cholesky factor of the correlation matrix.
+- *Multinomial* (`"multinomial"`) with a softmax link. 
 
 There is also a special response variable type `"deterministic"` which can be used to define deterministic transformations of other variables in the model. This special type is explained in greater detail in Section \@ref(sec:auxiliary).
 
@@ -369,7 +370,7 @@ defines a cubic B-spline with 10 degrees of freedom for the time-varying coeffic
 
 ## Group-level random effects
 
-Random effect terms for each group can be defined using the special term `random()` within the `formula` argument of `obs()`, analogously to `varying()`. By default, all random effects within a group and across all channels are modeled as zero-mean multivariate normal. The optional model component `random_spec()` can be used to define non-correlated random effects as `random_spec(correlated = FALSE)`. In addition, as with the spline coefficients, it is possible to switch between centered and non-centered (the default) parameterization of the random effects using the `noncentered` argument of `random_spec()`. The random effects are not yet supported for categorical distribution due to technical reasons.
+Random effect terms for each group can be defined using the special term `random()` within the `formula` argument of `obs()`, analogously to `varying()`. By default, all random effects within a group and across all channels are modeled as zero-mean multivariate normal. The optional model component `random_spec()` can be used to define non-correlated random effects as `random_spec(correlated = FALSE)`. In addition, as with the spline coefficients, it is possible to switch between centered and non-centered (the default) parameterization of the random effects using the `noncentered` argument of `random_spec()`.
 
 For example, the following code defines a Gaussian response variable `x` with a time-invariant common effect of `z` as well as a group-specific intercept and group-specific effect of `z`.
 
