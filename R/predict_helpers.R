@@ -455,64 +455,6 @@ generate_random_effect <- function(nu, sigma_nu, corr_matrix_nu, n_draws,
   out
 }
 
-#' Get Random Effects Across Channels
-#'
-#' @param x The `stan` components of a `dynamitefit` object.
-#' @noRd
-get_random_effect <- function(cg, cvars, cgvars) {
-  n_cg <- n_unique(cg)
-  out <- c()
-  for (i in seq_len(n_cg)) {
-    cg_idx <- which(cg == i)
-    j <- cg_idx[1L]
-    family <- cgvars[[i]]$family
-    if (is_multivariate(family)) {
-      if (is_multinomial(family)) {
-        out <- c(
-          out,
-          ifelse_(
-            cgvars[[i]]$has_random_intercept || cgvars[[i]]$has_random,
-            cgvars[[i]]$y[-1L],
-            character(0L)
-          )
-        )
-      } else {
-        for (k in cg_idx) {
-          out <- c(
-            out,
-            ifelse_(
-              cvars[[k]]$has_random_intercept || cvars[[k]]$has_random,
-              cvars[[k]]$y,
-              character(0L)
-            )
-          )
-        }
-      }
-    } else {
-      if (is_categorical(family)) {
-        out <- c(
-          out,
-          ifelse_(
-            cvars[[j]]$has_random_intercept || cvars[[j]]$has_random,
-            paste0(cvars[[j]]$y, "_", cvars[[j]]$categories[-1L]),
-            character(0L)
-          )
-        )
-      } else {
-        out <- c(
-          out,
-          ifelse_(
-            cvars[[j]]$has_random_intercept || cvars[[j]]$has_random,
-            cvars[[j]]$y,
-            character(0L)
-          )
-        )
-      }
-    }
-  }
-  out
-}
-
 #' Expand the Prediction Data Frame to Include All Covariates
 #'
 #' @param x Object returned by `predict.dynamitefit`.
@@ -565,11 +507,8 @@ prepare_eval_envs <- function(object, simulated, observed,
   )
   if (length(rand) > 0L) {
     n_all_draws <- ndraws(object)
-    nu_channels <- get_random_effect(
-      cg = attr(object$dformulas$stoch, "channel_groups"),
-      cvars = object$stan$channel_vars,
-      cgvars = object$stan$channel_group_vars
-    )
+    Ks <- object$stan$model_vars$Ks
+    nu_channels <- names(Ks)
     sigma_nus <- glue::glue("sigma_nu_{nu_channels}")
     sigma_nu <- t(
       do.call("cbind", samples[sigma_nus])[idx_draws, , drop = FALSE]
@@ -597,12 +536,7 @@ prepare_eval_envs <- function(object, simulated, observed,
       new_ids = new_ids,
       new_levels = new_levels
     )
-    Ks <- get_random_effect_counts(
-      cg = attr(object$dformulas$stoch, "channel_groups"),
-      cvars = object$stan$channel_vars,
-      cgvars = object$stan$channel_group_vars
-    )
-    dimnames(nu_samples)[[3L]] <- make.unique(rep(nus, times = Ks[Ks > 0]))
+    dimnames(nu_samples)[[3L]] <- make.unique(rep(nus, times = Ks[Ks > 0L]))
   }
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)

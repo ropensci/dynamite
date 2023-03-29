@@ -314,7 +314,8 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     backend = backend,
     cg = attr(dformulas$stoch, "channel_groups"),
     cvars = stan_input$channel_vars,
-    cgvars = stan_input$channel_group_vars
+    cgvars = stan_input$channel_group_vars,
+    mvars = stan_input$model_vars
   )
   sampling_info(dformulas, verbose, debug, backend)
   # if debug$stanfit exists (from the update method) then don't recompile

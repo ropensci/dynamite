@@ -205,11 +205,7 @@ test_that("gets can be got", {
       beta_y_b = 5L,
       a_y_b = 1L,
       beta_y_c = 5L,
-      a_y_c = 1L,
-      alpha_x_B = 1L,
-      alpha_x_C = 1L,
-      alpha_y_b = 1L,
-      alpha_y_c = 1L
+      a_y_c = 1L
     )
   )
 })
