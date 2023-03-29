@@ -253,9 +253,10 @@ get_parameter_dims.dynamitefit <- function(x, ...) {
     !is.null(x$stanfit),
     "No Stan model fit is available."
   )
+  pars_text <- get_code(x, blocks = "parameters")
+  pars <- get_parameters(pars_text)
   out <- rstan::get_inits(x$stanfit)[[1L]]
-  #pars <- "(a_|beta_|nu_raw|phi_|sigma_|tau_|omega_|L_|xi).+"
-  #out <- out[grepl(pars, names(out))]
+  out <- out[names(out) %in% pars]
   lapply(
     out,
     function(y) {
@@ -263,6 +264,23 @@ get_parameter_dims.dynamitefit <- function(x, ...) {
       ifelse_(is.null(d), 1L, d)
     }
   )
+}
+
+#' Internal Parameter Block Variable Name Extraction
+#'
+#' @param x \[`character(1L)`]\cr The Stan model code string of the
+#'   "Parameters" block.
+#' @noRd
+get_parameters <- function(x) {
+  x <- strsplit(x, split = "\n")[[1L]]
+  x <- x[grepl(";", x)]
+  par_regex <- regexec(
+    pattern = "^.+\\s([^\\s]+);.*$",
+    text = x,
+    perl = TRUE
+  )
+  par_matches <- regmatches(x, par_regex)
+  vapply(par_matches, "[[", character(1L), 2L)
 }
 
 

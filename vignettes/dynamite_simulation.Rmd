@@ -13,23 +13,24 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-library(dynamite)
+library("dynamite")
+suppressPackageStartupMessages(library("ggplot2"))
 ```
 
 # Using dynamite to generate panel data
 
 Dynamic multivariate panel models (DMPM) are conceptually challenging due to their multichannel and multivariate nature. These models can also contain a large number of various parameters, especially when the model contains time-varying effects or group-level random effects. This poses a challenge for users that wish to generate data according to such models, as manual specification of the parameters becomes cumbersome. 
 
-While the main purpose of `dynamite()` is to fit dynamic multivariate panel models to data and to obtain predictions, the package can fortunately also be used to generate data according to a specified model. The used need only specify the model formula, which along with data on the fixed covariates can be used the obtain the dimensions of all parameters in the model via the `get_parameter_dims()` function. As the name suggests, this function will return the names and dimensions of all parameters in the model which need to be specified for data simulation. However, in practice it is not necessary to define values for all parameters, as Stan will automatically generate random initial values for any missing parameters.
+While the main purpose of `dynamite` is to fit dynamic multivariate panel models to data and to obtain predictions, the package can fortunately also be used to generate data according to a specified model. The used need only specify the model formula, which along with data on the fixed covariates can be used the obtain the dimensions of all parameters in the model via the `get_parameter_dims()` function. As the name suggests, this function will return the names and dimensions of all parameters in the model which need to be specified for data simulation. However, in practice it is not necessary to define values for all parameters, as Stan will automatically generate random initial values for any missing parameters.
 
-After the user has specified the parameter values, they should be supplied to `dynamite()` as a list via the argument `init`, which will be used by Stan to initialize the parameters in the underlying Stan model. Further, the number of iterations should be set to 1 and the simulation algorithm to `"Fixed_param"`, so that no posterior sampling is carried out. This will result in a `dynamitefit` object that can be subsequently used in `predict` to obtain the desired simulated data.
+After the user has specified the parameter values, they should be supplied to `dynamite()` as a list via the argument `init`, which will be used by Stan to initialize the parameters in the underlying Stan model. Furthermore, the number of iterations should be set to `1` and the simulation algorithm to `"Fixed_param"` so that no posterior sampling is carried out. This will result in a `dynamitefit` object that can be subsequently used in `predict` to obtain the desired simulated data.
 
-# Simulating categorical data
+# Model with categorical responses
 
 As an illustration, the approach described in this vignette was used to generate the package data `categorical_example` as follows. First, we define the data for the first time index:
 ```{r categinit, eval=FALSE, echo=TRUE}
@@ -52,7 +53,8 @@ d <- dplyr::right_join(
   data.frame(
     time = rep(seq_len(n_time), each = n_id),
     id = seq_len(n_id)
-  )
+  ),
+  by = c("time", "id")
 )
 d$z <- rnorm(nrow(d))
 ```
@@ -74,16 +76,16 @@ Now we have the required information to specify the parameters of the model. The
 ```{r categparamvals, eval=FALSE, echo=TRUE}
 init <- list(
   beta_x_B = c(2, 0.8, 0.2, 0, 0),
-  beta_x_C = c(1, 0.5, 2, 0.2, 0.1),
   a_x_B = -0.1,
+  beta_x_C = c(1, 0.5, 2, 0.2, 0.1),
   a_x_C = 0.2,
   beta_y_b = c(0, 1, 0.8, 0.3, 0.5),
-  beta_y_c = c(1, 0.2, 0, 0.3, -0.5),
   a_y_b = 0.1,
+  beta_y_c = c(1, 0.2, 0, 0.3, -0.5),
   a_y_c = -0.5
 )
 ```
-We fit the model with these fixed values as follows
+We fit the model with these fixed values. Note that we wrap our `init` object in another list, because the `init` argument is chain specific, and thus the first element provides initial values to the first (and in this case only) chain.
 ```{r categfit, eval=FALSE, echo=TRUE}
 fit <- dynamite(
   dformula = f,
@@ -126,27 +128,57 @@ d <- dplyr::right_join(
   data.frame(
     time = rep(seq_len(n_time), each = n_id),
     id = seq_len(n_id)
-  )
+  ),
+  by = c("time", "id")
 )
 d$x <- rnorm(nrow(d))
 ```
-Next, we define the model formula for the DMPM of the response variable `y` and define the splines of the time-varying effects.
+Next, we define the model formula for the response variable `y` of the DMPM and define the splines of the time-varying effects.
 ```{r gaussianform}
 f <- obs(y ~ 1 + varying(~ -1 + x + lag(y)), family = "gaussian") +
   splines(df = 10)
 ```
 Again, we apply the `get_parameter_dims()` function to get the model parameters and their dimensions.
-```{r gaussiandimseval, eval=TRUE, echo=FALSE}
-list(
-  omega_y = c(2L, 10L),
-  tau_y = c(2L, 10L),
-  a_y = 1L,
-  sigma_y = c(1L),
-  delta_y = c(19L, 2L),
-  alpha_y = 1L
-)
-```
-```{r gaussiandimsecho, eval=FALSE, echo=TRUE}
+```{r gaussiandims}
 get_parameter_dims(x = f, data = d, time = "time", group = "id")
 ```
-Here, the parameters `omega_y` define the spline coefficients for the 
+Here, `omega_y` defines the spline coefficients for the two time-varying effects and `tau_y` defines the standard deviations of the random walk priors. We choose the following values for the model parameters:
+```{r gaussianparamvals}
+init <- list(
+  omega_y = rbind(
+    c(0.0,  0.2, -0.8, 1.0, 0.5, 0.0, 0.1, -0.2, -0.5,  0.1),
+    c(0.3, -0.4,  0.7, 0.5, 0.0, 0.0, 0.0,  0.6,  0.9, -0.8)
+  ),
+  tau_y = c(1.0, 0.75),
+  a_y = -1,
+  sigma_y = 0.5
+)
+```
+We fit the model with these fixed values.
+```{r gaussianfit, echo=TRUE, results='hide', message=FALSE}
+fit <- dynamite(
+  dformula = f,
+  data = d,
+  time = "time",
+  group = "id",
+  chains = 1,
+  iter = 1,
+  algorithm = "Fixed_param",
+  init = list(init),
+)
+```
+Finally, we generate the data using `predict()`.
+```{r gaussianpred}
+sim <- predict(fit, type = "response") |>
+  dplyr::mutate(y = y_new) |>
+  dplyr::select(id, time, x, y)
+```
+We can plot individual trajectories of `y` over time to visualize the data.
+```{r gaussianplot, fig.width = 7, fig.height=3.5}
+library(ggplot2)
+sim |>
+  dplyr::filter(id < 9) |>
+  ggplot(aes(time, y, color = factor(id))) +
+  geom_line() +
+  theme_bw()
+```
