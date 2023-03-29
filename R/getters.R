@@ -3,16 +3,7 @@
 #' Extracts the priors used in the dynamite model as a data frame. You
 #' can then alter the priors by changing the contents of the `prior` column and
 #' supplying this data frame to `dynamite` function using the argument
-#' `priors`.
-#'
-#' Note that the prior for the intercept term `alpha` is actually defined
-#' in a centered form, so the prior is related to the `alpha` when the
-#' covariates at the first time point are centered around their means. In other
-#' words, the prior is defined for `alpha + x_m * gamma` where `x_m` is vector
-#' of covariate means and gamma contains the corresponding coefficients (`beta`
-#' and `delta_1`). If you want to use prior directly on `alpha`, remove
-#' intercept from the formula and add a dummy covariate consisting of ones to
-#' the model.
+#' `priors`. See vignettes for details.
 #'
 #' @note Only the `prior` column of the output should be altered when defining
 #' the user-defined priors for the `dynamite`.

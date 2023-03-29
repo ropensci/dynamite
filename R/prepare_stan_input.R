@@ -89,9 +89,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     c(3L, 1L, 2L)
   )[T_idx, , , drop = FALSE]
   x_tmp <- X[1L, , , drop = FALSE]
-  sd_x <- apply(x_tmp, 3L, sd, na.rm = TRUE)
-  # needed for default priors, 0.5 is pretty arbitrary
-  sd_x <- setNames(pmax(0.5, sd_x, na.rm = TRUE), colnames(model_matrix))
+  sd_x <- setNames(apply(X, 3L, sd, na.rm = TRUE), colnames(model_matrix))
   x_means <- colMeans(x_tmp, dims = 2L, na.rm = TRUE)
   # For totally missing covariates
   x_means[is.na(x_means)] <- 0.0
@@ -787,6 +785,15 @@ prepare_channel_binomial <- function(y, Y, channel, sampling,
       call = rlang::caller_env()
     )
   }
+  mean_y <- ifelse_(
+    ncol(Y) > 1L,
+    mean(Y[1L, ], na.rm = TRUE),
+    Y[1L]
+  )
+  mean_y <- qlogis(pmin(0.99, pmax(0.01, mean_y)))
+  if (!is.finite(mean_y)) {
+    mean_y <- 0.0
+  }
   trials <- sampling[[paste0("trials_", y)]]
   if (!is.null(trials)) {
     trial_idx <- which(Y_obs < trials, arr.ind = TRUE)
@@ -796,7 +803,7 @@ prepare_channel_binomial <- function(y, Y, channel, sampling,
        {trial_idx[1, 2]}."
     )
   }
-  sd_y <- 0.5
+  sd_y <- 1
   mean_y <- 0.0
   sd_gamma <- 2.0 / sd_x
   mean_gamma <- rep(0.0, length(sd_gamma))
@@ -850,14 +857,16 @@ prepare_channel_poisson <- function(y, Y, channel, sampling,
     abort_negative(y, "Poisson", type = "integers", call = rlang::caller_env())
   }
   sd_y <- 1.0
-  if (ncol(Y) > 1L) {
-    mean_y <- log(mean(Y[1L, ], na.rm = TRUE))
-  } else {
-    mean_y <- log(Y[1L])
-  }
+  mean_y <- ifelse_(
+    ncol(Y) > 1L,
+    mean(Y[1L, ], na.rm = TRUE),
+    Y[1L]
+  )
+  mean_y <- log(pmax(0.1, mean_y))
   if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }
+
   sd_gamma <- 2.0 / sd_x
   mean_gamma <- rep(0.0, length(sd_gamma))
   out <- prepare_channel_default(
@@ -899,9 +908,10 @@ prepare_channel_negbin <- function(y, Y, channel, sampling,
   sd_y <- 1.0
   mean_y <- ifelse_(
     ncol(Y) > 1L,
-    log(mean(Y[1L, ], na.rm = TRUE)),
-    log(Y[1L])
+    mean(Y[1L, ], na.rm = TRUE),
+    Y[1L]
   )
+  mean_y <- log(pmax(0.1, mean_y))
   if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }
@@ -960,9 +970,10 @@ prepare_channel_exponential <- function(y, Y, channel, sampling,
   sd_y <- 1.0
   mean_y <- ifelse_(
     ncol(Y) > 1L,
-    log(mean(Y[1L, ], na.rm = TRUE)),
-    log(Y[1L])
+    mean(Y[1L, ], na.rm = TRUE),
+    Y[1L]
   )
+  mean_y <- log(pmax(0.1, mean_y))
   if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }
@@ -1002,9 +1013,10 @@ prepare_channel_gamma <- function(y, Y, channel, sampling,
   sd_y <- 1.0
   mean_y <- ifelse_(
     ncol(Y) > 1L,
-    log(mean(Y[1L, ], na.rm = TRUE)),
-    mean_y <- log(Y[1L])
+    mean(Y[1L, ], na.rm = TRUE),
+    Y[1L]
   )
+  mean_y <- log(pmax(0.1, mean_y))
   if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }
@@ -1058,9 +1070,10 @@ prepare_channel_beta <- function(y, Y, channel, sampling,
   sd_y <- 1.0
   mean_y <- ifelse_(
     ncol(Y) > 1L,
-    log(mean(Y[1L, ], na.rm = TRUE)),
-    log(Y[1L])
+    mean(Y[1L, ], na.rm = TRUE),
+    Y[1L]
   )
+  mean_y <- qlogis(pmin(0.99, pmax(0.01, mean_y)))
   if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }

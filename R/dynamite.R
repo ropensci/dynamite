@@ -5,29 +5,7 @@
 #' distributions and allows the user to flexibly customize the priors for the
 #' model parameters. The dynamite model is specified using standard \R formula
 #' syntax via [dynamite::dynamiteformula()]. For more information and examples,
-#' see 'Details' and the package vignette.
-#'
-#' Any univariate unbounded continuous distributions supported by Stan can be
-#' used as a prior for model parameters (the distribution is automatically
-#' truncated to positive side for constrained parameters). In addition, any
-#' univariate distribution bounded to the positive real line can be used as a
-#' prior for parameters constrained to be positive.
-#' See Stan function reference at
-#' \url{https://mc-stan.org/users/documentation/} for details. For custom
-#' priors, you should first get the default priors with [dynamite::get_priors()]
-#' function, and then modify the `priors` column of the obtained data frame
-#' before supplying it to the `dynamite` function.
-#'
-#' The default priors for regression coefficients are based on the standard
-#' deviation of the covariates at the first non-fixed time point. In case this
-#' is 0 or NA, it is transformed to (arbitrary) 0.5. The final prior is then
-#' normal distribution with zero mean and two times this standard deviation.
-#'
-#' The prior for the correlation structure of the random intercepts is defined
-#' via the Cholesky decomposition of the correlation matrix, as
-#' `lkj_corr_cholesky(1)`. See
-#' \url{https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html}
-#' for details.
+#' see 'Details' and the package vignettes.
 #'
 #' The best-case scalability of `dynamite` in terms of data size should be
 #' approximately linear in terms of number of time points and and number of

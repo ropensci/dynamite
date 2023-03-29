@@ -1,0 +1,102 @@
+---
+title: "Priors for DMPMs"
+link-citations: yes
+output:
+  bookdown::html_document2:
+    base_format: rmarkdown::html_vignette
+pkgdown:
+  as_is: true
+bibliography: dynamite.bib
+vignette: >
+  %\VignetteIndexEntry{dynamite_priors} 
+  %\VignetteEngine{knitr::rmarkdown} 
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r srr, eval = FALSE, echo = FALSE}
+#' @srrstats {BS1.2b} The package contains a vignette.
+```
+
+```{r setup, echo = FALSE, warning=FALSE}
+library("dynamite")
+library("ggplot2")
+suppressPackageStartupMessages(library("dplyr"))
+theme_set(theme_bw())
+options(dplyr.summarise.inform = FALSE)
+options(crayon.enabled = FALSE)
+options(dplyr.summarise.inform = FALSE)
+set.seed(0)
+```
+
+# Default prior distributions in dynamite
+
+The default priors in `dynamite` or chosen to be relatively uninformative (i.e. weakly informative), such that they provide computational stability by slightly regularizing the posterior. The motivation behind the priors is thus similar to other popular Stan-based R packages such as `brms`^[https://CRAN.R-project.org/package=brms] and `rstanarm`^[https://CRAN.R-project.org/package=rstanarm].
+
+Define $\sigma_x=\max(1, SD(x))$, where $SD(x)$ is the standard deviation of the predictor variable $x$ over groups and non-fixed^[See section [Lagged responses and predictors](https://docs.ropensci.org/dynamite/articles/dynamite.html#sec:lags) in the main vignette.] time points. Define also
+\[
+\sigma_y = \begin{cases}
+\max(1, SD(y)), &\text{if family is gaussian or student}\\ 
+1, &\text{otherwise}
+\end{cases},
+\] 
+where $SD(y)$ is the standard deviation of the response variable as over groups and non-fixed time points. 
+
+## Regression coefficients
+
+We define the default prior for a time-invariant regression coefficient $\beta$ as well for the first time-varying coefficient $\delta_1$ as zero-mean normal distribution with standard deviation of 
+$2\sigma_y/\sigma_x$. The two maximums used in definitions of $\sigma_y$ and $\sigma_x$ ensure that the prior standard deviation is at least 2.
+
+## Intercept
+
+As the posterior correlations between the intercept $\alpha$ term and the regression coefficients $\beta$ and $\delta$ can be cause computational inefficiencies with gradient based sampling algorithms of Stan, sampling of the intercept is performed indirectly via parameter $a$, so that the 
+intercept $\alpha$ (or $\alpha_1$ in case of time-varying intercept) is constructed as 
+\[
+\alpha = a - \bar X^\beta_1\beta - \bar X_1^\delta\delta_1,
+\]
+where $\bar X^\beta$ and $\bar X^\delta$ are the means of the corresponding predictors at first (non-fixed) time point. The prior is then defined for $a$ as
+\[
+a \sim N(\bar y, 2\sigma_y),
+\]
+where $\bar y$ is mean of the response variable values at first time point after applying the link function to them (except in case of categorical and multinomial case where $\bar y$ is set to zero).
+
+## Standard deviation parameters
+
+The prior for the standard deviation parameter $\tau$ of random walk prior of the spline coefficients is half-normal with the standard deviation of $2\sigma_y/\sigma_x$ (with $\sigma_x=1$ in case of varying intercept). Same prior distribution is also used for the the standard deviations of the random effects. Note that this prior can be too uninformative in some cases especially for the $\tau$ parameters. 
+
+## Correlation matrices
+
+The correlation matrix of the random effects uses LKJ(1) prior using the cholesky parameterization, see Stan documentation of `lkj_cholesky_corr` for details^[https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html].
+
+## Family-specific parameters
+
+For standard deviation parameter of gaussian and student responses, we use exponential prior with rate parameter $\frac{1}{2\max(1,\sigma_y)}$. The degrees-of-freedom parameter of the student's $t$-distribution has a $gamma(2, 0.1)$ prior, whereas other family specific parameters $\phi \sim Exponential(1)$.
+
+# Defining priors of dynamite models
+
+While dynamite can be used with default prior choices, we recommend to check whether the defaults make sense for your particular problem and modify them accordingly based on the domain knowledge. 
+
+Any univariate unbounded continuous distributions supported by Stan can be used as a prior for univariate model parameters (in case the parameter is constrained to be positive, the distribution is automatically truncated). Naturally, any univariate distribution bounded to the positive real line can be used as a prior for parameters constrained to be positive (e.g. standard deviation parameter).
+See Stan function reference at \url{https://mc-stan.org/users/documentation/} for possible distribution. 
+For custom priors, you should first get the default priors with `get_priors()` function, and then modify the `priors` column of the obtained data frame before supplying it to the `dynamite` function:
+
+```{r}
+f <- obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1 + z), "gaussian") +
+    random_spec(correlated = TRUE) + splines(df = 20)
+p <- get_priors(f, data = gaussian_example, time = "time", group = "id")
+p
+```
+```{r}
+p$prior[p$type == "sigma_nu"] <- "normal(0, 1)" # change prior for sigma_nu
+p$prior[p$parameter == "sigma_y"] <- "student_t(3, 0, 2)" #prior for sigma_y
+p
+```
+```{r, eval = FALSE}
+fit <- dynamite(f, data = gaussian_example, time = "time",  group = "id", priors = p)
+```

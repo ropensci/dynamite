@@ -52,6 +52,7 @@ to get the parameter dimensions.
 }
 \examples{
 get_parameter_dims(multichannel_example_fit)
+
 }
 \seealso{
 Model outputs
