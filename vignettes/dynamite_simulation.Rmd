@@ -109,7 +109,7 @@ categorical_example <- predict(fit, type = "response") |>
 As mentioned earlier, simulation from a model with time-varying effects is more challenging due to the inclusion of p-splines which means that we must also define initial values for the spline coefficients. We consider a single-channel model with a gaussian response that has a time-varying effect of a single covariate.
 
 ```{r gaussiainit}
-library(dynamite)
+library("dynamite")
 set.seed(1)
 n_id <- 8L
 n_time <- 20L
@@ -181,8 +181,9 @@ sim <- predict(gaussian_simulation_fit, type = "response") |>
 ```
 We can plot individual trajectories of `y` over time to visualize the data.
 ```{r gaussianplot, fig.width = 7, fig.height=3.5}
-library(ggplot2)
+library("ggplot2")
 sim |>
+  dplyr::filter(id < 9) |>
   ggplot(aes(time, y, color = factor(id))) +
   geom_line() +
   theme_bw()
