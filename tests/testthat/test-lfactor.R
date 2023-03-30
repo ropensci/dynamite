@@ -55,13 +55,19 @@ test_that("nonidentifiable lfactor specification gives warning", {
           nonzero_lambda = TRUE,
           correlated = TRUE,
           noncentered_psi = TRUE
-        ) + splines(30),
-      data = d, time = "time", group = "id", debug = list(no_compile = TRUE)),
+        ) +
+        splines(30),
+      data = d,
+      time = "time",
+      group = "id",
+      debug = list(no_compile = TRUE)
+    ),
     paste0("The common time-invariant intercept term of channel `y2` was ",
       "removed as channel predictors contain random intercept and latent ",
       "factor specified with `nonzero_lambda` as TRUE\\.")
   )
 })
+
 # WIP
 # test_that("latent factors work", {
 #   skip_if_not(run_extended_tests)
@@ -113,3 +119,93 @@ test_that("nonidentifiable lfactor specification gives warning", {
 #     tolerance = 0.1
 #   )
 # })
+
+# Tests involving `latent_factor_example` and `latent_factor_example_fit` -----
+
+set.seed(123)
+N <- 40L
+T_ <- 20L
+D <- 10
+B <- t(splines::bs(1:T_, df = D, intercept = TRUE))
+a <- cumsum(rnorm(D))
+psi <- numeric(T_)
+lambda_i <- rnorm(N, 1, 0.2)
+for (t in 1:T_) {
+  psi[t] <- B[, t] %*% a
+}
+y <- matrix(0, N, T_)
+for (t in 1:T_) {
+  y[, t] <- rnorm(N, lambda_i * psi[t], 0.2)
+}
+latent_factor_example <- data.frame(
+  y = c(y),
+  id = seq_len(N),
+  time = rep(seq_len(T_), each = N)
+)
+
+set.seed(1)
+latent_factor_example_fit <- onlyif(
+  run_extended_tests,
+  dynamite(
+    dformula = obs(y ~ 1, family = "gaussian") +
+      lfactor() +
+      splines(df = 10),
+    data = latent_factor_example,
+    group = "id",
+    time = "time",
+    iter = 2000,
+    warmup = 1000,
+    thin = 10,
+    chains = 2,
+    cores = 2,
+    refresh = 0,
+    save_warmup = FALSE,
+    pars = c(
+      "omega_alpha_1_y", "omega_raw_alpha_y", "omega_raw_psi",
+      "omega_raw_psi_1_y", "L_lf", "lambda_raw_y"
+    ),
+    include = FALSE
+  )
+)
+
+test_that("latent factor related parameters can be got", {
+  skip_if_not(run_extended_tests)
+  expect_equal(
+    get_parameter_types(latent_factor_example_fit),
+    c("alpha", "sigma", "lambda", "sigma_lambda", "psi", "tau_psi", "omega_psi")
+  )
+})
+
+test_that("lambdas can be plotted", {
+  skip_if_not(run_extended_tests)
+  expect_error(
+    plot_lambdas(latent_factor_example_fit),
+    NA
+  )
+})
+
+test_that("psis can be plotted", {
+  skip_if_not(run_extended_tests)
+  expect_error(
+    plot_psis(latent_factor_example_fit),
+    NA
+  )
+})
+
+test_that("new group levels can't be included if model has latent factor", {
+  skip_if_not(run_extended_tests)
+  nd <- latent_factor_example
+  nd$id[nd$id == 1] <- 100
+  expect_error(
+    predict(
+      latent_factor_example_fit,
+      newdata = nd, n_draws = 2
+    ),
+    paste(
+      "Grouping variable `id` contains unknown levels:\nx Level \"100\"",
+      "is not present in the original data\\.\ni Models with latent",
+      "factors do not support new levels because of identifiability",
+      "constraints\\."
+    )
+  )
+})

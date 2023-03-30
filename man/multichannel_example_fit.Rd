@@ -48,8 +48,6 @@ Example models
 \code{\link{gaussian_example_fit}},
 \code{\link{gaussian_example}},
 \code{\link{gaussian_simulation_fit}},
-\code{\link{latent_factor_example_fit}},
-\code{\link{latent_factor_example}},
 \code{\link{multichannel_example}}
 }
 \concept{examples}

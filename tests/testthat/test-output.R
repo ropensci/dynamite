@@ -99,19 +99,6 @@ test_that("nus can be plotted", {
   )
 })
 
-test_that("lambdas can be plotted", {
-  expect_error(
-    plot_lambdas(latent_factor_example_fit),
-    NA
-  )
-})
-test_that("psis can be plotted", {
-  expect_error(
-    plot_psis(latent_factor_example_fit),
-    NA
-  )
-})
-
 test_that("formula can be extracted", {
   expect_error(
     formula(gaussian_example_fit),
@@ -190,10 +177,6 @@ test_that("gets can be got", {
     c("alpha_x", "beta_x_z", "beta_x_x_lag1B", "beta_x_x_lag1C",
       "beta_x_y_lag1b", "beta_x_y_lag1c", "alpha_y", "beta_y_z",
       "beta_y_x_lag1B", "beta_y_x_lag1C", "beta_y_y_lag1b", "beta_y_y_lag1c")
-  )
-  expect_equal(
-    get_parameter_types(latent_factor_example_fit),
-    c("alpha", "sigma", "lambda", "sigma_lambda", "psi", "tau_psi", "omega_psi")
   )
   expect_equal(
     get_parameter_dims(categorical_example_fit),
