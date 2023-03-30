@@ -137,7 +137,7 @@ f <- obs(y ~ 1 + varying(~ -1 + x + lag(y)), family = "gaussian") +
   splines(df = 10)
 ```
 Again, we apply the `get_parameter_dims()` function to get the model parameters and their dimensions.
-```{r gaussiandimsecho, eval=TRUE, echo=FALSE}
+```{r gaussiandimsecho, eval=FALSE, echo=TRUE}
 get_parameter_dims(x = f, data = d, time = "time", group = "id")
 ```
 ```{r gaussiandimseval, eval=TRUE, echo=FALSE}
