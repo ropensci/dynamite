@@ -1,3 +1,7 @@
+# dynamite 1.3.1
+
+  * Added a new package data `gaussian_simulation_fit` that includes the model fit of the `dynamite_simulation` vignette for the example with time-varying effects.
+
 # dynamite 1.3.0
 
   * Added support for Student's t-distribution via `"student"` family in `obs()`.

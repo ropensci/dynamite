@@ -115,7 +115,7 @@
 #' @references
 #' Santtu Tikka and Jouni Helske (2023). `dynamite`: An \R Package for Dynamic
 #' Multivariate Panel Models. arXiv preprint,
-#' <https://arxiv.org/abs/2302.01607/>.
+#' <https://arxiv.org/abs/2302.01607>.
 #'
 #' Jouni Helske and Santtu Tikka (2022). Estimating Causal Effects
 #' from Panel Data with Dynamic Multivariate Panel Models. SocArxiv preprint,

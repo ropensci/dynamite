@@ -161,8 +161,8 @@ init <- list(
 )
 ```
 We fit the model with these fixed values.
-```{r gaussianfit, echo=TRUE, results='hide', message=FALSE}
-fit <- dynamite(
+```{r gaussianfit, eval=FALSE, echo=TRUE}
+gaussian_simulation_fit <- dynamite(
   dformula = f,
   data = d,
   time = "time",
@@ -175,7 +175,7 @@ fit <- dynamite(
 ```
 Finally, we generate the data using `predict()`.
 ```{r gaussianpred}
-sim <- predict(fit, type = "response") |>
+sim <- predict(gaussian_simulation_fit, type = "response") |>
   dplyr::mutate(y = y_new) |>
   dplyr::select(id, time, x, y)
 ```
