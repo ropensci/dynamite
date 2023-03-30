@@ -18,6 +18,7 @@ nobs.dynamitefit <- function(object, ...) {
     is.dynamitefit(object),
     "Argument {.var object} must be a {.cls dynamitefit} object."
   )
+  sampling_vars <- get_data(object)
   cg <- attr(object$dformulas$all, "channel_groups")
   n_cg <- n_unique(cg)
   n_obs <- 0L
@@ -28,7 +29,7 @@ nobs.dynamitefit <- function(object, ...) {
       paste0("n_obs_", object$stan$channel_group_vars[[i]]$y_cg),
       paste0("n_obs_", object$dformulas$all[[cg_idx]]$name)
     )
-    n_obs <- n_obs + sum(object$stan$sampling_vars[[n_cg]])
+    n_obs <- n_obs + sum(sampling_vars[[n_cg]])
   }
   n_obs
 }

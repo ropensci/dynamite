@@ -56,5 +56,6 @@ gaussian_example_single_fit <- dynamite(
 usethis::use_data(
   gaussian_example_single_fit,
   overwrite = TRUE,
-  compress = "xz", internal = TRUE
+  compress = "xz",
+  internal = TRUE
 )

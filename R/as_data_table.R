@@ -333,7 +333,7 @@ as_data_table_default <- function(type, draws, response, ...) {
 #' @describeIn as_data_table_default Data Table for a "xi" Parameter
 #' @noRd
 as_data_table_xi <- function(x, draws, n_draws, ...) {
-  D <- x$stan$sampling_vars$D
+  D <- x$stan$model_vars$D
   data.table::data.table(
     parameter = rep(
       paste0("xi_d", seq_len(D - 1L)),
@@ -496,7 +496,7 @@ as_data_table_tau <- function(x, draws, n_draws, response, ...) {
 #' @noRd
 as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
   n_cat <- length(category)
-  D <- x$stan$sampling_vars$D
+  D <- x$stan$model_vars$D
   var_names <- paste0(
     "omega_", response, "_",
     names(get_channel(x, response)$J_varying)
@@ -516,7 +516,7 @@ as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
 #' @noRd
 as_data_table_omega_alpha <-function(x, draws, n_draws, response,
   category, ...) {
-  D <- x$stan$sampling_vars$D
+  D <- x$stan$model_vars$D
   data.table::data.table(
     parameter = rep(
       paste0("omega_alpha_", response, "_d", seq_len(D)),
@@ -616,7 +616,7 @@ as_data_table_tau_psi <- function(draws, response, ...) {
 #' @noRd
 as_data_table_omega_psi <- function(x, draws, n_draws, response,
                                     category, ...) {
-  D <- x$stan$sampling_vars$D
+  D <- x$stan$model_vars$D
   data.table::data.table(
     parameter = rep(
       paste0("omega_psi_", response, "_d", seq_len(D)),

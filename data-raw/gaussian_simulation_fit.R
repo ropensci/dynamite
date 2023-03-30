@@ -1,6 +1,5 @@
 # Code to create `gaussian_simulation_fit` object used in the
 # `dynamite_simulation` vignette
-library(dynamite)
 
 set.seed(1)
 n_id <- 100L

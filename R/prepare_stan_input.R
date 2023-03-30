@@ -263,6 +263,10 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     correlated_lf = lfactor_def$correlated
   )
   # for stanblocks
+  model_vars[["T"]] <- sampling_vars[["T"]]
+  model_vars$M <- sampling_vars$M
+  model_vars$P <- sampling_vars$P
+  model_vars$D <- sampling_vars$D
   model_vars$K <- K
   model_vars$common_priors = prior_list$common_priors
   model_vars$spline_def = spline_def

@@ -245,13 +245,16 @@ dynamite <- function(dformula, data, time, group = NULL,
       dynamite_call$debug <- NULL
     }
   }
+  # copy so that get_data can still return the full stan_input via debug
+  stan_input_out <- stan_input
+  stan_input_out$sampling_vars <- NULL
   out <- structure(
     list(
       stanfit = stanfit,
       dformulas = dformulas,
       data = data,
       data_name = data_name,
-      stan = stan_input,
+      stan = stan_input_out,
       group_var = group,
       time_var = time,
       priors = rbindlist_(stan_input$priors),
@@ -332,11 +335,14 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
 #' @noRd
 dynamite_model <- function(compile, model_code, backend, stanc_options) {
   if (compile) {
+    e <- new.env()
     if (backend == "rstan") {
-      rstan::stan_model(model_code = model_code)
+      e$model_code <- model_code
+      with(e, {rstan::stan_model(model_code = model_code)})
     } else {
-      file <- cmdstanr::write_stan_file(model_code)
-      cmdstanr::cmdstan_model(file, stanc_options = stanc_options)
+      e$file <- cmdstanr::write_stan_file(model_code)
+      e$stanc_options <- stanc_options
+      with(e, {cmdstanr::cmdstan_model(file, stanc_options = stanc_options)})
     }
   } else {
     NULL
@@ -356,16 +362,14 @@ dynamite_sampling <- function(sampling, backend, model_code, model,
                               sampling_vars, dots) {
   out <- NULL
   if (sampling) {
+    e <- new.env()
     if (backend == "rstan") {
-      out <- do.call(
-        rstan::sampling,
-        c(list(object = model, data = sampling_vars), dots)
-      )
+      e$args <- c(list(object = model, data = sampling_vars), dots)
+      out <- with(e, {do.call(rstan::sampling, args)})
     } else {
-      sampling_out <- do.call(
-        model$sample,
-        c(list(data = sampling_vars), dots)
-      )
+      e$model <- model
+      e$args <- c(list(data = sampling_vars), dots)
+      sampling_out <- with(e, {do.call(model$sample, args)})
       out <- rstan::read_stan_csv(sampling_out$output_files())
       out@stanmodel <- methods::new("stanmodel", model_code = model_code)
     }
@@ -497,12 +501,12 @@ remove_redundant_parameters <- function(stan_input, backend,
   if (identical(dots$algorithm, "Fixed_param")) {
     return(dots)
   }
-  M <- stan_input$sampling_vars$M
+  M <- stan_input$model_vars$M
   if (is.null(dots$pars) && M > 0 && backend == "rstan") {
     dots$pars <- c("nu_raw", "nu", "L")
     dots$include <- FALSE
   }
-  P <- stan_input$sampling_vars$P
+  P <- stan_input$model_vars$P
   if (is.null(dots$pars) && P > 0 && backend == "rstan") {
     # many more, but depends on the channel names
     dots$pars <- c("omega_raw_psi", "L_lf")

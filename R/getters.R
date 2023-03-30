@@ -30,16 +30,13 @@ get_priors <- function(x, ...) {
 #' @rdname get_priors
 #' @export
 get_priors.dynamiteformula <- function(x, data, time, group = NULL, ...) {
-  out <- do.call(
-    "dynamite",
-    list(
-      dformula = x,
-      data = data,
-      time = time,
-      group = group,
-      debug = list(no_compile = TRUE),
-      ...
-    )
+  out <- dynamite(
+    dformula = x,
+    data = data,
+    time = time,
+    group = group,
+    debug = list(no_compile = TRUE),
+    ...
   )
   out$priors
 }
@@ -81,16 +78,13 @@ get_code <- function(x, ...) {
 #' @export
 get_code.dynamiteformula <- function(x, data, time,
                                      group = NULL, blocks = NULL, ...) {
-  out <- do.call(
-    "dynamite",
-    list(
-      dformula = x,
-      data = data,
-      time = time,
-      group = group,
-      debug = list(no_compile = TRUE, model_code = TRUE),
-      ...
-    )
+  out <- dynamite(
+    dformula = x,
+    data = data,
+    time = time,
+    group = group,
+    debug = list(no_compile = TRUE, model_code = TRUE),
+    ...
   )
   get_code_(out$model_code, blocks)
 }
@@ -98,11 +92,16 @@ get_code.dynamiteformula <- function(x, data, time,
 #' @rdname get_code
 #' @export
 get_code.dynamitefit <- function(x, blocks = NULL, ...) {
-  stopifnot_(
-    !is.null(x$stanfit),
-    "No Stan model fit is available."
+  out <- dynamite(
+    dformula = eval(formula(x)),
+    data = x$data,
+    time = x$time_var,
+    group = x$group_var,
+    debug = list(no_compile = TRUE, model_code = TRUE),
+    verbose = FALSE,
+    ...
   )
-  get_code_(x$stanfit@stanmodel@model_code, blocks)
+  get_code_(out$model_code, blocks)
 }
 
 #' Internal Stan Code Block Extraction
@@ -178,16 +177,25 @@ get_data.dynamiteformula <- function(x, data, time, group = NULL, ...) {
     data = data,
     time = time,
     group = group,
-    debug = list(no_compile = TRUE, sampling_vars = TRUE),
+    debug = list(no_compile = TRUE, stan_input = TRUE),
     ...
   )
-  out$stan$sampling_vars
+  out$stan_input$sampling_vars
 }
 
 #' @rdname get_data
 #' @export
 get_data.dynamitefit <- function(x, ...) {
-  x$stan$sampling_vars
+  out <- dynamite(
+    dformula = eval(formula(x)),
+    data = x$data,
+    time = x$time_var,
+    group = x$group_var,
+    debug = list(no_compile = TRUE, stan_input = TRUE),
+    verbose = FALSE,
+    ...
+  )
+  out$stan_input$sampling_vars
 }
 
 #' Get Parameter Dimensions of the Dynamite Model

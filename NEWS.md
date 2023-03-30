@@ -1,5 +1,7 @@
 # dynamite 1.3.1
 
+  * Fixed an incorrect URL in the main vignette.
+  * `"dynamitefit"` objects no longer contain the data used for Stan sampling by default. This data can still be retrieved via `get_data()`.
   * Added a new package data `gaussian_simulation_fit` that includes the model fit of the `dynamite_simulation` vignette for the example with time-varying effects.
 
 # dynamite 1.3.0

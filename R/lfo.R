@@ -61,7 +61,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   log_mean_exp <- function(x) {
     log_sum_exp(x) - log(length(x))
   }
-  T_ <- x$stan$sampling_vars[["T"]]
+  T_ <- x$stan$model_vars[["T"]]
   stopifnot_(
     checkmate::test_int(
       x = L,

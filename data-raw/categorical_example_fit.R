@@ -15,4 +15,8 @@ categorical_example_fit <- dynamite(
   save_warmup = FALSE
 )
 
-usethis::use_data(categorical_example_fit, overwrite = TRUE, compress = "xz")
+usethis::use_data(
+  categorical_example_fit,
+  overwrite = TRUE,
+  compress = "xz"
+)
