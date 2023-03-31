@@ -180,3 +180,7 @@ test_that("paste_rows works correctly", {
 test_that("message_ outputs", {
   expect_message(message_("This is a message"), "This is a message")
 })
+
+test_that("R_version works", {
+  expect_identical(R_version(), base::getRversion())
+})

@@ -796,7 +796,6 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
       .parse = FALSE
     )
   }
-
   declare_delta <- paste_rows(
     "// Time-varying coefficients",
     stan_array(backend, "vector", "delta_{y}", "T", dims = "K_varying_{ydim}"),
@@ -810,7 +809,6 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     .indent = idt(c(1, 2, 1)),
     .parse = FALSE
   )
-
   psi <- ifelse_(
     has_lfactor && nonzero_lambda,
     glue::glue(" - psi_{y}[1]"),

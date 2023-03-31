@@ -385,8 +385,12 @@ sampling_info <- function(dformulas, verbose, debug, backend) {
   if (!verbose || !is.null(debug) || isTRUE(debug$no_compile)) {
     return()
   }
-  if (!stan_supports_categorical_logit_glm(backend) &&
-    "categorical" %in% get_family_names(dformulas$all)) {
+  has_categorical <- "categorical" %in% vapply(
+    dformulas$all,
+    function(x) x$family$name,
+    character(1L)
+  )
+  if (has_categorical && !stan_supports_categorical_logit_glm(backend)) {
     warning_(
       c(
         "Efficient GLM variant of the categorical likelihood is not

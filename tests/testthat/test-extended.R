@@ -187,3 +187,32 @@ test_that("predict with random variable trials works", {
   expect_equal(sumr$mean, c(log(5), -3.0, 1.25), tolerance = 0.1)
   expect_error(predict(fit, n_draws = 5), NA)
 })
+
+test_that("shrinkage for splines is functional", {
+  skip_if_not(run_extended_tests)
+
+  set.seed(1)
+  expect_error(
+    fit <- dynamite(
+      dformula =
+        obs(
+          y ~ -1 + z + varying(~ x + lag(y)) + random(~1),
+          family = "gaussian"
+        ) +
+        random_spec() +
+        splines(df = 20, shrinkage = TRUE),
+      data = gaussian_example,
+      time = "time",
+      group = "id",
+      iter = 2000,
+      warmup = 1000,
+      chains = 1,
+      refresh = 0
+    ),
+    NA
+  )
+  expect_error(
+    summary(fit, types = "xi"),
+    NA
+  )
+})

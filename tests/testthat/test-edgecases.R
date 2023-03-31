@@ -505,6 +505,27 @@ test_that("no groups data preparation works", {
   )
 })
 
+test_that("no groups group variable name generation works", {
+  d <- gaussian_example |> dplyr::filter(id == 1)
+  d$.group <- d$x
+  d$x <- NULL
+  expect_error(
+    fit <- dynamite(
+      dformula =
+        obs(y ~ -1 + z + varying(~ .group + lag(y)), family = "gaussian") +
+        random_spec() +
+        splines(df = 20),
+      data = d,
+      time = "time",
+      debug = list(no_compile = TRUE)
+    ),
+    NA
+  )
+  expect_identical(fit$group_var, ".group_")
+  expect_true(all(fit$data[[fit$group_var]] == 1L))
+  expect_identical(get_code(fit), get_code(gaussian_example_single_fit))
+})
+
 # Deterministic edgecases -------------------------------------------------
 
 test_that("deterministic channels are parsed", {

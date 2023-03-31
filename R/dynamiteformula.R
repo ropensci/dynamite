@@ -517,14 +517,6 @@ get_families <- function(x) {
   lapply(x, "[[", "family")
 }
 
-#' Get All Family Names of a `dynamiteformula` Object
-#'
-#' @param x A `dynamiteformula` object.
-#' @noRd
-get_family_names <- function(x) {
-  vapply(x, function(x) x$family$name, character(1L))
-}
-
 #' Get a Quoted Expression of Deterministic Channel Definitions
 #'
 #' @param x A `dynamiteformula` object.

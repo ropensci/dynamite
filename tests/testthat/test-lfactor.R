@@ -157,14 +157,7 @@ latent_factor_example_fit <- onlyif(
     warmup = 1000,
     thin = 10,
     chains = 2,
-    cores = 2,
-    refresh = 0,
-    save_warmup = FALSE,
-    pars = c(
-      "omega_alpha_1_y", "omega_raw_alpha_y", "omega_raw_psi",
-      "omega_raw_psi_1_y", "L_lf", "lambda_raw_y"
-    ),
-    include = FALSE
+    cores = 2
   )
 )
 
@@ -199,7 +192,8 @@ test_that("new group levels can't be included if model has latent factor", {
   expect_error(
     predict(
       latent_factor_example_fit,
-      newdata = nd, n_draws = 2
+      newdata = nd,
+      n_draws = 2
     ),
     paste(
       "Grouping variable `id` contains unknown levels:\nx Level \"100\"",

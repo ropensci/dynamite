@@ -256,9 +256,14 @@ test_that("unrecognized arguments warns", {
 test_that("categorical non-glm availability warns", {
   expect_warning(
     mockthat::with_mock(
+      dynamite_model = function(...) NULL,
+      dynamite_sampling = function(...) NULL,
       stan_supports_categorical_logit_glm = function(...) FALSE,
-      get_family_names = function(...) "categorical",
-      sampling_info(NULL, TRUE, NULL, "rstan")
+      dynamite(
+        dformula = obs(y ~ 1, family = "categorical"),
+        data = data.frame(y = c("A", "B"), time = c(1, 2)),
+        time = "time"
+      )
     ),
     paste0(
       "Efficient GLM variant of the categorical likelihood is not available ",
