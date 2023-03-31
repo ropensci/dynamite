@@ -169,7 +169,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
       ks[[i - L]] <- k
       if (any(k > k_threshold)) {
         if (verbose) {
-          message_(paste0("Estimating model with ", i, " time points."))
+          message_("Estimating model with {i} time points.")
         }
         # refit the model based on the first i time points
         i_refit <- i

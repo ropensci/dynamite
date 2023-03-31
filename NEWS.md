@@ -4,6 +4,7 @@
   * `"dynamitefit"` objects no longer contain the data used for Stan sampling by default. This data can still be retrieved via `get_data()`.
   * Added a new package data `gaussian_simulation_fit` that includes the model fit of the `dynamite_simulation` vignette for the example with time-varying effects.
   * The package data `latent_factor_example` and `latent_factor_example_fit` have been removed to accommodate CRAN package size requirements. The code to generate these data is still available in the `data_raw` directory.
+  * Fixed an issue with `formula.dynamitefit()` when the model formula contained a `lags` component or a `lfactor` component.
 
 # dynamite 1.3.0
 

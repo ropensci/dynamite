@@ -92,16 +92,20 @@ get_code.dynamiteformula <- function(x, data, time,
 #' @rdname get_code
 #' @export
 get_code.dynamitefit <- function(x, blocks = NULL, ...) {
-  out <- dynamite(
-    dformula = eval(formula(x)),
-    data = x$data,
-    time = x$time_var,
-    group = x$group_var,
-    debug = list(no_compile = TRUE, model_code = TRUE),
-    verbose = FALSE,
-    ...
-  )
-  get_code_(out$model_code, blocks)
+  if (is.null(x$stanfit)) {
+    out <- dynamite(
+      dformula = eval(formula(x)),
+      data = x$data,
+      time = x$time_var,
+      group = x$group_var,
+      debug = list(no_compile = TRUE, model_code = TRUE),
+      verbose = FALSE,
+      ...
+    )$model_code
+  } else {
+    out <- x$stanfit@stanmodel@model_code[1L]
+  }
+  get_code_(out, blocks)
 }
 
 #' Internal Stan Code Block Extraction

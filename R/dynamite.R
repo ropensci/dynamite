@@ -568,7 +568,7 @@ formula.dynamitefit <- function(x, ...) {
   )
   lags_str <- onlyif(
     !is.null(lag_def),
-    glue::glue("lags(k = {lag_def$k}, type = {lag_def$type})")
+    glue::glue("lags(k = {lag_def$k}, type = '{lag_def$type}')")
   )
   spline_str <- onlyif(
     spline_def$has_splines,
@@ -583,13 +583,17 @@ formula.dynamitefit <- function(x, ...) {
     )
   )
   lfactor_def <- attr(x$dformulas$stoch, "lfactor")
+  lfactor_resp <- onlyif(
+    !is.null(lfactor_def$responses),
+    paste0("c(", paste0("'", lfactor_def$responses, "'", collapse = ", "), ")")
+  )
   lfactor_str <- onlyif(
     lfactor_def$has_lfactor,
     paste0(
       "lfactor(",
-      "responses = ", lfactor_def$responses, ", ",
+      "responses = ", lfactor_resp, ", ",
       "noncentered_psi = ", lfactor_def$noncentered_psi, ", ",
-      "nonzero_lambda = ", lfactor_def$nonzero_lambda, ", ",
+      "nonzero_lambda = c(", cs(lfactor_def$nonzero_lambda), "), ",
       "correlated = ", lfactor_def$correlated, ")"
     )
   )

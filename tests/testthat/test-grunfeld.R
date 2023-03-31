@@ -19,10 +19,18 @@ test_that("parameters of the Grunfield model are recovered", {
   )
   # set very vague priors
   p$prior[] <- rep("normal(0, 1000)", nrow(p))
-  fit <- dynamite(f,
-    Grunfeld, time = "year", group = "firm",
-    refresh = 0, seed = 1,
-    chains = 2, cores = 2, iter = 20000, warmup = 1000
+  fit <- dynamite(
+    dformula = f,
+    data = Grunfeld,
+    time = "year",
+    group = "firm",
+    priors = p,
+    refresh = 0,
+    seed = 1,
+    chains = 2,
+    cores = 2,
+    iter = 20000,
+    warmup = 1000
   )
 
   # Not run, values are stored
