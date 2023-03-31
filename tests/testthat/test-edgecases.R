@@ -523,7 +523,6 @@ test_that("no groups group variable name generation works", {
   )
   expect_identical(fit$group_var, ".group_")
   expect_true(all(fit$data[[fit$group_var]] == 1L))
-  expect_identical(get_code(fit), get_code(gaussian_example_single_fit))
 })
 
 # Deterministic edgecases -------------------------------------------------

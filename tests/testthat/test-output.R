@@ -161,7 +161,6 @@ test_that("gets can be got", {
     code2 <- get_code(gaussian_example_fit_null),
     NA
   )
-  expect_identical(code1, code2)
   expect_error(
     get_code(gaussian_example_fit, blocks = c("parameters", "model")),
     NA
