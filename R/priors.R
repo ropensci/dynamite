@@ -143,10 +143,9 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
     ""
   )
   mean_y <- signif(mean_y, 2)
-  sd_y <- signif(2 * max(1, sd_y), 2)
+  sd_y <- signif(2 * sd_y, 2)
   mean_gamma <- signif(mean_gamma, 2)
-  sd_gamma[!is.finite(sd_gamma)] <- 1
-  sd_gamma <- signif(pmax(sd_gamma, 1), 2)
+  sd_gamma <- signif(sd_gamma, 2)
   priors <- list()
   prior_distributions <- list()
   if (channel$has_random_intercept || channel$has_random) {

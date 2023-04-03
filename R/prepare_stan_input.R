@@ -89,7 +89,10 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     c(3L, 1L, 2L)
   )[T_idx, , , drop = FALSE]
   x_tmp <- X[1L, , , drop = FALSE]
-  sd_x <- setNames(apply(X, 3L, sd, na.rm = TRUE), colnames(model_matrix))
+  sd_x <- pmax(
+    setNames(apply(X, 3L, sd, na.rm = TRUE), colnames(model_matrix)),
+    1
+  )
   x_means <- colMeans(x_tmp, dims = 2L, na.rm = TRUE)
   # For totally missing covariates
   x_means[is.na(x_means)] <- 0.0
@@ -566,7 +569,7 @@ prepare_channel_categorical <- function(y, Y, channel, sampling,
   channel$S <- S_y
   channel$categories <- resp_levels
   sampling[[paste0("S_", y)]] <- S_y
-  sd_y <- 1
+  sd_y <- 1.0
   mean_y <- 0.0
   sd_gamma <- 2.0 / sd_x
   mean_gamma <- rep(0.0, length(sd_gamma))
@@ -645,7 +648,7 @@ prepare_channel_multinomial <- function(y, y_cg, Y, channel, sampling,
   S_y <- dim(Y)[3L]
   channel$S <- S_y
   sampling[[paste0("S_", y_cg)]] <- S_y
-  sd_y <- 1
+  sd_y <- 1.0
   mean_y <- 0.0
   sd_gamma <- 2.0 / sd_x
   mean_gamma <- rep(0.0, length(sd_gamma))
@@ -701,6 +704,7 @@ prepare_channel_gaussian <- function(y, Y, channel, sampling,
   if (!is.finite(sd_y) || identical(sd_y, 0.0)) {
     sd_y <- 1.0
   }
+  sd_y <- max(1.0, sd_y)
   if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }
@@ -1130,6 +1134,7 @@ prepare_channel_student <- function(y, Y, channel, sampling,
   if (!is.finite(sd_y) || identical(sd_y, 0.0)) {
     sd_y <- 1.0
   }
+  sd_y <- max(1.0, sd_y)
   if (!is.finite(mean_y)) {
     mean_y <- 0.0
   }

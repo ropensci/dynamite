@@ -1,3 +1,8 @@
+# dynamite 1.3.2
+
+  * Fixed the regularization of the default priors so that they match with the 
+    priors vignette.
+  
 # dynamite 1.3.1
 
   * Fixed an incorrect URL in the main vignette.
