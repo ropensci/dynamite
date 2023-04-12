@@ -34,6 +34,7 @@
 update.dynamitefit <- function(object, dformula = NULL, data = NULL,
                                priors = NULL, recompile = NULL, ...) {
   call <- object$call
+  e <- new.env()
   if (!is.null(dformula)) {
     call$dformula <- dformula
     recompile <- TRUE
@@ -47,9 +48,17 @@ update.dynamitefit <- function(object, dformula = NULL, data = NULL,
       call$priors <- get_priors(object)
     }
   }
+  data_name <- object$data_name
   if (!is.null(data)) {
-    data.table::setattr(data, "data_name", deparse1(substitute(data)))
-    call$data <- data
+    #data.table::setattr(data, "data_name", deparse1(substitute(data)))
+    data_name <- deparse1(substitute(data))
+    call$data <- substitute(data)
+    e[[data_name]] <- data
+  } else {
+    e[[data_name]] <- object$data
+  }
+  if (identical(data_name, "NULL")) {
+    call$data <- object$data
   }
   extras <- match.call(expand.dots = FALSE)$...
   # always ask for recompilation if using cmdstanr
@@ -59,7 +68,6 @@ update.dynamitefit <- function(object, dformula = NULL, data = NULL,
       !is.null(extras$backend) && extras$backend == "cmdstanr") {
     recompile <- TRUE
   }
-
   if (length(extras) > 0L) {
     existing <- !is.na(match(names(extras), names(call)))
     for (a in names(extras)[existing]) {
@@ -70,16 +78,21 @@ update.dynamitefit <- function(object, dformula = NULL, data = NULL,
       call <- as.call(call)
     }
   }
+  call$group <- ifelse_(
+    is.null(call$group),
+    object$group_var,
+    call$group
+  )
   # check that the model code does not change
   if (!isTRUE(recompile)) {
     call0 <- call
     call0$debug <- list(no_compile = TRUE, model_code = TRUE)
     recompile <- !identical(
-      eval(call0)$model_code, as.character(get_code(object))
+      eval(call0, env = e)$model_code, as.character(get_code(object))
     )
   }
   if (!recompile) {
     call$debug <- list(stanfit = object$stanfit@stanmodel)
   }
-  eval(call)
+  eval(call, env = e)
 }

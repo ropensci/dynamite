@@ -47,6 +47,10 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     "No Stan model fit is available."
   )
   stopifnot_(
+    !missing(L) && checkmate::test_int(x = L, lower = 1L),
+    "Argument {.arg L} must be a single positive {.cls integer}."
+  )
+  stopifnot_(
     checkmate::test_flag(x = verbose),
     "Argument {.arg verbose} must be a single {.cls logical} value."
   )
@@ -63,11 +67,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   }
   T_ <- x$stan$model_vars[["T"]]
   stopifnot_(
-    checkmate::test_int(
-      x = L,
-      lower = 0,
-      upper = T_
-    ),
+    checkmate::test_int(x = L, lower = 0, upper = T_),
     "Argument {.arg L} must be a single {.cls integer} between 0 and {T_}."
   )
   responses <- get_responses(x$dformulas$stoch)
@@ -80,7 +80,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   d[set_na_, (responses) := NA]
 
   if (verbose) {
-    message_(paste0("Estimating model with ", L, " time points."))
+    message_("Estimating model with {L} time points.")
   }
   fit <- update(x, data = d, refresh = 0, ...)
 

@@ -1,7 +1,7 @@
 # dynamite 1.3.2
 
-  * Fixed the regularization of the default priors so that they match with the 
-    priors vignette.
+  * Fixed the regularization of the default priors so that they match with the priors vignette.
+  * Fixed an issue with the `update()` method for model fit objects without a group variable.
   
 # dynamite 1.3.1
 
