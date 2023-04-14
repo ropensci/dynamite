@@ -1194,7 +1194,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
 }
 
 # intercept part, or the whole linear predictor in case no glm
-intercept_lines <- function(y, t, obs, t_obs, family,
+intercept_lines <- function(y, obs, t_obs, family,
                             has_varying, has_fixed, has_random,
                             has_fixed_intercept,
                             has_varying_intercept, has_random_intercept,
@@ -1273,7 +1273,7 @@ intercept_lines <- function(y, t, obs, t_obs, family,
   intercept
 }
 
-model_lines_categorical <- function(y, t, obs, t_obs, idt, priors, intercept,
+model_lines_categorical <- function(y, obs, t_obs, idt, priors, intercept,
                                     has_fixed, has_varying,
                                     categories, multinomial = FALSE, ...) {
   S <- length(categories)
@@ -1401,7 +1401,7 @@ model_lines_multinomial <- function(cvars, cgvars, idt, ...) {
   do.call(model_lines_categorical, args = c(cgvars, idt = idt))
 }
 
-model_lines_gaussian <- function(y, t, obs, t_obs, idt, priors, intercept,
+model_lines_gaussian <- function(y, obs, t_obs, idt, priors, intercept,
                                  has_fixed, has_varying,
                                  prior_distr, ...) {
   likelihood_term <- ifelse_(
@@ -1476,7 +1476,7 @@ model_lines_mvgaussian <- function(cvars, cgvars, idt, ...) {
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_bernoulli <- function(y, t, obs, t_obs, idt, priors, intercept,
+model_lines_bernoulli <- function(y, obs, t_obs, idt, priors, intercept,
                                   has_varying, has_fixed, ...) {
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
@@ -1500,7 +1500,7 @@ model_lines_bernoulli <- function(y, t, obs, t_obs, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_poisson <- function(y, t, obs, t_obs, idt, priors, intercept,
+model_lines_poisson <- function(y, obs, t_obs, idt, priors, intercept,
                                 has_varying, has_fixed, ...) {
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
@@ -1524,7 +1524,7 @@ model_lines_poisson <- function(y, t, obs, t_obs, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_negbin <- function(y, t, obs, t_obs, idt, priors, intercept,
+model_lines_negbin <- function(y, obs, t_obs, idt, priors, intercept,
                                has_varying, has_fixed, prior_distr, ...) {
   likelihood_term <- ifelse_(
     has_fixed || has_varying,
@@ -1549,7 +1549,7 @@ model_lines_negbin <- function(y, t, obs, t_obs, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_binomial <- function(y, t, obs, t_obs, idt, priors, intercept,
+model_lines_binomial <- function(y, obs, t_obs, idt, priors, intercept,
                                  has_varying, has_fixed, ...) {
   model_text <- paste_rows(
     "for (t in {t_obs}) {{",
@@ -1560,7 +1560,7 @@ model_lines_binomial <- function(y, t, obs, t_obs, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_exponential <- function(y, t, obs, t_obs, idt, priors, intercept,
+model_lines_exponential <- function(y, obs, t_obs, idt, priors, intercept,
                                     has_varying, has_fixed, ...) {
   model_text <- paste_rows(
     "for (t in 1:{t_obs}) {{",
@@ -1571,7 +1571,7 @@ model_lines_exponential <- function(y, t, obs, t_obs, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_gamma <- function(y, t, obs, t_obs, idt, priors, intercept,
+model_lines_gamma <- function(y, obs, t_obs, idt, priors, intercept,
                               has_varying, has_fixed, prior_distr, ...) {
   model_text <- paste_rows(
     "phi_{y} ~ {prior_distr$phi_prior_distr};",
@@ -1583,7 +1583,7 @@ model_lines_gamma <- function(y, t, obs, t_obs, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_beta <- function(y, t, obs, t_obs, idt, priors, intercept,
+model_lines_beta <- function(y, obs, t_obs, idt, priors, intercept,
                              has_varying, has_fixed, prior_distr, ...) {
   model_text <- paste_rows(
     "phi_{y} ~ {prior_distr$phi_prior_distr};",
@@ -1595,7 +1595,7 @@ model_lines_beta <- function(y, t, obs, t_obs, idt, priors, intercept,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_student <- function(y, t, obs, t_obs, idt, priors, intercept,
+model_lines_student <- function(y, obs, t_obs, idt, priors, intercept,
                                 has_varying, has_fixed, prior_distr, ...) {
   model_test <- paste_rows(
     "sigma_{y} ~ {prior_distr$sigma_prior_distr};",
