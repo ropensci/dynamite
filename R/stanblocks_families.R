@@ -832,7 +832,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     state_omega_alpha_1 <- paste_rows(
       "// Define the first alpha using mean a_{y}",
       "{{",
-      "vector[K_{y}] gamma__{y};",
+      "vector[K_{ydim}] gamma__{y};",
       onlyif(has_fixed, "gamma__{y}[L_fixed_{ydim}] = beta_{y};"),
       onlyif(has_varying, "gamma__{y}[L_varying_{ydim}] = delta_{y}[1];"),
       "omega_alpha_1_{y} = a_{y} - X_m[J_{ydim}] * gamma__{y};",

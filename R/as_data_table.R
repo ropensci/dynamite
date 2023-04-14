@@ -481,14 +481,15 @@ as_data_table_delta <- function(x, draws, n_draws,
 
 #' @describeIn as_data_table_default Data Table for a "tau" Parameter
 #' @noRd
-as_data_table_tau <- function(x, draws, n_draws, response, ...) {
+as_data_table_tau <- function(x, draws, n_draws, response, category, ...) {
   var_names <- paste0(
     "tau_", response, "_",
     names(get_channel(x, response)$J_varying)
   )
   data.table::data.table(
     parameter = rep(var_names, each = n_draws),
-    value = c(draws)
+    value = c(draws),
+    category = category
   )
 }
 
@@ -529,8 +530,12 @@ as_data_table_omega_alpha <-function(x, draws, n_draws, response,
 
 #' @describeIn as_data_table_default Data Table for a "tau_alpha" Parameter
 #' @noRd
-as_data_table_tau_alpha <- function(draws, response, ...) {
-  as_data_table_default("tau_alpha", draws, response)
+as_data_table_tau_alpha <- function(draws, response, category, ...) {
+  data.table::data.table(
+    parameter = paste0("tau_alpha_", response),
+    value = c(draws),
+    category = category
+  )
 }
 
 #' @describeIn as_data_table_default Data Table for a "sigma" Parameter

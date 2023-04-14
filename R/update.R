@@ -34,7 +34,6 @@
 update.dynamitefit <- function(object, dformula = NULL, data = NULL,
                                priors = NULL, recompile = NULL, ...) {
   call <- object$call
-  e <- new.env()
   if (!is.null(dformula)) {
     call$dformula <- dformula
     recompile <- TRUE
@@ -48,24 +47,14 @@ update.dynamitefit <- function(object, dformula = NULL, data = NULL,
       call$priors <- get_priors(object)
     }
   }
-  data_name <- object$data_name
   if (!is.null(data)) {
-    #data.table::setattr(data, "data_name", deparse1(substitute(data)))
-    data_name <- deparse1(substitute(data))
     call$data <- substitute(data)
-    e[[data_name]] <- data
-  } else {
-    e[[data_name]] <- object$data
-  }
-  if (identical(data_name, "NULL")) {
-    call$data <- object$data
   }
   extras <- match.call(expand.dots = FALSE)$...
   # always ask for recompilation if using cmdstanr
   # however, this does not necessarily lead to recompilation if original model
   # was compiled in the same session
-  if (object$backend == "cmdstanr" ||
-      !is.null(extras$backend) && extras$backend == "cmdstanr") {
+  if (object$backend == "cmdstanr" || identical(extras$backend, "cmdstanr")) {
     recompile <- TRUE
   }
   if (length(extras) > 0L) {
@@ -84,6 +73,50 @@ update.dynamitefit <- function(object, dformula = NULL, data = NULL,
     call$group
   )
   # check that the model code does not change
+  if (!isTRUE(recompile)) {
+    call0 <- call
+    call0$debug <- list(no_compile = TRUE, model_code = TRUE)
+    recompile <- !identical(
+      eval(call0)$model_code, as.character(get_code(object))
+    )
+  }
+  if (!recompile) {
+    call$debug <- list(stanfit = object$stanfit@stanmodel)
+  }
+  eval(call)
+}
+
+#' Internal `update` Method For LFO
+#'
+#' @inheritParams update.dynamitefit
+#' @noRd
+update_ <- function(object, data, refresh, ...) {
+  call <- object$call
+  call$dformula <- formula(object)
+  call$data <- data
+  call$time <- object$time_var
+  call$group <- object$group_var
+  call$priors <- get_priors(object)
+  call$refresh <- refresh
+  call$debug <- NULL
+  recompile <- NULL
+  extras <- match.call(expand.dots = FALSE)$...
+  if (object$backend == "cmdstanr" || identical(extras$backend, "cmdstanr")) {
+    recompile <- TRUE
+  }
+  # remove dynamite arguments
+  extras[c("dformula", "data", "time", "group", "priors", "debug")] <- NULL
+  if (length(extras) > 0L) {
+    existing <- !is.na(match(names(extras), names(call)))
+    for (a in names(extras)[existing]) {
+      call[[a]] <- extras[[a]]
+    }
+    if (any(!existing)) {
+      call <- c(as.list(call), extras[!existing])
+      call <- as.call(call)
+    }
+  }
+  e <- new.env()
   if (!isTRUE(recompile)) {
     call0 <- call
     call0$debug <- list(no_compile = TRUE, model_code = TRUE)

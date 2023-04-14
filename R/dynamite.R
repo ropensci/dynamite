@@ -60,11 +60,11 @@
 #'   combined with `model_code = TRUE`, which adds the Stan model code to the
 #'   return object.
 #' @param ... For `dynamite()`, additional arguments to [rstan::sampling()] or
-#'  [cmdstanr::sample()], such as `chains` and `cores` (`parallel_chains` in
-#'  `cmdstanr`). For `summary()`, additional arguments to
-#'  [dynamite::as.data.frame.dynamitefit()]. For `print()`, further arguments
-#'  to the print method for tibbles (see [tibble::formatting]). Not used for
-#'  `formula()`.
+#'   [cmdstanr::sample()], such as `chains` and `cores` (`parallel_chains` in
+#'   `cmdstanr`). For `summary()`, additional arguments to
+#'   [dynamite::as.data.frame.dynamitefit()]. For `print()`, further arguments
+#'   to the print method for tibbles (see [tibble::formatting]). Not used for
+#'   `formula()`.
 #' @return `dynamite` returns a `dynamitefit` object which is a list containing
 #'   the following components:
 #'

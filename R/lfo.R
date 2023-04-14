@@ -19,7 +19,9 @@
 #'   the LFO computations to the console.
 #' @param k_threshold \[`numeric(1)`]\cr Threshold for the Pareto k estimate
 #'   triggering refit. Default is 0.7.
-#' @param ... Additional parameters to `dynamite`.
+#' @param ... Additional arguments passed to [rstan::sampling()] or
+#'   [cmdstanr::sample()], such as `chains` and `cores` (`parallel_chains` in
+#'   `cmdstanr`).
 #' @return An `lfo` object which is a `list` with the following components:
 #'
 #'   * `ELPD`\cr Expected log predictive density estimate.
@@ -78,11 +80,10 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   set_na_ <- d[[time_var]] > timepoints[L]
   # d[set_na, (responses) := NA, env = list(set_na = set_na)]
   d[set_na_, (responses) := NA]
-
   if (verbose) {
     message_("Estimating model with {L} time points.")
   }
-  fit <- update(x, data = d, refresh = 0, ...)
+  fit <- update_(x, data = d, refresh = 0, ...)
 
   # would be faster to use only data
   # x$data[eval(time) >= timepoints[L] - x$stan$fixed]
@@ -102,7 +103,6 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   )$simulated
   # avoid NSE notes from R CMD check
   loglik <- patterns <- .draw <- NULL
-
   n_draws <- ndraws(x)
   # sum the log-likelihood over the channels and non-missing time points
   # for each group, time, and draw
@@ -119,7 +119,6 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     .SD,
     .SDcols = !patterns("_loglik$")
   ])
-
   elpds <- vector("list", T_ - L)
   subset_index_ <- lls[[time_var]] == timepoints[L + 1L]
   elpds[[1L]] <- lls[
@@ -132,11 +131,9 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     # by = list(time, id)#,
     # env = list(log_mean_exp = "log_mean_exp", time = time, id = id)
   ][["elpd"]]
-
   i_refit <- L
   refits <- timepoints[L]
   ks <- vector("list", T_ - L - 1L)
-
   for (i in seq.int(L + 1L, T_ - 1L)) {
     subset_index_ <- lls[[time_var]] == timepoints[i + 1L]
     if (lls[subset_index_, .N] > 0L) {
@@ -178,8 +175,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
         set_na_ <- d[[x$time_var]] > timepoints[i]
         # d[set_na, (responses) := NA, env = list(set_na = set_na)]
         d[set_na_, (responses) := NA]
-        fit <- update(fit, data = d, refresh = 0, ...)
-
+        fit <- update_(fit, data = d, refresh = 0, ...)
         out <- initialize_predict(
           fit,
           newdata = x$data,
@@ -193,7 +189,6 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           expand = FALSE,
           df = FALSE
         )$simulated
-
         threshold_subset_index_ <- out[[time_var]] > timepoints[L]
         lls <- stats::na.omit(out[
           threshold_subset_index_, # ,
