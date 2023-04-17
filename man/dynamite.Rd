@@ -18,6 +18,7 @@ dynamite(
   verbose_stan = FALSE,
   stanc_options = list("O1"),
   debug = NULL,
+  threads_per_chain = 1L,
   ...
 )
 
@@ -80,9 +81,13 @@ and sampling steps respectively. This can be useful for debugging when
 combined with \code{model_code = TRUE}, which adds the Stan model code to the
 return object.}
 
+\item{threads_per_chain}{[\code{integer(1)}]\cr A Positive integer defining the
+number of parallel threads to use within each chain. Default is \code{1}. See
+\code{\link[rstan:rstan_options]{rstan::rstan_options()}} and \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}} for details.}
+
 \item{...}{For \code{dynamite()}, additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} or
-\code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}, such as \code{chains} and \code{cores} (\code{parallel_chains} in
-\code{cmdstanr}). For \code{summary()}, additional arguments to
+\code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}, such as \code{chains} and \code{cores} (\code{chains} and
+\code{parallel_chains} in \code{cmdstanr}). For \code{summary()}, additional arguments to
 \code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}}. For \code{print()}, further arguments
 to the print method for tibbles (see \link[tibble:formatting]{tibble::formatting}). Not used for
 \code{formula()}.}

@@ -12,15 +12,16 @@
 #' @param mvars \[`list()`]\cr The `model_vars` component of
 #'   [prepare_stan_input()] output.
 #' @noRd
-create_blocks <- function(indent = 2L, backend, cg, cvars, cgvars, mvars) {
+create_blocks <- function(indent = 2L, backend, cg, cvars, cgvars, mvars,
+                          threading) {
   idt <- indenter_(indent)
   paste_rows(
-    create_functions(idt, backend, cg, cvars, cgvars, mvars),
+    create_functions(idt, backend, cg, cvars, cgvars, mvars, threading),
     create_data(idt, backend, cg, cvars, cgvars, mvars),
-    create_transformed_data(idt, backend, cg, cvars, cgvars, mvars),
+    create_transformed_data(idt, backend, cg, cvars, cgvars, mvars, threading),
     create_parameters(idt, backend, cg, cvars, cgvars, mvars),
     create_transformed_parameters(idt, backend, cg, cvars, cgvars, mvars),
-    create_model(idt, backend, cg, cvars, cgvars, mvars),
+    create_model(idt, backend, cg, cvars, cgvars, mvars, threading),
     create_generated_quantities(idt, backend, cg, cvars, cgvars, mvars),
     .parse = FALSE
   )
@@ -32,7 +33,7 @@ create_blocks <- function(indent = 2L, backend, cg, cvars, cgvars, mvars) {
 #' @param idt \[`function`]\cr
 #'   An indentation function created by [indenter_()].
 #' @noRd
-create_functions <- function(idt, backend, cg, cvars, cgvars, mvars) {
+create_functions <- function(idt, backend, cg, cvars, cgvars, mvars, threading) {
   functions_psi <- ""
   psis <- mvars$lfactor_def$responses
   P <- mvars$lfactor_def$P
@@ -61,14 +62,33 @@ create_functions <- function(idt, backend, cg, cvars, cgvars, mvars) {
       .indent = idt(c(1, 2, 2, 3, 3, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 2, 1))
     )
   }
+  # TODO, only create function for each unique family, either one or both variants (glm or no)
+  n_cg <- n_unique(cg)
+  likelihood_functions_text <- character(n_cg)
+  for (i in seq_len(n_cg)) {
+    cg_idx <- which(cg == i)
+    likelihood_functions_text[i] <- create_functions_lines(
+      idt, backend, cvars[cg_idx], cgvars[[i]], threading
+    )
+  }
   paste_rows(
     "functions {",
     functions_psi,
+    likelihood_functions_text,
     "}",
     .parse = FALSE
   )
 }
 
+#' Create Functions Lines for a Distribution
+#'
+#' @noRd
+create_functions_lines <- function(idt, backend, cvars, cgvars, threading) {
+  family <- cgvars$family
+  glm <- any(ulapply(cvars, function(x) x$has_fixed || x$has_varying))
+  args <- list(threading = threading, glm = glm)
+  lines_wrap("functions", family, idt, backend, args)
+}
 #' @describeIn create_function Create The 'Data' Block of the Stan Model Code
 #' @noRd
 create_data <- function(idt, backend, cg, cvars, cgvars, mvars) {
@@ -154,7 +174,8 @@ create_data_lines <- function(idt, backend, cvars, cgvars) {
 #' @describeIn create_function Create the 'Transformed Data'
 #'   Block of the Stan Model Code
 #' @noRd
-create_transformed_data <- function(idt, backend, cg, cvars, cgvars, mvars) {
+create_transformed_data <- function(idt, backend, cg, cvars, cgvars, mvars,
+                                    threading) {
   n_cg <- n_unique(cg)
   declarations <- character(n_cg)
   statements <- character(n_cg)
@@ -171,9 +192,11 @@ create_transformed_data <- function(idt, backend, cg, cvars, cgvars, mvars) {
     "transformed data {",
     declarations,
     onlyif(has_lfactor, "vector[2 * N] QR_Q = create_Q(N);"),
+    onlyif(threading, "int seq1N[N] = linspaced_int_array(N, 1, N);"),
+    onlyif(threading, "int grainsize = 1;"), #TODO, remove hardcoding
     statements,
     "}",
-    .indent = idt(c(0, 0, 1, 0, 0)),
+    .indent = idt(c(0, 0, 1, 1, 1, 0, 0)),
     .parse = FALSE
   )
 }
@@ -190,7 +213,7 @@ create_transformed_data_lines <- function(idt, backend, cvars, cgvars) {
         lines_wrap("transformed_data", "default", idt, backend, x)
       }
     )
-    tr_data <- lines_wrap("transformed_data", family, idt, backend, cgvars)
+    lines_wrap("transformed_data", family, idt, backend, cgvars)
   } else {
     cvars[[1L]]$default <- lines_wrap(
       "transformed_data", "default", idt, backend, cvars[[1L]]
@@ -477,7 +500,7 @@ create_transformed_parameters_lines <- function(idt, backend, cvars, cgvars) {
 
 #' @describeIn create_function Create the 'Model' Block of the Stan Model Code
 #' @noRd
-create_model <- function(idt, backend, cg, cvars, cgvars, mvars) {
+create_model <- function(idt, backend, cg, cvars, cgvars, mvars, threading) {
   spline_def <- mvars$spline_def
   spline_text <- ""
   if (!is.null(spline_def) && spline_def$shrinkage) {
@@ -629,7 +652,7 @@ create_model <- function(idt, backend, cg, cvars, cgvars, mvars) {
   for (i in seq_len(n_cg)) {
     cg_idx <- which(cg == i)
     model_text[i] <- create_model_lines(
-      idt, backend, cvars[cg_idx], cgvars[[i]]
+      idt, backend, cvars[cg_idx], cgvars[[i]], threading = threading
     )
   }
   paste_rows(
@@ -646,7 +669,7 @@ create_model <- function(idt, backend, cg, cvars, cgvars, mvars) {
 #' Create Model Lines for a Distribution
 #'
 #' @noRd
-create_model_lines <- function(idt, backend, cvars, cgvars, mvars) {
+create_model_lines <- function(idt, backend, cvars, cgvars, mvars, threading) {
   family <- cgvars$family
   if (is_multivariate(family)) {
     cgvars$backend <- backend
@@ -655,7 +678,7 @@ create_model_lines <- function(idt, backend, cvars, cgvars, mvars) {
       family,
       idt,
       backend,
-      list(cvars = cvars, cgvars = cgvars)
+      list(cvars = cvars, cgvars = cgvars, threading = threading)
     )
   } else {
     cvars[[1L]]$backend <- backend
@@ -681,6 +704,7 @@ create_model_lines <- function(idt, backend, cvars, cgvars, mvars) {
       cvars[[1L]]$priors <- do.call(prior_lines, c(cvars[[1L]], idt = idt))
       cvars[[1L]]$intercept <- do.call(intercept_lines, cvars[[1L]])
     }
+    cvars[[1L]]$threading <- threading
     lines_wrap("model", family, idt, backend, cvars[[1L]])
   }
 }

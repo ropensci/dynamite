@@ -59,9 +59,12 @@
 #'   and sampling steps respectively. This can be useful for debugging when
 #'   combined with `model_code = TRUE`, which adds the Stan model code to the
 #'   return object.
+#' @param threads_per_chain \[`integer(1)`]\cr A Positive integer defining the
+#'   number of parallel threads to use within each chain. Default is `1`. See
+#'   [rstan::rstan_options()] and [cmdstanr::sample()] for details.
 #' @param ... For `dynamite()`, additional arguments to [rstan::sampling()] or
-#'   [cmdstanr::sample()], such as `chains` and `cores` (`parallel_chains` in
-#'   `cmdstanr`). For `summary()`, additional arguments to
+#'   [cmdstanr::sample()], such as `chains` and `cores` (`chains` and
+#'   `parallel_chains` in `cmdstanr`). For `summary()`, additional arguments to
 #'   [dynamite::as.data.frame.dynamitefit()]. For `print()`, further arguments
 #'   to the print method for tibbles (see [tibble::formatting]). Not used for
 #'   `formula()`.
@@ -137,7 +140,8 @@
 dynamite <- function(dformula, data, time, group = NULL,
                      priors = NULL, backend = "rstan",
                      verbose = TRUE, verbose_stan = FALSE,
-                     stanc_options = list("O1"), debug = NULL, ...) {
+                     stanc_options = list("O1"), debug = NULL,
+                     threads_per_chain = 1L, ...) {
   stopifnot_(
     !missing(dformula),
     "Argument {.arg dformula} is missing."
@@ -193,6 +197,10 @@ dynamite <- function(dformula, data, time, group = NULL,
     is.null(debug) || is.list(debug),
     "Argument {.arg debug} must be a {.cls list} or NULL."
   )
+  stopifnot_(
+    checkmate::test_int(x = threads_per_chain, lower = 1L),
+    "Argument {.arg threads_per_chain} must be a single positive integer."
+  )
   backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
   stopifnot_(
     !inherits(backend, "try-error"),
@@ -229,6 +237,7 @@ dynamite <- function(dformula, data, time, group = NULL,
     verbose_stan,
     stanc_options,
     debug,
+    threads_per_chain,
     ...
   )
   # extract elements for debug argument
@@ -277,7 +286,7 @@ dynamite <- function(dformula, data, time, group = NULL,
 #' @noRd
 dynamite_stan <- function(dformulas, data, data_name, group, time,
                           priors, backend, verbose, verbose_stan,
-                          stanc_options, debug, ...) {
+                          stanc_options, debug, threads_per_chain, ...) {
   stan_input <- prepare_stan_input(
     dformulas$stoch,
     data,
@@ -293,9 +302,22 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     cg = attr(dformulas$stoch, "channel_groups"),
     cvars = stan_input$channel_vars,
     cgvars = stan_input$channel_group_vars,
-    mvars = stan_input$model_vars
+    mvars = stan_input$model_vars,
+    threading = threads_per_chain > 1L
   )
   sampling_info(dformulas, verbose, debug, backend)
+  stopifnot_(
+    stan_version(backend) > "2.23" || threads_per_chain == 1L,
+    paste0("Within-chain parallelization is not supported for Stan version ",
+           stan_version(backend)
+    )
+  )
+
+  if (backend == "rstan" && threads_per_chain > 1L) {
+    old_options <- rstan::rstan_options("threads_per_chain")
+    on.exit(rstan::rstan_options(threads_per_chain = old_options))
+    rstan::rstan_options(threads_per_chain = threads_per_chain)
+  }
   # if debug$stanfit exists (from the update method) then don't recompile
   model <- ifelse_(
     is.null(debug) || is.null(debug$stanfit),
@@ -303,7 +325,8 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
       compile = is.null(debug) || !isTRUE(debug$no_compile),
       model_code = model_code,
       backend = backend,
-      stanc_options = stanc_options
+      stanc_options = stanc_options,
+      threads_per_chain = threads_per_chain
     ),
     debug$stanfit
   )
@@ -315,7 +338,8 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     model_code = model_code,
     model = model,
     sampling_vars = stan_input$sampling_vars,
-    dots = dots
+    dots = dots,
+    threads_per_chain = threads_per_chain
   )
   list(
     stan_input = stan_input,
@@ -330,7 +354,8 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
 #' @param compile \[`logical(1)`]\cr Should the model be compiled?
 #' @param model_code \[`logical(1)`]\cr The model code as a string.
 #' @noRd
-dynamite_model <- function(compile, model_code, backend, stanc_options) {
+dynamite_model <- function(compile, model_code, backend, stanc_options,
+                           threads_per_chain) {
   if (compile) {
     e <- new.env()
     if (backend == "rstan") {
@@ -339,7 +364,16 @@ dynamite_model <- function(compile, model_code, backend, stanc_options) {
     } else {
       e$file <- cmdstanr::write_stan_file(model_code)
       e$stanc_options <- stanc_options
-      with(e, {cmdstanr::cmdstan_model(file, stanc_options = stanc_options)})
+      e$cpp_options <- ifelse_(
+        threads_per_chain > 1L,
+        list(stan_threads = TRUE),
+        list()
+      )
+      with(e, {cmdstanr::cmdstan_model(
+        file,
+        stanc_options = stanc_options,
+        cpp_options = cpp_options)
+      })
     }
   } else {
     NULL
@@ -356,7 +390,7 @@ dynamite_model <- function(compile, model_code, backend, stanc_options) {
 #' @param dots \[`list()`]\cr Additional arguments for `rstan` or `cmdstanr`.
 #' @noRd
 dynamite_sampling <- function(sampling, backend, model_code, model,
-                              sampling_vars, dots) {
+                              sampling_vars, dots, threads_per_chain) {
   out <- NULL
   if (sampling) {
     e <- new.env()
@@ -365,7 +399,8 @@ dynamite_sampling <- function(sampling, backend, model_code, model,
       out <- with(e, {do.call(rstan::sampling, args)})
     } else {
       e$model <- model
-      e$args <- c(list(data = sampling_vars), dots)
+      e$args <- c(list(data = sampling_vars), dots,
+                  threads_per_chain = threads_per_chain)
       sampling_out <- with(e, {do.call(model$sample, args)})
       out <- rstan::read_stan_csv(sampling_out$output_files())
       out@stanmodel <- methods::new("stanmodel", model_code = model_code)
