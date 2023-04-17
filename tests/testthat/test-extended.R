@@ -216,3 +216,46 @@ test_that("shrinkage for splines is functional", {
     NA
   )
 })
+
+test_that("update without recompile works", {
+  skip_if_not(run_extended_tests)
+
+  gaussian_fit <- dynamite(
+    dformula =
+      obs(
+        y ~ -1 + z + varying(~ x + lag(y)) + random(~1),
+        family = "gaussian"
+      ) +
+      random_spec() +
+      splines(df = 20),
+    data = gaussian_example,
+    time = "time",
+    group = "id",
+    iter = 2000,
+    warmup = 1000,
+    thin = 10,
+    chains = 2,
+    cores = 2,
+    refresh = 0,
+    save_warmup = FALSE,
+    pars = c(
+      "omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L",
+      "sigma_nu", "a_y"
+    ),
+    include = FALSE
+  )
+  expect_error(
+    fit <- update(
+      gaussian_fit,
+      data = gaussian_example,
+      warmup = 500,
+      iter = 1000
+    ),
+    NA
+  )
+  # Internal update_ function
+  expect_error(
+    lfo(gaussian_fit, L = 10, chains = 4, verbose_stan = FALSE),
+    NA
+  )
+})
