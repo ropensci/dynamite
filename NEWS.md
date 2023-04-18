@@ -3,7 +3,7 @@
   * Fixed the regularization of the default priors so that they match with the priors vignette.
   * Fixed an issue with the `update()` method for model fit objects without a group variable.
   * Fixed an issue with the `update()` method in `lfo()`.
-  * Fixed an issue with `"tau_alpha"` type parameters with the `as_draws()` method for categorical responses.
+  * Fixed an issue with `"tau"` and `"tau_alpha"` type parameters with the `as_draws()` method for categorical responses.
   * Fixed an issue with Stan code generation for models with time-varying covariates for categorical responses.
   * Fixed an issue with `formula.dynamitefit()` when the model contained a `splines` component.
 
