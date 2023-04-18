@@ -1,3 +1,7 @@
+# dynamite 1.3.3
+
+  * Fixed a partial argument name issue in the internal `update()` method used by `lfo()`.
+
 # dynamite 1.3.2
 
   * Fixed the regularization of the default priors so that they match with the priors vignette.
