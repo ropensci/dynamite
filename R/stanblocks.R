@@ -17,7 +17,7 @@ create_blocks <- function(indent = 2L, backend, cg, cvars, cgvars, mvars,
   idt <- indenter_(indent)
   paste_rows(
     create_functions(idt, backend, cg, cvars, cgvars, mvars, threading),
-    create_data(idt, backend, cg, cvars, cgvars, mvars),
+    create_data(idt, backend, cg, cvars, cgvars, mvars, threading),
     create_transformed_data(idt, backend, cg, cvars, cgvars, mvars, threading),
     create_parameters(idt, backend, cg, cvars, cgvars, mvars),
     create_transformed_parameters(idt, backend, cg, cvars, cgvars, mvars),
@@ -91,7 +91,7 @@ create_functions_lines <- function(idt, backend, cvars, cgvars, threading) {
 }
 #' @describeIn create_function Create The 'Data' Block of the Stan Model Code
 #' @noRd
-create_data <- function(idt, backend, cg, cvars, cgvars, mvars) {
+create_data <- function(idt, backend, cg, cvars, cgvars, mvars, threading) {
   has_splines <- any(vapply(cvars, "[[", logical(1L), "has_varying")) ||
     any(vapply(cvars, "[[", logical(1L), "has_varying_intercept")) ||
     any(vapply(cvars, "[[", logical(1L), "has_lfactor"))
@@ -130,6 +130,7 @@ create_data <- function(idt, backend, cg, cvars, cgvars, mvars) {
       P > 0L,
       "int<lower=0> P; // number of channels with latent factor"
     ),
+    onlyif(threading, "int<lower=1> grainsize;"),
     .indent = idt(1),
     .parse = FALSE
   )
@@ -193,10 +194,9 @@ create_transformed_data <- function(idt, backend, cg, cvars, cgvars, mvars,
     declarations,
     onlyif(has_lfactor, "vector[2 * N] QR_Q = create_Q(N);"),
     onlyif(threading, "int seq1N[N] = linspaced_int_array(N, 1, N);"),
-    onlyif(threading, "int grainsize = 1;"), #TODO, remove hardcoding
     statements,
     "}",
-    .indent = idt(c(0, 0, 1, 1, 1, 0, 0)),
+    .indent = idt(c(0, 0, 1, 1, 0, 0)),
     .parse = FALSE
   )
 }

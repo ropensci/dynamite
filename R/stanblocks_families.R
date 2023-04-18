@@ -1314,8 +1314,8 @@ intercept_lines <- function(y, obs, t_obs, family,
       "{intercept_alpha}{offset}{intercept_nu}{random}{lfactor}{fixed}{varying}"
     )
   )
-  is_real <- !has_offset && !has_random && !has_lfactor &&
-    !(!glm && (has_fixed || has_varying))
+  is_real <- !has_offset && !has_random && !has_random_intercept &&
+    !has_lfactor && !(!glm && (has_fixed || has_varying))
   attr(intercept, "glm") <- glm
   attr(intercept, "real") <- is_real
   intercept

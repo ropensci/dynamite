@@ -141,7 +141,7 @@ dynamite <- function(dformula, data, time, group = NULL,
                      priors = NULL, backend = "rstan",
                      verbose = TRUE, verbose_stan = FALSE,
                      stanc_options = list("O1"), debug = NULL,
-                     threads_per_chain = 1L, ...) {
+                     threads_per_chain = 1L, grainsize = NULL, ...) {
   stopifnot_(
     !missing(dformula),
     "Argument {.arg dformula} is missing."
@@ -201,6 +201,11 @@ dynamite <- function(dformula, data, time, group = NULL,
     checkmate::test_int(x = threads_per_chain, lower = 1L),
     "Argument {.arg threads_per_chain} must be a single positive integer."
   )
+  stopifnot_(
+    checkmate::test_int(x = grainsize, lower = 1L, null.ok = TRUE),
+    "Argument {.arg grainsize} must be a single positive integer or
+    {.code NULL}."
+  )
   backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
   stopifnot_(
     !inherits(backend, "try-error"),
@@ -238,6 +243,7 @@ dynamite <- function(dformula, data, time, group = NULL,
     stanc_options,
     debug,
     threads_per_chain,
+    grainsize,
     ...
   )
   # extract elements for debug argument
@@ -286,7 +292,8 @@ dynamite <- function(dformula, data, time, group = NULL,
 #' @noRd
 dynamite_stan <- function(dformulas, data, data_name, group, time,
                           priors, backend, verbose, verbose_stan,
-                          stanc_options, debug, threads_per_chain, ...) {
+                          stanc_options, debug, threads_per_chain, grainsize,
+                          ...) {
   stan_input <- prepare_stan_input(
     dformulas$stoch,
     data,
@@ -296,6 +303,12 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     fixed = attr(dformulas$all, "max_lag"),
     verbose
   )
+  grainsize <- ifelse_(
+    is.null(grainsize),
+    max(1, stan_input$sampling_vars$N / threads_per_chain),
+    grainsize
+  )
+  stan_input$sampling_vars$grainsize <- grainsize
   model_code <- create_blocks(
     indent = 2L,
     backend = backend,
