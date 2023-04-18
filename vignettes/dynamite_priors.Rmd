@@ -46,7 +46,7 @@ Define $\sigma_x=\max(1, \text{SD}(x))$, where $\mbox{SD}(x)$ is the standard de
 1, &\text{otherwise}
 \end{cases},
 \] 
-where $SD(y)$ is the standard deviation of the response variable as over groups and non-fixed time points.
+where $\mbox{SD}(y)$ is the standard deviation of the response variable as over groups and non-fixed time points.
 
 ## Regression coefficients
 
