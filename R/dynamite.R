@@ -400,7 +400,9 @@ dynamite_sampling <- function(sampling, backend, model_code, model,
     } else {
       e$model <- model
       e$args <- c(list(data = sampling_vars), dots,
-                  threads_per_chain = threads_per_chain)
+                  threads_per_chain = onlyif(threads_per_chain > 1L,
+                                              threads_per_chain)
+      )
       sampling_out <- with(e, {do.call(model$sample, args)})
       out <- rstan::read_stan_csv(sampling_out$output_files())
       out@stanmodel <- methods::new("stanmodel", model_code = model_code)
