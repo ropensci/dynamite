@@ -138,14 +138,48 @@ functions_lines_gaussian <- function(idt, backend, threading, glm) {
   # Functions for computing the log-likelihood, y and X are already subsetted
   # for complete cases in the function call
   # partial_loglik function use subset as "response" so use lpmf instead of lpdf
+  # partial_gaussian_glm_loglik_lpdf <- paste_rows(
+  #   paste0("real partial_gaussian_glm_loglik_lpmf(int[] subset, int start, ",
+  #          "int end, data vector y, "),
+  #   "vector intercept, data matrix X, vector gamma, real sigma) {{",
+  #   paste0("return normal_id_glm_lupdf(y[start:end] | X[start:end], ",
+  #          "intercept[start:end], gamma, sigma);"),
+  #   "}}",
+  #   .indent = idt(c(0, 1, 1, 0))
+  # )
+  # partial_gaussian_glm_loglik_lpdf <- paste_rows(
+  #   paste0("real partial_gaussian_glm_loglik_lpmf(int[] subset, int start, ",
+  #          "int end, data matrix y, "),
+  #   "real[] alpha, vector nu, data matrix[] X, vector beta, vector[] delta, real sigma) {{",
+  #   "real ll = 0.0;",
+  #   "for (t in start:end){{",
+  #   "vector[3] gamma;",
+  #   "gamma[1] = beta[1];",
+  #   "gamma[2:3] = delta[t];",
+  #   paste0("ll += normal_id_glm_lupdf(y[, t] | X[t], ",
+  #          "alpha[t] + nu, gamma, sigma);"),
+  #   "}}",
+  #   "return ll;",
+  #   "}}",
+  #   .indent = idt(c(0, 1, 1, 1, 2, 2, 2, 2, 1, 1, 0))
+  # )
   partial_gaussian_glm_loglik_lpdf <- paste_rows(
-    paste0("real partial_gaussian_glm_loglik_lpmf(int[] subset, int start, ",
-           "int end, data vector y, "),
-    "vector intercept, data matrix X, vector gamma, real sigma) {{",
-    paste0("return normal_id_glm_lupdf(y[start:end] | X[start:end], ",
-           "intercept[start:end], gamma, sigma);"),
+    paste0("real partial_gaussian_glm_loglik_lpdf(data matrix[] X, int start, ",
+           "int end, data matrix y, "),
+    "real[] alpha, vector nu, vector beta, vector[] delta, real sigma) {{",
+    "real ll = 0.0;",
+    "int i = 1;",
+    "for (t in start:end){{",
+    "vector[3] gamma;",
+    "gamma[1] = beta[1];",
+    "gamma[2:3] = delta[t];",
+    paste0("ll += normal_id_glm_lupdf(y[, t] | X[i], ",
+           "alpha[t] + nu, gamma, sigma);"),
+    "i += 1;",
     "}}",
-    .indent = idt(c(0, 1, 1, 0))
+    "return ll;",
+    "}}",
+    .indent = idt(c(0, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1, 1, 0))
   )
   gaussian_glm_loglik_lpdf <- paste_rows(
     paste0("real gaussian_glm_loglik_lpdf(data vector y, vector intercept, ",
@@ -1454,21 +1488,32 @@ model_lines_gaussian <- function(y, obs, t_obs, idt, priors, intercept,
                                  has_fixed, has_varying,
                                  prior_distr, threading, ...) {
   glm <- has_fixed || has_varying
-  seq1N <- ifelse_(
-    nchar(obs),
-    glue::glue("linspaced_int_array(n_obs_{y}[t], 1, n_obs_{y}[t])"),
-    "seq1N"
-  )
+  # seq1N <- ifelse_(
+  #   nchar(obs),
+  #   glue::glue("linspaced_int_array(n_obs_{y}[t], 1, n_obs_{y}[t])"),
+  #   "seq1N"
+  # )
+  seq1N <- "linspaced_int_array(T, 1, T)"
   likelihood_function <- ifelse_(
     threading,
     ifelse_(
       glm,
       paste0(
-        "target += reduce_sum(partial_gaussian_glm_loglik_lupmf, {seq1N}, ",
-        "grainsize, y_{y}[{obs}, t], intercept_{y}, X[t][{obs}, J_{y}], ",
-        "gamma__{y}, sigma_{y});"
+        "target += reduce_sum(partial_gaussian_glm_loglik_lupdf, X, ",
+        "grainsize, y_{y}, alpha_{y}, nu_{y}[, 1], ",
+        "beta_{y}, delta_{y}, sigma_{y});"
       ),
-      paste0("target += reduce_sum(partial_gaussian_loglik_lupmf, {seq1N}, ",
+      # paste0(
+      #   "target += reduce_sum(partial_gaussian_glm_loglik_lupmf, {seq1N}, ",
+      #   "grainsize, y_{y}, alpha_{y}, nu_{y}[, 1], X, ",
+      #   "beta_{y}, delta_{y}, sigma_{y});"
+      # ),
+      # paste0(
+      #   "target += reduce_sum_static(partial_gaussian_glm_loglik_lupmf, {seq1N}, ",
+      #   "grainsize, y_{y}[{obs}, t], intercept_{y}, X[t][{obs}, J_{y}], ",
+      #   "gamma__{y}, sigma_{y});"
+      # ),
+      paste0("target += reduce_sum_static(partial_gaussian_loglik_lupmf, {seq1N}, ",
              "grainsize, y_{y}[{obs}, t], intercept_{y}, sigma_{y});"
       )
     ),
@@ -1488,20 +1533,22 @@ model_lines_gaussian <- function(y, obs, t_obs, idt, priors, intercept,
   is_real <- attr(intercept, "real")
   model_text <- paste_rows(
     "sigma_{y} ~ {prior_distr$sigma_prior_distr};",
-    "{{",
-    onlyif(glm, "vector[K_{y}] gamma__{y};"),
-    onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
-    "for (t in {t_obs}) {{",
-    ifelse_(
-      is_real,
-      "vector[{n_obs}] intercept_{y} =  rep_vector({intercept}, {n_obs});",
-      "vector[{n_obs}] intercept_{y} = {intercept};"
-    ),
-    onlyif(has_varying, "gamma__{y}[L_varying_{y}] = delta_{y}[t];"),
     likelihood_function,
-    "}}",
-    "}}",
-    .indent = idt(c(1, 1, 2, 2, 2, 3, 3, 3, 2, 1))
+    #"{{",
+    #onlyif(glm, "vector[K_{y}] gamma__{y};"),
+    #onlyif(has_fixed, "gamma__{y}[L_fixed_{y}] = beta_{y};"),
+    # "for (t in {t_obs}) {{",
+    # ifelse_(
+    #   is_real,
+    #   "vector[{n_obs}] intercept_{y} =  rep_vector({intercept}, {n_obs});",
+    #   "vector[{n_obs}] intercept_{y} = {intercept};"
+    # ),
+    # onlyif(has_varying, "gamma__{y}[L_varying_{y}] = delta_{y}[t];"),
+    # likelihood_function,
+    # "}}",
+    #"}}",
+    .indent = idt(1)
+    #.indent = idt(c(1, 1, 2, 2, 2, 3, 3, 3, 2, 1))
   )
   paste_rows(priors, model_text, .parse = FALSE)
 }
