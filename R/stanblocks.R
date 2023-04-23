@@ -18,7 +18,7 @@ create_blocks <- function(indent = 2L, backend, cg, cvars, cgvars, mvars,
   paste_rows(
     create_functions(idt, backend, cg, cvars, cgvars, mvars, threading),
     create_data(idt, backend, cg, cvars, cgvars, mvars, threading),
-    create_transformed_data(idt, backend, cg, cvars, cgvars, mvars, threading),
+    create_transformed_data(idt, backend, cg, cvars, cgvars, mvars),
     create_parameters(idt, backend, cg, cvars, cgvars, mvars),
     create_transformed_parameters(idt, backend, cg, cvars, cgvars, mvars),
     create_model(idt, backend, cg, cvars, cgvars, mvars, threading),
@@ -62,7 +62,7 @@ create_functions <- function(idt, backend, cg, cvars, cgvars, mvars, threading) 
       .indent = idt(c(1, 2, 2, 3, 3, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 2, 1))
     )
   }
-  # TODO, only create function for each unique family, either one or both variants (glm or no)
+
   n_cg <- n_unique(cg)
   likelihood_functions_text <- character(n_cg)
   for (i in seq_len(n_cg)) {
@@ -85,9 +85,10 @@ create_functions <- function(idt, backend, cg, cvars, cgvars, mvars, threading) 
 #' @noRd
 create_functions_lines <- function(idt, backend, cvars, cgvars, threading) {
   family <- cgvars$family
-  glm <- any(ulapply(cvars, function(x) x$has_fixed || x$has_varying))
-  args <- list(threading = threading, glm = glm)
-  lines_wrap("functions", family, idt, backend, args)
+  cvars[[1L]]$default <- lines_wrap(
+    "functions", "default", idt, backend, c(cvars[[1L]], threading = threading)
+  )
+  lines_wrap("functions", family, idt, backend, cvars[[1L]])
 }
 #' @describeIn create_function Create The 'Data' Block of the Stan Model Code
 #' @noRd
@@ -175,8 +176,7 @@ create_data_lines <- function(idt, backend, cvars, cgvars) {
 #' @describeIn create_function Create the 'Transformed Data'
 #'   Block of the Stan Model Code
 #' @noRd
-create_transformed_data <- function(idt, backend, cg, cvars, cgvars, mvars,
-                                    threading) {
+create_transformed_data <- function(idt, backend, cg, cvars, cgvars, mvars) {
   n_cg <- n_unique(cg)
   declarations <- character(n_cg)
   statements <- character(n_cg)
@@ -193,7 +193,7 @@ create_transformed_data <- function(idt, backend, cg, cvars, cgvars, mvars,
     "transformed data {",
     declarations,
     onlyif(has_lfactor, "vector[2 * N] QR_Q = create_Q(N);"),
-    onlyif(threading, "int seq1N[N] = linspaced_int_array(N, 1, N);"),
+    "int seq1T[T] = linspaced_int_array(T, 1, T);",
     statements,
     "}",
     .indent = idt(c(0, 0, 1, 1, 0, 0)),
@@ -692,17 +692,17 @@ create_model_lines <- function(idt, backend, cvars, cgvars, mvars, threading) {
         }
       )
       cvars[[1L]]$backend <- backend
-      cvars[[1L]]$intercept <- lapply(
-        cvars[[1L]]$categories[-1L],
-        function(s) {
-          cvars[[1L]]$ydim <- cvars[[1L]]$y
-          cvars[[1L]]$y <- paste0(cvars[[1L]]$y, "_", s)
-          do.call(intercept_lines, cvars[[1L]])
-        }
-      )
+      # cvars[[1L]]$intercept <- lapply(
+      #   cvars[[1L]]$categories[-1L],
+      #   function(s) {
+      #     cvars[[1L]]$ydim <- cvars[[1L]]$y
+      #     cvars[[1L]]$y <- paste0(cvars[[1L]]$y, "_", s)
+      #     do.call(intercept_lines, cvars[[1L]])
+      #   }
+      # )
     } else {
       cvars[[1L]]$priors <- do.call(prior_lines, c(cvars[[1L]], idt = idt))
-      cvars[[1L]]$intercept <- do.call(intercept_lines, cvars[[1L]])
+     # cvars[[1L]]$intercept <- do.call(intercept_lines, cvars[[1L]])
     }
     cvars[[1L]]$threading <- threading
     lines_wrap("model", family, idt, backend, cvars[[1L]])

@@ -305,7 +305,7 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
   )
   grainsize <- ifelse_(
     is.null(grainsize),
-    max(1, stan_input$sampling_vars$N / threads_per_chain),
+    max(1, floor(stan_input$sampling_vars$T / threads_per_chain)),
     grainsize
   )
   stan_input$sampling_vars$grainsize <- grainsize
