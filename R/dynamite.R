@@ -280,6 +280,7 @@ dynamite <- function(dformula, data, time, group = NULL,
       time_var = time,
       priors = rbindlist_(stan_input$priors),
       backend = backend,
+      impute_m = impute_m,
       call = dynamite_call
     ),
     class = "dynamitefit"
@@ -531,6 +532,7 @@ dynamite_impute <- function(x, impute_m, backend,
       time_var = x$time_var,
       priors = x$priors,
       backend = "cmdstanr",
+      impute_m = impute_m,
       call = x$call
     ),
     class = "dynamitefit"
