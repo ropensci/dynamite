@@ -39,6 +39,10 @@
 #'   of the return object to get the column name of the new variable.
 #' @param priors \[`data.frame`]\cr An optional data frame with prior
 #'   definitions. See [dynamite::get_priors()] and 'Details'.
+#' @param impute_m \[`integer(1)`]\cr Number of imputed data sets to use when
+#'   `data` contains missing values for the response channels. The default
+#'   value `0` performs no imputation. Imputation is only supported for the
+#'   `cmdstanr` backend.
 #' @param backend \[`character(1)`]\cr Defines the backend interface to Stan,
 #'   should be  either `"rstan"` (the default) or `"cmdstanr"`. Note that
 #'   `cmdstanr` needs to be installed separately as it is not on CRAN. It also
@@ -138,7 +142,7 @@
 #' }
 #'
 dynamite <- function(dformula, data, time, group = NULL,
-                     priors = NULL, backend = "rstan",
+                     priors = NULL, impute_m = 0L, backend = "rstan",
                      verbose = TRUE, verbose_stan = FALSE,
                      stanc_options = list("O1"), debug = NULL,
                      threads_per_chain = 1L, grainsize = NULL, ...) {
@@ -206,6 +210,10 @@ dynamite <- function(dformula, data, time, group = NULL,
     "Argument {.arg grainsize} must be a single positive integer or
     {.code NULL}."
   )
+  stopifnot_(
+    checkmate::test_int(x = impute_m, lower = 0L, null.ok = FALSE),
+    "Argument {.arg impute_m} must be a single non-negative integer."
+  )
   backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
   stopifnot_(
     !inherits(backend, "try-error"),
@@ -237,6 +245,7 @@ dynamite <- function(dformula, data, time, group = NULL,
     group,
     time,
     priors,
+    impute_m,
     backend,
     verbose,
     verbose_stan,
@@ -281,7 +290,15 @@ dynamite <- function(dformula, data, time, group = NULL,
     got <- try(get(x = opt), silent = TRUE)
     out[[opt]] <- onlyif(!inherits(got, "try-error"), got)
   }
-  out
+  dynamite_impute(
+    out,
+    impute_m,
+    backend,
+    stanc_options,
+    threads_per_chain,
+    debug,
+    ...
+  )
 }
 
 #' Prepare Data for Stan and Construct a Stan Model for `dynamite`
@@ -321,8 +338,9 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
   sampling_info(dformulas, verbose, debug, backend)
   stopifnot_(
     stan_version(backend) > "2.23" || threads_per_chain == 1L,
-    paste0("Within-chain parallelization is not supported for Stan version ",
-           stan_version(backend)
+    paste0(
+      "Within-chain parallelization is not supported for Stan version ",
+      stan_version(backend)
     )
   )
 
@@ -357,7 +375,8 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
   list(
     stan_input = stan_input,
     model_code = model_code,
-    stanfit = stanfit
+    stanfit = stanfit,
+    dots = dots
   )
 }
 
@@ -373,7 +392,9 @@ dynamite_model <- function(compile, model_code, backend, stanc_options,
     e <- new.env()
     if (backend == "rstan") {
       e$model_code <- model_code
-      with(e, {rstan::stan_model(model_code = model_code)})
+      with(e, {
+        rstan::stan_model(model_code = model_code)
+      })
     } else {
       e$file <- cmdstanr::write_stan_file(model_code)
       e$stanc_options <- stanc_options
@@ -382,10 +403,12 @@ dynamite_model <- function(compile, model_code, backend, stanc_options,
         list(stan_threads = TRUE),
         list()
       )
-      with(e, {cmdstanr::cmdstan_model(
-        file,
-        stanc_options = stanc_options,
-        cpp_options = cpp_options)
+      with(e, {
+        cmdstanr::cmdstan_model(
+          file,
+          stanc_options = stanc_options,
+          cpp_options = cpp_options
+        )
       })
     }
   } else {
@@ -409,19 +432,109 @@ dynamite_sampling <- function(sampling, backend, model_code, model,
     e <- new.env()
     if (backend == "rstan") {
       e$args <- c(list(object = model, data = sampling_vars), dots)
-      out <- with(e, {do.call(rstan::sampling, args)})
+      out <- with(e, {
+        do.call(rstan::sampling, args)
+      })
     } else {
       e$model <- model
-      e$args <- c(list(data = sampling_vars), dots,
-                  threads_per_chain = onlyif(threads_per_chain > 1L,
-                                              threads_per_chain)
+      e$args <- c(
+        list(data = sampling_vars),
+        dots,
+        threads_per_chain = onlyif(threads_per_chain > 1L, threads_per_chain)
       )
-      sampling_out <- with(e, {do.call(model$sample, args)})
+      sampling_out <- with(e, {
+        do.call(model$sample, args)
+      })
       out <- rstan::read_stan_csv(sampling_out$output_files())
       out@stanmodel <- methods::new("stanmodel", model_code = model_code)
     }
   }
   out
+}
+
+dynamite_impute <- function(x, impute_m, backend,
+                            stanc_options, threads_per_chain, debug, ...) {
+  if (identical(impute_m, 0L) ||
+      identical(backend, "rstan") ||
+      isTRUE(debug$no_compile) ||
+      isTRUE(debug$no_sampling)) {
+    return(x)
+  }
+  pred <- initialize_predict(
+    object = x,
+    newdata = x$data,
+    type = "response",
+    eval_type = "predict",
+    funs = list(),
+    impute = "none",
+    new_levels = "none",
+    global_fixed = FALSE,
+    n_draws = min(impute_m, ndraws(x)),
+    expand = TRUE,
+    df = FALSE,
+    overwrite = TRUE
+  )
+  dform <- formula(x)
+  tmp <- dynamite(
+    dformula = dform,
+    data = pred[.draw == 1L, ],
+    time = x$time_var,
+    group = x$group_var,
+    priors = x$priors,
+    impute_m = 0L,
+    backend = "cmdstanr",
+    verbose = FALSE,
+    stanc_options = stanc_options,
+    threads_per_chain = threads_per_chain,
+    debug = list(no_sampling = TRUE, stan_input = TRUE, model = TRUE),
+    ...
+  )
+  dots <- tmp$stan_input$dots
+  dots$chains <- 1L
+  dots$parallel_chains <- 1L
+  filenames <- c()
+  e <- new.env()
+  e$model <- tmp$model
+  for (i in seq_along(impute_m)) {
+    sampling_vars <- dynamite(
+      dformula = dform,
+      data = pred[.draw == i, ],
+      time = x$time_var,
+      group = x$group_var,
+      impute_m = 0L,
+      backend = "cmdstanr",
+      verbose = FALSE,
+      debug = list(no_compile = TRUE, sampling_vars = TRUE)$sampling_vars,
+      ...
+    )
+    dots$chain_ids <- i
+    e$args <- c(
+      list(data = sampling_vars),
+      dots,
+      threads_per_chain = onlyif(threads_per_chain > 1L, threads_per_chain)
+    )
+    sampling_out <- with(e, {
+      do.call(model$sample, args)
+    })
+    filenames <- c(filenames, sampling_out$output_files())
+  }
+  stanfit <- rstan::read_stan_csv(filenames)
+  stanfit@stanmodel <- methods::new("stanmodel", model_code = model_code)
+  structure(
+    list(
+      stanfit = stanfit,
+      dformulas = x$dformulas,
+      data = x$data,
+      data_name = x$data_name,
+      stan = tmp$stan,
+      group_var = x$group_var,
+      time_var = x$time_var,
+      priors = x$priors,
+      backend = "cmdstanr",
+      call = x$call
+    ),
+    class = "dynamitefit"
+  )
 }
 
 #' Print an Informative Message Related to Stan Model Compilation/Sampling
@@ -881,7 +994,8 @@ parse_components <- function(dformulas, data, group_var, time_var) {
             "The common time-varying intercept term of channel
             {.var {lresp[i]}} was removed as channel predictors
             contain latent factor specified with {.arg nonzero_lambda}
-            as TRUE.")
+            as TRUE."
+          )
         }
         ficpt <- dformulas$stoch[[j]]$has_fixed_intercept
         ricpt <- dformulas$stoch[[j]]$has_random_intercept
@@ -891,10 +1005,10 @@ parse_components <- function(dformulas, data, group_var, time_var) {
             "The common time-invariant intercept term of channel
             {.var {lresp[i]}} was removed as channel predictors
             contain random intercept and latent factor specified
-            with {.arg nonzero_lambda} as TRUE.")
+            with {.arg nonzero_lambda} as TRUE."
+          )
         }
       }
-
     }
   }
   dformulas

@@ -207,7 +207,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
     global_fixed,
     n_draws,
     expand,
-    df
+    df,
+    overwrite = FALSE
   )
 }
 
@@ -216,9 +217,12 @@ predict.dynamitefit <- function(object, newdata = NULL,
 #' @inheritParams predict.dynamitefit
 #' @param eval_type \[`character(1)`]\cr Either `"predicted"`, `"fitted"`, or
 #'   `"loglik"`.
+#' @param overwrite \[`logical(1)`] If `TRUE`, overwrites original data values
+#'   with the predictions.
 #' @noRd
 initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
-                               new_levels, global_fixed, n_draws, expand, df) {
+                               new_levels, global_fixed, n_draws, expand, df,
+                               overwrite) {
   n_draws <- check_ndraws(n_draws, ndraws(object))
   newdata_null <- is.null(newdata)
   newdata <- check_newdata(object, newdata)
@@ -333,7 +337,8 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
     group_var = group_var,
     time_var = time_var,
     expand = expand,
-    df = df
+    df = df,
+    overwrite = overwrite
   )
 }
 
@@ -347,7 +352,7 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
 #' @noRd
 predict_ <- function(object, simulated, storage, observed,
                      mode, type, eval_type, new_levels, n_draws, fixed, funs,
-                     group_var, time_var, expand, df) {
+                     group_var, time_var, expand, df, overwrite) {
   formulas_stoch <- object$dformulas$stoch
   resp <- get_responses(object$dformulas$all)
   resp_stoch <- get_responses(object$dformulas$stoch)
@@ -511,7 +516,8 @@ predict_ <- function(object, simulated, storage, observed,
     type = ifelse_(identical(mode, "summary"), NULL, type),
     resp_stoch,
     simulated,
-    observed
+    observed,
+    overwrite
   )
   if (identical(mode, "full")) {
     lhs_lag <- c(lhs_ld, lhs_ls)
@@ -608,18 +614,20 @@ shift_simulated_values <- function(simulated, idx, idx_prev) {
 #' @inheritParams predict_full
 #' @param resp_stoch \[character()]\cr Vector of response variable names.
 #' @noRd
-finalize_predict <- function(type, resp_stoch, simulated, observed) {
+finalize_predict <- function(type, resp_stoch, simulated, observed, overwrite) {
   for (resp in resp_stoch) {
     store <- glue::glue("{resp}_store")
-    if (identical(type, "response")) {
-      data.table::set(
-        x = simulated,
-        j = glue::glue("{resp}_new"),
-        value = simulated[[resp]]
-      )
+    if (!overwrite) {
+      if (identical(type, "response")) {
+        data.table::set(
+          x = simulated,
+          j = glue::glue("{resp}_new"),
+          value = simulated[[resp]]
+        )
+      }
+      data.table::set(x = observed, j = resp, value = observed[[store]])
+      simulated[, c(resp) := NULL]
     }
-    data.table::set(x = observed, j = resp, value = observed[[store]])
     observed[, c(store) := NULL]
-    simulated[, c(resp) := NULL]
   }
 }
