@@ -245,7 +245,6 @@ dynamite <- function(dformula, data, time, group = NULL,
     group,
     time,
     priors,
-    impute_m,
     backend,
     verbose,
     verbose_stan,
@@ -258,6 +257,8 @@ dynamite <- function(dformula, data, time, group = NULL,
   # extract elements for debug argument
   stan_input <- stan_out$stan_input
   model_code <- stan_out$model_code
+  model <- stan_out$model
+  dots <- stan_out$dots
   stanfit <- stan_out$stanfit
   dynamite_call <- match.call()
   if (!is.null(debug) && !is.null(debug$stanfit)) {
@@ -377,6 +378,7 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     stan_input = stan_input,
     model_code = model_code,
     stanfit = stanfit,
+    model = model,
     dots = dots
   )
 }
@@ -465,7 +467,7 @@ dynamite_impute <- function(x, impute_m, backend,
     object = x,
     newdata = x$data,
     type = "response",
-    eval_type = "predict",
+    eval_type = "predicted",
     funs = list(),
     impute = "none",
     new_levels = "none",
@@ -475,7 +477,7 @@ dynamite_impute <- function(x, impute_m, backend,
     df = FALSE,
     overwrite = TRUE
   )
-  dform <- formula(x)
+  dform <- eval(formula(x))
   tmp <- dynamite(
     dformula = dform,
     data = pred[.draw == 1L, ],
@@ -489,19 +491,19 @@ dynamite_impute <- function(x, impute_m, backend,
     threads_per_chain = threads_per_chain,
     debug = list(
       no_sampling = TRUE,
-      stan_input = TRUE,
+      model_code = TRUE,
       model = TRUE,
-      model_code = TRUE
+      dots = TRUE
     ),
     ...
   )
-  dots <- tmp$stan_input$dots
+  dots <- tmp$dots
   dots$chains <- 1L
   dots$parallel_chains <- 1L
   filenames <- c()
   e <- new.env()
   e$model <- tmp$model
-  for (i in seq_along(impute_m)) {
+  for (i in seq_len(impute_m)) {
     sampling_vars <- dynamite(
       dformula = dform,
       data = pred[.draw == i, ],
@@ -510,9 +512,9 @@ dynamite_impute <- function(x, impute_m, backend,
       impute_m = 0L,
       backend = "cmdstanr",
       verbose = FALSE,
-      debug = list(no_compile = TRUE, sampling_vars = TRUE)$sampling_vars,
+      debug = list(no_compile = TRUE, stan_input = TRUE),
       ...
-    )
+    )$stan_input$sampling_vars
     dots$chain_ids <- i
     e$args <- c(
       list(data = sampling_vars),
