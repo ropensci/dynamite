@@ -487,7 +487,12 @@ dynamite_impute <- function(x, impute_m, backend,
     verbose = FALSE,
     stanc_options = stanc_options,
     threads_per_chain = threads_per_chain,
-    debug = list(no_sampling = TRUE, stan_input = TRUE, model = TRUE),
+    debug = list(
+      no_sampling = TRUE,
+      stan_input = TRUE,
+      model = TRUE,
+      model_code = TRUE
+    ),
     ...
   )
   dots <- tmp$stan_input$dots
@@ -520,7 +525,7 @@ dynamite_impute <- function(x, impute_m, backend,
     filenames <- c(filenames, sampling_out$output_files())
   }
   stanfit <- rstan::read_stan_csv(filenames)
-  stanfit@stanmodel <- methods::new("stanmodel", model_code = model_code)
+  stanfit@stanmodel <- methods::new("stanmodel", model_code = tmp$model_code)
   structure(
     list(
       stanfit = stanfit,
