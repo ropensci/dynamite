@@ -500,6 +500,7 @@ dynamite_impute <- function(x, impute_m, backend,
   dots <- tmp$dots
   dots$chains <- 1L
   dots$parallel_chains <- 1L
+  dots$iter_sampling <- ceiling(x$stanfit@sim$n_save[1] / impute_m) #?
   filenames <- c()
   e <- new.env()
   e$model <- tmp$model
@@ -509,6 +510,7 @@ dynamite_impute <- function(x, impute_m, backend,
       data = pred[.draw == i, ],
       time = x$time_var,
       group = x$group_var,
+      priors = x$priors,
       impute_m = 0L,
       backend = "cmdstanr",
       verbose = FALSE,
@@ -519,6 +521,7 @@ dynamite_impute <- function(x, impute_m, backend,
     e$args <- c(
       list(data = sampling_vars),
       dots,
+      output_dir = tempdir(),
       threads_per_chain = onlyif(threads_per_chain > 1L, threads_per_chain)
     )
     sampling_out <- with(e, {
