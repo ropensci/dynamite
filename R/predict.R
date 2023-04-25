@@ -222,7 +222,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
 #' @noRd
 initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
                                new_levels, global_fixed, n_draws, expand, df,
-                               overwrite) {
+                               overwrite = FALSE) {
   n_draws <- check_ndraws(n_draws, ndraws(object))
   newdata_null <- is.null(newdata)
   newdata <- check_newdata(object, newdata)
