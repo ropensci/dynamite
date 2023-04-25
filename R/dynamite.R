@@ -472,7 +472,7 @@ dynamite_impute <- function(x, impute_m, backend,
     impute = "none",
     new_levels = "none",
     global_fixed = FALSE,
-    n_draws = min(impute_m, ndraws(x)),
+    n_draws = 1,
     expand = TRUE,
     df = FALSE,
     overwrite = TRUE
@@ -480,7 +480,7 @@ dynamite_impute <- function(x, impute_m, backend,
   dform <- eval(formula(x))
   tmp <- dynamite(
     dformula = dform,
-    data = pred[.draw == 1L, ],
+    data = pred,
     time = x$time_var,
     group = x$group_var,
     priors = x$priors,
@@ -502,12 +502,12 @@ dynamite_impute <- function(x, impute_m, backend,
   dots$parallel_chains <- 1L
   dots$iter_sampling <- ceiling(x$stanfit@sim$n_save[1] / impute_m) #?
   filenames <- c()
-  e <- new.env()
-  e$model <- tmp$model
+  model <- tmp$model
+  model_code <- tmp$model_code
   for (i in seq_len(impute_m)) {
-    sampling_vars <- dynamite(
+    tmp <- dynamite(
       dformula = dform,
-      data = pred[.draw == i, ],
+      data = pred,
       time = x$time_var,
       group = x$group_var,
       priors = x$priors,
@@ -516,21 +516,36 @@ dynamite_impute <- function(x, impute_m, backend,
       verbose = FALSE,
       debug = list(no_compile = TRUE, stan_input = TRUE),
       ...
-    )$stan_input$sampling_vars
+    )
     dots$chain_ids <- i
-    e$args <- c(
-      list(data = sampling_vars),
+    args <- c(
+      list(data = tmp$stan_input$sampling_vars),
       dots,
       output_dir = tempdir(),
       threads_per_chain = onlyif(threads_per_chain > 1L, threads_per_chain)
     )
-    sampling_out <- with(e, {
-      do.call(model$sample, args)
-    })
+    sampling_out <- do.call(model$sample, args)
+    stanfit <- rstan::read_stan_csv(sampling_out$output_files())
+    tmp$stanfit <- stanfit
     filenames <- c(filenames, sampling_out$output_files())
+
+    pred <- initialize_predict(
+      object = tmp,
+      newdata = x$data,
+      type = "response",
+      eval_type = "predicted",
+      funs = list(),
+      impute = "none",
+      new_levels = "none",
+      global_fixed = FALSE,
+      n_draws = 1,
+      expand = TRUE,
+      df = FALSE,
+      overwrite = TRUE
+    )
   }
   stanfit <- rstan::read_stan_csv(filenames)
-  stanfit@stanmodel <- methods::new("stanmodel", model_code = tmp$model_code)
+  stanfit@stanmodel <- methods::new("stanmodel", model_code = model_code)
   structure(
     list(
       stanfit = stanfit,
