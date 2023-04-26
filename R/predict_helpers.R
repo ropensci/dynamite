@@ -618,8 +618,14 @@ prepare_eval_env_univariate <- function(e, resp, cvars, samples, nu_samples,
   e$has_random_intercept <- cvars$has_random_intercept
   e$has_lfactor <- cvars$has_lfactor
   e$resp <- resp
-  e$phi <- c(samples[[phi]][idx])
-  e$sigma <- c(samples[[sigma]][idx])
+  e$phi <- onlyif(
+    !is.null(samples[[phi]]),
+    rep_len(c(samples[[phi]][idx]), length.out = e$k)
+  )
+  e$sigma <-  onlyif(
+    !is.null(samples[[sigma]]),
+    rep_len(c(samples[[sigma]][idx]), length.out = e$k)
+  )
   if (has_random_effects) {
     nus <- make.unique(rep(paste0("nu_", resp), e$K_random))
     e$nu <- nu_samples[, , nus, drop = FALSE]
@@ -823,7 +829,8 @@ prepare_eval_env_multivariate <- function(e, resp, resp_levels, cvars,
     e[[K_varying]] <- cvars[[j]]$K_varying
     e[[J_random]] <- cvars[[j]]$J_random
     e[[K_random]] <- cvars[[j]]$K_random
-    onlyif(!is.null(samples[[phi]]),e[[phi]] <- c(samples[[phi]][idx]))
+    # No phi parameters yet
+    # onlyif(!is.null(samples[[phi]]), e[[phi]] <- c(samples[[phi]][idx]))
     onlyif(!is.null(samples[[sigma]]), e$sigma[, i] <- c(samples[[sigma]][idx]))
     # index j here, not from cvars
     if (has_random_effects[j]) {
@@ -1056,7 +1063,7 @@ predict_expr$predicted$gaussian <- "
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = rnorm(k, xbeta, sigma)[idx_out]
+    value = rnorm(k_obs, xbeta[idx_out], sigma[idx_out])
   )
 "
 
@@ -1108,22 +1115,22 @@ predict_expr$predicted$multinomial <- "
 "
 
 predict_expr$predicted$binomial <- "
-  prob <- plogis(xbeta)
+  prob <- plogis(xbeta[idx_out])
   data.table::set(
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = rbinom(k, trials, prob)[idx_out]
+    value = rbinom(k_obs, trials[idx_out], prob)
   )
 "
 
 predict_expr$predicted$bernoulli <- "
-  prob <- plogis(xbeta)
+  prob <- plogis(xbeta[idx_out])
   data.table::set(
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = rbinom(k, 1, prob)[idx_out]
+    value = rbinom(k_obs, 1, prob)
   )
 "
 
@@ -1133,7 +1140,7 @@ predict_expr$predicted$poisson <- "
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = rpois(k, exp_xbeta)[idx_out]
+    value = rpois(k_obs, exp_xbeta[idx_out])
   )
 "
 
@@ -1143,7 +1150,7 @@ predict_expr$predicted$negbin <- "
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = rnbinom(k, size = phi, mu = exp_xbeta)[idx_out]
+    value = rnbinom(k_obs, size = phi[idx_out], mu = exp_xbeta[idx_out])
   )
 "
 
@@ -1152,26 +1159,32 @@ predict_expr$predicted$exponential <- "
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = rexp(k, rate = exp(-xbeta))[idx_out]
+    value = rexp(k_obs, rate = exp(-xbeta[idx_out]))
   )
 "
 
 predict_expr$predicted$gamma <- "
+  phi_obs <- phi[idx_out]
   data.table::set(
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = rgamma(k, shape = phi, rate = phi * exp(-xbeta))[idx_out]
+    value = rgamma(
+      k_obs,
+      shape = phi_obs,
+      rate = phi_obs * exp(-xbeta[idx_out])
+    )
   )
 "
 
 predict_expr$predicted$beta <- "
-  mu <- plogis(xbeta)
+  mu <- plogis(xbeta[idx_out])
+  phi_obs <- phi[idx_out]
   data.table::set(
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = rbeta(k,  mu * phi, (1 - mu) * phi)[idx_out]
+    value = rbeta(k_obs,  mu * phi_obs, (1 - mu) * phi_obs)
   )
 "
 
@@ -1180,7 +1193,7 @@ predict_expr$predicted$student <- "
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = (xbeta + sigma * rt(k, phi))[idx_out]
+    value = xbeta[idx_out] + sigma[idx_out] * rt(k_obs, phi[idx_out])
   )
 "
 
