@@ -346,6 +346,7 @@ parse_formula <- function(x, original, family) {
   out <- vector(mode = "list", length = n_responses)
   for (i in seq_len(n_responses)) {
     out[[i]] <- formula_specials(formulas[[i]], original, family)
+    out[[i]]$original <- formulas[[i]]
     out[[i]]$name <- parse_name(responses[i])
   }
   out
