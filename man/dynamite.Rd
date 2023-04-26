@@ -19,6 +19,7 @@ dynamite(
   stanc_options = list("O1"),
   debug = NULL,
   threads_per_chain = 1L,
+  grainsize = NULL,
   ...
 )
 

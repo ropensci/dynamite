@@ -336,15 +336,10 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
   sampling[[paste0("n_obs_", y_name)]] <- obs_len
   sampling[[paste0("t_obs_", y_name)]] <- which(obs_len > 0L)
   sampling[[paste0("T_obs_", y_name)]] <- length(which(obs_len > 0L))
-  channel$t_obs <- ifelse_(
-    channel$has_fully_missing,
-    glue::glue("t_obs"),
-    "1:T"
-  )
   # obs selects complete cases if there are missing observations
   channel$obs <- ifelse_(
     channel$has_missing,
-    glue::glue("obs[1:n_obs[t], t]"),
+    glue::glue("obs_{y_name}[1:n_obs_{y_name}[t], t]"),
     ""
   )
   channel$has_fixed_intercept <- dformula$has_fixed_intercept
@@ -414,14 +409,9 @@ initialize_multivariate_channel <- function(y, y_cg, y_name, cg_idx,
   )
   channel$y <- unname(vapply(channel_vars[cg_idx], "[[", character(1L), "y"))
   channel$y_cg <- y_cg
-  channel$t_obs <- ifelse_(
-    channel$has_fully_missing,
-    glue::glue("t_obs"),
-    "1:T"
-  )
   channel$obs <- ifelse_(
     channel$has_missing,
-    glue::glue("obs[1:n_obs[t], t]"),
+    glue::glue("obs_{y_cg}[1:n_obs_{y_cg}[t], t]"),
     ""
   )
   z <- y_name[j]
@@ -431,6 +421,8 @@ initialize_multivariate_channel <- function(y, y_cg, y_name, cg_idx,
       channel[[has_spec]] <- TRUE
       sampling[[paste0(spec, "_", y_cg)]] <-
         sampling_vars[[paste0(spec, "_", z)]]
+    } else {
+      channel[[has_spec]] <- FALSE
     }
   }
   sampling[[paste0("obs_", y_cg)]] <- matrix_intersect(

@@ -85,10 +85,20 @@ create_functions <- function(idt, backend, cg, cvars, cgvars, mvars, threading) 
 #' @noRd
 create_functions_lines <- function(idt, backend, cvars, cgvars, threading) {
   family <- cgvars$family
-  cvars[[1L]]$default <- lines_wrap(
-    "functions", "default", idt, backend, c(cvars[[1L]], threading = threading)
-  )
-  lines_wrap("functions", family, idt, backend, cvars[[1L]])
+  if (is_multivariate(family)) {
+    lines_wrap("functions", family, idt, backend,
+               list(cvars = cvars, cgvars = cgvars, threading = threading))
+  } else {
+    if (is_categorical(family)) {
+      cvars[[1L]]$threading <- threading
+    } else {
+      cvars[[1L]]$default <- lines_wrap(
+        "functions", "default", idt, backend,
+        c(cvars[[1L]], threading = threading)
+      )
+    }
+    lines_wrap("functions", family, idt, backend, cvars[[1L]])
+  }
 }
 #' @describeIn create_function Create The 'Data' Block of the Stan Model Code
 #' @noRd
@@ -692,17 +702,8 @@ create_model_lines <- function(idt, backend, cvars, cgvars, mvars, threading) {
         }
       )
       cvars[[1L]]$backend <- backend
-      # cvars[[1L]]$intercept <- lapply(
-      #   cvars[[1L]]$categories[-1L],
-      #   function(s) {
-      #     cvars[[1L]]$ydim <- cvars[[1L]]$y
-      #     cvars[[1L]]$y <- paste0(cvars[[1L]]$y, "_", s)
-      #     do.call(intercept_lines, cvars[[1L]])
-      #   }
-      # )
     } else {
       cvars[[1L]]$priors <- do.call(prior_lines, c(cvars[[1L]], idt = idt))
-     # cvars[[1L]]$intercept <- do.call(intercept_lines, cvars[[1L]])
     }
     cvars[[1L]]$threading <- threading
     lines_wrap("model", family, idt, backend, cvars[[1L]])
