@@ -142,7 +142,7 @@ intercept_lines <- function(y, obs, family, has_varying, has_fixed, has_random,
   )
   offset <- ifelse_(
     has_offset,
-    glue::glue(" + to_vector(offset_{y}[t, {obs}])"),
+    glue::glue(" + offset_{y}[{obs}, t]"),
     ""
   )
   intercept_nu <- ifelse_(
@@ -274,7 +274,7 @@ functions_lines_default <- function(y, idt, obs, family, has_missing,
       onlyif(has_varying, c("data int[] {LJ}_varying_{y}", "vector[] delta_{y}")),
       onlyif(has_fixed || has_varying, c("data int[] J_{y}", "data int K_{y}")),
       onlyif(has_X, "data matrix[] X"),
-      onlyif(has_offset, "data real[,] offset_{y}"),
+      onlyif(has_offset, "data matrix offset_{y}"),
       onlyif(is_binomial(family), "data int[] trials_{y}"),
       extra_pars
     ))
@@ -961,7 +961,7 @@ data_lines_poisson <- function(y, idt, default, has_missing,
     ),
     onlyif(
       has_offset,
-      stan_array(backend, "real", "offset_{y}", "T, N")
+      "matrix[N, T] offset_{y}"
     ),
     .indent = idt(c(0, 0, 0, 1, 1, 1))
   )
@@ -981,7 +981,7 @@ data_lines_negbin <- function(y, idt, default, has_missing,
     ),
     onlyif(
       has_offset,
-      stan_array(backend, "real", "offset_{y}", "T, N")
+      "matrix[N, T] offset_{y}"
     ),
     .indent = idt(c(0, 0, 0, 1, 1, 1))
   )

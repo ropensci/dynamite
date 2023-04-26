@@ -366,8 +366,12 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
     if (!is.null(specials[[spec]])) {
       spec_split <- split(specials[[spec]], group)
       spec_array <- array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
-      sampling[[paste0(spec, "_", y_name)]] <-
+      spec_name <- paste0(spec, "_", y_name)
+      sampling[[spec_name]] <- ifelse_(
+        identical(spec, "offset"),
+        t(spec_array[seq.int(fixed + 1L, T_full), , drop = FALSE]),
         spec_array[seq.int(fixed + 1L, T_full), , drop = FALSE]
+      )
       channel[[paste0("has_", spec)]] <- TRUE
     } else {
       channel[[paste0("has_", spec)]] <- FALSE
