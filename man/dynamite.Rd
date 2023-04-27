@@ -86,6 +86,14 @@ return object.}
 number of parallel threads to use within each chain. Default is \code{1}. See
 \code{\link[rstan:rstan_options]{rstan::rstan_options()}} and \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}} for details.}
 
+\item{grainsize}{[\code{integer(1)}]\cr A Positive integer defining the
+suggested size of the partial sums when using within-chain parallelization.
+Default is number of time points divided by \code{threads_per_chain}.
+Setting this to \code{1} leads the workload division entirely to the internal
+scheduler. The performance of the within-chain parallelization can be
+sensitive to the choice of \code{grainsize}, see Stan manual on reduce-sum for
+details.}
+
 \item{...}{For \code{dynamite()}, additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} or
 \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}, such as \code{chains} and \code{cores} (\code{chains} and
 \code{parallel_chains} in \code{cmdstanr}). For \code{summary()}, additional arguments to

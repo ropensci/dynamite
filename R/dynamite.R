@@ -62,6 +62,13 @@
 #' @param threads_per_chain \[`integer(1)`]\cr A Positive integer defining the
 #'   number of parallel threads to use within each chain. Default is `1`. See
 #'   [rstan::rstan_options()] and [cmdstanr::sample()] for details.
+#' @param grainsize \[`integer(1)`]\cr A Positive integer defining the
+#'   suggested size of the partial sums when using within-chain parallelization.
+#'   Default is number of time points divided by `threads_per_chain`.
+#'   Setting this to `1` leads the workload division entirely to the internal
+#'   scheduler. The performance of the within-chain parallelization can be
+#'   sensitive to the choice of `grainsize`, see Stan manual on reduce-sum for
+#'   details.
 #' @param ... For `dynamite()`, additional arguments to [rstan::sampling()] or
 #'   [cmdstanr::sample()], such as `chains` and `cores` (`chains` and
 #'   `parallel_chains` in `cmdstanr`). For `summary()`, additional arguments to
@@ -509,6 +516,7 @@ dynamice <- function(dformula, data, time, group = NULL,
   imputed <- do.call(mice::mice, args = mice_args)
   measure_vars <- setdiff(names(data_wide), group)
   e <- new.env()
+  m <- mice_args$m
   sf <- vector(mode = "list", length = m)
   filenames <- character(m)
   model <- NULL
