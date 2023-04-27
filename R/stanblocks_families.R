@@ -1837,7 +1837,7 @@ model_lines_categorical <- function(y, obs, idt, priors,
                                     has_fixed, has_varying, has_random,
                                     has_lfactor, threading,
                                     categories, multinomial = FALSE,
-                                    ...) {
+                                    backend, ...) {
   distr <- ifelse_(multinomial, "multinomial", "categorical")
   S <- length(categories)
   cats <- categories[seq.int(2L, S)]
