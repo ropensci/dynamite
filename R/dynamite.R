@@ -249,7 +249,8 @@ dynamite <- function(dformula, data, time, group = NULL,
 #' @inheritParams dynamite
 #' @noRd
 dynamite_check <- function(dformula, data, time, group, priors, verbose,
-                           verbose_stan, stanc_options, debug) {
+                           verbose_stan, stanc_options,
+                           threads_per_chain, grainsize, debug) {
   stopifnot_(
     !missing(dformula),
     "Argument {.arg dformula} is missing."
@@ -533,11 +534,14 @@ dynamice <- function(dformula, data, time, group = NULL,
     formula = as.formula(paste0(group, " ~ ", time)),
     value.var = value_vars
   )
+  if (length(value_vars) == 1L) {
+    names(data_wide)[-1L] <- paste0(value_vars, "_", names(data_wide)[-1L])
+  }
   mice_args$data <- data_wide
   imputed <- do.call(mice::mice, args = mice_args)
   measure_vars <- setdiff(names(data_wide), group)
   e <- new.env()
-  m <- mice_args$m
+  m <- ifelse_(is.null(mice_args$m), 5L, mice_args$m)
   sf <- vector(mode = "list", length = m)
   filenames <- character(m)
   model <- NULL
