@@ -17,9 +17,9 @@ dynamite(
   verbose = TRUE,
   verbose_stan = FALSE,
   stanc_options = list("O1"),
-  debug = NULL,
   threads_per_chain = 1L,
   grainsize = NULL,
+  debug = NULL,
   ...
 )
 
@@ -34,8 +34,8 @@ dynamite(
 See \code{\link[=dynamiteformula]{dynamiteformula()}} and 'Details'.}
 
 \item{data}{[\code{data.frame}, \code{tibble::tibble}, or \code{data.table::data.table}]\cr
-The data that contains the variables in the
-model. Supported column types are \code{integer}, \code{logical}, \code{double}, and
+The data that contains the variables in the model in long format.
+Supported column types are \code{integer}, \code{logical}, \code{double}, and
 \code{factor}. Columns of type \code{character} will be converted to factors.
 Unused factor levels will be dropped. The \code{data} can contain missing
 values which will simply be ignored in the estimation in a case-wise
@@ -74,14 +74,6 @@ passed to the compile method of a \code{CmdStanModel} object via
 \code{\link[cmdstanr:cmdstan_model]{cmdstanr::cmdstan_model()}} when \code{backend = "cmdstanr"}.
 Defaults to \code{list("O1")} to enable level one compiler optimizations.}
 
-\item{debug}{[\code{list()}]\cr A named list of form \code{name = TRUE} indicating
-additional objects in the environment of the \code{dynamite} function which are
-added to the return object. Additionally, values \code{no_compile = TRUE} and
-\code{no_sampling = TRUE} can be used to skip the compilation of the Stan code
-and sampling steps respectively. This can be useful for debugging when
-combined with \code{model_code = TRUE}, which adds the Stan model code to the
-return object.}
-
 \item{threads_per_chain}{[\code{integer(1)}]\cr A Positive integer defining the
 number of parallel threads to use within each chain. Default is \code{1}. See
 \code{\link[rstan:rstan_options]{rstan::rstan_options()}} and \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}} for details.}
@@ -93,6 +85,14 @@ Setting this to \code{1} leads the workload division entirely to the internal
 scheduler. The performance of the within-chain parallelization can be
 sensitive to the choice of \code{grainsize}, see Stan manual on reduce-sum for
 details.}
+
+\item{debug}{[\code{list()}]\cr A named list of form \code{name = TRUE} indicating
+additional objects in the environment of the \code{dynamite} function which are
+added to the return object. Additionally, values \code{no_compile = TRUE} and
+\code{no_sampling = TRUE} can be used to skip the compilation of the Stan code
+and sampling steps respectively. This can be useful for debugging when
+combined with \code{model_code = TRUE}, which adds the Stan model code to the
+return object.}
 
 \item{...}{For \code{dynamite()}, additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} or
 \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}, such as \code{chains} and \code{cores} (\code{chains} and
@@ -190,6 +190,7 @@ from Panel Data with Dynamic Multivariate Panel Models. SocArxiv preprint,
 }
 \seealso{
 Model fitting
+\code{\link{dynamice}()},
 \code{\link{get_priors}()},
 \code{\link{update.dynamitefit}()}
 

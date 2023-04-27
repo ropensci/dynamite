@@ -532,16 +532,30 @@ dynamice <- function(dformula, data, time, group = NULL,
   data_wide <- data.table::dcast(
     data = data,
     formula = as.formula(paste0(group, " ~ ", time)),
-    value.var = value_vars
+    value.var = value_vars,
+    sep = "__"
   )
   if (length(value_vars) == 1L) {
-    names(data_wide)[-1L] <- paste0(value_vars, "_", names(data_wide)[-1L])
+    names(data_wide)[-1L] <- paste0(value_vars, "__", names(data_wide)[-1L])
   }
+  wide_vars <- names(data_wide)[-1L]
   mice_args$data <- data_wide
+  mice_args$predictorMatrix <- parse_predictors(
+    dformula = dformula,
+    vars = value_vars,
+    time = sort(unique(data[[time]]))
+  )
+  complete_vars <- wide_vars[
+    vapply(
+      data_wide[, .SD, .SDcols = wide_vars],
+      function(x) all(!is.na(x)),
+      logical(1L)
+    )
+  ]
+  mice_args$predictorMatrix[complete_vars, ] <- 0L
   imputed <- do.call(mice::mice, args = mice_args)
-  measure_vars <- setdiff(names(data_wide), group)
-  e <- new.env()
   m <- imputed$m
+  e <- new.env()
   sf <- vector(mode = "list", length = m)
   filenames <- character(m)
   model <- NULL
@@ -549,14 +563,25 @@ dynamice <- function(dformula, data, time, group = NULL,
   for (i in seq_len(m)) {
     melt_data <- data.table::as.data.table(mice::complete(imputed, action = i))
     # Need to construct melt call dynamically because of patterns
-    melt_call_str <- paste0(
-      "data.table::melt(",
-      "melt_data, ",
-      "id.vars = c(group), ",
-      "variable.name = time, ",
-      "measure.vars = patterns(",
-      paste0(value_vars, " = '^", value_vars, "_'", collapse = ", "),
-      "))"
+    melt_call_str <- ifelse_(
+      length(value_vars) == 1L,
+      paste0(
+        "data.table::melt(",
+        "melt_data, ",
+        "id.vars = group, ",
+        "variable.name = time, ",
+        "value.name = value_vars",
+        ")"
+      ),
+      paste0(
+        "data.table::melt(",
+        "melt_data, ",
+        "id.vars = group, ",
+        "variable.name = time, ",
+        "measure.vars = patterns(",
+        paste0(value_vars, " = '^", value_vars, "__'", collapse = ", "),
+        "))"
+      )
     )
     data_long <- eval(str2lang(melt_call_str))
     tmp <- dynamite(
@@ -1228,6 +1253,42 @@ parse_lfactor <- function(lfactor_def, resp, families) {
     )
   }
   out
+}
+
+parse_predictors <- function(dformula, vars, time) {
+  n_vars <- length(vars)
+  n_time <- length(time)
+  wide_vars <- c(t(outer(vars, time, FUN = "paste", sep = "__")))
+  out <- matrix(
+    0L,
+    nrow = n_vars * n_time,
+    ncol = n_vars * n_time,
+    dimnames = list(wide_vars, wide_vars)
+  )
+  resp <- get_responses(dformula)
+  idx <- seq_along(time) - n_time
+  for (v in vars) {
+    idx <- idx + n_time
+    i <- which(resp == v)
+    if (length(i) > 0L) {
+      lag_map <- extract_lags(get_lag_terms(dformula[i]))
+      lag_map <- lag_map[lag_map$var %in% vars, ]
+      for (j in seq_len(nrow(lag_map))) {
+        idx_lag <- seq_len(n_time) + n_time *
+          (which(vars == lag_map$var[j]) - 1L)
+        idx_arr <- cbind(idx, idx_lag - lag_map$k[j])
+        idx_arr <- idx_arr[idx_arr[, 2L] >= min(idx_lag), , drop = FALSE]
+        out[idx_arr] <- 1L
+      }
+      nonlags <- get_nonlag_terms(dformula[i])[[1L]]
+      for (j in seq_along(nonlags)) {
+        idx_nonlag <- seq_len(n_time) + n_time *
+          (which(vars == nonlags[j]) - 1L)
+        out[cbind(idx, idx_nonlag)] <- 1L
+      }
+    }
+  }
+  out <- out + t(out)
 }
 
 #' Adds NA Gaps to Fill In Missing Time Points in a Data Frame

@@ -19,8 +19,8 @@ existing \code{dynamitefit} object. See \code{\link[=dynamiteformula]{dynamitefo
 \item{...}{Ignored.}
 
 \item{data}{[\code{data.frame}, \code{tibble::tibble}, or \code{data.table::data.table}]\cr
-The data that contains the variables in the
-model. Supported column types are \code{integer}, \code{logical}, \code{double}, and
+The data that contains the variables in the model in long format.
+Supported column types are \code{integer}, \code{logical}, \code{double}, and
 \code{factor}. Columns of type \code{character} will be converted to factors.
 Unused factor levels will be dropped. The \code{data} can contain missing
 values which will simply be ignored in the estimation in a case-wise
@@ -61,6 +61,7 @@ get_priors(obs(y ~ x, family = "gaussian"),
 }
 \seealso{
 Model fitting
+\code{\link{dynamice}()},
 \code{\link{dynamite}()},
 \code{\link{update.dynamitefit}()}
 }
