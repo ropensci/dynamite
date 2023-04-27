@@ -285,7 +285,7 @@ functions_lines_default <- function(y, idt, obs, family, has_missing,
       has_varying,
       c(
         stan_array_arg(backend, "int", "{LJ}_varying_{y}", 0, TRUE),
-        "vector delta_{y}"
+        stan_array_arg(backend, "vector", "delta_{y}")
       )
     ),
     onlyif(
@@ -512,7 +512,7 @@ functions_lines_categorical <- function(y, idt, obs, family, has_missing,
       onlyif(has_random || has_random_intercept, "matrix nu_{yi}"),
       onlyif(has_lfactor, c("vector lambda_{yi}", "vector psi_{yi}")),
       onlyif(has_fixed, "vector beta_{yi}"),
-      onlyif(has_varying, "vector[] delta_{yi}")
+      onlyif(has_varying, stan_array_arg(backend, "vector", "delta_{yi}"))
     )))
   }
 
@@ -709,7 +709,7 @@ functions_lines_mvgaussian <- function(idt, cvars, cgvars, backend,
         cvars[[i]]$has_varying,
         c(
           stan_array_arg(backend, "int", "J_varying_{yi}", 0, TRUE),
-          "vector delta_{yi}"
+          stan_array_arg(backend, "vector", "delta_{yi}")
         )
       ),
       "real sigma_{yi}"
@@ -747,7 +747,7 @@ functions_lines_mvgaussian <- function(idt, cvars, cgvars, backend,
       "matrix[O_{y_cg}, O_{y_cg}] Lsigma = ",
       "diag_pre_multiply(sigma_{y_cg}, L_{y_cg});"
     ),
-    "for (t in t_obs_{y}) {{",
+    "for (t in t_obs_{y_cg}) {{",
     "vector[O_{y_cg}] mu[{n_obs}];",
     "vector[{n_obs}] mu_{y} = {mu};",
     "for (i in 1:{n_obs}) {{",
