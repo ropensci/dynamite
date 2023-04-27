@@ -242,7 +242,7 @@ functions_lines_default <- function(y, idt, obs, family, has_missing,
     !has_lfactor && (glm || !has_X)
   n_obs <- ifelse_(
     nchar(obs),
-    "n_obs_{y}[t]",
+    paste0("n_obs_", y, "[t]"),
     "N"
   )
   intercept_line <- ifelse_(
@@ -1835,7 +1835,7 @@ model_lines_categorical <- function(y, obs, idt, priors,
                                     has_fixed_intercept, has_varying_intercept,
                                     has_random_intercept,
                                     has_fixed, has_varying, has_random,
-                                    has_lfactor, threading,
+                                    has_lfactor, threading, backend,
                                     categories, multinomial = FALSE,
                                     backend, ...) {
   distr <- ifelse_(multinomial, "multinomial", "categorical")

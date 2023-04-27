@@ -52,12 +52,16 @@
 #'   passed to the compile method of a `CmdStanModel` object via
 #'   [cmdstanr::cmdstan_model()] when `backend = "cmdstanr"`.
 #'   Defaults to `list("O1")` to enable level one compiler optimizations.
-#' @param threads_per_chain \[`integer(1)`]\cr A positive integer defining the
+#' @param threads_per_chain \[`integer(1)`]\cr A Positive integer defining the
 #'   number of parallel threads to use within each chain. Default is `1`. See
 #'   [rstan::rstan_options()] and [cmdstanr::sample()] for details.
-#' @param grainsize \[`integer(1)`]\cr A positive integer defining the
-#'   partial sum size for the `reduce_sum` function of Stan. See
-#'   https://mc-stan.org/docs/stan-users-guide/reduce-sum.html for details.
+#' @param grainsize \[`integer(1)`]\cr A Positive integer defining the
+#'   suggested size of the partial sums when using within-chain parallelization.
+#'   Default is number of time points divided by `threads_per_chain`.
+#'   Setting this to `1` leads the workload division entirely to the internal
+#'   scheduler. The performance of the within-chain parallelization can be
+#'   sensitive to the choice of `grainsize`, see Stan manual on reduce-sum for
+#'   details.
 #' @param debug \[`list()`]\cr A named list of form `name = TRUE` indicating
 #'   additional objects in the environment of the `dynamite` function which are
 #'   added to the return object. Additionally, values `no_compile = TRUE` and
@@ -533,6 +537,7 @@ dynamice <- function(dformula, data, time, group = NULL,
   imputed <- do.call(mice::mice, args = mice_args)
   measure_vars <- setdiff(names(data_wide), group)
   e <- new.env()
+  m <- mice_args$m
   sf <- vector(mode = "list", length = m)
   filenames <- character(m)
   model <- NULL
