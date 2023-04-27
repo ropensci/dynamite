@@ -295,7 +295,7 @@ functions_lines_default <- function(y, idt, obs, family, has_missing,
         "data int K_{y}"
       )
     ),
-    onlyif(has_X, "data matrix[] X"),
+    onlyif(has_X, "data array[] matrix X"),
     onlyif(has_offset, "data matrix offset_{y}"),
     onlyif(
       is_binomial(family),
@@ -554,7 +554,7 @@ functions_lines_categorical <- function(y, idt, obs, family, has_missing,
         "data int K_{y}"
       )
     ),
-    onlyif(has_X, "data matrix[] X")
+    onlyif(has_X, "data array[] matrix X")
   )))
 
   n_obs <- ifelse_(
@@ -731,7 +731,7 @@ functions_lines_mvgaussian <- function(idt, cvars, cgvars, backend,
     paste0("data vector[,] y_{y_cg}"),
     "int O_{y_cg}",
     fun_args,
-    onlyif(has_X, "data matrix[] X"),
+    onlyif(has_X, "data array[] matrix X"),
     "matrix L_{y_cg}"
   )))
   n_obs <- ifelse_(

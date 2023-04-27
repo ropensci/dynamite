@@ -203,7 +203,11 @@ create_transformed_data <- function(idt, backend, cg, cvars, cgvars, mvars) {
     "transformed data {",
     declarations,
     onlyif(has_lfactor, "vector[2 * N] QR_Q = create_Q(N);"),
-    "int seq1T[T] = linspaced_int_array(T, 1, T);",
+    ifelse_(
+      stan_supports_array_keyword(backend),
+      "array[T] int seq1T = linspaced_int_array(T, 1, T);",
+      "int seq1T[T] = linspaced_int_array(T, 1, T);"
+    ),
     statements,
     "}",
     .indent = idt(c(0, 0, 1, 1, 0, 0)),
