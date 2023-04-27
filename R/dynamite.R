@@ -516,7 +516,7 @@ dynamice <- function(dformula, data, time, group = NULL,
   imputed <- do.call(mice::mice, args = mice_args)
   measure_vars <- setdiff(names(data_wide), group)
   e <- new.env()
-  m <- mice_args$m
+  m <- imputed$m
   sf <- vector(mode = "list", length = m)
   filenames <- character(m)
   model <- NULL
