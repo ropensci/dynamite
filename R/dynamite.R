@@ -20,8 +20,8 @@
 #'   See [dynamite::dynamiteformula()] and 'Details'.
 #' @param data
 #'   \[`data.frame`, `tibble::tibble`, or `data.table::data.table`]\cr
-#'   The data that contains the variables in the
-#'   model. Supported column types are `integer`, `logical`, `double`, and
+#'   The data that contains the variables in the model in long format.
+#'   Supported column types are `integer`, `logical`, `double`, and
 #'   `factor`. Columns of type `character` will be converted to factors.
 #'   Unused factor levels will be dropped. The `data` can contain missing
 #'   values which will simply be ignored in the estimation in a case-wise
@@ -52,6 +52,12 @@
 #'   passed to the compile method of a `CmdStanModel` object via
 #'   [cmdstanr::cmdstan_model()] when `backend = "cmdstanr"`.
 #'   Defaults to `list("O1")` to enable level one compiler optimizations.
+#' @param threads_per_chain \[`integer(1)`]\cr A positive integer defining the
+#'   number of parallel threads to use within each chain. Default is `1`. See
+#'   [rstan::rstan_options()] and [cmdstanr::sample()] for details.
+#' @param grainsize \[`integer(1)`]\cr A positive integer defining the
+#'   partial sum size for the `reduce_sum` function of Stan. See
+#'   https://mc-stan.org/docs/stan-users-guide/reduce-sum.html for details.
 #' @param debug \[`list()`]\cr A named list of form `name = TRUE` indicating
 #'   additional objects in the environment of the `dynamite` function which are
 #'   added to the return object. Additionally, values `no_compile = TRUE` and
@@ -59,9 +65,6 @@
 #'   and sampling steps respectively. This can be useful for debugging when
 #'   combined with `model_code = TRUE`, which adds the Stan model code to the
 #'   return object.
-#' @param threads_per_chain \[`integer(1)`]\cr A Positive integer defining the
-#'   number of parallel threads to use within each chain. Default is `1`. See
-#'   [rstan::rstan_options()] and [cmdstanr::sample()] for details.
 #' @param ... For `dynamite()`, additional arguments to [rstan::sampling()] or
 #'   [cmdstanr::sample()], such as `chains` and `cores` (`chains` and
 #'   `parallel_chains` in `cmdstanr`). For `summary()`, additional arguments to
@@ -140,8 +143,9 @@
 dynamite <- function(dformula, data, time, group = NULL,
                      priors = NULL, backend = "rstan",
                      verbose = TRUE, verbose_stan = FALSE,
-                     stanc_options = list("O1"), debug = NULL,
-                     threads_per_chain = 1L, grainsize = NULL, ...) {
+                     stanc_options = list("O1"),
+                     threads_per_chain = 1L, grainsize = NULL,
+                     debug = NULL, ...) {
   dynamite_check(
     dformula,
     data,
@@ -151,6 +155,8 @@ dynamite <- function(dformula, data, time, group = NULL,
     verbose,
     verbose_stan,
     stanc_options,
+    thread_per_chain,
+    grainsize,
     debug
   )
   backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
@@ -188,9 +194,9 @@ dynamite <- function(dformula, data, time, group = NULL,
     verbose,
     verbose_stan,
     stanc_options,
-    debug,
     threads_per_chain,
     grainsize,
+    debug,
     ...
   )
   # extract elements for debug argument
@@ -233,8 +239,13 @@ dynamite <- function(dformula, data, time, group = NULL,
   out
 }
 
+
+#' Check `dynamite` Arguments
+#'
+#' @inheritParams dynamite
+#' @noRd
 dynamite_check <- function(dformula, data, time, group, priors, verbose,
-                           verbose_stan, stanc_options, debug, ...) {
+                           verbose_stan, stanc_options, debug) {
   stopifnot_(
     !missing(dformula),
     "Argument {.arg dformula} is missing."
@@ -287,16 +298,15 @@ dynamite_check <- function(dformula, data, time, group, priors, verbose,
     is.null(debug) || is.list(debug),
     "Argument {.arg debug} must be a {.cls list} or NULL."
   )
-  # TODO move these to dots?
-  #stopifnot_(
-  #  checkmate::test_int(x = threads_per_chain, lower = 1L),
-  #  "Argument {.arg threads_per_chain} must be a single positive integer."
-  #)
-  #stopifnot_(
-  #  checkmate::test_int(x = grainsize, lower = 1L, null.ok = TRUE),
-  #  "Argument {.arg grainsize} must be a single positive integer or
-  #  {.code NULL}."
-  #)
+  stopifnot_(
+    checkmate::test_int(x = threads_per_chain, lower = 1L),
+    "Argument {.arg threads_per_chain} must be a single positive integer."
+  )
+  stopifnot_(
+    checkmate::test_int(x = grainsize, lower = 1L, null.ok = TRUE),
+    "Argument {.arg grainsize} must be a single positive integer or
+    {.code NULL}."
+  )
 }
 
 #' Prepare Data for Stan and Construct a Stan Model for `dynamite`
@@ -307,7 +317,7 @@ dynamite_check <- function(dformula, data, time, group, priors, verbose,
 #' @noRd
 dynamite_stan <- function(dformulas, data, data_name, group, time,
                           priors, backend, verbose, verbose_stan,
-                          stanc_options, debug, threads_per_chain, grainsize,
+                          stanc_options, threads_per_chain, grainsize, debug,
                           ...) {
   stan_input <- prepare_stan_input(
     dformulas$stoch,
@@ -453,6 +463,14 @@ dynamite_sampling <- function(sampling, backend, model_code, model,
 
 #' Estimate a Bayesian Dynamic Multivariate Panel Model With Multiple Imputation
 #'
+#' Applies multiple imputation using [mice::mice()] to the supplied `data`
+#' and fits a dynamic multivariate panel model to each imputed data set using
+#' [dynamite::dynamite()]. Posterior samples from each imputation run are
+#' combined. The long format `data` is automatically converted to a
+#' wide format before imputation to preserve the longitudinal structure, and
+#' then converted back to long format for estimation.
+#'
+#' @family fitting
 #' @inheritParams dynamite
 #' @param mice_args \[`list()`]\cr
 #'   Arguments passed to [mice::mice()] excluding `data`.
@@ -460,9 +478,9 @@ dynamite_sampling <- function(sampling, backend, model_code, model,
 dynamice <- function(dformula, data, time, group = NULL,
                      priors = NULL, backend = "rstan",
                      verbose = TRUE, verbose_stan = FALSE,
-                     stanc_options = list("O1"), debug = NULL,
+                     stanc_options = list("O1"),
                      threads_per_chain = 1L, grainsize = NULL,
-                     mice_args = list(), ...) {
+                     debug = NULL, mice_args = list(), ...) {
   stopifnot_(
     requireNamespace("mice"),
     "Please install the {.pkg mice} package to use multiple imputation."
@@ -476,6 +494,8 @@ dynamice <- function(dformula, data, time, group = NULL,
     verbose,
     verbose_stan,
     stanc_options,
+    threads_per_chain,
+    grainsize,
     debug
   )
   backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
@@ -485,6 +505,10 @@ dynamice <- function(dformula, data, time, group = NULL,
   )
   data <- droplevels(data)
   data <- data.table::as.data.table(data)
+  stopifnot_(
+    any(is.na(data)),
+    "Argument {.arg data} does not contain missing values."
+  )
   if (is.null(group)) {
     group <- ".group"
     data_names <- names(data)
