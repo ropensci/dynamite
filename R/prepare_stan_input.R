@@ -319,13 +319,34 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
   )
   channel <- c(channel, indices)
   sampling <- setNames(indices, paste0(names(indices), "_", y_name))
+  # evaluate specials such as offset and trials
+  spec_na <- matrix(FALSE, nrow = T_full - fixed, ncol = N)
+  for (spec in formula_special_funs) {
+    if (!is.null(specials[[spec]])) {
+      spec_idx <- seq.int(fixed + 1L, T_full)
+      spec_split <- split(specials[[spec]], group)
+      spec_array <- array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
+      spec_na <- spec_na | is.na(spec_array[spec_idx, , drop = FALSE])
+      spec_name <- paste0(spec, "_", y_name)
+      sampling[[spec_name]] <- ifelse_(
+        identical(spec, "offset"),
+        t(spec_array[spec_idx, , drop = FALSE]),
+        spec_array[spec_idx, , drop = FALSE]
+      )
+      channel[[paste0("has_", spec)]] <- TRUE
+    } else {
+      channel[[paste0("has_", spec)]] <- FALSE
+    }
+  }
   obs_idx <- array(0L, dim = c(N, T_full - fixed))
   obs_len <- integer(T_full - fixed)
   for (j in seq_len(T_full - fixed)) {
     x_na <- X_na[j, , channel$J, drop = FALSE]
     dim(x_na) <- c(N, channel$K)
     y_na <- Y_na[j, ]
-    obs_XY <- which(apply(x_na, 1L, function(z) all(!z)) & !y_na)
+    obs_XY <- which(
+      apply(x_na, 1L, function(z) all(!z)) & !y_na & all(!spec_na[j, ])
+    )
     obs_XY_len <- length(obs_XY)
     obs_idx[, j] <- c(obs_XY, rep(0L, N - obs_XY_len))
     obs_len[j] <- obs_XY_len
@@ -361,22 +382,6 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
     "Model for response variable {.var {y}} contains time-varying
      definitions but splines have not been defined."
   )
-  # evaluate specials such as offset and trials
-  for (spec in formula_special_funs) {
-    if (!is.null(specials[[spec]])) {
-      spec_split <- split(specials[[spec]], group)
-      spec_array <- array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
-      spec_name <- paste0(spec, "_", y_name)
-      sampling[[spec_name]] <- ifelse_(
-        identical(spec, "offset"),
-        t(spec_array[seq.int(fixed + 1L, T_full), , drop = FALSE]),
-        spec_array[seq.int(fixed + 1L, T_full), , drop = FALSE]
-      )
-      channel[[paste0("has_", spec)]] <- TRUE
-    } else {
-      channel[[paste0("has_", spec)]] <- FALSE
-    }
-  }
   sampling[[paste0("y_", y_name)]] <- ifelse_(
     dformula$family %in%
       c("gaussian", "gamma", "exponential", "beta", "student"),
