@@ -3,7 +3,7 @@
 #' @param backend \[`character(1)`]\cr Either `"rstan"` or `"cmdstanr"`
 #' @param type \[`character(1)`]\cr Variable type, e.g., `"int"`, `"real"` etc.
 #' @param name \[`character(1)`]\cr Name of the variable.
-#' @param arr_dis \[`character(1)`]\cr Dimensions of the array
+#' @param arr_dims \[`character(1)`]\cr Dimensions of the array
 #'   (without brackets).
 #' @param bounds \[`character(1)`]\cr Bounds of the variable (without < or >)
 #' @param dims \[`character(1)`]\cr Dimensions of the array elements
@@ -38,7 +38,21 @@ stan_array <- function(backend, type, name, arr_dims,
     )
   )
 }
-
+#' Create A Backward Compatible Stan Array for Function Arguments
+#' @noRd
+stan_array_arg <- function(backend, type, name, n_dims = 0, data = FALSE) {
+  commas <- paste(rep(",", n_dims), collapse = " ")
+  data <- ifelse(
+    data,
+    "data ",
+    ""
+  )
+  ifelse_(
+    stan_supports_array_keyword(backend),
+    paste0(data, "array[", commas, "] ", type, " ", name),
+    paste0(data, type, "[",commas, "] ", name)
+  )
+}
 #' Is Array Keyword Syntax Supported By Current Stan Version
 #'
 #' @param backend Either `"rstan"` or `"cmdstanr"`.

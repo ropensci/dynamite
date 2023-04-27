@@ -127,9 +127,9 @@ NULL
 # # Functions block -----------------------------------------------------------
 
 intercept_lines <- function(y, obs, family, has_varying, has_fixed, has_random,
-                      has_fixed_intercept,
-                      has_varying_intercept, has_random_intercept,
-                      has_lfactor, has_offset, backend, ydim = y, ...) {
+                            has_fixed_intercept,
+                            has_varying_intercept, has_random_intercept,
+                            has_lfactor, has_offset, backend, ydim = y, ...) {
 
   intercept_alpha <- ifelse_(
     has_fixed_intercept,
@@ -196,13 +196,13 @@ intercept_lines <- function(y, obs, family, has_varying, has_fixed, has_random,
     glue::glue("{intercept_alpha}{offset}{intercept_nu}{random}{lfactor}"),
     glue::glue("{intercept_alpha}{offset}{intercept_nu}{random}{lfactor}{fixed}{varying}")
   )
- intercept <- sub(
+  intercept <- sub(
     "^0 \\+",
     "",
     intercept
   )
- attr(intercept, "glm") <- glm
- intercept
+  attr(intercept, "glm") <- glm
+  intercept
 }
 functions_lines_default <- function(y, idt, obs, family, has_missing,
                                     has_varying, has_fixed, has_random,
@@ -226,7 +226,7 @@ functions_lines_default <- function(y, idt, obs, family, has_missing,
   extra_pars <- onlyif(
     family$name %in% c("gaussian", "student"),
     "real sigma_{y}"
-    )
+  )
   extra_pars <- ifelse_(
     family$name %in% c("negbin", "gamma", "beta", "student"),
     "real phi_{y}",
@@ -255,29 +255,54 @@ functions_lines_default <- function(y, idt, obs, family, has_missing,
     "L",
     "J"
   )
-  #TODO array style
   fun_args <- glue::glue(cs(c(
-      "int[] t_obs_{y}",
-      onlyif(threading, c("int start", "int end")),
-      ifelse_(
-        has_missing,
-        c("int[,] obs_{y}", "int[] n_obs_{y}"),
-        "int N"
+    stan_array_arg(backend, "int", "t_obs_{y}", 0, TRUE),
+    onlyif(threading, c("int start", "int end")),
+    ifelse_(
+      has_missing,
+      c(stan_array_arg(backend, "int", "obs_{y}", 1, TRUE),
+        stan_array_arg(backend, "int", "n_obs_{y}", 0, TRUE)
       ),
-      paste("data", y_type, "y_{y}"),
-      onlyif(has_fixed_intercept, "real alpha_{y}"),
-      onlyif(has_varying_intercept, "real[] alpha_{y}"),
-      onlyif(has_random, "data int[] L_random_{y}"),
-      onlyif(has_random || has_random_intercept, "matrix nu_{y}"),
-      onlyif(has_lfactor, c("vector lambda_{y}", "vector psi_{y}")),
-      onlyif(has_fixed, c("data int[] {LJ}_fixed_{y}", "vector beta_{y}")),
-      onlyif(has_varying, c("data int[] {LJ}_varying_{y}", "vector[] delta_{y}")),
-      onlyif(has_fixed || has_varying, c("data int[] J_{y}", "data int K_{y}")),
-      onlyif(has_X, "data matrix[] X"),
-      onlyif(has_offset, "data matrix offset_{y}"),
-      onlyif(is_binomial(family), "data int[] trials_{y}"),
-      extra_pars
-    ))
+      "data int N"
+    ),
+    paste("data", y_type, "y_{y}"),
+    onlyif(has_fixed_intercept, "real alpha_{y}"),
+    onlyif(
+      has_varying_intercept,
+      stan_array_arg(backend, "real", "alpha_{y}", 0)
+    ),
+    onlyif(has_random, stan_array_arg(backend, "int", "L_random_{y}", 0, TRUE)),
+    onlyif(has_random || has_random_intercept, "matrix nu_{y}"),
+    onlyif(has_lfactor, c("vector lambda_{y}", "vector psi_{y}")),
+    onlyif(
+      has_fixed,
+      c(
+        stan_array_arg(backend, "int", "{LJ}_fixed_{y}", 0, TRUE),
+        "vector beta_{y}"
+      )
+    ),
+    onlyif(
+      has_varying,
+      c(
+        stan_array_arg(backend, "int", "{LJ}_varying_{y}", 0, TRUE),
+        "vector delta_{y}"
+      )
+    ),
+    onlyif(
+      has_fixed || has_varying,
+      c(
+        stan_array_arg(backend, "int", "J_{y}", 0, TRUE),
+        "data int K_{y}"
+      )
+    ),
+    onlyif(has_X, "data matrix[] X"),
+    onlyif(has_offset, "data matrix offset_{y}"),
+    onlyif(
+      is_binomial(family),
+      stan_array_arg(backend, "int", "trials_{y}", 0, TRUE)
+    ),
+    extra_pars
+  ))
   )
 
   fun_body <- paste_rows(
@@ -307,8 +332,10 @@ functions_lines_gaussian <- function(y, obs, idt, default, ...) {
     glue::glue(
       "ll += normal_id_glm_lupdf(y_{y}[{obs}, t] | X[t][{obs}, J_{y}], ",
       "intercept_{y}, gamma__{y}, sigma_{y});"
-      ),
-     glue::glue("ll += normal_lupdf(y_{y}[{obs}, t] | intercept_{y}, sigma_{y});")
+    ),
+    glue::glue(
+      "ll += normal_lupdf(y_{y}[{obs}, t] | intercept_{y}, sigma_{y});"
+    )
   )
   fun_body <- default$fun_body
   fun_body <- gsub("__likelihood__", likelihood, fun_body)
@@ -366,7 +393,7 @@ functions_lines_poisson <- function(y, obs, idt, default, ...) {
   fun_body <- default$fun_body
   fun_body <- gsub("__likelihood__", likelihood, fun_body)
   paste_rows(
-     "real {default$fun_name}({default$fun_args}) {{",
+    "real {default$fun_name}({default$fun_args}) {{",
     "{fun_body}",
     "}}",
     .indent = idt(c(1, 0, 1))
@@ -377,10 +404,13 @@ functions_lines_negbin <- function(y, obs, idt, default, ...) {
   likelihood <- ifelse_(
     default$use_glm,
     glue::glue(
-      "ll += neg_binomial_2_log_glm_lupmf(y_{y}[t, {obs}] | X[t][{obs}, J_{y}], ",
-      "intercept_{y}, gamma__{y}, phi_{y});"
+      "ll += neg_binomial_2_log_glm_lupmf(y_{y}[t, {obs}] | ",
+      "X[t][{obs}, J_{y}], intercept_{y}, gamma__{y}, phi_{y});"
     ),
-    glue::glue("ll += neg_binomial_2_log_lupmf(y_{y}[t, {obs}] | intercept_{y}, phi_{y});")
+    glue::glue(
+      "ll += neg_binomial_2_log_lupmf(y_{y}[t, {obs}] | ",
+      "intercept_{y}, phi_{y});"
+    )
   )
   fun_body <- default$fun_body
   fun_body <- gsub("__likelihood__", likelihood, fun_body)
@@ -408,7 +438,8 @@ functions_lines_exponential <- function(y, obs, idt, default, ...) {
 
 functions_lines_gamma <- function(y, obs, idt, default, ...) {
   likelihood <- glue::glue(
-    "ll += gamma_lupdf(y_{y}[{obs}, t] | phi_{y}, phi_{y} * inv(exp(intercept_{y})));"
+    "ll += gamma_lupdf(y_{y}[{obs}, t] | phi_{y}, phi_{y} * ",
+    "inv(exp(intercept_{y})));"
   )
   fun_body <- default$fun_body
   fun_body <- gsub("__likelihood__", likelihood, fun_body)
@@ -422,7 +453,8 @@ functions_lines_gamma <- function(y, obs, idt, default, ...) {
 
 functions_lines_beta <- function(y, obs, idt, default, ...) {
   likelihood <- glue::glue(
-    "ll += beta_proportion_lupdf(y_{y}[{obs}, t] | inv_logit(intercept_{y}), phi_{y});"
+    "ll += beta_proportion_lupdf(y_{y}[{obs}, t] | ",
+    "inv_logit(intercept_{y}), phi_{y});"
   )
   fun_body <- default$fun_body
   fun_body <- gsub("__likelihood__", likelihood, fun_body)
@@ -435,7 +467,8 @@ functions_lines_beta <- function(y, obs, idt, default, ...) {
 }
 functions_lines_student <- function(y, obs, idt, default, ...) {
   likelihood <- glue::glue(
-    "ll += student_t_lupdf(y_{y}[{obs}, t] | phi_{y}, intercept_{y}, sigma_{y});"
+    "ll += student_t_lupdf(y_{y}[{obs}, t] | phi_{y}, intercept_{y}, ",
+    "sigma_{y});"
   )
   fun_body <- default$fun_body
   fun_body <- gsub("__likelihood__", likelihood, fun_body)
@@ -448,10 +481,12 @@ functions_lines_student <- function(y, obs, idt, default, ...) {
 }
 functions_lines_categorical <- function(y, idt, obs, family, has_missing,
                                         has_varying, has_fixed, has_random,
-                                        has_fixed_intercept, has_varying_intercept,
+                                        has_fixed_intercept,
+                                        has_varying_intercept,
                                         has_random_intercept, has_lfactor,
-                                        has_offset, backend, threading, ydim = y,
-                                        K, categories, multinomial = FALSE, ...) {
+                                        has_offset, backend, threading,
+                                        ydim = y, K, categories,
+                                        multinomial = FALSE, ...) {
   distr <- ifelse_(multinomial, "multinomial", "categorical")
   S <- length(categories)
   cats <- categories[seq.int(2L, S)]
@@ -470,7 +505,10 @@ functions_lines_categorical <- function(y, idt, obs, family, has_missing,
     )
     fun_args[i] <- glue::glue(cs(c(
       onlyif(has_fixed_intercept, "real alpha_{yi}"),
-      onlyif(has_varying_intercept, "real[] alpha_{yi}"),
+      onlyif(
+        has_varying_intercept,
+        stan_array_arg(backend, "real", "alpha_{yi}", 0)
+      ),
       onlyif(has_random || has_random_intercept, "matrix nu_{yi}"),
       onlyif(has_lfactor, c("vector lambda_{yi}", "vector psi_{yi}")),
       onlyif(has_fixed, "vector beta_{yi}"),
@@ -482,26 +520,43 @@ functions_lines_categorical <- function(y, idt, obs, family, has_missing,
   glm <- attr(intercept[[1]], "glm")
   LJ <- ifelse_(glm, "L", "J")
   fun_args <- glue::glue(cs(c(
-    "int[] t_obs_{y}",
+    stan_array_arg(backend, "int", "t_obs_{y}", 0, TRUE),
     onlyif(threading, c("int start", "int end")),
     ifelse_(
       has_missing,
-      c("int[,] obs_{y}", "int[] n_obs_{y}"),
-      "int N"
+      c(stan_array_arg(backend, "int", "obs_{y}", 1, TRUE),
+        stan_array_arg(backend, "int", "n_obs_{y}", 0, TRUE)
+      ),
+      "data int N"
     ),
-    ifelse_(
-      multinomial,
-      paste0("data int[,,] y_{y}"),
-      paste0("data int[,] y_{y}")
-    ),
-    "int S_{y}",
+    stan_array_arg(backend, "int", "y_{y}", 1 + multinomial, TRUE),
+    "data int S_{y}",
     fun_args,
-    onlyif(has_random, "int[] L_random_{y}"),
-    onlyif(has_fixed, "int[] {LJ}_fixed_{y}"),
-    onlyif(has_varying, "int[] {LJ}_varying_{y}"),
-    onlyif(has_fixed || has_varying, c("data int[] J_{y}", "data int K_{y}")),
+    onlyif(has_random, stan_array_arg(backend, "int", "L_random_{y}", 0, TRUE)),
+    onlyif(
+      has_fixed,
+      c(
+        stan_array_arg(backend, "int", "{LJ}_fixed_{y}", 0, TRUE),
+        "vector beta_{y}"
+      )
+    ),
+    onlyif(
+      has_varying,
+      c(
+        stan_array_arg(backend, "int", "{LJ}_varying_{y}", 0, TRUE),
+        "vector delta_{y}"
+      )
+    ),
+    onlyif(
+      has_fixed || has_varying,
+      c(
+        stan_array_arg(backend, "int", "J_{y}", 0, TRUE),
+        "data int K_{y}"
+      )
+    ),
     onlyif(has_X, "data matrix[] X")
   )))
+
   n_obs <- ifelse_(
     has_missing,
     glue::glue("n_obs_{y}[t]"),
@@ -538,8 +593,8 @@ functions_lines_categorical <- function(y, idt, obs, family, has_missing,
       )
     )
     likelihood_term <- paste0(
-      "ll += categorical_logit_glm_lupmf(y_{y}[t, {obs}] | X[t][{obs}, J_{y}], ",
-      "intercept_{y}, gamma__{y});"
+      "ll += categorical_logit_glm_lupmf(y_{y}[t, {obs}] | X[t][{obs},",
+      " J_{y}], intercept_{y}, gamma__{y});"
     )
     likelihood <- paste_rows(
       icpt,
@@ -564,7 +619,8 @@ functions_lines_categorical <- function(y, idt, obs, family, has_missing,
     )
     likelihood_term <- ifelse_(
       nzchar(obs),
-      "ll += {distr}_logit_lupmf(y_{y}[t, obs_{y}[i, t]{category_dim}] | intercept_{y});",
+      paste0("ll += {distr}_logit_lupmf(y_{y}[t, obs_{y}[i, t]{category_dim}]",
+             "| intercept_{y});"),
       "ll += {distr}_logit_lupmf(y_{y}[t, i{category_dim}] | intercept_{y});"
     )
     likelihood <- paste_rows(
@@ -584,7 +640,10 @@ functions_lines_categorical <- function(y, idt, obs, family, has_missing,
     )
   }
   fun_body <- paste_rows(
-    onlyif(K > 0L, glue::glue("vector[K_{y}] zeros_K_{y} = rep_vector(0, K_{y});")),
+    onlyif(
+      K > 0L,
+      glue::glue("vector[K_{y}] zeros_K_{y} = rep_vector(0, K_{y});")
+    ),
     "real ll = 0.0;",
     likelihood,
     "return ll;",
@@ -598,14 +657,17 @@ functions_lines_categorical <- function(y, idt, obs, family, has_missing,
     .indent = idt(c(1, 0, 1))
   )
 }
-functions_lines_multinomial <- function(idt, cvars, cgvars, threading, ...) {
+functions_lines_multinomial <- function(idt, cvars, cgvars, backend,
+                                        threading, ...) {
   cgvars$categories <- cgvars$y
   cgvars$y <- cgvars$y_cg
   cgvars$multinomial <- TRUE
   cgvars$threading <- threading
+  cgvars$backend <- backend
   do.call(functions_lines_categorical, args = c(cgvars, idt = idt))
 }
-functions_lines_mvgaussian <- function(idt, cvars, cgvars, backend, threading, ...) {
+functions_lines_mvgaussian <- function(idt, cvars, cgvars, backend,
+                                       threading, ...) {
 
   y <- cgvars$y
   y_cg <- cgvars$y_cg
@@ -620,24 +682,51 @@ functions_lines_mvgaussian <- function(idt, cvars, cgvars, backend, threading, .
     mu[i] <- do.call(intercept_lines, args = args)
     fun_args[i] <- glue::glue(cs(c(
       onlyif(cvars[[i]]$has_fixed_intercept, "real alpha_{yi}"),
-      onlyif(cvars[[i]]$has_varying_intercept, "real[] alpha_{yi}"),
-      onlyif(cvars[[i]]$has_random, "int[] L_random_{yi}"),
-      onlyif(cvars[[i]]$has_random || cvars[[i]]$has_random_intercept, "matrix nu_{yi}"),
-      onlyif(cvars[[i]]$has_lfactor, c("vector lambda_{yi}", "vector psi_{yi}")),
-      onlyif(cvars[[i]]$has_fixed, c("int[] J_fixed_{yi}", "vector beta_{yi}")),
-      onlyif(cvars[[i]]$has_varying, c("int[] J_varying_{yi}", "vector[] delta_{yi}")),
+      onlyif(
+        cvars[[i]]$has_varying_intercept,
+        stan_array_arg(backend, "real", "alpha_{yi}")
+      ),
+      onlyif(
+        cvars[[i]]$has_random,
+        stan_array_arg(backend, "int", "L_random_{yi}", 0, TRUE)
+      ),
+      onlyif(
+        cvars[[i]]$has_random || cvars[[i]]$has_random_intercept,
+        "matrix nu_{yi}"
+      ),
+      onlyif(
+        cvars[[i]]$has_lfactor,
+        c("vector lambda_{yi}", "vector psi_{yi}")
+      ),
+      onlyif(
+        cvars[[i]]$has_fixed,
+        c(
+          stan_array_arg(backend, "int", "J_fixed_{yi}", 0, TRUE),
+          "vector beta_{yi}"
+        )
+      ),
+      onlyif(
+        cvars[[i]]$has_varying,
+        c(
+          stan_array_arg(backend, "int", "J_varying_{yi}", 0, TRUE),
+          "vector delta_{yi}"
+        )
+      ),
       "real sigma_{yi}"
     )))
     has_X <- has_X ||
       cvars[[i]]$has_fixed || cvars[[i]]$has_varying || cvars[[i]]$has_random
   }
+
   fun_args <- glue::glue(cs(c(
-    "int[] t_obs_{y}",
+    stan_array_arg(backend, "int", "t_obs_{y_cg}", 0, TRUE),
     onlyif(threading, c("int start", "int end")),
     ifelse_(
       cgvars$has_missing,
-      c("int[,] obs_{y_cg}", "int[] n_obs_{y_cg}"),
-      "int N"
+      c(stan_array_arg(backend, "int", "obs_{y_cg}", 1, TRUE),
+        stan_array_arg(backend, "int", "n_obs_{y_cg}", 0, TRUE)
+      ),
+      "data int N"
     ),
     paste0("data vector[,] y_{y_cg}"),
     "int O_{y_cg}",
@@ -1552,7 +1641,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
     mtext_sigma_nu <- paste0(
       "sigma_nu_{y} ~ {prior_distr$sigma_nu_prior_distr}",
       "({dpars_sigma_nu});"
-      )
+    )
   } else {
     mtext_sigma_nu <-
       "sigma_nu_{y}[{1:K_random}] ~ {prior_distr$sigma_nu_prior_distr};"
@@ -1833,8 +1922,8 @@ model_lines_gaussian <- function(y, obs, idt, priors,
     threading,
     glue::glue(
       "target += reduce_sum(gaussian_loglik_{y}_lpmf, {seq1T}, grainsize, ",
-               "{fun_args});"
-      ),
+      "{fun_args});"
+    ),
     glue::glue(
       "target += gaussian_loglik_{y}_lpmf({seq1T} | {fun_args});"
     )
@@ -1865,9 +1954,15 @@ model_lines_mvgaussian <- function(cvars, cgvars, idt, threading, ...) {
     has_X <- has_X ||
       cvars[[i]]$has_fixed || cvars[[i]]$has_varying || cvars[[i]]$has_random
     fun_args[i] <- glue::glue(cs(c(
-      onlyif(cvars[[i]]$has_fixed_intercept || cvars[[i]]$has_varying_intercept, "alpha_{yi}"),
+      onlyif(
+        cvars[[i]]$has_fixed_intercept || cvars[[i]]$has_varying_intercept,
+        "alpha_{yi}"
+      ),
       onlyif(cvars[[i]]$has_random, "L_random_{yi}"),
-      onlyif(cvars[[i]]$has_random || cvars[[i]]$has_random_intercept, "nu_{yi}"),
+      onlyif(
+        cvars[[i]]$has_random || cvars[[i]]$has_random_intercept,
+        "nu_{yi}"
+      ),
       onlyif(cvars[[i]]$has_lfactor, c("lambda_{yi}", "psi_{yi}")),
       onlyif(cvars[[i]]$has_fixed, c("J_fixed_{yi}", "beta_{yi}")),
       onlyif(cvars[[i]]$has_varying, c("J_varying_{yi}", "delta_{yi}")),
@@ -1896,8 +1991,8 @@ model_lines_mvgaussian <- function(cvars, cgvars, idt, threading, ...) {
   likelihood <- ifelse_(
     threading,
     glue::glue(
-      "target += reduce_sum(mvgaussian_loglik_{y_cg}_lpmf, {seq1T}, grainsize, ",
-      "{fun_args});"
+      "target += reduce_sum(mvgaussian_loglik_{y_cg}_lpmf, {seq1T}, grainsize,",
+      " {fun_args});"
     ),
     glue::glue(
       "target += mvgaussian_loglik_{y_cg}_lpmf({seq1T} | {fun_args});"
