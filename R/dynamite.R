@@ -584,12 +584,20 @@ dynamice <- function(dformula, data, time, group = NULL,
       )
     )
     data_long <- eval(str2lang(melt_call_str))
+    if (length(value_vars) == 1L) {
+      pattern <- paste0("^", value_vars, "__")
+      data.table::set(
+        x = data_long,
+        j = time,
+        value = as.numeric(gsub(pattern, "", data_long[[time]]))
+      )
+    }
     tmp <- dynamite(
       dformula = dformula,
       data = data_long,
       time = time,
       group = group,
-      priors = priors,
+      priors = get_priors(dformula, data, time, group),
       backend = backend,
       verbose = FALSE,
       debug = list(
@@ -1288,7 +1296,7 @@ parse_predictors <- function(dformula, vars, time) {
       }
     }
   }
-  out <- out + t(out)
+  out + t(out)
 }
 
 #' Adds NA Gaps to Fill In Missing Time Points in a Data Frame
