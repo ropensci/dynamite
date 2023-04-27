@@ -159,7 +159,7 @@ dynamite <- function(dformula, data, time, group = NULL,
     verbose,
     verbose_stan,
     stanc_options,
-    thread_per_chain,
+    threads_per_chain,
     grainsize,
     debug
   )
