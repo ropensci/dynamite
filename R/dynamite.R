@@ -39,10 +39,6 @@
 #'   of the return object to get the column name of the new variable.
 #' @param priors \[`data.frame`]\cr An optional data frame with prior
 #'   definitions. See [dynamite::get_priors()] and 'Details'.
-#' @param impute_m \[`integer(1)`]\cr Number of imputed data sets to use when
-#'   `data` contains missing values for the response channels. The default
-#'   value `0` performs no imputation. Imputation is only supported for the
-#'   `cmdstanr` backend.
 #' @param backend \[`character(1)`]\cr Defines the backend interface to Stan,
 #'   should be  either `"rstan"` (the default) or `"cmdstanr"`. Note that
 #'   `cmdstanr` needs to be installed separately as it is not on CRAN. It also
@@ -142,77 +138,20 @@
 #' }
 #'
 dynamite <- function(dformula, data, time, group = NULL,
-                     priors = NULL, impute_m = 0L, backend = "rstan",
+                     priors = NULL, backend = "rstan",
                      verbose = TRUE, verbose_stan = FALSE,
                      stanc_options = list("O1"), debug = NULL,
                      threads_per_chain = 1L, grainsize = NULL, ...) {
-  stopifnot_(
-    !missing(dformula),
-    "Argument {.arg dformula} is missing."
-  )
-  stopifnot_(
-    !missing(data),
-    "Argument {.arg data} is missing."
-  )
-  stopifnot_(
-    !missing(time),
-    "Argument {.var time} is missing."
-  )
-  stopifnot_(
-    is.dynamiteformula(dformula),
-    "Argument {.arg dformula} must be a {.cls dynamiteformula} object."
-  )
-  stopifnot_(
-    length(which_stochastic(dformula)) > 0L,
-    "Argument {.arg dformula} must contain at least one stochastic channel."
-  )
-  stopifnot_(
-    is.data.frame(data),
-    "Argument {.arg data} must be a {.cls data.frame} object."
-  )
-  stopifnot_(
-    checkmate::test_string(
-      x = group,
-      null.ok = TRUE
-    ),
-    "Argument {.arg group} must be a single character string or {.code NULL}."
-  )
-  stopifnot_(
-    is.null(group) || !is.null(data[[group]]),
-    "Can't find grouping variable {.var {group}} in {.arg data}."
-  )
-  stopifnot_(
-    checkmate::test_string(x = time),
-    "Argument {.arg time} must be a single character string."
-  )
-  stopifnot_(
-    !is.null(data[[time]]),
-    "Can't find time index variable {.var {time}} in {.arg data}."
-  )
-  stopifnot_(
-    checkmate::test_flag(x = verbose),
-    "Argument {.arg verbose} must be a single {.cls logical} value."
-  )
-  stopifnot_(
-    checkmate::test_flag(x = verbose_stan),
-    "Argument {.arg verbose_stan} must be a single {.cls logical} value."
-  )
-  stopifnot_(
-    is.null(debug) || is.list(debug),
-    "Argument {.arg debug} must be a {.cls list} or NULL."
-  )
-  stopifnot_(
-    checkmate::test_int(x = threads_per_chain, lower = 1L),
-    "Argument {.arg threads_per_chain} must be a single positive integer."
-  )
-  stopifnot_(
-    checkmate::test_int(x = grainsize, lower = 1L, null.ok = TRUE),
-    "Argument {.arg grainsize} must be a single positive integer or
-    {.code NULL}."
-  )
-  stopifnot_(
-    checkmate::test_int(x = impute_m, lower = 0L, null.ok = FALSE),
-    "Argument {.arg impute_m} must be a single non-negative integer."
+  dynamite_check(
+    dformula,
+    data,
+    time,
+    group,
+    priors,
+    verbose,
+    verbose_stan,
+    stanc_options,
+    debug
   )
   backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
   stopifnot_(
@@ -281,7 +220,6 @@ dynamite <- function(dformula, data, time, group = NULL,
       time_var = time,
       priors = rbindlist_(stan_input$priors),
       backend = backend,
-      impute_m = impute_m,
       call = dynamite_call
     ),
     class = "dynamitefit"
@@ -292,15 +230,73 @@ dynamite <- function(dformula, data, time, group = NULL,
     got <- try(get(x = opt), silent = TRUE)
     out[[opt]] <- onlyif(!inherits(got, "try-error"), got)
   }
-  dynamite_impute(
-    out,
-    impute_m,
-    backend,
-    stanc_options,
-    threads_per_chain,
-    debug,
-    ...
+  out
+}
+
+dynamite_check <- function(dformula, data, time, group, priors, verbose,
+                           verbose_stan, stanc_options, debug, ...) {
+  stopifnot_(
+    !missing(dformula),
+    "Argument {.arg dformula} is missing."
   )
+  stopifnot_(
+    !missing(data),
+    "Argument {.arg data} is missing."
+  )
+  stopifnot_(
+    !missing(time),
+    "Argument {.var time} is missing."
+  )
+  stopifnot_(
+    is.dynamiteformula(dformula),
+    "Argument {.arg dformula} must be a {.cls dynamiteformula} object."
+  )
+  stopifnot_(
+    length(which_stochastic(dformula)) > 0L,
+    "Argument {.arg dformula} must contain at least one stochastic channel."
+  )
+  stopifnot_(
+    is.data.frame(data),
+    "Argument {.arg data} must be a {.cls data.frame} object."
+  )
+  stopifnot_(
+    checkmate::test_string(x = group, null.ok = TRUE),
+    "Argument {.arg group} must be a single character string or {.code NULL}."
+  )
+  stopifnot_(
+    is.null(group) || !is.null(data[[group]]),
+    "Can't find grouping variable {.var {group}} in {.arg data}."
+  )
+  stopifnot_(
+    checkmate::test_string(x = time),
+    "Argument {.arg time} must be a single character string."
+  )
+  stopifnot_(
+    !is.null(data[[time]]),
+    "Can't find time index variable {.var {time}} in {.arg data}."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = verbose),
+    "Argument {.arg verbose} must be a single {.cls logical} value."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = verbose_stan),
+    "Argument {.arg verbose_stan} must be a single {.cls logical} value."
+  )
+  stopifnot_(
+    is.null(debug) || is.list(debug),
+    "Argument {.arg debug} must be a {.cls list} or NULL."
+  )
+  # TODO move these to dots?
+  #stopifnot_(
+  #  checkmate::test_int(x = threads_per_chain, lower = 1L),
+  #  "Argument {.arg threads_per_chain} must be a single positive integer."
+  #)
+  #stopifnot_(
+  #  checkmate::test_int(x = grainsize, lower = 1L, null.ok = TRUE),
+  #  "Argument {.arg grainsize} must be a single positive integer or
+  #  {.code NULL}."
+  #)
 }
 
 #' Prepare Data for Stan and Construct a Stan Model for `dynamite`
@@ -455,110 +451,144 @@ dynamite_sampling <- function(sampling, backend, model_code, model,
   out
 }
 
-dynamite_impute <- function(x, impute_m, backend,
-                            stanc_options, threads_per_chain, debug, ...) {
-  if (identical(impute_m, 0L) ||
-      identical(backend, "rstan") ||
-      isTRUE(debug$no_compile) ||
-      isTRUE(debug$no_sampling)) {
-    return(x)
+#' Estimate a Bayesian Dynamic Multivariate Panel Model With Multiple Imputation
+#'
+#' @inheritParams dynamite
+#' @param mice_args \[`list()`]\cr
+#'   Arguments passed to [mice::mice()] excluding `data`.
+#' @export
+dynamice <- function(dformula, data, time, group = NULL,
+                     priors = NULL, backend = "rstan",
+                     verbose = TRUE, verbose_stan = FALSE,
+                     stanc_options = list("O1"), debug = NULL,
+                     threads_per_chain = 1L, grainsize = NULL,
+                     mice_args = list(), ...) {
+  stopifnot_(
+    requireNamespace("mice"),
+    "Please install the {.pkg mice} package to use multiple imputation."
+  )
+  dynamite_check(
+    dformula,
+    data,
+    time,
+    group,
+    priors,
+    verbose,
+    verbose_stan,
+    stanc_options,
+    debug
+  )
+  backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
+  stopifnot_(
+    !inherits(backend, "try-error"),
+    "Argument {.arg backend} must be {.val rstan} or {.val cmdstanr}."
+  )
+  data <- droplevels(data)
+  data <- data.table::as.data.table(data)
+  if (is.null(group)) {
+    group <- ".group"
+    data_names <- names(data)
+    while (group %in% data_names) {
+      group <- paste0(group, "_")
+    }
+    data[[group]] <- 1L
   }
-  pred <- initialize_predict(
-    object = x,
-    newdata = x$data,
-    type = "response",
-    eval_type = "predicted",
-    funs = list(),
-    impute = "none",
-    new_levels = "none",
-    global_fixed = FALSE,
-    n_draws = 1,
-    expand = TRUE,
-    df = FALSE,
-    overwrite = TRUE
+  d <- match.call()$data
+  data_name <- ifelse_(
+    is.symbol(d),
+    deparse1(d),
+    "NULL"
   )
-  dform <- eval(formula(x))
-  tmp <- dynamite(
-    dformula = dform,
-    data = pred,
-    time = x$time_var,
-    group = x$group_var,
-    priors = x$priors,
-    impute_m = 0L,
-    backend = "cmdstanr",
-    verbose = FALSE,
-    stanc_options = stanc_options,
-    threads_per_chain = threads_per_chain,
-    debug = list(
-      no_sampling = TRUE,
-      model_code = TRUE,
-      model = TRUE,
-      dots = TRUE
-    ),
-    ...
+  value_vars <- setdiff(names(data), c(time, group))
+  data_wide <- data.table::dcast(
+    data = data,
+    formula = as.formula(paste0(group, " ~ ", time)),
+    value.var = value_vars
   )
-  dots <- tmp$dots
-  dots$chains <- 1L
-  dots$parallel_chains <- 1L
-  dots$iter_sampling <- ceiling(x$stanfit@sim$n_save[1] / impute_m) #?
-  filenames <- c()
-  model <- tmp$model
-  model_code <- tmp$model_code
-  for (i in seq_len(impute_m)) {
+  mice_args$data <- data_wide
+  imputed <- do.call(mice::mice, args = mice_args)
+  measure_vars <- setdiff(names(data_wide), group)
+  e <- new.env()
+  sf <- vector(mode = "list", length = m)
+  filenames <- character(m)
+  model <- NULL
+  tmp <- NULL
+  for (i in seq_len(m)) {
+    melt_data <- data.table::as.data.table(mice::complete(imputed, action = i))
+    # Need to construct melt call dynamically because of patterns
+    melt_call_str <- paste0(
+      "data.table::melt(",
+      "melt_data, ",
+      "id.vars = c(group), ",
+      "variable.name = time, ",
+      "measure.vars = patterns(",
+      paste0(value_vars, " = '^", value_vars, "_'", collapse = ", "),
+      "))"
+    )
+    data_long <- eval(str2lang(melt_call_str))
     tmp <- dynamite(
-      dformula = dform,
-      data = pred,
-      time = x$time_var,
-      group = x$group_var,
-      priors = x$priors,
-      impute_m = 0L,
-      backend = "cmdstanr",
+      dformula = dformula,
+      data = data_long,
+      time = time,
+      group = group,
+      priors = priors,
+      backend = backend,
       verbose = FALSE,
-      debug = list(no_compile = TRUE, stan_input = TRUE),
+      debug = list(
+        dots = TRUE,
+        model = TRUE,
+        model_code = TRUE,
+        no_compile = i > 1L,
+        no_sampling = TRUE,
+        stan_input = TRUE
+      ),
       ...
     )
-    dots$chain_ids <- i
-    args <- c(
-      list(data = tmp$stan_input$sampling_vars),
-      dots,
-      output_dir = tempdir(),
-      threads_per_chain = onlyif(threads_per_chain > 1L, threads_per_chain)
-    )
-    sampling_out <- do.call(model$sample, args)
-    stanfit <- rstan::read_stan_csv(sampling_out$output_files())
-    tmp$stanfit <- stanfit
-    filenames <- c(filenames, sampling_out$output_files())
-
-    pred <- initialize_predict(
-      object = tmp,
-      newdata = x$data,
-      type = "response",
-      eval_type = "predicted",
-      funs = list(),
-      impute = "none",
-      new_levels = "none",
-      global_fixed = FALSE,
-      n_draws = 1,
-      expand = TRUE,
-      df = FALSE,
-      overwrite = TRUE
-    )
+    onlyif(i == 1L, e$model <- tmp$model)
+    dots <- tmp$dots
+    if (identical(backend, "rstan")) {
+      e$args <- c(
+        list(object = e$model, data = tmp$stan_input$sampling_vars),
+        dots
+      )
+      sf[[i]] <- with(e, {
+        do.call(rstan::sampling, args)
+      })
+    } else {
+      dots$chain_ids <- i
+      e$args <- c(
+        list(data = tmp$stan_input$sampling_vars),
+        dots,
+        output_dir = tempdir(),
+        threads_per_chain = onlyif(threads_per_chain > 1L, threads_per_chain)
+      )
+      sampling_out <- with(e, {
+        do.call(model$sample, args)
+      })
+      #stanfit <- rstan::read_stan_csv(sampling_out$output_files())
+      #tmp$stanfit <- stanfit
+      filenames[i] <- sampling_out$output_files()
+    }
   }
-  stanfit <- rstan::read_stan_csv(filenames)
-  stanfit@stanmodel <- methods::new("stanmodel", model_code = model_code)
+  if (identical(backend, "rstan")) {
+    stanfit <- rstan::sflist2stanfit(sf)
+  } else {
+    stanfit <- rstan::read_stan_csv(filenames)
+    stanfit@stanmodel <- methods::new("stanmodel", model_code = tmp$model_code)
+  }
+  # TODO return object? How is this going to work with update?
   structure(
     list(
       stanfit = stanfit,
-      dformulas = x$dformulas,
-      data = x$data,
-      data_name = x$data_name,
+      dformulas = tmp$dformulas,
+      data = data,
+      data_name = data_name,
       stan = tmp$stan,
-      group_var = x$group_var,
-      time_var = x$time_var,
-      priors = x$priors,
-      backend = "cmdstanr",
-      impute_m = impute_m,
-      call = x$call
+      group_var = group,
+      time_var = time,
+      priors = priors,
+      backend = backend,
+      call = tmp$call # TODO?
     ),
     class = "dynamitefit"
   )
