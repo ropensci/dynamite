@@ -529,31 +529,95 @@ dynamice <- function(dformula, data, time, group = NULL,
     "NULL"
   )
   value_vars <- setdiff(names(data), c(time, group))
-  data_wide <- data.table::dcast(
+
+  # Wide format imputation
+  # data_wide <- data.table::dcast(
+  #   data = data,
+  #   formula = as.formula(paste0(group, " ~ ", time)),
+  #   value.var = value_vars,
+  #   sep = "__"
+  # )
+  # if (length(value_vars) == 1L) {
+  #   names(data_wide)[-1L] <- paste0(value_vars, "__", names(data_wide)[-1L])
+  # }
+  # wide_vars <- names(data_wide)[-1L]
+  # mice_args$data <- data_wide
+  # complete_vars <- wide_vars[
+  #   vapply(
+  #     data_wide[, .SD, .SDcols = wide_vars],
+  #     function(x) all(!is.na(x)),
+  #     logical(1L)
+  #   )
+  # ]
+  # pred_mat <- parse_predictors(
+  #   dformula = dformula,
+  #   vars = value_vars,
+  #   time = sort(unique(data[[time]])),
+  #   group_var = group
+  # )
+  # pred_mat[complete_vars, ] <- 0L
+  # mice_args$predictorMatrix <- pred_mat
+  # imputed <- do.call(mice::mice, args = mice_args)
+
+  # Long format imputation
+  max_lag <- max(extract_lags(get_lag_terms(dformula))$k)
+  data_forward <- dynamite(
+    # Ensure that lags/leads exist for imputation by adding lags()
+    dformula = dformula + lags(k = max_lag),
     data = data,
-    formula = as.formula(paste0(group, " ~ ", time)),
-    value.var = value_vars,
-    sep = "__"
+    time = time,
+    group = group,
+    priors = get_priors(dformula, data, time, group),
+    backend = backend,
+    verbose = FALSE,
+    debug = list(no_compile = TRUE, no_sampling = TRUE)
+  )$data
+  data_rev <- data.table::copy(data)
+  data.table::set(
+    x = data_rev,
+    j = time,
+    value = rev(data[[time]])
   )
-  if (length(value_vars) == 1L) {
-    names(data_wide)[-1L] <- paste0(value_vars, "__", names(data_wide)[-1L])
-  }
-  wide_vars <- names(data_wide)[-1L]
-  mice_args$data <- data_wide
-  mice_args$predictorMatrix <- parse_predictors(
+  tmp <- dynamite(
+    dformula = dformula,
+    data = data_rev,
+    time = time,
+    group = group,
+    priors = get_priors(dformula, data, time, group),
+    backend = backend,
+    verbose = FALSE,
+    debug = list(no_compile = TRUE, no_sampling = TRUE)
+  )
+  data_backward <- tmp$data
+  data.table::set(
+    x = data_backward,
+    j = time,
+    value = rev(data_backward[[time]])
+  )
+  data.table::setkeyv(data_backward, c(group, time))
+  lags <- c(
+    get_responses(tmp$dformulas$lag_stoch),
+    get_responses(tmp$dformulas$lag_det)
+  )
+  data_backward <- data_backward[, .SD, .SDcols = lags]
+  leads <- gsub("_lag", "_lead", lags, fixed = TRUE)
+  colnames(data_backward) <- leads
+  mice_args$data <- cbind_datatable(data_forward, data_backward)
+  complete_vars <- vapply(
+    mice_args$data,
+    function(x) all(!is.na(x)),
+    logical(1L)
+  )
+  pred_mat <- parse_predictors(
     dformula = dformula,
     vars = value_vars,
-    time = sort(unique(data[[time]]))
+    all_vars = colnames(mice_args$data)
   )
-  complete_vars <- wide_vars[
-    vapply(
-      data_wide[, .SD, .SDcols = wide_vars],
-      function(x) all(!is.na(x)),
-      logical(1L)
-    )
-  ]
-  mice_args$predictorMatrix[complete_vars, ] <- 0L
+  pred_mat[complete_vars, ] <- 0L
+  mice_args$predictorMatrix <- pred_mat
+  mice_args$method <- "norm"
   imputed <- do.call(mice::mice, args = mice_args)
+
   m <- imputed$m
   e <- new.env()
   sf <- vector(mode = "list", length = m)
@@ -561,40 +625,45 @@ dynamice <- function(dformula, data, time, group = NULL,
   model <- NULL
   tmp <- NULL
   for (i in seq_len(m)) {
-    melt_data <- data.table::as.data.table(mice::complete(imputed, action = i))
-    # Need to construct melt call dynamically because of patterns
-    melt_call_str <- ifelse_(
-      length(value_vars) == 1L,
-      paste0(
-        "data.table::melt(",
-        "melt_data, ",
-        "id.vars = group, ",
-        "variable.name = time, ",
-        "value.name = value_vars",
-        ")"
-      ),
-      paste0(
-        "data.table::melt(",
-        "melt_data, ",
-        "id.vars = group, ",
-        "variable.name = time, ",
-        "measure.vars = patterns(",
-        paste0(value_vars, " = '^", value_vars, "__'", collapse = ", "),
-        "))"
-      )
-    )
-    data_long <- eval(str2lang(melt_call_str))
-    if (length(value_vars) == 1L) {
-      pattern <- paste0("^", value_vars, "__")
-      data.table::set(
-        x = data_long,
-        j = time,
-        value = as.numeric(gsub(pattern, "", data_long[[time]]))
-      )
-    }
+
+    # Wide to long in wide format imputation
+    # melt_data <- data.table::as.data.table(mice::complete(imputed, action = i))
+    # # Need to construct melt call dynamically because of patterns
+    # melt_call_str <- ifelse_(
+    #   length(value_vars) == 1L,
+    #   paste0(
+    #     "data.table::melt(",
+    #     "melt_data, ",
+    #     "id.vars = group, ",
+    #     "variable.name = time, ",
+    #     "value.name = value_vars",
+    #     ")"
+    #   ),
+    #   paste0(
+    #     "data.table::melt(",
+    #     "melt_data, ",
+    #     "id.vars = group, ",
+    #     "variable.name = time, ",
+    #     "measure.vars = patterns(",
+    #     paste0(value_vars, " = '^", value_vars, "__'", collapse = ", "),
+    #     "))"
+    #   )
+    # )
+    # data_long <- eval(str2lang(melt_call_str))
+    # if (length(value_vars) == 1L) {
+    #   pattern <- paste0("^", value_vars, "__")
+    #   data.table::set(
+    #     x = data_long,
+    #     j = time,
+    #     value = as.numeric(gsub(pattern, "", data_long[[time]]))
+    #   )
+    # }
+    data_imputed <- mice::complete(imputed, action = i)
+    data_imputed <- data_imputed[, c(group, time, value_vars)]
     tmp <- dynamite(
       dformula = dformula,
-      data = data_long,
+      #data = data_long,
+      data = data_imputed,
       time = time,
       group = group,
       priors = get_priors(dformula, data, time, group),
@@ -1263,40 +1332,76 @@ parse_lfactor <- function(lfactor_def, resp, families) {
   out
 }
 
-parse_predictors <- function(dformula, vars, time) {
+# Wide format predictor matrix
+# parse_predictors <- function(dformula, vars, time, group_var) {
+#   n_vars <- length(vars)
+#   n_time <- length(time)
+#   wide_vars <- c(t(outer(vars, time, FUN = "paste", sep = "__")))
+#   out <- matrix(
+#     0L,
+#     nrow = 1L + n_vars * n_time,
+#     ncol = 1L + n_vars * n_time,
+#     dimnames = list(c(group_var, wide_vars), c(group_var, wide_vars))
+#   )
+#   resp <- get_responses(dformula)
+#   idx <- 1L + seq_along(time) - n_time
+#   for (v in vars) {
+#     idx <- idx + n_time
+#     i <- which(resp == v)
+#     if (length(i) > 0L) {
+#       lag_map <- extract_lags(get_lag_terms(dformula[i]))
+#       lag_map <- lag_map[lag_map$var %in% vars, ]
+#       for (j in seq_len(nrow(lag_map))) {
+#         idx_lag <- 1L + seq_len(n_time) + n_time * (which(vars == lag_map$var[j]) - 1L)
+#         idx_arr <- cbind(idx, idx_lag - lag_map$k[j])
+#         idx_arr <- idx_arr[idx_arr[, 2L] >= min(idx_lag), , drop = FALSE]
+#         out[idx_arr] <- 1L
+#       }
+#       nonlags <- get_nonlag_terms(dformula[i])[[1L]]
+#       for (j in seq_along(nonlags)) {
+#         idx_nonlag <- 1L +
+#           seq_len(n_time) + n_time * (which(vars == nonlags[j]) - 1L)
+#         out[cbind(idx, idx_nonlag)] <- 1L
+#       }
+#     }
+#   }
+#   out + t(out)
+# }
+
+#' Long-format Predictor Matrix for Imputation
+#'
+#' @param dformula \[`dynamiteformula`]\cr The model formula.
+#' @param vars \[`character()`]\cr Names of the variables with NA values in the
+#'   data.
+#' @param all_vars \[`character()`]\cr Names of all data variables.
+#' @noRd
+parse_predictors <- function(dformula, vars, all_vars) {
   n_vars <- length(vars)
-  n_time <- length(time)
-  wide_vars <- c(t(outer(vars, time, FUN = "paste", sep = "__")))
+  n_all <- length(all_vars)
   out <- matrix(
     0L,
-    nrow = n_vars * n_time,
-    ncol = n_vars * n_time,
-    dimnames = list(wide_vars, wide_vars)
+    nrow = n_all,
+    ncol = n_all,
+    dimnames = list(all_vars, all_vars)
   )
   resp <- get_responses(dformula)
-  idx <- seq_along(time) - n_time
   for (v in vars) {
-    idx <- idx + n_time
     i <- which(resp == v)
     if (length(i) > 0L) {
       lag_map <- extract_lags(get_lag_terms(dformula[i]))
-      lag_map <- lag_map[lag_map$var %in% vars, ]
       for (j in seq_len(nrow(lag_map))) {
-        idx_lag <- seq_len(n_time) + n_time *
-          (which(vars == lag_map$var[j]) - 1L)
-        idx_arr <- cbind(idx, idx_lag - lag_map$k[j])
-        idx_arr <- idx_arr[idx_arr[, 2L] >= min(idx_lag), , drop = FALSE]
-        out[idx_arr] <- 1L
+        out[v, paste0(lag_map$var[j], "_lag", lag_map$k[j])] <- 1L
+        out[lag_map$var[j], paste0(v, "_lead", lag_map$k[j])] <- 1L *
+          (lag_map$var[j] %in% vars)
       }
       nonlags <- get_nonlag_terms(dformula[i])[[1L]]
       for (j in seq_along(nonlags)) {
-        idx_nonlag <- seq_len(n_time) + n_time *
-          (which(vars == nonlags[j]) - 1L)
-        out[cbind(idx, idx_nonlag)] <- 1L
+        out[v, nonlags[j]] <- 1L
+        out[nonlags[j], v] <- 1L * (nonlags[j] %in% vars)
       }
     }
   }
-  out + t(out)
+  out
 }
 
 #' Adds NA Gaps to Fill In Missing Time Points in a Data Frame
