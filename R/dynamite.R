@@ -615,7 +615,13 @@ dynamice <- function(dformula, data, time, group = NULL,
   )
   pred_mat[complete_vars, ] <- 0L
   mice_args$predictorMatrix <- pred_mat
-  mice_args$method <- "norm"
+  method <- rep("", length = ncol(pred_mat))
+  names(method) <- colnames(pred_mat)
+  method[value_vars] <- "norm"
+  mice_args$method <- method
+  ignore <- rep(FALSE, length = nrow(data))
+  ignore[which(data[[time]] <= max_lag)] <- TRUE
+  mice_args$ignore <- ignore
   imputed <- do.call(mice::mice, args = mice_args)
 
   m <- imputed$m
@@ -1390,9 +1396,15 @@ parse_predictors <- function(dformula, vars, all_vars) {
     if (length(i) > 0L) {
       lag_map <- extract_lags(get_lag_terms(dformula[i]))
       for (j in seq_len(nrow(lag_map))) {
-        out[v, paste0(lag_map$var[j], "_lag", lag_map$k[j])] <- 1L
-        out[lag_map$var[j], paste0(v, "_lead", lag_map$k[j])] <- 1L *
-          (lag_map$var[j] %in% vars)
+        lag <- paste0(lag_map$var[j], "_lag", lag_map$k[j])
+        lead <- paste0(v, "_lead", lag_map$k[j])
+        out[v, lag] <- 1L
+        out[lag_map$var[j], lead] <- 1L #*
+          #(lag_map$var[j] %in% vars)
+        # out[lead, v] <- 1L
+        # out[lead, lag] <- 1L
+        # out[lag, v] <- 1L
+        # out[lag, lead] <- 1L
       }
       nonlags <- get_nonlag_terms(dformula[i])[[1L]]
       for (j in seq_along(nonlags)) {
