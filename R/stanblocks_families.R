@@ -258,13 +258,13 @@ functions_lines_default <- function(y, idt, obs, family, has_missing,
     "J"
   )
   fun_args <- glue::glue(cs(c(
-    stan_array_arg(backend, "int", "t_obs_{y}", 0, TRUE),
+    stan_array_arg(backend, "int", "t_obs_{y}", 0L, TRUE),
     onlyif(threading, c("int start", "int end")),
     ifelse_(
       has_missing,
       c(
-        stan_array_arg(backend, "int", "obs_{y}", 1, TRUE),
-        stan_array_arg(backend, "int", "n_obs_{y}", 0, TRUE)
+        stan_array_arg(backend, "int", "obs_{y}", 1L, TRUE),
+        stan_array_arg(backend, "int", "n_obs_{y}", 0L, TRUE)
       ),
       "data int N"
     ),
@@ -272,12 +272,12 @@ functions_lines_default <- function(y, idt, obs, family, has_missing,
     onlyif(has_fixed_intercept, "real alpha_{y}"),
     onlyif(
       has_varying_intercept,
-      stan_array_arg(backend, "real", "alpha_{y}", 0)
+      stan_array_arg(backend, "real", "alpha_{y}", 0L)
     ),
     onlyif(
       has_random,
       c(
-        stan_array_arg(backend, "int", "L_random_{y}", 0, TRUE),
+        stan_array_arg(backend, "int", "L_random_{y}", 0L, TRUE),
         "int K_random_{y}"
       )
     ),
@@ -286,21 +286,21 @@ functions_lines_default <- function(y, idt, obs, family, has_missing,
     onlyif(
       has_fixed,
       c(
-        stan_array_arg(backend, "int", "{LJ}_fixed_{y}", 0, TRUE),
+        stan_array_arg(backend, "int", "{LJ}_fixed_{y}", 0L, TRUE),
         "vector beta_{y}"
       )
     ),
     onlyif(
       has_varying,
       c(
-        stan_array_arg(backend, "int", "{LJ}_varying_{y}", 0, TRUE),
+        stan_array_arg(backend, "int", "{LJ}_varying_{y}", 0L, TRUE),
         stan_array_arg(backend, "vector", "delta_{y}")
       )
     ),
     onlyif(
       has_fixed || has_varying,
       c(
-        stan_array_arg(backend, "int", "J_{y}", 0, TRUE),
+        stan_array_arg(backend, "int", "J_{y}", 0L, TRUE),
         "data int K_{y}"
       )
     ),
@@ -308,7 +308,7 @@ functions_lines_default <- function(y, idt, obs, family, has_missing,
     onlyif(has_offset, "data matrix offset_{y}"),
     onlyif(
       is_binomial(family),
-      stan_array_arg(backend, "int", "trials_{y}", 0, TRUE)
+      stan_array_arg(backend, "int", "trials_{y}", 1L, TRUE)
     ),
     extra_pars
   ))
@@ -516,7 +516,7 @@ functions_lines_categorical <- function(y, idt, obs, family, has_missing,
       onlyif(has_fixed_intercept, "real alpha_{yi}"),
       onlyif(
         has_varying_intercept,
-        stan_array_arg(backend, "real", "alpha_{yi}", 0)
+        stan_array_arg(backend, "real", "alpha_{yi}", 0L)
       ),
       onlyif(has_random || has_random_intercept, "matrix nu_{yi}"),
       onlyif(has_lfactor, c("vector lambda_{yi}", "vector psi_{yi}")),
@@ -529,12 +529,12 @@ functions_lines_categorical <- function(y, idt, obs, family, has_missing,
   glm <- attr(intercept[[1]], "glm")
   LJ <- ifelse_(glm, "L", "J")
   fun_args <- glue::glue(cs(c(
-    stan_array_arg(backend, "int", "t_obs_{y}", 0, TRUE),
+    stan_array_arg(backend, "int", "t_obs_{y}", 0L, TRUE),
     onlyif(threading, c("int start", "int end")),
     ifelse_(
       has_missing,
-      c(stan_array_arg(backend, "int", "obs_{y}", 1, TRUE),
-        stan_array_arg(backend, "int", "n_obs_{y}", 0, TRUE)
+      c(stan_array_arg(backend, "int", "obs_{y}", 1L, TRUE),
+        stan_array_arg(backend, "int", "n_obs_{y}", 0L, TRUE)
       ),
       "data int N"
     ),
@@ -544,22 +544,22 @@ functions_lines_categorical <- function(y, idt, obs, family, has_missing,
     onlyif(
       has_random,
       c(
-        stan_array_arg(backend, "int", "L_random_{y}", 0, TRUE),
+        stan_array_arg(backend, "int", "L_random_{y}", 0L, TRUE),
         "int K_random_{y}"
       )
     ),
     onlyif(
       has_fixed,
-      stan_array_arg(backend, "int", "{LJ}_fixed_{y}", 0, TRUE)
+      stan_array_arg(backend, "int", "{LJ}_fixed_{y}", 0L, TRUE)
     ),
     onlyif(
       has_varying,
-      stan_array_arg(backend, "int", "{LJ}_varying_{y}", 0, TRUE)
+      stan_array_arg(backend, "int", "{LJ}_varying_{y}", 0L, TRUE)
     ),
     onlyif(
       has_fixed || has_varying,
       c(
-        stan_array_arg(backend, "int", "J_{y}", 0, TRUE),
+        stan_array_arg(backend, "int", "J_{y}", 0L, TRUE),
         "data int K_{y}"
       )
     ),
@@ -698,7 +698,7 @@ functions_lines_mvgaussian <- function(idt, cvars, cgvars, backend,
       onlyif(
         cvars[[i]]$has_random,
         c(
-          stan_array_arg(backend, "int", "L_random_{yi}", 0, TRUE),
+          stan_array_arg(backend, "int", "L_random_{yi}", 0L, TRUE),
           "int K_random_{yi}"
         )
       ),
@@ -713,14 +713,14 @@ functions_lines_mvgaussian <- function(idt, cvars, cgvars, backend,
       onlyif(
         cvars[[i]]$has_fixed,
         c(
-          stan_array_arg(backend, "int", "J_fixed_{yi}", 0, TRUE),
+          stan_array_arg(backend, "int", "J_fixed_{yi}", 0L, TRUE),
           "vector beta_{yi}"
         )
       ),
       onlyif(
         cvars[[i]]$has_varying,
         c(
-          stan_array_arg(backend, "int", "J_varying_{yi}", 0, TRUE),
+          stan_array_arg(backend, "int", "J_varying_{yi}", 0L, TRUE),
           stan_array_arg(backend, "vector", "delta_{yi}")
         )
       ),
@@ -731,12 +731,12 @@ functions_lines_mvgaussian <- function(idt, cvars, cgvars, backend,
   }
 
   fun_args <- glue::glue(cs(c(
-    stan_array_arg(backend, "int", "t_obs_{y_cg}", 0, TRUE),
+    stan_array_arg(backend, "int", "t_obs_{y_cg}", 0L, TRUE),
     onlyif(threading, c("int start", "int end")),
     ifelse_(
       cgvars$has_missing,
-      c(stan_array_arg(backend, "int", "obs_{y_cg}", 1, TRUE),
-        stan_array_arg(backend, "int", "n_obs_{y_cg}", 0, TRUE)
+      c(stan_array_arg(backend, "int", "obs_{y_cg}", 1L, TRUE),
+        stan_array_arg(backend, "int", "n_obs_{y_cg}", 0L, TRUE)
       ),
       "data int N"
     ),
