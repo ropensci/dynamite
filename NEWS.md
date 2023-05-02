@@ -2,7 +2,6 @@
 
   * `dynamite()` now supports parallel computation via the reduce-sum functionality of Stan.
   * Fixed an issue in `predict()` that resulted in redundant `NAs produced` warnings.
-  * Estimation of dynamic multivariate panel models with multiple imputation is now available via the function `dynamice()` which uses the `mice` package.
   * Fixed an issue with `formula.dynamitefit()` with models that had multivariate channels.
 
 # dynamite 1.3.3

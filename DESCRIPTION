@@ -43,7 +43,6 @@ Suggests:
     covr,
     dplyr,
     knitr,
-    mice,
     mockthat,
     rmarkdown,
     testthat (>= 3.0.0),

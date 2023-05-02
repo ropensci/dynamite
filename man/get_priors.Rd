@@ -61,7 +61,6 @@ get_priors(obs(y ~ x, family = "gaussian"),
 }
 \seealso{
 Model fitting
-\code{\link{dynamice}()},
 \code{\link{dynamite}()},
 \code{\link{update.dynamitefit}()}
 }
