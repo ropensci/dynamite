@@ -1,8 +1,11 @@
+# dynamite 1.5.0
+
+  * Estimation of dynamic multivariate panel models with multiple imputation is now available via the function `dynamice()` which uses the `mice` package.
+
 # dynamite 1.4.0
 
   * `dynamite()` now supports parallel computation via the reduce-sum functionality of Stan.
   * Fixed an issue in `predict()` that resulted in redundant `NAs produced` warnings.
-  * Estimation of dynamic multivariate panel models with multiple imputation is now available via the function `dynamice()` which uses the `mice` package.
   * Fixed an issue with `formula.dynamitefit()` with models that had multivariate channels.
 
 # dynamite 1.3.3
@@ -14,8 +17,9 @@
   * Fixed the regularization of the default priors so that they match with the priors vignette.
   * Fixed an issue with the `update()` method for model fit objects without a group variable.
   * Fixed an issue with the `update()` method in `lfo()`.
-  * Fixed an issue with `"tau_alpha"` type parameters with the `as_draws()` method for categorical responses.
+  * Fixed an issue with `"tau"` and `"tau_alpha"` type parameters with the `as_draws()` method for categorical responses.
   * Fixed an issue with Stan code generation for models with time-varying covariates for categorical responses.
+  * Fixed an issue with `formula.dynamitefit()` when the model contained a `splines` component.
 
 # dynamite 1.3.1
 

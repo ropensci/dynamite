@@ -942,8 +942,9 @@ formula.dynamitefit <- function(x, ...) {
       "override = FALSE, ",
       "df = ", spline_def$bs_opts$df, ", ",
       "degree = ", spline_def$bs_opts$degree, ", ",
-      "lb_tau = ", spline_def$lb, ", ",
-      "noncentered = ", spline_def$noncentered, ")"
+      "lb_tau = c(", cs(spline_def$lb), "), ",
+      "noncentered = c(", cs(spline_def$noncentered), ")",
+      ")"
     )
   )
   lfactor_def <- attr(x$dformulas$stoch, "lfactor")
@@ -958,7 +959,8 @@ formula.dynamitefit <- function(x, ...) {
       "responses = ", lfactor_resp, ", ",
       "noncentered_psi = ", lfactor_def$noncentered_psi, ", ",
       "nonzero_lambda = c(", cs(lfactor_def$nonzero_lambda), "), ",
-      "correlated = ", lfactor_def$correlated, ")"
+      "correlated = ", lfactor_def$correlated,
+      ")"
     )
   )
   random_spec_def <- attr(x$dformulas$stoch, "random_spec")
@@ -967,7 +969,8 @@ formula.dynamitefit <- function(x, ...) {
     paste0(
       "random_spec(",
       "correlated = ", random_spec_def$correlated, ", ",
-      "noncentered = ", random_spec_def$noncentered, ")"
+      "noncentered = ", random_spec_def$noncentered,
+      ")"
     )
   )
   str2lang(
