@@ -16,7 +16,9 @@ Description: Easy-to-use and efficient interface for
   <doi:10.31235/osf.io/mdwu5>. The package supports joint modeling of multiple 
   measurements per individual, time-varying and time-invariant effects, and a 
   wide range of discrete and continuous distributions. Estimation of these 
-  dynamic multivariate panel models is carried out via 'Stan'.
+  dynamic multivariate panel models is carried out via 'Stan'. For an 
+  in-depth tutorial of the package, see (Tikka and Helske, 2023) 
+  <arxiv:2302.01607>.
 License: GPL (>= 3)
 URL: https://docs.ropensci.org/dynamite/, https://github.com/ropensci/dynamite/
 BugReports: https://github.com/ropensci/dynamite/issues/
