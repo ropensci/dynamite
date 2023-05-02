@@ -54,7 +54,7 @@ lags <- function(k = 1L, type = c("fixed", "varying", "random")) {
   )
 }
 
-#' Create a Lagged Version of a Vector
+#' Create a Lagging Version of a Vector
 #'
 #' @param x \[`vector()`]\cr A vector of values.
 #' @param k \[`integer(1)`]\cr Number of positions to lag by.

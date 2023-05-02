@@ -560,10 +560,23 @@ dynamice <- function(dformula, data, time, group = NULL,
   # imputed <- do.call(mice::mice, args = mice_args)
 
   # Long format imputation
-  max_lag <- max(extract_lags(get_lag_terms(dformula))$k)
+
+  max_lag <- max(
+    extract_lags(get_lag_terms(dformula))$k,
+    onlyif(
+      !is.null(attr(dformula, "lags")),
+      attr(dformula, "lags")$k
+    )
+  )
+  # Ensure that lags/leads exist for imputation by adding/incrementing lags()
+  dformula_tmp <- dformula
+  if (is.null(attr(dformula_tmp, "lags"))) {
+    dformula_tmp <- dformula_tmp + lags(k = max_lag)
+  } else {
+    attr(dformula_tmp, "lags")$k <- max_lag
+  }
   tmp <- dynamite(
-    # Ensure that lags/leads exist for imputation by adding lags()
-    dformula = dformula + lags(k = max_lag),
+    dformula = dformula_tmp,
     data = data,
     time = time,
     group = group,
@@ -581,7 +594,7 @@ dynamice <- function(dformula, data, time, group = NULL,
     value = rev(data[[time]])
   )
   tmp <- dynamite(
-    dformula = dformula,
+    dformula = dformula_tmp,
     data = data_rev,
     time = time,
     group = group,
@@ -597,12 +610,15 @@ dynamice <- function(dformula, data, time, group = NULL,
     value = rev(data_backward[[time]])
   )
   data.table::setkeyv(data_backward, c(group, time))
-  lags <- c(
-    get_responses(tmp$dformulas$lag_stoch),
-    get_responses(tmp$dformulas$lag_pred)
-  )
+  lag_stoch <- get_responses(tmp$dformulas$lag_stoch)
+  lag_pred <- get_responses(tmp$dformulas$lag_pred)
+  lag_det <- get_responses(tmp$dformulas$lag_det)
+  lead_stoch <- gsub("_lag", "_lead", lag_stoch, fixed = TRUE)
+  lead_pred <- gsub("_lag", "_lead", lag_pred, fixed = TRUE)
+  lead_det <- gsub("_lag", "_lead", lag_det, fixed = TRUE)
+  lags <- c(lag_stoch, lag_pred, lag_det)
+  leads <- c(lead_stoch, lead_pred, lead_det)
   data_backward <- data_backward[, .SD, .SDcols = lags]
-  leads <- gsub("_lag", "_lead", lags, fixed = TRUE)
   colnames(data_backward) <- leads
   mice_args$data <- cbind_datatable(data_forward, data_backward)
   complete_vars <- vapply(
@@ -620,6 +636,12 @@ dynamice <- function(dformula, data, time, group = NULL,
   method <- rep("", length = ncol(pred_mat))
   names(method) <- colnames(pred_mat)
   method[value_vars] <- "norm"
+  #method[lag_stoch] <- paste0("~ I(lag_(", get_rhs(tmp$dformulas$lag_stoch), "))")
+  #method[lag_pred] <- paste0("~ I(lag_(", get_rhs(tmp$dformulas$lag_pred), "))")
+  #method[lag_det] <- paste0("~ I(lag_(", get_rhs(tmp$dformulas$lag_det), "))")
+  #method[lead_stoch] <- paste0("~ I(lead_(", get_rhs(tmp$dformulas$lag_stoch), "))")
+  #method[lead_pred] <- paste0("~ I(lead_(", get_rhs(tmp$dformulas$lag_pred), "))")
+  #method[lead_det] <- paste0("~ I(lead_(", get_rhs(tmp$dformulas$lag_det), "))")
   mice_args$method <- method
   ignore <- rep(FALSE, length = nrow(data))
   ignore[which(data[[time]] <= max_lag)] <- TRUE
