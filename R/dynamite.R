@@ -586,7 +586,6 @@ dynamice <- function(dformula, data, time, group = NULL,
     debug = list(no_compile = TRUE, no_sampling = TRUE)
   )
   data_forward <- tmp$data
-  dformula_all <- tmp$dformulas$all
   data_rev <- data.table::copy(data)
   data.table::set(
     x = data_rev,
@@ -627,11 +626,14 @@ dynamice <- function(dformula, data, time, group = NULL,
     logical(1L)
   )
   pred_mat <- parse_predictors(
-    dformula = dformula_all,
+    dformula = dformula_tmp,
     vars = value_vars,
     all_vars = colnames(mice_args$data)
   )
+  pred_mat[, group] <- 1L
+  pred_mat[, time] <- 1L
   pred_mat[complete_vars, ] <- 0L
+  pred_mat[c(group, time), ] <- 0L
   mice_args$predictorMatrix <- pred_mat
   method <- rep("", length = ncol(pred_mat))
   names(method) <- colnames(pred_mat)
@@ -1421,7 +1423,15 @@ parse_predictors <- function(dformula, vars, all_vars) {
   for (v in vars) {
     i <- which(resp == v)
     if (length(i) > 0L) {
-      lag_map <- extract_lags(get_lag_terms(dformula[i]))
+      lag_map <- rbind(
+        extract_lags(get_lag_terms(dformula[i])),
+        expand.grid(
+          src = "",
+          var = resp,
+          k = attr(dformula, "lags")$k,
+          present = FALSE
+        )
+      )
       for (j in seq_len(nrow(lag_map))) {
         lag <- paste0(lag_map$var[j], "_lag", lag_map$k[j])
         lead <- paste0(v, "_lead", lag_map$k[j])
