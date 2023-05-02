@@ -67,6 +67,15 @@ lag_ <- function(x, k = 1) {
   out
 }
 
+#' Create a Leading Version of a Vector
+#'
+#' @param x \[`vector()`]\cr A vector of values.
+#' @param k \[`integer(1)`]\cr Number of positions to lead by.
+#' @noRd
+lead_ <- function(x, k = 1) {
+  rev(lag_(rev(x), k))
+}
+
 #' Adds Default Shift Values to Terms of the Form `lag(y)`
 #'
 #' @param x A `language` object.

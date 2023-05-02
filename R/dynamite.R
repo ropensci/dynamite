@@ -561,7 +561,7 @@ dynamice <- function(dformula, data, time, group = NULL,
 
   # Long format imputation
   max_lag <- max(extract_lags(get_lag_terms(dformula))$k)
-  data_forward <- dynamite(
+  tmp <- dynamite(
     # Ensure that lags/leads exist for imputation by adding lags()
     dformula = dformula + lags(k = max_lag),
     data = data,
@@ -571,7 +571,9 @@ dynamice <- function(dformula, data, time, group = NULL,
     backend = backend,
     verbose = FALSE,
     debug = list(no_compile = TRUE, no_sampling = TRUE)
-  )$data
+  )
+  data_forward <- tmp$data
+  dformula_all <- tmp$dformulas$all
   data_rev <- data.table::copy(data)
   data.table::set(
     x = data_rev,
@@ -597,7 +599,7 @@ dynamice <- function(dformula, data, time, group = NULL,
   data.table::setkeyv(data_backward, c(group, time))
   lags <- c(
     get_responses(tmp$dformulas$lag_stoch),
-    get_responses(tmp$dformulas$lag_det)
+    get_responses(tmp$dformulas$lag_pred)
   )
   data_backward <- data_backward[, .SD, .SDcols = lags]
   leads <- gsub("_lag", "_lead", lags, fixed = TRUE)
@@ -609,7 +611,7 @@ dynamice <- function(dformula, data, time, group = NULL,
     logical(1L)
   )
   pred_mat <- parse_predictors(
-    dformula = dformula,
+    dformula = dformula_all,
     vars = value_vars,
     all_vars = colnames(mice_args$data)
   )
