@@ -30,7 +30,7 @@ knitr::opts_chunk$set(
 [![dynamite CRAN badge](http://www.r-pkg.org/badges/version/dynamite)](https://cran.r-project.org/package=dynamite)
 <!-- badges: end -->
 
-The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use interface for Bayesian inference of complex panel (time series) data comprising of multiple measurements per multiple individuals measured in time. The main features distinguishing the package and the underlying methodology from many other approaches are:
+The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use interface for Bayesian inference of complex panel (time series) data comprising of multiple measurements per multiple individuals measured in time via dynamic multivariate panel models (DMPM). The main features distinguishing the package and the underlying methodology from many other approaches are:
 
 * Support for regular time-invariant effects, group-level random effects, and time-varying effects modeled via Bayesian P-splines.
 * Joint modeling of multiple measurements per individual (multiple channels) based directly on the assumed data generating process. Individual channels can be univariate or multivariate.
@@ -39,11 +39,11 @@ The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use i
 * Transparent quantification of parameter and predictive uncertainty due to a fully Bayesian approach.
 * User-friendly and efficient R interface with state-of-the-art estimation via Stan. Both `rstan` and `cmdstanr` backends are supported.
 
-The `dynamite` package is developed with the support of Academy of Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)). 
+The `dynamite` package is developed with the support of Academy of Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)). For further information on DMPMs and the `dynamite` package, see the related [arXiv](https://arxiv.org/abs/2302.01607) and [SocArXiv](https://osf.io/preprints/socarxiv/mdwu5/) preprints.
 
 ## Installation
 
-You can install the stable version of `dynamite` from  [CRAN](https://cran.r-project.org/package=dynamite), and the development version from [R-universe](https://r-universe.dev/search/) by running one the following lines:
+You can install the most recent stable version of `dynamite` from [CRAN](https://cran.r-project.org/package=dynamite), and the development version from [R-universe](https://r-universe.dev/search/) by running one the following lines:
 
 ```{r, eval = FALSE}
 install.packages("dynamite", repos = "https://ropensci.r-universe.dev")

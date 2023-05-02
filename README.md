@@ -22,8 +22,9 @@ badge](http://www.r-pkg.org/badges/version/dynamite)](https://cran.r-project.org
 The `dynamite` [R](https://www.r-project.org/) package provides an
 easy-to-use interface for Bayesian inference of complex panel (time
 series) data comprising of multiple measurements per multiple
-individuals measured in time. The main features distinguishing the
-package and the underlying methodology from many other approaches are:
+individuals measured in time via dynamic multivariate panel models
+(DMPM). The main features distinguishing the package and the underlying
+methodology from many other approaches are:
 
 - Support for regular time-invariant effects, group-level random
   effects, and time-varying effects modeled via Bayesian P-splines.
@@ -46,10 +47,13 @@ package and the underlying methodology from many other approaches are:
 
 The `dynamite` package is developed with the support of Academy of
 Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)).
+For further information on DMPMs and the `dynamite` package, see the
+related [arXiv](https://arxiv.org/abs/2302.01607) and
+[SocArXiv](https://osf.io/preprints/socarxiv/mdwu5/) preprints.
 
 ## Installation
 
-You can install the stable version of `dynamite` from
+You can install the most recent stable version of `dynamite` from
 [CRAN](https://cran.r-project.org/package=dynamite), and the development
 version from [R-universe](https://r-universe.dev/search/) by running one
 the following lines:
@@ -89,26 +93,25 @@ gaussian_example_fit
 #> Grouping variable: id (Number of groups: 50)
 #> Time index variable: time (Number of time points: 30)
 #> 
-#> Smallest bulk-ESS: 687 (sigma_nu_y_alpha)
-#> Smallest tail-ESS: 931 (sigma_nu_y_alpha)
-#> Largest Rhat: 1.006 (nu_y_alpha_id4)
+#> Smallest bulk-ESS: 557 (sigma_nu_y_alpha)
+#> Smallest tail-ESS: 1032 (sigma_nu_y_alpha)
+#> Largest Rhat: 1.006 (alpha_y[28])
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  4.869  2.737
-#> chain:2  4.848  2.877
+#> chain:1  4.809  2.653
+#> chain:2  4.765  1.802
 #> 
 #> Summary statistics of the time- and group-invariant parameters:
 #> # A tibble: 6 × 10
-#>   variable        mean median      sd     mad     q5   q95  rhat ess_b…¹ ess_t…²
-#>   <chr>          <dbl>  <dbl>   <dbl>   <dbl>  <dbl> <dbl> <dbl>   <dbl>   <dbl>
-#> 1 beta_y_z      1.97   1.97   0.0118  0.0123  1.95   1.99   1.00   2613.   1696.
-#> 2 sigma_nu_y_a… 0.0941 0.0936 0.0114  0.0113  0.0767 0.114  1.00    687.    931.
-#> 3 sigma_y       0.198  0.198  0.00386 0.00368 0.192  0.204  1.00   2697.   1510.
-#> 4 tau_alpha_y   0.208  0.202  0.0451  0.0412  0.145  0.290  1.00   1270.   1452.
-#> 5 tau_y_x       0.362  0.352  0.0673  0.0604  0.268  0.490  1.00   2103.   1725.
-#> 6 tau_y_y_lag1  0.107  0.103  0.0217  0.0204  0.0768 0.146  1.00   1739.   1184.
-#> # … with abbreviated variable names ¹​ess_bulk, ²​ess_tail
+#>   variable      mean median      sd     mad     q5   q95  rhat ess_bulk ess_tail
+#>   <chr>        <num>  <num>   <num>   <num>  <num> <num> <num>    <num>    <num>
+#> 1 beta_y_z    1.97   1.97   0.0121  0.0124  1.95   1.99  1.00     2122.    1385.
+#> 2 sigma_nu_y… 0.0944 0.0938 0.0112  0.0113  0.0774 0.114 0.999     557.    1032.
+#> 3 sigma_y     0.198  0.198  0.00368 0.00382 0.192  0.204 1.00     2169.    1398.
+#> 4 tau_alpha_y 0.209  0.202  0.0497  0.0453  0.143  0.298 1.00     1237.    1419.
+#> 5 tau_y_x     0.362  0.353  0.0674  0.0650  0.268  0.485 1.00     2177.    1670.
+#> 6 tau_y_y_la… 0.106  0.103  0.0216  0.0206  0.0770 0.146 1.00     1936.    1144.
 ```
 
 Posterior estimates of time-varying effects:

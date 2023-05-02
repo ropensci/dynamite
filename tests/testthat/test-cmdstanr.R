@@ -80,3 +80,32 @@ test_that("LOO and LFO works for AR(1) model estimated with cmdstanr", {
   expect_equal(l$ELPD_SE, 7.58842574523583, tolerance = 1)
   expect_error(plot(l), NA)
 })
+
+test_that("within-chain parallelization with cmdstanr works", {
+  skip_if_not(run_extended_tests)
+  skip_on_os("mac") # Seems to segfault on MacOS
+  set.seed(1)
+  f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
+    obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
+    obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
+    aux(numeric(logp) ~ log(p + 1))
+  fit_dynamite <- dynamite(
+    f,
+    data = multichannel_example,
+    time = "time",
+    group = "id",
+    backend = "cmdstanr",
+    show_messages = FALSE,
+    threads_per_chain = 2,
+    grainsize = 10,
+    chains = 2,
+    parallel_chains = 1
+  )
+  expect_equal(
+    coef(fit_dynamite)$mean[1L],
+    0.003,
+    tolerance = 0.1,
+    ignore_attr = TRUE
+  )
+  expect_error(get_code(fit_dynamite), NA)
+})

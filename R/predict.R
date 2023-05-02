@@ -493,6 +493,7 @@ predict_ <- function(object, simulated, storage, observed,
         if (identical(eval_type, "predicted")) {
           idx_na <- is.na(simulated[idx, .SD, .SDcols = resp[cg_idx]])
           e$idx_out <- which(idx_na, arr.ind = TRUE)[, "row"]
+          e$k_obs <- length(e$idx_out)
           e$idx_data <- idx[e$idx_out]
           if (any(idx_na)) {
             eval(e$call, envir = e)
@@ -619,7 +620,7 @@ finalize_predict <- function(type, resp_stoch, simulated, observed) {
       )
     }
     data.table::set(x = observed, j = resp, value = observed[[store]])
-    observed[, c(store) := NULL]
     simulated[, c(resp) := NULL]
+    observed[, c(store) := NULL]
   }
 }

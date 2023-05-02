@@ -124,7 +124,8 @@ test_that("non-glm categorical fit works", {
         iter = 2000,
         chains = 1,
         refresh = 0,
-        verbose = FALSE
+        verbose = FALSE,
+        threads_per_chain = 2
       )
     ),
     NA

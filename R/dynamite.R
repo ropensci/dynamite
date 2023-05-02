@@ -20,8 +20,8 @@
 #'   See [dynamite::dynamiteformula()] and 'Details'.
 #' @param data
 #'   \[`data.frame`, `tibble::tibble`, or `data.table::data.table`]\cr
-#'   The data that contains the variables in the
-#'   model. Supported column types are `integer`, `logical`, `double`, and
+#'   The data that contains the variables in the model in long format.
+#'   Supported column types are `integer`, `logical`, `double`, and
 #'   `factor`. Columns of type `character` will be converted to factors.
 #'   Unused factor levels will be dropped. The `data` can contain missing
 #'   values which will simply be ignored in the estimation in a case-wise
@@ -52,6 +52,16 @@
 #'   passed to the compile method of a `CmdStanModel` object via
 #'   [cmdstanr::cmdstan_model()] when `backend = "cmdstanr"`.
 #'   Defaults to `list("O1")` to enable level one compiler optimizations.
+#' @param threads_per_chain \[`integer(1)`]\cr A Positive integer defining the
+#'   number of parallel threads to use within each chain. Default is `1`. See
+#'   [rstan::rstan_options()] and [cmdstanr::sample()] for details.
+#' @param grainsize \[`integer(1)`]\cr A Positive integer defining the
+#'   suggested size of the partial sums when using within-chain parallelization.
+#'   Default is number of time points divided by `threads_per_chain`.
+#'   Setting this to `1` leads the workload division entirely to the internal
+#'   scheduler. The performance of the within-chain parallelization can be
+#'   sensitive to the choice of `grainsize`, see Stan manual on reduce-sum for
+#'   details.
 #' @param debug \[`list()`]\cr A named list of form `name = TRUE` indicating
 #'   additional objects in the environment of the `dynamite` function which are
 #'   added to the return object. Additionally, values `no_compile = TRUE` and
@@ -60,8 +70,8 @@
 #'   combined with `model_code = TRUE`, which adds the Stan model code to the
 #'   return object.
 #' @param ... For `dynamite()`, additional arguments to [rstan::sampling()] or
-#'   [cmdstanr::sample()], such as `chains` and `cores` (`parallel_chains` in
-#'   `cmdstanr`). For `summary()`, additional arguments to
+#'   [cmdstanr::sample()], such as `chains` and `cores` (`chains` and
+#'   `parallel_chains` in `cmdstanr`). For `summary()`, additional arguments to
 #'   [dynamite::as.data.frame.dynamitefit()]. For `print()`, further arguments
 #'   to the print method for tibbles (see [tibble::formatting]). Not used for
 #'   `formula()`.
@@ -137,61 +147,21 @@
 dynamite <- function(dformula, data, time, group = NULL,
                      priors = NULL, backend = "rstan",
                      verbose = TRUE, verbose_stan = FALSE,
-                     stanc_options = list("O1"), debug = NULL, ...) {
-  stopifnot_(
-    !missing(dformula),
-    "Argument {.arg dformula} is missing."
-  )
-  stopifnot_(
-    !missing(data),
-    "Argument {.arg data} is missing."
-  )
-  stopifnot_(
-    !missing(time),
-    "Argument {.var time} is missing."
-  )
-  stopifnot_(
-    is.dynamiteformula(dformula),
-    "Argument {.arg dformula} must be a {.cls dynamiteformula} object."
-  )
-  stopifnot_(
-    length(which_stochastic(dformula)) > 0L,
-    "Argument {.arg dformula} must contain at least one stochastic channel."
-  )
-  stopifnot_(
-    is.data.frame(data),
-    "Argument {.arg data} must be a {.cls data.frame} object."
-  )
-  stopifnot_(
-    checkmate::test_string(
-      x = group,
-      null.ok = TRUE
-    ),
-    "Argument {.arg group} must be a single character string or {.code NULL}."
-  )
-  stopifnot_(
-    is.null(group) || !is.null(data[[group]]),
-    "Can't find grouping variable {.var {group}} in {.arg data}."
-  )
-  stopifnot_(
-    checkmate::test_string(x = time),
-    "Argument {.arg time} must be a single character string."
-  )
-  stopifnot_(
-    !is.null(data[[time]]),
-    "Can't find time index variable {.var {time}} in {.arg data}."
-  )
-  stopifnot_(
-    checkmate::test_flag(x = verbose),
-    "Argument {.arg verbose} must be a single {.cls logical} value."
-  )
-  stopifnot_(
-    checkmate::test_flag(x = verbose_stan),
-    "Argument {.arg verbose_stan} must be a single {.cls logical} value."
-  )
-  stopifnot_(
-    is.null(debug) || is.list(debug),
-    "Argument {.arg debug} must be a {.cls list} or NULL."
+                     stanc_options = list("O1"),
+                     threads_per_chain = 1L, grainsize = NULL,
+                     debug = NULL, ...) {
+  dynamite_check(
+    dformula,
+    data,
+    time,
+    group,
+    priors,
+    verbose,
+    verbose_stan,
+    stanc_options,
+    threads_per_chain,
+    grainsize,
+    debug
   )
   backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
   stopifnot_(
@@ -228,12 +198,16 @@ dynamite <- function(dformula, data, time, group = NULL,
     verbose,
     verbose_stan,
     stanc_options,
+    threads_per_chain,
+    grainsize,
     debug,
     ...
   )
   # extract elements for debug argument
   stan_input <- stan_out$stan_input
   model_code <- stan_out$model_code
+  model <- stan_out$model
+  dots <- stan_out$dots
   stanfit <- stan_out$stanfit
   dynamite_call <- match.call()
   if (!is.null(debug) && !is.null(debug$stanfit)) {
@@ -269,6 +243,76 @@ dynamite <- function(dformula, data, time, group = NULL,
   out
 }
 
+#' Check `dynamite` Arguments
+#'
+#' @inheritParams dynamite
+#' @noRd
+dynamite_check <- function(dformula, data, time, group, priors, verbose,
+                           verbose_stan, stanc_options,
+                           threads_per_chain, grainsize, debug) {
+  stopifnot_(
+    !missing(dformula),
+    "Argument {.arg dformula} is missing."
+  )
+  stopifnot_(
+    !missing(data),
+    "Argument {.arg data} is missing."
+  )
+  stopifnot_(
+    !missing(time),
+    "Argument {.var time} is missing."
+  )
+  stopifnot_(
+    is.dynamiteformula(dformula),
+    "Argument {.arg dformula} must be a {.cls dynamiteformula} object."
+  )
+  stopifnot_(
+    length(which_stochastic(dformula)) > 0L,
+    "Argument {.arg dformula} must contain at least one stochastic channel."
+  )
+  stopifnot_(
+    is.data.frame(data),
+    "Argument {.arg data} must be a {.cls data.frame} object."
+  )
+  stopifnot_(
+    checkmate::test_string(x = group, null.ok = TRUE),
+    "Argument {.arg group} must be a single character string or {.code NULL}."
+  )
+  stopifnot_(
+    is.null(group) || !is.null(data[[group]]),
+    "Can't find grouping variable {.var {group}} in {.arg data}."
+  )
+  stopifnot_(
+    checkmate::test_string(x = time),
+    "Argument {.arg time} must be a single character string."
+  )
+  stopifnot_(
+    !is.null(data[[time]]),
+    "Can't find time index variable {.var {time}} in {.arg data}."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = verbose),
+    "Argument {.arg verbose} must be a single {.cls logical} value."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = verbose_stan),
+    "Argument {.arg verbose_stan} must be a single {.cls logical} value."
+  )
+  stopifnot_(
+    is.null(debug) || is.list(debug),
+    "Argument {.arg debug} must be a {.cls list} or NULL."
+  )
+  stopifnot_(
+    checkmate::test_int(x = threads_per_chain, lower = 1L),
+    "Argument {.arg threads_per_chain} must be a single positive integer."
+  )
+  stopifnot_(
+    checkmate::test_int(x = grainsize, lower = 1L, null.ok = TRUE),
+    "Argument {.arg grainsize} must be a single positive integer or
+    {.code NULL}."
+  )
+}
+
 #' Prepare Data for Stan and Construct a Stan Model for `dynamite`
 #'
 #' @inheritParams dynamite
@@ -277,7 +321,8 @@ dynamite <- function(dformula, data, time, group = NULL,
 #' @noRd
 dynamite_stan <- function(dformulas, data, data_name, group, time,
                           priors, backend, verbose, verbose_stan,
-                          stanc_options, debug, ...) {
+                          stanc_options, threads_per_chain, grainsize, debug,
+                          ...) {
   stan_input <- prepare_stan_input(
     dformulas$stoch,
     data,
@@ -287,15 +332,35 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     fixed = attr(dformulas$all, "max_lag"),
     verbose
   )
+  grainsize <- ifelse_(
+    is.null(grainsize),
+    max(1, floor(stan_input$sampling_vars$T / threads_per_chain)),
+    grainsize
+  )
+  stan_input$sampling_vars$grainsize <- grainsize
   model_code <- create_blocks(
     indent = 2L,
     backend = backend,
     cg = attr(dformulas$stoch, "channel_groups"),
     cvars = stan_input$channel_vars,
     cgvars = stan_input$channel_group_vars,
-    mvars = stan_input$model_vars
+    mvars = stan_input$model_vars,
+    threading = threads_per_chain > 1L
   )
   sampling_info(dformulas, verbose, debug, backend)
+  stopifnot_(
+    stan_version(backend) > "2.23" || threads_per_chain == 1L,
+    paste0(
+      "Within-chain parallelization is not supported for Stan version ",
+      stan_version(backend)
+    )
+  )
+
+  if (backend == "rstan" && threads_per_chain > 1L) {
+    old_options <- rstan::rstan_options("threads_per_chain")
+    on.exit(rstan::rstan_options(threads_per_chain = old_options))
+    rstan::rstan_options(threads_per_chain = threads_per_chain)
+  }
   # if debug$stanfit exists (from the update method) then don't recompile
   model <- ifelse_(
     is.null(debug) || is.null(debug$stanfit),
@@ -303,7 +368,8 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
       compile = is.null(debug) || !isTRUE(debug$no_compile),
       model_code = model_code,
       backend = backend,
-      stanc_options = stanc_options
+      stanc_options = stanc_options,
+      threads_per_chain = threads_per_chain
     ),
     debug$stanfit
   )
@@ -315,12 +381,15 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     model_code = model_code,
     model = model,
     sampling_vars = stan_input$sampling_vars,
-    dots = dots
+    dots = dots,
+    threads_per_chain = threads_per_chain
   )
   list(
     stan_input = stan_input,
     model_code = model_code,
-    stanfit = stanfit
+    stanfit = stanfit,
+    model = model,
+    dots = dots
   )
 }
 
@@ -330,16 +399,30 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
 #' @param compile \[`logical(1)`]\cr Should the model be compiled?
 #' @param model_code \[`logical(1)`]\cr The model code as a string.
 #' @noRd
-dynamite_model <- function(compile, model_code, backend, stanc_options) {
+dynamite_model <- function(compile, model_code, backend, stanc_options,
+                           threads_per_chain) {
   if (compile) {
     e <- new.env()
     if (backend == "rstan") {
       e$model_code <- model_code
-      with(e, {rstan::stan_model(model_code = model_code)})
+      with(e, {
+        rstan::stan_model(model_code = model_code)
+      })
     } else {
       e$file <- cmdstanr::write_stan_file(model_code)
       e$stanc_options <- stanc_options
-      with(e, {cmdstanr::cmdstan_model(file, stanc_options = stanc_options)})
+      e$cpp_options <- ifelse_(
+        threads_per_chain > 1L,
+        list(stan_threads = TRUE),
+        list()
+      )
+      with(e, {
+        cmdstanr::cmdstan_model(
+          file,
+          stanc_options = stanc_options,
+          cpp_options = cpp_options
+        )
+      })
     }
   } else {
     NULL
@@ -356,17 +439,25 @@ dynamite_model <- function(compile, model_code, backend, stanc_options) {
 #' @param dots \[`list()`]\cr Additional arguments for `rstan` or `cmdstanr`.
 #' @noRd
 dynamite_sampling <- function(sampling, backend, model_code, model,
-                              sampling_vars, dots) {
+                              sampling_vars, dots, threads_per_chain) {
   out <- NULL
   if (sampling) {
     e <- new.env()
     if (backend == "rstan") {
       e$args <- c(list(object = model, data = sampling_vars), dots)
-      out <- with(e, {do.call(rstan::sampling, args)})
+      out <- with(e, {
+        do.call(rstan::sampling, args)
+      })
     } else {
       e$model <- model
-      e$args <- c(list(data = sampling_vars), dots)
-      sampling_out <- with(e, {do.call(model$sample, args)})
+      e$args <- c(
+        list(data = sampling_vars),
+        dots,
+        threads_per_chain = onlyif(threads_per_chain > 1L, threads_per_chain)
+      )
+      sampling_out <- with(e, {
+        do.call(model$sample, args)
+      })
       out <- rstan::read_stan_csv(sampling_out$output_files())
       out@stanmodel <- methods::new("stanmodel", model_code = model_code)
     }
@@ -834,7 +925,8 @@ parse_components <- function(dformulas, data, group_var, time_var) {
             "The common time-varying intercept term of channel
             {.var {lresp[i]}} was removed as channel predictors
             contain latent factor specified with {.arg nonzero_lambda}
-            as TRUE.")
+            as TRUE."
+          )
         }
         ficpt <- dformulas$stoch[[j]]$has_fixed_intercept
         ricpt <- dformulas$stoch[[j]]$has_random_intercept
@@ -844,10 +936,10 @@ parse_components <- function(dformulas, data, group_var, time_var) {
             "The common time-invariant intercept term of channel
             {.var {lresp[i]}} was removed as channel predictors
             contain random intercept and latent factor specified
-            with {.arg nonzero_lambda} as TRUE.")
+            with {.arg nonzero_lambda} as TRUE."
+          )
         }
       }
-
     }
   }
   dformulas
