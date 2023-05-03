@@ -1850,7 +1850,6 @@ model_lines_categorical <- function(y, obs, idt, priors,
     )
     fun_args[i] <- glue::glue(cs(c(
       onlyif(has_fixed_intercept || has_varying_intercept, "alpha_{yi}"),
-      onlyif(has_varying_intercept, "alpha_{yi}"),
       onlyif(has_random || has_random_intercept, "nu_{yi}"),
       onlyif(has_lfactor, c("lambda_{y}_{yi}", "psi_{yi}")),
       onlyif(has_fixed, "beta_{yi}"),
