@@ -606,10 +606,10 @@ functions_lines_categorical <- function(y, idt, obs, family, has_missing,
       " J_{y}], intercept_{y}, gamma__{y});"
     )
     likelihood <- paste_rows(
-      icpt,
       gamma,
       beta,
       "for (t in t_obs_{y}) {{",
+      icpt,
       delta,
       likelihood_term,
       "}}",
