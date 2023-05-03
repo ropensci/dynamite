@@ -1086,10 +1086,20 @@ fill_time <- function(data, group_var, time_var) {
   #  by = group_var,
   #  env = list(time_var = time_var)
   # ]$V1
-  split_data <- split(data, by = group_var)
-  time_duplicated <- unlist(
-    lapply(split_data, function(x) any(duplicated(x[[time_var]])))
-  )
+  time_ivals <- diff(time)
+  time_scale <- min(diff(time))
+  full_time <- seq(time[1L], time[length(time)], by = time_scale)
+  data_groups <- as.integer(data[[group_var]])
+  group <- unique(data_groups)
+  n_group <- length(group)
+  time_duplicated <- logical(n_group)
+  time_missing <- logical(n_group)
+  for (i in seq_len(n_group)) {
+    idx_group <- which(data_groups == group[i])
+    sub <- data[idx_group, ]
+    time_duplicated[i] <- any(duplicated(sub[[time_var]]))
+    time_missing[i] <- !identical(sub[[time_var]], full_time)
+  }
   d <- which(time_duplicated)
   stopifnot_(
     all(!time_duplicated),
@@ -1099,21 +1109,16 @@ fill_time <- function(data, group_var, time_var) {
              {cli::qty(length(d))}{?has/have} duplicate observations."
     )
   )
-  time_ivals <- diff(time)
-  time_scale <- min(diff(time))
   stopifnot_(
     all(time_ivals[!is.na(time_ivals)] %% time_scale == 0),
     "Observations must occur at regular time intervals."
   )
-  full_time <- seq(time[1L], time[length(time)], by = time_scale)
+
   # time_missing <- data[,
   #  !identical(time_var, full_time),
   #  by = group_var,
   #  env = list(time_var = time_var, full_time = full_time)
   # ]$V1
-  time_missing <- unlist(
-    lapply(split_data, function(x) !identical(x[[time_var]], full_time))
-  )
   if (any(time_missing)) {
     full_data_template <- data.table::as.data.table(
       expand.grid(
