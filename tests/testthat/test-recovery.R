@@ -181,9 +181,13 @@ test_that("LOO works for AR(1) model", {
 })
 
 test_that("LOO works with separate channels", {
+  skip_if_not(run_extended_tests)
   set.seed(1)
   expect_error(
-    l <- loo(multichannel_example_fit, separate_channels = TRUE),
+    l <- loo(
+      update(multichannel_example_fit, thin = 1),
+      separate_channels = TRUE
+    ),
     NA
   )
   expect_equal(
