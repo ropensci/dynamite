@@ -338,14 +338,17 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     grainsize
   )
   stan_input$sampling_vars$grainsize <- grainsize
-  model_code <- create_blocks(
-    indent = 2L,
-    backend = backend,
-    cg = attr(dformulas$stoch, "channel_groups"),
-    cvars = stan_input$channel_vars,
-    cgvars = stan_input$channel_group_vars,
-    mvars = stan_input$model_vars,
-    threading = threads_per_chain > 1L
+  model_code <- onlyif(
+    !isFALSE(debug$model_code),
+    create_blocks(
+      indent = 2L,
+      backend = backend,
+      cg = attr(dformulas$stoch, "channel_groups"),
+      cvars = stan_input$channel_vars,
+      cgvars = stan_input$channel_group_vars,
+      mvars = stan_input$model_vars,
+      threading = threads_per_chain > 1L
+    )
   )
   sampling_info(dformulas, verbose, debug, backend)
   stopifnot_(

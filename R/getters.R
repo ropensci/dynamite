@@ -181,7 +181,7 @@ get_data.dynamiteformula <- function(x, data, time, group = NULL, ...) {
     data = data,
     time = time,
     group = group,
-    debug = list(no_compile = TRUE, stan_input = TRUE),
+    debug = list(no_compile = TRUE, stan_input = TRUE, model_code = FALSE),
     ...
   )
   out$stan_input$sampling_vars
@@ -195,7 +195,7 @@ get_data.dynamitefit <- function(x, ...) {
     data = x$data,
     time = x$time_var,
     group = x$group_var,
-    debug = list(no_compile = TRUE, stan_input = TRUE),
+    debug = list(no_compile = TRUE, stan_input = TRUE, model_code = FALSE),
     verbose = FALSE,
     ...
   )
