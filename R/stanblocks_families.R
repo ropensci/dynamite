@@ -2250,7 +2250,7 @@ model_lines_negbin <- function(y, obs, idt, priors,
           glm = TRUE
         ),
         onlyif(has_offset, glue::glue("offset_{y}")),
-        "phi_{y}"
+        glue::glue("phi_{y}")
       ),
       collapse = ","
     )
