@@ -2262,7 +2262,7 @@ model_lines_negbin <- function(y, obs, idt, priors,
     likelihood <- loglik_negbin(y, obs, idt, default)
   }
   model_text <- paste_rows(
-    "phi_{y} ~ {prior_distr$phi_prior_distr};",
+    glue::glue("phi_{y} ~ {prior_distr$phi_prior_distr};"),
     likelihood,
     .indent = idt(c(1, 0)),
     .parse = FALSE
