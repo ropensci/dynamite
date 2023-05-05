@@ -468,6 +468,7 @@ dynamite_sampling <- function(sampling, backend, model_code, model,
   out
 }
 
+
 #' Estimate a Bayesian Dynamic Multivariate Panel Model With Multiple Imputation
 #'
 #' Applies multiple imputation using [mice::mice()] to the supplied `data`
@@ -487,7 +488,7 @@ dynamice <- function(dformula, data, time, group = NULL,
                      verbose = TRUE, verbose_stan = FALSE,
                      stanc_options = list("O1"),
                      threads_per_chain = 1L, grainsize = NULL,
-                     debug = NULL, mice_args = list(), ...) {
+                     debug = NULL, mice_args = list(), impute_method = "default",...) {
   stopifnot_(
     requireNamespace("mice"),
     "Please install the {.pkg mice} package to use multiple imputation."
@@ -622,24 +623,57 @@ dynamice <- function(dformula, data, time, group = NULL,
   data_backward <- data_backward[, .SD, .SDcols = lags]
   colnames(data_backward) <- leads
   mice_args$data <- cbind_datatable(data_forward, data_backward)
-  complete_vars <- vapply(
-    mice_args$data,
-    function(x) all(!is.na(x)),
-    logical(1L)
-  )
+
+  # this is done automatically by mice?
+  # complete_vars <- vapply(
+  #   mice_args$data,
+  #   function(x) all(!is.na(x)),
+  #   logical(1L)
+  # )
   pred_mat <- parse_predictors(
     dformula = dformula_tmp,
     vars = value_vars,
     all_vars = colnames(mice_args$data)
   )
-  pred_mat[, group] <- 1L
-  pred_mat[, time] <- 1L
-  pred_mat[complete_vars, ] <- 0L
+  # for comparison purposes do not impute with group or time
+  # but these are needed for lag and lead "imputation"
+  #pred_mat[, group] <- 1L
+  #pred_mat[, time] <- 1L
+  # pred_mat[complete_vars, ] <- 0L
   pred_mat[c(group, time), ] <- 0L
-  mice_args$predictorMatrix <- pred_mat
+  pred_mat["x_lag1", "x"] <- 1L
+  pred_mat["y_lag1", "y"] <- 1L
+  pred_mat["x_lead1", "x"] <- 1L
+  pred_mat["y_lead1", "y"] <- 1L
+  pred_mat["x_lag1", group] <- 1L
+  pred_mat["y_lag1", group] <- 1L
+  pred_mat["x_lead1", group] <- 1L
+  pred_mat["y_lead1", group] <- 1L
+  pred_mat["x_lag1", time] <- 1L
+  pred_mat["y_lag1", time] <- 1L
+  pred_mat["x_lead1", time] <- 1L
+  pred_mat["y_lead1", time] <- 1L
+
   method <- rep("", length = ncol(pred_mat))
   names(method) <- colnames(pred_mat)
   method[value_vars] <- "norm"
+  # default is to impute only responses using non-imputed lead and lag
+  if (impute_method == "impute_and_use_all") {
+    method[lag_stoch] <- "lag"
+    method[lead_stoch] <- "lead"
+  }
+  if (impute_method == "impute_and_use_only_lags") {
+    # impute and use only lags
+    method[lag_stoch] <- "lag"
+    pred_mat[, "y_lead1"] <- 0L
+    pred_mat[, "x_lead1"] <- 0L
+  }
+  if (impute_method == "use_only_lag") {
+    # impute only responses, without using the leads
+    pred_mat[, "y_lead1"] <- 0L
+    pred_mat[, "x_lead1"] <- 0L
+  }
+  mice_args$predictorMatrix <- pred_mat
   #method[lag_stoch] <- paste0("~ I(lag_(", get_rhs(tmp$dformulas$lag_stoch), "))")
   #method[lag_pred] <- paste0("~ I(lag_(", get_rhs(tmp$dformulas$lag_pred), "))")
   #method[lag_det] <- paste0("~ I(lag_(", get_rhs(tmp$dformulas$lag_det), "))")
@@ -1369,7 +1403,6 @@ parse_lfactor <- function(lfactor_def, resp, families) {
   out
 }
 
-<<<<<<< HEAD
 # Wide format predictor matrix
 # parse_predictors <- function(dformula, vars, time, group_var) {
 #   n_vars <- length(vars)
@@ -1456,8 +1489,6 @@ parse_predictors <- function(dformula, vars, all_vars) {
   out
 }
 
-=======
->>>>>>> main
 #' Adds NA Gaps to Fill In Missing Time Points in a Data Frame
 #'
 #' @inheritParams dynamite
