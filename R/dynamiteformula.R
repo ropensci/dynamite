@@ -292,6 +292,8 @@ parse_formula <- function(x, original, family) {
   responses <- all.vars(formula_lhs(x))
   formula_str <- deparse1(formula_rhs(x))
   formula_parts <- strsplit(formula_str, "|", fixed = TRUE)[[1L]]
+  original_str <- deparse1(formula_rhs(original))
+  original_parts <- strsplit(original_str, "|", fixed = TRUE)[[1L]]
   n_formulas <- length(formula_parts)
   n_responses <- length(responses)
   if (is_multivariate(family)) {
@@ -330,6 +332,7 @@ parse_formula <- function(x, original, family) {
     formula_parts
   )
   formulas <- lapply(paste0(responses, "~", formula_parts), as.formula)
+  originals <- lapply(paste0(responses, " ~ ", original_parts), as.formula)
   predictors <- ulapply(formulas, function(y) {
     find_nonlags(formula_rhs(y))
   })
@@ -346,7 +349,7 @@ parse_formula <- function(x, original, family) {
   out <- vector(mode = "list", length = n_responses)
   for (i in seq_len(n_responses)) {
     out[[i]] <- formula_specials(formulas[[i]], original, family)
-    out[[i]]$original <- formulas[[i]]
+    out[[i]]$original <- originals[[i]]
     out[[i]]$name <- parse_name(responses[i])
   }
   out
@@ -421,7 +424,11 @@ print.dynamiteformula <- function(x, ...) {
   print.data.frame(out, right = FALSE)
   if (!is.null(attr(x, "lags"))) {
     k <- attr(x, "lags")$k
-    cat("\nLagged responses added as predictors with: k = ", cs(k), sep = "")
+    type <- attr(x, "lags")$type
+    cat(
+      "\nLagged responses added as ", type, " predictors with: k = ", cs(k),
+      sep = ""
+    )
   }
   if (!is.null(attr(x, "random_spec"))) {
     rand <- which_random(x)

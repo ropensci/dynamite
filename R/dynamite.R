@@ -243,7 +243,6 @@ dynamite <- function(dformula, data, time, group = NULL,
   out
 }
 
-
 #' Check `dynamite` Arguments
 #'
 #' @inheritParams dynamite
@@ -339,14 +338,17 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     grainsize
   )
   stan_input$sampling_vars$grainsize <- grainsize
-  model_code <- create_blocks(
-    indent = 2L,
-    backend = backend,
-    cg = attr(dformulas$stoch, "channel_groups"),
-    cvars = stan_input$channel_vars,
-    cgvars = stan_input$channel_group_vars,
-    mvars = stan_input$model_vars,
-    threading = threads_per_chain > 1L
+  model_code <- onlyif(
+    !isFALSE(debug$model_code),
+    create_blocks(
+      indent = 2L,
+      backend = backend,
+      cg = attr(dformulas$stoch, "channel_groups"),
+      cvars = stan_input$channel_vars,
+      cgvars = stan_input$channel_group_vars,
+      mvars = stan_input$model_vars,
+      threading = threads_per_chain > 1L
+    )
   )
   sampling_info(dformulas, verbose, debug, backend)
   stopifnot_(
@@ -1367,6 +1369,7 @@ parse_lfactor <- function(lfactor_def, resp, families) {
   out
 }
 
+<<<<<<< HEAD
 # Wide format predictor matrix
 # parse_predictors <- function(dformula, vars, time, group_var) {
 #   n_vars <- length(vars)
@@ -1453,6 +1456,8 @@ parse_predictors <- function(dformula, vars, all_vars) {
   out
 }
 
+=======
+>>>>>>> main
 #' Adds NA Gaps to Fill In Missing Time Points in a Data Frame
 #'
 #' @inheritParams dynamite
@@ -1468,10 +1473,20 @@ fill_time <- function(data, group_var, time_var) {
   #  by = group_var,
   #  env = list(time_var = time_var)
   # ]$V1
-  split_data <- split(data, by = group_var)
-  time_duplicated <- unlist(
-    lapply(split_data, function(x) any(duplicated(x[[time_var]])))
-  )
+  time_ivals <- diff(time)
+  time_scale <- min(diff(time))
+  full_time <- seq(time[1L], time[length(time)], by = time_scale)
+  data_groups <- as.integer(data[[group_var]])
+  group <- unique(data_groups)
+  n_group <- length(group)
+  time_duplicated <- logical(n_group)
+  time_missing <- logical(n_group)
+  for (i in seq_len(n_group)) {
+    idx_group <- which(data_groups == group[i])
+    sub <- data[idx_group, ]
+    time_duplicated[i] <- any(duplicated(sub[[time_var]]))
+    time_missing[i] <- !identical(sub[[time_var]], full_time)
+  }
   d <- which(time_duplicated)
   stopifnot_(
     all(!time_duplicated),
@@ -1481,21 +1496,16 @@ fill_time <- function(data, group_var, time_var) {
              {cli::qty(length(d))}{?has/have} duplicate observations."
     )
   )
-  time_ivals <- diff(time)
-  time_scale <- min(diff(time))
   stopifnot_(
     all(time_ivals[!is.na(time_ivals)] %% time_scale == 0),
     "Observations must occur at regular time intervals."
   )
-  full_time <- seq(time[1L], time[length(time)], by = time_scale)
+
   # time_missing <- data[,
   #  !identical(time_var, full_time),
   #  by = group_var,
   #  env = list(time_var = time_var, full_time = full_time)
   # ]$V1
-  time_missing <- unlist(
-    lapply(split_data, function(x) !identical(x[[time_var]], full_time))
-  )
   if (any(time_missing)) {
     full_data_template <- data.table::as.data.table(
       expand.grid(

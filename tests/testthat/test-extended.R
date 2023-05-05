@@ -111,7 +111,7 @@ test_that("multinomial fit and predict work", {
 
 test_that("non-glm categorical fit works", {
   skip_if_not(run_extended_tests)
-
+  skip_on_os("mac") # Seems to segfault on MacOS
   expect_error(
     mockthat::with_mock(
       stan_supports_categorical_logit_glm = function(...) FALSE,

@@ -181,9 +181,29 @@ test_that("LOO works for AR(1) model", {
 })
 
 test_that("LOO works with separate channels", {
+  skip_if_not(run_extended_tests)
   set.seed(1)
+  # Fit again so that recompile with update works with all platforms
+  multichannel_fit <- dynamite(
+    dformula = obs(g ~ lag(g) + lag(logp), family = "gaussian") +
+      obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
+      obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
+      aux(numeric(logp) ~ log(p + 1)),
+    data = multichannel_example,
+    time = "time",
+    group = "id",
+    verbose = FALSE,
+    chains = 1,
+    cores = 1,
+    iter = 2000,
+    warmup = 1000,
+    init = 0,
+    refresh = 0,
+    thin = 5,
+    save_warmup = FALSE
+  )
   expect_error(
-    l <- loo(multichannel_example_fit, separate_channels = TRUE),
+    l <- loo(update(multichannel_fit, thin = 1), separate_channels = TRUE),
     NA
   )
   expect_equal(

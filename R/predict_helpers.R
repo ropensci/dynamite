@@ -245,10 +245,27 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
   #  by = group_var,
   #  env = list(time_var = time_var)
   # ]$V1
-  split_data <- split(data, by = group_var)
-  time_duplicated <- unlist(
-    lapply(split_data, function(x) any(duplicated(x[[time_var]])))
+  time <- sort(unique(data[[time_var]]))
+  time_ivals <- diff(time)
+  time_scale <- min(diff(time))
+  full_time <- seq(time[1L], time[length(time)], by = time_scale)
+  data_groups <- as.integer(data[[group_var]])
+  group <- unique(data_groups)
+  n_group <- length(group)
+  time_duplicated <- logical(n_group)
+  time_groups <- list(
+    has_missing = logical(n_group),
+    has_gaps = logical(n_group)
   )
+  time_missing <- logical(n_group)
+  for (i in seq_len(n_group)) {
+    idx_group <- which(data_groups == group[i])
+    sub <- data[idx_group, ]
+    time_duplicated[i] <- any(duplicated(sub[[time_var]]))
+    time_groups$has_missing[i] <- !identical(sub[[time_var]], full_time)
+    time_groups$has_gaps[i] <- length(idx_group) !=
+      (diff(range(sub[[time_var]])) + 1L) * time_scale
+  }
   d <- which(time_duplicated)
   stopifnot_(
     all(!time_duplicated),
@@ -258,10 +275,8 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
              {cli::qty(d)}{?has/have} duplicate observations."
     )
   )
-  time <- sort(unique(data[[time_var]]))
   if (length(time) > 1L) {
     original_order <- colnames(data)
-    full_time <- seq(time[1L], time[length(time)], by = time_scale)
     # time_groups <- data[,
     # {
     #  has_missing = !identical(time_var, full_time)
@@ -275,16 +290,6 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
     #  time_scale = time_scale
     # )
     # ]
-    time_groups <- list(
-      has_missing = unlist(
-        lapply(split_data, function(x) !identical(x[[time_var]], full_time))
-      ),
-      has_gaps = unlist(
-        lapply(split_data, function(x) {
-          nrow(x) != (diff(range(x[[time_var]])) + 1L) * time_scale
-        })
-      )
-    )
     if (any(time_groups$has_missing)) {
       if (any(time_groups$has_gaps)) {
         warning_(c(

@@ -25,16 +25,19 @@ print.dynamitefit <- function(x, ...) {
   cat("Model:\n")
   attr(x$dformulas$all, "random") <- attr(x$dformulas$stoch, "random")
   print.dynamiteformula(x$dformulas$all)
-  cat("\nData: ", x$data_name, " (Number of observations: ", nobs(x), ")",
+  cat(
+    "\nData: ", x$data_name, " (Number of observations: ", nobs(x), ")",
     sep = ""
   )
   if (!is.null(x$group_var)) {
-    cat("\nGrouping variable: ", x$group_var, " (Number of groups: ",
+    cat(
+      "\nGrouping variable: ", x$group_var, " (Number of groups: ",
       n_unique(x$data[[x$group_var]]), ")",
       sep = ""
     )
   }
-  cat("\nTime index variable: ", x$time_var, " (Number of time points: ",
+  cat(
+    "\nTime index variable: ", x$time_var, " (Number of time points: ",
     n_unique(x$data[[x$time_var]]), ")\n",
     sep = ""
   )

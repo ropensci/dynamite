@@ -2,6 +2,11 @@
 
   * Estimation of dynamic multivariate panel models with multiple imputation is now available via the function `dynamice()` which uses the `mice` package.
 
+# dynamite 1.4.1
+
+  * Fixed an issue in `dynamite()` data parsing that caused substantial memory usage in some instances.
+  * Fixed an issue with Stan code generation for categorical responses.
+
 # dynamite 1.4.0
 
   * `dynamite()` now supports parallel computation via the reduce-sum functionality of Stan.

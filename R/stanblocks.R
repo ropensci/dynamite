@@ -62,14 +62,16 @@ create_functions <- function(idt, backend, cg, cvars, cgvars, mvars, threading) 
       .indent = idt(c(1, 2, 2, 3, 3, 2, 2, 1, 1, 2, 2, 2, 2, 3, 3, 2, 2, 2, 1))
     )
   }
-
-  n_cg <- n_unique(cg)
-  likelihood_functions_text <- character(n_cg)
-  for (i in seq_len(n_cg)) {
-    cg_idx <- which(cg == i)
-    likelihood_functions_text[i] <- create_functions_lines(
-      idt, backend, cvars[cg_idx], cgvars[[i]], threading
-    )
+  likelihood_functions_text <- ""
+  if (threading) {
+    n_cg <- n_unique(cg)
+    likelihood_functions_text <- character(n_cg)
+    for (i in seq_len(n_cg)) {
+      cg_idx <- which(cg == i)
+      likelihood_functions_text[i] <- create_functions_lines(
+        idt, backend, cvars[cg_idx], cgvars[[i]], threading
+      )
+    }
   }
   paste_rows(
     "functions {",
@@ -93,7 +95,7 @@ create_functions_lines <- function(idt, backend, cvars, cgvars, threading) {
       cvars[[1L]]$threading <- threading
     } else {
       cvars[[1L]]$default <- lines_wrap(
-        "functions", "default", idt, backend,
+        "loglik", "default", idt, backend,
         c(cvars[[1L]], threading = threading)
       )
     }
@@ -708,6 +710,9 @@ create_model_lines <- function(idt, backend, cvars, cgvars, mvars, threading) {
       cvars[[1L]]$backend <- backend
     } else {
       cvars[[1L]]$priors <- do.call(prior_lines, c(cvars[[1L]], idt = idt))
+      cvars[[1L]]$default <- lines_wrap(
+        "loglik", "default", idt, backend, c(cvars[[1L]], threading = threading)
+      )
     }
     cvars[[1L]]$threading <- threading
     lines_wrap("model", family, idt, backend, cvars[[1L]])

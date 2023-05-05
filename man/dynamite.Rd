@@ -190,7 +190,6 @@ from Panel Data with Dynamic Multivariate Panel Models. SocArxiv preprint,
 }
 \seealso{
 Model fitting
-\code{\link{dynamice}()},
 \code{\link{get_priors}()},
 \code{\link{update.dynamitefit}()}
 
