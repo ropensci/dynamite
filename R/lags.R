@@ -338,9 +338,10 @@ parse_new_lags <- function(dformula, channels_stoch, increment, type, lhs) {
   for (i in seq_along(channels_stoch)) {
     j <- channels_stoch[i]
     if (any(increment[[i]])) {
-      dformula[j] <- dynamiteformula_(
-        formula = increment_formula(
+      dformula[[j]] <- formula_specials(
+        x = increment_formula(
           formula = dformula[[j]]$formula,
+          specials = dformula[[j]]$specials,
           x = lhs[increment[[j]]],
           type = type,
           varying_idx = dformula[[j]]$varying,

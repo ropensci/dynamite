@@ -106,6 +106,7 @@ test_that("formula incrementation logic is correct", {
     form_list <- list(
       increment_formula(
         formula = o$formula,
+        specials = list(),
         x = "w",
         type = "fixed",
         varying_idx = o$varying,
@@ -117,6 +118,7 @@ test_that("formula incrementation logic is correct", {
       ),
       increment_formula(
         formula = o$formula,
+        specials = list(),
         x = "w",
         type = "varying",
         varying_idx = o$varying,
@@ -128,6 +130,7 @@ test_that("formula incrementation logic is correct", {
       ),
       increment_formula(
         formula = o$formula,
+        specials = list(),
         x = "w",
         type = "random",
         varying_idx = o$varying,

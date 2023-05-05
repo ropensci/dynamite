@@ -104,8 +104,10 @@ formula_specials <- function(x, original, family) {
     )
   }
   xt <- formula_terms(x)
+  resp <- deparse1(formula_lhs(x))
   list(
-    response = deparse1(formula_lhs(x)),
+    response = resp,
+    name = parse_name(resp),
     formula = x,
     family = family,
     original = original,
