@@ -631,15 +631,18 @@ formula.dynamitefit <- function(x, ...) {
     is.dynamitefit(x),
     "Argument {.arg x} must be a {.cls dynamitefit} object."
   )
+  cg <- attr(x$dformulas$all, "channel_groups")
+  cg_first <- which(!duplicated(cg))
+  dformula <- x$dformulas$all[cg_first]
   formula_str <- vapply(
-    get_originals(x$dformulas$all),
+    get_originals(dformula),
     deparse1,
     character(1L)
   )
-  ch_stoch <- which_stochastic(x$dformulas$all)
-  ch_det <- which_deterministic(x$dformulas$all)
+  ch_stoch <- which_stochastic(dformula)
+  ch_det <- which_deterministic(dformula)
   family_str <- vapply(
-    get_families(x$dformulas$all),
+    get_families(dformula),
     function(y) y$name,
     character(1L)
   )
@@ -671,7 +674,12 @@ formula.dynamitefit <- function(x, ...) {
       "splines(",
       "shrinkage = ", spline_def$shrinkage, ", ",
       "override = FALSE, ",
-      "df = ", spline_def$bs_opts$df, ", ",
+      "df = ", ifelse_(
+        is.null(spline_def$bs_opts$df),
+        "NULL",
+        spline_def$bs_opts$df
+      ),
+      ", ",
       "degree = ", spline_def$bs_opts$degree, ", ",
       "lb_tau = c(", cs(spline_def$lb), "), ",
       "noncentered = c(", cs(spline_def$noncentered), ")",

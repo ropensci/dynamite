@@ -89,6 +89,7 @@ drop_unused <- function(dformula, data, group_var, time_var) {
 #' Add Fixed or Varying Terms to a Formula
 #'
 #' @param formula \[`formula`]\cr A formula object.
+#' @param specials \[`list()`]\cr Special terms of the formula.
 #' @param x \[`character()`]\cr A vector of terms to add.
 #' @param type \[`character(1)`]\cr Either `"fixed"` or `"varying"`
 #'   indicating the type of terms to add.
@@ -103,7 +104,7 @@ drop_unused <- function(dformula, data, group_var, time_var) {
 #' @param random_icpt \[`logical(1)`]\cr
 #'   Does the formula have a random intercept
 #' @noRd
-increment_formula <- function(formula, x,
+increment_formula <- function(formula, specials, x,
                               type = c("fixed", "varying", "random"),
                               varying_idx, fixed_idx, random_idx,
                               varying_icpt, fixed_icpt, random_icpt) {
@@ -148,7 +149,15 @@ increment_formula <- function(formula, x,
     paste0(" + ", f, ifelse_(nzchar(f), " + ", ""), x_plus),
     ifelse_(nzchar(f), paste0(" + ", f), f)
   )
-  out_str <- glue::glue("{formula_str}{f_out}{v_out}{r_out}")
+  specials_out <- ""
+  for (spec in formula_special_funs) {
+    if (!is.null(specials[[spec]])) {
+      specials_out <- paste0(
+        specials_out, " + ", spec, "(", specials[[spec]], ")"
+      )
+    }
+  }
+  out_str <- glue::glue("{formula_str}{f_out}{v_out}{r_out}{specials_out}")
   as.formula(out_str)
 }
 

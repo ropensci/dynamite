@@ -129,6 +129,81 @@ test_that("formula can be extracted", {
   )
 })
 
+test_that("Formula extraction is correct", {
+  expect_identical(
+    deparse1(formula(gaussian_example_fit)),
+    paste0(
+      "obs(y ~ -1 + z + varying(~x + lag(y)) + ",
+      "random(~1), family = \"gaussian\") + ",
+      "splines(shrinkage = FALSE, override = FALSE, df = 20, ",
+      "degree = 3, lb_tau = c(0), noncentered = c(FALSE)) + ",
+      "random_spec(correlated = FALSE, noncentered = TRUE)"
+    )
+  )
+  expect_identical(
+    deparse1(formula(multichannel_example_fit)),
+    paste0(
+      "obs(g ~ lag(g) + lag(logp), family = \"gaussian\") + ",
+      "obs(p ~ lag(g) + lag(logp) + lag(b), family = \"poisson\") + ",
+      "obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = \"bernoulli\") + ",
+      "aux(numeric(logp) ~ log(p + 1))"
+    )
+  )
+  expect_identical(
+    deparse1(formula(categorical_example_fit)),
+    paste0(
+      "obs(x ~ z + lag(x) + lag(y), family = \"categorical\") + ",
+      "obs(y ~ z + lag(x) + lag(y), family = \"categorical\")"
+    )
+  )
+
+  f <- obs(z ~ w1, family = "gaussian") +
+    obs(c(w1, w2, w3) ~ 1 | y | varying(~-1 + x), family = "mvgaussian") +
+    lags(k = 1, type = "varying") +
+    splines()
+  d <- data.frame(
+    x = rnorm(10),
+    y = rnorm(10),
+    z = rnorm(10),
+    w1 = rnorm(10),
+    w2 = rnorm(10),
+    w3 = rnorm(10),
+    time = 1:10,
+    id = rep(1, 10)
+  )
+  fit <- dynamite(f, d, "time", "id", debug = list(no_compile = TRUE))
+  expect_identical(
+    deparse1(formula(fit)),
+    paste0(
+      "obs(z ~ w1, family = \"gaussian\") + ",
+      "obs(c(w1, w2, w3) ~ 1 | y | varying(~-1 + x), family = \"mvgaussian\") + ",
+      "lags(k = 1, type = \"varying\") + ",
+      "splines(shrinkage = FALSE, override = FALSE, df = NULL, degree = 3, ",
+      "lb_tau = c(0, 0, 0, 0), noncentered = c(FALSE, FALSE, FALSE, FALSE))"
+    )
+  )
+
+  f <- obs(c(a, b, c) ~ d + trials(n), family = "multinomial") +
+    lags(k = 1, type = "fixed")
+  d <- data.frame(
+    a = sample.int(5, 10, replace = TRUE),
+    b = sample.int(10, 10, replace = TRUE),
+    c = sample.int(12, 10, replace = TRUE),
+    d = rnorm(10),
+    time = 1:10,
+    id = rep(1, 10)
+  )
+  d$n <- d$a + d$b + d$c
+  fit <- dynamite(f, d, "time", "id", debug = list(no_compile = TRUE))
+  expect_identical(
+    deparse1(formula(fit)),
+    paste0(
+      "obs(c(a, b, c) ~ d + trials(n), family = \"multinomial\") + ",
+      "lags(k = 1, type = \"fixed\")"
+    )
+  )
+})
+
 test_that("MCMC diagnostics can be computed", {
   expect_error(
     capture_all_output(mcmc_diagnostics(gaussian_example_fit)),
