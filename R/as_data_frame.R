@@ -18,7 +18,6 @@
 #'  * `tau`\cr Standard deviations of the spline coefficients of `delta`.
 #'  * `tau_alpha`\cr Standard deviations of the spline coefficients of
 #'    time-varying `alpha`.
-#'  * `xi`\cr Common time-varying shrinkage factor for splines.
 #'  * `sigma_nu`\cr Standard deviations of the random effects `nu`.
 #'  * `corr_nu`\cr Pairwise within-group correlations of random effects `nu`.
 #'     Samples of the full correlation matrix can be extracted manually as

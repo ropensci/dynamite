@@ -210,6 +210,7 @@ test_that("random effects are handled correctly", {
 })
 
 test_that("shrinkage is handled correctly", {
+  skip()
   expect_error(
     obs_all_alpha <- obs(y1 ~ -1 + varying(~x1), family = "categorical") +
       obs(x3 ~ varying(~ -1 + x1), family = "categorical") +

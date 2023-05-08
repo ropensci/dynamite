@@ -190,7 +190,7 @@ test_that("predict with random variable trials works", {
 })
 
 test_that("shrinkage for splines is functional", {
-  skip_if_not(run_extended_tests)
+  skip("Shrinkage feature removed at least for now.")
 
   set.seed(1)
   expect_error(

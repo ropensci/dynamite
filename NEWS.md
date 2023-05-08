@@ -5,6 +5,7 @@
   * Fixed an issue with `formula.dynamitefit()` with models that had multinomial channels.
   * Fixed an issue with `formula.dynamitefit()` when the `df` argument of `splines()` was `NULL`.
   * Formulas with `trials()` and `offset()` terms are now properly parsed when using `lags()`.
+  * Removed experimental shrinkage feature.
 
 # dynamite 1.4.0
 

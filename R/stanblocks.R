@@ -522,7 +522,7 @@ create_model <- function(idt, backend, cg, cvars, cgvars, mvars, threading) {
   if (!is.null(spline_def) && spline_def$shrinkage) {
     xi_prior <- mvars$common_priors
     xi_prior <- xi_prior[xi_prior$parameter == "xi", "prior"]
-    spline_text <- paste_rows("xi[1] ~ {xi_prior};", .indent = idt(1))
+    spline_text <- paste_rows("xi ~ {xi_prior};", .indent = idt(1))
   }
   random_text <- ""
   if (mvars$random_def$M > 0L) {

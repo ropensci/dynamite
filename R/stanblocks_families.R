@@ -1835,7 +1835,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
     )
   } else {
     xi_term1 <- ifelse_(shrinkage, " * xi[1]", "")
-    xi_term <- ifelse_(shrinkage, " * xi[i - 1]", "")
+    xi_term <- ifelse_(shrinkage, " * xi[i]", "")
     mtext_omega <- paste_rows(
       paste0(
         "omega_raw_alpha_{y}[1] ~ normal(omega_alpha_1_{y}, ",

@@ -27,11 +27,6 @@
 #'   Can be a single logical value, or vector of logical values, defining the
 #'   parameterization separately for each channel, even for channels without
 #'   varying effects.
-#' @param shrinkage \[`logical(1)`]\cr If `TRUE`, a common global shrinkage
-#'   parameter \eqn{\xi} is used for the splines so that the standard
-#'   deviation of the random walk prior is of the spline coefficients is
-#'   \eqn{\xi\tau}. Default is `FALSE`. This is an experimental feature and
-#'   not tested comprehensively.
 #' @param override \[`logical(1)`]\cr If `FALSE` (the default), an existing
 #'    definition for the splines will not be overridden by another call to
 #'    `splines()`. If `TRUE`, any existing definitions will be replaced.
@@ -48,7 +43,8 @@
 #'   )
 #'
 splines <- function(df = NULL, degree = 3L, lb_tau = 0,
-                    noncentered = FALSE, shrinkage = FALSE, override = FALSE) {
+                    noncentered = FALSE, override = FALSE) {
+  shrinkage <- FALSE
   stopifnot_(
     checkmate::test_flag(x = shrinkage),
     "Argument {.arg shrinkage} must be a single {.cls logical} value."
