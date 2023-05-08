@@ -135,8 +135,8 @@ test_that("Formula extraction is correct", {
     paste0(
       "obs(y ~ -1 + z + varying(~x + lag(y)) + ",
       "random(~1), family = \"gaussian\") + ",
-      "splines(shrinkage = FALSE, override = FALSE, df = 20, ",
-      "degree = 3, lb_tau = c(0), noncentered = c(FALSE)) + ",
+      "splines(df = 20, degree = 3, lb_tau = c(0), ",
+      "noncentered = c(FALSE), override = FALSE) + ",
       "random_spec(correlated = FALSE, noncentered = TRUE)"
     )
   )
@@ -178,8 +178,8 @@ test_that("Formula extraction is correct", {
       "obs(z ~ w1, family = \"gaussian\") + ",
       "obs(c(w1, w2, w3) ~ 1 | y | varying(~-1 + x), family = \"mvgaussian\") + ",
       "lags(k = 1, type = \"varying\") + ",
-      "splines(shrinkage = FALSE, override = FALSE, df = NULL, degree = 3, ",
-      "lb_tau = c(0, 0, 0, 0), noncentered = c(FALSE, FALSE, FALSE, FALSE))"
+      "splines(df = NULL, degree = 3, lb_tau = c(0, 0, 0, 0), ",
+      "noncentered = c(FALSE, FALSE, FALSE, FALSE), override = FALSE)"
     )
   )
 

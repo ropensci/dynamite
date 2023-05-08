@@ -672,8 +672,6 @@ formula.dynamitefit <- function(x, ...) {
     spline_def$has_splines,
     paste0(
       "splines(",
-      "shrinkage = ", spline_def$shrinkage, ", ",
-      "override = FALSE, ",
       "df = ", ifelse_(
         is.null(spline_def$bs_opts$df),
         "NULL",
@@ -682,7 +680,8 @@ formula.dynamitefit <- function(x, ...) {
       ", ",
       "degree = ", spline_def$bs_opts$degree, ", ",
       "lb_tau = c(", cs(spline_def$lb), "), ",
-      "noncentered = c(", cs(spline_def$noncentered), ")",
+      "noncentered = c(", cs(spline_def$noncentered), "), ",
+      "override = FALSE",
       ")"
     )
   )
