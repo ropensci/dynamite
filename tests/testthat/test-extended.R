@@ -234,7 +234,7 @@ test_that("update without recompile works", {
     group = "id",
     iter = 2000,
     warmup = 1000,
-    thin = 10,
+    thin = 1,
     chains = 2,
     cores = 2,
     refresh = 0,
@@ -250,7 +250,8 @@ test_that("update without recompile works", {
       gaussian_fit,
       data = gaussian_example,
       warmup = 500,
-      iter = 1000
+      iter = 1000,
+      thin = 1
     ),
     NA
   )

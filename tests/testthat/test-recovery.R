@@ -199,7 +199,7 @@ test_that("LOO works with separate channels", {
     warmup = 1000,
     init = 0,
     refresh = 0,
-    thin = 5,
+    thin = 1,
     save_warmup = FALSE
   )
   expect_error(

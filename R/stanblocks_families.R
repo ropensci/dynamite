@@ -228,10 +228,9 @@ loglik_lines_default <- function(y, idt, obs, family, has_missing,
     family$name %in% c("gaussian", "student"),
     "real sigma_{y}"
   )
-  extra_pars <- c(extra_pars, ifelse_(
+  extra_pars <- c(extra_pars, onlyif(
     family$name %in% c("negbin", "gamma", "beta", "student"),
-    "real phi_{y}",
-    extra_pars
+    "real phi_{y}"
   ))
   intercept <- intercept_lines(
     y, obs, family, has_varying, has_fixed, has_random, has_fixed_intercept,
@@ -802,7 +801,7 @@ loglik_mvgaussian <- function(idt, cvars, cgvars, backend,
         ),
         "data int N"
       ),
-      paste0("data vector[,] y_{y_cg}"),
+      stan_array_arg("cmdstanr", "vector", "y_{y_cg}", 1, TRUE),
       "int O_{y_cg}",
       fun_args,
       onlyif(has_X, "data array[] matrix X"),
@@ -832,7 +831,7 @@ loglik_mvgaussian <- function(idt, cvars, cgvars, backend,
       "diag_pre_multiply(sigma_{y_cg}, L_{y_cg});"
     ),
     "for (t in {loop_index}) {{",
-    "vector[O_{y_cg}] mu[{n_obs}];",
+    stan_array(backend, "vector", "mu", "{n_obs}", dims = "O_{y_cg}"),
     "vector[{n_obs}] mu_{y} = {mu};",
     "for (i in 1:{n_obs}) {{",
     "mu[i] = [{cs(mu_y)}]';",

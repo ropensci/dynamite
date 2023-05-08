@@ -155,7 +155,7 @@ latent_factor_example_fit <- onlyif(
     time = "time",
     iter = 2000,
     warmup = 1000,
-    thin = 10,
+    thin = 1,
     chains = 2,
     cores = 2
   )
