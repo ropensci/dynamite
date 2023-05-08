@@ -228,11 +228,11 @@ loglik_lines_default <- function(y, idt, obs, family, has_missing,
     family$name %in% c("gaussian", "student"),
     "real sigma_{y}"
   )
-  extra_pars <- ifelse_(
+  extra_pars <- c(extra_pars, ifelse_(
     family$name %in% c("negbin", "gamma", "beta", "student"),
     "real phi_{y}",
     extra_pars
-  )
+  ))
   intercept <- intercept_lines(
     y, obs, family, has_varying, has_fixed, has_random, has_fixed_intercept,
     has_varying_intercept, has_random_intercept, has_lfactor, has_offset,
@@ -2429,7 +2429,7 @@ model_lines_student <- function(y, obs, idt, priors,
           has_varying_intercept, has_random_intercept, has_random, has_lfactor,
           glm = FALSE
         ),
-        glue::glue("sigma_y"),
+        glue::glue("sigma_{y}"),
         glue::glue("phi_{y}")
       ),
       collapse = ", "
