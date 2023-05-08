@@ -2,19 +2,19 @@
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
   "identifier": "dynamite",
-  "description": "Easy-to-use and efficient interface for Bayesian inference of complex panel (time series) data using dynamic multivariate panel models by Helske and Tikka (2022) <doi:10.31235/osf.io/mdwu5>. The package supports joint modeling of multiple measurements per individual, time-varying and time-invariant effects, and a wide range of discrete and continuous distributions. Estimation of these dynamic multivariate panel models is carried out via 'Stan'.",
+  "description": "Easy-to-use and efficient interface for Bayesian inference of complex panel (time series) data using dynamic multivariate panel models by Helske and Tikka (2022) <doi:10.31235/osf.io/mdwu5>. The package supports joint modeling of multiple measurements per individual, time-varying and time-invariant effects, and a wide range of discrete and continuous distributions. Estimation of these dynamic multivariate panel models is carried out via 'Stan'. For an in-depth tutorial of the package, see (Tikka and Helske, 2023) <arxiv:2302.01607>.",
   "name": "dynamite: Bayesian Modeling and Causal Inference for Multivariate\n    Longitudinal Data",
   "relatedLink": ["https://docs.ropensci.org/dynamite/", "https://CRAN.R-project.org/package=dynamite"],
   "codeRepository": "https://github.com/ropensci/dynamite/",
   "issueTracker": "https://github.com/ropensci/dynamite/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.2.0",
+  "version": "1.4.1",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.2.2 (2022-10-31 ucrt)",
+  "runtimePlatform": "R version 4.2.1 (2022-06-23 ucrt)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -102,6 +102,18 @@
     },
     {
       "@type": "SoftwareApplication",
+      "identifier": "mockthat",
+      "name": "mockthat",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=mockthat"
+    },
+    {
+      "@type": "SoftwareApplication",
       "identifier": "rmarkdown",
       "name": "rmarkdown",
       "provider": {
@@ -143,7 +155,7 @@
       "@type": "SoftwareApplication",
       "identifier": "R",
       "name": "R",
-      "version": ">= 3.5.0"
+      "version": ">= 3.6.0"
     },
     "2": {
       "@type": "SoftwareApplication",
@@ -295,7 +307,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "4960.01KB",
+  "fileSize": "5281.352KB",
   "citation": [
     {
       "@type": "CreativeWork",
