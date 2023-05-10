@@ -80,7 +80,6 @@ Potential values for the \code{types} argument are:
 \item \code{tau}\cr Standard deviations of the spline coefficients of \code{delta}.
 \item \code{tau_alpha}\cr Standard deviations of the spline coefficients of
 time-varying \code{alpha}.
-\item \code{xi}\cr Common time-varying shrinkage factor for splines.
 \item \code{sigma_nu}\cr Standard deviations of the random effects \code{nu}.
 \item \code{corr_nu}\cr Pairwise within-group correlations of random effects \code{nu}.
 Samples of the full correlation matrix can be extracted manually as
