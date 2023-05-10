@@ -221,6 +221,7 @@ test_that("shrinkage for splines is functional", {
 test_that("update without recompile works", {
   skip_if_not(run_extended_tests)
 
+  set.seed(0)
   gaussian_fit <- dynamite(
     dformula =
       obs(
@@ -249,15 +250,15 @@ test_that("update without recompile works", {
     fit <- update(
       gaussian_fit,
       data = gaussian_example,
-      warmup = 500,
-      iter = 1000,
+      warmup = 1000,
+      iter = 2000,
       thin = 1
     ),
     NA
   )
   # Internal update_ function
   expect_error(
-    lfo(gaussian_fit, L = 10, chains = 4, verbose_stan = FALSE),
+    lfo(gaussian_fit, L = 20, chains = 4, verbose_stan = FALSE),
     NA
   )
 })
