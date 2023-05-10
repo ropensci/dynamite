@@ -105,7 +105,7 @@ dynamice <- function(dformula, data, time, group = NULL,
                      verbose = TRUE, verbose_stan = FALSE,
                      stanc_options = list("O1"),
                      threads_per_chain = 1L, grainsize = NULL,
-                     debug = NULL, mice_args = list(), impute_method = "default", method = "norm", ...) {
+                     debug = NULL, mice_args = list(), impute_method = "default", ...) {
   stopifnot_(
     requireNamespace("mice"),
     "Please install the {.pkg mice} package to use multiple imputation."
@@ -281,11 +281,7 @@ dynamice <- function(dformula, data, time, group = NULL,
 
     method <- rep("", length = ncol(pred_mat))
     names(method) <- colnames(pred_mat)
-    method[value_vars] <- method #"norm"
-    if (method == "2lonly.norm") {
-      pred_mat[, group] <- -2
-      pred_mat[, time] <- 2
-    }
+    method[value_vars] <- "norm"
     # default is to impute only responses using non-imputed lead and lag
     if (impute_method == "impute_and_use_all") {
       method[lag_stoch] <- "lag"
