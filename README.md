@@ -53,12 +53,13 @@ related [arXiv](https://arxiv.org/abs/2302.01607) and
 
 ## Installation
 
-You can install the most recent stable version of `dynamite` from
-[CRAN](https://cran.r-project.org/package=dynamite), and the development
+You can install the most recent stable version of `dynmite` from
+[CRAN](https://cran.r-project.org/package=dynamite) or the development
 version from [R-universe](https://r-universe.dev/search/) by running one
 the following lines:
 
 ``` r
+install.packages("dynamite")
 install.packages("dynamite", repos = "https://ropensci.r-universe.dev")
 ```
 
@@ -99,8 +100,8 @@ gaussian_example_fit
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  4.809  2.653
-#> chain:2  4.765  1.802
+#> chain:1  5.169  2.753
+#> chain:2  4.897  1.763
 #> 
 #> Summary statistics of the time- and group-invariant parameters:
 #> # A tibble: 6 × 10

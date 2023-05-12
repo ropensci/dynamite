@@ -43,9 +43,10 @@ The `dynamite` package is developed with the support of Academy of Finland grant
 
 ## Installation
 
-You can install the most recent stable version of `dynamite` from [CRAN](https://cran.r-project.org/package=dynamite), and the development version from [R-universe](https://r-universe.dev/search/) by running one the following lines:
+You can install the most recent stable version of `dynmite` from [CRAN](https://cran.r-project.org/package=dynamite) or the development version from [R-universe](https://r-universe.dev/search/) by running one the following lines:
 
 ```{r, eval = FALSE}
+install.packages("dynamite")
 install.packages("dynamite", repos = "https://ropensci.r-universe.dev")
 ```
 
