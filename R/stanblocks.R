@@ -18,7 +18,7 @@ create_blocks <- function(indent = 2L, backend, cg, cvars, cgvars, mvars,
   paste_rows(
     create_functions(idt, backend, cg, cvars, cgvars, mvars, threading),
     create_data(idt, backend, cg, cvars, cgvars, mvars, threading),
-    create_transformed_data(idt, backend, cg, cvars, cgvars, mvars),
+    create_transformed_data(idt, backend, cg, cvars, cgvars, mvars, threading),
     create_parameters(idt, backend, cg, cvars, cgvars, mvars),
     create_transformed_parameters(idt, backend, cg, cvars, cgvars, mvars),
     create_model(idt, backend, cg, cvars, cgvars, mvars, threading),
@@ -188,7 +188,8 @@ create_data_lines <- function(idt, backend, cvars, cgvars) {
 #' @describeIn create_function Create the 'Transformed Data'
 #'   Block of the Stan Model Code
 #' @noRd
-create_transformed_data <- function(idt, backend, cg, cvars, cgvars, mvars) {
+create_transformed_data <- function(idt, backend, cg, cvars, cgvars, mvars,
+                                    threading) {
   n_cg <- n_unique(cg)
   declarations <- character(n_cg)
   statements <- character(n_cg)
@@ -205,10 +206,18 @@ create_transformed_data <- function(idt, backend, cg, cvars, cgvars, mvars) {
     "transformed data {",
     declarations,
     onlyif(has_lfactor, "vector[2 * N] QR_Q = create_Q(N);"),
-    ifelse_(
-      stan_supports_array_keyword(backend),
-      "array[T] int seq1T = linspaced_int_array(T, 1, T);",
-      "int seq1T[T] = linspaced_int_array(T, 1, T);"
+    onlyif(
+      threading,
+      ifelse_(
+        stan_supports_array_keyword(backend),
+        "array[T] int seq1T = linspaced_int_array(T, 1, T);",
+        paste_rows(
+          "int seq1T[T];",
+          "for(t in 1:T) seq1T[t] = t;",
+          .indent = idt(1),
+          .parse = FALSE
+        )
+      )
     ),
     statements,
     "}",

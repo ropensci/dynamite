@@ -1,3 +1,6 @@
+# dynamite 1.4.2
+  * Fixed a code generation in the transformed data block to be backwards compatible with Stan.
+
 # dynamite 1.4.1
 
   * Fixed an issue in `dynamite()` data parsing that caused substantial memory usage in some instances.
