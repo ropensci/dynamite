@@ -132,16 +132,20 @@
 #' <https://osf.io/preprints/socarxiv/mdwu5/>.
 #' @examples
 #' \donttest{
-#' fit <- dynamite(
-#'   dformula = obs(y ~ -1 + varying(~x), family = "gaussian") +
-#'     lags(type = "varying") +
-#'     splines(df = 20),
-#'   gaussian_example,
-#'   "time",
-#'   "id",
-#'   chains = 1,
-#'   refresh = 0
-#' )
+#' # Please update your rstan and StanHeaders installation before running
+#' # on Windows
+#' if (!identical(.Platform$OS.type, "windows")) {
+#'   fit <- dynamite(
+#'     dformula = obs(y ~ -1 + varying(~x), family = "gaussian") +
+#'       lags(type = "varying") +
+#'       splines(df = 20),
+#'     gaussian_example,
+#'     "time",
+#'     "id",
+#'     chains = 1,
+#'     refresh = 0
+#'   )
+#' }
 #' }
 #'
 dynamite <- function(dformula, data, time, group = NULL,
