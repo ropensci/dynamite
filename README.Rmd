@@ -19,16 +19,7 @@ knitr::opts_chunk$set(
 #' @srrstats {G1.1,  G1.2}
 ```
 
-# dynamite: Bayesian Modeling and Causal Inference for Multivariate Longitudinal Data <a href="https://docs.ropensci.org/dynamite/"><img src="man/figures/logo.png" align="right" height="139"/></a>
-
-<!-- badges: start -->
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-[![R-CMD-check](https://github.com/ropensci/dynamite/workflows/R-CMD-check/badge.svg)](https://github.com/ropensci/dynamite/actions)
-[![Codecov test coverage](https://codecov.io/gh/ropensci/dynamite/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ropensci/dynamite?branch=main)
-[![Status at rOpenSci Software Peer Review](https://badges.ropensci.org/554_status.svg)](https://github.com/ropensci/software-review/issues/554)
-[![dynamite status badge](https://ropensci.r-universe.dev/badges/dynamite)](https://ropensci.r-universe.dev)
-[![dynamite CRAN badge](http://www.r-pkg.org/badges/version/dynamite)](https://cran.r-project.org/package=dynamite)
-<!-- badges: end -->
+# dynamite: Bayesian Modeling and Causal Inference for Multivariate Longitudinal Data <img src="man/figures/logo.png" align="right" height="139"/></a>
 
 The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use interface for Bayesian inference of complex panel (time series) data comprising of multiple measurements per multiple individuals measured in time via dynamic multivariate panel models (DMPM). The main features distinguishing the package and the underlying methodology from many other approaches are:
 
@@ -39,15 +30,14 @@ The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use i
 * Transparent quantification of parameter and predictive uncertainty due to a fully Bayesian approach.
 * User-friendly and efficient R interface with state-of-the-art estimation via Stan. Both `rstan` and `cmdstanr` backends are supported.
 
-The `dynamite` package is developed with the support of Academy of Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)). For further information on DMPMs and the `dynamite` package, see the related [arXiv](https://arxiv.org/abs/2302.01607) and [SocArXiv](https://osf.io/preprints/socarxiv/mdwu5/) preprints.
+ For further information on DMPMs and the `dynamite` package, see the package vignettes.
 
 ## Installation
 
-You can install the most recent stable version of `dynmite` from [CRAN](https://cran.r-project.org/package=dynamite) or the development version from [R-universe](https://r-universe.dev/search/) by running one the following lines:
-
-```{r, eval = FALSE}
-install.packages("dynamite")
-install.packages("dynamite", repos = "https://ropensci.r-universe.dev")
+Please install the `dynamite` package using the provided tar.gz file. If on a Windows platform you may also need to update your `rstan` and `StanHeaders` installation by running
+```{r, eval = FALSE, echo = TRUE}
+remove.packages(c("rstan", "StanHeaders"))
+install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 
 ## Example
@@ -114,8 +104,6 @@ pred |>
   theme_bw()
 ```
 
-For more examples, see the package vignette and the [blog post about dynamite](https://ropensci.org/blog/2023/01/31/dynamite-r-package/).
-
 ## Related packages
 
 - The `dynamite` package uses Stan via [`rstan`](https://CRAN.R-project.org/package=rstan) and [`cmdstanr`](https://mc-stan.org/cmdstanr/) (see also https://mc-stan.org), which is a probabilistic programming language for general Bayesian modelling.
@@ -123,7 +111,3 @@ For more examples, see the package vignette and the [blog post about dynamite](h
 - Regression modeling with time-varying coefficients based on kernel smoothing and least squares estimation is available in package [`tvReg`](https://CRAN.R-project.org/package=tvReg). The [`tvem`](https://CRAN.R-project.org/package=tvem) package provides similar functionality for gaussian, binomial and poisson responses with [`mgcv`](https://CRAN.R-project.org/package=mgcv) backend.
 - [`plm`](https://CRAN.R-project.org/package=plm) contains various methods to estimate linear models for panel data, e.g., fixed effect models.
 - [`lavaan`](https://CRAN.R-project.org/package=lavaan) provides tools for structural equation modeling, and as such can be used to model various panel data models as well.
-
-## Contributing
-
-Contributions are very welcome, see [CONTRIBUTING.md](https://github.com/ropensci/dynamite/blob/main/.github/CONTRIBUTING.md) for general guidelines.

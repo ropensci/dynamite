@@ -1,23 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# dynamite: Bayesian Modeling and Causal Inference for Multivariate Longitudinal Data <a href="https://docs.ropensci.org/dynamite/"><img src="man/figures/logo.png" align="right" height="139"/></a>
-
-<!-- badges: start -->
-
-[![Project Status: Active – The project has reached a stable, usable
-state and is being actively
-developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
-[![R-CMD-check](https://github.com/ropensci/dynamite/workflows/R-CMD-check/badge.svg)](https://github.com/ropensci/dynamite/actions)
-[![Codecov test
-coverage](https://codecov.io/gh/ropensci/dynamite/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ropensci/dynamite?branch=main)
-[![Status at rOpenSci Software Peer
-Review](https://badges.ropensci.org/554_status.svg)](https://github.com/ropensci/software-review/issues/554)
-[![dynamite status
-badge](https://ropensci.r-universe.dev/badges/dynamite)](https://ropensci.r-universe.dev)
-[![dynamite CRAN
-badge](http://www.r-pkg.org/badges/version/dynamite)](https://cran.r-project.org/package=dynamite)
-<!-- badges: end -->
+# dynamite: Bayesian Modeling and Causal Inference for Multivariate Longitudinal Data <img src="man/figures/logo.png" align="right" height="139"/></a>
 
 The `dynamite` [R](https://www.r-project.org/) package provides an
 easy-to-use interface for Bayesian inference of complex panel (time
@@ -45,22 +29,18 @@ methodology from many other approaches are:
   estimation via Stan. Both `rstan` and `cmdstanr` backends are
   supported.
 
-The `dynamite` package is developed with the support of Academy of
-Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)).
 For further information on DMPMs and the `dynamite` package, see the
-related [arXiv](https://arxiv.org/abs/2302.01607) and
-[SocArXiv](https://osf.io/preprints/socarxiv/mdwu5/) preprints.
+package vignettes.
 
 ## Installation
 
-You can install the most recent stable version of `dynmite` from
-[CRAN](https://cran.r-project.org/package=dynamite) or the development
-version from [R-universe](https://r-universe.dev/search/) by running one
-the following lines:
+Please install the `dynamite` package using the provided tar.gz file. If
+on a Windows platform you may also need to update your `rstan` and
+`StanHeaders` installation by running
 
 ``` r
-install.packages("dynamite")
-install.packages("dynamite", repos = "https://ropensci.r-universe.dev")
+remove.packages(c("rstan", "StanHeaders"))
+install.packages("rstan", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 
 ## Example
@@ -100,8 +80,8 @@ gaussian_example_fit
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  5.169  2.753
-#> chain:2  4.897  1.763
+#> chain:1  4.971  2.656
+#> chain:2  4.912  1.753
 #> 
 #> Summary statistics of the time- and group-invariant parameters:
 #> # A tibble: 6 × 10
@@ -158,9 +138,6 @@ pred |>
 
 <img src="man/figures/README-unnamed-chunk-10-1.png" style="display: block; margin: auto;" />
 
-For more examples, see the package vignette and the [blog post about
-dynamite](https://ropensci.org/blog/2023/01/31/dynamite-r-package/).
-
 ## Related packages
 
 - The `dynamite` package uses Stan via
@@ -182,9 +159,3 @@ dynamite](https://ropensci.org/blog/2023/01/31/dynamite-r-package/).
 - [`lavaan`](https://CRAN.R-project.org/package=lavaan) provides tools
   for structural equation modeling, and as such can be used to model
   various panel data models as well.
-
-## Contributing
-
-Contributions are very welcome, see
-[CONTRIBUTING.md](https://github.com/ropensci/dynamite/blob/main/.github/CONTRIBUTING.md)
-for general guidelines.

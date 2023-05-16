@@ -11,13 +11,6 @@
 #' * The package vignette.
 #' * [dynamite::dynamiteformula()] for information on defining models.
 #' * [dynamite::dynamite()] for information on fitting models.
-#' * \url{https://github.com/ropensci/dynamite/issues/} to submit a bug report
-#'   or a feature request.
-#'
-#' # Authors
-#' | Santtu Tikka (author) | <santtuth@@gmail.com>  |
-#' | --------------------- | ---------------------- |
-#' | Jouni Helske (author) | <jouni.helske@@iki.fi> |
 #'
 #' @docType package
 #' @name dynamite-package
