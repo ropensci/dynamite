@@ -337,24 +337,31 @@ loglik_lines_default <- function(y, idt, obs, family, has_missing,
     ifelse_(threading, "return ll;", "target += ll;"),
     .indent = idt(c(2, 2, 2, 2, 3, 3, 3, 2, 2))
   )
+  u <- ifelse_(
+    stan_version(backend) >= "2.25",
+    "u",
+    ""
+  )
   list(
     fun_name = onlyif(threading, fun_name),
     fun_args = onlyif(threading, fun_args),
     fun_body = fun_body,
     use_glm = attr(intercept, "glm"),
-    threading = threading)
+    threading = threading,
+    u = u)
 }
 
 loglik_gaussian <- function(y, obs, idt, default, ...) {
+  u <- default$u
 
   likelihood <- ifelse_(
     default$use_glm,
     glue::glue(
-      "ll += normal_id_glm_lupdf(y_{y}[{obs}, t] | X[t][{obs}, J_{y}], ",
+      "ll += normal_id_glm_l{u}pdf(y_{y}[{obs}, t] | X[t][{obs}, J_{y}], ",
       "intercept_{y}, gamma__{y}, sigma_{y});"
     ),
     glue::glue(
-      "ll += normal_lupdf(y_{y}[{obs}, t] | intercept_{y}, sigma_{y});"
+      "ll += normal_l{u}pdf(y_{y}[{obs}, t] | intercept_{y}, sigma_{y});"
     )
   )
   fun_body <- default$fun_body
@@ -373,8 +380,9 @@ loglik_gaussian <- function(y, obs, idt, default, ...) {
 }
 
 loglik_binomial <- function(y, obs, idt, default, ...) {
+  u <- default$u
   likelihood <- glue::glue(
-    "ll += binomial_logit_lupmf(y_{y}[t, {obs}] | ",
+    "ll += binomial_logit_l{u}pmf(y_{y}[t, {obs}] | ",
     "trials_{y}[t, {obs}], intercept_{y});"
   )
   fun_body <- default$fun_body
@@ -392,13 +400,14 @@ loglik_binomial <- function(y, obs, idt, default, ...) {
 }
 
 loglik_bernoulli <- function(y, obs, idt, default, ...) {
+  u <- default$u
   likelihood <- ifelse_(
     default$use_glm,
     glue::glue(
-      "ll += bernoulli_logit_glm_lupmf(y_{y}[t, {obs}] | X[t][{obs}, J_{y}], ",
+      "ll += bernoulli_logit_glm_l{u}pmf(y_{y}[t, {obs}] | X[t][{obs}, J_{y}], ",
       "intercept_{y}, gamma__{y});"
     ),
-    glue::glue("ll += bernoulli_logit_lupmf(y_{y}[t, {obs}] | intercept_{y});")
+    glue::glue("ll += bernoulli_logit_l{u}pmf(y_{y}[t, {obs}] | intercept_{y});")
   )
   fun_body <- default$fun_body
   fun_body <- gsub("__likelihood__", likelihood, fun_body)
@@ -415,13 +424,14 @@ loglik_bernoulli <- function(y, obs, idt, default, ...) {
 }
 
 loglik_poisson <- function(y, obs, idt, default, ...) {
+  u <- default$u
   likelihood <- ifelse_(
     default$use_glm,
     glue::glue(
-      "ll += poisson_log_glm_lupmf(y_{y}[t, {obs}] | X[t][{obs}, J_{y}], ",
+      "ll += poisson_log_glm_l{u}pmf(y_{y}[t, {obs}] | X[t][{obs}, J_{y}], ",
       "intercept_{y}, gamma__{y});"
     ),
-    glue::glue("ll += poisson_log_lupmf(y_{y}[t, {obs}] | intercept_{y});")
+    glue::glue("ll += poisson_log_l{u}pmf(y_{y}[t, {obs}] | intercept_{y});")
   )
   fun_body <- default$fun_body
   fun_body <- gsub("__likelihood__", likelihood, fun_body)
@@ -438,14 +448,15 @@ loglik_poisson <- function(y, obs, idt, default, ...) {
 }
 
 loglik_negbin <- function(y, obs, idt, default, ...) {
+  u <- default$u
   likelihood <- ifelse_(
     default$use_glm,
     glue::glue(
-      "ll += neg_binomial_2_log_glm_lupmf(y_{y}[t, {obs}] | ",
+      "ll += neg_binomial_2_log_glm_l{u}pmf(y_{y}[t, {obs}] | ",
       "X[t][{obs}, J_{y}], intercept_{y}, gamma__{y}, phi_{y});"
     ),
     glue::glue(
-      "ll += neg_binomial_2_log_lupmf(y_{y}[t, {obs}] | ",
+      "ll += neg_binomial_2_log_l{u}pmf(y_{y}[t, {obs}] | ",
       "intercept_{y}, phi_{y});"
     )
   )
@@ -464,8 +475,9 @@ loglik_negbin <- function(y, obs, idt, default, ...) {
 }
 
 loglik_exponential <- function(y, obs, idt, default, ...) {
+  u <- default$u
   likelihood <- glue::glue(
-    "ll += exponential_lupdf(y_{y}[{obs}, t] | inv(exp(intercept_{y})));"
+    "ll += exponential_l{u}pdf(y_{y}[{obs}, t] | inv(exp(intercept_{y})));"
   )
   fun_body <- default$fun_body
   fun_body <- gsub("__likelihood__", likelihood, fun_body)
@@ -482,8 +494,9 @@ loglik_exponential <- function(y, obs, idt, default, ...) {
 }
 
 loglik_gamma <- function(y, obs, idt, default, ...) {
+  u <- default$u
   likelihood <- glue::glue(
-    "ll += gamma_lupdf(y_{y}[{obs}, t] | phi_{y}, phi_{y} * ",
+    "ll += gamma_l{u}pdf(y_{y}[{obs}, t] | phi_{y}, phi_{y} * ",
     "inv(exp(intercept_{y})));"
   )
   fun_body <- default$fun_body
@@ -501,8 +514,9 @@ loglik_gamma <- function(y, obs, idt, default, ...) {
 }
 
 loglik_beta <- function(y, obs, idt, default, ...) {
+  u <- default$u
   likelihood <- glue::glue(
-    "ll += beta_proportion_lupdf(y_{y}[{obs}, t] | ",
+    "ll += beta_proportion_l{u}pdf(y_{y}[{obs}, t] | ",
     "inv_logit(intercept_{y}), phi_{y});"
   )
   fun_body <- default$fun_body
@@ -519,8 +533,9 @@ loglik_beta <- function(y, obs, idt, default, ...) {
   )
 }
 loglik_student <- function(y, obs, idt, default, ...) {
+  u <- default$u
   likelihood <- glue::glue(
-    "ll += student_t_lupdf(y_{y}[{obs}, t] | phi_{y}, intercept_{y}, ",
+    "ll += student_t_l{u}pdf(y_{y}[{obs}, t] | phi_{y}, intercept_{y}, ",
     "sigma_{y});"
   )
   fun_body <- default$fun_body
@@ -545,6 +560,11 @@ loglik_categorical <- function(y, idt, obs, family, has_missing,
                                backend, threading,
                                ydim = y, K, categories,
                                multinomial = FALSE, ...) {
+  u <- ifelse_(
+    stan_version(backend) >= "2.25",
+    "u",
+    ""
+  )
   distr <- ifelse_(multinomial, "multinomial", "categorical")
   S <- length(categories)
   cats <- categories[seq.int(2L, S)]
@@ -577,6 +597,8 @@ loglik_categorical <- function(y, idt, obs, family, has_missing,
   has_X <- has_fixed || has_varying || has_random
   glm <- attr(intercept[[1]], "glm")
   LJ <- ifelse_(glm, "L", "J")
+  scalar_intercept <- !has_random && !has_random_intercept &&
+    !has_lfactor && (glm || !has_X)
   fun_args <- onlyif(
     threading, glue::glue(cs(c(
       stan_array_arg(backend, "int", "t_obs_{y}", 0L, TRUE),
@@ -636,14 +658,14 @@ loglik_categorical <- function(y, idt, obs, family, has_missing,
     icpt <- paste_rows(
       "real intercept_{cats} = {unlist(intercept)};",
       "vector[S_{y}] intercept_{y} = [{cs(icpt_y)}]';",
-      .indent = idt(1)
+      .indent = idt(3)
     )
     gamma <- onlyif(
       has_fixed || has_varying,
       paste_rows(
         "matrix[K_{y}, S_{y}] gamma__{y};",
         "gamma__{y}[, 1] = zeros_K_{y};",
-        .indent = idt(1)
+        .indent = idt(2)
       )
     )
     beta <- onlyif(
@@ -661,7 +683,7 @@ loglik_categorical <- function(y, idt, obs, family, has_missing,
       )
     )
     likelihood_term <- paste0(
-      "ll += categorical_logit_glm_lupmf(y_{y}[t, {obs}] | X[t][{obs},",
+      "ll += categorical_logit_glm_l{u}pmf(y_{y}[t, {obs}] | X[t][{obs},",
       " J_{y}], intercept_{y}, gamma__{y});"
     )
     likelihood <- paste_rows(
@@ -672,24 +694,38 @@ loglik_categorical <- function(y, idt, obs, family, has_missing,
       delta,
       likelihood_term,
       "}}",
-      .indent = idt(c(0, 0, 0, 1, 2, 2, 1))
+      .indent = idt(c(0, 2, 2, 0, 3, 3, 2))
     )
   } else {
     category_dim <- ifelse_(multinomial, ", ", "")
-    icpt_y <- c("0", paste0("intercept_", cats, "[i]"))
-    icpt <- paste_rows(
-      ifelse_(
-        nzchar(obs),
-        "vector[n_obs_{y}[t]] intercept_{cats} = {unlist(intercept)};",
-        "vector[N] intercept_{cats} = {unlist(intercept)};"
-      ),
-      .indent = idt(2)
+
+    intercept_line <- ifelse_(
+      scalar_intercept,
+      "real intercept_{y} = {intercept};",
+      "vector[{n_obs}] intercept_{y} = {intercept};"
     )
+    if (scalar_intercept) {
+      icpt_y <- c("0", paste0("intercept_", cats))
+      icpt <- paste_rows(
+        "real intercept_{cats} = {unlist(intercept)};",
+        .indent = idt(3)
+      )
+    } else {
+      icpt_y <- c("0", paste0("intercept_", cats, "[i]"))
+      icpt <- paste_rows(
+        ifelse_(
+          nzchar(obs),
+          "vector[n_obs_{y}[t]] intercept_{cats} = {unlist(intercept)};",
+          "vector[N] intercept_{cats} = {unlist(intercept)};"
+        ),
+        .indent = idt(3)
+      )
+    }
     likelihood_term <- ifelse_(
       nzchar(obs),
-      paste0("ll += {distr}_logit_lupmf(y_{y}[t, obs_{y}[i, t]{category_dim}]",
+      paste0("ll += {distr}_logit_l{u}pmf(y_{y}[t, obs_{y}[i, t]{category_dim}]",
              "| intercept_{y});"),
-      "ll += {distr}_logit_lupmf(y_{y}[t, i{category_dim}] | intercept_{y});"
+      "ll += {distr}_logit_l{u}pmf(y_{y}[t, i{category_dim}] | intercept_{y});"
     )
     likelihood <- paste_rows(
       "vector[S_{y}] intercept_{y};",
@@ -704,7 +740,7 @@ loglik_categorical <- function(y, idt, obs, family, has_missing,
       likelihood_term,
       "}}",
       "}}",
-      .indent = idt(c(1, 1, 0, 2, 3, 3, 2, 1))
+      .indent = idt(c(2, 2, 0, 3, 4, 4, 3, 2))
     )
   }
   fun_body <- paste_rows(
@@ -716,17 +752,24 @@ loglik_categorical <- function(y, idt, obs, family, has_missing,
     likelihood,
     ifelse_(threading, "return ll;", "target += ll;"),
     .parse = FALSE,
-    .indent = idt(c(1, 1, 0, 1))
+    .indent = idt(c(1, 2, 0, 2))
   )
   paste_rows(
     ifelse_(threading, "real {distr}_loglik_{y}_lpmf({fun_args}) {{", "{{"),
     "{fun_body}",
     "}}",
-    .indent = idt(c(1, 0, 1))
+    .indent = idt(c(1, 1, 1))
   )
 }
 loglik_multinomial <- function(idt, cvars, cgvars, backend,
                                threading, ...) {
+  stopifnot_(
+    stan_version(backend) >= "2.24",
+    c(
+      "Multinomial family is not supported for this version of {.pkg {backend}}.",
+      `i` = "Please install a newer version of {.pkg {backend}}."
+    )
+  )
   cgvars$categories <- cgvars$y
   cgvars$y <- cgvars$y_cg
   cgvars$multinomial <- TRUE
@@ -736,7 +779,11 @@ loglik_multinomial <- function(idt, cvars, cgvars, backend,
 }
 loglik_mvgaussian <- function(idt, cvars, cgvars, backend,
                               threading, ...) {
-
+  u <- ifelse_(
+    stan_version(backend) >= "2.25",
+    "u",
+    ""
+  )
   y <- cgvars$y
   y_cg <- cgvars$y_cg
   obs <- cgvars$obs
@@ -836,7 +883,7 @@ loglik_mvgaussian <- function(idt, cvars, cgvars, backend,
     "for (i in 1:{n_obs}) {{",
     "mu[i] = [{cs(mu_y)}]';",
     "}}",
-    "ll += multi_normal_cholesky_lupdf(y_{y_cg}[t, {obs}] | mu, Lsigma);",
+    "ll += multi_normal_cholesky_l{u}pdf(y_{y_cg}[t, {obs}] | mu, Lsigma);",
     "}}",
     .indent = idt(c(1, 1, 1, 2, 2, 2, 3, 2, 2, 1))
   )
