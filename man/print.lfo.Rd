@@ -19,8 +19,12 @@ Prints the summary of the leave-future-out cross-validation.
 }
 \examples{
 \donttest{
-# This gives warnings due to the small number of iterations
-suppressWarnings(lfo(gaussian_example_fit, L = 20))
+# Please update your rstan and StanHeaders installation before running
+# on Windows
+if (!identical(.Platform$OS.type, "windows")) {
+  # This gives warnings due to the small number of iterations
+  suppressWarnings(lfo(gaussian_example_fit, L = 20))
+}
 }
 
 }
