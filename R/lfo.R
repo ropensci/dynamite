@@ -60,13 +60,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     checkmate::test_number(x = k_threshold),
     "Argument {.arg k_threshold} must be a single {.cls numeric} value."
   )
-  log_sum_exp <- function(x) {
-    max_x <- max(x)
-    max_x + log(sum(exp(x - max_x)))
-  }
-  log_mean_exp <- function(x) {
-    log_sum_exp(x) - log(length(x))
-  }
+
   T_ <- x$stan$model_vars[["T"]]
   stopifnot_(
     checkmate::test_int(x = L, lower = 0, upper = T_),
@@ -108,7 +102,8 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   # for each group, time, and draw
   # drop those id&time pairs which contain NA
   subset_indices_ <- out[[time_var]] > timepoints[L]
-  lls <- stats::na.omit(out[
+  lls <- #stats::na.omit(
+    out[
     subset_indices_
     # time > timepoints[L], #,
     # env = list(time = time, timepoints = timepoints, L = L)
@@ -118,7 +113,8 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   ][,
     .SD,
     .SDcols = !patterns("_loglik$")
-  ])
+  ]
+  #)
   elpds <- vector("list", T_ - L)
   subset_index_ <- lls[[time_var]] == timepoints[L + 1L]
   elpds[[1L]] <- lls[
@@ -151,14 +147,25 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
         #  i_refit = i_refit
         # )
       ][,
-        list(logratio = sum(loglik)),
+        list(logratio = sum(loglik, na.rm = TRUE)),
         # by = list(id, .draw),
         by = c(group_var, ".draw")
       ]
-
+      lr <- matrix(logratio$logratio, nrow = n_draws, byrow = TRUE)
+      lw_subset_index_ <- lls[[time_var]] == timepoints[i + 1]
+      ll <- matrix(
+        lls[
+          lw_subset_index_,
+          loglik # ,
+          # env = list(time = time, timepoints = timepoints, i = i)
+        ], nrow = n_draws, byrow = TRUE
+      )
+      non_na_idx <- intersect(which(!is.na(colSums(lr))), which(!is.na(colSums(ll))))
+      lr <- lr[, non_na_idx]
+      ll <- ll[, non_na_idx]
       psis_obj <- suppressWarnings(
         loo::psis(
-          matrix(logratio$logratio, nrow = n_draws),
+          lr,
           r_eff = NA
         )
       )
@@ -190,10 +197,10 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           df = FALSE
         )$simulated
         threshold_subset_index_ <- out[[time_var]] > timepoints[L]
-        lls <- stats::na.omit(out[
+        lls <- out[
           threshold_subset_index_, # ,
           # env = list(time = time, timepoint = timepoints, L = L)
-        ])[,
+        ][,
           loglik := rowSums(.SD),
           .SDcols = patterns("_loglik$")
         ][,
@@ -212,15 +219,9 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
         ][["elpd"]]
       } else {
         lw <- loo::weights.importance_sampling(psis_obj, normalize = TRUE)
-        lw_subset_index_ <- lls[[time_var]] == timepoints[i + 1]
-        ll <- lls[
-          lw_subset_index_,
-          loglik # ,
-          # env = list(time = time, timepoints = timepoints, i = i)
-        ]
         elpds[[i - L + 1L]] <-
           log_sum_exp_rows(
-            t(lw) + matrix(ll, ncol = n_draws),
+            t(lw + ll),
             ncol(lw),
             n_draws
           )

@@ -390,7 +390,18 @@ log_sum_exp_rows <- function(x, m, n) {
   maxs <- apply(x, 1L, max)
   maxs + log(.rowSums(exp(x - maxs), m, n))
 }
-
+log_sum_exp <- function(x, na.rm = FALSE) {
+  max_x <- max(x, na.rm = na.rm)
+  max_x + log(sum(exp(x - max_x), na.rm = na.rm))
+}
+log_mean_exp <- function(x, na.rm = FALSE) {
+  n <- ifelse_(
+    na.rm,
+    sum(!is.na(x)),
+    length(x)
+  )
+  log_sum_exp(x, na.rm = na.rm) - log(n)
+}
 #' Number of Unique Values
 #'
 #' @inheritParams data.table::uniqueN
