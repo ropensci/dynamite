@@ -157,16 +157,20 @@ shape of the posterior), this can vary greatly.
 }
 \examples{
 \donttest{
-fit <- dynamite(
-  dformula = obs(y ~ -1 + varying(~x), family = "gaussian") +
-    lags(type = "varying") +
-    splines(df = 20),
-  gaussian_example,
-  "time",
-  "id",
-  chains = 1,
-  refresh = 0
-)
+# Please update your rstan and StanHeaders installation before running
+# on Windows
+if (!identical(.Platform$OS.type, "windows")) {
+  fit <- dynamite(
+    dformula = obs(y ~ -1 + varying(~x), family = "gaussian") +
+      lags(type = "varying") +
+      splines(df = 20),
+    gaussian_example,
+    "time",
+    "id",
+    chains = 1,
+    refresh = 0
+  )
+}
 }
 
 formula(gaussian_example_fit)

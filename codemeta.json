@@ -2,11 +2,8 @@
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
   "identifier": "dynamite",
-  "description": "Easy-to-use and efficient interface for Bayesian inference of complex panel (time series) data using dynamic multivariate panel models by Helske and Tikka (2022) <doi:10.31235/osf.io/mdwu5>. The package supports joint modeling of multiple measurements per individual, time-varying and time-invariant effects, and a wide range of discrete and continuous distributions. Estimation of these dynamic multivariate panel models is carried out via 'Stan'. For an in-depth tutorial of the package, see (Tikka and Helske, 2023) <arxiv:2302.01607>.",
+  "description": "Easy-to-use and efficient interface for Bayesian inference of complex panel (time series) data using dynamic multivariate panel models by the Authors (2022). The package supports joint modeling of multiple measurements per individual, time-varying and time-invariant effects, and a wide range of discrete and continuous distributions. Estimation of these dynamic multivariate panel models is carried out via 'Stan'. For an in-depth tutorial of the package, see the package vignette.",
   "name": "dynamite: Bayesian Modeling and Causal Inference for Multivariate\n    Longitudinal Data",
-  "relatedLink": ["https://docs.ropensci.org/dynamite/", "https://CRAN.R-project.org/package=dynamite"],
-  "codeRepository": "https://github.com/ropensci/dynamite/",
-  "issueTracker": "https://github.com/ropensci/dynamite/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
   "version": "1.4.2",
   "programmingLanguage": {
@@ -24,26 +21,26 @@
   "author": [
     {
       "@type": "Person",
-      "givenName": "Santtu",
-      "familyName": "Tikka",
-      "email": "santtuth@gmail.com",
-      "@id": "https://orcid.org/0000-0003-4039-4342"
+      "givenName": "XXXX",
+      "familyName": "XXXX",
+      "email": "xxxx",
+      "@id": "https://orcid.org/XXXX"
     },
     {
       "@type": "Person",
-      "givenName": "Jouni",
-      "familyName": "Helske",
-      "email": "jouni.helske@iki.fi",
-      "@id": "https://orcid.org/0000-0001-7130-793X"
+      "givenName": "XXXX",
+      "familyName": "XXXX",
+      "email": "xxxx",
+      "@id": "https://orcid.org/XXXX"
     }
   ],
   "maintainer": [
     {
       "@type": "Person",
-      "givenName": "Santtu",
-      "familyName": "Tikka",
-      "email": "santtuth@gmail.com",
-      "@id": "https://orcid.org/0000-0003-4039-4342"
+      "givenName": "XXXX",
+      "familyName": "XXXX",
+      "email": "xxxx",
+      "@id": "https://orcid.org/XXXX"
     }
   ],
   "softwareSuggestions": [
@@ -307,60 +304,21 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "2092380.689KB",
+  "fileSize": "5064.821KB",
   "citation": [
-    {
-      "@type": "CreativeWork",
-      "datePublished": "2023",
-      "author": [
-        {
-          "@type": "Person",
-          "givenName": "Santtu",
-          "familyName": "Tikka"
-        },
-        {
-          "@type": "Person",
-          "givenName": "Jouni",
-          "familyName": "Helske"
-        }
-      ],
-      "name": "dynamite: An R Package for Dynamic Multivariate Panel Models",
-      "identifier": "10.48550/ARXIV.2302.01607",
-      "url": "https://arxiv.org/abs/2302.01607",
-      "@id": "https://doi.org/10.48550/ARXIV.2302.01607",
-      "sameAs": "https://doi.org/10.48550/ARXIV.2302.01607"
-    },
-    {
-      "@type": "CreativeWork",
-      "datePublished": "2022",
-      "author": [
-        {
-          "@type": "Person",
-          "givenName": "Santtu",
-          "familyName": "Tikka"
-        },
-        {
-          "@type": "Person",
-          "givenName": "Jouni",
-          "familyName": "Helske"
-        }
-      ],
-      "name": "Estimating Causal Effects from Panel Data with Dynamic\n    Multivariate Panel Models",
-      "url": "https://osf.io/preprints/socarxiv/mdwu5/"
-    },
     {
       "@type": "SoftwareSourceCode",
       "datePublished": "2022",
       "author": [
         {
           "@type": "Person",
-          "givenName": "Santtu",
-          "familyName": "Tikka"
+          "givenName": "XXXX",
+          "familyName": "XXXX"
         },
         {
           "@type": "Person",
-          "givenName": "Jouni",
-          "familyName": "Helske"
+          "givenName": "XXXX",
+          "familyName": "XXXX"
         }
       ],
       "name": "Bayesian Modeling and Causal Inference for Multivariate\n    Longitudinal Data",
@@ -368,14 +326,8 @@
       "description": "R package version 1.0.0"
     }
   ],
+  "codeRepository": "https://github.com/ropensci/dynamite",
   "releaseNotes": "https://github.com/ropensci/dynamite/blob/master/NEWS.md",
   "readme": "https://github.com/ropensci/dynamite/blob/main/README.md",
-  "contIntegration": ["https://github.com/ropensci/dynamite/actions", "https://app.codecov.io/gh/ropensci/dynamite?branch=main"],
-  "developmentStatus": "https://www.repostatus.org/#active",
-  "review": {
-    "@type": "Review",
-    "url": "https://github.com/ropensci/software-review/issues/554",
-    "provider": "https://ropensci.org"
-  },
   "keywords": ["bayesian-inference", "panel-data", "r", "r-package", "rstats", "stan", "statistical-models"]
 }

@@ -37,10 +37,14 @@
 #' models, Journal of Statistical Computation and Simulation, 90:14, 2499-2523.
 #' @examples
 #' \donttest{
-#' # this gives warnings due to the small number of iterations
-#' out <- suppressWarnings(lfo(gaussian_example_fit, L = 20))
-#' out$ELPD
-#' out$ELPD_SE
+#' # Please update your rstan and StanHeaders installation before running
+#' # on Windows
+#' if (!identical(.Platform$OS.type, "windows")) {
+#'   # this gives warnings due to the small number of iterations
+#'   out <- suppressWarnings(lfo(gaussian_example_fit, L = 20))
+#'   out$ELPD
+#'   out$ELPD_SE
+#' }
 #' }
 #'
 lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
@@ -255,8 +259,12 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
 #' @export
 #' @examples
 #' \donttest{
-#' # This gives warnings due to the small number of iterations
-#' suppressWarnings(lfo(gaussian_example_fit, L = 20))
+#' # Please update your rstan and StanHeaders installation before running
+#' # on Windows
+#' if (!identical(.Platform$OS.type, "windows")) {
+#'   # This gives warnings due to the small number of iterations
+#'   suppressWarnings(lfo(gaussian_example_fit, L = 20))
+#' }
 #' }
 #'
 print.lfo <- function(x, ...) {
@@ -283,8 +291,12 @@ print.lfo <- function(x, ...) {
 #' @export
 #' @examples
 #' \donttest{
-#' # This gives warnings due to the small number of iterations
-#' plot(suppressWarnings(lfo(gaussian_example_fit, L = 20)))
+#' # Please update your rstan and StanHeaders installation before running
+#' # on Windows
+#' if (!identical(.Platform$OS.type, "windows")) {
+#'   # This gives warnings due to the small number of iterations
+#'   plot(suppressWarnings(lfo(gaussian_example_fit, L = 20)))
+#' }
 #' }
 #'
 plot.lfo <- function(x, ...) {

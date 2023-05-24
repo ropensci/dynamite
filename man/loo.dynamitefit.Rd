@@ -27,9 +27,13 @@ models using Pareto smoothed importance sampling with the \code{loo} package.
 }
 \examples{
 \donttest{
-# this gives warnings due to the small number of iterations
-suppressWarnings(loo(gaussian_example_fit))
-suppressWarnings(loo(gaussian_example_fit, separate_channels = TRUE))
+# Please update your rstan and StanHeaders installation before running
+# on Windows
+if (!identical(.Platform$OS.type, "windows")) {
+  # this gives warnings due to the small number of iterations
+  suppressWarnings(loo(gaussian_example_fit))
+  suppressWarnings(loo(gaussian_example_fit, separate_channels = TRUE))
+}
 }
 
 }

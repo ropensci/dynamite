@@ -126,47 +126,51 @@ sumr <- predict(multichannel_example_fit, type = "mean",
   n_draws = 2L)
 head(sumr$simulated)
 \donttest{
-# Simulate from the prior predictive distribution
+# Please update your rstan and StanHeaders installation before running
+# on Windows
+if (!identical(.Platform$OS.type, "windows")) {
+  # Simulate from the prior predictive distribution
 
-f <- obs(y ~ lag(y) + varying(~ -1 + x), "gaussian") +
-  splines(df = 10, noncentered = TRUE)
+  f <- obs(y ~ lag(y) + varying(~ -1 + x), "gaussian") +
+    splines(df = 10, noncentered = TRUE)
 
-# Create data with missing observations
-# Note that due to the lagged term in the model,
-# we need to fix the first time point
-d <- data.frame(y = c(0, rep(NA, 49)), x = rnorm(50), time = 1:50)
+  # Create data with missing observations
+  # Note that due to the lagged term in the model,
+  # we need to fix the first time point
+  d <- data.frame(y = c(0, rep(NA, 49)), x = rnorm(50), time = 1:50)
 
-# suppress warnings due to the lack of data
-suppressWarnings(
-  priors <- get_priors(f, data = d, time = "time")
-)
+  # Suppress warnings due to the lack of data
+  suppressWarnings(
+    priors <- get_priors(f, data = d, time = "time")
+  )
 
-# modify default priors which can produce exploding behavior when used
-# without data
-priors$prior <- c(
-  "normal(0, 1)",
-  "normal(0.6, 0.1)",
-  "normal(-0.2, 0.5)",
-  "normal(0.2, 0.1)",
-  "normal(0.5, 0.1)"
-)
+  # Modify default priors which can produce exploding behavior when used
+  # without data
+  priors$prior <- c(
+    "normal(0, 1)",
+    "normal(0.6, 0.1)",
+    "normal(-0.2, 0.5)",
+    "normal(0.2, 0.1)",
+    "normal(0.5, 0.1)"
+  )
 
-# samples from the prior conditional on the first time point and x
-fit <- dynamite(
-  dformula = f,
-  data = d,
-  time = "time",
-  verbose = FALSE,
-  priors = priors,
-  chains = 1
-)
+  # Samples from the prior conditional on the first time point and x
+  fit <- dynamite(
+    dformula = f,
+    data = d,
+    time = "time",
+    verbose = FALSE,
+    priors = priors,
+    chains = 1
+  )
 
-# simulate new data
-pp <- predict(fit)
+  # Simulate new data
+  pp <- predict(fit)
 
-ggplot2::ggplot(pp, ggplot2::aes(time, y_new, group = .draw)) +
-  ggplot2::geom_line(alpha = 0.1) +
-  ggplot2::theme_bw()
+  ggplot2::ggplot(pp, ggplot2::aes(time, y_new, group = .draw)) +
+    ggplot2::geom_line(alpha = 0.1) +
+    ggplot2::theme_bw()
+}
 }
 
 }
