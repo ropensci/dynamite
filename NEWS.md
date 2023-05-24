@@ -1,9 +1,11 @@
+# dynamite 1.4.3
+
+  * Fixed an issue with `formula.dynamitefit()` with models defined using `lags()` with a vector `k` argument with more than one value.
+
 # dynamite 1.4.2
 
   * Added further checks and fixes for backwards compatibility with Stan.
   * Fixed code generation for intercept-only categorical model.
-
-# dynamite 1.4.2
   * Fixed code generation in the transformed data block to be backwards compatible with Stan.
 
 # dynamite 1.4.1
