@@ -64,16 +64,15 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     checkmate::test_number(x = k_threshold),
     "Argument {.arg k_threshold} must be a single {.cls numeric} value."
   )
-
-  T_ <- x$stan$model_vars[["T"]]
+  time_var <- x$time_var
+  group_var <- x$group_var
+  timepoints <- sort(unique(x$data[[time_var]]))
+  T_ <- length(timepoints)
   stopifnot_(
     checkmate::test_int(x = L, lower = 0, upper = T_),
     "Argument {.arg L} must be a single {.cls integer} between 0 and {T_}."
   )
   responses <- get_responses(x$dformulas$stoch)
-  time_var <- x$time_var
-  group_var <- x$group_var
-  timepoints <- sort(unique(x$data[[time_var]]))
   d <- data.table::copy(x$data)
   set_na_ <- d[[time_var]] > timepoints[L]
   # d[set_na, (responses) := NA, env = list(set_na = set_na)]

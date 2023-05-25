@@ -248,17 +248,26 @@ test_that("LFO works for AR(1) model", {
   # This also implicitly tests update method
   skip_if_not(run_extended_tests)
   set.seed(1)
-  fit <- dynamite(obs(LakeHuron ~ 1, "gaussian") + lags(),
-    data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
+  d <- data.frame(LakeHuron, time = seq_len(length(LakeHuron)))
+  priors <- get_priors(
+    obs(LakeHuron ~ 1, "gaussian") + lags(k = 1:4),
+    data = d,
+    time = "time"
+  )
+  priors$prior[2:5] <- "normal(0, 0.5)"
+  priors$prior[6] <- "student_t(3, 0, 2.5)"
+  fit <- dynamite(obs(LakeHuron ~ 1, "gaussian") + lags(k = 1:4),
+    data = d,
     time = "time",
-    group = "id",
-    chains = 1,
+    priors = priors,
+    chains = 2,
+    cores = 2,
     iter = 2000,
     refresh = 0
   )
   l <- lfo(fit, L = 20)
-  expect_equal(l$ELPD, -90.4188604974201, tolerance = 1)
-  expect_equal(l$ELPD_SE, 7.58842574523583, tolerance = 1)
+  expect_equal(l$ELPD, -92.7, tolerance = 1)
+  expect_equal(l$ELPD_SE, 7.8, tolerance = 1)
   expect_error(plot(l), NA)
   expect_error(print(l), NA)
 })
