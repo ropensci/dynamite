@@ -135,8 +135,8 @@ test_that("Formula extraction is correct", {
     paste0(
       "obs(y ~ -1 + z + varying(~x + lag(y)) + ",
       "random(~1), family = \"gaussian\") + ",
-      "splines(df = 20, degree = 3, lb_tau = c(0), ",
-      "noncentered = c(FALSE), override = FALSE) + ",
+      "splines(df = 20, degree = 3, lb_tau = 0, ",
+      "noncentered = FALSE, override = FALSE) + ",
       "random_spec(correlated = FALSE, noncentered = TRUE)"
     )
   )
