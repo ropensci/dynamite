@@ -668,9 +668,24 @@ formula.dynamitefit <- function(x, ...) {
       collapse = " +\n"
     )
   )
+  lags_k <- ifelse_(
+    length(lag_def$k) > 1L,
+    paste0("c(", cs(lag_def$k), ")"),
+    lag_def$k
+  )
   lags_str <- onlyif(
     !is.null(lag_def),
-    glue::glue("lags(k = c({cs(lag_def$k)}), type = '{lag_def$type}')")
+    glue::glue("lags(k = {lags_k}, type = '{lag_def$type}')")
+  )
+  spline_lb <- ifelse_(
+    length(spline_def$lb) > 1L,
+    paste0("c(", cs(spline_def$lb), ")"),
+    spline_def$lb
+  )
+  spline_noncentered <- ifelse_(
+    length(spline_def$noncentered) > 1L,
+    paste0("c(", cs(spline_def$noncentered), ")"),
+    spline_def$noncentered
   )
   spline_str <- onlyif(
     spline_def$has_splines,
@@ -683,8 +698,8 @@ formula.dynamitefit <- function(x, ...) {
       ),
       ", ",
       "degree = ", spline_def$bs_opts$degree, ", ",
-      "lb_tau = c(", cs(spline_def$lb), "), ",
-      "noncentered = c(", cs(spline_def$noncentered), "), ",
+      "lb_tau = ", spline_lb, ", ",
+      "noncentered = ", spline_noncentered, ", ",
       "override = FALSE",
       ")"
     )
@@ -694,13 +709,18 @@ formula.dynamitefit <- function(x, ...) {
     !is.null(lfactor_def$responses),
     paste0("c(", paste0("'", lfactor_def$responses, "'", collapse = ", "), ")")
   )
+  lfactor_nonzero <- ifelse_(
+    length(lfactor_def$nonzero_lambda) > 1L,
+    paste0("c(", cs(lfactor_def$nonzero_lambda), ")"),
+    lfactor_def$nonzero_lambda
+  )
   lfactor_str <- onlyif(
     lfactor_def$has_lfactor,
     paste0(
       "lfactor(",
       "responses = ", lfactor_resp, ", ",
       "noncentered_psi = ", lfactor_def$noncentered_psi, ", ",
-      "nonzero_lambda = c(", cs(lfactor_def$nonzero_lambda), "), ",
+      "nonzero_lambda = ", lfactor_nonzero, ", ",
       "correlated = ", lfactor_def$correlated,
       ")"
     )
