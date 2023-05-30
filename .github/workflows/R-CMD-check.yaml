@@ -67,7 +67,7 @@ jobs:
             Rcpp
             rstan
             StanHeaders
-            cmdstanr
+            stan-dev/cmdstanr
 
       - name: Build CmdStan
         run: |
