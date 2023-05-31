@@ -50,7 +50,9 @@ is triggered if pareto k values of any group exceeds the threshold.
 # on Windows
 if (!identical(.Platform$OS.type, "windows")) {
   # this gives warnings due to the small number of iterations
-  out <- suppressWarnings(lfo(gaussian_example_fit, L = 20))
+  out <- suppressWarnings(
+    lfo(gaussian_example_fit, L = 20, chains = 1, cores = 1)
+  )
   out$ELPD
   out$ELPD_SE
 }

@@ -24,7 +24,9 @@ together with a horizontal line representing the used threshold.
 # on Windows
 if (!identical(.Platform$OS.type, "windows")) {
   # This gives warnings due to the small number of iterations
-  plot(suppressWarnings(lfo(gaussian_example_fit, L = 20)))
+  plot(suppressWarnings(
+    lfo(gaussian_example_fit, L = 20, chains = 1, cores = 1)
+  ))
 }
 }
 

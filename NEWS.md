@@ -1,8 +1,12 @@
+# dynamite 1.4.4
+
+  * Example of the `lfo()` method now uses a single chain and core to avoid a compatibility issue with CRAN
+
 # dynamite 1.4.3
 
   * Fixed an issue with `formula.dynamitefit()` with models defined using `lags()` with a vector `k` argument with more than one value.
-  * Fixed an issue in `lfo` method which resulted wrong ELPD estimates in panel data setting.
-  * Fixed an issue in `lfo` method which in case of lagged responses caused the ELPD computations to skip last time points.
+  * Fixed an issue in the `lfo()` method which resulted wrong ELPD estimates in panel data setting.
+  * Fixed an issue in the `lfo()` method which in case of lagged responses caused the ELPD computations to skip last time points.
 
 # dynamite 1.4.2
 
