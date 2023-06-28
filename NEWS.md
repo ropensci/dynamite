@@ -1,6 +1,7 @@
 # dynamite 1.4.4
 
-  * Example of the `lfo()` method now uses a single chain and core to avoid a compatibility issue with CRAN
+  * Example of the `lfo()` method now uses a single chain and core to avoid a compatibility issue with CRAN.
+  * Fixed `plot_nus` for categorical responses.
 
 # dynamite 1.4.3
 
