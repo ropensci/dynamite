@@ -2,6 +2,7 @@
 
   * Example of the `lfo()` method now uses a single chain and core to avoid a compatibility issue with CRAN.
   * Fixed `plot_nus` for categorical responses.
+  * Fixed an issue in predict with duplicate time points within group.
 
 # dynamite 1.4.3
 
