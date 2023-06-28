@@ -122,7 +122,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   #)
   elpds <- vector("list", T_ - L)
   subset_index_ <- lls[[time_var]] == timepoints[L + 1L]
-  elpds[[1L]] <- lls[
+  elpds[[1L]] <- stats::na.omit(lls[
     subset_index_
     # time == timepoints[L + 1L], ,
     # env = list(time = time, timepoints = timepoints, L = L)
@@ -131,7 +131,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     by = c(time_var, group_var)
     # by = list(time, id)#,
     # env = list(log_mean_exp = "log_mean_exp", time = time, id = id)
-  ][["elpd"]]
+  ][["elpd"]])
   i_refit <- L
   refits <- timepoints[L]
   ks <- vector("list", T_ - L - 1L)
@@ -213,7 +213,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           .SDcols = !patterns("_loglik$")
         ]
         elpds_subset_index_ <- lls[[time_var]] == timepoints[i + 1L]
-        elpds[[i - L + 1L]] <- lls[
+        elpds[[i - L + 1L]] <- stats::na.omit(lls[
           elpds_subset_index_ # ,
           # env = list(time = time, timepoints = timepoints, i = i)
         ][,
@@ -221,7 +221,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           # by = list(time, id)#,
           by = c(time_var, group_var)
           # env = list(log_mean_exp = "log_mean_exp", time = time, id = id)
-        ][["elpd"]]
+        ][["elpd"]])
       } else {
         lw <- loo::weights.importance_sampling(psis_obj, normalize = TRUE)
         elpds[[i - L + 1L]] <-

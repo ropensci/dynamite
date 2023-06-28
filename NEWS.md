@@ -2,7 +2,8 @@
 
   * Example of the `lfo()` method now uses a single chain and core to avoid a compatibility issue with CRAN.
   * Fixed `plot_nus` for categorical responses.
-  * Fixed an issue in predict with duplicate time points within group.
+  * Fixed an issue which caused an error in error message of `predict` and `fitted` methods when `newdata` contained duplicate time points within group.
+  * Fixed an issue (#72) which caused NA ELPD value in `lfo` in case of missing data.
 
 # dynamite 1.4.3
 
