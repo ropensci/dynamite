@@ -1,7 +1,7 @@
 Package: dynamite
 Title: Bayesian Modeling and Causal Inference for Multivariate
     Longitudinal Data
-Version: 1.4.2
+Version: 1.4.4
 Authors@R: c(
     person("XXXX", "XXXX", email = "xxxx@xxxx.com", 
            role = c("aut", "cre"), comment = c(ORCID = "XXXX")),

@@ -37,10 +37,16 @@
 #' models, Journal of Statistical Computation and Simulation, 90:14, 2499-2523.
 #' @examples
 #' \donttest{
-#' # this gives warnings due to the small number of iterations
-#' out <- suppressWarnings(lfo(gaussian_example_fit, L = 20))
-#' out$ELPD
-#' out$ELPD_SE
+#' # Please update your rstan and StanHeaders installation before running
+#' # on Windows
+#' if (!identical(.Platform$OS.type, "windows")) {
+#'   # this gives warnings due to the small number of iterations
+#'   out <- suppressWarnings(
+#'     lfo(gaussian_example_fit, L = 20, chains = 1, cores = 1)
+#'   )
+#'   out$ELPD
+#'   out$ELPD_SE
+#' }
 #' }
 #'
 lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
@@ -60,22 +66,15 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     checkmate::test_number(x = k_threshold),
     "Argument {.arg k_threshold} must be a single {.cls numeric} value."
   )
-  log_sum_exp <- function(x) {
-    max_x <- max(x)
-    max_x + log(sum(exp(x - max_x)))
-  }
-  log_mean_exp <- function(x) {
-    log_sum_exp(x) - log(length(x))
-  }
-  T_ <- x$stan$model_vars[["T"]]
+  time_var <- x$time_var
+  group_var <- x$group_var
+  timepoints <- sort(unique(x$data[[time_var]]))
+  T_ <- length(timepoints)
   stopifnot_(
     checkmate::test_int(x = L, lower = 0, upper = T_),
     "Argument {.arg L} must be a single {.cls integer} between 0 and {T_}."
   )
   responses <- get_responses(x$dformulas$stoch)
-  time_var <- x$time_var
-  group_var <- x$group_var
-  timepoints <- sort(unique(x$data[[time_var]]))
   d <- data.table::copy(x$data)
   set_na_ <- d[[time_var]] > timepoints[L]
   # d[set_na, (responses) := NA, env = list(set_na = set_na)]
@@ -108,7 +107,8 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   # for each group, time, and draw
   # drop those id&time pairs which contain NA
   subset_indices_ <- out[[time_var]] > timepoints[L]
-  lls <- stats::na.omit(out[
+  lls <- #stats::na.omit(
+    out[
     subset_indices_
     # time > timepoints[L], #,
     # env = list(time = time, timepoints = timepoints, L = L)
@@ -118,10 +118,11 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   ][,
     .SD,
     .SDcols = !patterns("_loglik$")
-  ])
+  ]
+  #)
   elpds <- vector("list", T_ - L)
   subset_index_ <- lls[[time_var]] == timepoints[L + 1L]
-  elpds[[1L]] <- lls[
+  elpds[[1L]] <- stats::na.omit(lls[
     subset_index_
     # time == timepoints[L + 1L], ,
     # env = list(time = time, timepoints = timepoints, L = L)
@@ -130,7 +131,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     by = c(time_var, group_var)
     # by = list(time, id)#,
     # env = list(log_mean_exp = "log_mean_exp", time = time, id = id)
-  ][["elpd"]]
+  ][["elpd"]])
   i_refit <- L
   refits <- timepoints[L]
   ks <- vector("list", T_ - L - 1L)
@@ -151,14 +152,25 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
         #  i_refit = i_refit
         # )
       ][,
-        list(logratio = sum(loglik)),
+        list(logratio = sum(loglik, na.rm = TRUE)),
         # by = list(id, .draw),
         by = c(group_var, ".draw")
       ]
-
+      lr <- matrix(logratio$logratio, nrow = n_draws, byrow = TRUE)
+      lw_subset_index_ <- lls[[time_var]] == timepoints[i + 1]
+      ll <- matrix(
+        lls[
+          lw_subset_index_,
+          loglik # ,
+          # env = list(time = time, timepoints = timepoints, i = i)
+        ], nrow = n_draws, byrow = TRUE
+      )
+      non_na_idx <- intersect(which(!is.na(colSums(lr))), which(!is.na(colSums(ll))))
+      lr <- lr[, non_na_idx]
+      ll <- ll[, non_na_idx]
       psis_obj <- suppressWarnings(
         loo::psis(
-          matrix(logratio$logratio, nrow = n_draws),
+          lr,
           r_eff = NA
         )
       )
@@ -190,10 +202,10 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           df = FALSE
         )$simulated
         threshold_subset_index_ <- out[[time_var]] > timepoints[L]
-        lls <- stats::na.omit(out[
+        lls <- out[
           threshold_subset_index_, # ,
           # env = list(time = time, timepoint = timepoints, L = L)
-        ])[,
+        ][,
           loglik := rowSums(.SD),
           .SDcols = patterns("_loglik$")
         ][,
@@ -201,7 +213,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           .SDcols = !patterns("_loglik$")
         ]
         elpds_subset_index_ <- lls[[time_var]] == timepoints[i + 1L]
-        elpds[[i - L + 1L]] <- lls[
+        elpds[[i - L + 1L]] <- stats::na.omit(lls[
           elpds_subset_index_ # ,
           # env = list(time = time, timepoints = timepoints, i = i)
         ][,
@@ -209,18 +221,12 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           # by = list(time, id)#,
           by = c(time_var, group_var)
           # env = list(log_mean_exp = "log_mean_exp", time = time, id = id)
-        ][["elpd"]]
+        ][["elpd"]])
       } else {
         lw <- loo::weights.importance_sampling(psis_obj, normalize = TRUE)
-        lw_subset_index_ <- lls[[time_var]] == timepoints[i + 1]
-        ll <- lls[
-          lw_subset_index_,
-          loglik # ,
-          # env = list(time = time, timepoints = timepoints, i = i)
-        ]
         elpds[[i - L + 1L]] <-
           log_sum_exp_rows(
-            t(lw) + matrix(ll, ncol = n_draws),
+            t(lw + ll),
             ncol(lw),
             n_draws
           )
@@ -254,8 +260,12 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
 #' @export
 #' @examples
 #' \donttest{
-#' # This gives warnings due to the small number of iterations
-#' suppressWarnings(lfo(gaussian_example_fit, L = 20))
+#' # Please update your rstan and StanHeaders installation before running
+#' # on Windows
+#' if (!identical(.Platform$OS.type, "windows")) {
+#'   # This gives warnings due to the small number of iterations
+#'   suppressWarnings(lfo(gaussian_example_fit, L = 20))
+#' }
 #' }
 #'
 print.lfo <- function(x, ...) {
@@ -282,8 +292,14 @@ print.lfo <- function(x, ...) {
 #' @export
 #' @examples
 #' \donttest{
-#' # This gives warnings due to the small number of iterations
-#' plot(suppressWarnings(lfo(gaussian_example_fit, L = 20)))
+#' # Please update your rstan and StanHeaders installation before running
+#' # on Windows
+#' if (!identical(.Platform$OS.type, "windows")) {
+#'   # This gives warnings due to the small number of iterations
+#'   plot(suppressWarnings(
+#'     lfo(gaussian_example_fit, L = 20, chains = 1, cores = 1)
+#'   ))
+#' }
 #' }
 #'
 plot.lfo <- function(x, ...) {

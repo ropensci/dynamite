@@ -357,7 +357,9 @@ plot_nus <- function(x, parameters = NULL, responses = NULL, level = 0.05,
   )
   # avoid NSE notes from R CMD check
   mean <- parameter <- NULL
-  coefs$parameter <- glue::glue("{coefs$parameter}_{coefs$group}")
+  coefs$parameter <- glue::glue("{coefs$parameter}_{coefs$category}_{coefs$group}")
+  # remove NAs from parameters which are not category specific
+  coefs$parameter <- gsub("_NA", "", coefs$parameter)
   coefs$parameter <- factor(coefs$parameter, levels = coefs$parameter)
   title <- paste0(
     "Posterior mean and ",

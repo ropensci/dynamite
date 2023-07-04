@@ -19,38 +19,42 @@
 #' fitted(gaussian_example_fit, n_draws = 2L)
 #' \donttest{
 #' set.seed(1)
-#' fit <- dynamite(
-#'   dformula = obs(LakeHuron ~ 1, "gaussian") + lags(),
-#'   data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
-#'   time = "time",
-#'   group = "id",
-#'   chains = 1,
-#'   refresh = 0
-#' )
+#' # Please update your rstan and StanHeaders installation before running
+#' # on Windows
+#' if (!identical(.Platform$OS.type, "windows")) {
+#'   fit <- dynamite(
+#'     dformula = obs(LakeHuron ~ 1, "gaussian") + lags(),
+#'     data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
+#'     time = "time",
+#'     group = "id",
+#'     chains = 1,
+#'     refresh = 0
+#'   )
 #'
-#' if (requireNamespace("dplyr") &&
-#'   requireNamespace("tidyr") &&
-#'   base::getRversion() >= "4.1.0") {
+#'   if (requireNamespace("dplyr") &&
+#'     requireNamespace("tidyr") &&
+#'     base::getRversion() >= "4.1.0") {
 #'
-#'   # One-step ahead samples (fitted values) from the posterior
-#'   # (first time point is fixed due to lag in the model):
-#'   fitted(fit) |>
-#'     dplyr::filter(time > 2) |>
-#'     ggplot2::ggplot(ggplot2::aes(time, LakeHuron_fitted, group = .draw)) +
-#'     ggplot2::geom_line(alpha = 0.5) +
-#'     # observed values
-#'     ggplot2::geom_line(ggplot2::aes(y = LakeHuron), colour = "tomato") +
-#'     ggplot2::theme_bw()
+#'     # One-step ahead samples (fitted values) from the posterior
+#'     # (first time point is fixed due to lag in the model):
+#'     fitted(fit) |>
+#'       dplyr::filter(time > 2) |>
+#'       ggplot2::ggplot(ggplot2::aes(time, LakeHuron_fitted, group = .draw)) +
+#'       ggplot2::geom_line(alpha = 0.5) +
+#'       # observed values
+#'       ggplot2::geom_line(ggplot2::aes(y = LakeHuron), colour = "tomato") +
+#'       ggplot2::theme_bw()
 #'
-#'   # Posterior predictive distribution given the first time point:
-#'   predict(fit, type = "mean") |>
-#'     dplyr::filter(time > 2) |>
-#'     ggplot2::ggplot(ggplot2::aes(time, LakeHuron_mean, group = .draw)) +
-#'     ggplot2::geom_line(alpha = 0.5) +
-#'     # observed values
-#'     ggplot2::geom_line(ggplot2::aes(y = LakeHuron), colour = "tomato") +
-#'     ggplot2::theme_bw()
-#' }
+#'     # Posterior predictive distribution given the first time point:
+#'     predict(fit, type = "mean") |>
+#'       dplyr::filter(time > 2) |>
+#'       ggplot2::ggplot(ggplot2::aes(time, LakeHuron_mean, group = .draw)) +
+#'       ggplot2::geom_line(alpha = 0.5) +
+#'       # observed values
+#'       ggplot2::geom_line(ggplot2::aes(y = LakeHuron), colour = "tomato") +
+#'       ggplot2::theme_bw()
+#'   }
+#'  }
 #' }
 #'
 fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL,

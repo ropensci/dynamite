@@ -1,9 +1,21 @@
-# dynamite 1.4.2
-  * Added further checks and fixes for backwards compatibility with Stan.
-  * Fixed code generation for intercept-only categorical model.
+# dynamite 1.4.4
+
+  * Example of the `lfo()` method now uses a single chain and core to avoid a compatibility issue with CRAN.
+  * Fixed `plot_nus` for categorical responses.
+  * Fixed an issue which caused an error in error message of `predict` and `fitted` methods when `newdata` contained duplicate time points within group.
+  * Fixed an issue (#72) which caused NA ELPD value in `lfo` in case of missing data.
+
+# dynamite 1.4.3
+
+  * Fixed an issue with `formula.dynamitefit()` with models defined using `lags()` with a vector `k` argument with more than one value.
+  * Fixed an issue in the `lfo()` method which resulted wrong ELPD estimates in panel data setting.
+  * Fixed an issue in the `lfo()` method which in case of lagged responses caused the ELPD computations to skip last time points.
 
 # dynamite 1.4.2
-  * Fixed a code generation in the transformed data block to be backwards compatible with Stan.
+
+  * Added further checks and fixes for backwards compatibility with Stan.
+  * Fixed code generation for intercept-only categorical model.
+  * Fixed code generation in the transformed data block to be backwards compatible with Stan.
 
 # dynamite 1.4.1
 

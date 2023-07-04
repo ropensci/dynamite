@@ -46,10 +46,16 @@ is triggered if pareto k values of any group exceeds the threshold.
 }
 \examples{
 \donttest{
-# this gives warnings due to the small number of iterations
-out <- suppressWarnings(lfo(gaussian_example_fit, L = 20))
-out$ELPD
-out$ELPD_SE
+# Please update your rstan and StanHeaders installation before running
+# on Windows
+if (!identical(.Platform$OS.type, "windows")) {
+  # this gives warnings due to the small number of iterations
+  out <- suppressWarnings(
+    lfo(gaussian_example_fit, L = 20, chains = 1, cores = 1)
+  )
+  out$ELPD
+  out$ELPD_SE
+}
 }
 
 }
