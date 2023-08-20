@@ -314,8 +314,7 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
     J = as.array(c(fixed_pars, varying_pars)),
     J_random = as.array(random_pars),
     L_fixed = as.array(seq_along(fixed_pars)),
-    L_varying = as.array(length(fixed_pars) + seq_along(varying_pars)),
-    L_random = as.array(seq_along(random_pars))
+    L_varying = as.array(length(fixed_pars) + seq_along(varying_pars))
   )
   channel <- c(channel, indices)
   sampling <- setNames(indices, paste0(names(indices), "_", y_name))
@@ -465,8 +464,7 @@ initialize_multivariate_channel <- function(y, y_cg, y_name, cg_idx,
       "J",
       "J_random",
       "L_fixed",
-      "L_varying",
-      "L_random"
+      "L_varying"
     )
     copy_channel <- setdiff(
       names(channel_vars[[z]]),

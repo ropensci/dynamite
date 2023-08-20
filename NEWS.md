@@ -1,3 +1,8 @@
+# dynamite 1.4.5
+  
+  * `get_data` method for `dynamitefit` object now correctly uses the previously defined priors instead of the default ones.
+  * Fixed a bug in indexing of random effect terms.
+
 # dynamite 1.4.4
 
   * Example of the `lfo()` method now uses a single chain and core to avoid a compatibility issue with CRAN.

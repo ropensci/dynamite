@@ -159,11 +159,11 @@ intercept_lines <- function(y, obs, family, has_varying, has_fixed, has_random,
     ifelse_(
       has_random_intercept,
       paste0(
-        glue::glue(" + rows_dot_product(X[t][{obs}, L_random_{ydim}], "),
+        glue::glue(" + rows_dot_product(X[t][{obs}, J_random_{ydim}], "),
         glue::glue("nu_{y}[{obs}, 2:K_random_{ydim}])")
       ),
       paste0(
-        glue::glue(" + rows_dot_product(X[t][{obs}, L_random_{ydim}], "),
+        glue::glue(" + rows_dot_product(X[t][{obs}, J_random_{ydim}], "),
         glue::glue("nu_{y}[{obs}, ])")
       )
     ),
@@ -279,7 +279,7 @@ loglik_lines_default <- function(y, idt, obs, family, has_missing,
       onlyif(
         has_random,
         c(
-          stan_array_arg(backend, "int", "L_random_{y}", 0L, TRUE),
+          stan_array_arg(backend, "int", "J_random_{y}", 0L, TRUE),
           "int K_random_{y}"
         )
       ),
@@ -616,7 +616,7 @@ loglik_categorical <- function(y, idt, obs, family, has_missing,
       onlyif(
         has_random,
         c(
-          stan_array_arg(backend, "int", "L_random_{y}", 0L, TRUE),
+          stan_array_arg(backend, "int", "J_random_{y}", 0L, TRUE),
           "int K_random_{y}"
         )
       ),
@@ -804,7 +804,7 @@ loglik_mvgaussian <- function(idt, cvars, cgvars, backend,
       onlyif(
         cvars[[i]]$has_random,
         c(
-          stan_array_arg(backend, "int", "L_random_{yi}", 0L, TRUE),
+          stan_array_arg(backend, "int", "J_random_{yi}", 0L, TRUE),
           "int K_random_{yi}"
         )
       ),
@@ -1116,10 +1116,6 @@ data_lines_default <- function(y, idt, has_random_intercept,
     onlyif(
       K_varying > 0L,
       stan_array(backend, "int", "L_varying_{y}", "K_varying_{y}")
-    ),
-    onlyif(
-      K_random > re_icpt,
-      stan_array(backend, "int", "L_random_{y}", "K_random_{y}{icpt}")
     ),
     .indent = idt(1)
   )
@@ -1999,7 +1995,7 @@ loglik_fun_args <- function(y, has_fixed, has_varying, has_missing,
     ),
     "y_{y}",
     onlyif(has_fixed_intercept || has_varying_intercept, "alpha_{y}"),
-    onlyif(has_random, c("L_random_{y}", "K_random_{y}")),
+    onlyif(has_random, c("J_random_{y}", "K_random_{y}")),
     onlyif(has_random || has_random_intercept, "nu_{y}"),
     onlyif(has_lfactor, c("lambda_{y}", "psi_{y}")),
     onlyif(has_fixed, c("{LJ}_fixed_{y}", "beta_{y}")),
@@ -2059,7 +2055,7 @@ model_lines_categorical <- function(y, idt, obs, family, priors,
       "y_{y}",
       "S_{y}",
       fun_args,
-      onlyif(has_random, c("L_random_{y}", "K_random_{y}")),
+      onlyif(has_random, c("J_random_{y}", "K_random_{y}")),
       onlyif(has_fixed, "{LJ}_fixed_{y}"),
       onlyif(has_varying, "{LJ}_varying_{y}"),
       onlyif(has_fixed || has_varying, c("J_{y}", "K_{y}")),
@@ -2169,7 +2165,7 @@ model_lines_mvgaussian <- function(cvars, cgvars, idt, backend, threading, ...) 
           cvars[[i]]$has_fixed_intercept || cvars[[i]]$has_varying_intercept,
           "alpha_{yi}"
         ),
-        onlyif(cvars[[i]]$has_random, c("L_random_{yi}", "K_random_{yi}")),
+        onlyif(cvars[[i]]$has_random, c("J_random_{yi}", "K_random_{yi}")),
         onlyif(
           cvars[[i]]$has_random || cvars[[i]]$has_random_intercept,
           "nu_{yi}"
