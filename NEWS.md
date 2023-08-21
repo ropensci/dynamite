@@ -2,6 +2,7 @@
   
   * `get_data` method for `dynamitefit` object now correctly uses the previously defined priors instead of the default ones.
   * Fixed a bug in indexing of random effect terms.
+  * Limited the number of parallel threads used by the `data.table` package in some examples for CRAN.
 
 # dynamite 1.4.4
 

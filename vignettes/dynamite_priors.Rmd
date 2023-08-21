@@ -33,6 +33,7 @@ options(dplyr.summarise.inform = FALSE)
 options(crayon.enabled = FALSE)
 options(dplyr.summarise.inform = FALSE)
 set.seed(0)
+data.table::setDTthreads(threads = 1)
 ```
 
 # Default prior distributions in dynamite
