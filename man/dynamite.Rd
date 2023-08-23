@@ -160,8 +160,6 @@ shape of the posterior), this can vary greatly.
 # Please update your rstan and StanHeaders installation before running
 # on Windows
 if (!identical(.Platform$OS.type, "windows")) {
-  threads <- data.table::getDTthreads()
-  data.table::setDTthreads(threads = 1) # For CRAN
   fit <- dynamite(
     dformula = obs(y ~ -1 + varying(~x), family = "gaussian") +
       lags(type = "varying") +
@@ -172,7 +170,6 @@ if (!identical(.Platform$OS.type, "windows")) {
     chains = 1,
     refresh = 0
   )
-  data.table::setDTthreads(threads = threads) # Restore
 }
 }
 
