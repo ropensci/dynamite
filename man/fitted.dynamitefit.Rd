@@ -42,6 +42,7 @@ model parameters. See also
 \code{\link[=predict.dynamitefit]{predict.dynamitefit()}} for multi-step predictions.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 fitted(gaussian_example_fit, n_draws = 2L)
 \donttest{
 set.seed(1)

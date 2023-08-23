@@ -32,6 +32,7 @@ exception to this is spline coefficients omega, which also contain the
 number denoting the knot number.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 get_parameter_names(multichannel_example_fit)
 
 }

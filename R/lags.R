@@ -16,6 +16,7 @@
 #' @return An object of class `lags`.
 #' @srrstats {G2.3a} Uses match.arg
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' obs(y ~ -1 + varying(~x), family = "gaussian") +
 #'   lags(type = "varying") + splines(df = 20)
 #'

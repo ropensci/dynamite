@@ -18,6 +18,7 @@
 #' @return A `data.frame` containing the prior definitions.
 #' @srrstats {BS5.2} Provides access to the prior definitions of the model.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
 #' get_priors(obs(y ~ x, family = "gaussian"),
 #'   data = d, time = "time", group = "id"
@@ -60,6 +61,7 @@ get_priors.dynamitefit <- function(x, ...) {
 #'   extracts the full model code.
 #' @return The Stan model blocks as a `character` string.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
 #' cat(get_code(obs(y ~ x, family = "gaussian"),
 #'   data = d, time = "time", group = "id"
@@ -164,6 +166,7 @@ get_code_ <- function(x, blocks = NULL) {
 #' @inheritParams get_priors.dynamiteformula
 #' @return A `list` containing the input data to Stan.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
 #' str(get_data(obs(y ~ x, family = "gaussian"),
 #'   data = d, time = "time", group = "id"
@@ -218,6 +221,7 @@ get_data.dynamitefit <- function(x, ...) {
 #' @export
 #' @family output
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' get_parameter_dims(multichannel_example_fit)
 #'
 get_parameter_dims <- function(x, ...) {
@@ -305,6 +309,7 @@ get_parameters <- function(x) {
 #' @export
 #' @family output
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' get_parameter_types(multichannel_example_fit)
 #'
 get_parameter_types <- function(x, ...) {
@@ -343,6 +348,7 @@ get_parameter_types.dynamitefit <- function(x, ...) {
 #' @export
 #' @family output
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' get_parameter_names(multichannel_example_fit)
 #'
 get_parameter_names <- function(x, types = NULL, ...) {

@@ -150,6 +150,7 @@ channels and whether to use centered or noncentered parameterization for
 the random effects.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 # A single gaussian response channel with a time-varying effect of 'x',
 # and a time-varying effect of the lag of 'y' using B-splines with
 # 20 degrees of freedom for the coefficients of the time-varying terms.
@@ -175,8 +176,10 @@ obs(g ~ lag(g) + lag(logp), family = "gaussian") +
   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
   aux(numeric(logp) ~ log(p + 1))
 
+data.table::setDTthreads(1) # For CRAN
 obs(y ~ x, family = "gaussian") + obs(z ~ w, family = "exponential")
 
+data.table::setDTthreads(1) # For CRAN
 x <- obs(y ~ x + random(~ 1 + lag(d)), family = "gaussian") +
   obs(z ~ varying(~w), family = "exponential") +
   aux(numeric(d) ~ log(y) | init(c(0, 1))) +

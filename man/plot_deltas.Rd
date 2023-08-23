@@ -44,6 +44,7 @@ A \code{ggplot} object.
 Plot Time-varying Regression Coefficients of a Dynamite Model
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 plot_deltas(gaussian_example_fit, level = 0.025, scales = "free") +
   ggplot2::theme_minimal()
 

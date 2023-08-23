@@ -117,6 +117,7 @@ package. However, such predictions can be obtained by augmenting the
 original data with \code{NA} values before model estimation.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 out <- predict(gaussian_example_fit, type = "response", n_draws = 2L)
 head(out)
 

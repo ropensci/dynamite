@@ -43,6 +43,7 @@ updating can lead to an error due to different naming in \code{cmdstanr} and
 \code{rstan} sampling arguments.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 \dontrun{
 # re-estimate the example fit without thinning:
 # As the model is compiled on Windows, this will fail on other platforms

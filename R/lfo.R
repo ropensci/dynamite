@@ -36,6 +36,7 @@
 #' Approximate leave-future-out cross-validation for Bayesian time series
 #' models, Journal of Statistical Computation and Simulation, 90:14, 2499-2523.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' \donttest{
 #' # Please update your rstan and StanHeaders installation before running
 #' # on Windows
@@ -259,6 +260,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
 #' @return Returns `x` invisibly.
 #' @export
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' \donttest{
 #' # Please update your rstan and StanHeaders installation before running
 #' # on Windows
@@ -291,6 +293,7 @@ print.lfo <- function(x, ...) {
 #' @return A ggplot object.
 #' @export
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' \donttest{
 #' # Please update your rstan and StanHeaders installation before running
 #' # on Windows

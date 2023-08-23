@@ -18,6 +18,7 @@ Returns \code{x} invisibly.
 Prints the summary of the leave-future-out cross-validation.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 \donttest{
 # Please update your rstan and StanHeaders installation before running
 # on Windows

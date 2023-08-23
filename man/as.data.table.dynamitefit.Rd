@@ -68,6 +68,7 @@ Provides a \code{data.table} representation of the posterior samples of the mode
 parameters. See \code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}} for details.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 as.data.table(
   gaussian_example_fit,
   responses = "y",

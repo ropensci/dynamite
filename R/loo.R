@@ -19,6 +19,7 @@
 #' Practical Bayesian model evaluation using leave-one-out cross-validation and
 #' WAIC. Statistics and Computing. 27(5), 1413–1432.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' \donttest{
 #' # Please update your rstan and StanHeaders installation before running
 #' # on Windows

@@ -7,6 +7,7 @@
 #' @return Total number of non-missing observations as an `integer`.
 #' @srrstats {RE4.5} Provides the number of observations.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' nobs(gaussian_example_fit)
 #'
 nobs.dynamitefit <- function(object, ...) {

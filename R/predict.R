@@ -92,6 +92,7 @@
 #' @srrstats {RE4.16} New group levels are supported via
 #'   `new_levels` parameter.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' out <- predict(gaussian_example_fit, type = "response", n_draws = 2L)
 #' head(out)
 #'

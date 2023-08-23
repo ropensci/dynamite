@@ -55,6 +55,7 @@ See potential values for the types argument in
 argument.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 as_draws(gaussian_example_fit, types = c("sigma", "beta"))
 
 # Compute MCMC diagnostics using the posterior package

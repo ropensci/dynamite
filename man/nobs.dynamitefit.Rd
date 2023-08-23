@@ -18,6 +18,7 @@ Total number of non-missing observations as an \code{integer}.
 Extract the Number of Observations Used to Fit a Dynamite Model
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 nobs(gaussian_example_fit)
 
 }

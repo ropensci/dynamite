@@ -17,6 +17,7 @@ Number of posterior draws as a single \code{integer} value.
 Return the Number of Posterior Draws of a \code{dynamitefit} Object
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 ndraws(gaussian_example_fit)
 
 }

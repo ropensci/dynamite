@@ -1,3 +1,5 @@
+data.table::setDTthreads(1) # For CRAN
+
 # Data warnings -----------------------------------------------------------
 
 test_that("factor time conversion warns", {

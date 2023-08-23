@@ -3,6 +3,8 @@
 
 run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "true")
 
+data.table::setDTthreads(1) # For CRAN
+
 test_that("stanc_options argument works", {
   skip_if_not(run_extended_tests)
   set.seed(1)

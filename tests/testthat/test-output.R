@@ -1,3 +1,5 @@
+data.table::setDTthreads(1) # For CRAN
+
 # Capture both message and output types
 capture_all_output <- function(x) {
   utils::capture.output(

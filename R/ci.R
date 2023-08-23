@@ -18,6 +18,7 @@
 #'   to `NA`.
 #' @srrstats {RE4.3} Provides credible intervals.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' confint(gaussian_example_fit, level = 0.9)
 #'
 confint.dynamitefit <- function(object, parm, level = 0.95, ...) {

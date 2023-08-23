@@ -31,6 +31,7 @@ Note that as this function tries to draw a plot containing effects of all
 groups, the plot will become messy with large number of groups.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 plot_nus(gaussian_example_fit)
 
 }

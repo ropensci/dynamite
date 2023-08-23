@@ -2,6 +2,8 @@
 #'   model fitted to a classic Grunfeld data match with brms and plm.
 run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "true")
 
+data.table::setDTthreads(1) # For CRAN
+
 test_that("parameters of the Grunfield model are recovered", {
   skip_if_not(run_extended_tests)
 

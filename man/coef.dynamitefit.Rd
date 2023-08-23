@@ -60,6 +60,7 @@ model parameters in a long format.
 Extracts either time-varying or time-invariant parameters of the model.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 betas <- coef(gaussian_example_fit, type = "beta")
 deltas <- coef(gaussian_example_fit, type = "delta")
 

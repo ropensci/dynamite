@@ -23,6 +23,7 @@
 #'   model parameters in a long format.
 #' @srrstats {G2.3a, RE4.2} Provides model coefficients.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' betas <- coef(gaussian_example_fit, type = "beta")
 #' deltas <- coef(gaussian_example_fit, type = "delta")
 #'

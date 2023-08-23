@@ -25,6 +25,7 @@ Adds the lagged value of the response of each channel specified via
 can be either time-varying or time-invariant.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 obs(y ~ -1 + varying(~x), family = "gaussian") +
   lags(type = "varying") + splines(df = 20)
 

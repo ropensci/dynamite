@@ -11,6 +11,8 @@
 #'
 run_scaling_tests <- identical(Sys.getenv("DYNAMITE_SCALING_TESTS"), "true")
 
+data.table::setDTthreads(1) # For CRAN
+
 test_that("scaling for gaussian model is linear in number of time points", {
   skip_if_not(run_scaling_tests)
   set.seed(1)

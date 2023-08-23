@@ -72,6 +72,7 @@
 #'   model parameters in a long format. For a wide format, see
 #'   [dynamite::as_draws()].
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' as.data.frame(
 #'   gaussian_example_fit,
 #'   responses = "y",

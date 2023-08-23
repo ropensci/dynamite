@@ -1,3 +1,5 @@
+data.table::setDTthreads(1) # For CRAN
+
 test_that("formula model topology is correct", {
   f1 <- obs(c(y1, y2) ~ 1 | x, family = "mvgaussian") +
     obs(x ~ 1 + z, family = "gaussian")

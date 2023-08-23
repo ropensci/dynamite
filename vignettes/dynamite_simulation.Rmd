@@ -20,6 +20,7 @@ knitr::opts_chunk$set(
 )
 library("dynamite")
 suppressPackageStartupMessages(library("ggplot2"))
+data.table::setDTthreads(1) # For CRAN
 ```
 
 # Using dynamite to generate panel data

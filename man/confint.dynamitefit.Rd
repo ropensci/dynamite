@@ -29,6 +29,7 @@ to \code{NA}.
 Extracts credible intervals from \code{dynamitefit} object.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 confint(gaussian_example_fit, level = 0.9)
 
 }

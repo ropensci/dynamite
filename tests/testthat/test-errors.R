@@ -1,3 +1,5 @@
+data.table::setDTthreads(1) # For CRAN
+
 obs_test <- obs(y ~ x + w, family = "gaussian")
 
 set.seed(0)

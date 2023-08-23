@@ -2,7 +2,8 @@
 #'   same scale.
 #' @srrstats {G5.4} Predict and fitted method produce results identical with
 #'   "manual" computation based on the same posterior samples.
-#'
+
+data.table::setDTthreads(1) # For CRAN
 
 test_that("predictions are on the same scale as input data", {
   expect_error(

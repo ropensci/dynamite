@@ -33,6 +33,7 @@ options(dplyr.summarise.inform = FALSE)
 options(crayon.enabled = FALSE)
 options(dplyr.summarise.inform = FALSE)
 set.seed(0)
+data.table::setDTthreads(1) # For CRAN
 ```
 
 This vignette is a modification of [@dynamite] which contains more examples and details.

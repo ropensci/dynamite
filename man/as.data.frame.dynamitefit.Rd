@@ -105,6 +105,7 @@ Samples of the full correlation matrix can be extracted manually as
 }
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 as.data.frame(
   gaussian_example_fit,
   responses = "y",

@@ -51,6 +51,7 @@ the \code{stanfit} element of the \code{dynamitefit} object. When applied to
 to get the parameter dimensions.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 get_parameter_dims(multichannel_example_fit)
 
 }

@@ -32,6 +32,7 @@
 #'    `splines()`. If `TRUE`, any existing definitions will be replaced.
 #' @return An object of class `splines`.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' # Two channel model with varying effects, with explicit lower bounds for the
 #' # random walk prior standard deviations, with noncentered parameterization
 #' # for the first channel and centered for the second channel.

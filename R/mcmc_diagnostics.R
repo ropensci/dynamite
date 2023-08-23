@@ -12,6 +12,7 @@
 #'   positive (unrestricted) integer.
 #' @return Returns `x` (invisibly).
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' mcmc_diagnostics(gaussian_example_fit)
 #'
 mcmc_diagnostics <- function(x, n) {

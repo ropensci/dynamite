@@ -36,6 +36,7 @@ A \code{ggplot} object.
 Plot Time-invariant Regression Coefficients of a Dynamite Model
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 plot_betas(gaussian_example_fit, level = 0.1)
 
 }

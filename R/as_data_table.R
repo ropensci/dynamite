@@ -13,6 +13,7 @@
 #' @return A `data.table` containing either samples or summary statistics of
 #'   the model parameters.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' as.data.table(
 #'   gaussian_example_fit,
 #'   responses = "y",

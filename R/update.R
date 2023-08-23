@@ -23,6 +23,7 @@
 #' @export
 #' @family fitting
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' \dontrun{
 #' # re-estimate the example fit without thinning:
 #' # As the model is compiled on Windows, this will fail on other platforms

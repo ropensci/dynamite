@@ -11,6 +11,7 @@
 #' @srrstats {BS6.0, RE4.17} Implements the `print` method for the model fit.
 #' @srrstats {BS5.3, BS5.5} Contains convergence statistics in the output.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' print(gaussian_example_fit)
 #'
 print.dynamitefit <- function(x, ...) {

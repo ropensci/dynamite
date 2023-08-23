@@ -21,6 +21,7 @@
 #'   you encounter divergences or other problems in sampling.
 #' @return An object of class `random_spec`.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' # two channel model with correlated random effects for responses x and y
 #' obs(y ~ 1 + random(~1), family = "gaussian") +
 #'   obs(x ~ 1 + random(~1 + z), family = "poisson") +

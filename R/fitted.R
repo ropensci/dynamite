@@ -16,6 +16,7 @@
 #' @return A `data.frame` containing the fitted values.
 #' @srrstats {RE4.9} Returns the fitted values.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' fitted(gaussian_example_fit, n_draws = 2L)
 #' \donttest{
 #' set.seed(1)

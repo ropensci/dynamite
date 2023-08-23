@@ -45,6 +45,7 @@ computed independently for each group, but the re-estimation of the model
 is triggered if pareto k values of any group exceeds the threshold.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 \donttest{
 # Please update your rstan and StanHeaders installation before running
 # on Windows

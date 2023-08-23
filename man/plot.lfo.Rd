@@ -19,6 +19,7 @@ Plots Pareto k values per each time point (with one point per group),
 together with a horizontal line representing the used threshold.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 \donttest{
 # Please update your rstan and StanHeaders installation before running
 # on Windows

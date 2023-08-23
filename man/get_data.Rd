@@ -46,6 +46,7 @@ A \code{list} containing the input data to Stan.
 Returns the input data to the Stan model. Mostly useful for debugging.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 d <- data.frame(y = rnorm(10), x = 1:10, time = 1:10, id = 1)
 str(get_data(obs(y ~ x, family = "gaussian"),
   data = d, time = "time", group = "id"

@@ -23,6 +23,7 @@
 #' @inheritParams as.data.frame.dynamitefit
 #' @return A `draws_df` object.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' as_draws(gaussian_example_fit, types = c("sigma", "beta"))
 #'
 #' # Compute MCMC diagnostics using the posterior package

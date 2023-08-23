@@ -22,6 +22,7 @@ Extracts all parameter types of used in the \code{dynamitefit} object. See
 \code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}} for explanations of different types.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 get_parameter_types(multichannel_example_fit)
 
 }

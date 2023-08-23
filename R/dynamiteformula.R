@@ -120,6 +120,7 @@
 #' @srrstats {G2.3b} Uses tolower.
 #' @srrstats {RE1.0} Uses a formula interface.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' # A single gaussian response channel with a time-varying effect of 'x',
 #' # and a time-varying effect of the lag of 'y' using B-splines with
 #' # 20 degrees of freedom for the coefficients of the time-varying terms.
@@ -351,6 +352,7 @@ parse_name <- function(x) {
 #' @param e2 \[`dynamiteformula`]\cr A model formula specification.
 #' @export
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' obs(y ~ x, family = "gaussian") + obs(z ~ w, family = "exponential")
 #'
 `+.dynamiteformula` <- function(e1, e2) {
@@ -367,6 +369,7 @@ parse_name <- function(x) {
 #' @param ... Ignored.
 #' @export
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' x <- obs(y ~ x + random(~ 1 + lag(d)), family = "gaussian") +
 #'   obs(z ~ varying(~w), family = "exponential") +
 #'   aux(numeric(d) ~ log(y) | init(c(0, 1))) +

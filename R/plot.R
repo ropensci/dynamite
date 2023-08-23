@@ -22,6 +22,7 @@
 #' method. Further plots can be easily constructed with the help of `as_draws`
 #' combined with `ggplot2`, for example.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' plot(gaussian_example_fit, type = "beta")
 #'
 plot.dynamitefit <- function(x, parameters = NULL, type = NULL,
@@ -97,6 +98,7 @@ plot.dynamitefit <- function(x, parameters = NULL, type = NULL,
 #' @srrstats {G2.3a} Uses match.arg.
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' plot_deltas(gaussian_example_fit, level = 0.025, scales = "free") +
 #'   ggplot2::theme_minimal()
 #'
@@ -210,6 +212,7 @@ plot_deltas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
 #' @return A `ggplot` object.
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' plot_betas(gaussian_example_fit, level = 0.1)
 #'
 plot_betas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
@@ -301,6 +304,7 @@ plot_betas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
 #' @return A `ggplot` object.
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' plot_nus(gaussian_example_fit)
 #'
 plot_nus <- function(x, parameters = NULL, responses = NULL, level = 0.05,

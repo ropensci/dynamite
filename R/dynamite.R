@@ -131,6 +131,7 @@
 #' from Panel Data with Dynamic Multivariate Panel Models. SocArxiv preprint,
 #' <https://osf.io/preprints/socarxiv/mdwu5/>.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' \donttest{
 #' # Please update your rstan and StanHeaders installation before running
 #' # on Windows
@@ -624,6 +625,7 @@ remove_redundant_parameters <- function(stan_input, backend,
 #' @family formulas
 #' @export
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' formula(gaussian_example_fit)
 #'
 formula.dynamitefit <- function(x, ...) {

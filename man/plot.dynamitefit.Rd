@@ -32,6 +32,7 @@ A \code{ggplot} object.
 Produces the traceplots and the density plots of the model parameters.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 plot(gaussian_example_fit, type = "beta")
 
 }

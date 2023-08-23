@@ -25,6 +25,7 @@ sizes and largest Rhat values. See \code{\link[rstan:check_hmc_diagnostics]{rsta
 \code{\link[posterior:draws_summary]{posterior::default_convergence_measures()}} for details.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 mcmc_diagnostics(gaussian_example_fit)
 
 }

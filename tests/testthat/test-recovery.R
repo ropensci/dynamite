@@ -10,6 +10,8 @@
 #'   process are recovered when increasing the data size.
 run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "true")
 
+data.table::setDTthreads(1) # For CRAN
+
 test_that("parameters for the linear regression are recovered as with lm", {
   skip_if_not(run_extended_tests)
   set.seed(1)

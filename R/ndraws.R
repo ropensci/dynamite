@@ -7,6 +7,7 @@
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @return Number of posterior draws as a single `integer` value.
 #' @examples
+#' data.table::setDTthreads(1) # For CRAN
 #' ndraws(gaussian_example_fit)
 #'
 ndraws.dynamitefit <- function(x) {

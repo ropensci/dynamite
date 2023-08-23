@@ -1,5 +1,7 @@
 #' @srrstats {G5.8,G5.8a, G5.8b, G5.8c, G5.8d} Edge conditions are tested.
 
+data.table::setDTthreads(1) # For CRAN
+
 # Model edgecases ---------------------------------------------------------
 
 set.seed(0)

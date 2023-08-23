@@ -156,6 +156,7 @@ depend on the discrepancy of the data and the model (and the subsequent
 shape of the posterior), this can vary greatly.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 \donttest{
 # Please update your rstan and StanHeaders installation before running
 # on Windows
@@ -173,10 +174,13 @@ if (!identical(.Platform$OS.type, "windows")) {
 }
 }
 
+data.table::setDTthreads(1) # For CRAN
 formula(gaussian_example_fit)
 
+data.table::setDTthreads(1) # For CRAN
 print(gaussian_example_fit)
 
+data.table::setDTthreads(1) # For CRAN
 summary(gaussian_example_fit,
   types = "beta",
   probs = c(0.05, 0.1, 0.9, 0.95)

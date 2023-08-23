@@ -1,14 +1,15 @@
 # dynamite 1.4.5
-  
-  * `get_data` method for `dynamitefit` object now correctly uses the previously defined priors instead of the default ones.
+
+  * The `get_data()` method for `dynamitefit` objects now correctly uses the previously defined priors instead of the default ones.
   * Fixed a bug in indexing of random effect terms.
+  * Limited the number of parallel threads used by the `data.table` package to 1 in examples, tests, and vignettes for CRAN.
 
 # dynamite 1.4.4
 
   * Example of the `lfo()` method now uses a single chain and core to avoid a compatibility issue with CRAN.
-  * Fixed `plot_nus` for categorical responses.
-  * Fixed an issue which caused an error in error message of `predict` and `fitted` methods when `newdata` contained duplicate time points within group.
-  * Fixed an issue (#72) which caused NA ELPD value in `lfo` in case of missing data.
+  * Fixed `plot_nus()` for categorical responses.
+  * Fixed an issue which caused an error in error message of `predict()` and `fitted()` methods when `newdata` contained duplicate time points within group.
+  * Fixed an issue (#72) which caused NA ELPD value in `lfo()` in case of missing data.
 
 # dynamite 1.4.3
 

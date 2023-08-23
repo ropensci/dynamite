@@ -44,6 +44,7 @@ restrictions are added to the model. Details will be available in an
 upcoming paper. This component should be treated as experimental feature.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 # three channel model with common factor affecting for responses x and y
 obs(y ~ 1, family = "gaussian") +
   obs(x ~ 1, family = "poisson") +

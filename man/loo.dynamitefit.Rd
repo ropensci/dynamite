@@ -26,6 +26,7 @@ Estimates the leave-one-out (LOO) information criterion for \code{dynamite}
 models using Pareto smoothed importance sampling with the \code{loo} package.
 }
 \examples{
+data.table::setDTthreads(1) # For CRAN
 \donttest{
 # Please update your rstan and StanHeaders installation before running
 # on Windows
