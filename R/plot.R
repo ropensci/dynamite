@@ -97,11 +97,8 @@ plot.dynamitefit <- function(x, parameters = NULL, type = NULL,
 #' @srrstats {G2.3a} Uses match.arg.
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #' @examples
-#' threads <- data.table::getDTthreads()
-#' data.table::setDTthreads(threads = 1) # For CRAN
 #' plot_deltas(gaussian_example_fit, level = 0.025, scales = "free") +
 #'   ggplot2::theme_minimal()
-#' data.table::setDTthreads(threads = threads) # Restore
 #'
 plot_deltas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
                         alpha = 0.5, scales = c("fixed", "free"),
