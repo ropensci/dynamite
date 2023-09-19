@@ -416,11 +416,21 @@ create_transformed_parameters <- function(idt, backend,
   }
   lfactor_text <- ""
   psis <- mvars$lfactor_def$responses
+  psis <- lapply(psis, function(x) {
+    y <- cvars[[x]]
+    ifelse_(
+    is_categorical(y$family),
+    y$categories[-y$S],
+    y$y)
+    })
+  n_y <- lengths(psis)
+  psis <- unlist(psis)
   P <- length(psis)
   if (P > 0L) {
     if (mvars$lfactor_def$noncentered_psi) {
+      nz_lambda <- rep(mvars$lfactor_def$nonzero_lambda, times = n_y)
       tau_psi <- ifelse(
-        mvars$lfactor_def$nonzero_lambda,
+        nz_lambda,
         paste0("tau_psi_", psis, " * "),
         ""
       )
@@ -579,8 +589,18 @@ create_model <- function(idt, backend, cg, cvars, cgvars, mvars, threading) {
   }
   lfactor_text <- ""
   psis <- mvars$lfactor_def$responses
+  psis <- lapply(psis, function(x) {
+    y <- cvars[[x]]
+    ifelse_(
+      is_categorical(y$family),
+      y$categories[-y$S],
+      y$y)
+  })
+  n_y <- lengths(psis)
+  psis <- unlist(psis)
   P <- length(psis)
   if (P > 0L) {
+    nz_lambda <- rep(mvars$lfactor_def$nonzero_lambda, times = n_y)
     omega1 <- paste0("omega_raw_psi_1_", psis, collapse = ", ")
     if (mvars$lfactor_def$correlated) {
       L_prior <- mvars$common_priors
@@ -592,10 +612,10 @@ create_model <- function(idt, backend, cg, cvars, cgvars, mvars, threading) {
           .indent = idt(c(1, 1))
         )
       } else {
-        if (any(mvars$lfactor_def$nonzero_lambda)) {
+        if (any(nz_lambda)) {
           tau <- paste0(
             ifelse(
-              mvars$lfactor_def$nonzero_lambda,
+              nz_lambda,
               paste0("tau_psi_", psis),
               "1"
             ),
@@ -639,10 +659,10 @@ create_model <- function(idt, backend, cg, cvars, cgvars, mvars, threading) {
           .indent = idt(1)
         )
       } else {
-        if (any(mvars$lfactor_def$nonzero_lambda)) {
+        if (any(nz_lambda)) {
           tau <- paste0(
             ifelse(
-              mvars$lfactor_def$nonzero_lambda,
+              nz_lambda,
               paste0("tau_psi_", psis),
               "1"
             ),

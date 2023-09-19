@@ -1063,7 +1063,6 @@ parse_lfactor <- function(lfactor_def, resp, families) {
   out <- list()
   if (!is.null(lfactor_def)) {
     valid_channels <- resp
-    # default, use all channels except categorical
     if (is.null(lfactor_def$responses)) {
       lfactor_def$responses <- valid_channels
     } else {
@@ -1083,7 +1082,7 @@ parse_lfactor <- function(lfactor_def, resp, families) {
     out$has_lfactor <- TRUE
     out$responses <- lfactor_def$responses
     out$noncentered_psi <- lfactor_def$noncentered_psi
-    n_channels <- length(resp)
+    n_channels <- length(lfactor_def$responses)
     out$nonzero_lambda <- lfactor_def$nonzero_lambda
     stopifnot_(
       length(out$nonzero_lambda) %in% c(1L, n_channels),

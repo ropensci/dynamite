@@ -1,3 +1,7 @@
+# dynamite 1.4.6
+
+  * Fixed the construction of latent factors for categorical responses.
+
 # dynamite 1.4.5
 
   * The `get_data()` method for `dynamitefit` objects now correctly uses the previously defined priors instead of the default ones.
