@@ -1,3 +1,7 @@
+# dynamite 1.4.7
+
+  * Added a note on priors vignette regarding default priors for $\tau$ parameters.
+  
 # dynamite 1.4.6
 
   * Fixed the construction of latent factors for categorical responses.

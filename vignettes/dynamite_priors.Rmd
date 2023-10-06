@@ -68,7 +68,7 @@ where $\bar y$ is mean of the response variable values at first time point after
 
 ## Standard deviation parameters
 
-The prior for the standard deviation parameter $\tau$ of the random walk prior of the spline coefficients is half-normal with the standard deviation of $2\sigma_y/\sigma_x$ (with $\sigma_x=1$ in case of a time-varying intercept). The same prior distribution is also used for the the standard deviations of the random effects. Note that this prior can be too uninformative in some cases especially for the $\tau$ parameters. 
+The prior for the standard deviation parameter $\tau$ of the random walk prior of the spline coefficients is half-normal with the standard deviation of $2\sigma_y/\sigma_x$ (with $\sigma_x=1$ in case of a time-varying intercept). The same prior distribution is also used for the the standard deviations of the random effects. Note that this prior can be too uninformative in some cases especially for the $\tau$ parameters. A boundary (zero) avoiding $Gamma(2, z)$ prior with suitable value of $z$ can often work better for $\tau$ when the default prior leads to divergences (alternatively, in some occasions switching between centered and noncentered parameterization in `splines` can help).
 
 ## Correlation matrices
 
