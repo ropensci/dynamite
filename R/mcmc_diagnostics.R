@@ -38,7 +38,7 @@ mcmc_diagnostics.dynamitefit <- function(x, n = 3L) {
     "Argument {.arg n} must be a single {.cls integer}."
   )
   if (!is.null(x$stanfit)) {
-    if (identical(x$stanfit@stan_args[[1L]]$algorithm, "NUTS")) {
+    if (x$stanfit@stan_args[[1L]]$algorithm %in% c("NUTS", "hmc")) {
       n_draws <- ndraws(x)
       n_divs <- rstan::get_num_divergent(x$stanfit)
       n_trees <- rstan::get_num_max_treedepth(x$stanfit)

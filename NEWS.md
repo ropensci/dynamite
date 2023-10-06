@@ -1,6 +1,7 @@
 # dynamite 1.4.7
 
   * Added a note on priors vignette regarding default priors for $\tau$ parameters.
+  * Fixed `mcmc_diagnostics` function so that HMC diagnostics are checked also for models run with the `cmdstanr` backend.
   
 # dynamite 1.4.6
 
