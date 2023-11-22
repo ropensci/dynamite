@@ -223,7 +223,8 @@ parse_funs <- function(object, type, funs, categories) {
       name <- paste0(fun_names[j], "_", funs_names[i])
       if (length(resp_idx) > 0L) {
         category <- ifelse_(
-          is_categorical(family_stoch[[resp_idx]]),
+          !identical(type, "response") &&
+            is_categorical(family_stoch[[resp_idx]]),
           paste0("_", categories[[funs_names[i]]]),
           ""
         )
