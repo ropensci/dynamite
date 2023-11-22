@@ -175,7 +175,7 @@ parse_newdata <- function(dformulas, newdata, data, type, eval_type,
 #'
 #' @inheritParams predict.dynamitefit
 #' @noRd
-parse_funs <- function(object, type, funs) {
+parse_funs <- function(object, type, funs, categories) {
   stopifnot_(
     !is.null(object$group_var),
     "Argument {.arg funs} requires data with multiple individuals."
@@ -202,6 +202,7 @@ parse_funs <- function(object, type, funs) {
     paste0("_", type)
   )
   resp_stoch <- get_responses(object$dformulas$stoch)
+  family_stoch <- get_families(object$dformulas$stoch)
   for (i in seq_along(funs)) {
     stopifnot_(
       is.list(funs[[i]]),
@@ -217,16 +218,26 @@ parse_funs <- function(object, type, funs) {
         is.function(funs[[i]][[j]]),
         "Each element of {.arg funs} must contain only functions."
       )
-      out[[idx]] <- list(
-        fun = funs[[i]][[j]],
-        name = paste0(fun_names[j], "_", funs_names[i]),
-        target = ifelse_(
-          funs_names[i] %in% resp_stoch,
-          paste0(funs_names[i], suffix),
-          funs_names[i]
+      resp_idx <- funs_names[i] %in% resp_stoch
+      target <- funs_names[i]
+      name <- paste0(fun_names[j], "_", funs_names[i])
+      if (length(resp_idx) > 0L) {
+        category <- ifelse_(
+          is_categorical(family_stoch[[resp_idx]]),
+          paste0("_", categories[[funs_names[i]]]),
+          ""
         )
-      )
-      idx <- idx + 1L
+        target <- paste0(target, suffix, category)
+        name <- paste0(name, category)
+      }
+      for (k in seq_along(name)) {
+        out[[idx]] <- list(
+          fun = funs[[i]][[j]],
+          name = name[k],
+          target = target[k]
+        )
+        idx <- idx + 1L
+      }
     }
   }
   out

@@ -231,6 +231,10 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
   group_var <- object$group_var
   time_var <- object$time_var
   resp_stoch <- get_responses(object$dformulas$stoch)
+  categories <- lapply(
+    attr(object$stan$responses, "resp_class"),
+    "attr", "levels"
+  )
   new_levels <- ifelse_(
     length(which_random(object$dformulas$all)) == 0L,
     "ignore",
@@ -243,10 +247,7 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
     type = type,
     eval_type = eval_type,
     resp_stoch = resp_stoch,
-    categories = lapply(
-      attr(object$stan$responses, "resp_class"),
-      "attr", "levels"
-    ),
+    categories = categories,
     clear_names = c(
       get_responses(object$dformulas$det),
       get_responses(object$dformulas$lag_det),
@@ -317,7 +318,7 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
   mode <- "full"
   if (length(funs) > 0L) {
     mode <- "summary"
-    funs <- parse_funs(object, type, funs)
+    funs <- parse_funs(object, type, funs, categories)
     data.table::setcolorder(
       x = simulated,
       neworder = c(group_var, time_var, resp_draw)
