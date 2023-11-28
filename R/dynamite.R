@@ -45,7 +45,8 @@
 #'   needs the actual `CmdStan` software. See https://mc-stan.org/cmdstanr/ for
 #'   details.
 #' @param verbose \[`logical(1)`]\cr All warnings and messages are suppressed
-#'   if set to `FALSE`. Defaults to `TRUE`.
+#'   if set to `FALSE`. Defaults to `TRUE`. Setting this to `FALSE` will also
+#'   disable checks for perfect collinearity in the model matrix.
 #' @param verbose_stan \[`logical(1)`]\cr This is the `verbose` argument for
 #'   [rstan::sampling()]. Defaults to `FALSE`.
 #' @param stanc_options \[`list()`]\cr This is the `stanc_options` argument
@@ -846,9 +847,9 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
     "Non-finite values were found in variable{?s}
     {.var {data_names[!finite_cols]}} of {.arg data}."
   )
+  data.table::setkeyv(data, c(group_var, time_var))
   data <- fill_time(data, group_var, time_var)
   drop_unused(dformula, data, group_var, time_var)
-  data.table::setkeyv(data, c(group_var, time_var))
   data
 }
 
@@ -1129,8 +1130,10 @@ fill_time <- function(data, group_var, time_var) {
   n_group <- length(group)
   time_duplicated <- logical(n_group)
   time_missing <- logical(n_group)
+  group_bounds <- c(0, data[, max(.I), by = group_var]$V1)
   for (i in seq_len(n_group)) {
-    idx_group <- which(data_groups == group[i])
+    idx_group <- seq(group_bounds[i] + 1, group_bounds[i + 1])
+    #idx_group <- which(data_groups == group[i])
     sub <- data[idx_group, ]
     time_duplicated[i] <- any(duplicated(sub[[time_var]]))
     time_missing[i] <- !identical(sub[[time_var]], full_time)
@@ -1148,26 +1151,27 @@ fill_time <- function(data, group_var, time_var) {
     all(time_ivals[!is.na(time_ivals)] %% time_scale == 0),
     "Observations must occur at regular time intervals."
   )
-
   # time_missing <- data[,
   #  !identical(time_var, full_time),
   #  by = group_var,
   #  env = list(time_var = time_var, full_time = full_time)
   # ]$V1
   if (any(time_missing)) {
+    data_names <- names(data)
     full_data_template <- data.table::as.data.table(
       expand.grid(
-        time = full_time,
-        group = unique(data[[group_var]])
+        group = unique(data[[group_var]]),
+        time = full_time
       )
     )
-    names(full_data_template) <- c(time_var, group_var)
+    names(full_data_template) <- c(group_var, time_var)
     data <- data.table::merge.data.table(
       full_data_template,
       data,
-      by = c(time_var, group_var),
+      by = c(group_var, time_var),
       all.x = TRUE
     )
+    data.table::setcolorder(data, data_names)
   }
   data
 }

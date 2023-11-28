@@ -123,13 +123,13 @@ parse_newdata <- function(dformulas, newdata, data, type, eval_type,
       newdata[[i]] <- factor(newdata[[i]], levels = l_orig)
     }
   }
+  data.table::setDT(newdata, key = c(group_var, time_var))
   newdata <- fill_time_predict(
     newdata,
     group_var,
     time_var,
     time_scale = original_times[2L] - original_times[1L]
   )
-  data.table::setDT(newdata, key = c(group_var, time_var))
   clear_names <- intersect(names(newdata), clear_names)
   if (length(clear_names) > 0L) {
     # TODO no need check length when data.table package is updated
@@ -270,8 +270,9 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
     has_gaps = logical(n_group)
   )
   time_missing <- logical(n_group)
+  group_bounds <- c(0, data[, max(.I), by = group_var]$V1)
   for (i in seq_len(n_group)) {
-    idx_group <- which(data_groups == group[i])
+    idx_group <- seq(group_bounds[i] + 1, group_bounds[i + 1])
     sub <- data[idx_group, ]
     time_duplicated[i] <- any(duplicated(sub[[time_var]]))
     time_groups$has_missing[i] <- !identical(sub[[time_var]], full_time)
@@ -288,7 +289,6 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
     )
   )
   if (length(time) > 1L) {
-    original_order <- colnames(data)
     # time_groups <- data[,
     # {
     #  has_missing = !identical(time_var, full_time)
@@ -303,6 +303,7 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
     # )
     # ]
     if (any(time_groups$has_missing)) {
+      data_names <- colnames(data)
       if (any(time_groups$has_gaps)) {
         warning_(c(
           "Time index variable {.var {time_var}} of {.arg newdata} has gaps:",
@@ -312,16 +313,17 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
         ))
       }
       full_data_template <- data.table::as.data.table(expand.grid(
-        time = full_time,
-        group = unique(data[[group_var]])
+        group = unique(data[[group_var]]),
+        time = full_time
       ))
-      names(full_data_template) <- c(time_var, group_var)
+      names(full_data_template) <- c(group_var, time_var)
       data <- data.table::merge.data.table(
         full_data_template,
         data,
-        by = c(time_var, group_var),
+        by = c(group_var, time_var),
         all.x = TRUE
       )
+      data.table::setcolorder(data, data_names)
     }
   }
   data

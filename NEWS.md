@@ -1,3 +1,8 @@
+# dynamite 1.4.8
+
+  * Made several performance improvements to data parsing.
+  * `dynamite()` will now retain the original column order of `data` in all circumstances.
+
 # dynamite 1.4.7
 
   * Added a note on priors vignette regarding default priors for $\tau$ parameters.

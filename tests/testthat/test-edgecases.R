@@ -10,8 +10,8 @@ individuals <- 5
 total_obs <- timepoints * individuals
 
 test_data <- data.frame(
-  time = 1:timepoints,
   group = gl(individuals, timepoints),
+  time = 1:timepoints,
   offset = sample(50:100, size = total_obs, replace = TRUE),
   trials = sample(50:100, size = total_obs, replace = TRUE)
 ) |>
@@ -487,6 +487,8 @@ test_that("data expansion to full time scale works", {
   expected_data_single <- droplevels(expected_data_single)
   expected_data_single$trials <- NULL
   expected_data_single$offset <- NULL
+  expected_data_single$group <- NULL
+  expected_data_single$.group <- 1L
   data.table::setDT(expected_data_single, key = c("time"))
   expect_equal(fit_single$data, expected_data_single, ignore_attr = TRUE)
 })

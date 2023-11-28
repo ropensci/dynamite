@@ -81,13 +81,16 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   )
   N <- n_unique(group)
   K <- ncol(model_matrix)
-  X <- aperm(
-    array(
-      as.numeric(unlist(split(model_matrix, gl(T_full, 1L, N * T_full)))),
-      dim = c(N, K, T_full)
-    ),
-    c(3L, 1L, 2L)
-  )[T_idx, , , drop = FALSE]
+  #X <- aperm(
+  #  array(
+  #    as.numeric(unlist(split(model_matrix, gl(T_full, 1L, N * T_full)))),
+  #    dim = c(N, K, T_full)
+  #  ),
+  #  c(3L, 1L, 2L)
+  #)[T_idx, , , drop = FALSE]
+  X <- model_matrix[,]
+  dim(X) <- c(T_full, N, K)
+  X <- X[T_idx, , , drop = FALSE]
   x_tmp <- X[1L, , , drop = FALSE]
   sd_x <- pmax(
     setNames(apply(X, 3L, sd, na.rm = TRUE), colnames(model_matrix)),
@@ -107,12 +110,14 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   for (i in seq_len(n_channels)) {
     y <- resp[i]
     y_name <- resp_names[i]
-    y_split <- split(
-      data[, .SD, .SDcols = c(y, group_var)],
-      by = group_var,
-      keep.by = FALSE
-    )
-    Y <- array(as.numeric(unlist(y_split)), dim = c(T_full, N))
+    #y_split <- split(
+    #  data[, .SD, .SDcols = c(y, group_var)],
+    #  by = group_var,
+    #  keep.by = FALSE
+    #)
+    #Y <- array(as.numeric(unlist(y_split)), dim = c(T_full, N))
+    Y <- as.numeric(data[[y]])
+    dim(Y) <- c(T_full, N)
     Y <- Y[T_idx, , drop = FALSE]
     tmp <- initialize_univariate_channel(
       dformula = dformula[[i]],
@@ -323,8 +328,10 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
   for (spec in formula_special_funs) {
     if (!is.null(specials[[spec]])) {
       spec_idx <- seq.int(fixed + 1L, T_full)
-      spec_split <- split(specials[[spec]], group)
-      spec_array <- array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
+      #spec_split <- split(specials[[spec]], group)
+      spec_array <- as.numeric(specials[[spec]])
+      dim(spec_array) <- c(T_full, N)
+      #spec_array <- array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
       spec_na <- spec_na | is.na(spec_array[spec_idx, , drop = FALSE])
       spec_name <- paste0(spec, "_", y_name)
       sampling[[spec_name]] <- ifelse_(
