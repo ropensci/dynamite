@@ -19,6 +19,7 @@ dynamite(
   stanc_options = list("O1"),
   threads_per_chain = 1L,
   grainsize = NULL,
+  custom_model_code = NULL,
   debug = NULL,
   ...
 )
@@ -64,7 +65,8 @@ needs the actual \code{CmdStan} software. See https://mc-stan.org/cmdstanr/ for
 details.}
 
 \item{verbose}{[\code{logical(1)}]\cr All warnings and messages are suppressed
-if set to \code{FALSE}. Defaults to \code{TRUE}.}
+if set to \code{FALSE}. Defaults to \code{TRUE}. Setting this to \code{FALSE} will also
+disable checks for perfect collinearity in the model matrix.}
 
 \item{verbose_stan}{[\code{logical(1)}]\cr This is the \code{verbose} argument for
 \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}. Defaults to \code{FALSE}.}
@@ -78,13 +80,16 @@ Defaults to \code{list("O1")} to enable level one compiler optimizations.}
 number of parallel threads to use within each chain. Default is \code{1}. See
 \code{\link[rstan:rstan_options]{rstan::rstan_options()}} and \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}} for details.}
 
-\item{grainsize}{[\code{integer(1)}]\cr A Positive integer defining the
+\item{grainsize}{[\code{integer(1)}]\cr A positive integer defining the
 suggested size of the partial sums when using within-chain parallelization.
 Default is number of time points divided by \code{threads_per_chain}.
 Setting this to \code{1} leads the workload division entirely to the internal
 scheduler. The performance of the within-chain parallelization can be
 sensitive to the choice of \code{grainsize}, see Stan manual on reduce-sum for
 details.}
+
+\item{custom_model_code}{[\code{character(1)}]\cr An optional character string
+to override the generated model code. For expert users only.}
 
 \item{debug}{[\code{list()}]\cr A named list of form \code{name = TRUE} indicating
 additional objects in the environment of the \code{dynamite} function which are

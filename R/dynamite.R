@@ -56,13 +56,15 @@
 #' @param threads_per_chain \[`integer(1)`]\cr A Positive integer defining the
 #'   number of parallel threads to use within each chain. Default is `1`. See
 #'   [rstan::rstan_options()] and [cmdstanr::sample()] for details.
-#' @param grainsize \[`integer(1)`]\cr A Positive integer defining the
+#' @param grainsize \[`integer(1)`]\cr A positive integer defining the
 #'   suggested size of the partial sums when using within-chain parallelization.
 #'   Default is number of time points divided by `threads_per_chain`.
 #'   Setting this to `1` leads the workload division entirely to the internal
 #'   scheduler. The performance of the within-chain parallelization can be
 #'   sensitive to the choice of `grainsize`, see Stan manual on reduce-sum for
 #'   details.
+#' @param custom_model_code \[`character(1)`]\cr An optional character string
+#'   to override the generated model code. For expert users only.
 #' @param debug \[`list()`]\cr A named list of form `name = TRUE` indicating
 #'   additional objects in the environment of the `dynamite` function which are
 #'   added to the return object. Additionally, values `no_compile = TRUE` and
@@ -155,7 +157,7 @@ dynamite <- function(dformula, data, time, group = NULL,
                      verbose = TRUE, verbose_stan = FALSE,
                      stanc_options = list("O1"),
                      threads_per_chain = 1L, grainsize = NULL,
-                     debug = NULL, ...) {
+                     custom_model_code = NULL, debug = NULL, ...) {
   dynamite_check(
     dformula,
     data,
@@ -167,6 +169,7 @@ dynamite <- function(dformula, data, time, group = NULL,
     stanc_options,
     threads_per_chain,
     grainsize,
+    custom_model_code,
     debug
   )
   backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
@@ -206,6 +209,7 @@ dynamite <- function(dformula, data, time, group = NULL,
     stanc_options,
     threads_per_chain,
     grainsize,
+    custom_model_code,
     debug,
     ...
   )
@@ -255,7 +259,8 @@ dynamite <- function(dformula, data, time, group = NULL,
 #' @noRd
 dynamite_check <- function(dformula, data, time, group, priors, verbose,
                            verbose_stan, stanc_options,
-                           threads_per_chain, grainsize, debug) {
+                           threads_per_chain, grainsize,
+                           custom_model_code, debug) {
   stopifnot_(
     !missing(dformula),
     "Argument {.arg dformula} is missing."
@@ -305,6 +310,10 @@ dynamite_check <- function(dformula, data, time, group, priors, verbose,
     "Argument {.arg verbose_stan} must be a single {.cls logical} value."
   )
   stopifnot_(
+    checkmate::test_string(x = custom_model_code, null.ok = TRUE),
+    "Argument {.arg custom_model_code} must be a single {.cls character} string."
+  )
+  stopifnot_(
     is.null(debug) || is.list(debug),
     "Argument {.arg debug} must be a {.cls list} or NULL."
   )
@@ -327,7 +336,8 @@ dynamite_check <- function(dformula, data, time, group, priors, verbose,
 #' @noRd
 dynamite_stan <- function(dformulas, data, data_name, group, time,
                           priors, backend, verbose, verbose_stan,
-                          stanc_options, threads_per_chain, grainsize, debug,
+                          stanc_options, threads_per_chain, grainsize,
+                          custom_model_code, debug,
                           ...) {
   stan_input <- prepare_stan_input(
     dformulas$stoch,
@@ -344,8 +354,9 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     grainsize
   )
   stan_input$sampling_vars$grainsize <- grainsize
+  model_code <- custom_model_code
   model_code <- onlyif(
-    !isFALSE(debug$model_code),
+    !isFALSE(debug$model_code) && is.null(custom_model_code),
     create_blocks(
       indent = 2L,
       backend = backend,
