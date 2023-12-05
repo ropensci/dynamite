@@ -354,8 +354,7 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     grainsize
   )
   stan_input$sampling_vars$grainsize <- grainsize
-  model_code <- custom_model_code
-  model_code <- onlyif(
+  model_code <- ifelse(
     !isFALSE(debug$model_code) && is.null(custom_model_code),
     create_blocks(
       indent = 2L,
@@ -365,7 +364,8 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
       cgvars = stan_input$channel_group_vars,
       mvars = stan_input$model_vars,
       threading = threads_per_chain > 1L
-    )
+    ),
+    custom_model_code
   )
   sampling_info(dformulas, verbose, debug, backend)
   stopifnot_(
