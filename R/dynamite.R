@@ -63,8 +63,10 @@
 #'   scheduler. The performance of the within-chain parallelization can be
 #'   sensitive to the choice of `grainsize`, see Stan manual on reduce-sum for
 #'   details.
-#' @param custom_model_code \[`character(1)`]\cr An optional character string
-#'   to override the generated model code. For expert users only.
+#' @param custom_stan_model \[`character(1)`]\cr An optional character string
+#'   that either contains a customized stan model code or a path to a `.stan`
+#'   file that contains the code. Using this will override the generated model
+#'   code. For expert users only.
 #' @param debug \[`list()`]\cr A named list of form `name = TRUE` indicating
 #'   additional objects in the environment of the `dynamite` function which are
 #'   added to the return object. Additionally, values `no_compile = TRUE` and
@@ -157,7 +159,7 @@ dynamite <- function(dformula, data, time, group = NULL,
                      verbose = TRUE, verbose_stan = FALSE,
                      stanc_options = list("O1"),
                      threads_per_chain = 1L, grainsize = NULL,
-                     custom_model_code = NULL, debug = NULL, ...) {
+                     custom_stan_model = NULL, debug = NULL, ...) {
   dynamite_check(
     dformula,
     data,
@@ -169,8 +171,13 @@ dynamite <- function(dformula, data, time, group = NULL,
     stanc_options,
     threads_per_chain,
     grainsize,
-    custom_model_code,
+    custom_stan_model,
     debug
+  )
+  custom_stan_model <- ifelse_(
+    grepl("\\.stan$", custom_stan_model, perl = TRUE),
+    paste(readLines(custom_stan_model), collapse = "\n"),
+    custom_stan_model
   )
   backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
   stopifnot_(
@@ -209,7 +216,7 @@ dynamite <- function(dformula, data, time, group = NULL,
     stanc_options,
     threads_per_chain,
     grainsize,
-    custom_model_code,
+    custom_stan_model,
     debug,
     ...
   )
@@ -260,7 +267,7 @@ dynamite <- function(dformula, data, time, group = NULL,
 dynamite_check <- function(dformula, data, time, group, priors, verbose,
                            verbose_stan, stanc_options,
                            threads_per_chain, grainsize,
-                           custom_model_code, debug) {
+                           custom_stan_model, debug) {
   stopifnot_(
     !missing(dformula),
     "Argument {.arg dformula} is missing."
@@ -310,8 +317,13 @@ dynamite_check <- function(dformula, data, time, group, priors, verbose,
     "Argument {.arg verbose_stan} must be a single {.cls logical} value."
   )
   stopifnot_(
-    checkmate::test_string(x = custom_model_code, null.ok = TRUE),
-    "Argument {.arg custom_model_code} must be a single {.cls character} string."
+    checkmate::test_string(x = custom_stan_model, null.ok = TRUE),
+    "Argument {.arg custom_stan_model} must be a single {.cls character} string."
+  )
+  stopifnot_(
+    !grepl("\\.stan$", custom_stan_model, perl = TRUE) ||
+      file.exists(custom_stan_model),
+    "File {.file {custom_stan_model}} does not exist."
   )
   stopifnot_(
     is.null(debug) || is.list(debug),
@@ -337,7 +349,7 @@ dynamite_check <- function(dformula, data, time, group, priors, verbose,
 dynamite_stan <- function(dformulas, data, data_name, group, time,
                           priors, backend, verbose, verbose_stan,
                           stanc_options, threads_per_chain, grainsize,
-                          custom_model_code, debug,
+                          custom_stan_model, debug,
                           ...) {
   stan_input <- prepare_stan_input(
     dformulas$stoch,
@@ -355,7 +367,7 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
   )
   stan_input$sampling_vars$grainsize <- grainsize
   model_code <- ifelse(
-    !isFALSE(debug$model_code) && is.null(custom_model_code),
+    !isFALSE(debug$model_code) && is.null(custom_stan_model),
     create_blocks(
       indent = 2L,
       backend = backend,
@@ -365,7 +377,7 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
       mvars = stan_input$model_vars,
       threading = threads_per_chain > 1L
     ),
-    custom_model_code
+    custom_stan_model
   )
   sampling_info(dformulas, verbose, debug, backend)
   stopifnot_(

@@ -19,7 +19,7 @@ dynamite(
   stanc_options = list("O1"),
   threads_per_chain = 1L,
   grainsize = NULL,
-  custom_model_code = NULL,
+  custom_stan_model = NULL,
   debug = NULL,
   ...
 )
@@ -88,8 +88,10 @@ scheduler. The performance of the within-chain parallelization can be
 sensitive to the choice of \code{grainsize}, see Stan manual on reduce-sum for
 details.}
 
-\item{custom_model_code}{[\code{character(1)}]\cr An optional character string
-to override the generated model code. For expert users only.}
+\item{custom_stan_model}{[\code{character(1)}]\cr An optional character string
+that either contains a customized stan model code or a path to a \code{.stan}
+file that contains the code. Using this will override the generated model
+code. For expert users only.}
 
 \item{debug}{[\code{list()}]\cr A named list of form \code{name = TRUE} indicating
 additional objects in the environment of the \code{dynamite} function which are
