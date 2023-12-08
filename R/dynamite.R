@@ -175,7 +175,7 @@ dynamite <- function(dformula, data, time, group = NULL,
     debug
   )
   custom_stan_model <- ifelse_(
-    grepl("\\.stan$", custom_stan_model, perl = TRUE),
+    isTRUE(grepl("\\.stan$", custom_stan_model, perl = TRUE)),
     paste(readLines(custom_stan_model), collapse = "\n"),
     custom_stan_model
   )
@@ -321,7 +321,7 @@ dynamite_check <- function(dformula, data, time, group, priors, verbose,
     "Argument {.arg custom_stan_model} must be a single {.cls character} string."
   )
   stopifnot_(
-    !grepl("\\.stan$", custom_stan_model, perl = TRUE) ||
+    !isTRUE(grepl("\\.stan$", custom_stan_model, perl = TRUE)) ||
       file.exists(custom_stan_model),
     "File {.file {custom_stan_model}} does not exist."
   )
@@ -366,7 +366,7 @@ dynamite_stan <- function(dformulas, data, data_name, group, time,
     grainsize
   )
   stan_input$sampling_vars$grainsize <- grainsize
-  model_code <- ifelse(
+  model_code <- ifelse_(
     !isFALSE(debug$model_code) && is.null(custom_stan_model),
     create_blocks(
       indent = 2L,
