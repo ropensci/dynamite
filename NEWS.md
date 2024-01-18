@@ -1,3 +1,8 @@
+# dynamite 1.4.9
+  * Added option to input custom model code for `dynamite` which can be used to 
+    tweak some aspects of the model (no checks on the compatibility with the post processing are made).
+  * Changed the default optimization level for `cmdstanr` backend to `O0`, as the `O1` is not necessarily stable in all cases.
+
 # dynamite 1.4.8
 
   * Made several performance improvements to data parsing.

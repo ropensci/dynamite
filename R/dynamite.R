@@ -52,7 +52,8 @@
 #' @param stanc_options \[`list()`]\cr This is the `stanc_options` argument
 #'   passed to the compile method of a `CmdStanModel` object via
 #'   [cmdstanr::cmdstan_model()] when `backend = "cmdstanr"`.
-#'   Defaults to `list("O1")` to enable level one compiler optimizations.
+#'   Defaults to `list("O0")`. To enable level one compiler optimizations,
+#'   use `list("O1")`.
 #' @param threads_per_chain \[`integer(1)`]\cr A Positive integer defining the
 #'   number of parallel threads to use within each chain. Default is `1`. See
 #'   [rstan::rstan_options()] and [cmdstanr::sample()] for details.
@@ -157,7 +158,7 @@
 dynamite <- function(dformula, data, time, group = NULL,
                      priors = NULL, backend = "rstan",
                      verbose = TRUE, verbose_stan = FALSE,
-                     stanc_options = list("O1"),
+                     stanc_options = list("O0"),
                      threads_per_chain = 1L, grainsize = NULL,
                      custom_stan_model = NULL, debug = NULL, ...) {
   dynamite_check(
