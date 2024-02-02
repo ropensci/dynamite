@@ -3,10 +3,14 @@
 #' Information on the estimated dynamite model can be obtained via
 #'  `print` including the following: The model formula, the data, the smallest
 #' effective sample sizes, largest Rhat and summary statistics of the
-#' time-invariant model parameters.
+#' time- and group-invariant model parameters.
 #'
 #' @export
 #' @rdname dynamite
+#' @param full_diagnostics By default, the effective sample size (ESS) and Rhat
+#' are computed only for the time- and group-invariant parameters
+#' (`full_diagnostics = FALSE`). Setting this to `TRUE` computes ESS and Rhat
+#' values for all model parameters, which can take some time for complex models.
 #' @return `print` returns `x` invisibly.
 #' @srrstats {BS6.0, RE4.17} Implements the `print` method for the model fit.
 #' @srrstats {BS5.3, BS5.5} Contains convergence statistics in the output.
@@ -14,7 +18,7 @@
 #' data.table::setDTthreads(1) # For CRAN
 #' print(gaussian_example_fit)
 #'
-print.dynamitefit <- function(x, ...) {
+print.dynamitefit <- function(x, full_diagnostics = FALSE, ...) {
   stopifnot_(
     !missing(x),
     "Argument {.arg x} is missing."
@@ -43,11 +47,25 @@ print.dynamitefit <- function(x, ...) {
     sep = ""
   )
   if (!is.null(x$stanfit)) {
+    cat("\n")
+    hmc_diagnostics(x)
     draws <- suppressWarnings(as_draws(x))
-    sumr <- posterior::summarise_draws(
-      draws,
-      posterior::default_convergence_measures()
+
+    match_names <- grepl(
+      pattern = "^(?!.*^nu|^omega|^lambda|.*\\[.*]).*",
+      x = names(draws),
+      perl = TRUE
     )
+
+    if (full_diagnostics) {
+      # compute only the convergence measures for all variables
+      sumr <- posterior::summarise_draws(
+        draws,
+        posterior::default_convergence_measures()
+      )
+    } else {
+      sumr <- posterior::summarise_draws(draws[, match_names])
+    }
     min_ess <- which.min(sumr$ess_bulk)
     cat("\nSmallest bulk-ESS: ", round(sumr$ess_bulk[min_ess]), " (",
       sumr$variable[min_ess], ")",
@@ -69,12 +87,10 @@ print.dynamitefit <- function(x, ...) {
     cat(
       "\nSummary statistics of the time- and group-invariant parameters:\n"
     )
-    match_names <- grepl(
-      pattern = "^(?!.*^nu|^omega|^lambda|.*\\[.*]).*",
-      x = names(draws),
-      perl = TRUE
-    )
-    print(posterior::summarise_draws(draws[, match_names]), ...)
+    if (full_diagnostics) {
+      sumr <- posterior::summarise_draws(draws[, match_names])
+    }
+    print(sumr, ...)
   } else {
     cat("No Stan model fit is available.\n")
   }

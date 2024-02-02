@@ -78,13 +78,14 @@ update.dynamitefit <- function(object, dformula = NULL, data = NULL,
     call0 <- call
     call0$debug <- list(no_compile = TRUE, model_code = TRUE)
     recompile <- !identical(
-      eval(call0)$model_code, as.character(get_code(object))
+      eval(call0, envir = parent.frame())$model_code,
+      as.character(get_code(object))
     )
   }
   if (!recompile) {
     call$debug <- list(stanfit = object$stanfit@stanmodel)
   }
-  eval(call)
+  eval(call, envir = parent.frame())
 }
 
 #' Internal `update` Method For LFO
