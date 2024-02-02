@@ -758,7 +758,7 @@ generate_sim_call_univariate <- function(resp, family, type, eval_type,
         "  i = idx_data,",
         "  j = '{resp}_link',",
         "  value = xbeta[idx_out]",
-        ")",
+        ")"
       ),
       ""
     ),
