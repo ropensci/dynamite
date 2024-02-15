@@ -1237,7 +1237,7 @@ data_lines_poisson <- function(y, idt, default, has_missing,
     ),
     onlyif(
       has_offset,
-      "matrix[N, T] offset_{y}"
+      "matrix[N, T] offset_{y};"
     ),
     .indent = idt(c(0, 0, 0, 1, 1, 1))
   )
@@ -1257,7 +1257,7 @@ data_lines_negbin <- function(y, idt, default, has_missing,
     ),
     onlyif(
       has_offset,
-      "matrix[N, T] offset_{y}"
+      "matrix[N, T] offset_{y};"
     ),
     .indent = idt(c(0, 0, 0, 1, 1, 1))
   )

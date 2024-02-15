@@ -261,9 +261,9 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
   time_ivals <- diff(time)
   time_scale <- min(diff(time))
   full_time <- seq(time[1L], time[length(time)], by = time_scale)
-  data_groups <- as.integer(data[[group_var]])
-  group <- unique(data_groups)
-  n_group <- length(group)
+  #data_groups <- as.integer(data[[group_var]])
+  #group <- unique(data_groups)
+  n_group <- n_unique(data[[group_var]])
   time_duplicated <- logical(n_group)
   time_groups <- list(
     has_missing = logical(n_group),
