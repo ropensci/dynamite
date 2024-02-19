@@ -143,7 +143,7 @@ test_that("cyclic dependency fails", {
     obs(x ~ z, family = "gaussian")
   expect_error(
     obs_lhs + obs_rhs,
-    "Cyclic dependency found in model formula\\."
+    "The model must be acyclic\\."
   )
 })
 

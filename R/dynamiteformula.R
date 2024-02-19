@@ -645,7 +645,7 @@ join_dynamiteformulas <- function(e1, e2) {
   topo <- topological_order(dep)
   stopifnot_(
     length(topo) > 0L,
-    "Cyclic dependency found in model formula."
+    "The model must be acyclic."
   )
   attributes(out) <- c(attributes(e1), attributes(e2))
   attr(out, "channel_groups") <- cg
