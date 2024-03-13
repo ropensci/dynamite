@@ -19,7 +19,6 @@
 #' | --------------------- | ---------------------- |
 #' | Jouni Helske (author) | <jouni.helske@@iki.fi> |
 #'
-#' @docType package
 #' @name dynamite-package
 #' @importFrom data.table :=
 #' @importFrom loo loo
@@ -46,7 +45,7 @@
 #' @srrstats {BS2.15} Errors can be caught using base R functionalities.
 #' @srrstats {BS7.1, BS7.2} Parameters used to simulate example datasets are
 #'   recovered.
-NULL
+"_PACKAGE"
 
 #' Simulated Data of Gaussian Responses
 #'

@@ -467,6 +467,48 @@ test_that("multiple special components fail", {
   )
 })
 
+test_that("specials with multiple arguments fail", {
+  expect_error(
+    obs(y ~ fixed(~1, 2), family = "gaussian"),
+    "A `fixed\\(\\)` term must have a single formula argument\\."
+  )
+  expect_error(
+    obs(y ~ varying(~1, 2), family = "gaussian"),
+    "A `varying\\(\\)` term must have a single formula argument\\."
+  )
+  expect_error(
+    obs(y ~ random(~1, 2), family = "gaussian"),
+    "A `random\\(\\)` term must have a single formula argument\\."
+  )
+})
+
+test_that("nested specials fail", {
+  err <- paste0(
+    "A model formula must not contain nested ",
+    "`fixed\\(\\)`, `varying\\(\\)`, or `random\\(\\)` terms\\."
+  )
+  expect_error(
+    obs(y ~ random(~1 + random(~1)), family = "gaussian"),
+    err
+  )
+  expect_error(
+    obs(y ~ varying(~1 + varying(~1)), family = "gaussian"),
+    err
+  )
+  expect_error(
+    obs(y ~ fixed(~1 + fixed(~1)), family = "gaussian"),
+    err
+  )
+  expect_error(
+    obs(y ~ random(~1 + varying(~1)), family = "gaussian"),
+    err
+  )
+  expect_error(
+    obs(y ~ varying(~1 + random(~1)), family = "gaussian"),
+    err
+  )
+})
+
 test_that("specials that cannot be evaluated fail", {
   expect_error(
     dynamite(

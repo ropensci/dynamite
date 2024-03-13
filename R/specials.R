@@ -11,7 +11,7 @@ formula_specials <- function(x, original, family) {
   for (y in formula_special_funs) {
     specials[[y]] <- onlyif(
       !is.null(xt_specials[[y]]),
-      xt_variables[[xt_specials[[y]] + 1]][[2]]
+      xt_variables[[xt_specials[[y]] + 1L]][[2L]]
     )
   }
   special_vars <- unlist(xt_specials)
@@ -32,43 +32,10 @@ formula_specials <- function(x, original, family) {
   xt_specials <- attr(xt, "specials")[c("fixed", "varying", "random")]
   xt_variables <- attr(xt, "variables")
   xt_terms <- attr(xt, "term.labels")
-  fixed_icpt <- 0L
   special_vars <- unlist(xt_specials)
-  fixed_terms <- character(0L)
-  if (!is.null(xt_specials[["fixed"]])) {
-    stopifnot_(
-      length(xt_specials[["fixed"]]) == 1L,
-      "Multiple {.code fixed()} terms are not supported."
-    )
-    # eval to ensure fixed_form is a formula
-    fixed_form <- eval(xt_variables[[xt_specials[["fixed"]] + 1]][[2]])
-    fixed_terms <- formula_terms(fixed_form)
-    fixed_icpt <- attr(terms(fixed_form), "intercept")
-  }
-  varying_terms <- character(0L)
-  varying_icpt <- 0L
-  if (!is.null(xt_specials[["varying"]])) {
-    stopifnot_(
-      length(xt_specials[["varying"]]) == 1L,
-      "Multiple {.code varying()} terms are not supported."
-    )
-    # eval to ensure varying_form is a formula
-    varying_form <- eval(xt_variables[[xt_specials[["varying"]] + 1]][[2]])
-    varying_terms <- formula_terms(varying_form)
-    varying_icpt <- attr(terms(varying_form), "intercept")
-  }
-  random_terms <- character(0L)
-  random_icpt <- 0L
-  if (!is.null(xt_specials[["random"]])) {
-    stopifnot_(
-      length(xt_specials[["random"]]) == 1L,
-      "Multiple {.code random()} terms are not supported."
-    )
-    # eval to ensure random_form is a formula
-    random_form <- eval(xt_variables[[xt_specials[["random"]] + 1]][[2]])
-    random_terms <- formula_terms(random_form)
-    random_icpt <- attr(terms(random_form), "intercept")
-  }
+  fixed <- get_special_terms("fixed", xt_variables, xt_specials)
+  varying <- get_special_terms("varying", xt_variables, xt_specials)
+  random <- get_special_terms("random", xt_variables, xt_specials)
   x <- drop_terms(
     termobj = xt,
     dropx = get_special_term_indices(
@@ -78,25 +45,25 @@ formula_specials <- function(x, original, family) {
     )
   )
   form_terms <- formula_terms(x)
-  fixed_terms <- union(form_terms, fixed_terms)
-  fixed_icpt <- attr(xt, "intercept") || fixed_icpt
-  full_terms <- union(fixed_terms, union(varying_terms, random_terms))
-  any_icpt <- fixed_icpt || varying_icpt || random_icpt
-  if (fixed_icpt && varying_icpt) {
+  fixed$terms <- union(form_terms, fixed$terms)
+  fixed$icpt <- attr(xt, "intercept") || fixed$icpt
+  full_terms <- union(fixed$terms, union(varying$terms, random$terms))
+  any_icpt <- fixed$icpt || varying$icpt || random$icpt
+  if (fixed$icpt && varying$icpt) {
     warning_(c(
       "Both time-independent and time-varying intercept specified:",
       `i` = "Defaulting to time-varying intercept."
     ))
-    fixed_icpt <- FALSE
+    fixed$icpt <- FALSE
   }
   if (length(full_terms) > 0L) {
     x <- reformulate(
       termlabels = full_terms,
-      response = xt_variables[[2]],
-      intercept = 1 * any_icpt
+      response = xt_variables[[2L]],
+      intercept = 1L * any_icpt
     )
   } else {
-    y <- as.character(xt_variables[[2]])
+    y <- as.character(xt_variables[[2L]])
     x <- ifelse_(
       any_icpt,
       as.formula(paste0(y, "~ 1")),
@@ -112,12 +79,12 @@ formula_specials <- function(x, original, family) {
     family = family,
     original = original,
     specials = specials,
-    fixed = which(xt %in% fixed_terms),
-    has_fixed_intercept = as.logical(fixed_icpt),
-    varying = which(xt %in% varying_terms),
-    has_varying_intercept = as.logical(varying_icpt),
-    random = which(xt %in% random_terms),
-    has_random_intercept = as.logical(random_icpt)
+    fixed = which(xt %in% fixed$terms),
+    has_fixed_intercept = as.logical(fixed$icpt),
+    varying = which(xt %in% varying$terms),
+    has_varying_intercept = as.logical(varying$icpt),
+    random = which(xt %in% random$terms),
+    has_random_intercept = as.logical(random$icpt)
   )
 }
 
@@ -243,8 +210,7 @@ evaluate_specials <- function(dformula, data, check = TRUE) {
       stopifnot_(
         !inherits(spec_eval, c("warning", "error")),
         c(
-          "Unable to evaluate {.fun {spec}} for response variable
-           {.var {y}}:",
+          "Unable to evaluate {.fun {spec}} for response variable {.var {y}}:",
           `x` = spec_eval$message
         )
       )
@@ -292,6 +258,46 @@ check_offset <- function(y, x) {
       `x` = "Offset cannot be a {.cls factor}."
     )
   )
+}
+
+#' Retrieve the Corresponding Terms of A Special Component in a Formula
+#'
+#' @param type \[`character(1)`]\cr Either `"fixed"`, `"varying"` or `"random"`.
+#' @param xt_variables \[`language()`]\cr A `"variables"` component of a
+#'   formula `terms` object.
+#' @param xt_specials \[`list`]\cr A `"specials"` component of a
+#'   formula `terms` object.
+#' @noRd
+get_special_terms <- function(type, xt_variables, xt_specials) {
+  terms <- character(0L)
+  icpt <- FALSE
+  if (!is.null(xt_specials[[type]])) {
+    stopifnot_(
+      length(xt_specials[[type]]) == 1L,
+      "Multiple {.code {type}()} terms are not supported."
+    )
+    stopifnot_(
+      length(xt_variables[[xt_specials[[type]] + 1L]]) == 2L,
+      "A {.code {type}()} term must have a single formula argument."
+    )
+    # eval to ensure that form is a formula
+    form <- eval(xt_variables[[xt_specials[[type]] + 1L]][[2L]])
+    terms <- formula_terms(form)
+    icpt <- attr(terms(form), "intercept")
+    nested_specials <- c("fixed", "varying", "random")
+    xt <- terms(form, specials = nested_specials)
+    xt_specials <- attr(xt, "specials")[nested_specials]
+    for (spec in nested_specials) {
+      stopifnot_(
+        is.null(xt_specials[[spec]]),
+        paste0(
+          "A model formula must not contain nested ",
+          "{.code fixed()}, {.code varying()}, or {.code random()} terms."
+        )
+      )
+    }
+  }
+  list(terms = terms, icpt = icpt)
 }
 
 #' Retrieve the Corresponding Term of a Special Variable in a Formula

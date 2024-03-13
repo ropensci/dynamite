@@ -1,5 +1,6 @@
 # dynamite 1.4.10
 
+  * The formula interface now prohibits additional invalid `fixed()`, `varying()`, and `random()` definitions in `obs()`.
   * Fixed an error in Stan code generation if an offset term was included in the model formula.
   * Fixed an issue when using `character` type `group` variables.
 

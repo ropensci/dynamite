@@ -28,3 +28,27 @@ or a feature request.
 }
 }
 
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://docs.ropensci.org/dynamite/}
+  \item \url{https://github.com/ropensci/dynamite/}
+  \item Report bugs at \url{https://github.com/ropensci/dynamite/issues/}
+}
+
+}
+\author{
+\strong{Maintainer}: Santtu Tikka \email{santtuth@gmail.com} (\href{https://orcid.org/0000-0003-4039-4342}{ORCID})
+
+Authors:
+\itemize{
+  \item Jouni Helske \email{jouni.helske@iki.fi} (\href{https://orcid.org/0000-0001-7130-793X}{ORCID})
+}
+
+Other contributors:
+\itemize{
+  \item Nicholas Clark [reviewer]
+  \item Lucy D’Agostino McGowan [reviewer]
+}
+
+}
