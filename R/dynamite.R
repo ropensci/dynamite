@@ -890,8 +890,7 @@ parse_past <- function(dformula, data, group_var, time_var) {
       if (identical(typeof(cl), "language")) {
         past_eval <- try(eval(cl), silent = TRUE)
         if (inherits(past_eval, "try-error")) {
-          past_eval <- try(data[, eval(cl)], silent = TRUE)
-          # past_eval <- try(data[, cl, env = list(cl = cl)], silent = TRUE)
+          past_eval <- try(data[, cl, env = list(cl = cl)], silent = TRUE)
           stopifnot_(
             !inherits(past_eval, "try-error"),
             c(
@@ -1141,23 +1140,18 @@ fill_time <- function(data, group_var, time_var) {
     length(time) > 1L,
     "There must be at least two time points in the data."
   )
-  # time_duplicated <- data[,
-  #  any(duplicated(time_var)),
-  #  by = group_var,
-  #  env = list(time_var = time_var)
-  # ]$V1
   time_ivals <- diff(time)
   time_scale <- min(diff(time))
   full_time <- seq(time[1L], time[length(time)], by = time_scale)
-  #data_groups <- as.integer(data[[group_var]])
-  #group <- unique(data_groups)
   n_group <- n_unique(data[[group_var]])
   time_duplicated <- logical(n_group)
   time_missing <- logical(n_group)
-  group_bounds <- c(0, data[, max(.I), by = group_var]$V1)
+  group_bounds <- c(
+    0L,
+    data[, base::max(.I), by = group, env = list(group = group_var)]$V1
+  )
   for (i in seq_len(n_group)) {
-    idx_group <- seq(group_bounds[i] + 1, group_bounds[i + 1])
-    #idx_group <- which(data_groups == group[i])
+    idx_group <- seq(group_bounds[i] + 1L, group_bounds[i + 1L])
     sub <- data[idx_group, ]
     time_duplicated[i] <- any(duplicated(sub[[time_var]]))
     time_missing[i] <- !identical(sub[[time_var]], full_time)
@@ -1175,11 +1169,6 @@ fill_time <- function(data, group_var, time_var) {
     all(time_ivals[!is.na(time_ivals)] %% time_scale == 0),
     "Observations must occur at regular time intervals."
   )
-  # time_missing <- data[,
-  #  !identical(time_var, full_time),
-  #  by = group_var,
-  #  env = list(time_var = time_var, full_time = full_time)
-  # ]$V1
   if (any(time_missing)) {
     data_names <- names(data)
     full_data_template <- data.table::as.data.table(

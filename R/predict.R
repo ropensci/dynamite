@@ -277,7 +277,6 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
     resp_stoch = resp_stoch,
     eval_type = eval_type,
     group_var = group_var,
-    time_var = time_var,
     fixed = fixed,
     global_fixed = global_fixed
   )
@@ -384,8 +383,14 @@ predict_ <- function(object, simulated, storage, observed,
   )
   if (identical(mode, "full")) {
     n_new <- nrow(simulated)
-    simulated <- simulated[rep(seq_len(n_new), each = n_draws)]
-    simulated[, (".draw") := rep(seq.int(1L, n_draws), n_new)]
+    simulated <- simulated[
+      rep(seq_len(n_new), each = n_draws),
+      env = list(n_new = n_new, n_draws = n_draws)
+    ]
+    simulated[,
+      (".draw") := rep(seq.int(1L, n_draws), n_new),
+      env = list(n_new = n_new, n_draws = n_draws)
+    ]
     idx <- which(draw_time == u_time[1L]) + (fixed - 1L) * n_draws
     n_sim <- n_draws
   } else {
@@ -394,9 +399,8 @@ predict_ <- function(object, simulated, storage, observed,
     idx_prev <- seq.int(1L, n_sim)
     simulated <- storage[1L, ]
     simulated[, (names(simulated)) := .SD[NA]]
-    # simulated <- simulated[rep(1L, 2L * n_sim), , env = list(n_sim = n_sim)]
-    simulated <- simulated[rep(1L, 2L * n_sim)]
-      data.table::set(
+    simulated <- simulated[rep(1L, 2L * n_sim), env = list(n_sim = n_sim)]
+    data.table::set(
       x = simulated,
       j = ".draw",
       value = rep(seq.int(1L, n_draws), 2L * n_group)
@@ -409,17 +413,15 @@ predict_ <- function(object, simulated, storage, observed,
     )
     summaries <- storage[1L, ]
     for (f in funs) {
-      # target <- f$fun(storage[[f$target]][1L])
-      # summaries[, (f$name) := target, env = list(target = target)]
-      summaries[, (f$name) := f$fun(storage[[f$target]][1L])]
+      target <- f$fun(storage[[f$target]][1L])
+      summaries[, (f$name) := target, env = list(target = target)]
     }
     summaries[, (names(storage)) := NULL]
     summaries[, (names(summaries)) := .SD[NA]]
-    # summaries <- summaries[
-    #  rep(1L, n_time * n_draws),
-    #  env = list(n_time = n_time, n_draws = n_draws)
-    # ]
-    summaries <- summaries[rep(1L, n_time * n_draws)]
+    summaries <- summaries[
+      rep(1L, n_time * n_draws),
+      env = list(n_time = n_time, n_draws = n_draws)
+    ]
     data.table::set(
       x = summaries,
       j = time_var,
@@ -564,7 +566,7 @@ assign_from_storage <- function(storage, simulated, idx, idx_obs) {
   }
 }
 
-#' Compute And Assing Summary Predictions
+#' Compute And Assign Summary Predictions
 #'
 #' @inheritParams predict_summary
 #' @inheritParams predict_full
@@ -577,17 +579,12 @@ assign_summaries <- function(summaries, simulated, funs, idx, idx_summ) {
       x = summaries,
       i = idx_summ,
       j = f$name,
-      # value = simulated[
-      #  idx, lapply(.SD, fun),
-      #  by = ".draw",
-      #  .SDcols = target,
-      #  env = list(fun = fun, target = target)
-      # ][[target]]
       value = simulated[
         idx,
-        lapply(.SD, f$fun),
+        lapply(.SD, fun),
         by = ".draw",
-        .SDcols = f$target
+        .SDcols = f$target,
+        env = list(fun = f$fun, idx = idx)
       ][[f$target]]
     )
   }

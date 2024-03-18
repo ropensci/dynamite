@@ -66,7 +66,10 @@ cbind_datatable <- function(...) {
   )
 }
 
-#* Data Table rbindlist With Data Frame Output
+#' Data Table `rbindlist` With Data Frame Output
+#'
+#' @param x A `list` of `data.frame` objects.
+#' @noRd
 rbindlist_ <- function(x) {
   data.table::setDF(data.table::rbindlist(x))
 }
@@ -402,6 +405,7 @@ log_mean_exp <- function(x, na.rm = FALSE) {
   )
   log_sum_exp(x, na.rm = na.rm) - log(n)
 }
+
 #' Number of Unique Values
 #'
 #' @inheritParams data.table::uniqueN

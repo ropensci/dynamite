@@ -453,6 +453,10 @@ get_names <- function(x) {
   vapply(x, function(y) y$name, character(1L))
 }
 
+#' Get Lagged Terms of All Formulas of a `dynamiteformula` Object
+#'
+#' @param x A `dynamiteformula` object.
+#' @noRd
 get_lag_terms <- function(x) {
   lapply(x, function(y) {
     unique(find_lags(formula_rhs(y$formula)))
@@ -466,6 +470,16 @@ get_lag_terms <- function(x) {
 get_nonlag_terms <- function(x) {
   lapply(x, function(y) {
     unique(find_nonlags(formula_rhs(y$original)))
+  })
+}
+
+#' Get the Order of All Lag Terms of All Formulas of a `dynamiteformula` Object
+#'
+#' @param x A `dynamiteformula` object.
+#' @noRd
+get_lag_orders <- function(x) {
+  lapply(x, function(y) {
+    unique(find_lag_orders(formula_rhs(y$formula)))
   })
 }
 
@@ -532,6 +546,19 @@ get_quoted <- function(x) {
   # } else {
   #  NULL
   # }
+}
+
+#' Get the Markov Blanket of Response Variable
+#'
+#' @param x A `dynamiteformula` object.
+#' @param y A `character` string naming the response variable.
+#' @noRd
+get_markov_blanket <- function(x, y) {
+  y_ch <- which(get_responses(x) == y)
+  lag_pa <- get_lag_terms(x[y_ch])
+  lag_order <- get_lag_orders(x[y_ch])
+  contemporaneous_pa <- get_nonlag_terms(x[y_ch])
+
 }
 
 #' Get Indices of Deterministic Channels in a `dynamiteformula` Object

@@ -252,17 +252,10 @@ parse_funs <- function(object, type, funs, categories) {
 #' @inheritParams dynamite
 #' @noRd
 fill_time_predict <- function(data, group_var, time_var, time_scale) {
-  # time_duplicated <- data[,
-  #  any(duplicated(time_var)),
-  #  by = group_var,
-  #  env = list(time_var = time_var)
-  # ]$V1
   time <- sort(unique(data[[time_var]]))
   time_ivals <- diff(time)
   time_scale <- min(diff(time))
   full_time <- seq(time[1L], time[length(time)], by = time_scale)
-  #data_groups <- as.integer(data[[group_var]])
-  #group <- unique(data_groups)
   n_group <- n_unique(data[[group_var]])
   time_duplicated <- logical(n_group)
   time_groups <- list(
@@ -270,9 +263,16 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
     has_gaps = logical(n_group)
   )
   time_missing <- logical(n_group)
-  group_bounds <- c(0, data[, max(.I), by = group_var]$V1)
+  group_bounds <- c(
+    0L,
+    data[,
+      base::max(.I),
+      by = group,
+      env = list(group = group_var)
+    ]$V1
+  )
   for (i in seq_len(n_group)) {
-    idx_group <- seq(group_bounds[i] + 1, group_bounds[i + 1])
+    idx_group <- seq(group_bounds[i] + 1L, group_bounds[i + 1L])
     sub <- data[idx_group, ]
     time_duplicated[i] <- any(duplicated(sub[[time_var]]))
     time_groups$has_missing[i] <- !identical(sub[[time_var]], full_time)
@@ -289,19 +289,6 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
     )
   )
   if (length(time) > 1L) {
-    # time_groups <- data[,
-    # {
-    #  has_missing = !identical(time_var, full_time)
-    #  has_gaps = .N != (diff(range(time_var)) + 1L) * time_scale
-    #  list(has_missing, has_gaps)
-    # },
-    # by = group_var
-    # env = list(
-    #  time_var = time_var,
-    #  group_var = group_var,
-    #  time_scale = time_scale
-    # )
-    # ]
     if (any(time_groups$has_missing)) {
       data_names <- colnames(data)
       if (any(time_groups$has_gaps)) {
@@ -341,18 +328,16 @@ impute_newdata <- function(newdata, impute, predictors, group_var) {
       newdata[,
         (predictors) := lapply(.SD, locf),
         .SDcols = predictors,
-        by = group_var
-        # by = group_var,
-        # env = list(locf = locf)
+        by = group,
+        env = list(locf = locf, group = group_var)
       ]
     },
     `nocb` = {
       newdata[,
         (predictors) := lapply(.SD, nocb),
         .SDcols = predictors,
-        by = group_var
-        # by = group_var,
-        # env = list(locf = locf)
+        by = group,
+        env = list(nocb = nocb, group = group_var)
       ]
     },
     `none` = {
@@ -370,27 +355,37 @@ impute_newdata <- function(newdata, impute, predictors, group_var) {
 #' @param fixed \[integer(1)]\cr The number of fixed time points.
 #' @noRd
 clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
-                           group_var, time_var, clear_names,
-                           fixed, global_fixed) {
+                           group_var, fixed, global_fixed) {
   if (newdata_null && identical(eval_type, "predicted")) {
     if (global_fixed) {
       clear_idx <- newdata[,
-        .I[seq.int(fixed + 1L, .N)],
-        by = group_var
-        # by = group_var,
-        # env = list(fixed = fixed)
+        .I[base::seq.int(fixed + 1L, .N)],
+        by = group,
+        env = list(fixed = fixed, group = group_var)
       ]$V1
     } else {
       clear_idx <- newdata[,
-        .I[seq.int(fixed + which(apply(!is.na(.SD), 1L, any))[1L], .N)],
+        .I[
+          base::seq.int(
+            fixed + base::which(
+              base::apply(!base::is.na(.SD), 1L, base::any)
+            )[1L],
+            .N
+          )
+        ],
         .SDcols = resp_stoch,
-        by = group_var
-        # by = group_var,
-        # env = list(fixed = fixed, any = any)
+        by = group,
+        env = list(
+          fixed = fixed,
+          group = group_var
+        )
       ]$V1
     }
-    # newdata[clear_idx, c(resp_stoch) := NA, env = list(clear_idx = clear_idx)]
-    newdata[clear_idx, c(resp_stoch) := NA]
+    newdata[
+      clear_idx,
+      c(resp_stoch) := NA,
+      env = list(clear_idx = clear_idx)
+    ]
   }
 }
 

@@ -81,20 +81,13 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   )
   N <- n_unique(group)
   K <- ncol(model_matrix)
-  #X <- aperm(
-  #  array(
-  #    as.numeric(unlist(split(model_matrix, gl(T_full, 1L, N * T_full)))),
-  #    dim = c(N, K, T_full)
-  #  ),
-  #  c(3L, 1L, 2L)
-  #)[T_idx, , , drop = FALSE]
-  X <- model_matrix[,]
+  X <- model_matrix[, ]
   dim(X) <- c(T_full, N, K)
   X <- X[T_idx, , , drop = FALSE]
   x_tmp <- X[1L, , , drop = FALSE]
   sd_x <- pmax(
     setNames(apply(X, 3L, sd, na.rm = TRUE), colnames(model_matrix)),
-    1
+    1.0
   )
   x_means <- colMeans(x_tmp, dims = 2L, na.rm = TRUE)
   # For totally missing covariates
@@ -110,12 +103,6 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   for (i in seq_len(n_channels)) {
     y <- resp[i]
     y_name <- resp_names[i]
-    #y_split <- split(
-    #  data[, .SD, .SDcols = c(y, group_var)],
-    #  by = group_var,
-    #  keep.by = FALSE
-    #)
-    #Y <- array(as.numeric(unlist(y_split)), dim = c(T_full, N))
     Y <- as.numeric(data[[y]])
     dim(Y) <- c(T_full, N)
     Y <- Y[T_idx, , drop = FALSE]

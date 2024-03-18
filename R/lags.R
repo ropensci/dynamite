@@ -118,6 +118,28 @@ find_lags <- function(x) {
   }
 }
 
+#' Extract the Order of Lagged Variables from a Language Object
+#'
+#' @param x A `language` object
+#' @noRd
+find_lag_orders <- function(x) {
+  if (!is.recursive(x)) {
+    return(list())
+  }
+  if (is.call(x)) {
+    if (identical(as.character(x[[1L]]), "lag")) {
+      if (length(x) == 2L) {
+        return(list(list(lag = deparse1(x), order = 1L)))
+      } else {
+        return(list(list(lag = deparse1(x), order = x[[3L]])))
+      }
+    } else {
+      unlist(lapply(x[-1L], find_lag_orders), recursive = FALSE)
+    }
+  }
+}
+
+
 
 #' Extract Non-lag Variables from a Language Object
 #'
@@ -483,8 +505,11 @@ parse_singleton_lags <- function(dformula, data, group_var,
       if (y$is_resp && !is.null(y$past_val)) {
         if (identical(y$past_type, "past")) {
           past_out <- lag_(y$past_val, i)
-          # na_idx <- data[, .I[seq_len(i)], by = group_var, env = list(i = i)]$V1
-          na_idx <- data[, .I[seq_len(i)], by = group_var]$V1
+          na_idx <- data[,
+            .I[base::seq_len(i)],
+            by = group,
+            env = list(i = i, group = group_var)
+          ]$V1
           past_out[na_idx] <- NA
           spec <- list(
             past = past_out,

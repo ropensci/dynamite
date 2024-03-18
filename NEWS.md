@@ -1,3 +1,7 @@
+# dynamite 1.4.11
+
+  * The package now depends on `data.table` version 1.15.0 or higher.
+
 # dynamite 1.4.10
 
   * The formula interface now prohibits additional invalid `fixed()`, `varying()`, and `random()` definitions in `obs()`.
