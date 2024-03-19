@@ -149,11 +149,9 @@ plot_dynamiteformula_tikz <- function(g) {
     "\\tikzset{%",
     "  -semithick,",
     "  >={Stealth[width=1.5mm,length=2mm]},",
-    paste0(
-      "  obs/.style 2 args = {",
-      "    name = #1, circle, draw, inner sep = 5pt, label = center:$#2$",
-      "  }"
-    ),
+    "  obs/.style 2 args = {",
+    "    name = #1, circle, draw, inner sep = 5pt, label = center:$#2$",
+    "  }",
     "}",
     .parse = FALSE
   )
