@@ -85,7 +85,7 @@ plot.dynamitefit <- function(x, parameters = NULL, type = NULL,
 #' @export
 #' @family plotting
 #' @param x \[`dynamiteformula`]\cr The model formula.
-#' @param show_deterministic \[`logical(1)`]\cr Should deterministic auxiliary
+#' @param show_auxiliary \[`logical(1)`]\cr Should deterministic auxiliary
 #'   responses be shown in the plot? If `FALSE`, the vertices corresponding
 #'   to such responses will be projected out. The default is `TRUE`.
 #' @param show_covariates \[`logical(1)`]\cr Should unmodeled covariates be
@@ -105,7 +105,7 @@ plot.dynamitefit <- function(x, parameters = NULL, type = NULL,
 #' # TikZ format
 #' plot(multichannel_formula, tikz = TRUE)
 #'
-plot.dynamiteformula <- function(x, show_deterministic = TRUE,
+plot.dynamiteformula <- function(x, show_auxiliary = TRUE,
                                  show_covariates = FALSE, tikz = FALSE, ...) {
   stopifnot_(
     !missing(x),
@@ -116,10 +116,18 @@ plot.dynamiteformula <- function(x, show_deterministic = TRUE,
     "Argument {.arg x} must be a {.cls dynamiteformula} object."
   )
   stopifnot_(
+    checkmate::test_flag(x = show_auxiliary),
+    "Argument {.arg show_auxiliary} must be a single {.cls logical} value."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = show_covariates),
+    "Argument {.arg show_covariates} must be a single {.cls logical} value."
+  )
+  stopifnot_(
     checkmate::test_flag(x = tikz),
     "Argument {.arg tikz} must be a single {.cls logical} value."
   )
-  g <- get_dag(x, project = !show_deterministic, covariates = show_covariates)
+  g <- get_dag(x, project = !show_auxiliary, covariates = show_covariates)
   ifelse_(
     tikz,
     plot_dynamiteformula_tikz(g),
@@ -142,8 +150,9 @@ plot_dynamiteformula_tikz <- function(g) {
     "  -semithick,",
     "  >={Stealth[width=1.5mm,length=2mm]},",
     paste0(
-      "  obs/.style 2 args = ",
-      "{name = #1, circle, draw, inner sep = 5pt, label = center:$#2$}"
+      "  obs/.style 2 args = {",
+      "    name = #1, circle, draw, inner sep = 5pt, label = center:$#2$",
+      "  }"
     ),
     "}",
     .parse = FALSE

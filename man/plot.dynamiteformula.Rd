@@ -4,12 +4,12 @@
 \alias{plot.dynamiteformula}
 \title{Plot the Model Structure as a Directed Acyclic Graph (DAG)}
 \usage{
-\method{plot}{dynamiteformula}(x, show_deterministic = TRUE, show_covariates = FALSE, tikz = FALSE, ...)
+\method{plot}{dynamiteformula}(x, show_auxiliary = TRUE, show_covariates = FALSE, tikz = FALSE, ...)
 }
 \arguments{
 \item{x}{[\code{dynamiteformula}]\cr The model formula.}
 
-\item{show_deterministic}{[\code{logical(1)}]\cr Should deterministic auxiliary
+\item{show_auxiliary}{[\code{logical(1)}]\cr Should deterministic auxiliary
 responses be shown in the plot? If \code{FALSE}, the vertices corresponding
 to such responses will be projected out. The default is \code{TRUE}.}
 
