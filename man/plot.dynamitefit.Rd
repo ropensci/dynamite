@@ -11,7 +11,7 @@
 
 \item{parameters}{[\code{charecter()}]\ Parameter name(s) for which the plots
 should be drawn. Possible options can be found with the function
-\code{\link[=get_parameter_names]{get_parameter_names()}}. The default is all parameters ofa
+\code{\link[=get_parameter_names]{get_parameter_names()}}. The default is all parameters of a
 specific type for all responses, which can lead to too crowded a plot.}
 
 \item{type}{[\code{character(1)}]\cr Type of the parameter for which the plots
@@ -38,6 +38,7 @@ plot(gaussian_example_fit, type = "beta")
 }
 \seealso{
 Drawing plots
+\code{\link{plot.dynamiteformula}()},
 \code{\link{plot_betas}()},
 \code{\link{plot_deltas}()},
 \code{\link{plot_lambdas}()},

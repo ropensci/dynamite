@@ -124,22 +124,22 @@ find_lags <- function(x) {
 #' @noRd
 find_lag_orders <- function(x) {
   if (!is.recursive(x)) {
-    return(list())
+    return(
+      data.frame(var = character(0L), order = integer(0L))
+    )
   }
   if (is.call(x)) {
     if (identical(as.character(x[[1L]]), "lag")) {
       if (length(x) == 2L) {
-        return(list(list(lag = deparse1(x), order = 1L)))
+        return(data.frame(var = deparse1(x[[2L]]), order = 1L))
       } else {
-        return(list(list(lag = deparse1(x), order = x[[3L]])))
+        return(data.frame(var = deparse1(x[[2L]]), order = x[[3L]]))
       }
     } else {
-      unlist(lapply(x[-1L], find_lag_orders), recursive = FALSE)
+      rbindlist_(lapply(x[-1L], find_lag_orders))
     }
   }
 }
-
-
 
 #' Extract Non-lag Variables from a Language Object
 #'

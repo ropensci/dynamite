@@ -350,8 +350,7 @@ dynamite_check <- function(dformula, data, time, group, priors, verbose,
 dynamite_stan <- function(dformulas, data, data_name, group, time,
                           priors, backend, verbose, verbose_stan,
                           stanc_options, threads_per_chain, grainsize,
-                          custom_stan_model, debug,
-                          ...) {
+                          custom_stan_model, debug, ...) {
   stan_input <- prepare_stan_input(
     dformulas$stoch,
     data,
@@ -523,7 +522,7 @@ sampling_info <- function(dformulas, verbose, debug, backend) {
   }
 }
 
-#' Check Arguments Names Of `...` for Stan Sampling
+#' Check Argument Names Of `...` for Stan Sampling
 #'
 #' @inheritParams dynamite_stan
 #' @param dots The `...` arguments of `dynamite` as a `list`

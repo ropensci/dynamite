@@ -43,6 +43,7 @@ plot_betas(gaussian_example_fit, level = 0.1)
 \seealso{
 Drawing plots
 \code{\link{plot.dynamitefit}()},
+\code{\link{plot.dynamiteformula}()},
 \code{\link{plot_deltas}()},
 \code{\link{plot_lambdas}()},
 \code{\link{plot_nus}()},

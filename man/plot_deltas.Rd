@@ -52,6 +52,7 @@ plot_deltas(gaussian_example_fit, level = 0.025, scales = "free") +
 \seealso{
 Drawing plots
 \code{\link{plot.dynamitefit}()},
+\code{\link{plot.dynamiteformula}()},
 \code{\link{plot_betas}()},
 \code{\link{plot_lambdas}()},
 \code{\link{plot_nus}()},

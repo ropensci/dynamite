@@ -38,6 +38,7 @@ plot_nus(gaussian_example_fit)
 \seealso{
 Drawing plots
 \code{\link{plot.dynamitefit}()},
+\code{\link{plot.dynamiteformula}()},
 \code{\link{plot_betas}()},
 \code{\link{plot_deltas}()},
 \code{\link{plot_lambdas}()},

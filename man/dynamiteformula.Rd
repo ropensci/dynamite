@@ -66,7 +66,7 @@ documentation on \code{NegBinomial2} in the Stan function reference manual.
 \item Gamma: \code{gamma} (log-link, using mean and shape parameterization).
 \item Beta: \code{beta} (logit-link, using mean and precision parameterization).
 \item Student t: \code{student} (identity link, parametrized using degrees of
-freedon, location and scale)
+freedom, location and scale)
 }
 
 The models in the \pkg{dynamite} package are defined by combining the

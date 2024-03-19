@@ -7,7 +7,7 @@
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param parameters \[`charecter()`]\ Parameter name(s) for which the plots
 #'   should be drawn. Possible options can be found with the function
-#'   [dynamite::get_parameter_names()]. The default is all parameters ofa
+#'   [dynamite::get_parameter_names()]. The default is all parameters of a
 #'   specific type for all responses, which can lead to too crowded a plot.
 #' @param type \[`character(1)`]\cr Type of the parameter for which the plots
 #'   should be drawn. Possible options can be found with the function
@@ -26,7 +26,7 @@
 #' plot(gaussian_example_fit, type = "beta")
 #'
 plot.dynamitefit <- function(x, parameters = NULL, type = NULL,
-  responses = NULL, ...) {
+                             responses = NULL, ...) {
   stopifnot_(
     !is.null(parameters) || !is.null(type),
     "Both arguments {.arg parameters} and {.arg type} are missing, you should
@@ -72,6 +72,180 @@ plot.dynamitefit <- function(x, parameters = NULL, type = NULL,
     nrow = length(vars),
     byrow = TRUE
   )
+}
+
+#' Plot the Model Structure as a Directed Acyclic Graph (DAG)
+#'
+#' Plot a snapshot of the model structure at a specific time point with
+#' a window of the highest-order lag dependency both into the past and the
+#' future as a directed acyclic graph (DAG). Only response variables are
+#' shown in the plot. This function can also produce a TikZ code of the DAG
+#' to be used in reports and publications.
+#'
+#' @export
+#' @family plotting
+#' @param x \[`dynamiteformula`]\cr The model formula.
+#' @param show_deterministic \[`logical(1)`]\cr Should deterministic auxiliary
+#'   responses be shown in the plot? If `FALSE`, the vertices corresponding
+#'   to such responses will be projected out. The default is `TRUE`.
+#' @param show_covariates \[`logical(1)`]\cr Should unmodeled covariates be
+#'   shown in the plot? The defaults is `FALSE`.
+#' @param tikz \[`logical(1)`]\cr Should the DAG be returned in TikZ format?
+#'   The default is `FALSE` returning a `ggplot` object instead.
+#' @param ... Not used..
+#' @return A `ggplot` object, or a `character` string if `tikz = TRUE`.
+#' @examples
+#' data.table::setDTthreads(1) # For CRAN
+#' multichanneL_formula <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
+#'   obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
+#'   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
+#'   aux(numeric(logp) ~ log(p + 1))
+#' # A ggplot
+#' plot(multichannel_formula)
+#' # TikZ format
+#' plot(multichannel_formula, tikz = TRUE)
+#'
+plot.dynamiteformula <- function(x, show_deterministic = TRUE,
+                                 show_covariates = FALSE, tikz = FALSE, ...) {
+  stopifnot_(
+    !missing(x),
+    "Argument {.arg x} is missing."
+  )
+  stopifnot_(
+    is.dynamiteformula(x),
+    "Argument {.arg x} must be a {.cls dynamiteformula} object."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = tikz),
+    "Argument {.arg tikz} must be a single {.cls logical} value."
+  )
+  g <- get_dag(x, project = !show_deterministic, covariates = show_covariates)
+  ifelse_(
+    tikz,
+    plot_dynamiteformula_tikz(g),
+    plot_dynamiteformula_ggplot(g)
+  )
+}
+
+#' Create a TikZ plot of the Directed Acyclic Graph of a `dynamiteformula`
+#'
+#' @param g \[`list`]\cr Output of `get_dag`.
+#' @noRd
+plot_dynamiteformula_tikz <- function(g) {
+  edgelist <- g$edgelist
+  layout <- g$layout
+  preamble <- paste_rows(
+    "% Preamble",
+    "\\usepackage{tikz}",
+    "\\usetikzlibrary{positioning, arrows.meta, shapes.geometric}",
+    "\\tikzset{%",
+    "  -semithick,",
+    "  >={Stealth[width=1.5mm,length=2mm]},",
+    paste0(
+      "  obs/.style 2 args = ",
+      "{name = #1, circle, draw, inner sep = 5pt, label = center:$#2$}"
+    ),
+    "}",
+    .parse = FALSE
+  )
+  n_v <- nrow(layout)
+  layout$alias <- paste0("v", seq_len(n_v))
+  vertices <- character(n_v)
+  for (i in seq_along(vertices)) {
+    vertices[i] <- paste0(
+      "  \\node [obs = {",
+      layout$alias[i], "}{",
+      layout$var[i], "}] at (",
+      layout$x[i], ", ",
+      layout$y[i], ") {\\vphantom{0}};"
+    )
+  }
+  n_e <- nrow(edgelist)
+  edges <- character(n_e)
+  for (i in seq_along(edges)) {
+    from <- layout$alias[layout$var == edgelist$from[i]]
+    to <- layout$alias[layout$var == edgelist$to[i]]
+    x <- layout$x[layout$alias == from]
+    y <- layout$y[layout$alias == from]
+    xend <- layout$x[layout$alias == to]
+    yend <- layout$y[layout$alias == to]
+    vec <- c(xend - x, yend - y)
+    curved <- (abs(vec[1L]) < 0.05 && abs(vec[2L]) > 1.05) ||
+      (abs(vec[2L]) < 0.05 && abs(vec[1L]) > 1.05)
+    edges[i] <- ifelse_(
+      curved,
+      paste0("  \\draw [->] (", from, ") to[bend right=45] (", to, ");"),
+      paste0("  \\draw [->] (", from, ") -- (", to, ");")
+    )
+  }
+  paste_rows(
+    preamble,
+    "% DAG",
+    "\\begin{tikzpicture}",
+    vertices,
+    edges,
+    "\\end{tikzpicture}",
+    .parse = FALSE
+  )
+}
+
+#' Create a `ggplot` of the Directed Acyclic Graph of a `dynamiteformula`
+#'
+#' @param g \[`list`]\cr Output of `get_dag`.
+#' @noRd
+plot_dynamiteformula_ggplot <- function(g) {
+  v <- colnames(g$A)
+  layout <- g$layout
+  edgelist <- g$edgelist
+  layout$var_expr <- gsub("(.+)_\\{(.+)\\}", "\\1\\[\\2\\]", layout$var)
+  p <- ggplot2::ggplot(
+    ggplot2::aes(x = x, y = y, label = var_expr),
+    data = layout
+  ) +
+    ggplot2::theme_void() +
+    ggplot2::coord_equal(
+      xlim = c(min(layout$x) - 0.75, max(layout$x) + 0.75),
+      ylim = c(min(layout$y) - 0.75, max(layout$y) + 0.75)
+    )
+  for (i in seq_len(nrow(edgelist))) {
+    from <- edgelist$from[i]
+    to <- edgelist$to[i]
+    x <- layout$x[layout$var == from]
+    y <- layout$y[layout$var == from]
+    xend <- layout$x[layout$var == to]
+    yend <- layout$y[layout$var == to]
+    vec <- c(xend - x, yend - y)
+    curved <- (abs(vec[1L]) < 0.05 && abs(vec[2L]) > 1.05) ||
+      (abs(vec[2L]) < 0.05 && abs(vec[1L]) > 1.05)
+    arrow_fun <- ifelse_(
+      curved,
+      ggplot2::geom_curve,
+      ggplot2::geom_segment
+    )
+    rotation <- ifelse_(
+      curved,
+      1/sqrt(2) * matrix(c(1, 1, -1, 1), 2, 2),
+      diag(2L)
+    )
+    vec <- rotation %*% (vec / sqrt(sum(vec^2)))
+    xend <- xend - 0.215 * vec[1L]
+    yend <- yend - 0.215 * vec[2L]
+    edge_data <- data.frame(
+      x = x,
+      y = y,
+      xend = xend,
+      yend = yend
+    )
+    p <- p +
+      arrow_fun(
+        ggplot2::aes(x = x, y = y, xend = xend, yend = yend),
+        data = edge_data,
+        inherit.aes = FALSE,
+        arrow = ggplot2::arrow(length = ggplot2::unit(0.5, "cm"))
+      )
+  }
+  p + ggplot2::geom_point(size = 20, shape = 21, fill = "white") +
+    ggplot2::geom_text(vjust = 0.4, parse = TRUE)
 }
 
 #' Plot Time-varying Regression Coefficients of a Dynamite Model
@@ -308,7 +482,7 @@ plot_betas <- function(x, parameters = NULL, responses = NULL, level = 0.05,
 #' plot_nus(gaussian_example_fit)
 #'
 plot_nus <- function(x, parameters = NULL, responses = NULL, level = 0.05,
-  groups = NULL) {
+                     groups = NULL) {
   stopifnot_(
     checkmate::test_character(
       x = parameters,
@@ -445,9 +619,8 @@ plot_lambdas <- function(x, responses = NULL, level = 0.05) {
 #' @srrstats {G2.3a} Uses match.arg.
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.3} Implements the `plot` method.
 #'
-plot_psis <- function(
-    x, responses = NULL, level = 0.05, alpha = 0.5,
-    scales = c("fixed", "free")) {
+plot_psis <- function(x, responses = NULL, level = 0.05, alpha = 0.5,
+                      scales = c("fixed", "free")) {
   stopifnot_(
     checkmate::test_number(
       x = level,
