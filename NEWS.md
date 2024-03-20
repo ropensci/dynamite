@@ -1,6 +1,6 @@
 # dynamite 1.4.11
 
-  * The package now depends on `data.table` version 1.15.0 or higher.
+  * The package now depends on `data.table` version 1.15.0 or higher and the `ggforce` package.
   * Added a `plot` method for `dynamiteformula` objects. This method draws a directed acyclic graph (DAG) of the model structure as a snapshot in time with timepoints from the past and the future equal to the highest-order lag dependency in the model as a `ggplot` object. Alternatively, setting the argument `tikz = TRUE` returns the DAG as a `character` string in TikZ format. See the documentation for more details.
 
 # dynamite 1.4.10

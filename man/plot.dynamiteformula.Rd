@@ -4,7 +4,15 @@
 \alias{plot.dynamiteformula}
 \title{Plot the Model Structure as a Directed Acyclic Graph (DAG)}
 \usage{
-\method{plot}{dynamiteformula}(x, show_auxiliary = TRUE, show_covariates = FALSE, tikz = FALSE, ...)
+\method{plot}{dynamiteformula}(
+  x,
+  show_auxiliary = TRUE,
+  show_covariates = FALSE,
+  tikz = FALSE,
+  vertex_size = 0.25,
+  label_size = 18,
+  ...
+)
 }
 \arguments{
 \item{x}{[\code{dynamiteformula}]\cr The model formula.}
@@ -18,6 +26,13 @@ shown in the plot? The defaults is \code{FALSE}.}
 
 \item{tikz}{[\code{logical(1)}]\cr Should the DAG be returned in TikZ format?
 The default is \code{FALSE} returning a \code{ggplot} object instead.}
+
+\item{vertex_size}{[\code{double(1)}]\cr The size (radius) of the vertex circles
+used in the \code{ggplot} DAG. (The vertical and horizontal distances between
+vertices in the grid are 1, for reference.)}
+
+\item{label_size}{[\code{double(1)}]\cr Font size (in points) to use for the
+vertex labels in the \code{ggplot} DAG.}
 
 \item{...}{Not used..}
 }

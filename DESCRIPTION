@@ -28,6 +28,7 @@ Imports:
     checkmate,
     cli,
     data.table (>= 1.15.0),
+    ggforce,
     glue,
     ggplot2,
     loo,

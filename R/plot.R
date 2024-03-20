@@ -92,6 +92,11 @@ plot.dynamitefit <- function(x, parameters = NULL, type = NULL,
 #'   shown in the plot? The defaults is `FALSE`.
 #' @param tikz \[`logical(1)`]\cr Should the DAG be returned in TikZ format?
 #'   The default is `FALSE` returning a `ggplot` object instead.
+#' @param vertex_size \[`double(1)`]\cr The size (radius) of the vertex circles
+#'   used in the `ggplot` DAG. (The vertical and horizontal distances between
+#'   vertices in the grid are 1, for reference.)
+#' @param label_size \[`double(1)`]\cr Font size (in points) to use for the
+#'   vertex labels in the `ggplot` DAG.
 #' @param ... Not used..
 #' @return A `ggplot` object, or a `character` string if `tikz = TRUE`.
 #' @examples
@@ -106,7 +111,8 @@ plot.dynamitefit <- function(x, parameters = NULL, type = NULL,
 #' plot(multichannel_formula, tikz = TRUE)
 #'
 plot.dynamiteformula <- function(x, show_auxiliary = TRUE,
-                                 show_covariates = FALSE, tikz = FALSE, ...) {
+                                 show_covariates = FALSE, tikz = FALSE,
+                                 vertex_size = 0.25, label_size = 18, ...) {
   stopifnot_(
     !missing(x),
     "Argument {.arg x} is missing."
@@ -131,7 +137,7 @@ plot.dynamiteformula <- function(x, show_auxiliary = TRUE,
   ifelse_(
     tikz,
     plot_dynamiteformula_tikz(g),
-    plot_dynamiteformula_ggplot(g)
+    plot_dynamiteformula_ggplot(g, vertex_size, label_size)
   )
 }
 
@@ -147,10 +153,10 @@ plot_dynamiteformula_tikz <- function(g) {
     "\\usepackage{tikz}",
     "\\usetikzlibrary{positioning, arrows.meta, shapes.geometric}",
     "\\tikzset{%",
-    "  -semithick,",
+    "  semithick,",
     "  >={Stealth[width=1.5mm,length=2mm]},",
     "  obs/.style 2 args = {",
-    "    name = #1, circle, draw, inner sep = 5pt, label = center:$#2$",
+    "    name = #1, circle, draw, inner sep = 8pt, label = center:$#2$",
     "  }",
     "}",
     .parse = FALSE
@@ -177,8 +183,9 @@ plot_dynamiteformula_tikz <- function(g) {
     xend <- layout$x[layout$alias == to]
     yend <- layout$y[layout$alias == to]
     vec <- c(xend - x, yend - y)
-    curved <- (abs(vec[1L]) < 0.05 && abs(vec[2L]) > 1.05) ||
-      (abs(vec[2L]) < 0.05 && abs(vec[1L]) > 1.05)
+    curved <- (vec[1L] == 0 && abs(vec[2L]) > 1.0) ||
+      (abs(vec[2L]) == 0 && vec[1L] > 1.0) ||
+      (vec[1L] >= 2 && abs(vec[2L]) >= 2 && vec[1L] == abs(vec[2L]))
     edges[i] <- ifelse_(
       curved,
       paste0("  \\draw [->] (", from, ") to[bend right=45] (", to, ");"),
@@ -200,7 +207,7 @@ plot_dynamiteformula_tikz <- function(g) {
 #'
 #' @param g \[`list`]\cr Output of `get_dag`.
 #' @noRd
-plot_dynamiteformula_ggplot <- function(g) {
+plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
   v <- colnames(g$A)
   layout <- g$layout
   edgelist <- g$edgelist
@@ -209,11 +216,9 @@ plot_dynamiteformula_ggplot <- function(g) {
     ggplot2::aes(x = x, y = y, label = var_expr),
     data = layout
   ) +
-    ggplot2::theme_void() +
-    ggplot2::coord_equal(
-      xlim = c(min(layout$x) - 0.75, max(layout$x) + 0.75),
-      ylim = c(min(layout$y) - 0.75, max(layout$y) + 0.75)
-    )
+    ggplot2::theme_void()
+  any_curved_x <- FALSE
+  any_curved_y <- FALSE
   for (i in seq_len(nrow(edgelist))) {
     from <- edgelist$from[i]
     to <- edgelist$to[i]
@@ -222,21 +227,24 @@ plot_dynamiteformula_ggplot <- function(g) {
     xend <- layout$x[layout$var == to]
     yend <- layout$y[layout$var == to]
     vec <- c(xend - x, yend - y)
-    curved <- (abs(vec[1L]) < 0.05 && abs(vec[2L]) > 1.05) ||
-      (abs(vec[2L]) < 0.05 && abs(vec[1L]) > 1.05)
+    curved_x <- vec[1L] == 0 && abs(vec[2L]) > 1
+    curved_y <- abs(vec[2L]) == 0 && vec[1L] > 1
+    curved_diag <- vec[1L] >= 2 && abs(vec[2L]) >= 2 && vec[1L] == abs(vec[2L])
+    any_curved_x <- any_curved_x || curved_x
+    any_curved_y <- any_curved_y || curved_y
     arrow_fun <- ifelse_(
-      curved,
+      curved_x || curved_y || curved_diag,
       ggplot2::geom_curve,
       ggplot2::geom_segment
     )
     rotation <- ifelse_(
-      curved,
+      curved_x || curved_y,
       1/sqrt(2) * matrix(c(1, 1, -1, 1), 2, 2),
       diag(2L)
     )
     vec <- rotation %*% (vec / sqrt(sum(vec^2)))
-    xend <- xend - 0.215 * vec[1L]
-    yend <- yend - 0.215 * vec[2L]
+    xend <- xend - vertex_size * vec[1L]
+    yend <- yend - vertex_size * vec[2L]
     edge_data <- data.frame(
       x = x,
       y = y,
@@ -248,11 +256,28 @@ plot_dynamiteformula_ggplot <- function(g) {
         ggplot2::aes(x = x, y = y, xend = xend, yend = yend),
         data = edge_data,
         inherit.aes = FALSE,
-        arrow = ggplot2::arrow(length = ggplot2::unit(0.5, "cm"))
+        arrow = ggplot2::arrow(length = ggplot2::unit(0.033, "npc"))
       )
   }
-  p + ggplot2::geom_point(size = 20, shape = 21, fill = "white") +
-    ggplot2::geom_text(vjust = 0.4, parse = TRUE)
+  p + ggforce::geom_circle(
+    ggplot2::aes(x0 = x, y0 = y, r = vertex_size),
+    fill = "white"
+  ) +
+    ggplot2::geom_text(
+      vjust = 0.4,
+      parse = TRUE,
+      size = label_size / ggplot2::.pt
+    ) +
+    ggplot2::coord_equal(
+      xlim = c(
+        min(layout$x) - 0.15 - 0.25 * any_curved_x,
+        max(layout$x) + 0.15 + 0.25 * any_curved_x
+      ),
+      ylim = c(
+        min(layout$y) - 0.15 - 0.25 * any_curved_y,
+        max(layout$y) + 0.15 + 0.25 * any_curved_y
+      )
+    )
 }
 
 #' Plot Time-varying Regression Coefficients of a Dynamite Model
