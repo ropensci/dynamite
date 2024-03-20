@@ -252,6 +252,8 @@ parse_funs <- function(object, type, funs, categories) {
 #' @inheritParams dynamite
 #' @noRd
 fill_time_predict <- function(data, group_var, time_var, time_scale) {
+  # avoid NSE notes from R CMD check
+  group <- NULL
   time <- sort(unique(data[[time_var]]))
   time_ivals <- diff(time)
   time_scale <- min(diff(time))
@@ -323,6 +325,8 @@ fill_time_predict <- function(data, group_var, time_var, time_scale) {
 #' @param group_var \[`character(1)`]\cr Grouping variable name.
 #' @noRd
 impute_newdata <- function(newdata, impute, predictors, group_var) {
+  # avoid NSE notes from R CMD check
+  group <- NULL
   switch(impute,
     `locf` = {
       newdata[,
@@ -356,6 +360,8 @@ impute_newdata <- function(newdata, impute, predictors, group_var) {
 #' @noRd
 clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
                            group_var, fixed, global_fixed) {
+  # avoid NSE notes from R CMD check
+  group <- NULL
   if (newdata_null && identical(eval_type, "predicted")) {
     if (global_fixed) {
       clear_idx <- newdata[,

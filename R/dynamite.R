@@ -1134,6 +1134,8 @@ parse_lfactor <- function(lfactor_def, resp, families) {
 #' @inheritParams dynamite
 #' @noRd
 fill_time <- function(data, group_var, time_var) {
+  # avoid NSE notes from R CMD check
+  group <- NULL
   time <- sort(unique(data[[time_var]]))
   stopifnot_(
     length(time) > 1L,

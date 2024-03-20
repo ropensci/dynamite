@@ -104,7 +104,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     df = FALSE
   )$simulated
   # avoid NSE notes from R CMD check
-  loglik <- patterns <- .draw <- NULL
+  loglik <- patterns <- .draw <- group <- groups <- time <- NULL
   n_draws <- ndraws(x)
   # sum the log-likelihood over the channels and non-missing time points
   # for each group, time, and draw

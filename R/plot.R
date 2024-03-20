@@ -101,7 +101,7 @@ plot.dynamitefit <- function(x, parameters = NULL, type = NULL,
 #' @return A `ggplot` object, or a `character` string if `tikz = TRUE`.
 #' @examples
 #' data.table::setDTthreads(1) # For CRAN
-#' multichanneL_formula <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
+#' multichannel_formula <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
 #'   obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
 #'   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
 #'   aux(numeric(logp) ~ log(p + 1))
@@ -208,6 +208,8 @@ plot_dynamiteformula_tikz <- function(g) {
 #' @param g \[`list`]\cr Output of `get_dag`.
 #' @noRd
 plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
+  # avoid NSE notes from R CMD check
+  var_expr <- NULL
   v <- colnames(g$A)
   layout <- g$layout
   edgelist <- g$edgelist

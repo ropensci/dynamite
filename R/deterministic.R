@@ -75,6 +75,8 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
 #' @noRd
 assign_initial_values <- function(data, idx, dd, dlp, dld, dls,
                                   fixed, group_var) {
+  # avoid NSE notes from R CMD check
+  group <- NULL
   ro_lp <- ifelse_(
     is.null(attr(dlp, "rank_order")),
     integer(0L),

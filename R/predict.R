@@ -574,6 +574,8 @@ assign_from_storage <- function(storage, simulated, idx, idx_obs) {
 #' @param idx_summ Indices of the summarized predictions to be assigned.
 #' @noRd
 assign_summaries <- function(summaries, simulated, funs, idx, idx_summ) {
+  # avoid NSE notes from R CMD check
+  fun <- NULL
   for (f in funs) {
     data.table::set(
       x = summaries,

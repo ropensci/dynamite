@@ -472,6 +472,8 @@ parse_global_lags <- function(dformula, lag_map, resp_stoch, channels_stoch) {
 #' @noRd
 parse_singleton_lags <- function(dformula, data, group_var,
                                  lag_map, valid_resp, verbose) {
+  # avoid NSE notes from R CMD check
+  group <- NULL
   n_lag <- nrow(lag_map)
   resp_all <- get_responses(dformula)
   channels <- vector(mode = "list", length = n_lag)

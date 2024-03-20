@@ -48,7 +48,7 @@ to be used in reports and publications.
 }
 \examples{
 data.table::setDTthreads(1) # For CRAN
-multichanneL_formula <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
+multichannel_formula <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
   obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
   aux(numeric(logp) ~ log(p + 1))
