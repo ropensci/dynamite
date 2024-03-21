@@ -234,14 +234,12 @@ plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
     curved_diag <- vec[1L] >= 2 && abs(vec[2L]) >= 2 && vec[1L] == abs(vec[2L])
     any_curved_x <- any_curved_x || curved_x
     any_curved_y <- any_curved_y || curved_y
-    arrow_fun <- ifelse_(
-      curved_x || curved_y || curved_diag,
-      ggplot2::geom_curve,
-      ggplot2::geom_segment
-    )
+    curved <- curved_x || curved_y || curved_diag
+    curvature <- ifelse_(curved_diag, 0.5, sqrt(0.5)^max(abs(vec)))
+    angle <- pi / max(abs(vec) + 2)
     rotation <- ifelse_(
-      curved_x || curved_y,
-      1/sqrt(2) * matrix(c(1, 1, -1, 1), 2, 2),
+      curved,
+      matrix(c(cos(angle), sin(angle), -sin(angle), cos(angle)), 2, 2),
       diag(2L)
     )
     vec <- rotation %*% (vec / sqrt(sum(vec^2)))
@@ -254,11 +252,21 @@ plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
       yend = yend
     )
     p <- p +
-      arrow_fun(
-        ggplot2::aes(x = x, y = y, xend = xend, yend = yend),
-        data = edge_data,
-        inherit.aes = FALSE,
-        arrow = ggplot2::arrow(length = ggplot2::unit(0.033, "npc"))
+      ifelse_(
+        curved,
+        ggplot2::geom_curve(
+          ggplot2::aes(x = x, y = y, xend = xend, yend = yend),
+          data = edge_data,
+          inherit.aes = FALSE,
+          arrow = ggplot2::arrow(length = ggplot2::unit(0.033, "npc")),
+          curvature = curvature
+        ),
+        ggplot2::geom_segment(
+          ggplot2::aes(x = x, y = y, xend = xend, yend = yend),
+          data = edge_data,
+          inherit.aes = FALSE,
+          arrow = ggplot2::arrow(length = ggplot2::unit(0.033, "npc"))
+        )
       )
   }
   p + ggforce::geom_circle(

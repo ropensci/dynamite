@@ -548,7 +548,7 @@ get_quoted <- function(x) {
 #' @param project A `logical` value. If `TRUE`, deterministic responses are
 #'   projected out of the DAG.
 #' @noRd
-get_dag <- function(x, project = FALSE, covariates = FALSE, expand = 1L) {
+get_dag <- function(x, project = FALSE, covariates = FALSE) {
   resp <- get_responses(x)
   contemp_dep <- ifelse_(
     covariates,
@@ -596,7 +596,7 @@ get_dag <- function(x, project = FALSE, covariates = FALSE, expand = 1L) {
     resp <- resp[resp_stoch]
     cg <- cg[resp_stoch]
   }
-  max_lag <- expand * max(lag_dep$order)
+  max_lag <- max(1L, max(lag_dep$order))
   all_vars <- c(
     resp,
     unique(setdiff(union(unlist(contemp_dep), lag_dep$var), resp))
@@ -609,18 +609,19 @@ get_dag <- function(x, project = FALSE, covariates = FALSE, expand = 1L) {
   )
   n <- length(v)
   m <- nrow(lag_dep)
-  e <- sum(lengths(contemp_dep)) * (1L + 2L * max_lag) + m * (2L * max_lag)
   A <- matrix(
     0L,
     nrow = n,
     ncol = n,
     dimnames = replicate(2L, v, simplify = FALSE)
   )
-  edgelist <- data.frame(from = character(e), to = character(e))
   if (covariates) {
-    p <- length(all_vars) - length(resp)
+    p <- length(resp)
     resp <- all_vars
-    layout_y <- c(seq_len(p), p + rev(seq_along(resp[order(cg)])))
+    layout_y <- c(
+      rev(seq_along(resp[order(cg)])),
+      p + seq_len(length(all_vars) - p)
+    )
   } else {
     layout_y <- rev(seq_along(resp[order(cg)]))
   }
@@ -640,53 +641,56 @@ get_dag <- function(x, project = FALSE, covariates = FALSE, expand = 1L) {
   var_t <- paste0(lag_dep$var, "_{t}")
   A[cbind(var_past, resp_t)] <- 1L
   A[cbind(var_t, resp_future)] <- 1L
-  m_seq <- seq_len(m)
-  edgelist[m_seq, ] <- data.frame(from = var_past, to = resp_t)
-  edgelist[m + m_seq, ] <- data.frame(from = var_t, to = resp_future)
+  edgelist <- list()
+  edgelist[[1L]] <- data.frame(from = var_past, to = resp_t)
+  edgelist[[2L]] <- data.frame(from = var_t, to = resp_future)
+  e_idx <- 3L
   for (i in seq_len(max_lag - 1L)) {
+    include <- (lag_dep$order + i) <= max_lag
     var_past <- paste0(lag_dep$var, "_{t - ", lag_dep$order + i, "}")
+    var_past <- var_past[include]
     resp_past <- paste0(lag_dep$resp, "_{t - ", i, "}")
-    var_future <- paste0(lag_dep$var, "_{t + ", lag_dep$order + i, "}")
-    resp_future <- paste0(lag_dep$resp, "_{t + ", i, "}")
+    resp_past <- resp_past[include]
+    var_future <- paste0(lag_dep$var, "_{t + ", i, "}")
+    var_future <- var_future[include]
+    resp_future <- paste0(lag_dep$resp, "_{t + ", i + lag_dep$order, "}")
+    resp_future <- resp_future[include]
     A[cbind(var_past, resp_past)] <- 1L
     A[cbind(var_future, resp_future)] <- 1L
-    resp_past <- paste0(resp, "_{t - ", i, "}")
-    resp_future <- paste0(resp, "_{t + ", i, "}")
-    layout[layout$var %in% resp_past, "x"] <- (-1.0) * i
+    edgelist[[e_idx]] <- data.frame(from = var_past, to = resp_past)
+    edgelist[[e_idx + 1L]] <- data.frame(from = var_future, to = resp_future)
+    resp_past <- paste0(resp, "_{t - ", i + 1L, "}")
+    resp_future <- paste0(resp, "_{t + ", i + 1L, "}")
+    layout[layout$var %in% resp_past, "x"] <- (-1.0) * (i + 1L)
     layout[layout$var %in% resp_past, "y"] <- layout_y
-    layout[layout$var %in% resp_future, "x"] <- (1.0) * i
+    layout[layout$var %in% resp_future, "x"] <- (1.0) * (i + 1L)
     layout[layout$var %in% resp_future, "y"] <- layout_y
-    edgelist[(2 * i) * m + m_seq, ] <-
-      data.frame(from = var_past, to = resp_past)
-    edgelist[(2 * i + 1) * m + m_seq, ] <-
-      data.frame(from = var_future, to = resp_future)
+    e_idx <- e_idx + 2L
   }
-  idx <- m * (2L * max_lag)
   for (i in seq_along(contemp_dep)) {
     k <- length(contemp_dep[[i]])
     if (k > 0L) {
       resp_ti <- paste0(resp[i], "_{t}")
       contemp_t <- paste0(contemp_dep[[i]], "_{t}")
       A[contemp_t, resp_ti] <- 1L
-      edgelist[idx + seq_len(k), ] <-
-        data.frame(from = contemp_t, to = resp_ti)
-      idx <- idx + k
+      edgelist[[e_idx]] <- data.frame(from = contemp_t, to = resp_ti)
+      e_idx <- e_idx + 1L
       for (j in seq_len(max_lag)) {
         contemp_past <- paste0(contemp_dep[[i]], "_{t - ", j, "}")
-        resp_past <- paste0(resp[i], "_{t - ", j, "}")
         contemp_future <- paste0(contemp_dep[[i]], "_{t + ", j, "}")
+        resp_past <- paste0(resp[i], "_{t - ", j, "}")
         resp_future <- paste0(resp[i], "_{t + ", j, "}")
         A[contemp_past, resp_past] <- 1L
         A[contemp_future, resp_future] <- 1L
-        edgelist[idx + seq_len(k), ] <-
-          data.frame(from = contemp_past, resp_past)
-        edgelist[idx + k + seq_len(k), ] <-
-          data.frame(from = contemp_future, resp_future)
-        idx <- idx + 2 * k
+        edgelist[[e_idx]] <-
+          data.frame(from = contemp_past, to = resp_past)
+        edgelist[[e_idx + 1L]] <-
+          data.frame(from = contemp_future, to = resp_future)
+        e_idx <- e_idx + 2L
       }
     }
   }
-  list(A = A, edgelist = edgelist, layout = layout)
+  list(A = A, edgelist = rbindlist_(edgelist), layout = layout)
 }
 
 #' Get the Markov Blanket of a Response Variable
@@ -695,11 +699,14 @@ get_dag <- function(x, project = FALSE, covariates = FALSE, expand = 1L) {
 #' @param y A `character` string naming the response variable.
 #' @noRd
 get_markov_blanket <- function(x, y) {
-  y_ch <- which(get_responses(x) == y)
-  lag_pa <- get_lag_terms(x[y_ch])
-  lag_order <- get_lag_orders(x[y_ch])
-  contemporaneous_pa <- get_nonlag_terms(x[y_ch])
-
+  g <- get_dag(x, project = TRUE, covariates = TRUE)
+  A <- g$A
+  v <- colnames(A)
+  y <- paste0(y, "_{t}")
+  pa <- v[which(A[, y] == 1L)]
+  ch <- v[which(A[y, ] == 1L)]
+  pa_ch <- unique(v[which(A[, ch] == 1L, arr.ind = TRUE)[, "row"]])
+  setdiff(union(c(ch, pa), pa_ch), y)
 }
 
 #' Get Indices of Deterministic Channels in a `dynamiteformula` Object

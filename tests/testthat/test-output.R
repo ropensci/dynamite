@@ -76,6 +76,28 @@ test_that("default plot works", {
   )
 })
 
+test_that("formula plot works", {
+  f <- obs(y ~ x + lag(logz) + lag(y, 2) + lag(w), family = "gaussian") +
+    obs(w ~ lag(x) + z, family = "gaussian") +
+    aux(numeric(logz) ~ log(z))
+  expect_error(
+    plot(f),
+    NA
+  )
+  expect_error(
+    plot(f, show_auxiliary = TRUE),
+    NA
+  )
+  expect_error(
+    plot(f, show_covariates = TRUE),
+    NA
+  )
+  expect_error(
+    plot(f, show_auxiliary = TRUE, show_covariates = TRUE),
+    NA
+  )
+})
+
 test_that("betas can be plotted", {
   expect_error(
     plot_betas(gaussian_example_fit),
