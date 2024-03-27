@@ -32,8 +32,18 @@
 #'
 loo.dynamitefit <- function(x, separate_channels = FALSE, ...) {
   stopifnot_(
+    is.null(object$imputed),
+    "Leave-one-out cross-validation is not supported for models estimated using
+     multiple imputation."
+  )
+  stopifnot_(
     !is.null(x$stanfit),
     "No Stan model fit is available."
+  )
+    stopifnot_(
+    is.null(object$imputed),
+    "The {.fun update} method is not supported for models estimated using
+     multiple imputation."
   )
   stopifnot_(
     checkmate::test_flag(x = separate_channels),

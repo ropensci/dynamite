@@ -60,12 +60,21 @@ lags <- function(k = 1L, type = c("fixed", "varying", "random")) {
 #' @param x \[`vector()`]\cr A vector of values.
 #' @param k \[`integer(1)`]\cr Number of positions to lag by.
 #' @noRd
-lag_ <- function(x, k = 1) {
+lag_ <- function(x, k = 1L) {
   lag_idx <- seq_len(length(x) - k)
   out <- x
   out[seq_len(k)] <- NA
   out[k + lag_idx] <- x[lag_idx]
   out
+}
+
+#' Create a Leading Version of a Vector
+#'
+#' @param x \[`vector()`]\cr A vector of values.
+#' @param k \[`integer(1)`]\cr Number of positions to lead by.
+#' @noRd
+lead_ <- function(x, k = 1L) {
+  rev(lag_(rev(x), k))
 }
 
 #' Adds Default Shift Values to Terms of the Form `lag(y)`

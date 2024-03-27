@@ -52,6 +52,11 @@
 #'
 lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   stopifnot_(
+    is.null(object$imputed),
+    "Leave-future-out cross-validation is not supported for models
+     estimated using multiple imputation."
+  )
+  stopifnot_(
     !is.null(x$stanfit),
     "No Stan model fit is available."
   )

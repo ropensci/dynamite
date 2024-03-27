@@ -65,7 +65,7 @@
 #'   sensitive to the choice of `grainsize`, see Stan manual on reduce-sum for
 #'   details.
 #' @param custom_stan_model \[`character(1)`]\cr An optional character string
-#'   that either contains a customized stan model code or a path to a `.stan`
+#'   that either contains a customized Stan model code or a path to a `.stan`
 #'   file that contains the code. Using this will override the generated model
 #'   code. For expert users only.
 #' @param debug \[`list()`]\cr A named list of form `name = TRUE` indicating
@@ -183,7 +183,7 @@ dynamite <- function(dformula, data, time, group = NULL,
   backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
   stopifnot_(
     !inherits(backend, "try-error"),
-    "Argument {.arg backend} must be {.val rstan} or {.val cmdstanr}."
+    "Argument {.arg backend} must be either {.val rstan} or {.val cmdstanr}."
   )
   if (is.null(group)) {
     group <- ".group"

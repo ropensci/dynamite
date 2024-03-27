@@ -1,3 +1,7 @@
+# dynamite 1.5.0
+
+  * Estimation of dynamic multivariate panel models with multiple imputation is now available via the function `dynamice()` which uses the `mice` package.
+
 # dynamite 1.4.11
 
   * The package now depends on `data.table` version 1.15.0 or higher and the `ggforce` package.

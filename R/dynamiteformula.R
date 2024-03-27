@@ -547,8 +547,13 @@ get_quoted <- function(x) {
 #' @param x A `dynamiteformula` object.
 #' @param project A `logical` value. If `TRUE`, deterministic responses are
 #'   projected out of the DAG.
+#' @param covariates A `logical` value. If `TRUE`, fixed covariates are also
+#'   included in the DAG.
+#' @param format A `character` string describing how to label variable names.
 #' @noRd
-get_dag <- function(x, project = FALSE, covariates = FALSE) {
+get_dag <- function(x, project = FALSE, covariates = FALSE,
+                    format = c("default", "expression", "lag")) {
+  f_ <- dag_formatter(format)
   resp <- get_responses(x)
   contemp_dep <- ifelse_(
     covariates,
@@ -567,14 +572,17 @@ get_dag <- function(x, project = FALSE, covariates = FALSE) {
     for (i in resp_det) {
       contemp_pa <- contemp_dep[[i]]
       k <- length(contemp_pa)
-      if (k > 0) {
-        contemp_dep[-i] <- lapply(contemp_dep[-i], function(y) {
-          ifelse_(
-            contemp_pa %in% y,
-            union(y, contemp_pa),
-            y
-          )
-        })
+      if (k > 0L) {
+        contemp_dep[-i] <- lapply(
+          contemp_dep[-i],
+          function(y) {
+            ifelse_(
+              contemp_pa %in% y,
+              union(y, contemp_pa),
+              y
+            )
+          }
+        )
       }
       lag_dep_pa <- lag_dep[lag_dep$resp == resp[i], ]
       lag_dep_ch <- lag_dep[lag_dep$var == resp[i], ]
@@ -582,7 +590,7 @@ get_dag <- function(x, project = FALSE, covariates = FALSE) {
       for (j in seq_len(nrow(lag_dep_ch))) {
         lag_dep_new[[j]] <- data.frame(
           var = c(contemp_pa, lag_dep_pa$var),
-          order = c(rep(0, k), lag_dep_pa$order) + lag_dep_ch$order[j],
+          order = c(rep(0L, k), lag_dep_pa$order) + lag_dep_ch$order[j],
           resp = lag_dep_ch$resp[j]
         )
       }
@@ -603,9 +611,12 @@ get_dag <- function(x, project = FALSE, covariates = FALSE) {
   )
   resp_lag <- expand.grid(var = all_vars, order = seq_len(max_lag))
   v <- c(
-    paste0(resp_lag$var, "_{t - ", resp_lag$order, "}"),
-    paste0(resp_lag$var, "_{t + ", resp_lag$order, "}"),
-    paste0(all_vars, "_{t}")
+    f_(resp_lag$var, -1L * resp_lag$order),
+    f_(resp_lag$var, resp_lag$order),
+    f_(all_vars, 0L)
+    #paste0(resp_lag$var, "_{t - ", resp_lag$order, "}"),
+    #paste0(resp_lag$var, "_{t + ", resp_lag$order, "}"),
+    #paste0(all_vars, "_{t}")
   )
   n <- length(v)
   m <- nrow(lag_dep)
@@ -625,9 +636,12 @@ get_dag <- function(x, project = FALSE, covariates = FALSE) {
   } else {
     layout_y <- rev(seq_along(resp[order(cg)]))
   }
-  resp_past <- paste0(resp, "_{t - 1}")
-  resp_future <- paste0(resp, "_{t + 1}")
-  resp_t <- paste0(resp, "_{t}")
+  # resp_past <- paste0(resp, "_{t - 1}")
+  # resp_future <- paste0(resp, "_{t + 1}")
+  # resp_t <- paste0(resp, "_{t}")
+  resp_past <- f_(resp, -1L)
+  resp_future <- f_(resp, 1L)
+  resp_t <- f_(resp, 0L)
   layout <- data.frame(var = v, x = NA, y = NA)
   layout[layout$var %in% resp_t, "x"] <- 0.0
   layout[layout$var %in% resp_t, "y"] <- layout_y
@@ -635,10 +649,14 @@ get_dag <- function(x, project = FALSE, covariates = FALSE) {
   layout[layout$var %in% resp_past, "y"] <- layout_y
   layout[layout$var %in% resp_future, "x"] <- 1.0
   layout[layout$var %in% resp_future, "y"] <- layout_y
-  var_past <- paste0(lag_dep$var, "_{t - ", lag_dep$order, "}")
-  resp_future <- paste0(lag_dep$resp, "_{t + ", lag_dep$order, "}")
-  resp_t <- paste0(lag_dep$resp, "_{t}")
-  var_t <- paste0(lag_dep$var, "_{t}")
+  # var_past <- paste0(lag_dep$var, "_{t - ", lag_dep$order, "}")
+  # resp_future <- paste0(lag_dep$resp, "_{t + ", lag_dep$order, "}")
+  # resp_t <- paste0(lag_dep$resp, "_{t}")
+  # var_t <- paste0(lag_dep$var, "_{t}")
+  var_past <- f_(lag_dep$var, -1 * lag_dep$order)
+  resp_future <- f_(lag_dep$resp, lag_dep$order)
+  resp_t <- f_(lag_dep$resp, 0L)
+  var_t <- f_(lag_dep$var, 0L)
   A[cbind(var_past, resp_t)] <- 1L
   A[cbind(var_t, resp_future)] <- 1L
   edgelist <- list()
@@ -647,20 +665,26 @@ get_dag <- function(x, project = FALSE, covariates = FALSE) {
   e_idx <- 3L
   for (i in seq_len(max_lag - 1L)) {
     include <- (lag_dep$order + i) <= max_lag
-    var_past <- paste0(lag_dep$var, "_{t - ", lag_dep$order + i, "}")
+    #var_past <- paste0(lag_dep$var, "_{t - ", lag_dep$order + i, "}")
+    var_past <- f_(lag_dep$var, -1 * (lag_dep$order + i))
     var_past <- var_past[include]
-    resp_past <- paste0(lag_dep$resp, "_{t - ", i, "}")
+    #resp_past <- paste0(lag_dep$resp, "_{t - ", i, "}")
+    resp_past <- f_(lag_dep$resp, -1 * i)
     resp_past <- resp_past[include]
-    var_future <- paste0(lag_dep$var, "_{t + ", i, "}")
+    #var_future <- paste0(lag_dep$var, "_{t + ", i, "}")
+    var_future <- f_(lag_dep$var, i)
     var_future <- var_future[include]
-    resp_future <- paste0(lag_dep$resp, "_{t + ", i + lag_dep$order, "}")
+    #resp_future <- paste0(lag_dep$resp, "_{t + ", i + lag_dep$order, "}")
+    resp_future <- f_(lag_dep$resp, (lag_dep$order + i))
     resp_future <- resp_future[include]
     A[cbind(var_past, resp_past)] <- 1L
     A[cbind(var_future, resp_future)] <- 1L
     edgelist[[e_idx]] <- data.frame(from = var_past, to = resp_past)
     edgelist[[e_idx + 1L]] <- data.frame(from = var_future, to = resp_future)
-    resp_past <- paste0(resp, "_{t - ", i + 1L, "}")
-    resp_future <- paste0(resp, "_{t + ", i + 1L, "}")
+    #resp_past <- paste0(resp, "_{t - ", i + 1L, "}")
+    #resp_future <- paste0(resp, "_{t + ", i + 1L, "}")
+    resp_past <- f_(resp, -1L * (i + 1L))
+    resp_future <- f_(resp, i + 1L)
     layout[layout$var %in% resp_past, "x"] <- (-1.0) * (i + 1L)
     layout[layout$var %in% resp_past, "y"] <- layout_y
     layout[layout$var %in% resp_future, "x"] <- (1.0) * (i + 1L)
@@ -670,16 +694,22 @@ get_dag <- function(x, project = FALSE, covariates = FALSE) {
   for (i in seq_along(contemp_dep)) {
     k <- length(contemp_dep[[i]])
     if (k > 0L) {
-      resp_ti <- paste0(resp[i], "_{t}")
-      contemp_t <- paste0(contemp_dep[[i]], "_{t}")
+      #resp_ti <- paste0(resp[i], "_{t}")
+      #contemp_t <- paste0(contemp_dep[[i]], "_{t}")
+      resp_ti <- f_(resp[i], 0L)
+      contemp_t <- f_(contemp_dep[[i]], 0L)
       A[contemp_t, resp_ti] <- 1L
       edgelist[[e_idx]] <- data.frame(from = contemp_t, to = resp_ti)
       e_idx <- e_idx + 1L
       for (j in seq_len(max_lag)) {
-        contemp_past <- paste0(contemp_dep[[i]], "_{t - ", j, "}")
-        contemp_future <- paste0(contemp_dep[[i]], "_{t + ", j, "}")
-        resp_past <- paste0(resp[i], "_{t - ", j, "}")
-        resp_future <- paste0(resp[i], "_{t + ", j, "}")
+        #contemp_past <- paste0(contemp_dep[[i]], "_{t - ", j, "}")
+        #contemp_future <- paste0(contemp_dep[[i]], "_{t + ", j, "}")
+        #resp_past <- paste0(resp[i], "_{t - ", j, "}")
+        #resp_future <- paste0(resp[i], "_{t + ", j, "}")
+        contemp_past <- f_(contemp_dep[[i]], -1L * j)
+        contemp_future <- f_(contemp_dep[[i]], j)
+        resp_past <- f_(resp[i], -1L * j)
+        resp_future <- f_(resp[i], j)
         A[contemp_past, resp_past] <- 1L
         A[contemp_future, resp_future] <- 1L
         edgelist[[e_idx]] <-
@@ -695,18 +725,50 @@ get_dag <- function(x, project = FALSE, covariates = FALSE) {
 
 #' Get the Markov Blanket of a Response Variable
 #'
-#' @param x A `dynamiteformula` object.
+#' @param g Output of `get_dag()`.
 #' @param y A `character` string naming the response variable.
 #' @noRd
-get_markov_blanket <- function(x, y) {
-  g <- get_dag(x, project = TRUE, covariates = TRUE)
+get_markov_blanket <- function(g, y) {
   A <- g$A
   v <- colnames(A)
-  y <- paste0(y, "_{t}")
   pa <- v[which(A[, y] == 1L)]
   ch <- v[which(A[y, ] == 1L)]
-  pa_ch <- unique(v[which(A[, ch] == 1L, arr.ind = TRUE)[, "row"]])
+  pa_ch <- onlyif(
+    length(ch) > 0L,
+    unique(v[which(A[, ch, drop = FALSE] == 1L, arr.ind = TRUE)[, "row"]])
+  )
   setdiff(union(c(ch, pa), pa_ch), y)
+}
+
+#' Create a Function to Format DAG Vertex Names
+#'
+#' @inheritParams get_dag
+#' @noRd
+dag_formatter <- function(format) {
+  switch(
+    format,
+    default = function(v, k) {
+      suffix <- c(" - ", "", " + ")
+      k_str <- as.character(abs(k))
+      k_str[k == 0L] <- ""
+      s <- sign(k) + 2L
+      paste0(v, "_{t", suffix[s], k_str, "}")
+    },
+    expression = function(v, k) {
+      suffix <- c(" - ", "", " + ")
+      k_str <- as.character(abs(k))
+      k_str[k == 0L] <- ""
+      s <- sign(k) + 2L
+      paste0(v, "[t", suffix[s], k_str, "]")
+    },
+    lag = function(v, k) {
+      suffix <- c("_lag", "", "_lead")
+      k_str <- as.character(abs(k))
+      k_str[k == 0L] <- ""
+      s <- sign(k) + 2L
+      paste0(v, suffix[s], k_str)
+    }
+  )
 }
 
 #' Get Indices of Deterministic Channels in a `dynamiteformula` Object

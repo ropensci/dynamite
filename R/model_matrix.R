@@ -37,7 +37,7 @@ full_model.matrix <- function(dformula, data, verbose) {
   u_names <- setdiff(unique(colnames(model_matrix)), "(Intercept)")
   model_matrix <- model_matrix[, u_names, drop = FALSE]
   y_names <- get_responses(dformula)
-  empty_list <- setNames(
+  empty_list <- stats::setNames(
     vector(mode = "list", length = length(model_matrices)),
     y_names
   )
@@ -49,7 +49,7 @@ full_model.matrix <- function(dformula, data, verbose) {
     for (type in types) {
       if (!is.null(model_matrices_type[[i]][[type]])) {
         cols <- which(u_names %in% colnames(model_matrices_type[[i]][[type]]))
-        attr(model_matrix, type)[[i]] <- setNames(cols, u_names[cols])
+        attr(model_matrix, type)[[i]] <- stats::setNames(cols, u_names[cols])
       } else {
         attr(model_matrix, type)[[i]] <- integer(0L)
       }
