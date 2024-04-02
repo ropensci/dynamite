@@ -52,7 +52,7 @@
 #'
 lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   stopifnot_(
-    is.null(object$imputed),
+    is.null(x$imputed),
     "Leave-future-out cross-validation is not supported for models
      estimated using multiple imputation."
   )
