@@ -40,6 +40,7 @@ gaussian_simulation_fit <- dynamite(
   group = "id",
   chains = 1,
   iter = 1,
+  refresh = 0,
   algorithm = "Fixed_param",
   init = list(init),
 )

@@ -34,12 +34,12 @@ gaussian_simulation_fit <- dynamite(
 }
 \seealso{
 Example models
-\code{\link{categorical_example_fit}},
 \code{\link{categorical_example}},
-\code{\link{gaussian_example_fit}},
+\code{\link{categorical_example_fit}},
 \code{\link{gaussian_example}},
-\code{\link{multichannel_example_fit}},
-\code{\link{multichannel_example}}
+\code{\link{gaussian_example_fit}},
+\code{\link{multichannel_example}},
+\code{\link{multichannel_example_fit}}
 }
 \concept{examples}
 \keyword{datasets}

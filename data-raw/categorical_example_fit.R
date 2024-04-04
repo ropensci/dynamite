@@ -1,6 +1,6 @@
 # Code to create `categorical_example_fit` object
 
-library(dynamite)
+library("dynamite")
 
 set.seed(1)
 categorical_example_fit <- dynamite(

@@ -5,7 +5,7 @@
 \alias{loo}
 \title{Approximate Leave-One-Out (LOO) Cross-validation}
 \usage{
-\method{loo}{dynamitefit}(x, separate_channels = FALSE, thin = NULL, ...)
+\method{loo}{dynamitefit}(x, separate_channels = FALSE, thin = 1L, ...)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
@@ -17,7 +17,7 @@ different channels are combined, i.e., all channels of are left out.}
 
 \item{thin}{[\code{integer(1)}]\cr Use only every \code{thin} posterior sample when
 computing LOO. This can be beneficial with when the model object contains
-large number of samples. Default is \code{NULL} which is equal to \code{thin = 1}.}
+large number of samples. Default is \code{1} meaning that all samples are used.}
 
 \item{...}{Ignored.}
 }

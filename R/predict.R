@@ -390,8 +390,8 @@ predict_ <- function(object, simulated, storage, observed,
       env = list(n_new = n_new, n_draws = n_draws)
     ]
     simulated[,
-              (".draw") := rep(seq.int(1L, n_draws), n_new),
-              env = list(n_new = n_new, n_draws = n_draws)
+      (".draw") := rep(seq.int(1L, n_draws), n_new),
+      env = list(n_new = n_new, n_draws = n_draws)
     ]
     idx <- which(draw_time == u_time[1L]) + (fixed - 1L) * n_draws
     n_sim <- n_draws
@@ -439,7 +439,7 @@ predict_ <- function(object, simulated, storage, observed,
   idx_draws <- ifelse_(
     identical(n_draws, ndraws(object)),
     seq_len(n_draws),
-    sample.int(ndraws(object), n_draws)
+    object$permutation[seq_len(n_draws)]
   )
   eval_envs <- prepare_eval_envs(
     object,

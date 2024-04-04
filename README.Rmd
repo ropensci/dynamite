@@ -55,13 +55,13 @@ install.packages("dynamite", repos = "https://ropensci.r-universe.dev")
 A single-channel model with time-invariant effect of `z`, time-varying effect of `x`, lagged value of the response variable `y` and a group-specific random intercepts:
 
 ```{r, echo = FALSE}
-library(dynamite)
+library("dynamite")
 ggplot2::theme_set(ggplot2::theme_bw())
 ```
 
 ```{r, eval = FALSE}
 set.seed(1)
-library(dynamite)
+library("dynamite")
 gaussian_example_fit <- dynamite(
   obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1), family = "gaussian") +
     splines(df = 20),
@@ -72,7 +72,7 @@ gaussian_example_fit <- dynamite(
 
 ```{r, echo = FALSE}
 set.seed(1)
-library(dynamite)
+library("dynamite")
 gaussian_example_fit <- update(gaussian_example_fit,
   iter = 2000, warmup = 1000, thin = 1,
   chains = 2, cores = 2, refresh = 0
@@ -102,7 +102,7 @@ plot(gaussian_example_fit, type = "beta")
 Posterior predictive samples for the first 4 groups (samples based on the posterior distribution of model parameters and observed data on first time point):
 
 ```{r, warning=FALSE, fig.width = 9, fig.height = 4}
-library(ggplot2)
+library("ggplot2")
 pred <- predict(gaussian_example_fit, n_draws = 100)
 pred |>
   dplyr::filter(id < 5) |>

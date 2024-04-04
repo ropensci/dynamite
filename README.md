@@ -71,7 +71,7 @@ group-specific random intercepts:
 
 ``` r
 set.seed(1)
-library(dynamite)
+library("dynamite")
 gaussian_example_fit <- dynamite(
   obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1), family = "gaussian") +
     splines(df = 20),
@@ -94,25 +94,29 @@ gaussian_example_fit
 #> Grouping variable: id (Number of groups: 50)
 #> Time index variable: time (Number of time points: 30)
 #> 
-#> Smallest bulk-ESS: 557 (sigma_nu_y_alpha)
-#> Smallest tail-ESS: 1032 (sigma_nu_y_alpha)
-#> Largest Rhat: 1.006 (alpha_y[28])
+#> NUTS sampler diagnostics:
+#> 
+#> No divergences, saturated max treedepths or low E-BFMIs.
+#> 
+#> Smallest bulk-ESS: 661 (sigma_nu_y_alpha)
+#> Smallest tail-ESS: 1058 (sigma_nu_y_alpha)
+#> Largest Rhat: 1.003 (sigma_y)
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  5.169  2.753
-#> chain:2  4.897  1.763
+#> chain:1  5.479  3.373
+#> chain:2  5.966  3.770
 #> 
 #> Summary statistics of the time- and group-invariant parameters:
 #> # A tibble: 6 × 10
 #>   variable      mean median      sd     mad     q5   q95  rhat ess_bulk ess_tail
-#>   <chr>        <num>  <num>   <num>   <num>  <num> <num> <num>    <num>    <num>
-#> 1 beta_y_z    1.97   1.97   0.0121  0.0124  1.95   1.99  1.00     2122.    1385.
-#> 2 sigma_nu_y… 0.0944 0.0938 0.0112  0.0113  0.0774 0.114 0.999     557.    1032.
-#> 3 sigma_y     0.198  0.198  0.00368 0.00382 0.192  0.204 1.00     2169.    1398.
-#> 4 tau_alpha_y 0.209  0.202  0.0497  0.0453  0.143  0.298 1.00     1237.    1419.
-#> 5 tau_y_x     0.362  0.353  0.0674  0.0650  0.268  0.485 1.00     2177.    1670.
-#> 6 tau_y_y_la… 0.106  0.103  0.0216  0.0206  0.0770 0.146 1.00     1936.    1144.
+#>   <chr>        <dbl>  <dbl>   <dbl>   <dbl>  <dbl> <dbl> <dbl>    <dbl>    <dbl>
+#> 1 beta_y_z    1.97   1.97   0.0116  0.0112  1.95   1.99   1.00    2815.    1434.
+#> 2 sigma_nu_y… 0.0944 0.0933 0.0114  0.0107  0.0780 0.114  1.00     661.    1058.
+#> 3 sigma_y     0.198  0.198  0.00373 0.00362 0.192  0.204  1.00    2580.    1254.
+#> 4 tau_alpha_y 0.212  0.205  0.0483  0.0432  0.146  0.301  1.00    1731.    1606.
+#> 5 tau_y_x     0.364  0.355  0.0740  0.0648  0.266  0.494  1.00    2812.    1504.
+#> 6 tau_y_y_la… 0.107  0.105  0.0219  0.0213  0.0781 0.148  1.00    2387.    1682.
 ```
 
 Posterior estimates of time-varying effects:
@@ -144,7 +148,7 @@ the posterior distribution of model parameters and observed data on
 first time point):
 
 ``` r
-library(ggplot2)
+library("ggplot2")
 pred <- predict(gaussian_example_fit, n_draws = 100)
 pred |>
   dplyr::filter(id < 5) |>

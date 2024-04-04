@@ -502,7 +502,10 @@ prepare_eval_envs <- function(object, simulated, observed,
                               type, eval_type, idx_draws,
                               new_levels, group_var) {
   #samples <- rstan::extract(object$stanfit)
-  samples <- lapply(posterior::as_draws_rvars(object$stanfit), posterior::draws_of)
+  samples <- lapply(
+    posterior::as_draws_rvars(object$stanfit),
+    posterior::draws_of
+  )
   channel_vars <- object$stan$channel_vars
   channel_group_vars <- object$stan$channel_group_vars
   cg <- attr(object$dformulas$all, "channel_groups")

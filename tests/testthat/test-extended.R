@@ -264,3 +264,83 @@ test_that("update without recompile works", {
     NA
   )
 })
+
+test_that("custom stan model works", {
+  skip_if_not(run_extended_tests)
+
+  code <- get_code(gaussian_example_fit)
+  set.seed(1)
+  expect_error(
+    custom_fit <- dynamite(
+      dformula =
+        obs(y ~ -1 + z + varying(~ x + lag(y)) +
+          random(~1), family = "gaussian") +
+        random_spec() +
+        splines(df = 20),
+      data = gaussian_example,
+      time = "time",
+      group = "id",
+      iter = 2000,
+      warmup = 1000,
+      thin = 10,
+      chains = 2,
+      cores = 2,
+      refresh = 0,
+      save_warmup = FALSE,
+      pars = c(
+        "omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L",
+        "sigma_nu", "a_y"
+      ),
+      include = FALSE,
+      custom_stan_model = code
+    ),
+    NA
+  )
+  expect_equal(
+    rstan::extract(custom_fit$stanfit, permuted = FALSE),
+    rstan::extract(gaussian_example_fit$stanfit, permuted = FALSE)
+  )
+})
+
+test_that("dynamice works", {
+  skip_if_not(run_extended_tests)
+
+  set.seed(1)
+  n <- 50
+  p <- 1000
+  y <- replicate(p, stats::arima.sim(list(ar = 0.7), n, sd = 0.1))
+  d <- data.frame(y = c(y), time = 1:n, id = rep(seq_len(p), each = n))
+  dmiss <- d
+  dmiss$y[sample(seq_len(nrow(d)), size = 0.2 * nrow(d))] <- NA
+
+  # Long format imputation
+  expect_error(
+    fit_long <- dynamice(
+      obs(y ~ lag(y), "gaussian"),
+      time = "time",
+      group = "id",
+      data = dmiss,
+      chains = 1,
+      refresh = 0,
+      backend = "rstan",
+      impute_format = "long",
+      mice_args = list(m = 5, print = FALSE)
+    ),
+    NA
+  )
+
+  # Wide format imputation
+  expect_error(
+    fit_wide <- dynamice(
+      obs(y ~ lag(y), "gaussian"),
+      time = "time",
+      group = "id", data = dmiss,
+      chains = 1,
+      refresh = 0,
+      backend = "rstan",
+      impute_format = "wide",
+      mice_args = list(m = 5, print = FALSE)
+    ),
+    NA
+  )
+})

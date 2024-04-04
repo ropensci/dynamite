@@ -43,8 +43,8 @@ obs(x ~ z, family = "categorical") +
 }
 \seealso{
 Model formula construction
-\code{\link{dynamiteformula}()},
 \code{\link{dynamite}()},
+\code{\link{dynamiteformula}()},
 \code{\link{lfactor}()},
 \code{\link{random_spec}()},
 \code{\link{splines}()}

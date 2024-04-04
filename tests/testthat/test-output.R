@@ -61,6 +61,10 @@ test_that("fit object can be printed", {
     capture_all_output(print(gaussian_example_fit)),
     NA
   )
+  expect_error(
+    capture_all_output(print(gaussian_example_fit, full_diagnostics = TRUE)),
+    NA
+  )
   gaussian_example_fit_null <- gaussian_example_fit
   gaussian_example_fit_null$stanfit <- NULL
   expect_output(
@@ -94,6 +98,26 @@ test_that("formula plot works", {
   )
   expect_error(
     plot(f, show_auxiliary = TRUE, show_covariates = TRUE),
+    NA
+  )
+  multichannel_formula <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
+    obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
+    obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
+    aux(numeric(logp) ~ log(p + 1))
+  expect_error(
+    plot(multichannel_formula),
+    NA
+  )
+  expect_error(
+    plot(multichannel_formula, show_auxiliary = TRUE),
+    NA
+  )
+  expect_error(
+    plot(multichannel_formula, show_covariates = TRUE),
+    NA
+  )
+  expect_error(
+    plot(multichannel_formula, show_auxiliary = TRUE, show_covariates = TRUE),
     NA
   )
 })
@@ -153,7 +177,7 @@ test_that("formula can be extracted", {
   )
 })
 
-test_that("Formula extraction is correct", {
+test_that("formula extraction is correct", {
   expect_identical(
     deparse1(formula(gaussian_example_fit)),
     paste0(

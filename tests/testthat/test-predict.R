@@ -124,13 +124,17 @@ test_that("no groups prediction works", {
 })
 
 test_that("fitted works", {
-  expect_error(fitg <- fitted(gaussian_example_fit, n_draws = 2), NA)
+  expect_error(fitg <- fitted(gaussian_example_fit, n_draws = 1), NA)
 
-  # first chain, second draw (permuted)
-  iter <- gaussian_example_fit$stanfit@sim$permutation[[1L]][2L]
-  xzy <- gaussian_example_fit$data |> dplyr::filter(id == 5 & time == 20)
+  n <- ndraws(gaussian_example_fit) %/%
+    gaussian_example_fit$stanfit@sim$chains
+  idx <- gaussian_example_fit$permutation[1L]
+  iter <- idx %% n
+  chain <- 1 + idx %/% n
+  xzy <- gaussian_example_fit$data |>
+    dplyr::filter(id == 5 & time == 20)
   manual <- as_draws(gaussian_example_fit) |>
-    dplyr::filter(.iteration == iter & .chain == 1) |>
+    dplyr::filter(.iteration == iter & .chain == chain) |>
     dplyr::summarise(fit = `alpha_y[20]` + nu_y_alpha_id5 +
       `delta_y_x[20]` * xzy$x + beta_y_z * xzy$z +
       `delta_y_y_lag1[20]` * xzy$y_lag1) |>
@@ -138,14 +142,18 @@ test_that("fitted works", {
   automatic <- fitg |>
     dplyr::filter(id == 5 & time == 20) |>
     dplyr::pull(y_fitted)
-  expect_equal(automatic[2L], manual)
+  expect_equal(automatic, manual)
 
-  expect_error(fitc <- fitted(categorical_example_fit, n_draws = 2), NA)
-  # first chain, second draw (permuted)
-  iter <- categorical_example_fit$stanfit@sim$permutation[[1L]][2L]
+  expect_error(fitc <- fitted(categorical_example_fit, n_draws = 1), NA)
+
+  n <- ndraws(categorical_example_fit) %/%
+    categorical_example_fit$stanfit@sim$chains
+  idx <- categorical_example_fit$permutation[1L]
+  iter <- idx %% n
+  chain <- 1 + idx %/% n
   xzy <- categorical_example_fit$data |> dplyr::filter(id == 5 & time == 20)
   manual <- as_draws(categorical_example_fit) |>
-    dplyr::filter(.iteration == iter & .chain == 1) |>
+    dplyr::filter(.iteration == iter & .chain == chain) |>
     dplyr::summarise(
       x_A = 0,
       x_B = alpha_x_B + beta_x_z_B * xzy$z + beta_x_x_lag1C_B +
@@ -157,26 +165,29 @@ test_that("fitted works", {
   automatic <- fitc |>
     dplyr::filter(id == 5 & time == 20) |>
     dplyr::pull(x_fitted_C)
-  expect_equal(automatic[2L], manual)
+  expect_equal(automatic, manual)
 })
 
 test_that("categorical predict with type = link works", {
   expect_error(
-    fitc <- predict(categorical_example_fit, type = "link", n_draws = 2),
+    fitc <- predict(categorical_example_fit, type = "link", n_draws = 1),
     NA
   )
-
-  # first chain, second draw (permuted)
-  iter <- categorical_example_fit$stanfit@sim$permutation[[1L]][2L]
-  xzy <- categorical_example_fit$data |> dplyr::filter(id == 5 & time == 2)
+  n <- ndraws(categorical_example_fit) %/%
+    categorical_example_fit$stanfit@sim$chains
+  idx <- categorical_example_fit$permutation[1L]
+  iter <- idx %% n
+  chain <- 1 + idx %/% n
+  xzy <- categorical_example_fit$data |>
+    dplyr::filter(id == 5 & time == 2)
   manual <- as_draws(categorical_example_fit) |>
-    dplyr::filter(.iteration == iter & .chain == 1) |>
+    dplyr::filter(.iteration == iter & .chain == chain) |>
     dplyr::summarise(x = alpha_x_C + beta_x_z_C * xzy$z + beta_x_x_lag1C_C) |>
     dplyr::pull(x)
   automatic <- fitc |>
     dplyr::filter(id == 5 & time == 2) |>
     dplyr::pull(x_link_C)
-  expect_equal(automatic[2], manual)
+  expect_equal(automatic, manual)
 })
 
 test_that("fitted and predict give equal results for the first time point", {
@@ -429,20 +440,27 @@ test_that("predict with loglik works", {
     NA
   )
 
-  iter <- gaussian_example_fit$stanfit@sim$permutation[[1L]][2L]
-  xzy <- gaussian_example_fit$data |> dplyr::filter(id == 5 & time == 20)
-
+  # n <- ndraws(gaussian_example_fit) %/%
+  #   gaussian_example_fit$stanfit@sim$chains
+  # idx <- gaussian_example_fit$permutation[1L]
+  # iter <- idx %% n
+  # chain <- 1 + idx %/% n
+  xzy <- gaussian_example_fit$data |>
+    dplyr::filter(id == 5 & time == 20)
   manual <- as_draws(gaussian_example_fit) |>
-    dplyr::filter(.iteration == iter & .chain == 1) |>
-    dplyr::summarise(loglik = dnorm(xzy$y, `alpha_y[20]` +
-      nu_y_alpha_id5 + `delta_y_x[20]` * xzy$x +
-      beta_y_z * xzy$z + `delta_y_y_lag1[20]` * xzy$y_lag1, sigma_y,
-    log = TRUE
-    )) |>
+    dplyr::filter(.iteration == 1 & .chain == 1) |>
+    dplyr::summarise(
+      loglik = dnorm(
+        xzy$y, `alpha_y[20]` +
+          nu_y_alpha_id5 + `delta_y_x[20]` * xzy$x +
+          beta_y_z * xzy$z + `delta_y_y_lag1[20]` * xzy$y_lag1,
+        sigma_y,
+        log = TRUE
+      )
+    ) |>
     dplyr::pull(loglik)
-
   automatic <- out |>
-    dplyr::filter(id == 5 & time == 20 & .draw == 2) |>
+    dplyr::filter(id == 5 & time == 20 & .draw == 1) |>
     dplyr::pull(y_loglik)
   expect_equal(manual, automatic)
 })

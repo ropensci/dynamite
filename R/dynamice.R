@@ -140,6 +140,13 @@ dynamice <- function(dformula, data, time, group = NULL,
     stanfit <- rstan::read_stan_csv(filenames)
     stanfit@stanmodel <- methods::new("stanmodel", model_code = tmp$model_code)
   }
+  # TODO does this work in this case?
+  n_draws <- ifelse_(
+    is.null(stanfit),
+    0L,
+    (stanfit@sim$n_save[1L] - stanfit@sim$warmup2[1L]) *
+      stanfit@sim$chains
+  )
   # TODO return object? How is this going to work with update?
   structure(
     list(
@@ -152,8 +159,9 @@ dynamice <- function(dformula, data, time, group = NULL,
       time_var = time,
       priors = priors,
       backend = backend,
+      permutation = sample(n_draws),
+      imputed = imputed,
       call = tmp$call, # TODO?
-      imputed = imputed
     ),
     class = "dynamitefit"
   )

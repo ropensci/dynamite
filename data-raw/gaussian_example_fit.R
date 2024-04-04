@@ -1,6 +1,6 @@
 # Code to create `gaussian_example_fit` object
 
-library(dynamite)
+library("dynamite")
 
 # Note the very small number of post-warmup iterations due to the data size
 # restrictions in CRAN.
