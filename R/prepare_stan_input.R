@@ -54,7 +54,10 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   sampling_vars <- list()
   # A list of variables for Stan model construction
   model_vars <- list()
-  empty_list <- setNames(vector(mode = "list", length = n_channels), resp_names)
+  empty_list <- stats::setNames(
+    vector(mode = "list", length = n_channels),
+    resp_names
+  )
   # A list containing a list for each channel consisting of
   # variables used to construct the Stan model code
   channel_vars <- empty_list
@@ -86,7 +89,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   X <- X[T_idx, , , drop = FALSE]
   x_tmp <- X[1L, , , drop = FALSE]
   sd_x <- pmax(
-    setNames(apply(X, 3L, sd, na.rm = TRUE), colnames(model_matrix)),
+    stats::setNames(apply(X, 3L, sd, na.rm = TRUE), colnames(model_matrix)),
     1.0
   )
   x_means <- colMeans(x_tmp, dims = 2L, na.rm = TRUE)
@@ -309,16 +312,14 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
     L_varying = as.array(length(fixed_pars) + seq_along(varying_pars))
   )
   channel <- c(channel, indices)
-  sampling <- setNames(indices, paste0(names(indices), "_", y_name))
+  sampling <- stats::setNames(indices, paste0(names(indices), "_", y_name))
   # evaluate specials such as offset and trials
   spec_na <- matrix(FALSE, nrow = T_full - fixed, ncol = N)
   for (spec in formula_special_funs) {
     if (!is.null(specials[[spec]])) {
       spec_idx <- seq.int(fixed + 1L, T_full)
-      #spec_split <- split(specials[[spec]], group)
       spec_array <- as.numeric(specials[[spec]])
       dim(spec_array) <- c(T_full, N)
-      #spec_array <- array(as.numeric(unlist(spec_split)), dim = c(T_full, N))
       spec_na <- spec_na | is.na(spec_array[spec_idx, , drop = FALSE])
       spec_name <- paste0(spec, "_", y_name)
       sampling[[spec_name]] <- ifelse_(

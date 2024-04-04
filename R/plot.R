@@ -133,12 +133,23 @@ plot.dynamiteformula <- function(x, show_auxiliary = TRUE,
     checkmate::test_flag(x = tikz),
     "Argument {.arg tikz} must be a single {.cls logical} value."
   )
-  g <- get_dag(x, project = !show_auxiliary, covariates = show_covariates)
-  ifelse_(
-    tikz,
-    plot_dynamiteformula_tikz(g),
+  if (tikz) {
+    g <- get_dag(
+      x,
+      project = !show_auxiliary,
+      covariates = show_covariates,
+      format = "default"
+    )
+    plot_dynamiteformula_tikz(g)
+  } else {
+    g <- get_dag(
+      x,
+      project = !show_auxiliary,
+      covariates = show_covariates,
+      format = "expression"
+    )
     plot_dynamiteformula_ggplot(g, vertex_size, label_size)
-  )
+  }
 }
 
 #' Create a TikZ plot of the Directed Acyclic Graph of a `dynamiteformula`

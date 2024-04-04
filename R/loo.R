@@ -36,6 +36,11 @@
 #'
 loo.dynamitefit <- function(x, separate_channels = FALSE, thin = NULL, ...) {
   stopifnot_(
+    is.null(x$imputed),
+    "Leave-one-out cross-validation is not supported for models estimated using
+     multiple imputation."
+  )
+  stopifnot_(
     !is.null(x$stanfit),
     "No Stan model fit is available."
   )

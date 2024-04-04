@@ -34,6 +34,11 @@
 #'
 update.dynamitefit <- function(object, dformula = NULL, data = NULL,
                                priors = NULL, recompile = NULL, ...) {
+  stopifnot_(
+    is.null(object$imputed),
+    "The {.fun update} method is not supported for models estimated using
+     multiple imputation."
+  )
   call <- object$call
   if (!is.null(dformula)) {
     call$dformula <- dformula
