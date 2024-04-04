@@ -83,7 +83,9 @@ non-fixed time point is counted from the first time point globally.
 If there are no groups, then the options are equivalent.}
 
 \item{n_draws}{[\code{integer(1)}]\cr Number of posterior samples to use,
-default is \code{NULL} which uses all samples.}
+default is \code{NULL} which uses all samples without permuting (with chains
+concatenated). If \code{n_draws}is smaller than \code{ndraws(object)}, a random
+subset of \code{n_draws} posterior samples are used.}
 
 \item{expand}{[\code{logical(1)}]\cr If \code{TRUE} (the default), the output
 is a single \code{data.frame} containing the original \code{newdata} and the

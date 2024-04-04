@@ -12,10 +12,9 @@
 #'   separately for each channel. This can be useful in diagnosing where the
 #'   model fails. Default is `FALSE`, in which case the likelihoods of
 #'   different channels are combined, i.e., all channels of are left out.
-#' @param n_draws \[`integer(1)`]\cr Number of posterior samples to use,
-#'   default is `NULL` which uses all samples without permuting (with chains
-#'   concatenated). If `n_draws`is smaller than `ndraws(object)`, a random
-#'   subset of `n_draws` posterior samples are used.
+#' @param thin \[`integer(1)`]\cr Use only every `thin` posterior sample when
+#'   computing LOO. This can be beneficial with when the model object contains
+#'   large number of samples. Default is `NULL` which is equal to `thin = 1`.
 #' @param ... Ignored.
 #' @return An output from [loo::loo()] or a list of such outputs (if
 #'   `separate_channels` was `TRUE`).
@@ -48,7 +47,7 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, thin = NULL, ...) {
     checkmate::test_flag(x = separate_channels),
     "Argument {.arg separate_channels} must be a single {.cls logical} value."
   )
-  if (!is.null(thin)) thin <- 1L
+  if (is.null(thin)) thin <- 1L
   # compute loglik for all posterior samples even with thin != NULL
   out <- initialize_predict(
     x,
@@ -68,12 +67,12 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, thin = NULL, ...) {
 
   n_chains <- x$stanfit@sim$chains
   n_draws <- ndraws(x) %/% n_chains
-
+  idx_draws <- seq.int(1L, n_draws * n_chains, by = thin)
   loo_ <- function(ll, n_draws, n_chains, thin) {
-    ll <- t(matrix(ll, ncol = n_draws * n_chains))[seq.int(1, n_draws * n_chains, by = thin),]
+    ll <- t(matrix(ll, ncol = n_draws * n_chains)[, idx_draws])
     reff <- loo::relative_eff(
       exp(ll),
-      chain_id = rep(seq_len(n_chains), each = n_draws)
+      chain_id = rep(seq_len(n_chains), each = nrow(ll) / n_chains)
     )
     loo::loo(ll, r_eff = reff)
   }
