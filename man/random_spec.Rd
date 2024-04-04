@@ -41,8 +41,8 @@ obs(y ~ 1 + random(~1), family = "gaussian") +
 }
 \seealso{
 Model formula construction
-\code{\link{dynamite}()},
 \code{\link{dynamiteformula}()},
+\code{\link{dynamite}()},
 \code{\link{lags}()},
 \code{\link{lfactor}()},
 \code{\link{splines}()}

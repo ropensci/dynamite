@@ -30,12 +30,12 @@ coefficients vary according to a spline with 20 degrees of freedom.
 }
 \seealso{
 Example models
-\code{\link{categorical_example}},
 \code{\link{categorical_example_fit}},
+\code{\link{categorical_example}},
 \code{\link{gaussian_example_fit}},
 \code{\link{gaussian_simulation_fit}},
-\code{\link{multichannel_example}},
-\code{\link{multichannel_example_fit}}
+\code{\link{multichannel_example_fit}},
+\code{\link{multichannel_example}}
 }
 \concept{examples}
 \keyword{datasets}

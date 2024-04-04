@@ -65,7 +65,9 @@
 #'   non-fixed time point is counted from the first time point globally.
 #'   If there are no groups, then the options are equivalent.
 #' @param n_draws \[`integer(1)`]\cr Number of posterior samples to use,
-#'   default is `NULL` which uses all samples.
+#'   default is `NULL` which uses all samples without permuting (with chains
+#'   concatenated). If `n_draws`is smaller than `ndraws(object)`, a random
+#'   subset of `n_draws` posterior samples are used.
 #' @param expand \[`logical(1)`]\cr If `TRUE` (the default), the output
 #'   is a single `data.frame` containing the original `newdata` and the
 #'   predicted values. Otherwise, a `list` is returned with two components,
@@ -388,8 +390,8 @@ predict_ <- function(object, simulated, storage, observed,
       env = list(n_new = n_new, n_draws = n_draws)
     ]
     simulated[,
-      (".draw") := rep(seq.int(1L, n_draws), n_new),
-      env = list(n_new = n_new, n_draws = n_draws)
+              (".draw") := rep(seq.int(1L, n_draws), n_new),
+              env = list(n_new = n_new, n_draws = n_draws)
     ]
     idx <- which(draw_time == u_time[1L]) + (fixed - 1L) * n_draws
     n_sim <- n_draws
@@ -434,13 +436,18 @@ predict_ <- function(object, simulated, storage, observed,
     )
     idx_summ <- which(summaries[[time_var]] == u_time[1L]) + (fixed - 1L)
   }
+  idx_draws <- ifelse_(
+    identical(n_draws, ndraws(object)),
+    seq_len(n_draws),
+    sample.int(ndraws(object), n_draws)
+  )
   eval_envs <- prepare_eval_envs(
     object,
     simulated,
     observed,
     type,
     eval_type,
-    n_draws,
+    idx_draws,
     new_levels,
     group_var
   )
@@ -525,8 +532,8 @@ predict_ <- function(object, simulated, storage, observed,
   if (identical(mode, "full")) {
     lhs_lag <- c(lhs_ld, lhs_ls)
     if (length(lhs_lag) > 0L) {
-    # This if might not be needed in next version of data.table
-    #simulated[, c(lhs_ld, lhs_ls) := NULL]
+      # This if might not be needed in next version of data.table
+      #simulated[, c(lhs_ld, lhs_ls) := NULL]
       simulated[, c(lhs_lag) := NULL]
     }
     data.table::setkeyv(simulated, cols = c(".draw", group_var, time_var))

@@ -499,17 +499,18 @@ expand_predict_output <- function(simulated, observed, df) {
 #' @inheritParams clear_nonfixed
 #' @noRd
 prepare_eval_envs <- function(object, simulated, observed,
-                              type, eval_type, n_draws,
+                              type, eval_type, idx_draws,
                               new_levels, group_var) {
-  samples <- rstan::extract(object$stanfit)
+  #samples <- rstan::extract(object$stanfit)
+  samples <- lapply(posterior::as_draws_rvars(object$stanfit), posterior::draws_of)
   channel_vars <- object$stan$channel_vars
   channel_group_vars <- object$stan$channel_group_vars
   cg <- attr(object$dformulas$all, "channel_groups")
   n_cg <- n_unique(cg)
   eval_envs <- vector(mode = "list", length = n_cg)
-  idx_draws <- seq_len(n_draws)
   rand <- which_random(object$dformulas$all)
   n_group <- n_unique(observed[[group_var]])
+  n_draws <- length(idx_draws)
   k <- 0L # index of channel_vars
   l <- 0L # index of channel_group_vars
   orig_ids <- unique(object$data[[group_var]])

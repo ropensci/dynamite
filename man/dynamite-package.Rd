@@ -2,6 +2,7 @@
 % Please edit documentation in R/dynamite-package.R
 \docType{package}
 \name{dynamite-package}
+\alias{dynamite}
 \alias{dynamite-package}
 \title{The \code{dynamite} package.}
 \description{

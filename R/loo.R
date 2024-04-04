@@ -12,6 +12,10 @@
 #'   separately for each channel. This can be useful in diagnosing where the
 #'   model fails. Default is `FALSE`, in which case the likelihoods of
 #'   different channels are combined, i.e., all channels of are left out.
+#' @param n_draws \[`integer(1)`]\cr Number of posterior samples to use,
+#'   default is `NULL` which uses all samples without permuting (with chains
+#'   concatenated). If `n_draws`is smaller than `ndraws(object)`, a random
+#'   subset of `n_draws` posterior samples are used.
 #' @param ... Ignored.
 #' @return An output from [loo::loo()] or a list of such outputs (if
 #'   `separate_channels` was `TRUE`).
@@ -30,7 +34,7 @@
 #' }
 #' }
 #'
-loo.dynamitefit <- function(x, separate_channels = FALSE, ...) {
+loo.dynamitefit <- function(x, separate_channels = FALSE, thin = NULL, ...) {
   stopifnot_(
     !is.null(x$stanfit),
     "No Stan model fit is available."
@@ -39,6 +43,8 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, ...) {
     checkmate::test_flag(x = separate_channels),
     "Argument {.arg separate_channels} must be a single {.cls logical} value."
   )
+  if (!is.null(thin)) thin <- 1L
+  # compute loglik for all posterior samples even with thin != NULL
   out <- initialize_predict(
     x,
     newdata = NULL,
@@ -58,8 +64,8 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, ...) {
   n_chains <- x$stanfit@sim$chains
   n_draws <- ndraws(x) %/% n_chains
 
-  loo_ <- function(ll, n_draws, n_chains) {
-    ll <- t(matrix(ll, ncol = n_draws * n_chains))
+  loo_ <- function(ll, n_draws, n_chains, thin) {
+    ll <- t(matrix(ll, ncol = n_draws * n_chains))[seq.int(1, n_draws * n_chains, by = thin),]
     reff <- loo::relative_eff(
       exp(ll),
       chain_id = rep(seq_len(n_chains), each = n_draws)
@@ -76,13 +82,13 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, ...) {
       ),
       by = "variable"
     )
-    lapply(ll, function(x) loo_(x$value, n_draws, n_chains))
+    lapply(ll, function(x) loo_(x$value, n_draws, n_chains, thin))
   } else {
     temp <- out[, .SD, .SDcols = patterns("_loglik$")]
     ll <- temp[is.finite(rowSums(temp))][,
       rowSums(.SD),
       .SDcols = names(temp)
     ]
-    loo_(ll, n_draws, n_chains)
+    loo_(ll, n_draws, n_chains, thin)
   }
 }

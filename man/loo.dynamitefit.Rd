@@ -5,7 +5,7 @@
 \alias{loo}
 \title{Approximate Leave-One-Out (LOO) Cross-validation}
 \usage{
-\method{loo}{dynamitefit}(x, separate_channels = FALSE, ...)
+\method{loo}{dynamitefit}(x, separate_channels = FALSE, n_draws = NULL, ...)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
@@ -14,6 +14,10 @@
 separately for each channel. This can be useful in diagnosing where the
 model fails. Default is \code{FALSE}, in which case the likelihoods of
 different channels are combined, i.e., all channels of are left out.}
+
+\item{n_draws}{[\code{integer(1)}]\cr Number of posterior samples to use in LOO.
+Default is \code{NULL}, in which case all posterior samples of the model object
+are used.}
 
 \item{...}{Ignored.}
 }
