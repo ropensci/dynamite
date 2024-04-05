@@ -12,9 +12,13 @@
 #' @inheritParams dynamite
 #' @param mice_args \[`list()`]\cr
 #'   Arguments passed to [mice::mice()] excluding `data`.
-#' @param impute_format \[`character(1L)`]\cr Format of the data that will be
+#' @param impute_format \[`character(1)`]\cr Format of the data that will be
 #'   passed to the imputation method. Should be either `"wide"` (the default)
 #'   or `"long"` corresponding to wide format and long format imputation.
+#' @param keep_imputed \[`logical(1)`]\cr Should the imputed datasets be
+#'   kept in the return object? The default is `FALSE`. If `TRUE`, the
+#'   imputations will be included in the `imputed` field in the return object
+#'   that is otherwise `NULL`.
 #' @export
 dynamice <- function(dformula, data, time, group = NULL,
                      priors = NULL, backend = "rstan",
@@ -22,7 +26,8 @@ dynamice <- function(dformula, data, time, group = NULL,
                      stanc_options = list("O0"),
                      threads_per_chain = 1L, grainsize = NULL,
                      custom_stan_model = NULL, debug = NULL,
-                     mice_args = list(), impute_format = "wide", ...) {
+                     mice_args = list(), impute_format = "wide",
+                     keep_imputed = FALSE, ...) {
   stopifnot_(
     requireNamespace("mice"),
     "Please install the {.pkg mice} package to use multiple imputation."
@@ -53,6 +58,10 @@ dynamice <- function(dformula, data, time, group = NULL,
   stopifnot_(
     !inherits(impute_format, "try-error"),
     "Argument {.arg impute_format} must be either {.val long} or {.val wide}."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = keep_imputed),
+    "Argument {.arg keep_imputed} must be a single {.cls logical} value."
   )
   data <- droplevels(data)
   data <- data.table::as.data.table(data)
@@ -160,8 +169,8 @@ dynamice <- function(dformula, data, time, group = NULL,
       priors = priors,
       backend = backend,
       permutation = sample(n_draws),
-      imputed = imputed,
-      call = tmp$call, # TODO?
+      imputed = onlyif(keep_imputed, imputed),
+      call = tmp$call # TODO?
     ),
     class = "dynamitefit"
   )

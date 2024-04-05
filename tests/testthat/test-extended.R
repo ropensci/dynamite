@@ -296,9 +296,11 @@ test_that("custom stan model works", {
     ),
     NA
   )
-  expect_equal(
-    rstan::extract(custom_fit$stanfit, permuted = FALSE),
-    rstan::extract(gaussian_example_fit$stanfit, permuted = FALSE)
+  expect_true(
+    all.equal(
+      rstan::extract(custom_fit$stanfit, permuted = FALSE),
+      rstan::extract(gaussian_example_fit$stanfit, permuted = FALSE)
+    )
   )
 })
 
@@ -324,6 +326,7 @@ test_that("dynamice works", {
       refresh = 0,
       backend = "rstan",
       impute_format = "long",
+      keep_imputed = FALSE,
       mice_args = list(m = 5, print = FALSE)
     ),
     NA
@@ -339,6 +342,7 @@ test_that("dynamice works", {
       refresh = 0,
       backend = "rstan",
       impute_format = "wide",
+      keep_imputed = FALSE,
       mice_args = list(m = 5, print = FALSE)
     ),
     NA
