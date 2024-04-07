@@ -8,7 +8,7 @@
   "codeRepository": "https://github.com/ropensci/dynamite/",
   "issueTracker": "https://github.com/ropensci/dynamite/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.4.6",
+  "version": "1.5.0",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -102,6 +102,18 @@
     },
     {
       "@type": "SoftwareApplication",
+      "identifier": "mice",
+      "name": "mice",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=mice"
+    },
+    {
+      "@type": "SoftwareApplication",
       "identifier": "mockthat",
       "name": "mockthat",
       "provider": {
@@ -185,6 +197,7 @@
       "@type": "SoftwareApplication",
       "identifier": "data.table",
       "name": "data.table",
+      "version": ">= 1.15.0",
       "provider": {
         "@id": "https://cran.r-project.org",
         "@type": "Organization",
@@ -194,6 +207,18 @@
       "sameAs": "https://CRAN.R-project.org/package=data.table"
     },
     "5": {
+      "@type": "SoftwareApplication",
+      "identifier": "ggforce",
+      "name": "ggforce",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=ggforce"
+    },
+    "6": {
       "@type": "SoftwareApplication",
       "identifier": "glue",
       "name": "glue",
@@ -205,7 +230,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=glue"
     },
-    "6": {
+    "7": {
       "@type": "SoftwareApplication",
       "identifier": "ggplot2",
       "name": "ggplot2",
@@ -217,7 +242,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=ggplot2"
     },
-    "7": {
+    "8": {
       "@type": "SoftwareApplication",
       "identifier": "loo",
       "name": "loo",
@@ -229,12 +254,12 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=loo"
     },
-    "8": {
+    "9": {
       "@type": "SoftwareApplication",
       "identifier": "methods",
       "name": "methods"
     },
-    "9": {
+    "10": {
       "@type": "SoftwareApplication",
       "identifier": "patchwork",
       "name": "patchwork",
@@ -246,7 +271,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=patchwork"
     },
-    "10": {
+    "11": {
       "@type": "SoftwareApplication",
       "identifier": "posterior",
       "name": "posterior",
@@ -258,7 +283,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=posterior"
     },
-    "11": {
+    "12": {
       "@type": "SoftwareApplication",
       "identifier": "rlang",
       "name": "rlang",
@@ -270,7 +295,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=rlang"
     },
-    "12": {
+    "13": {
       "@type": "SoftwareApplication",
       "identifier": "rstan",
       "name": "rstan",
@@ -282,12 +307,12 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=rstan"
     },
-    "13": {
+    "14": {
       "@type": "SoftwareApplication",
       "identifier": "stats",
       "name": "stats"
     },
-    "14": {
+    "15": {
       "@type": "SoftwareApplication",
       "identifier": "tibble",
       "name": "tibble",
@@ -300,14 +325,14 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=tibble"
     },
-    "15": {
+    "16": {
       "@type": "SoftwareApplication",
       "identifier": "utils",
       "name": "utils"
     },
     "SystemRequirements": null
   },
-  "fileSize": "5081.631KB",
+  "fileSize": "5726.255KB",
   "citation": [
     {
       "@type": "CreativeWork",
