@@ -68,6 +68,9 @@
 #'   default is `NULL` which uses all samples without permuting (with chains
 #'   concatenated). If `n_draws`is smaller than `ndraws(object)`, a random
 #'   subset of `n_draws` posterior samples are used.
+#' @param thin \[`integer(1)`]\cr Use only every `thin` posterior sample.
+#'   This can be beneficial with when the model object contains
+#'   large number of samples. Default is `1` meaning that all samples are used.
 #' @param expand \[`logical(1)`]\cr If `TRUE` (the default), the output
 #'   is a single `data.frame` containing the original `newdata` and the
 #'   predicted values. Otherwise, a `list` is returned with two components,
