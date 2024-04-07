@@ -4,7 +4,7 @@
 \alias{lfo}
 \title{Approximate Leave-Future-Out (LFO) Cross-validation}
 \usage{
-lfo(x, L, verbose = TRUE, k_threshold = 0.7, thin = 1, ...)
+lfo(x, L, verbose = TRUE, k_threshold = 0.7, ...)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
@@ -17,10 +17,6 @@ the LFO computations to the console.}
 
 \item{k_threshold}{[\code{numeric(1)}]\cr Threshold for the Pareto k estimate
 triggering refit. Default is 0.7.}
-
-\item{thin}{[\code{integer(1)}]\cr Use only every \code{thin} posterior sample when
-computing LFO. This can be beneficial with when the model object contains
-large number of samples. Default is \code{1} meaning that all samples are used.}
 
 \item{...}{Additional arguments passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} or
 \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}, such as \code{chains} and \code{cores} (\code{parallel_chains} in

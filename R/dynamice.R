@@ -444,10 +444,12 @@ parse_predictors_wide <- function(dformula, value_vars, idx_time, group_var) {
 
 #' Compute Lagging Values of an Imputed Response
 #'
+#' Function for computing the lagged values of an imputed response in `mice`.
+#'
 #' @inheritParams mice::mice.impute.norm
 #' @param group_var \[`character(1)`]\cr Name of the grouping variable.
 #' @param resp \[`character(1)`]\cr Name of the response variable.
-#' @noRd
+#' @keywords internal
 #' @export
 mice.impute.lag <- function(y, ry, x, wy = NULL,
                             group_var, resp, ...) {
@@ -464,10 +466,12 @@ mice.impute.lag <- function(y, ry, x, wy = NULL,
 
 #' Compute Leading Values of an Imputed Response
 #'
+#' Function for computing the leading values of an imputed response in `mice`.
+#'
 #' @inheritParams mice::mice.impute.norm
 #' @param group_var \[`character(1)`]\cr Name of the grouping variable.
 #' @param resp \[`character(1)`]\cr Name of the response variable.
-#' @noRd
+#' @keywords internal
 #' @export
 mice.impute.lead <- function(y, ry, x, wy = NULL,
                              group_var, resp, ...) {

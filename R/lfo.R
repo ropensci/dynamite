@@ -19,9 +19,6 @@
 #'   the LFO computations to the console.
 #' @param k_threshold \[`numeric(1)`]\cr Threshold for the Pareto k estimate
 #'   triggering refit. Default is 0.7.
-#' @param thin \[`integer(1)`]\cr Use only every `thin` posterior sample when
-#'   computing LFO. This can be beneficial with when the model object contains
-#'   large number of samples. Default is `1` meaning that all samples are used.
 #' @param ... Additional arguments passed to [rstan::sampling()] or
 #'   [cmdstanr::sample()], such as `chains` and `cores` (`parallel_chains` in
 #'   `cmdstanr`).
@@ -54,7 +51,7 @@
 #' }
 #' }
 #'
-lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, thin = 1, ...) {
+lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   stopifnot_(
     is.null(x$imputed),
     "Leave-future-out cross-validation is not supported for models
@@ -76,10 +73,6 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, thin = 1, ...) {
     checkmate::test_number(x = k_threshold),
     "Argument {.arg k_threshold} must be a single {.cls numeric} value."
   )
-  stopifnot_(
-    checkmate::test_int(x = thin, lower = 1L, upper = ndraws(x)),
-    "Argument {.arg thin} must be a single positive {.cls integer}."
-  )
   time_var <- x$time_var
   group_var <- x$group_var
   tp <- sort(unique(x$data[[time_var]]))
@@ -100,7 +93,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, thin = 1, ...) {
   }
   fit <- update_(x, data = d, refresh = 0, ...)
 
-  idx_draws <- seq.int(1, ndraws(x), by = thin)
+  idx_draws <- seq.int(1, ndraws(fit))
   n_draws <- length(idx_draws)
   # would be faster to use only data
   # x$data[eval(time) >= tp[L] - x$stan$fixed]
