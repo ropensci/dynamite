@@ -448,6 +448,7 @@ parse_predictors_wide <- function(dformula, value_vars, idx_time, group_var) {
 #' @param group_var \[`character(1)`]\cr Name of the grouping variable.
 #' @param resp \[`character(1)`]\cr Name of the response variable.
 #' @noRd
+#' @export
 mice.impute.lag <- function(y, ry, x, wy = NULL,
                             group_var, resp, ...) {
   if (is.null(wy)) {
@@ -467,6 +468,7 @@ mice.impute.lag <- function(y, ry, x, wy = NULL,
 #' @param group_var \[`character(1)`]\cr Name of the grouping variable.
 #' @param resp \[`character(1)`]\cr Name of the response variable.
 #' @noRd
+#' @export
 mice.impute.lead <- function(y, ry, x, wy = NULL,
                              group_var, resp, ...) {
   if (is.null(wy)) {
