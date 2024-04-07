@@ -13,6 +13,7 @@
   new_levels = c("none", "bootstrap", "gaussian", "original"),
   global_fixed = FALSE,
   n_draws = NULL,
+  thin = 1,
   expand = TRUE,
   df = TRUE,
   ...

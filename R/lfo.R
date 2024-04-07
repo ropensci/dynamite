@@ -19,6 +19,9 @@
 #'   the LFO computations to the console.
 #' @param k_threshold \[`numeric(1)`]\cr Threshold for the Pareto k estimate
 #'   triggering refit. Default is 0.7.
+#' @param thin \[`integer(1)`]\cr Use only every `thin` posterior sample when
+#'   computing LFO. This can be beneficial with when the model object contains
+#'   large number of samples. Default is `1` meaning that all samples are used.
 #' @param ... Additional arguments passed to [rstan::sampling()] or
 #'   [cmdstanr::sample()], such as `chains` and `cores` (`parallel_chains` in
 #'   `cmdstanr`).
@@ -47,10 +50,11 @@
 #'   )
 #'   out$ELPD
 #'   out$ELPD_SE
+#'   plot(out)
 #' }
 #' }
 #'
-lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
+lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, thin = 1, ...) {
   stopifnot_(
     is.null(x$imputed),
     "Leave-future-out cross-validation is not supported for models
@@ -72,6 +76,10 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     checkmate::test_number(x = k_threshold),
     "Argument {.arg k_threshold} must be a single {.cls numeric} value."
   )
+  stopifnot_(
+    checkmate::test_int(x = thin, lower = 1L, upper = ndraws(x)),
+    "Argument {.arg thin} must be a single positive {.cls integer}."
+  )
   time_var <- x$time_var
   group_var <- x$group_var
   tp <- sort(unique(x$data[[time_var]]))
@@ -92,6 +100,8 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   }
   fit <- update_(x, data = d, refresh = 0, ...)
 
+  idx_draws <- seq.int(1, ndraws(x), by = thin)
+  n_draws <- length(idx_draws)
   # would be faster to use only data
   # x$data[eval(time) >= tp[L] - x$stan$fixed]
   # but in a case of missing data this is not necessarily enough
@@ -104,13 +114,12 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     impute = "none",
     new_levels = "none",
     global_fixed = FALSE,
-    n_draws = NULL,
+    idx_draws,
     expand = FALSE,
     df = FALSE
   )$simulated
   # avoid NSE notes from R CMD check
   loglik <- patterns <- .draw <- group <- groups <- time <- NULL
-  n_draws <- ndraws(x)
   # sum the log-likelihood over the channels and non-missing time points
   # for each group, time, and draw
   # drop those id&time pairs which contain NA
@@ -176,7 +185,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
       )
       lr <- lr[, non_na_idx]
       ll <- ll[, non_na_idx]
-      psis_obj <- suppressWarnings(loo::psis(lr, r_eff = NA))
+      psis_obj <- suppressWarnings(loo::psis(lr))
       k <- loo::pareto_k_values(psis_obj)
       ks[[i - L]] <- k
       if (any(k > k_threshold)) {
@@ -202,7 +211,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           impute = "none",
           new_levels = "none",
           global_fixed = FALSE,
-          n_draws = NULL,
+          idx_draws,
           expand = FALSE,
           df = FALSE
         )$simulated

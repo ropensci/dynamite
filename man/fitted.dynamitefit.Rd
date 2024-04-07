@@ -4,7 +4,15 @@
 \alias{fitted.dynamitefit}
 \title{Extract Fitted Values of a Dynamite Model}
 \usage{
-\method{fitted}{dynamitefit}(object, newdata = NULL, n_draws = NULL, expand = TRUE, df = TRUE, ...)
+\method{fitted}{dynamitefit}(
+  object,
+  newdata = NULL,
+  n_draws = NULL,
+  thin = 1,
+  expand = TRUE,
+  df = TRUE,
+  ...
+)
 }
 \arguments{
 \item{object}{[\code{dynamitefit}]\cr The model fit object.}
