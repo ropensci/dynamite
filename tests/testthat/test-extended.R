@@ -268,7 +268,31 @@ test_that("update without recompile works", {
 test_that("custom stan model works", {
   skip_if_not(run_extended_tests)
 
-  code <- get_code(gaussian_example_fit)
+  # The same as gaussian_example_fit, but we need to refit because
+  # the results may not be reproducible across different platforms
+  set.seed(1)
+  initial_fit <- dynamite(
+    dformula =
+      obs(y ~ -1 + z + varying(~ x + lag(y)) +
+            random(~1), family = "gaussian") +
+      random_spec() +
+      splines(df = 20),
+    data = gaussian_example,
+    time = "time",
+    group = "id",
+    iter = 2000,
+    warmup = 1000,
+    thin = 10,
+    chains = 2,
+    cores = 2,
+    refresh = 0,
+    save_warmup = FALSE,
+    pars = c(
+      "omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L",
+      "sigma_nu", "a_y"
+    ),
+    include = FALSE
+  )
   set.seed(1)
   expect_error(
     custom_fit <- dynamite(
@@ -297,8 +321,8 @@ test_that("custom stan model works", {
     NA
   )
   expect_equal(
-    rstan::extract(custom_fit$stanfit, permuted = FALSE),
-    rstan::extract(gaussian_example_fit$stanfit, permuted = FALSE)
+    rstan::extract(initial_fit$stanfit, permuted = FALSE),
+    rstan::extract(custom_fit$stanfit, permuted = FALSE)
   )
 })
 
