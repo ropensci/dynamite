@@ -272,9 +272,8 @@ test_that("custom stan model works", {
   # the results may not be reproducible across different platforms
   set.seed(1)
   initial_fit <- dynamite(
-    dformula =
-      obs(y ~ -1 + z + varying(~ x + lag(y)) +
-            random(~1), family = "gaussian") +
+    dformula = obs(y ~ -1 + z + varying(~ x + lag(y)) +
+      random(~1), family = "gaussian") +
       random_spec() +
       splines(df = 20),
     data = gaussian_example,
@@ -293,12 +292,12 @@ test_that("custom stan model works", {
     ),
     include = FALSE
   )
+  code <- get_code(initial_fit)
   set.seed(1)
   expect_error(
     custom_fit <- dynamite(
-      dformula =
-        obs(y ~ -1 + z + varying(~ x + lag(y)) +
-          random(~1), family = "gaussian") +
+      dformula = obs(y ~ -1 + z + varying(~ x + lag(y)) +
+        random(~1), family = "gaussian") +
         random_spec() +
         splines(df = 20),
       data = gaussian_example,
@@ -348,6 +347,7 @@ test_that("dynamice works", {
       refresh = 0,
       backend = "rstan",
       impute_format = "long",
+      keep_imputed = FALSE,
       mice_args = list(m = 5, print = FALSE)
     ),
     NA
@@ -363,6 +363,7 @@ test_that("dynamice works", {
       refresh = 0,
       backend = "rstan",
       impute_format = "wide",
+      keep_imputed = FALSE,
       mice_args = list(m = 5, print = FALSE)
     ),
     NA

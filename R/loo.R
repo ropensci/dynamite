@@ -51,7 +51,12 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, thin = 1L, ...) {
     checkmate::test_int(x = thin, lower = 1L, upper = ndraws(x)),
     "Argument {.arg thin} must be a single positive {.cls integer}."
   )
-  # compute loglik for all posterior samples even with thin > 1
+  n_chains <- x$stanfit@sim$chains
+  n_draws <- ndraws(x)
+  idx_draws <- seq.int(1, n_draws, by = thin)
+  # need equal number of samples per chain
+  idx_draws <- idx_draws[seq_len(n_draws %/% thin - n_draws %% n_chains)]
+  n_draws <- length(idx_draws) %/% n_chains
   out <- initialize_predict(
     x,
     newdata = NULL,
@@ -61,18 +66,14 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, thin = 1L, ...) {
     impute = "none",
     new_levels = "none",
     global_fixed = FALSE,
-    n_draws = NULL,
+    idx_draws,
     expand = FALSE,
     df = FALSE
   )$simulated
   # avoid NSE notes from R CMD check
   patterns <- NULL
-
-  n_chains <- x$stanfit@sim$chains
-  n_draws <- ndraws(x) %/% n_chains
-  idx_draws <- seq.int(1L, n_draws * n_chains, by = thin)
   loo_ <- function(ll, n_draws, n_chains) {
-    ll <- t(matrix(ll, ncol = n_draws * n_chains)[, idx_draws])
+    ll <- t(matrix(ll, ncol = n_draws * n_chains))
     reff <- loo::relative_eff(
       exp(ll),
       chain_id = rep(seq_len(n_chains), each = nrow(ll) / n_chains)

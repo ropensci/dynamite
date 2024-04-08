@@ -56,6 +56,7 @@ if (!identical(.Platform$OS.type, "windows")) {
   )
   out$ELPD
   out$ELPD_SE
+  plot(out)
 }
 }
 

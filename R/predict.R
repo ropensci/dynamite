@@ -68,6 +68,9 @@
 #'   default is `NULL` which uses all samples without permuting (with chains
 #'   concatenated). If `n_draws`is smaller than `ndraws(object)`, a random
 #'   subset of `n_draws` posterior samples are used.
+#' @param thin \[`integer(1)`]\cr Use only every `thin` posterior sample.
+#'   This can be beneficial with when the model object contains
+#'   large number of samples. Default is `1` meaning that all samples are used.
 #' @param expand \[`logical(1)`]\cr If `TRUE` (the default), the output
 #'   is a single `data.frame` containing the original `newdata` and the
 #'   predicted values. Otherwise, a `list` is returned with two components,
@@ -158,7 +161,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
                                 new_levels = c(
                                   "none", "bootstrap", "gaussian", "original"
                                 ),
-                                global_fixed = FALSE, n_draws = NULL,
+                                global_fixed = FALSE, n_draws = NULL, thin = 1,
                                 expand = TRUE, df = TRUE, ...) {
   stopifnot_(
     !is.null(object$stanfit),
@@ -203,6 +206,20 @@ predict.dynamitefit <- function(object, newdata = NULL,
     checkmate::test_flag(x = df),
     "Argument {.arg df} must be a single {.cls logical} value."
   )
+  stopifnot_(
+    checkmate::test_int(x = thin, lower = 1L, upper = ndraws(object)),
+    "Argument {.arg thin} must be a single positive {.cls integer}."
+  )
+  if (thin > 1L) {
+    idx_draws <- seq.int(1L, ndraws(object), by = thin)
+  } else {
+    n_draws <- check_ndraws(n_draws, ndraws(object))
+    idx_draws <- ifelse_(
+      identical(n_draws, ndraws(object)),
+      seq_len(n_draws),
+      object$permutation[seq_len(n_draws)]
+    )
+  }
   initialize_predict(
     object,
     newdata,
@@ -212,7 +229,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
     impute,
     new_levels,
     global_fixed,
-    n_draws,
+    idx_draws,
     expand,
     df
   )
@@ -225,8 +242,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
 #'   `"loglik"`.
 #' @noRd
 initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
-                               new_levels, global_fixed, n_draws, expand, df) {
-  n_draws <- check_ndraws(n_draws, ndraws(object))
+                               new_levels, global_fixed, idx_draws, expand, df) {
+  n_draws <- length(idx_draws)
   newdata_null <- is.null(newdata)
   newdata <- check_newdata(object, newdata)
   fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
@@ -334,7 +351,7 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
     type = type,
     eval_type = eval_type,
     new_levels = new_levels,
-    n_draws = n_draws,
+    idx_draws = idx_draws,
     fixed = fixed,
     funs = funs,
     group_var = group_var,
@@ -353,8 +370,9 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
 #' @param mode Simulation mode, either `"full"` or `"summary"`.
 #' @noRd
 predict_ <- function(object, simulated, storage, observed,
-                     mode, type, eval_type, new_levels, n_draws, fixed, funs,
+                     mode, type, eval_type, new_levels, idx_draws, fixed, funs,
                      group_var, time_var, expand, df) {
+  n_draws <- length(idx_draws)
   formulas_stoch <- object$dformulas$stoch
   resp <- get_responses(object$dformulas$all)
   resp_stoch <- get_responses(object$dformulas$stoch)
@@ -390,8 +408,8 @@ predict_ <- function(object, simulated, storage, observed,
       env = list(n_new = n_new, n_draws = n_draws)
     ]
     simulated[,
-      (".draw") := rep(seq.int(1L, n_draws), n_new),
-      env = list(n_new = n_new, n_draws = n_draws)
+              (".draw") := rep(seq.int(1L, n_draws), n_new),
+              env = list(n_new = n_new, n_draws = n_draws)
     ]
     idx <- which(draw_time == u_time[1L]) + (fixed - 1L) * n_draws
     n_sim <- n_draws
@@ -436,11 +454,6 @@ predict_ <- function(object, simulated, storage, observed,
     )
     idx_summ <- which(summaries[[time_var]] == u_time[1L]) + (fixed - 1L)
   }
-  idx_draws <- ifelse_(
-    identical(n_draws, ndraws(object)),
-    seq_len(n_draws),
-    object$permutation[seq_len(n_draws)]
-  )
   eval_envs <- prepare_eval_envs(
     object,
     simulated,

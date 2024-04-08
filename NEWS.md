@@ -1,8 +1,9 @@
 # dynamite 1.5.0
 
   * Estimation of dynamic multivariate panel models with multiple imputation is now available via the function `dynamice()` which uses the `mice` package.
-  * `predict` function no longer permutes the posterior samples when all samples are used i.e. when `n_draws = NULL` (default). This also corrects the standard error estimates of `loo`, which were not correct earlier due to the mixing of chains.
-  * Added an argument `thin` for the `loo` method.
+  * `predict` and `fitted` functions no longer permutes the posterior samples when all samples are used i.e. when `n_draws = NULL` (default). This also corrects the standard error estimates of `loo`, which were not correct earlier due to the mixing of chains.
+  * Added an argument `thin` for the `loo`, `predict` and `fitted` method.
+  * Print method now only prints the run time for fastest and slowest chain instead of all chains.
 
 # dynamite 1.4.11
 

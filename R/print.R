@@ -81,9 +81,16 @@ print.dynamitefit <- function(x, full_diagnostics = FALSE, ...) {
       sumr$variable[max_rhat], ")",
       sep = ""
     )
-    cat("\n\nElapsed time (seconds):\n")
-    print(rstan::get_elapsed_time(x$stanfit))
+    runtimes <- rstan::get_elapsed_time(x$stanfit)
 
+    if (nrow(runtimes) > 2L) {
+      rs <- rowSums(runtimes)
+      cat("\n\nElapsed time (seconds) for fastest and slowest chains:\n")
+      print(runtimes[c(which.min(rs), which.max(rs)), ])
+    } else {
+      cat("\n\nElapsed time (seconds):\n")
+      print(runtimes)
+    }
     cat(
       "\nSummary statistics of the time- and group-invariant parameters:\n"
     )

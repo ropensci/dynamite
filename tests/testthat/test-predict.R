@@ -433,7 +433,7 @@ test_that("predict with loglik works", {
       impute = "none",
       new_levels = "none",
       global_fixed = FALSE,
-      n_draws = NULL,
+      idx_draws = 1:ndraws(gaussian_example_fit),
       expand = FALSE,
       df = TRUE
     )$simulated,

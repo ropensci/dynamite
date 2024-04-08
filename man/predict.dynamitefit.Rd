@@ -13,6 +13,7 @@
   new_levels = c("none", "bootstrap", "gaussian", "original"),
   global_fixed = FALSE,
   n_draws = NULL,
+  thin = 1,
   expand = TRUE,
   df = TRUE,
   ...
@@ -86,6 +87,10 @@ If there are no groups, then the options are equivalent.}
 default is \code{NULL} which uses all samples without permuting (with chains
 concatenated). If \code{n_draws}is smaller than \code{ndraws(object)}, a random
 subset of \code{n_draws} posterior samples are used.}
+
+\item{thin}{[\code{integer(1)}]\cr Use only every \code{thin} posterior sample.
+This can be beneficial with when the model object contains
+large number of samples. Default is \code{1} meaning that all samples are used.}
 
 \item{expand}{[\code{logical(1)}]\cr If \code{TRUE} (the default), the output
 is a single \code{data.frame} containing the original \code{newdata} and the

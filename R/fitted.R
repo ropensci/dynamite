@@ -58,7 +58,7 @@
 #'  }
 #' }
 #'
-fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL,
+fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, thin = 1,
                                expand = TRUE, df = TRUE, ...) {
   stopifnot_(
     !is.null(object$stanfit),
@@ -72,6 +72,16 @@ fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL,
     checkmate::test_flag(x = df),
     "Argument {.arg df} must be a single {.cls logical} value."
   )
+  if (thin > 1L) {
+    idx_draws <- seq.int(1L, ndraws(object), by = thin)
+  } else {
+    n_draws <- check_ndraws(n_draws, ndraws(object))
+    idx_draws <- ifelse_(
+      identical(n_draws, ndraws(object)),
+      seq_len(n_draws),
+      object$permutation[seq_len(n_draws)]
+    )
+  }
   initialize_predict(
     object,
     newdata,
@@ -81,7 +91,7 @@ fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL,
     impute = "none",
     new_levels = "none",
     global_fixed = FALSE,
-    n_draws,
+    idx_draws,
     expand,
     df
   )

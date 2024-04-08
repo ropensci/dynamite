@@ -47,6 +47,7 @@
 #'   )
 #'   out$ELPD
 #'   out$ELPD_SE
+#'   plot(out)
 #' }
 #' }
 #'
@@ -92,6 +93,8 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   }
   fit <- update_(x, data = d, refresh = 0, ...)
 
+  idx_draws <- seq.int(1, ndraws(fit))
+  n_draws <- length(idx_draws)
   # would be faster to use only data
   # x$data[eval(time) >= tp[L] - x$stan$fixed]
   # but in a case of missing data this is not necessarily enough
@@ -104,13 +107,12 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     impute = "none",
     new_levels = "none",
     global_fixed = FALSE,
-    n_draws = NULL,
+    idx_draws,
     expand = FALSE,
     df = FALSE
   )$simulated
   # avoid NSE notes from R CMD check
   loglik <- patterns <- .draw <- group <- groups <- time <- NULL
-  n_draws <- ndraws(x)
   # sum the log-likelihood over the channels and non-missing time points
   # for each group, time, and draw
   # drop those id&time pairs which contain NA
@@ -176,7 +178,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
       )
       lr <- lr[, non_na_idx]
       ll <- ll[, non_na_idx]
-      psis_obj <- suppressWarnings(loo::psis(lr, r_eff = NA))
+      psis_obj <- suppressWarnings(loo::psis(lr))
       k <- loo::pareto_k_values(psis_obj)
       ks[[i - L]] <- k
       if (any(k > k_threshold)) {
@@ -202,7 +204,7 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           impute = "none",
           new_levels = "none",
           global_fixed = FALSE,
-          n_draws = NULL,
+          idx_draws,
           expand = FALSE,
           df = FALSE
         )$simulated

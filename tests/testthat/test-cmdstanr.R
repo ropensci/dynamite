@@ -79,8 +79,8 @@ test_that("LOO and LFO works for AR(1) model estimated with cmdstanr", {
   expect_error(plot(l), NA)
 
   l <- lfo(fit, L = 20)
-  expect_equal(l$ELPD, -90.4188604974201, tolerance = 1)
-  expect_equal(l$ELPD_SE, 7.58842574523583, tolerance = 1)
+  expect_equal(l$ELPD, -91.5427292742266, tolerance = 1)
+  expect_equal(l$ELPD_SE, 7.57777033647258, tolerance = 1)
   expect_error(plot(l), NA)
 })
 

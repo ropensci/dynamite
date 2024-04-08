@@ -20,6 +20,7 @@ dynamice(
   debug = NULL,
   mice_args = list(),
   impute_format = "wide",
+  keep_imputed = FALSE,
   ...
 )
 }
@@ -98,9 +99,14 @@ return object.}
 \item{mice_args}{[\code{list()}]\cr
 Arguments passed to \code{\link[mice:mice]{mice::mice()}} excluding \code{data}.}
 
-\item{impute_format}{[\code{character(1L)}]\cr Format of the data that will be
+\item{impute_format}{[\code{character(1)}]\cr Format of the data that will be
 passed to the imputation method. Should be either \code{"wide"} (the default)
 or \code{"long"} corresponding to wide format and long format imputation.}
+
+\item{keep_imputed}{[\code{logical(1)}]\cr Should the imputed datasets be
+kept in the return object? The default is \code{FALSE}. If \code{TRUE}, the
+imputations will be included in the \code{imputed} field in the return object
+that is otherwise \code{NULL}.}
 
 \item{...}{For \code{dynamite()}, additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} or
 \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}, such as \code{chains} and \code{cores} (\code{chains} and

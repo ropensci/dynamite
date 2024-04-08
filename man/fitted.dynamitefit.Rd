@@ -4,7 +4,15 @@
 \alias{fitted.dynamitefit}
 \title{Extract Fitted Values of a Dynamite Model}
 \usage{
-\method{fitted}{dynamitefit}(object, newdata = NULL, n_draws = NULL, expand = TRUE, df = TRUE, ...)
+\method{fitted}{dynamitefit}(
+  object,
+  newdata = NULL,
+  n_draws = NULL,
+  thin = 1,
+  expand = TRUE,
+  df = TRUE,
+  ...
+)
 }
 \arguments{
 \item{object}{[\code{dynamitefit}]\cr The model fit object.}
@@ -19,6 +27,10 @@ were used to fit the model, and no new group levels can be included.}
 default is \code{NULL} which uses all samples without permuting (with chains
 concatenated). If \code{n_draws}is smaller than \code{ndraws(object)}, a random
 subset of \code{n_draws} posterior samples are used.}
+
+\item{thin}{[\code{integer(1)}]\cr Use only every \code{thin} posterior sample.
+This can be beneficial with when the model object contains
+large number of samples. Default is \code{1} meaning that all samples are used.}
 
 \item{expand}{[\code{logical(1)}]\cr If \code{TRUE} (the default), the output
 is a single \code{data.frame} containing the original \code{newdata} and the
