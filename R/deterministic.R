@@ -129,16 +129,8 @@ assign_initial_values <- function(data, idx, dd, dlp, dld, dls,
 #'   the channels.
 #' @noRd
 assign_deterministic <- function(data, idx, cl) {
-  # Remove this if when env is available in CRAN data.table
-  # if (!is.null(cl)) {
-  #  data[idx, cl, env = list(cl = cl)]
-  # }
-  for (.deterministic_channel_definition_ in cl) {
-    data[
-      idx,
-      (.deterministic_channel_definition_$name) :=
-        eval(.deterministic_channel_definition_$expr)
-    ]
+  if (!is.null(cl)) {
+    data[idx, cl, env = list(cl = cl)]
   }
 }
 
@@ -147,25 +139,18 @@ assign_deterministic <- function(data, idx, cl) {
 #' @param simulated \[`data.table`]\cr Data table to assign the values into.
 #' @param sub \[`data.table`]\cr Subset of data to evaluate the channel.
 #' @param idx \[`integer()`]\cr A vector of indices to assign values into.
-#' @param idx_obs \[`integer()`]\cr A vector of indices of predictor values.
-#' @param .deterministic_channel_name_ \[`character(1)`]\cr
+#' @param resp \[`character(1)`]\cr
 #'   Name of the response variable of the channel.
-#' @param .deterministic_channel_definition_ \[`language`]\cr
-#'   A quoted expression defining the channel.
+#' @param cl \[`language`]\cr A `list` of a quoted expression defining
+#'   the channel.
 #' @noRd
-assign_deterministic_predict <- function(simulated, sub, idx,
-                                         .deterministic_channel_name_,
-                                         .deterministic_channel_definition_) {
-
-  sub[,
-    (.deterministic_channel_name_) :=
-      eval(.deterministic_channel_definition_)
-  ]
+assign_deterministic_predict <- function(simulated, sub, idx, resp, cl) {
+  sub[, cl, env = list(cl = cl)]
   data.table::set(
     x = simulated,
     i = idx,
-    j = .deterministic_channel_name_,
-    value = sub[[.deterministic_channel_name_]]
+    j = resp,
+    value = sub[[resp]]
   )
 }
 

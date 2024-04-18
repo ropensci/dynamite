@@ -338,7 +338,14 @@ parse_formula <- function(x, family) {
   )
 }
 
-#' Parse a Channel Name for a `dynamiteformula`
+#' Parse a Channel Name for a `dynamiteformula` To Be Used in Stan
+#'
+#' This function prepares a channel name such that it is valid for Stan. From
+#' Stan Reference Manual: "A variable by itself is a well-formed expression of
+#' the same type as the variable. Variables in Stan consist of ASCII strings
+#' containing only the basic lower-case and upper-case Roman letters, digits,
+#' and the underscore (_) character. Variables must start with a letter
+#' (a--z and A--Z) and may not end with two underscores (__)"
 #'
 #' @param x A `character` vector.
 #' @noRd
@@ -535,11 +542,17 @@ get_families <- function(x) {
 #' @noRd
 get_quoted <- function(x) {
   resp <- get_responses(x)
-  out <- list()
-  for (i in seq_along(x)) {
-    out[[i]] <- list(name = resp[i], expr = formula_rhs(x[[i]]$formula))
+  if (length(resp) > 0L) {
+    expr <- lapply(x, function(x) deparse1(formula_rhs(x$formula)))
+    quote_str <- paste0(
+      "`:=`(",
+      paste0(resp, " = ", expr, collapse = ","),
+      ")"
+    )
+    str2lang(quote_str)
+  } else {
+    NULL
   }
-  out
 }
 
 #' Get a Directed Acyclic Graph (DAG) of a `dynamiteformula` Object.

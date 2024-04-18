@@ -1087,7 +1087,7 @@ predict_expr$predicted$gaussian <- "
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = rnorm(k_obs, xbeta[idx_out], sigma[idx_out])
+    value = rnorm(k_obs, mean = xbeta[idx_out], sd = sigma[idx_out])
   )
 "
 
@@ -1144,7 +1144,7 @@ predict_expr$predicted$binomial <- "
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = rbinom(k_obs, trials[idx_out], prob)
+    value = rbinom(k_obs, size = trials[idx_out], prob = prob)
   )
 "
 
@@ -1154,7 +1154,7 @@ predict_expr$predicted$bernoulli <- "
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = rbinom(k_obs, 1, prob)
+    value = rbinom(k_obs, size = 1, prob = prob)
   )
 "
 
@@ -1164,7 +1164,7 @@ predict_expr$predicted$poisson <- "
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = rpois(k_obs, exp_xbeta[idx_out])
+    value = rpois(k_obs, lambda = exp_xbeta[idx_out])
   )
 "
 
@@ -1208,7 +1208,7 @@ predict_expr$predicted$beta <- "
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = rbeta(k_obs,  mu * phi_obs, (1 - mu) * phi_obs)
+    value = rbeta(k_obs, shape1 = mu * phi_obs, shape2 = (1 - mu) * phi_obs)
   )
 "
 
@@ -1217,7 +1217,7 @@ predict_expr$predicted$student <- "
     x = out,
     i = idx_data,
     j = '{resp}',
-    value = xbeta[idx_out] + sigma[idx_out] * rt(k_obs, phi[idx_out])
+    value = xbeta[idx_out] + sigma[idx_out] * rt(k_obs, df = phi[idx_out])
   )
 "
 
@@ -1350,7 +1350,7 @@ predict_expr$loglik$gaussian <- "
     x = out,
     i = idx,
     j = '{resp}_loglik',
-    value = dnorm(y, xbeta, sigma, log = TRUE)
+    value = dnorm(y, mean = xbeta, sd = sigma, log = TRUE)
   )
 "
 
@@ -1402,7 +1402,7 @@ predict_expr$loglik$binomial <- "
     x = out,
     i = idx,
     j = '{resp}_loglik',
-    value = dbinom(y, trials, prob, log = TRUE)
+    value = dbinom(y, size = trials, prob = prob, log = TRUE)
   )
 "
 
@@ -1412,7 +1412,7 @@ predict_expr$loglik$bernoulli <- "
     x = out,
     i = idx,
     j = '{resp}_loglik',
-    value = dbinom(y, 1, prob, log = TRUE)
+    value = dbinom(y, size = 1, prob = prob, log = TRUE)
   )
 "
 
@@ -1422,7 +1422,7 @@ predict_expr$loglik$poisson <- "
     x = out,
     i = idx,
     j = '{resp}_loglik',
-    value = dpois(y, exp_xbeta, log = TRUE)
+    value = dpois(y, lambda = exp_xbeta, log = TRUE)
   )
 "
 
@@ -1460,7 +1460,7 @@ predict_expr$loglik$beta <- "
     x = out,
     i = idx,
     j = '{resp}_loglik',
-    value = dbeta(y,  mu * phi, (1 - mu) * phi, log = TRUE)
+    value = dbeta(y,  shape1 = mu * phi, shape2 = (1 - mu) * phi, log = TRUE)
   )
 "
 
@@ -1469,6 +1469,6 @@ predict_expr$loglik$student <- "
     x = out,
     i = idx,
     j = '{resp}_loglik',
-    value = dt((y - xbeta)/sigma, phi, log = TRUE)
+    value = dt((y - xbeta) / sigma, df = phi, log = TRUE) - log(sigma)
   )
 "

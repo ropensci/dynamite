@@ -487,7 +487,7 @@ predict_ <- function(object, simulated, storage, observed,
           sub,
           idx,
           resp[k],
-          formula_rhs(object$dformulas$all[[k]]$formula)
+          get_quoted(object$dformulas$all[k])
         )
       } else {
         specials <- evaluate_specials(
