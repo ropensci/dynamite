@@ -317,10 +317,26 @@ parse_formula <- function(x, family) {
     formula_parts
   )
   formulas <- lapply(paste0(responses, "~", formula_parts), as.formula)
-  predictors <- ulapply(formulas, function(y) {
-    find_nonlags(formula_rhs(y))
-  })
-  resp_pred <- responses %in% predictors
+  predictors <- lapply(
+    formulas,
+    function(y) {
+      find_nonlags(formula_rhs(y))
+    }
+  )
+  resp_pred <- vapply(
+    seq_along(responses),
+    function(i) {
+      responses[i] %in% predictors[[i]]
+    },
+    logical(1L)
+  )
+  # predictors <- ulapply(
+  #   formulas,
+  #   function(y) {
+  #     find_nonlags(formula_rhs(y))
+  #   }
+  # )
+  # resp_pred <- responses %in% predictors
   p <- sum(resp_pred)
   stopifnot_(
     !any(resp_pred),
@@ -352,7 +368,6 @@ parse_formula <- function(x, family) {
 parse_name <- function(x) {
   gsub("[^[:alnum:]_]+", "", x, perl = TRUE)
 }
-
 
 #' @rdname dynamiteformula
 #' @param e1 \[`dynamiteformula`]\cr A model formula specification.

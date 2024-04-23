@@ -156,10 +156,10 @@ test_that("contemporaneous self dependency within a channel fails", {
     )
   )
   expect_error(
-    obs(c(y, x) ~ x | 1, family = "mvgaussian"),
+    obs(c(y, x) ~ y | 1, family = "mvgaussian"),
     paste0(
       "Contemporaneous self-dependency found in model formula:\n",
-      "x Variable `x` appears on both sides of the formula for \\(y, x\\)\\."
+      "x Variable `y` appears on both sides of the formula for \\(y, x\\)\\."
     )
   )
 })
