@@ -1,0 +1,130 @@
+---
+title: "Customizing DMPMs"
+link-citations: yes
+output:
+  bookdown::html_document2:
+    base_format: rmarkdown::html_vignette
+pkgdown:
+  as_is: true
+bibliography: dynamite.bib
+vignette: >
+  %\VignetteIndexEntry{Customizing DMPMs} 
+  %\VignetteEngine{knitr::rmarkdown} 
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r srr, eval = FALSE, echo = FALSE}
+#' @srrstats {BS1.2b} The package contains a vignette.
+```
+
+```{r setup, echo = FALSE, warning=FALSE}
+library("dynamite")
+library("ggplot2")
+suppressPackageStartupMessages(library("dplyr"))
+theme_set(theme_bw())
+options(dplyr.summarise.inform = FALSE)
+options(crayon.enabled = FALSE)
+options(dplyr.summarise.inform = FALSE)
+set.seed(0)
+data.table::setDTthreads(1) # For CRAN
+```
+
+Sometimes the current modelling choices of `dynamite` might not fully suit your needs. This vignette shows how you can modify existing `dynamite` model and still use for example the `predict` method of `dynamite`.
+
+
+# Using modified Stan code with dynamite
+
+The `get_code` method can be used to extract the generated Stan code for inspection:
+
+```{r}
+f <- obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1), "gaussian") + 
+  splines(df = 20)
+dynamite_code <- get_code(f, data = gaussian_example, time = "time",  group = "id")
+```
+Calling `cat(dynamite_code)` code then prints the code, or you can write it directly to a file for example with `sink()`. The `get_code` method also works for `dynamitefit` object, e.g., `get_code(gaussian_example_fit)`.
+
+Consider for example that instead of normal distribution for the random effects, you would like to use $t$-distributed random effects. This is not directly supported by the `dynamite`, but the previously obtained Stan code is easy to modify for this. We replace the line ` to_vector(nu_raw) ~ std_normal();` in the model block of original model code with
+```{stan, eval = FALSE}
+df ~ gamma(2, 0.1);
+to_vector(nu_raw) ~ student_t(df, 0, 1);
+```
+and add `real<lower=2> df;` to the parameters block. Now we can call the `dynamite` with our new model code:
+
+```{r}
+fit <- dynamite(
+  f, data = gaussian_example, time = "time",  group = "id", 
+  custom_stan_model = "custom_code.stan", chains = 1, refresh = 0)
+```
+The print method does not recognise the new parameter `df`, but we can extract those samples manually from the `stanfit` object:
+```{r}
+as.array(fit$stanfit, pars = "df") |> 
+  posterior::as_draws_df() |> 
+  posterior::summarise_draws()
+```
+
+It is important to note that in order to use the post processing functions of `dynamite`, the modifications to the Stan code should not alter the names or sizes of the higher level parameters such as the random effect parameters `nu` in this example. Modifying priors, rewriting likelihood calculations or transformed parameters for efficiency gains, adding constraints to parameters, or computing additional variables in generated quantities block are some of the potential modifications that allows you to still use many useful functions of the `dynamite`. For example, we can visualize the random effects our our custom model:
+```{r}
+plot_nus(fit)
+```
+perform leave-one-out cross-validation:
+```{r}
+loo(fit)
+```
+and compute predictions:
+```{r}
+newdata <- data.frame(
+  time = 1:30, 
+  id = 51, 
+  y = rep(c(3, NA), times = c(10, 20)), 
+  x = 0, 
+  z = 1
+)
+pp <- predict(
+  fit, newdata = newdata, new_levels = "gaussian", n_draws = 50
+)
+
+ggplot2::ggplot(pp, ggplot2::aes(time, y_new, group = .draw)) +
+    ggplot2::geom_line(alpha = 0.1) +
+    ggplot2::theme_bw()
+```
+# Using non-MCMC algorithms in dynamite
+
+While dynamite is written for MCMC estimation of the DMPMs, we can still use other algorithms provided by Stan. Continuing the previous example, if we want to do variational inference instead, we first extract the input data for Stan with `get_data`:
+
+```{r}
+d <- get_data(fit)
+```
+
+As `get_code`, this method is available for both `dynamiteformula` and `dynamitefit` objects.
+
+with the custom code and the corresponding input data, we can call `rstan`'s variational algorithm:
+
+```{r}
+model <- rstan::stan_model("custom_code.stan")
+fit_vb <- rstan::vb(model, data = d, iter = 1e5, refresh = 0)
+```
+We can analogously perform optimization with `rstan::optimization` and analyze the results as with standalone Stan model. However, because `vb` returns a `stanfit` object with samples from the approximate posterior we can also exploit some of the functionality of `dynamite`: Let's assume that we want to perform variational inference because MCMC is too slow. If we first create an `dynamitefit` object `fit` from `dynamite` call with only few iterations, we can replace the `fit$stanfit` with the `stanfit` object returned from `rstan::vb`:
+```{r}
+fit_vb_dynamite <- fit
+fit_vb_dynamite$stanfit <- fit_vb
+```
+Now the methods for `dynamitefit` objects such as `summary` and `predict` work as they would for MCMC based output (note though that for example the `rhat` and `ess` values from summary are not meaningful):
+
+```{r}
+summary(fit_vb_dynamite, types = "beta")
+pp2 <- predict(
+  fit_vb_dynamite, newdata = newdata, new_levels = "gaussian", n_draws = 50
+)
+
+ggplot2::ggplot(pp2, ggplot2::aes(time, y_new, group = .draw)) +
+    ggplot2::geom_line(alpha = 0.1) +
+    ggplot2::theme_bw()
+```
+

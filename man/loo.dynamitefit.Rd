@@ -49,6 +49,7 @@ WAIC. Statistics and Computing. 27(5), 1413–1432.
 }
 \seealso{
 Model diagnostics
+\code{\link{hmc_diagnostics}()},
 \code{\link{lfo}()},
 \code{\link{mcmc_diagnostics}()}
 }

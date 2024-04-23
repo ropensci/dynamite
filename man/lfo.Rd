@@ -68,6 +68,7 @@ models, Journal of Statistical Computation and Simulation, 90:14, 2499-2523.
 }
 \seealso{
 Model diagnostics
+\code{\link{hmc_diagnostics}()},
 \code{\link{loo.dynamitefit}()},
 \code{\link{mcmc_diagnostics}()}
 }

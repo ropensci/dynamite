@@ -4,6 +4,8 @@
   * `predict` and `fitted` functions no longer permutes the posterior samples when all samples are used i.e. when `n_draws = NULL` (default). This also corrects the standard error estimates of `loo`, which were not correct earlier due to the mixing of chains.
   * Added an argument `thin` for the `loo`, `predict` and `fitted` method.
   * Print method now only prints the run time for fastest and slowest chain instead of all chains.
+  * Exported function `hmc_diagnostics`.
+  * Added a vignette on `get_code` and `get_data` functions and how they can be used to modify the generated Stan code and perform variational Bayes inference.
 
 # dynamite 1.4.11
 

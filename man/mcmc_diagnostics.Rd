@@ -21,7 +21,7 @@ Returns \code{x} (invisibly).
 }
 \description{
 Prints HMC diagnostics, and lists parameters with smallest effective sample
-sizes and largest Rhat values. See \code{\link[rstan:check_hmc_diagnostics]{rstan::check_hmc_diagnostics()}} and
+sizes and largest Rhat values. See \code{\link[=hmc_diagnostics]{hmc_diagnostics()}} and
 \code{\link[posterior:draws_summary]{posterior::default_convergence_measures()}} for details.
 }
 \examples{
@@ -31,6 +31,7 @@ mcmc_diagnostics(gaussian_example_fit)
 }
 \seealso{
 Model diagnostics
+\code{\link{hmc_diagnostics}()},
 \code{\link{lfo}()},
 \code{\link{loo.dynamitefit}()}
 }
