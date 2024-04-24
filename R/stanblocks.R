@@ -88,20 +88,29 @@ create_functions <- function(idt, backend, cg, cvars, cgvars, mvars, threading) 
 create_functions_lines <- function(idt, backend, cvars, cgvars, threading) {
   family <- cgvars$family
   if (is_multivariate(family)) {
-    lines_wrap("functions", family, idt, backend,
-               list(cvars = cvars, cgvars = cgvars, threading = threading))
+    lines_wrap(
+      "functions",
+      family,
+      idt,
+      backend,
+      list(cvars = cvars, cgvars = cgvars, threading = threading)
+    )
   } else {
     if (is_categorical(family)) {
       cvars[[1L]]$threading <- threading
     } else {
       cvars[[1L]]$default <- lines_wrap(
-        "loglik", "default", idt, backend,
+        "loglik",
+        "default",
+        idt,
+        backend,
         c(cvars[[1L]], threading = threading)
       )
     }
     lines_wrap("functions", family, idt, backend, cvars[[1L]])
   }
 }
+
 #' @describeIn create_function Create The 'Data' Block of the Stan Model Code
 #' @noRd
 create_data <- function(idt, backend, cg, cvars, cgvars, mvars, threading) {
@@ -213,7 +222,7 @@ create_transformed_data <- function(idt, backend, cg, cvars, cgvars, mvars,
         "array[T] int seq1T = linspaced_int_array(T, 1, T);",
         paste_rows(
           "int seq1T[T];",
-          "for(t in 1:T) seq1T[t] = t;",
+          "for (t in 1:T) seq1T[t] = t;",
           .indent = idt(1),
           .parse = FALSE
         )
@@ -416,13 +425,17 @@ create_transformed_parameters <- function(idt, backend,
   }
   lfactor_text <- ""
   psis <- mvars$lfactor_def$responses
-  psis <- lapply(psis, function(x) {
-    y <- cvars[[x]]
-    ifelse_(
-    is_categorical(y$family),
-    y$categories[-y$S],
-    y$y)
-    })
+  psis <- lapply(
+    psis,
+    function(x) {
+      y <- cvars[[x]]
+      ifelse_(
+        is_categorical(y$family),
+        y$categories[-y$S],
+        y$y
+      )
+    }
+  )
   n_y <- lengths(psis)
   psis <- unlist(psis)
   P <- length(psis)
@@ -589,13 +602,17 @@ create_model <- function(idt, backend, cg, cvars, cgvars, mvars, threading) {
   }
   lfactor_text <- ""
   psis <- mvars$lfactor_def$responses
-  psis <- lapply(psis, function(x) {
-    y <- cvars[[x]]
-    ifelse_(
-      is_categorical(y$family),
-      y$categories[-y$S],
-      y$y)
-  })
+  psis <- lapply(
+    psis,
+    function(x) {
+      y <- cvars[[x]]
+      ifelse_(
+        is_categorical(y$family),
+        y$categories[-y$S],
+        y$y
+      )
+    }
+  )
   n_y <- lengths(psis)
   psis <- unlist(psis)
   P <- length(psis)

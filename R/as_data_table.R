@@ -102,7 +102,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
     "alpha", "beta", "delta", "tau", "tau_alpha", "xi",
     "sigma_nu", "sigma", "phi", "nu", "lambda", "sigma_lambda",
     "psi", "tau_psi", "corr", "corr_psi", "corr_nu",
-    "omega", "omega_alpha", "omega_psi"
+    "omega", "omega_alpha", "omega_psi", "cuts"
   )
   if (is.null(types)) {
     types <- ifelse_(
@@ -650,6 +650,19 @@ as_data_table_corr <- function(x, draws, n_draws, resps, ...) {
   pairs <- apply(utils::combn(resps, 2L), 2L, paste, collapse = "__")
   data.table::data.table(
     parameter = rep(paste0("corr_", pairs), each = n_draws),
+    value = c(draws)
+  )
+}
+
+#* @describeIn as_data_table_default Data Table for a "cuts" Parameter
+#* @noRd
+as_data_table_cuts <- function(x, draws, response, n_draws, ...) {
+  S <- get_channel(x, response)$S
+  data.table::data.table(
+    parameter = rep(
+      paste0("cuts_", response, "_", seq_len(S - 1L)),
+      each = n_draws
+    ),
     value = c(draws)
   )
 }

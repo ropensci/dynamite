@@ -27,7 +27,6 @@ print.dynamitefit <- function(x, full_diagnostics = FALSE, ...) {
     is.dynamitefit(x),
     "Argument {.arg x} must be a {.cls dynamitefit} object."
   )
-  mcmc_algorithm <- x$stanfit@stan_args[[1L]]$algorithm %in% c("NUTS", "hmc")
   cat("Model:\n")
   attr(x$dformulas$all, "random") <- attr(x$dformulas$stoch, "random")
   print.dynamiteformula(x$dformulas$all)
@@ -49,16 +48,17 @@ print.dynamitefit <- function(x, full_diagnostics = FALSE, ...) {
   )
   if (!is.null(x$stanfit)) {
     cat("\n")
-    if (mcmc_algorithm) hmc_diagnostics(x)
+    mcmc_algorithm <- x$stanfit@stan_args[[1L]]$algorithm %in% c("NUTS", "hmc")
+    if (mcmc_algorithm) {
+      hmc_diagnostics(x)
+    }
     draws <- suppressWarnings(as_draws(x))
-
     match_names <- grepl(
       pattern = "^(?!.*^nu|^omega|^lambda|.*\\[.*]).*",
       x = names(draws),
       perl = TRUE
     )
-
-    if (full_diagnostics & mcmc_algorithm) {
+    if (full_diagnostics && mcmc_algorithm) {
       # compute only the convergence measures for all variables
       sumr <- posterior::summarise_draws(
         draws,
@@ -84,7 +84,6 @@ print.dynamitefit <- function(x, full_diagnostics = FALSE, ...) {
           sep = ""
       )
       runtimes <- rstan::get_elapsed_time(x$stanfit)
-
       if (nrow(runtimes) > 2L) {
         rs <- rowSums(runtimes)
         cat("\n\nElapsed time (seconds) for fastest and slowest chains:\n")

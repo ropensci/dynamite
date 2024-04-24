@@ -1,11 +1,13 @@
 # dynamite 1.5.0
 
   * Estimation of dynamic multivariate panel models with multiple imputation is now available via the function `dynamice()` which uses the `mice` package.
-  * `predict` and `fitted` functions no longer permutes the posterior samples when all samples are used i.e. when `n_draws = NULL` (default). This also corrects the standard error estimates of `loo`, which were not correct earlier due to the mixing of chains.
-  * Added an argument `thin` for the `loo`, `predict` and `fitted` method.
+  * `predict` and `fitted` functions no longer permutes the posterior samples when all samples are used i.e. when `n_draws = NULL` (default). This also corrects the standard error estimates of `loo()`, which were not correct earlier due to the mixing of chains.
+  * Added an argument `thin` for `loo()`, `predict()` and `fitted()` methods.
   * Print method now only prints the run time for fastest and slowest chain instead of all chains.
-  * Exported function `hmc_diagnostics`.
-  * Added a vignette on `get_code` and `get_data` functions and how they can be used to modify the generated Stan code and perform variational Bayes inference.
+  * A new exported function `hmc_diagnostics()` is now available.
+  * Added a vignette on `get_code()` and `get_data()` functions and how they can be used to modify the generated Stan code and perform variational Bayes inference.
+  * Contemporaneous dependencies are now allowed between different components of multivariate distributions, e.g., `obs(c(y, x) ~ x | 1, family = "mvgaussian")`.
+  * Ordered probit and logit are now available via `obs(., family = "cumulative", link = "probit")` and `obs(., family = "cumulative", link = "logit")`, respectively.
 
 # dynamite 1.4.11
 

@@ -168,8 +168,16 @@ increment_formula <- function(formula, specials, x,
 #'
 #' @param x A `character` vector.
 #' @noRd
-cs <- function(x) {
-  paste0(x, collapse = ", ")
+cs <- function(...) {
+  paste0(c(...), collapse = ", ")
+}
+
+#' Create a Comma-separated Character String and Evaluate with glue
+#'
+#' @param ... `character` strings.
+#' @noRd
+glue_cs <- function(...) {
+  glue::glue(cs(c(...)), .envir = parent.frame())
 }
 
 #' Paste And Optionally Parse Character Strings Containing `glue` Syntax

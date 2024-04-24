@@ -377,7 +377,7 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
      definitions but splines have not been defined."
   )
   sampling[[paste0("y_", y_name)]] <- ifelse_(
-    dformula$family %in%
+    dformula$family$name %in%
       c("gaussian", "gamma", "exponential", "beta", "student"),
     t(Y_out),
     Y_out
@@ -550,7 +550,7 @@ prepare_channel_default <- function(y, Y, channel, sampling,
 #' @describeIn prepare_channel_default Prepare a Categorical Channel
 #' @noRd
 prepare_channel_categorical <- function(y, Y, channel, sampling,
-                                        sd_x, resp_class, priors, ...) {
+                                        sd_x, resp_class, priors) {
   stopifnot_(
     "factor" %in% resp_class,
     c(
@@ -1175,6 +1175,46 @@ prepare_channel_student <- function(y, Y, channel, sampling,
       phi_prior
     )
     check_priors(priors, defaults)
+  }
+  out
+}
+
+#' @describeIn prepare_channel_default Prepare a Student-t Channel
+#' @noRd
+prepare_channel_cumulative <- function(y, Y, channel, sampling,
+                                       sd_x, resp_class, priors) {
+  stopifnot_(
+    all(c("ordered", "factor") %in% resp_class),
+    c(
+      "Response variable {.var {y}} is invalid:",
+      `x` = "Cumulative family supports only {.cls ordered factor} variables."
+    )
+  )
+  resp_levels <- attr(resp_class, "levels")
+  S_y <- length(resp_levels)
+  channel$S <- S_y
+  channel$categories <- resp_levels
+  sampling[[paste0("S_", y)]] <- S_y
+  sd_y <- 1
+  mean_y <- 0.0
+  sd_gamma <- 2.0 / sd_x
+  mean_gamma <- rep(0.0, length(sd_gamma))
+  out <- prepare_channel_default(
+    y,
+    Y,
+    channel,
+    sampling,
+    mean_gamma,
+    sd_gamma,
+    mean_y,
+    sd_y,
+    priors
+  )
+  if (!is.null(priors)) {
+    check_priors(
+      out$priors,
+      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
+    )
   }
   out
 }

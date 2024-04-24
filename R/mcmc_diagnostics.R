@@ -37,13 +37,13 @@ mcmc_diagnostics.dynamitefit <- function(x, n = 3L) {
     ),
     "Argument {.arg n} must be a single {.cls integer}."
   )
-  algorithm <- x$stanfit@stan_args[[1L]]$algorithm
-  stopifnot_(
-    algorithm %in% c("NUTS", "hmc"),
-    "MCMC diagnostics are only meaningful for samples from MCMC.
-    Model was estimated using the ", algorithm, "algorithm."
-  )
   if (!is.null(x$stanfit)) {
+    algorithm <- x$stanfit@stan_args[[1L]]$algorithm
+    stopifnot_(
+      algorithm %in% c("NUTS", "hmc"),
+      "MCMC diagnostics are only meaningful for samples from MCMC.
+       The model was estimated using the ", algorithm, "algorithm."
+    )
     hmc_diagnostics(x)
     init <- seq_len(n)
     sumr <- posterior::summarise_draws(

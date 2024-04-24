@@ -28,7 +28,7 @@
 #' * Exponential: `exponential` (log-link).
 #' * Gamma: `gamma` (log-link, using mean and shape parameterization).
 #' * Beta: `beta` (logit-link, using mean and precision parameterization).
-#' * Student t: `student` (identity link, parametrized using degrees of
+#' * Student t: `student` (identity link, parameterized using degrees of
 #'   freedom, location and scale)
 #'
 #' The models in the \pkg{dynamite} package are defined by combining the
@@ -116,6 +116,9 @@
 #' @param formula \[`formula`]\cr An \R formula describing the model.
 #' @param family \[`character(1)`]\cr The family name. See 'Details' for the
 #'   supported families.
+#' @param link \[`character(1)`]\cr The name of the link function to use or
+#'   `NULL`. See details for supported link functions and default values of
+#'   specific families.
 #' @return A `dynamiteformula` object.
 #' @srrstats {G2.3b} Uses tolower.
 #' @srrstats {RE1.0} Uses a formula interface.
@@ -146,7 +149,7 @@
 #'   obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
 #'   aux(numeric(logp) ~ log(p + 1))
 #'
-dynamiteformula <- function(formula, family) {
+dynamiteformula <- function(formula, family, link = NULL) {
   stopifnot_(
     !missing(formula),
     "Argument {.arg formula} is missing."
@@ -170,10 +173,10 @@ dynamiteformula <- function(formula, family) {
   )
   family <- tolower(family)
   stopifnot_(
-    is_supported(family),
+    is_supported_family(family),
     "Family {.val {family}} is not supported."
   )
-  family <- do.call(paste0(family, "_"), args = list())
+  family <- do.call(paste0(family, "_"), args = list(link = link))
   stopifnot_(
     !"I" %in% all.names(formula),
     "{.code I(.)} is not supported by {.fun dynamiteformula}."
@@ -231,7 +234,8 @@ dynamiteformula <- function(formula, family) {
 #' @param has_random_intercept \[`logical(1)`]\cr Does the channel contain
 #'   a random group-level intercept term?
 #' @noRd
-dynamitechannel <- function(formula, original = NULL, family, response, name = NULL,
+dynamitechannel <- function(formula, original = NULL,
+                            family, response, name = NULL,
                             fixed = integer(0L), varying = integer(0L),
                             random = integer(0L), specials = list(),
                             has_fixed_intercept = FALSE,

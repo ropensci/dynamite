@@ -24,7 +24,9 @@ test_that("stanc_options argument works", {
     show_messages = FALSE,
     init = 0
   )
-  expect_equal(summary(fit, parameter = "alpha_y")$mean[2], 1.5,
+  expect_equal(
+    summary(fit, parameter = "alpha_y")$mean[2],
+    1.5,
     tolerance = 0.1,
     ignore_attr = TRUE
   )
@@ -192,6 +194,60 @@ test_that("threading produces valid model code for other distributions", {
     grainsize = 10,
     chains = 2,
     parallel_chains = 1,
+    debug = list(no_compile = TRUE, model_code = TRUE)
+  )
+  e <- new.env()
+  e$file <- cmdstanr::write_stan_file(out$model_code)
+  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  expect_true(model$check_syntax())
+})
+
+test_that("syntax is correct for various models", {
+  skip_if_not(run_extended_tests)
+  skip_on_os("mac")
+
+  # categorical_example_fit
+  out <- dynamite(
+    dformula = obs(x ~ z + lag(x) + lag(y), family = "categorical") +
+      obs(y ~ z + lag(x) + lag(y), family = "categorical"),
+    data = categorical_example,
+    time = "time",
+    group = "id",
+    backend = "cmdstanr",
+    debug = list(no_compile = TRUE, model_code = TRUE)
+  )
+  e <- new.env()
+  e$file <- cmdstanr::write_stan_file(out$model_code)
+  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  expect_true(model$check_syntax())
+
+  # gaussian_example_fit
+  out <- dynamite(
+    dformula =
+      obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1), family = "gaussian") +
+      random_spec() +
+      splines(df = 20),
+    data = gaussian_example,
+    time = "time",
+    group = "id",
+    backend = "cmdstanr",
+    debug = list(no_compile = TRUE, model_code = TRUE)
+  )
+  e <- new.env()
+  e$file <- cmdstanr::write_stan_file(out$model_code)
+  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  expect_true(model$check_syntax())
+
+  # categorical_example_fit
+  out <- dynamite(
+    dformula = obs(g ~ lag(g) + lag(logp), family = "gaussian") +
+      obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
+      obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
+      aux(numeric(logp) ~ log(p + 1)),
+    data = multichannel_example,
+    time = "time",
+    group = "id",
+    backend = "cmdstanr",
     debug = list(no_compile = TRUE, model_code = TRUE)
   )
   e <- new.env()

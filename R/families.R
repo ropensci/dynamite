@@ -3,15 +3,25 @@
 #' Family Functions for \pkg{dynamite} Models
 #'
 #' @param name \[`character(1)`]\cr Name of the family.
+#' @param link \[`character(1)`]\cr Name of the link function.
 #' @noRd
-dynamitefamily <- function(name) {
+dynamitefamily <- function(name, link) {
   name <- tolower(as.character(name)[1L])
   stopifnot_(
-    is_supported(name),
+    is_supported_family(name),
     "{.val {name}} is not a supported family."
   )
+  link <- ifelse_(
+    missing(link) || is.null(link),
+    default_link(name),
+    tolower(as.character(link)[1L])
+  )
+  stopifnot_(
+    is_supported_link(name, link),
+    "{.val {link}} is not a supported link function for a {.val {name}} channel."
+  )
   structure(
-    list(name = name),
+    list(name = name, link = link),
     class = "dynamitefamily"
   )
 }
@@ -28,8 +38,16 @@ is.dynamitefamily <- function(x) {
 #'
 #' @param name \[`character(1)`]\cr Name of the family.
 #' @noRd
-is_supported <- function(name) {
+is_supported_family <- function(name) {
   name %in% supported_families
+}
+
+#' Check If a Link Function Is Supported for a Family
+#'
+#' @param name \[`character(1)`]\cr Name of the family.
+#' @param link \[`character(1)`]\cr Name of the link function.
+is_supported_link <- function(name, link) {
+  link %in% supported_links[[name]]
 }
 
 #' Check If a Family Is Multivariate
@@ -40,21 +58,13 @@ is_multivariate <- function(x) {
   x$name %in% c("mvgaussian", "multinomial")
 }
 
-supported_families <- c(
-  "binomial",
-  "bernoulli", # separate as Stan has more efficient pmf for it
-  "categorical",
-  "multinomial",
-  "negbin",
-  "gaussian",
-  "mvgaussian",
-  "poisson",
-  "deterministic",
-  "gamma",
-  "exponential",
-  "beta",
-  "student"
-)
+#' Get the Default Link of a Family
+#'
+#' @param name \[`character(1)`]\cr Name of the family.
+#' @noRd
+default_link <- function(name) {
+  supported_links[[name]][1L]
+}
 
 #' Test If Multivariate Family Uses Univariate Components
 #'
@@ -74,6 +84,40 @@ get_univariate <- function(x) {
   unname(out[x$name])
 }
 
+supported_families <- c(
+  "bernoulli", # separate as Stan has more efficient pmf for it
+  "beta",
+  "binomial",
+  "categorical",
+  "cumulative", # ordered probit and logit
+  "deterministic",
+  "exponential",
+  "gamma",
+  "gaussian",
+  "multinomial",
+  "mvgaussian",
+  "negbin",
+  "poisson",
+  "student"
+)
+
+supported_links <- list(
+  bernoulli = c("logit"),
+  beta = c("logit"),
+  binomial = c("logit"),
+  categorical = c("softmax"),
+  cumulative = c("logit", "probit"),
+  deterministic = c("identity"),
+  exponential = c("log"),
+  gamma = c("log"),
+  gaussian = c("identity"),
+  multinomial = c("softmax"),
+  mvgaussian = c("identity"),
+  negbin = c("log"),
+  poisson = c("log"),
+  student = c("identity")
+)
+
 # Generate `family_` and `is_family` convenience functions
 # for all supported families
 for (family in supported_families) {
@@ -86,8 +130,8 @@ for (family in supported_families) {
   })(family))
   assign(paste0(family, "_"), (function(y) {
     force(y)
-    function() {
-      dynamitefamily(y)
+    function(link) {
+      dynamitefamily(y, link)
     }
   })(family))
 }
