@@ -885,8 +885,8 @@ functions_lines_binomial <- function(...) {
   loglik_lines_binomial(...)
 }
 
-functions_lines_categorical <- function(ydim = y, multinomial = FALSE, ...) {
-  loglik_lines_categorical(ydim = y, multinomial = multinomial, ...)
+functions_lines_categorical <- function(...) {
+  loglik_lines_categorical(...)
 }
 
 functions_lines_cumulative <- function(...) {
