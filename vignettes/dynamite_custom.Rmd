@@ -50,8 +50,8 @@ dynamite_code <- get_code(f, data = gaussian_example, time = "time",  group = "i
 ```
 Calling `cat(dynamite_code)` code then prints the code, or you can write it directly to a file for example with `sink()`. The `get_code` method also works for `dynamitefit` object, e.g., `get_code(gaussian_example_fit)`.
 
-Consider for example that instead of normal distribution for the random effects, you would like to use $t$-distributed random effects. This is not directly supported by the `dynamite`, but the previously obtained Stan code is easy to modify for this. We replace the line ` to_vector(nu_raw) ~ std_normal();` in the model block of original model code with
-```{stan, eval = FALSE}
+Consider for example that instead of normal distribution for the random effects, you would like to use $t$-distributed random effects. This is not directly supported by the `dynamite`, but the previously obtained Stan code is easy to modify for this. We replace the line `to_vector(nu_raw) ~ std_normal();` in the model block of original model code with
+```{stan, eval = FALSE, output.var = "temp"}
 df ~ gamma(2, 0.1);
 to_vector(nu_raw) ~ student_t(df, 0, 1);
 ```
