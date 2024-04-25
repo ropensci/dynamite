@@ -362,6 +362,37 @@ create_parameters_lines <- function(idt, backend, cvars, cgvars) {
       cgvars$univariate <- univariate
     }
     lines_wrap("parameters", family, idt, backend, cgvars)
+  } else if (is_cumulative(family)) {
+    # the linear predictor without intercept
+    has_varying_intercept <- cvars[[1L]]$has_varying_intercept
+    cvars[[1L]]$has_fixed_intercept <- FALSE
+    cvars[[1L]]$has_varying_intercept <- FALSE
+    par_main <- lines_wrap(
+      "parameters", "default", idt, backend, cvars[[1L]]
+    )
+    # time-varying intercepts only
+    cvars[[1L]]$has_random_intercept <- FALSE
+    cvars[[1L]]$has_fixed <- FALSE
+    cvars[[1L]]$has_varying <- FALSE
+    cvars[[1L]]$has_random <- FALSE
+    cvars[[1L]]$has_lfactor <- FALSE
+    cvars[[1L]]$has_varying_intercept <- has_varying_intercept
+    par_alpha <- ulapply(
+      seq_len(cvars[[1L]]$S - 1L),
+      function(s) {
+        cvars[[1L]]$ydim <- cvars[[1L]]$y
+        cvars[[1L]]$y <- paste0(cvars[[1L]]$y, "_", s)
+        cvars[[1L]]$pos_omega_alpha <- s > 1L
+        lines_wrap(
+          "parameters", "default", idt, backend, cvars[[1L]]
+        )
+      }
+    )
+    cvars[[1L]]$default <- paste_rows(
+      par_main,
+      par_alpha,
+      .parse = FALSE
+    )
   } else {
     if (is_categorical(family)) {
       cvars[[1L]]$default <- lapply(
@@ -537,6 +568,34 @@ create_transformed_parameters_lines <- function(idt, backend, cvars, cgvars) {
           )
         }
       )
+    } else if (is_cumulative(family)) {
+      # the linear predictor without intercept
+      has_varying_intercept <- cvars[[1L]]$has_varying_intercept
+      cvars[[1L]]$has_fixed_intercept <- FALSE
+      cvars[[1L]]$has_varying_intercept <- FALSE
+      tpar_main <- list(
+        lines_wrap(
+          "transformed_parameters", "default", idt, backend, cvars[[1L]]
+        )
+      )
+      # time-varying intercepts only
+      cvars[[1L]]$has_random_intercept <- FALSE
+      cvars[[1L]]$has_fixed <- FALSE
+      cvars[[1L]]$has_varying <- FALSE
+      cvars[[1L]]$has_random <- FALSE
+      cvars[[1L]]$has_lfactor <- FALSE
+      cvars[[1L]]$has_varying_intercept <- has_varying_intercept
+      tpar_alphas <- lapply(
+        seq_len(cvars[[1L]]$S - 1L),
+        function(s) {
+          cvars[[1L]]$ydim <- cvars[[1L]]$y
+          cvars[[1L]]$y <- paste0(cvars[[1L]]$y, "_", s)
+          lines_wrap(
+            "transformed_parameters", "default", idt, backend, cvars[[1L]]
+          )
+        }
+      )
+      cvars[[1L]]$default <- c(tpar_main, tpar_alphas)
     } else {
       cvars[[1L]]$default <- lines_wrap(
         "transformed_parameters", "default", idt, backend, cvars[[1L]]
@@ -754,10 +813,33 @@ create_model_lines <- function(idt, backend, cvars, cgvars, mvars, threading) {
         }
       )
       cvars[[1L]]$backend <- backend
-    } else {
-      cvars[[1L]]$priors <- do.call(prior_lines, c(cvars[[1L]], idt = idt))
+    } else if (is_cumulative(family)) {
+      # time-varying intercepts only
+      alpha_args <- c(cvars[[1L]], idt = idt)
+      alpha_args$has_fixed_intercept <- FALSE
+      alpha_args$has_lfactor <- FALSE
+      alpha_args$has_random_intercept <- FALSE
+      alpha_args$has_fixed <- FALSE
+      alpha_args$has_varying <- FALSE
+      alpha_args$has_random <- FALSE
+      alpha_args$has_lfactor <- FALSE
+      alpha_priors <- ulapply(
+        seq_len(cvars[[1L]]$S - 1L),
+        function(s) {
+          alpha_args$ydim <- cvars[[1L]]$y
+          alpha_args$y <- paste0(cvars[[1L]]$y, "_", s)
+          do.call(prior_lines, alpha_args)
+        }
+      )
+      # the linear predictor without intercept
+      def_args <- c(cvars[[1L]], idt = idt)
+      def_args$has_fixed_intercept <- FALSE
+      def_args$has_varying_intercept <- FALSE
+      def_args$threading <- threading
+      priors <- do.call(prior_lines, def_args)
+      cvars[[1L]]$priors <- c(alpha_priors, priors)
       cvars[[1L]]$default <- lines_wrap(
-        "loglik", "default", idt, backend, c(cvars[[1L]], threading = threading)
+        "loglik", "default", idt, backend, def_args
       )
     }
     cvars[[1L]]$threading <- threading

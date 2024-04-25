@@ -128,9 +128,9 @@ NULL
 # log-likelihoods -----------------------------------------------------------
 
 intercept_lines <- function(y, obs, family, has_varying, has_fixed, has_random,
-                            has_fixed_intercept,
-                            has_varying_intercept, has_random_intercept,
-                            has_lfactor, has_offset, backend, ydim = y, ...) {
+                            has_fixed_intercept, has_varying_intercept,
+                            has_random_intercept, has_lfactor, has_offset,
+                            backend, ydim = y, ...) {
 
   intercept_alpha <- ifelse_(
     has_fixed_intercept,
@@ -197,11 +197,7 @@ intercept_lines <- function(y, obs, family, has_varying, has_fixed, has_random,
     glue::glue("{intercept_alpha}{offset}{intercept_nu}{random}{lfactor}"),
     glue::glue("{intercept_alpha}{offset}{intercept_nu}{random}{lfactor}{fixed}{varying}")
   )
-  intercept <- sub(
-    "^0 \\+",
-    "",
-    intercept
-  )
+  intercept <- sub("^0 \\+", "", intercept)
   attr(intercept, "glm") <- glm
   intercept
 }
@@ -224,14 +220,6 @@ loglik_lines_default <- function(y, idt, obs, family, has_missing,
     )
   )
   has_X <- has_fixed || has_varying || has_random
-  # extra_pars <- onlyif(
-  #   family$name %in% c("gaussian", "student"),
-  #   "real sigma_{y}"
-  # )
-  #extra_pars <- c(extra_pars, onlyif(
-  #  family$name %in% c("negbin", "gamma", "beta", "student"),
-  #  "real phi_{y}"
-  #))
   intercept <- intercept_lines(
     y, obs, family, has_varying, has_fixed, has_random, has_fixed_intercept,
     has_varying_intercept, has_random_intercept, has_lfactor, has_offset,
@@ -443,7 +431,7 @@ loglik_lines_categorical <- function(y, idt, obs, family, has_missing,
     )
     intercept[[i]] <- intercept_lines(
       yi, obs, family, has_varying, has_fixed, has_random, has_fixed_intercept,
-      has_varying_intercept, has_random_intercept, has_lfactor, FALSE,
+      has_varying_intercept, has_random_intercept, has_lfactor, has_offset,
       backend, ydim = y
     )
     fun_args[i] <- glue_cs(
@@ -628,19 +616,31 @@ loglik_lines_categorical <- function(y, idt, obs, family, has_missing,
   )
 }
 
-loglik_lines_cumulative <- function(y, obs, idt, default, family, ...) {
+loglik_lines_cumulative <- function(y, obs, idt, default, family,
+                                    has_fixed_intercept,
+                                    has_varying_intercept, ...) {
   u <- default$u
-  link <- ifelse_(
-    identical("logit", family$link),
-    "logistic",
-    "probit"
+  is_logit <- identical("logit", family$link)
+  link <- ifelse_(is_logit, "logistic", "probit")
+  alpha <- ifelse_(
+    has_varying_intercept,
+    glue::glue("alpha_{y}[t, ]"),
+    glue::glue("alpha_{y}")
   )
-  likelihood <- glue::glue(
-    "ll += ordered_{link}_l{u}pmf(y_{y}[t, {obs}] | intercept_{y}, cuts_{y});"
+  likelihood <- ifelse_(
+    default$use_glm && is_logit,
+    glue::glue(
+      "ll += ordered_{link}_glm_l{u}pmf(y_{y}[t, {obs}] | X[t][{obs}, J_{y}], ",
+      "gamma__{y}, {alpha});"
+    ),
+    glue::glue(
+      "ll += ordered_{link}_l{u}pmf(y_{y}[t, {obs}] | intercept_{y}, {alpha});"
+    )
   )
   if (default$threading) {
     default$fun_args <- cs(
-      default$fun_args, glue::glue("ordered[S_{y} - 1] cuts_{y}")
+      default$fun_args,
+      onlyif(has_fixed_intercept, glue::glue("ordered[S_{y} - 1] alpha_{y}"))
     )
   }
   loglik_lines_finalize(idt, default, likelihood)
@@ -927,8 +927,8 @@ functions_lines_student <- function(...) {
 
 # Data block --------------------------------------------------------------
 
-missing_data_lines <- function(y, idt,
-                               has_missing, has_fully_missing, backend) {
+missing_data_lines <- function(y, idt, has_missing,
+                               has_fully_missing, backend) {
   mis <- character(0L)
   full_mis <- character(0L)
   if (has_missing) {
@@ -1152,7 +1152,7 @@ data_lines_cumulative <- function(y, idt, default, has_missing,
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     "// Response",
-    stan_array(backend, "int", "y_{y}", "T, N", "lower=1, upper=S_{y}"),
+    stan_array(backend, "int", "y_{y}", "T, N", "lower=0, upper=S_{y}"),
     .indent = idt(c(1, 0, 0, 0, 1, 1))
   )
 }
@@ -1359,14 +1359,16 @@ transformed_data_lines_student <- function(default, ...) {
 
 parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
                                      has_varying, has_fixed_intercept,
-                                     has_varying_intercept,
-                                     has_lfactor, noncentered_psi,
-                                     nonzero_lambda, ydim = y, ...) {
+                                     has_varying_intercept, has_lfactor,
+                                     noncentered_psi, nonzero_lambda,
+                                     ydim = y, pos_omega_alpha = FALSE, ...) {
 
   oname <- ifelse_(noncentered, "omega_raw_", "omega_")
 
   # positivity constraint to deal with label-switching
-  tr <- ifelse(has_lfactor && !nonzero_lambda, "<lower=0>", "")
+  tr <- ifelse_(has_lfactor && !nonzero_lambda, "<lower=0>", "")
+  # constrain omegas to be positive
+  op <- ifelse_(pos_omega_alpha, "<lower=0>", "")
   paste_rows(
     onlyif(
       has_fixed,
@@ -1390,7 +1392,7 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
     ),
     onlyif(
       has_varying_intercept,
-      "row_vector[D - 1] omega_raw_alpha_{y}; // Coefficients for alpha"
+      "row_vector{op}[D - 1] omega_raw_alpha_{y}; // Coefficients for alpha"
     ),
     onlyif(
       has_varying_intercept,
@@ -1443,10 +1445,11 @@ parameters_lines_categorical <- function(y, idt, default, ...) {
   )
 }
 
-parameters_lines_cumulative <- function(y, idt, default, ...) {
+parameters_lines_cumulative <- function(y, idt, default,
+                                        has_fixed_intercept, ...) {
   paste_rows(
     default,
-    "ordered[S_{y} - 1] cuts_{y}; // Cutpoints",
+    onlyif(has_fixed_intercept, "ordered[S_{y} - 1] alpha_{y}; // Cutpoints"),
     .indent = idt(c(0, 1))
   )
 }
@@ -1738,8 +1741,38 @@ transformed_parameters_lines_categorical <- function(default, idt, ...) {
   )
 }
 
-transformed_parameters_lines_cumulative <- function(default, ...) {
-  default
+transformed_parameters_lines_cumulative <- function(y, categories,
+                                                    default, idt, ...) {
+  S <- length(categories)
+  declare_alpha <- glue::glue("array[T] ordered[S_{y} - 1] alpha_y;")
+  alpha_loop <- vapply(
+    seq(2L, S - 1L),
+    function(s) {
+      glue::glue("alpha_{y}[t, {s}] = alpha_{y}[t, {s - 1}] + alpha_{y}_{s}[t];")
+    },
+    character(1L)
+  )
+  state_alpha <- paste_rows(
+    "for (t in 1:T) {{",
+    "alpha_{y}[t, 1] = alpha_{y}_1[t];",
+    alpha_loop,
+    "}}",
+    .indent = idt(c(1, 2, 2, 1))
+  )
+  list(
+    declarations = paste_rows(
+      ulapply(default, "[[", "declarations"),
+      declare_alpha,
+      .parse = FALSE,
+      .indent = idt(c(0, 1))
+    ),
+    statements = paste_rows(
+      ulapply(default, "[[", "statements"),
+      state_alpha,
+      .parse = FALSE,
+      .indent = idt(0)
+    )
+  )
 }
 
 transformed_parameters_lines_exponential <- function(default, ...) {
@@ -2094,7 +2127,7 @@ model_lines_categorical <- function(y, idt, obs, family, priors,
 model_lines_cumulative <- function(y, obs, idt, priors,
                                    threading, default, ...) {
   if (threading) {
-    default$fun_call_args <- cs(default$fun_call_args, glue::glue("cuts_{y}"))
+    default$fun_call_args <- cs(default$fun_call_args, glue::glue("alpha_{y}"))
   }
   paste_rows(
     priors,

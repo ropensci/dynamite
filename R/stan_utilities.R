@@ -101,6 +101,7 @@ stan_supports_glm_likelihood <- function(family, backend, common_intercept) {
   ifelse_(
     is_categorical(family),
     stan_supports_categorical_logit_glm(backend, common_intercept),
-    family$name %in% c("bernoulli", "gaussian", "poisson", "negbin")
+    (family$name %in% c("bernoulli", "gaussian", "poisson", "negbin")) ||
+      (identical(family$name, "cumulative") && identical(family$link, "logit"))
   )
 }
