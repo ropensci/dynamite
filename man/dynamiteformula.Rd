@@ -8,9 +8,9 @@
 \alias{print.dynamiteformula}
 \title{Model formula for \pkg{dynamite}}
 \usage{
-dynamiteformula(formula, family)
+dynamiteformula(formula, family, link = NULL)
 
-obs(formula, family)
+obs(formula, family, link = NULL)
 
 aux(formula)
 
@@ -23,6 +23,10 @@ aux(formula)
 
 \item{family}{[\code{character(1)}]\cr The family name. See 'Details' for the
 supported families.}
+
+\item{link}{[\code{character(1)}]\cr The name of the link function to use or
+\code{NULL}. See details for supported link functions and default values of
+specific families.}
 
 \item{e1}{[\code{dynamiteformula}]\cr A model formula specification.}
 
@@ -65,7 +69,7 @@ documentation on \code{NegBinomial2} in the Stan function reference manual.
 \item Exponential: \code{exponential} (log-link).
 \item Gamma: \code{gamma} (log-link, using mean and shape parameterization).
 \item Beta: \code{beta} (logit-link, using mean and precision parameterization).
-\item Student t: \code{student} (identity link, parametrized using degrees of
+\item Student t: \code{student} (identity link, parameterized using degrees of
 freedom, location and scale)
 }
 

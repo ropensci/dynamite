@@ -46,6 +46,7 @@ is_supported_family <- function(name) {
 #'
 #' @param name \[`character(1)`]\cr Name of the family.
 #' @param link \[`character(1)`]\cr Name of the link function.
+#' @noRd
 is_supported_link <- function(name, link) {
   link %in% supported_links[[name]]
 }
