@@ -803,6 +803,7 @@ create_model_lines <- function(idt, backend, cvars, cgvars, mvars, threading) {
     )
   } else {
     cvars[[1L]]$backend <- backend
+    cvars[[1L]]$threading <- threading
     if (is_categorical(family)) {
       cvars[[1L]]$priors <- lapply(
         cvars[[1L]]$categories[-1L],
@@ -812,7 +813,6 @@ create_model_lines <- function(idt, backend, cvars, cgvars, mvars, threading) {
           do.call(prior_lines, c(cvars[[1L]], idt = idt))
         }
       )
-      cvars[[1L]]$backend <- backend
     } else if (is_cumulative(family)) {
       # time-varying intercepts only
       alpha_args <- c(cvars[[1L]], idt = idt)
@@ -841,8 +841,12 @@ create_model_lines <- function(idt, backend, cvars, cgvars, mvars, threading) {
       cvars[[1L]]$default <- lines_wrap(
         "loglik", "default", idt, backend, def_args
       )
+    } else {
+      cvars[[1L]]$priors <- do.call(prior_lines, c(cvars[[1L]], idt = idt))
+      cvars[[1L]]$default <- lines_wrap(
+        "loglik", "default", idt, backend, cvars[[1L]]
+      )
     }
-    cvars[[1L]]$threading <- threading
     lines_wrap("model", family, idt, backend, cvars[[1L]])
   }
 }

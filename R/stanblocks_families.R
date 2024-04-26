@@ -409,7 +409,7 @@ loglik_lines_binomial <- function(y, obs, idt, default, ...) {
 }
 
 loglik_lines_categorical <- function(y, idt, obs, family, has_missing,
-                                     has_fully_missing,
+                                     has_fully_missing, has_offset,
                                      has_varying, has_fixed, has_random,
                                      has_fixed_intercept,
                                      has_varying_intercept,
@@ -2054,7 +2054,7 @@ model_lines_binomial <- function(y, obs, idt, priors,
 }
 
 model_lines_categorical <- function(y, idt, obs, family, priors,
-                                    has_missing, has_fully_missing,
+                                    has_missing, has_fully_missing, has_offset,
                                     has_fixed_intercept, has_varying_intercept,
                                     has_random_intercept,
                                     has_fixed, has_varying, has_random,
@@ -2115,10 +2115,10 @@ model_lines_categorical <- function(y, idt, obs, family, priors,
     )
   } else {
     likelihood <- loglik_lines_categorical(
-      y, idt, obs, family, has_missing, has_fully_missing, has_varying,
-      has_fixed, has_random, has_fixed_intercept, has_varying_intercept,
-      has_random_intercept, has_lfactor, backend, threading, y, K, categories,
-      multinomial
+      y, idt, obs, family, has_missing, has_fully_missing, has_offset,
+      has_varying, has_fixed, has_random, has_fixed_intercept,
+      has_varying_intercept, has_random_intercept, has_lfactor,
+      backend, threading, y, K, categories, multinomial
     )
   }
   paste_rows(priors, likelihood, .parse = FALSE)
