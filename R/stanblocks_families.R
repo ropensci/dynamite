@@ -1387,7 +1387,7 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
     ),
     ifelse_(
       has_fixed_intercept || has_varying_intercept,
-      "real a_{y}; // Mean of the first time point",
+      "real{op} a_{y}; // Mean of the first time point",
       ""
     ),
     onlyif(
@@ -1751,7 +1751,7 @@ transformed_parameters_lines_cumulative <- function(y, categories,
     S <- length(categories)
     declare_alpha <- glue::glue(
       stan_array(
-        backend, "real", "alpha_{y}", "T", "", "S_{y} - 1"
+        backend, "vector", "alpha_{y}", "T", "", "S_{y} - 1"
       )
     )
     alpha_loop <- vapply(
