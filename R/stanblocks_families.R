@@ -1742,23 +1742,35 @@ transformed_parameters_lines_categorical <- function(default, idt, ...) {
 }
 
 transformed_parameters_lines_cumulative <- function(y, categories,
-                                                    default, idt, ...) {
-  S <- length(categories)
-  declare_alpha <- glue::glue("array[T] ordered[S_{y} - 1] alpha_y;")
-  alpha_loop <- vapply(
-    seq(2L, S - 1L),
-    function(s) {
-      glue::glue("alpha_{y}[t, {s}] = alpha_{y}[t, {s - 1}] + alpha_{y}_{s}[t];")
-    },
-    character(1L)
-  )
-  state_alpha <- paste_rows(
-    "for (t in 1:T) {{",
-    "alpha_{y}[t, 1] = alpha_{y}_1[t];",
-    alpha_loop,
-    "}}",
-    .indent = idt(c(1, 2, 2, 1))
-  )
+                                                    has_varying_intercept,
+                                                    default, idt,
+                                                    backend, ...) {
+  declare_alpha <- ""
+  state_alpha <- ""
+  if (has_varying_intercept) {
+    S <- length(categories)
+    declare_alpha <- glue::glue(
+      stan_array(
+        backend, "real", "alpha_{y}", "T", "", "S_{y} - 1"
+      )
+    )
+    alpha_loop <- vapply(
+      seq(2L, S - 1L),
+      function(s) {
+        glue::glue(
+          "alpha_{y}[t, {s}] = alpha_{y}[t, {s - 1}] + alpha_{y}_{s}[t];"
+        )
+      },
+      character(1L)
+    )
+    state_alpha <- paste_rows(
+      "for (t in 1:T) {{",
+      "alpha_{y}[t, 1] = alpha_{y}_1[t];",
+      alpha_loop,
+      "}}",
+      .indent = idt(c(1, 2, 2, 1))
+    )
+  }
   list(
     declarations = paste_rows(
       ulapply(default, "[[", "declarations"),

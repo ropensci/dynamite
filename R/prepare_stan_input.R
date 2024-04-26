@@ -1184,10 +1184,10 @@ prepare_channel_student <- function(y, Y, channel, sampling,
 prepare_channel_cumulative <- function(y, Y, channel, sampling,
                                        sd_x, resp_class, priors) {
   stopifnot_(
-    all(c("ordered", "factor") %in% resp_class),
+    "factor" %in% resp_class,
     c(
       "Response variable {.var {y}} is invalid:",
-      `x` = "Cumulative family supports only {.cls ordered factor} variables."
+      `x` = "Cumulative family supports only {.cls factor} variables."
     )
   )
   resp_levels <- attr(resp_class, "levels")
