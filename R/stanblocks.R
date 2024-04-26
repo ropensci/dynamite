@@ -362,37 +362,6 @@ create_parameters_lines <- function(idt, backend, cvars, cgvars) {
       cgvars$univariate <- univariate
     }
     lines_wrap("parameters", family, idt, backend, cgvars)
-  } else if (is_cumulative(family)) {
-    # the linear predictor without intercept
-    has_varying_intercept <- cvars[[1L]]$has_varying_intercept
-    cvars[[1L]]$has_fixed_intercept <- FALSE
-    cvars[[1L]]$has_varying_intercept <- FALSE
-    par_main <- lines_wrap(
-      "parameters", "default", idt, backend, cvars[[1L]]
-    )
-    # time-varying intercepts only
-    cvars[[1L]]$has_random_intercept <- FALSE
-    cvars[[1L]]$has_fixed <- FALSE
-    cvars[[1L]]$has_varying <- FALSE
-    cvars[[1L]]$has_random <- FALSE
-    cvars[[1L]]$has_lfactor <- FALSE
-    cvars[[1L]]$has_varying_intercept <- has_varying_intercept
-    par_alpha <- ulapply(
-      seq_len(cvars[[1L]]$S - 1L),
-      function(s) {
-        cvars[[1L]]$ydim <- cvars[[1L]]$y
-        cvars[[1L]]$y <- paste0(cvars[[1L]]$y, "_", s)
-        cvars[[1L]]$pos_omega_alpha <- s > 1L
-        lines_wrap(
-          "parameters", "default", idt, backend, cvars[[1L]]
-        )
-      }
-    )
-    cvars[[1L]]$default <- paste_rows(
-      par_main,
-      par_alpha,
-      .parse = FALSE
-    )
   } else {
     if (is_categorical(family)) {
       cvars[[1L]]$default <- lapply(
@@ -405,7 +374,40 @@ create_parameters_lines <- function(idt, backend, cvars, cgvars) {
           )
         }
       )
-    } else {
+    } else if (is_cumulative(family)) {
+      # the linear predictor without intercept
+      def_args <- cvars[[1L]]
+      has_varying_intercept <- def_args$has_varying_intercept
+      def_args$has_fixed_intercept <- FALSE
+      def_args$has_varying_intercept <- FALSE
+      par_main <- lines_wrap(
+        "parameters", "default", idt, backend, def_args
+      )
+      # time-varying intercepts only
+      def_args$has_random_intercept <- FALSE
+      def_args$has_fixed <- FALSE
+      def_args$has_varying <- FALSE
+      def_args$has_random <- FALSE
+      def_args$has_lfactor <- FALSE
+      def_args$has_varying_intercept <- has_varying_intercept
+      par_alpha <- ulapply(
+        seq_len(def_args$S - 1L),
+        function(s) {
+          def_args$ydim <- def_args$y
+          def_args$y <- paste0(def_args$y, "_", s)
+          def_args$pos_omega_alpha <- s > 1L
+          lines_wrap(
+            "parameters", "default", idt, backend, def_args
+          )
+        }
+      )
+      cvars[[1L]]$default <- paste_rows(
+        par_main,
+        par_alpha,
+        .parse = FALSE
+      )
+    }
+    else {
       cvars[[1L]]$default <- lines_wrap(
         "parameters", "default", idt, backend, cvars[[1L]]
       )
