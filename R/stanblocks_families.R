@@ -1152,7 +1152,7 @@ data_lines_cumulative <- function(y, idt, default, has_missing,
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     "// Response",
-    stan_array(backend, "int", "y_{y}", "T, N", "lower=1, upper=S_{y}"),
+    stan_array(backend, "int", "y_{y}", "T, N", "lower=0, upper=S_{y}"),
     .indent = idt(c(1, 0, 0, 0, 1, 1))
   )
 }
