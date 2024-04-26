@@ -424,11 +424,23 @@ as_data_table_alpha <- function(x, draws, n_draws,
       category = category
     )
   } else {
-    data.table::data.table(
-      parameter = paste0("alpha_", response),
-      value = c(draws),
-      category = category
-    )
+    channel <- get_channel(x, response)
+    if (is_cumulative(channel$family)) {
+      S <- channel$S
+      data.table::data.table(
+        parameter = rep(
+          paste0("alpha_", response, "_", seq_len(S - 1L)),
+          each = n_draws
+        ),
+        value = c(draws)
+      )
+    } else{
+      data.table::data.table(
+        parameter = paste0("alpha_", response),
+        value = c(draws),
+        category = category
+      )
+    }
   }
 }
 
@@ -654,15 +666,4 @@ as_data_table_corr <- function(x, draws, n_draws, resps, ...) {
   )
 }
 
-#* @describeIn as_data_table_default Data Table for a "cuts" Parameter
-#* @noRd
-as_data_table_cuts <- function(x, draws, response, n_draws, ...) {
-  S <- get_channel(x, response)$S
-  data.table::data.table(
-    parameter = rep(
-      paste0("cuts_", response, "_", seq_len(S - 1L)),
-      each = n_draws
-    ),
-    value = c(draws)
-  )
-}
+
