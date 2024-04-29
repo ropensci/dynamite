@@ -45,10 +45,11 @@ methodology from many other approaches are:
   estimation via Stan. Both `rstan` and `cmdstanr` backends are
   supported.
 
-The `dynamite` package is developed with the support of Academy of
-Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)).
-For further information on DMPMs and the `dynamite` package, see the
-related [arXiv](https://arxiv.org/abs/2302.01607) and
+The `dynamite` package is developed with the support of the Research
+Council of Finland grant 331817
+([PREDLIFE](https://sites.utu.fi/predlife/en/)). For further information
+on DMPMs and the `dynamite` package, see the related
+[arXiv](https://arxiv.org/abs/2302.01607) and
 [SocArXiv](https://osf.io/preprints/socarxiv/mdwu5/) preprints.
 
 ## Installation
@@ -83,7 +84,7 @@ gaussian_example_fit <- dynamite(
 Summary of the model:
 
 ``` r
-gaussian_example_fit
+print(gaussian_example_fit)
 #> Model:
 #>   Family   Formula                                       
 #> y gaussian y ~ -1 + z + varying(~x + lag(y)) + random(~1)
@@ -104,8 +105,8 @@ gaussian_example_fit
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  5.479  3.373
-#> chain:2  5.966  3.770
+#> chain:1  5.511  3.354
+#> chain:2  5.504  3.462
 #> 
 #> Summary statistics of the time- and group-invariant parameters:
 #> # A tibble: 6 × 10
@@ -122,7 +123,7 @@ gaussian_example_fit
 Posterior estimates of time-varying effects:
 
 ``` r
-plot_deltas(gaussian_example_fit, scales = "free")
+plot(gaussian_example_fit, plot_type = "delta", scales = "free")
 ```
 
 <img src="man/figures/README-unnamed-chunk-7-1.png" style="display: block; margin: auto;" />
@@ -130,12 +131,12 @@ plot_deltas(gaussian_example_fit, scales = "free")
 And group-specific intercepts:
 
 ``` r
-plot_nus(gaussian_example_fit, groups = 1:10)
+plot(gaussian_example_fit, plot_type = "nu", groups = 1:10)
 ```
 
 <img src="man/figures/README-unnamed-chunk-8-1.png" style="display: block; margin: auto;" />
 
-Traceplots and density plots:
+Traceplots and density plots for time-invariant parameters:
 
 ``` r
 plot(gaussian_example_fit, type = "beta")

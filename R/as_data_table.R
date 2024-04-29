@@ -25,6 +25,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
                                       row.names = NULL, optional = FALSE,
                                       parameters = NULL,
                                       responses = NULL, types = NULL,
+                                      times = NULL, groups = NULL,
                                       summary = FALSE, probs = c(0.05, 0.95),
                                       include_fixed = TRUE, ...) {
   stopifnot_(
@@ -65,6 +66,22 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       null.ok = TRUE
     ),
     "Argument {.arg types} must be a {.cls character} vector."
+  )
+  stopifnot_(
+    checkmate::test_numeric(
+      x = times,
+      min.len = 1L,
+      null.ok = TRUE
+    ),
+    "Argument {.arg times} must be a {.cls integer} vector."
+  )
+  stopifnot_(
+    checkmate::test_vector(
+      x = groups,
+      min.len = 1L,
+      null.ok = TRUE
+    ),
+    "Argument {.arg groups} must be a vector."
   )
   stopifnot_(
     checkmate::test_flag(x = summary),
@@ -164,6 +181,12 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
     d[, .draw := rep_len(seq_len(n_r * n_c), n_d)]
     d[, .iteration := rep_len(seq_len(n_r), n_d)]
     d[, .chain := rep_len(rep(seq_len(n_c), each = n_r), n_d)]
+    if (!is.null(times)) {
+      d <- d[time %in% times, , env = list(times = times)]
+    }
+    if (!is.null(groups)) {
+      d <- d[group %in% groups, , env = list(groups = I(groups))]
+    }
     d
   }
   # avoid NSE notes from R CMD check

@@ -39,7 +39,7 @@ The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use i
 * Transparent quantification of parameter and predictive uncertainty due to a fully Bayesian approach.
 * User-friendly and efficient R interface with state-of-the-art estimation via Stan. Both `rstan` and `cmdstanr` backends are supported.
 
-The `dynamite` package is developed with the support of Academy of Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)). For further information on DMPMs and the `dynamite` package, see the related [arXiv](https://arxiv.org/abs/2302.01607) and [SocArXiv](https://osf.io/preprints/socarxiv/mdwu5/) preprints.
+The `dynamite` package is developed with the support of the Research Council of Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)). For further information on DMPMs and the `dynamite` package, see the related [arXiv](https://arxiv.org/abs/2302.01607) and [SocArXiv](https://osf.io/preprints/socarxiv/mdwu5/) preprints.
 
 ## Installation
 
@@ -81,20 +81,20 @@ gaussian_example_fit <- update(gaussian_example_fit,
 
 Summary of the model:
 ```{r}
-gaussian_example_fit
+print(gaussian_example_fit)
 ```
 
 Posterior estimates of time-varying effects:
 ```{r, fig.width = 9, fig.height = 4}
-plot_deltas(gaussian_example_fit, scales = "free")
+plot(gaussian_example_fit, plot_type = "delta", scales = "free")
 ```
 
 And group-specific intercepts:
 ```{r, fig.width = 9, fig.height = 4}
-plot_nus(gaussian_example_fit, groups = 1:10)
+plot(gaussian_example_fit, plot_type = "nu", groups = 1:10)
 ```
 
-Traceplots and density plots:
+Traceplots and density plots for time-invariant parameters:
 ```{r, fig.width = 9, fig.height = 4}
 plot(gaussian_example_fit, type = "beta")
 ```

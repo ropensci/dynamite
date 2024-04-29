@@ -60,11 +60,6 @@ plot(multichannel_formula, tikz = TRUE)
 }
 \seealso{
 Drawing plots
-\code{\link{plot.dynamitefit}()},
-\code{\link{plot_betas}()},
-\code{\link{plot_deltas}()},
-\code{\link{plot_lambdas}()},
-\code{\link{plot_nus}()},
-\code{\link{plot_psis}()}
+\code{\link{plot.dynamitefit}()}
 }
 \concept{plotting}

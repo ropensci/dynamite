@@ -2,26 +2,80 @@
 % Please edit documentation in R/plot.R
 \name{plot.dynamitefit}
 \alias{plot.dynamitefit}
-\title{Traceplots and Density Plots for a \code{dynamitefit} Object}
+\title{Plots for \code{dynamitefit} Objects}
 \usage{
-\method{plot}{dynamitefit}(x, parameters = NULL, type = NULL, responses = NULL, ...)
+\method{plot}{dynamitefit}(
+  x,
+  plot_type = c("default", "beta", "delta", "nu", "lambda", "psi"),
+  type = NULL,
+  parameters = NULL,
+  responses = NULL,
+  groups = NULL,
+  times = NULL,
+  level = 0.05,
+  alpha = 0.5,
+  scales = c("fixed", "free"),
+  include_alpha = TRUE,
+  n_params = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
-\item{parameters}{[\code{charecter()}]\ Parameter name(s) for which the plots
-should be drawn. Possible options can be found with the function
-\code{\link[=get_parameter_names]{get_parameter_names()}}. The default is all parameters of a
-specific type for all responses, which can lead to too crowded a plot.}
+\item{plot_type}{[\code{character(1)}]\cr What type of plot to draw? The default
+is \code{"default"} which draws posterior densities and traceplots of the
+selected parameters. Other options are \code{"beta"}, \code{"delta"}, \code{"nu"},
+\code{"lambda"} and \code{"psi"}. Option \code{"beta"} draws the posterior intervals
+and means of the \code{beta} type parameters. Option \code{"delta"} draws the
+posterior means and intervals as function of time for the \code{delta} type
+parameters. Option \code{"nu"} draws the posterior means and intervals for the
+group-specific random intercepts. Option \code{"lambda"} draws the posterior
+means and intervals for the factor loading, and option \code{"psi"} draws
+the means and posterior intervals for the latent factors as a function of
+time.}
 
 \item{type}{[\code{character(1)}]\cr Type of the parameter for which the plots
 should be drawn. Possible options can be found with the function
 \code{\link[=get_parameter_types]{get_parameter_types()}}. Ignored if the argument \code{parameters}
-is supplied.}
+is supplied or if \code{plot_type} is not \code{"default"}.}
+
+\item{parameters}{[\code{charecter()}]\cr Parameter name(s) for which the plots
+should be drawn. Possible options can be found with the function
+\code{\link[=get_parameter_names]{get_parameter_names()}}. The default is all parameters of a
+specific type, limited by \code{n_params}.}
 
 \item{responses}{[\code{character()}]\cr Response(s) for which the plots should
 be drawn. Possible options are \code{unique(x$priors$response)}. Default is
 all responses. Ignored if the argument \code{parameters} is supplied.}
+
+\item{groups}{[\code{character(1)}]\cr Group name(s) for which the plots
+should be drawn when \code{plot_type} is \code{"nu"} or \code{"lambda"}.
+The default is all groups.}
+
+\item{times}{[\code{double()}]\cr Time point(s) for which the plots should be
+drawn for time-varying parameters. By default, all time points are
+included, up to the maximum number of parameters specified by \code{n_params}
+starting from the first non-fixed time point.}
+
+\item{level}{[\code{numeric(1)}]\cr Level for posterior intervals.
+Default is 0.05, leading to 90\% intervals.}
+
+\item{alpha}{[\code{numeric(1)}]\cr Opacity level for \code{geom_ribbon}.
+Default is 0.5.}
+
+\item{scales}{[\code{character(1)}]\cr Should y-axis of the panels be \code{"fixed"}
+(the default) or \code{"free"}? See \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}.}
+
+\item{include_alpha}{[\code{logical(1)}]\cr If \code{TRUE} (default), plots also
+the time-varying alphas if such parameters exists in the model.}
+
+\item{n_params}{[\code{integer()}]\cr Maximum number of parameters to plot.
+The default value is set by \code{plot_type}: 5 for \code{"default"}, 50 for
+\code{"beta"}, \code{"nu"} and \code{"lambda"}, and 3 for \code{"delta"} and \code{"psi"}. This
+argument is intended to prevent accidental plots that may be very large
+and time consuming to plot. Please use the \code{parameters}, \code{times}, and
+\code{groups} arguments to fine-tune which parameters to plot.}
 
 \item{...}{Not used..}
 }
@@ -29,7 +83,10 @@ all responses. Ignored if the argument \code{parameters} is supplied.}
 A \code{ggplot} object.
 }
 \description{
-Produces the traceplots and the density plots of the model parameters.
+Produces the traceplots and the density plots of the model parameters. Can
+also be used to plot the time-varying and time-invariant parameters of the
+model along with their posterior intervals. See the \code{plot_type} argument
+for details on available plots.
 }
 \examples{
 data.table::setDTthreads(1) # For CRAN
@@ -38,11 +95,6 @@ plot(gaussian_example_fit, type = "beta")
 }
 \seealso{
 Drawing plots
-\code{\link{plot.dynamiteformula}()},
-\code{\link{plot_betas}()},
-\code{\link{plot_deltas}()},
-\code{\link{plot_lambdas}()},
-\code{\link{plot_nus}()},
-\code{\link{plot_psis}()}
+\code{\link{plot.dynamiteformula}()}
 }
 \concept{plotting}

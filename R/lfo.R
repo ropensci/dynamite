@@ -53,6 +53,14 @@
 #'
 lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   stopifnot_(
+    !missing(x),
+    "Argument {.arg x} is missing."
+  )
+  stopifnot_(
+    is.dynamitefit(x),
+    "Argument {.arg x} must be a {.cls dynamitefit} object."
+  )
+  stopifnot_(
     is.null(x$imputed),
     "Leave-future-out cross-validation is not supported for models
      estimated using multiple imputation."

@@ -35,6 +35,14 @@
 #'
 loo.dynamitefit <- function(x, separate_channels = FALSE, thin = 1L, ...) {
   stopifnot_(
+    !missing(x),
+    "Argument {.arg x} is missing."
+  )
+  stopifnot_(
+    is.dynamitefit(x),
+    "Argument {.arg x} must be a {.cls dynamitefit} object."
+  )
+  stopifnot_(
     is.null(x$imputed),
     "Leave-one-out cross-validation is not supported for models estimated using
      multiple imputation."
@@ -53,7 +61,7 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, thin = 1L, ...) {
   )
   n_chains <- x$stanfit@sim$chains
   n_draws <- ndraws(x)
-  idx_draws <- seq.int(1, n_draws, by = thin)
+  idx_draws <- seq.int(1L, n_draws, by = thin)
   # need equal number of samples per chain
   idx_draws <- idx_draws[seq_len(n_draws %/% thin - n_draws %% n_chains)]
   n_draws <- length(idx_draws) %/% n_chains

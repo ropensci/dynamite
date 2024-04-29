@@ -61,6 +61,14 @@
 fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, thin = 1,
                                expand = TRUE, df = TRUE, ...) {
   stopifnot_(
+    !missing(object),
+    "Argument {.arg object} is missing."
+  )
+  stopifnot_(
+    is.dynamitefit(object),
+    "Argument {.arg object} must be a {.cls dynamitefit} object."
+  )
+  stopifnot_(
     !is.null(object$stanfit),
     "No Stan model fit is available."
   )

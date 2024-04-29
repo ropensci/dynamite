@@ -57,6 +57,10 @@
 #'   all values listed in details except spline coefficients `omega`,
 #'   `omega_alpha`, and `omega_psi`. See also [dynamite::get_parameter_types()].
 #'    Ignored if the argument `parameters` is supplied.
+#' @param times \[`double()`]\cr Time point(s) to keep. If `NULL`
+#'   (the default), all time points are kept.
+#' @param groups \[`character()`] Group name(s) to keep. If `NULL`
+#'   (the default), all groups are kept.
 #' @param summary \[`logical(1)`]\cr If `TRUE`, returns posterior
 #'   mean, standard deviation, and posterior quantiles (as defined by the
 #'   `probs` argument) for all parameters. If `FALSE` (default), returns the
@@ -104,7 +108,7 @@
 #'
 as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
                                       parameters = NULL, responses = NULL,
-                                      types = NULL,
+                                      types = NULL, times = NULL, groups = NULL,
                                       summary = FALSE, probs = c(0.05, 0.95),
                                       include_fixed = TRUE, ...) {
   out <- as.data.table.dynamitefit(
@@ -115,6 +119,8 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     parameters,
     responses,
     types,
+    times,
+    groups,
     summary,
     probs,
     include_fixed,

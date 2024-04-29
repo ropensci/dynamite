@@ -9,6 +9,8 @@
   parameters = NULL,
   type = c("beta", "delta", "nu", "lambda", "psi"),
   responses = NULL,
+  times = NULL,
+  groups = NULL,
   summary = TRUE,
   probs = c(0.05, 0.95),
   include_alpha = TRUE,
@@ -32,6 +34,12 @@ latent factor. Ignored if the argument \code{parameters} is supplied.}
 should be extracted. Possible options are elements of
 \code{unique(x$priors$response)}, and the default is this entire vector.
 Ignored if the argument \code{parameters} is supplied.}
+
+\item{times}{[\code{double()}]\cr Time point(s) to keep. If \code{NULL}
+(the default), all time points are kept.}
+
+\item{groups}{[\code{character()}] Group name(s) to keep. If \code{NULL}
+(the default), all groups are kept.}
 
 \item{summary}{[\code{logical(1)}]\cr If \code{TRUE}, returns posterior
 mean, standard deviation, and posterior quantiles (as defined by the
