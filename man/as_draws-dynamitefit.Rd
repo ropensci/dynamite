@@ -7,7 +7,15 @@
 \alias{as_draws}
 \title{Convert \code{dynamite} Output to \code{draws_df} Format}
 \usage{
-\method{as_draws_df}{dynamitefit}(x, parameters = NULL, responses = NULL, types = NULL, ...)
+\method{as_draws_df}{dynamitefit}(
+  x,
+  parameters = NULL,
+  responses = NULL,
+  types = NULL,
+  times = NULL,
+  groups = NULL,
+  ...
+)
 
 \method{as_draws}{dynamitefit}(x, parameters = NULL, responses = NULL, types = NULL, ...)
 }
@@ -29,6 +37,12 @@ samples should be extracted. See details of possible values. Default is
 all values listed in details except spline coefficients \code{omega},
 \code{omega_alpha}, and \code{omega_psi}. See also \code{\link[=get_parameter_types]{get_parameter_types()}}.
 Ignored if the argument \code{parameters} is supplied.}
+
+\item{times}{[\code{double()}]\cr Time point(s) to keep. If \code{NULL}
+(the default), all time points are kept.}
+
+\item{groups}{[\code{character()}] Group name(s) to keep. If \code{NULL}
+(the default), all groups are kept.}
 
 \item{...}{Ignored.}
 }

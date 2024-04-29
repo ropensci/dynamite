@@ -18,5 +18,13 @@
 #' )
 #'
 summary.dynamitefit <- function(object, ...) {
+  stopifnot_(
+    !missing(object),
+    "Argument {.arg object} is missing."
+  )
+  stopifnot_(
+    is.dynamitefit(object),
+    "Argument {.arg object} must be a {.cls dynamitefit} object."
+  )
   as.data.frame.dynamitefit(object, summary = TRUE, ...)
 }

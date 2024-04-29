@@ -254,4 +254,43 @@ test_that("syntax is correct for various models", {
   e$file <- cmdstanr::write_stan_file(out$model_code)
   model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
   expect_true(model$check_syntax())
+
+  # ordered probit model
+  set.seed(0)
+
+  n <- 100
+  t <- 30
+  x <- matrix(0, n, t)
+  y <- matrix(0, n, t)
+  p <- matrix(0, n, 4)
+  alpha <- c(-1, 0, 1)
+
+  for (i in seq_len(t)) {
+    x[, i] <- rnorm(n)
+    eta <- 0.6 * x[, i]
+    p[, 1] <- 1 - plogis(eta - alpha[1])
+    p[, 2] <- plogis(eta - alpha[1]) - plogis(eta - alpha[2])
+    p[, 3] <- plogis(eta - alpha[2]) - plogis(eta - alpha[3])
+    p[, 4] <- plogis(eta - alpha[3])
+    y[, i] <- apply(p, 1, sample, x = 1:4, size = 1, replace = FALSE)
+  }
+
+  d <- data.frame(
+    y = factor(c(y), levels = 1:4), x = c(x),
+    time = rep(seq_len(t), each = n),
+    id = rep(seq_len(n), t)
+  )
+
+  out <- dynamite(
+    dformula = obs(y ~ x, family = "cumulative", link = "logit"),
+    data = d,
+    time = "time",
+    group = "id",
+    backend = "cmdstanr",
+    debug = list(no_compile = TRUE, model_code = TRUE)
+  )
+  e <- new.env()
+  e$file <- cmdstanr::write_stan_file(out$model_code)
+  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  expect_true(model$check_syntax())
 })

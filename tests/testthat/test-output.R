@@ -80,7 +80,7 @@ test_that("default plot works", {
   )
 })
 
-test_that("formula plot works", {
+test_that("default formula plot works", {
   f <- obs(y ~ x + lag(logz) + lag(y, 2) + lag(w), family = "gaussian") +
     obs(w ~ lag(x) + z, family = "gaussian") +
     aux(numeric(logz) ~ log(z))
@@ -122,27 +122,74 @@ test_that("formula plot works", {
   )
 })
 
-test_that("betas can be plotted", {
+test_that("tikz formula plot works", {
+  f <- obs(y ~ x + lag(logz) + lag(y, 2) + lag(w), family = "gaussian") +
+    obs(w ~ lag(x) + z, family = "gaussian") +
+    aux(numeric(logz) ~ log(z))
   expect_error(
-    plot_betas(gaussian_example_fit),
+    plot(f, tikz = TRUE),
     NA
   )
   expect_error(
-    plot_betas(categorical_example_fit),
+    plot(f, show_auxiliary = TRUE, tikz = TRUE),
+    NA
+  )
+  expect_error(
+    plot(f, show_covariates = TRUE, tikz = TRUE),
+    NA
+  )
+  expect_error(
+    plot(f, show_auxiliary = TRUE, show_covariates = TRUE, tikz = TRUE),
+    NA
+  )
+  multichannel_formula <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
+    obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
+    obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
+    aux(numeric(logp) ~ log(p + 1))
+  expect_error(
+    plot(multichannel_formula, tikz = TRUE),
+    NA
+  )
+  expect_error(
+    plot(multichannel_formula, show_auxiliary = TRUE, tikz = TRUE),
+    NA
+  )
+  expect_error(
+    plot(multichannel_formula, show_covariates = TRUE, tikz = TRUE),
+    NA
+  )
+  expect_error(
+    plot(
+      multichannel_formula,
+      show_auxiliary = TRUE,
+      show_covariates = TRUE,
+      tikz = TRUE
+    ),
+    NA
+  )
+})
+
+test_that("betas can be plotted", {
+  expect_error(
+    plot(gaussian_example_fit, plot_type = "beta"),
+    NA
+  )
+  expect_error(
+    plot(categorical_example_fit, plot_type = "beta"),
     NA
   )
 })
 
 test_that("deltas can be plotted", {
   expect_error(
-    plot_deltas(gaussian_example_fit),
+    plot(gaussian_example_fit, plot_type = "delta"),
     NA
   )
 })
 
 test_that("nus can be plotted", {
   expect_error(
-    plot_nus(gaussian_example_fit),
+    plot(gaussian_example_fit, plot_type = "nu"),
     NA
   )
 })

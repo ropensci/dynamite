@@ -23,6 +23,14 @@
 #'
 confint.dynamitefit <- function(object, parm, level = 0.95, ...) {
   stopifnot_(
+    !missing(object),
+    "Argument {.arg x} is missing."
+  )
+  stopifnot_(
+    is.dynamitefit(object),
+    "Argument {.arg object} must be a {.cls dynamitefit} object."
+  )
+  stopifnot_(
     checkmate::test_number(
       x = level,
       lower = 0.0,

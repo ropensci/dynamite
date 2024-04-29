@@ -30,9 +30,17 @@
 coef.dynamitefit <- function(object,
                              parameters = NULL,
                              type = c("beta", "delta", "nu", "lambda", "psi"),
-                             responses = NULL, summary = TRUE,
-                             probs = c(0.05, 0.95),
+                             responses = NULL, times = NULL, groups = NULL,
+                             summary = TRUE, probs = c(0.05, 0.95),
                              include_alpha = TRUE, ...) {
+  stopifnot_(
+    !missing(object),
+    "Argument {.arg object} is missing."
+  )
+  stopifnot_(
+    is.dynamitefit(object),
+    "Argument {.arg object} must be a {.cls dynamitefit} object."
+  )
   if (is.null(parameters)) {
     type <- onlyif(is.character(type), tolower(type))
     type <- try(
@@ -49,14 +57,15 @@ coef.dynamitefit <- function(object,
       "Argument {.arg include_alpha} must be single {.cls logical} value."
     )
   }
-
   if (is.null(parameters) && include_alpha && type %in% c("beta", "delta")) {
     types <- c("alpha", type)
     out <- as.data.frame.dynamitefit(
       object,
       parameters = parameters,
-      types = types,
       responses = responses,
+      types = types,
+      times = times,
+      groups = groups,
       summary = summary,
       probs = probs
     )
@@ -70,8 +79,10 @@ coef.dynamitefit <- function(object,
     out <- as.data.frame.dynamitefit(
       object,
       parameters = parameters,
-      types = type,
       responses = responses,
+      types = type,
+      times = times,
+      groups = groups,
       summary = summary,
       probs = probs
     )

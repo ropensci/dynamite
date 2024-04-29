@@ -90,18 +90,17 @@ newdata <- data.frame(
   x = 0, 
   z = 1
 )
-pp <- predict(
-  fit, newdata = newdata, new_levels = "gaussian", n_draws = 50
-)
+
+pp <- predict(fit, newdata = newdata, new_levels = "gaussian", n_draws = 50)
 
 ggplot2::ggplot(pp, ggplot2::aes(time, y_new, group = .draw)) +
-    ggplot2::geom_line(alpha = 0.1) +
-    ggplot2::theme_bw()
+  ggplot2::geom_line(alpha = 0.1) +
+  ggplot2::theme_bw()
 ```
 
 # Using non-MCMC algorithms in `dynamite`
 
-While `dynamite` is written for MCMC estimation of DMPMs, we can still use other algorithms provided by Stan. Continuing the previous example, if we want to do variational inference instead, we first extract the input data for Stan with `get_data`:
+While `dynamite` is written for MCMC estimation of DMPMs, we can still use other algorithms provided by Stan. Continuing the previous example, if we want to do variational inference instead, we first extract the input data for Stan with `get_data()`:
 
 ```{r}
 d <- get_data(fit)
@@ -114,7 +113,7 @@ model <- rstan::stan_model("custom_code.stan")
 fit_vb <- rstan::vb(model, data = d, iter = 1e5, refresh = 0)
 ```
 
-We can analogously perform optimization with `rstan::optimization()` and analyze the results as with a standalone Stan model. However, because `vb()` returns a `stanfit` object with samples from the approximate posterior, we can also exploit some of the functionality of `dynamite`. Let's assume that we want to perform variational inference because MCMC is too slow. If we first create a `dynamitefit` object `fit` from a `dynamite()` call with only few iterations, we can replace `fit$stanfit` with the `stanfit` object returned from `rstan::vb`:
+We can analogously perform optimization with `rstan::optimization()` and analyze the results as with a standalone Stan model. However, because `vb()` returns a `stanfit` object with samples from the approximate posterior, we can also exploit some of the functionality of `dynamite`. Let's assume that we want to perform variational inference because MCMC is too slow. If we first create a `dynamitefit` object `fit` from a `dynamite()` call with only few iterations, we can replace `fit$stanfit` with the `stanfit` object returned from `rstan::vb()`:
 
 ```{r}
 fit_vb_dynamite <- fit
@@ -131,6 +130,6 @@ pp2 <- predict(
 )
 
 ggplot2::ggplot(pp2, ggplot2::aes(time, y_new, group = .draw)) +
-    ggplot2::geom_line(alpha = 0.1) +
-    ggplot2::theme_bw()
+  ggplot2::geom_line(alpha = 0.1) +
+  ggplot2::theme_bw()
 ```

@@ -49,11 +49,18 @@ formula_specials <- function(x, original, family) {
   fixed$icpt <- attr(xt, "intercept") || fixed$icpt
   full_terms <- union(fixed$terms, union(varying$terms, random$terms))
   any_icpt <- fixed$icpt || varying$icpt || random$icpt
+  stopifnot_(
+    !is_cumulative(family) || fixed$icpt || varying$icpt,
+    "A time-constant or a time-varying intercept must be specified
+     for a cumulative channel."
+  )
   if (fixed$icpt && varying$icpt) {
-    warning_(c(
-      "Both time-independent and time-varying intercept specified:",
-      `i` = "Defaulting to time-varying intercept."
-    ))
+    warning_(
+      c(
+        "Both time-constant and time-varying intercept specified:",
+        `i` = "Defaulting to time-varying intercept."
+      )
+    )
     fixed$icpt <- FALSE
   }
   if (length(full_terms) > 0L) {

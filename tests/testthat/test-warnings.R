@@ -124,7 +124,7 @@ test_that("multiple intercept warns", {
   expect_warning(
     obs(y ~ 1 + varying(~1), family = "gaussian"),
     paste0(
-      "Both time-independent and time-varying intercept specified:\n",
+      "Both time-constant and time-varying intercept specified:\n",
       "i Defaulting to time-varying intercept\\."
     )
   )

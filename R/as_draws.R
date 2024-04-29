@@ -30,7 +30,8 @@
 #' posterior::summarise_draws(as_draws(gaussian_example_fit))
 #'
 as_draws_df.dynamitefit <- function(x, parameters = NULL, responses = NULL,
-  types = NULL, ...) {
+                                    types = NULL, times = NULL,
+                                    groups = NULL, ...) {
   # avoid NSE notes from R CMD check
   .chain <- .draw <- .iteration <- NULL
   category <- group <- parameter <- response <- time <- type <- value <- NULL
@@ -39,6 +40,8 @@ as_draws_df.dynamitefit <- function(x, parameters = NULL, responses = NULL,
     parameters = parameters,
     responses = responses,
     types = types,
+    times = times,
+    groups = groups,
     summary = FALSE,
     include_fixed = FALSE
   )[,
@@ -80,6 +83,6 @@ as_draws_df.dynamitefit <- function(x, parameters = NULL, responses = NULL,
 #' @return A `draws_df` object.
 #' @inheritParams as_draws_df.dynamitefit
 as_draws.dynamitefit <- function(x, parameters = NULL, responses = NULL,
-  types = NULL, ...) {
+                                 types = NULL, ...) {
   as_draws_df.dynamitefit(x, parameters, responses, types, ...)
 }

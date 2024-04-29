@@ -111,6 +111,47 @@ test_that("multinomial fit and predict work", {
   )
 })
 
+
+test_that("cumulative fit works", {
+  skip_if_not(run_extended_tests)
+
+  set.seed(0)
+
+  n <- 100
+  t <- 30
+  x <- matrix(0, n, t)
+  y <- matrix(0, n, t)
+  p <- matrix(0, n, 4)
+  alpha <- c(-1, 0, 1)
+
+  for (i in seq_len(t)) {
+    x[, i] <- rnorm(n)
+    eta <- 0.6 * x[, i]
+    p[, 1] <- 1 - plogis(eta - alpha[1])
+    p[, 2] <- plogis(eta - alpha[1]) - plogis(eta - alpha[2])
+    p[, 3] <- plogis(eta - alpha[2]) - plogis(eta - alpha[3])
+    p[, 4] <- plogis(eta - alpha[3])
+    y[, i] <- apply(p, 1, sample, x = 1:4, size = 1, replace = FALSE)
+  }
+
+  d <- data.frame(
+    y = factor(c(y), levels = 1:4), x = c(x),
+    time = rep(seq_len(t), each = n),
+    id = rep(seq_len(n), t)
+  )
+
+  expect_error(
+    fit_logit <- dynamite(
+      dformula =
+        obs(y ~ x, family = "cumulative", link = "logit"),
+      data = d,
+      time = "time",
+      group = "id"
+    ),
+    NA
+  )
+})
+
 test_that("non-glm categorical fit works", {
   skip_if_not(run_extended_tests)
   skip_on_os("mac") # Seems to segfault on MacOS

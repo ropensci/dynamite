@@ -9,6 +9,11 @@ hmc_diagnostics(x)
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 }
+\value{
+Returns \code{x} (invisibly).
+data.table::setDTthreads(1) # For CRAN
+hmc_diagnostics(gaussian_example_fit)
+}
 \description{
 Prints the divergences, saturated treedepths, and low E-BFMI warnings.
 }

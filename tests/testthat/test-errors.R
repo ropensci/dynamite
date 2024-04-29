@@ -397,6 +397,16 @@ test_that("multinomial family fails with multiple formula components", {
   )
 })
 
+test_that("cumulative channel fails without an intercept", {
+  expect_error(
+    obs(y ~ -1, family = "cumulative"),
+    paste0(
+      "A time-constant or a time-varying intercept must be specified ",
+      "for a cumulative channel\\."
+    )
+  )
+})
+
 # Formula specials errors -------------------------------------------------
 
 test_that("no intercept or predictors fails if no lfactor", {
@@ -963,15 +973,35 @@ test_that("output for missing argument fails", {
   methods <- c(
     "as.data.frame",
     "as_draws_df",
+    "confint",
+    "coef",
+    "fitted",
     "formula",
-    "print",
+    "hmc_diagnostics",
+    "lfo",
+    "loo",
     "mcmc_diagnostics",
     "ndraws",
-    "nobs"
+    "nobs",
+    "plot",
+    "predict",
+    "print",
+    "summary",
+    "update"
+  )
+  non_s3_methods <- c(
+    "hmc_diagnostics",
+    "lfo",
+    "mcmc_diagnostics"
   )
   for (m in methods) {
+    call_fun <- ifelse_(
+      m %in% non_s3_methods,
+      m,
+      paste0(m, ".dynamitefit")
+    )
     expect_error(
-      do.call(paste0(!!m, ".dynamitefit"), args = list()),
+      do.call(call_fun, args = list()),
       "Argument `.+` is missing"
     )
   }
@@ -981,20 +1011,47 @@ test_that("output for non dynamitefit objects fails", {
   methods <- c(
     "as.data.frame",
     "as_draws_df",
+    "confint",
+    "coef",
+    "fitted",
     "formula",
-    "print",
-    "mcmc_diagnostics",
+    "loo",
     "ndraws",
-    "nobs"
+    "nobs",
+    "plot",
+    "predict",
+    "print",
+    "summary",
+    "update"
   )
-  args <- list(x = 1L)
+  object_arg_methods <- c(
+    "coef",
+    "confint",
+    "fitted",
+    "nobs",
+    "predict",
+    "summary",
+    "update"
+  )
+  non_s3_methods <- c(
+    "hmc_diagnostics",
+    "lfo",
+    "mcmc_diagnostics"
+  )
   for (m in methods) {
-    if (identical(m, "nobs")) {
-      args <- list(object = 1L)
-    }
+    args <- ifelse_(
+      m %in% object_arg_methods,
+      list(object = 1L),
+      list(x = 1L)
+    )
+    call_fun <- ifelse_(
+      m %in% non_s3_methods,
+      m,
+      paste0(m, ".dynamitefit")
+    )
     expect_error(
-      do.call(paste0(!!m, ".dynamitefit"), args = args),
-      "Argument `.+` must be a <dynamitefit> object"
+      do.call(call_fun, args = args),
+      "Argument `.+` must be a <dynamitefit> object\\."
     )
   }
 })
@@ -1003,23 +1060,27 @@ test_that("output without Stan fit fails", {
   methods <- c(
     "as.data.frame",
     "as_draws_df",
+    "fitted",
+    "predict",
     "ndraws"
   )
-  args <- list(x = gaussian_example_fit)
-  args$x$stanfit <- NULL
+  object_arg_methods <- c(
+    "fitted",
+    "predict"
+  )
+  fit <- gaussian_example_fit
+  fit$stanfit <- NULL
   for (m in methods) {
+    args <- ifelse_(
+      m %in% object_arg_methods,
+      list(object = fit),
+      list(x = fit)
+    )
     expect_error(
       do.call(paste0(!!m, ".dynamitefit"), args = args),
-      "No Stan model fit is available"
+      "No Stan model fit is available\\."
     )
   }
-})
-
-test_that("non dynamiteformula print fails", {
-  expect_error(
-    print.dynamiteformula(x = 1L),
-    "Argument `x` must be a <dynamiteformula> object\\."
-  )
 })
 
 test_that("Invalid responses fail", {
@@ -1352,8 +1413,8 @@ test_that("plot errors when no type is defined", {
   expect_error(
     plot(categorical_example_fit),
     paste0(
-      "Both arguments `parameters` and `type` are missing, ",
-      "you should supply one of them."
+      "Either `parameters` or `type` must be provided when `plot_type` ",
+      "is \"default\"\\."
     )
   )
 })
@@ -1375,23 +1436,27 @@ test_that("plot errors when no variable is found ", {
   )
 })
 
-test_that("plot_deltas errors when the model does not contain deltas", {
+test_that("plotting deltas errors when the model does not contain deltas", {
   expect_error(
-    plot_deltas(categorical_example_fit),
+    plot(categorical_example_fit, plot_type = "delta"),
     "The model does not contain varying coefficients delta."
   )
 })
 
-test_that("plot_nus errors when the model does not contain nus", {
+test_that("plotting nus errors when the model does not contain nus", {
   expect_error(
-    plot_nus(categorical_example_fit),
+    plot(categorical_example_fit, plot_type = "nu"),
     "The model does not contain random effects nu."
   )
 })
 
-test_that("plot_betas errors when incorrect parameters are supplied", {
+test_that("plotting betas errors when incorrect parameters are supplied", {
   expect_error(
-    plot_betas(gaussian_example_fit, parameters = "delta_y_x"),
+    plot(
+      gaussian_example_fit,
+      plot_type = "beta",
+      parameters = "delta_y_x"
+    ),
     paste0(
       "Parameter `delta_y_x` not found or it is of wrong type:\n",
       'i Use `get_parameter_names\\(\\)` with `types = "beta"` to check ',
@@ -1400,9 +1465,13 @@ test_that("plot_betas errors when incorrect parameters are supplied", {
   )
 })
 
-test_that("plot_deltas errors when incorrect parameters are supplied", {
+test_that("plotting deltas errors when incorrect parameters are supplied", {
   expect_error(
-    plot_deltas(gaussian_example_fit, parameters = c("a", "delta_y_x")),
+    plot(
+      gaussian_example_fit,
+      plot_type = "delta",
+      parameters = c("a", "delta_y_x")
+    ),
     paste0(
       "Parameter `a` not found or it is of wrong type:\n",
       'i Use `get_parameter_names\\(\\)` with `types = "delta"` to check ',
@@ -1411,17 +1480,25 @@ test_that("plot_deltas errors when incorrect parameters are supplied", {
   )
 })
 
-test_that("plot_nus errors when incorrect parameters are supplied", {
+test_that("plotting nus errors when incorrect parameters are supplied", {
   expect_error(
-    plot_nus(gaussian_example_fit, parameters = 5),
+    plot(
+      gaussian_example_fit,
+      plot_type = "nu",
+      parameters = 5
+    ),
     "Argument `parameters` must be a <character> vector\\."
   )
   expect_error(
-    plot_nus(gaussian_example_fit, parameters = "test"),
+    plot(
+      gaussian_example_fit,
+      plot_type = "nu",
+      parameters = "test"
+    ),
     paste0(
       "Parameter `test` not found or it is of wrong type:\n",
-      'i Use `get_parameter_names\\(\\)` with `types = "nu"` to check ',
-      'suitable parameter names\\.'
+      "i Use `get_parameter_names\\(\\)` with `types = \"nu\"` to check ",
+      "suitable parameter names\\."
     )
   )
 })

@@ -13,6 +13,8 @@
   parameters = NULL,
   responses = NULL,
   types = NULL,
+  times = NULL,
+  groups = NULL,
   summary = FALSE,
   probs = c(0.05, 0.95),
   include_fixed = TRUE,
@@ -43,6 +45,12 @@ samples should be extracted. See details of possible values. Default is
 all values listed in details except spline coefficients \code{omega},
 \code{omega_alpha}, and \code{omega_psi}. See also \code{\link[=get_parameter_types]{get_parameter_types()}}.
 Ignored if the argument \code{parameters} is supplied.}
+
+\item{times}{[\code{double()}]\cr Time point(s) to keep. If \code{NULL}
+(the default), all time points are kept.}
+
+\item{groups}{[\code{character()}] Group name(s) to keep. If \code{NULL}
+(the default), all groups are kept.}
 
 \item{summary}{[\code{logical(1)}]\cr If \code{TRUE}, returns posterior
 mean, standard deviation, and posterior quantiles (as defined by the

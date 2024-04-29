@@ -297,7 +297,6 @@ get_parameters <- function(x) {
   vapply(par_matches, "[[", character(1L), 2L)
 }
 
-
 #' Get Parameter Types of the Dynamite Model
 #'
 #' Extracts all parameter types of used in the `dynamitefit` object. See
