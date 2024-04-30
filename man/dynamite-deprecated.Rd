@@ -9,61 +9,16 @@
 \alias{plot_psis}
 \title{Deprecated Functions in the dynamite Package}
 \usage{
-plot_betas(x, parameters, responses, level, include_alpha, include_cutpoints, n_params, ...)
-plot_deltas(x, parameters, responses, level, alpha, scales, include_alpha, include_cutpoints, times, n_params, ...)
-plot_nus(x, parameters, responses, level, groups, n_params, ...)
-plot_lambdas(x,  responses, level, groups, n_params, ...)
-plot_psis(x, responses, level, alpha, scales, times, n_params, ...)
+plot_betas(x, ...)
+plot_deltas(x,  ...)
+plot_nus(x, ...)
+plot_lambdas(x,  ...)
+plot_psis(x, ...)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
 \item{...}{Not used.}
-
-\item{parameters}{[\code{charecter()}]\cr Parameter name(s) for which the plots
-should be drawn. Possible options can be found with the function
-\code{\link[=get_parameter_names]{get_parameter_names()}}. The default is all parameters of a
-specific type, limited by \code{n_params}.}
-
-\item{responses}{[\code{character()}]\cr Response(s) for which the plots should
-be drawn. Possible options are \code{unique(x$priors$response)}. Default is
-all responses. Ignored if the argument \code{parameters} is supplied.}
-
-\item{type}{[\code{character(1)}]\cr Type of the parameter for which the plots
-should be drawn. Possible options can be found with the function
-\code{\link[=get_parameter_types]{get_parameter_types()}}. Ignored if the argument \code{parameters}
-is supplied or if \code{plot_type} is not \code{"default"}.}
-
-\item{level}{[\code{numeric(1)}]\cr Level for posterior intervals.
-Default is 0.05, leading to 90\% intervals.}
-
-\item{alpha}{[\code{numeric(1)}]\cr Opacity level for \code{geom_ribbon}.
-Default is 0.5.}
-
-\item{scales}{[\code{character(1)}]\cr Should y-axis of the panels be \code{"fixed"}
-(the default) or \code{"free"}? See \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}.}
-
-\item{include_alpha}{[\code{logical(1)}]\cr If \code{TRUE} (default), plots also
-the time-varying alphas if such parameters exists in the model.}
-
-\item{include_cutpoints}{[\code{logical(1)}]\cr If \code{TRUE} (default), plots also
-the cutpoints if such parameters exists in the model (either time-varying
-or time-invariant).}
-
-\item{times}{[\code{integer()}]\cr Time point(s) for which the plots should be
-drawn for time-varying parameters. By default, all time points are
-included, up to the maximum number of parameters specified by \code{n_params}
-starting from the first non-fixed time point.}
-
-\item{groups}{[\code{character(1)}]\cr Group name(s) for which the plots
-should be drawn when \code{plot_type} is \code{"nu"}. The default is all groups.}
-
-\item{n_params}{[\code{integer()}]\cr Maximum number of parameters to plot.
-The default value is set by \code{plot_type}: 5 for \code{"default"}, 50 for
-\code{"beta"}, \code{"nu"} and \code{"lambda"}, and 3 for \code{"delta"} and \code{"psi"}. This
-argument is intended to prevent accidental plots that may be very large
-and time consuming to plot. Please use the \code{parameters}, \code{times}, and
-\code{groups} arguments to fine-tune which parameters to plot.}
 }
 \value{
 A \code{ggplot} object.
@@ -83,11 +38,7 @@ package. They will eventually be completely removed.
 }
 }
 
-\examples{
-data.table::setDTthreads(1) # For CRAN
-plot_betas(gaussian_example_fit)
-
-}
 \seealso{
-\code{\link[=plot.dynamitefit]{plot.dynamitefit()}}
+See \code{\link[=plot.dynamitefit]{plot.dynamitefit()}} for documentation of the
+parameters of these functions
 }
