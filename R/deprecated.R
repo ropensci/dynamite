@@ -10,13 +10,13 @@
 #' plot_nus(x, ...)
 #' plot_lambdas(x,  ...)
 #' plot_psis(x, ...)
-#' @param ... Not used.
 #' @return A `ggplot` object.
 #' @seealso See [dynamite::plot.dynamitefit()] for documentation of the
 #'   parameters of these functions
 #' @export  plot_betas plot_deltas plot_nus plot_lambdas plot_psis
 #' @aliases plot_betas plot_deltas plot_nus plot_lambdas plot_psis
 #' @param x \[`dynamitefit`]\cr The model fit object.
+#' @param ... Not used.
 #' @section Details:
 #'
 #'   * `plot_betas` is now called via `plot(., plot_type = "beta")`
