@@ -5,15 +5,11 @@
 #'
 #' @rdname dynamite-deprecated
 #' @name dynamite-deprecated
-#' @docType package
-#' @usage plot_betas(x, ...)
-#' plot_deltas(x, ...)
-#' plot_nus(x, ...)
-#' plot_lambdas(x, ...)
-#' plot_psis(x, ...)
-#' @export plot_betas plot_deltas plot_nus plot_lambdas plot_psis
-#' @aliases plot_betas plot_deltas plot_nus plot_lambdas plot_psis
-#' @param x \[`dynamitefit`]\cr The model fit object.
+#' @usage plot_betas(x, parameters, responses, level, include_alpha, include_cutpoints, n_params, ...)
+#' plot_deltas(x, parameters, responses, level, alpha, scales, include_alpha, include_cutpoints, times, n_params, ...)
+#' plot_nus(x, parameters, responses, level, groups, n_params, ...)
+#' plot_lambdas(x,  responses, level, groups, n_params, ...)
+#' plot_psis(x, responses, level, alpha, scales, times, n_params, ...)
 #' @param parameters \[`charecter()`]\cr Parameter name(s) for which the plots
 #'   should be drawn. Possible options can be found with the function
 #'   [dynamite::get_parameter_names()]. The default is all parameters of a
@@ -48,9 +44,12 @@
 #'   argument is intended to prevent accidental plots that may be very large
 #'   and time consuming to plot. Please use the `parameters`, `times`, and
 #'   `groups` arguments to fine-tune which parameters to plot.
-#' @param ... Not used..
+#' @param ... Not used.
 #' @return A `ggplot` object.
 #' @seealso [dynamite::plot.dynamitefit()]
+#' @export  plot_betas plot_deltas plot_nus plot_lambdas plot_psis
+#' @aliases plot_betas plot_deltas plot_nus plot_lambdas plot_psis
+#' @param x \[`dynamitefit`]\cr The model fit object.
 #' @section Details:
 #'
 #'   * `plot_betas` is now called via `plot(., plot_type = "beta")`

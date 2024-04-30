@@ -13,6 +13,9 @@
 #'   time-invariant intercept term alpha if time-invariant parameters beta are
 #'   extracted, and time-varying alpha if time-varying delta are extracted.
 #'   Ignored if the argument `parameters` is supplied.
+#' @param include_cutpoints \[`logical(1)`]\cr If `TRUE` (default), plots also
+#'   the cutpoints if such parameters exists in the model (either time-varying
+#'   or time-invariant).
 #' @param summary \[`logical(1)`]\cr If `TRUE` (default), returns posterior
 #'   mean, standard deviation, and posterior quantiles (as defined by the
 #'   `probs` argument) for all parameters. If `FALSE`, returns the

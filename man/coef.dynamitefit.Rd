@@ -55,6 +55,10 @@ time-invariant intercept term alpha if time-invariant parameters beta are
 extracted, and time-varying alpha if time-varying delta are extracted.
 Ignored if the argument \code{parameters} is supplied.}
 
+\item{include_cutpoints}{[\code{logical(1)}]\cr If \code{TRUE} (default), plots also
+the cutpoints if such parameters exists in the model (either time-varying
+or time-invariant).}
+
 \item{...}{Ignored.}
 }
 \value{
