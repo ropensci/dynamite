@@ -1772,7 +1772,7 @@ transformed_parameters_lines_cumulative <- function(y, categories,
       "for (t in 1:T) {{",
       "vector[S_{y}] tmp = exp(append_row(0, cutpoints_{y}[t, ]));",
       "for (s in 1:(S_{y} - 1)) {{",
-      "cutpoints_y[t, s] = log(sum(tmp[1:s]) / sum(tmp[(s + 1):S_{y}]));",
+      "cutpoints_{y}[t, s] = log(sum(tmp[1:s]) / sum(tmp[(s + 1):S_{y}]));",
       "}}",
       "}}",
       .indent = idt(c(1, 1, 2, 2, 3, 2, 1))
