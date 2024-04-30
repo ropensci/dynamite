@@ -622,25 +622,29 @@ loglik_lines_cumulative <- function(y, obs, idt, default, family,
   u <- default$u
   is_logit <- identical("logit", family$link)
   link <- ifelse_(is_logit, "logistic", "probit")
-  alpha <- ifelse_(
+  cutpoints <- ifelse_(
     has_varying_intercept,
-    glue::glue("alpha_{y}[t, ]"),
-    glue::glue("alpha_{y}")
+    glue::glue("cutpoints_{y}[t, ]"),
+    glue::glue("cutpoints_{y}")
   )
   likelihood <- ifelse_(
     default$use_glm && is_logit,
     glue::glue(
       "ll += ordered_{link}_glm_l{u}pmf(y_{y}[t, {obs}] | X[t][{obs}, J_{y}], ",
-      "gamma__{y}, {alpha});"
+      "gamma__{y}, {cutpoints});"
     ),
     glue::glue(
-      "ll += ordered_{link}_l{u}pmf(y_{y}[t, {obs}] | intercept_{y}, {alpha});"
+      "ll += ordered_{link}_l{u}pmf(y_{y}[t, {obs}] | ",
+      "intercept_{y}, {cutpoints});"
     )
   )
   if (default$threading) {
     default$fun_args <- cs(
       default$fun_args,
-      onlyif(has_fixed_intercept, glue::glue("ordered[S_{y} - 1] alpha_{y}"))
+      onlyif(
+        has_fixed_intercept,
+        glue::glue("ordered[S_{y} - 1] cutpoints_{y}")
+      )
     )
   }
   loglik_lines_finalize(idt, default, likelihood)
@@ -1361,14 +1365,11 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
                                      has_varying, has_fixed_intercept,
                                      has_varying_intercept, has_lfactor,
                                      noncentered_psi, nonzero_lambda,
-                                     ydim = y, pos_omega_alpha = FALSE, ...) {
+                                     ydim = y, ...) {
 
   oname <- ifelse_(noncentered, "omega_raw_", "omega_")
-
   # positivity constraint to deal with label-switching
   tr <- ifelse_(has_lfactor && !nonzero_lambda, "<lower=0>", "")
-  # constrain omegas to be positive
-  op <- ifelse_(pos_omega_alpha, "<lower=0>", "")
   paste_rows(
     onlyif(
       has_fixed,
@@ -1387,12 +1388,12 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
     ),
     ifelse_(
       has_fixed_intercept || has_varying_intercept,
-      "real{op} a_{y}; // Mean of the first time point",
+      "real a_{y}; // Mean of the first time point",
       ""
     ),
     onlyif(
       has_varying_intercept,
-      "row_vector{op}[D - 1] omega_raw_alpha_{y}; // Coefficients for alpha"
+      "row_vector[D - 1] omega_raw_alpha_{y}; // Coefficients for alpha"
     ),
     onlyif(
       has_varying_intercept,
@@ -1449,7 +1450,10 @@ parameters_lines_cumulative <- function(y, idt, default,
                                         has_fixed_intercept, ...) {
   paste_rows(
     default,
-    onlyif(has_fixed_intercept, "ordered[S_{y} - 1] alpha_{y}; // Cutpoints"),
+    onlyif(
+      has_fixed_intercept,
+      "ordered[S_{y} - 1] cutpoints_{y}; // Cutpoints"
+    ),
     .indent = idt(c(0, 1))
   )
 }
@@ -1745,42 +1749,45 @@ transformed_parameters_lines_cumulative <- function(y, categories,
                                                     has_varying_intercept,
                                                     default, idt,
                                                     backend, ...) {
-  declare_alpha <- ""
-  state_alpha <- ""
+  declare_cutpoints <- ""
+  state_cutpoints <- ""
   if (has_varying_intercept) {
     S <- length(categories)
-    declare_alpha <- glue::glue(
+    declare_cutpoints <- glue::glue(
       stan_array(
-        backend, "vector", "alpha_{y}", "T", "", "S_{y} - 1"
+        backend, "vector", "cutpoints_{y}", "T", "", "S_{y} - 1"
       )
     )
-    alpha_loop <- vapply(
-      seq(2L, S - 1L),
+    assign_cutpoints <- vapply(
+      seq(1L, S - 1L),
       function(s) {
         glue::glue(
-          "alpha_{y}[t, {s}] = alpha_{y}[t, {s - 1}] + alpha_{y}_{s}[t];"
+          "cutpoints_{y}[, {s}] = alpha_{y}_{s};"
         )
       },
       character(1L)
     )
-    state_alpha <- paste_rows(
+    state_cutpoints <- paste_rows(
+      assign_cutpoints,
       "for (t in 1:T) {{",
-      "alpha_{y}[t, 1] = alpha_{y}_1[t];",
-      alpha_loop,
+      "vector[S_{y}] tmp = exp(append_row(0, cutpoints_{y}[t, ]));",
+      "for (s in 1:(S_{y} - 1)) {{",
+      "cutpoints_y[t, s] = log(sum(tmp[1:s]) / sum(tmp[(s + 1):S_{y}]));",
       "}}",
-      .indent = idt(c(1, 2, 2, 1))
+      "}}",
+      .indent = idt(c(1, 1, 2, 2, 3, 2, 1))
     )
   }
   list(
     declarations = paste_rows(
       ulapply(default, "[[", "declarations"),
-      declare_alpha,
+      declare_cutpoints,
       .parse = FALSE,
       .indent = idt(c(0, 1))
     ),
     statements = paste_rows(
       ulapply(default, "[[", "statements"),
-      state_alpha,
+      state_cutpoints,
       .parse = FALSE,
       .indent = idt(0)
     )
@@ -1964,17 +1971,16 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
       .parse = FALSE
     )
   }
-
   mtext_alpha <- "a_{y} ~ {prior_distr$alpha_prior_distr};"
+  mtext_tau_alpha <- "tau_alpha_{y} ~ {prior_distr$tau_alpha_prior_distr};"
   mtext_varying_intercept <- paste_rows(
     mtext_alpha,
     mtext_omega,
-    "tau_alpha_{y} ~ {prior_distr$tau_alpha_prior_distr};",
+    mtext_tau_alpha,
     .indent = idt(c(0, 1, 1)),
     .parse = FALSE
   )
   mtext_fixed_intercept <- mtext_alpha
-
   if (prior_distr$vectorized_beta) {
     dpars_fixed <-  ifelse_(
       prior_distr$beta_prior_npars > 0L,
@@ -1989,7 +1995,6 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
   } else {
     mtext_fixed <- "beta_{y}[{1:K_fixed}] ~ {prior_distr$beta_prior_distr};"
   }
-
   if (prior_distr$vectorized_tau) {
     dpars_tau <- ifelse_(
       prior_distr$tau_prior_npars > 0L,

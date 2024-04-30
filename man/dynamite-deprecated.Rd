@@ -12,6 +12,10 @@
 \title{Deprecated Functions in the dynamite Package}
 \usage{
 plot_betas(x, ...)
+plot_deltas(x, ...)
+plot_nus(x, ...)
+plot_lambdas(x, ...)
+plot_psis(x, ...)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
@@ -44,6 +48,10 @@ Default is 0.5.}
 \item{include_alpha}{[\code{logical(1)}]\cr If \code{TRUE} (default), plots also
 the time-varying alphas if such parameters exists in the model.}
 
+\item{include_cutpoints}{[\code{logical(1)}]\cr If \code{TRUE} (default), plots also
+the cutpoints if such parameters exists in the model (either time-varying
+or time-invariant).}
+
 \item{times}{[\code{integer()}]\cr Time point(s) for which the plots should be
 drawn for time-varying parameters. By default, all time points are
 included, up to the maximum number of parameters specified by \code{n_params}
@@ -71,9 +79,17 @@ package. They will eventually be completely removed.
 \itemize{
 \item \code{plot_betas} is now called via \code{plot(., plot_type = "beta")}
 \item \code{plot_deltas} is now called via \code{plot(., plot_type = "delta")}
-\item \code{plot_nus} is now called via \code{plot(., plot_type = "delta")}
+\item \code{plot_nus} is now called via \code{plot(., plot_type = "nu")}
 \item \code{plot_lambdas} is now called via \code{plot(., plot_type = "lambda")}
 \item \code{plot_psis} is now called via \code{plot(., plot_type = "psi")}
 }
 }
 
+\examples{
+data.table::setDTthreads(1) # For CRAN
+plot_betas(gaussian_example_fit)
+
+}
+\seealso{
+\code{\link[=plot.dynamitefit]{plot.dynamitefit()}}
+}

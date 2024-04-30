@@ -14,6 +14,7 @@
   summary = TRUE,
   probs = c(0.05, 0.95),
   include_alpha = TRUE,
+  include_cutpoints = TRUE,
   ...
 )
 }
@@ -41,9 +42,9 @@ Ignored if the argument \code{parameters} is supplied.}
 \item{groups}{[\code{character()}] Group name(s) to keep. If \code{NULL}
 (the default), all groups are kept.}
 
-\item{summary}{[\code{logical(1)}]\cr If \code{TRUE}, returns posterior
+\item{summary}{[\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
 mean, standard deviation, and posterior quantiles (as defined by the
-\code{probs} argument) for all parameters. If \code{FALSE} (default), returns the
+\code{probs} argument) for all parameters. If \code{FALSE}, returns the
 posterior samples instead.}
 
 \item{probs}{[\code{numeric()}]\cr Quantiles of interest. Default is
@@ -52,11 +53,7 @@ posterior samples instead.}
 \item{include_alpha}{[\code{logical(1)}]\cr If \code{TRUE} (default), extracts also
 time-invariant intercept term alpha if time-invariant parameters beta are
 extracted, and time-varying alpha if time-varying delta are extracted.
-Ignored if the argument \code{parameters} is supplied.
-@param summary [\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
-mean, standard deviation, and posterior quantiles (as defined by the
-\code{probs} argument) for all parameters. If \code{FALSE}, returns the
-posterior samples instead.}
+Ignored if the argument \code{parameters} is supplied.}
 
 \item{...}{Ignored.}
 }

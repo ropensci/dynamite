@@ -273,7 +273,11 @@ plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
 #' @param scales \[`character(1)`]\cr Should y-axis of the panels be `"fixed"`
 #'   (the default) or `"free"`? See [ggplot2::facet_wrap()].
 #' @param include_alpha \[`logical(1)`]\cr If `TRUE` (default), plots also
-#'   the time-varying alphas if such parameters exists in the model.
+#'   the alphas if such parameters exists in the model (either time-varying or
+#'   time-invariant)
+#' @param include_cutpoints \[`logical(1)`]\cr If `TRUE` (default), plots also
+#'   the cutpoints if such parameters exists in the model (either time-varying
+#'   or time-invariant).
 #' @param n_params \[`integer()`]\cr Maximum number of parameters to plot.
 #'   The default value is set by `plot_type`: 5 for `"default"`, 50 for
 #'   `"beta"`, `"nu"` and `"lambda"`, and 3 for `"delta"` and `"psi"`. This
@@ -292,11 +296,11 @@ plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
 plot.dynamitefit <- function(x, plot_type = c(
                                "default", "beta", "delta", "nu", "lambda", "psi"
                              ),
-                             type = NULL,  parameters = NULL, responses = NULL,
-                             groups = NULL, times = NULL,
-                             level = 0.05, alpha = 0.5,
-                             scales = c("fixed", "free"),
-                             include_alpha = TRUE, n_params = NULL, ...) {
+                             type = NULL, parameters = NULL, responses = NULL,
+                             groups = NULL, times = NULL, level = 0.05,
+                             alpha = 0.5, scales = c("fixed", "free"),
+                             include_alpha = TRUE, include_cutpoints = TRUE,
+                             n_params = NULL, ...) {
   stopifnot_(
     !missing(x),
     "Argument {.arg x} is missing."
@@ -314,8 +318,9 @@ plot.dynamitefit <- function(x, plot_type = c(
   )
   stopifnot_(
     !inherits(plot_type, "try-error"),
-    "Argument {.arg type} must be either
-    {.val response}, {.val mean}, or {.val link}."
+    "Argument {.arg type} must one one of
+    {.val default}, {.val beta}, {.val delta}, {.val nu}, {.val lambda},
+    or {.val psi}."
   )
   stopifnot_(
     !identical(plot_type, "default") || !is.null(parameters) || !is.null(type),
@@ -368,7 +373,15 @@ plot.dynamitefit <- function(x, plot_type = c(
   switch(
     plot_type,
     default = plot_default(x, parameters, type, responses, times, n_params),
-    beta = plot_beta(x, parameters, responses, level, include_alpha, n_params),
+    beta = plot_beta(
+      x,
+      parameters,
+      responses,
+      level,
+      include_alpha,
+      include_cutpoints,
+      n_params
+    ),
     delta = plot_delta(
       x,
       parameters,
@@ -377,6 +390,7 @@ plot.dynamitefit <- function(x, plot_type = c(
       alpha,
       scales,
       include_alpha,
+      include_cutpoints,
       times,
       n_params
     ),
@@ -400,15 +414,9 @@ plot_default <- function(x, parameters, type, responses, times, n_params) {
       times = times
     )
   )
-  n_params <- ifelse_(
-    is.null(n_params),
-    5L,
-    n_params
-  )
   # avoid NSE notes from R CMD check
   parameter <- density <- .iteration <- .chain <- NULL
-  vars <- setdiff(names(out), c(".chain", ".iteration", ".draw"))
-  vars <- vars[seq_len(min(length(vars), n_params))]
+  vars <- filter_params(out, n_params, 5L)
   p_list <- vector(mode = "list", length = 2L * length(vars))
   for (i in seq_along(vars)) {
     v <- vars[i]
@@ -445,7 +453,7 @@ plot_default <- function(x, parameters, type, responses, times, n_params) {
 #' @inheritParams plot.dynamitefit
 #' @noRd
 plot_beta <- function(x, parameters, responses, level,
-                      include_alpha, n_params) {
+                      include_alpha, include_cutpoints, n_params) {
 
   if (!is.null(parameters)) {
     beta_names <- get_parameter_names(x, types = "beta")
@@ -466,14 +474,14 @@ plot_beta <- function(x, parameters, responses, level,
     responses = responses,
     type = "beta",
     probs = c(level, 1 - level),
-    include_alpha = include_alpha
+    include_alpha = include_alpha,
+    include_cutpoints = include_cutpoints
   )
   stopifnot_(
     nrow(coefs) > 0L,
     "The model does not contain fixed coefficients beta."
   )
-  n_params <- ifelse_(is.null(n_params), 50, n_params)
-  coefs <- filter_coefs(coefs, n_params)
+  coefs <- filter_params(coefs, n_params, 50)
   title <- paste0(
     "Posterior mean and ",
     100 * (1 - 2 * level),
@@ -511,7 +519,8 @@ plot_beta <- function(x, parameters, responses, level,
 #' @inheritParams plot.dynamitefit
 #' @noRd
 plot_delta <- function(x, parameters, responses, level, alpha,
-                       scales, include_alpha, times, n_params) {
+                       scales, include_alpha, include_cutpoints,
+                       times, n_params) {
   if (!is.null(parameters)) {
     delta_names <- get_parameter_names(x, types = "delta")
     found_pars <- parameters %in% delta_names
@@ -532,14 +541,14 @@ plot_delta <- function(x, parameters, responses, level, alpha,
     type = "delta",
     times = times,
     probs = c(level, 1 - level),
-    include_alpha = include_alpha
+    include_alpha = include_alpha,
+    include_cutpoints = include_cutpoints
   )
   stopifnot_(
     nrow(coefs) > 0L,
     "The model does not contain varying coefficients delta."
   )
-  n_params <- ifelse_(is.null(n_params), 3, n_params)
-  coefs <- filter_coefs(coefs, n_params)
+  coefs <- filter_params(coefs, n_params, 3L)
   title <- paste0(
     "Posterior mean and ",
     100 * (1 - 2 * level),
@@ -608,8 +617,7 @@ plot_nu <- function(x, parameters, responses, level, groups, n_params) {
     !inherits(coefs, "try-error"),
     "The model does not contain random effects nu."
   )
-  n_params <- ifelse_(is.null(n_params), 50, n_params)
-  coefs <- filter_coefs(coefs, n_params)
+  coefs <- filter_params(coefs, n_params, 50L)
   # avoid NSE notes from R CMD check
   mean <- parameter <- NULL
   coefs$parameter <- glue::glue(
@@ -651,8 +659,7 @@ plot_lambda <- function(x, responses, level, groups, n_params) {
     !inherits(coefs, "try-error"),
     "The model does not contain latent factor psi."
   )
-  n_params <- ifelse_(is.null(n_params), 50, n_params)
-  coefs <- filter_coefs(coefs, n_params)
+  coefs <- filter_params(coefs, n_params, 50L)
   # avoid NSE notes from R CMD check
   time <- mean <- parameter <- NULL
   coefs$parameter <- glue::glue("{coefs$parameter}_{coefs$group}")
@@ -685,8 +692,7 @@ plot_psi <- function(x, responses, level, alpha, scales, times, n_params) {
     nrow(coefs) > 0L,
     "The model does not contain latent factor psi."
   )
-  n_params <- ifelse_(is.null(n_params), 3, n_params)
-  coefs <- filter_coefs(coefs, n_params)
+  coefs <- filter_params(coefs, n_params, 3L)
   title <- paste0(
     "Posterior mean and ",
     100 * (1 - 2 * level),
@@ -720,18 +726,46 @@ plot_psi <- function(x, responses, level, alpha, scales, times, n_params) {
     ggplot2::labs(title = title, x = "Time", y = "Value")
 }
 
-#' Select only specific number of coefficients for plotting
+#' Select only specific number of parameters for plotting
 #'
-#' @param coefs Output of `coef.dynamitefit()`.
+#' @param x Output of `coef.dynamitefit()` or a `draws` object.
 #' @param n_params Number of parameters to keep.
+#' @param n_params_default Number of parameters to keep if `n_params` is `NULL`.
 #' @noRd
-filter_coefs <- function(coefs, n_params) {
-  param <- glue::glue(
-    "{coefs$parameter}_{coefs$category}_{coefs$group}"
+filter_params <- function(x, n_params, n_params_default) {
+  vars <- character(0L)
+  keep_params <- logical(0L)
+  is_draws <- inherits(x, "draws")
+  n_params_set <- !is.null(n_params)
+  n_params <- ifelse_(
+    n_params_set,
+    n_params,
+    n_params_default
   )
-  param <- gsub("_NA", "", param)
-  u_param <- unique(param)
-  n_params <- min(n_params, length(u_param))
-  keep_params <- param %in% u_param[seq_len(n_params)]
-  coefs[keep_params, ]
+  if (is_draws) {
+    vars <- setdiff(names(x), c(".chain", ".iteration", ".draw"))
+    vars_len <- length(vars)
+    keep_params <- logical(vars_len)
+    keep_params[seq_len(min(vars_len, n_params))] <- TRUE
+  } else {
+    param <- glue::glue("{x$parameter}_{x$group}")
+    param <- gsub("_NA", "", param)
+    u_param <- unique(param)
+    n_params <- min(n_params, length(u_param))
+    keep_params <- param %in% u_param[seq_len(n_params)]
+  }
+  onlyif(
+    !n_params_set && !all(keep_params),
+    warning_(c(
+      "Number of parameters to be plotted ({length(keep_params)}) exceeds the
+       maximum number of parameters ({n_params}). The remaining parameters will
+       not be plotted.",
+      `i` = "Please increase {.arg n_params} to plot more parameters."
+    ))
+  )
+  ifelse_(
+    is_draws,
+    vars[keep_params],
+    x[keep_params, ]
+  )
 }

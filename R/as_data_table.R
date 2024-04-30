@@ -119,7 +119,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
     "alpha", "beta", "delta", "tau", "tau_alpha", "xi",
     "sigma_nu", "sigma", "phi", "nu", "lambda", "sigma_lambda",
     "psi", "tau_psi", "corr", "corr_psi", "corr_nu",
-    "omega", "omega_alpha", "omega_psi", "cuts"
+    "omega", "omega_alpha", "omega_psi", "cutpoints"
   )
   if (is.null(types)) {
     types <- ifelse_(
@@ -227,8 +227,15 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   categories <- c(
     NA_character_,
     ulapply(
-      attr(x$stan$responses, "resp_class"),
-      function(y) attr(y, "levels")[-1L]
+      x$stan$responses,
+      function(y) {
+        channel <- get_channel(x, y)
+        if (is_cumulative(channel$family)) {
+          seq_len(channel$S - 1L)
+        } else {
+          channel$categories[-1L]
+        }
+      }
     )
   )
   tmp <- data.table::as.data.table(
@@ -447,23 +454,11 @@ as_data_table_alpha <- function(x, draws, n_draws,
       category = category
     )
   } else {
-    channel <- get_channel(x, response)
-    if (is_cumulative(channel$family)) {
-      S <- channel$S
-      data.table::data.table(
-        parameter = rep(
-          paste0("alpha_", response, "_", seq_len(S - 1L)),
-          each = n_draws
-        ),
-        value = c(draws)
-      )
-    } else{
-      data.table::data.table(
-        parameter = paste0("alpha_", response),
-        value = c(draws),
-        category = category
-      )
-    }
+    data.table::data.table(
+      parameter = paste0("alpha_", response),
+      value = c(draws),
+      category = category
+    )
   }
 }
 
@@ -689,4 +684,38 @@ as_data_table_corr <- function(x, draws, n_draws, resps, ...) {
   )
 }
 
+#' @describeIn as_data_table_default Data Table for a "cutpoints" Parameter
+#' @noRd
+as_data_table_cutpoints <- function(x, draws, response,
+                                    n_draws, include_fixed, ...) {
+  channel <- get_channel(x, response)
+  S <- channel$S
+  fixed <- x$stan$fixed
+  all_time_points <- sort(unique(x$data[[x$time_var]]))
+  if (channel$has_varying_intercept) {
+    time_points <- ifelse_(
+      include_fixed,
+      all_time_points,
+      all_time_points[seq.int(fixed + 1L, length(all_time_points))]
+    )
+    n_na <- include_fixed * fixed * n_draws
+    n_time <- length(time_points)
+    n_time2 <- (n_time - include_fixed * fixed) * (S - 1L)
+    data.table::data.table(
+      parameter = paste0("cutpoints_", response),
+      value = c(
+        rep(NA, n_na),
+        c(draws[, , seq_len(n_time2)])
+      ),
+      category = rep(seq_len(S - 1L), each = n_draws * n_time),
+      time = rep(time_points, each = n_draws)
+    )
+  } else {
+    data.table::data.table(
+      parameter = paste0("cutpoints_", response),
+      category = rep(seq_len(S - 1L), each = n_draws),
+      value = c(draws)
+    )
+  }
+}
 

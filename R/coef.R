@@ -13,7 +13,7 @@
 #'   time-invariant intercept term alpha if time-invariant parameters beta are
 #'   extracted, and time-varying alpha if time-varying delta are extracted.
 #'   Ignored if the argument `parameters` is supplied.
-#'  @param summary \[`logical(1)`]\cr If `TRUE` (default), returns posterior
+#' @param summary \[`logical(1)`]\cr If `TRUE` (default), returns posterior
 #'   mean, standard deviation, and posterior quantiles (as defined by the
 #'   `probs` argument) for all parameters. If `FALSE`, returns the
 #'   posterior samples instead.
@@ -32,7 +32,8 @@ coef.dynamitefit <- function(object,
                              type = c("beta", "delta", "nu", "lambda", "psi"),
                              responses = NULL, times = NULL, groups = NULL,
                              summary = TRUE, probs = c(0.05, 0.95),
-                             include_alpha = TRUE, ...) {
+                             include_alpha = TRUE,
+                             include_cutpoints = TRUE, ...) {
   stopifnot_(
     !missing(object),
     "Argument {.arg object} is missing."
@@ -56,9 +57,17 @@ coef.dynamitefit <- function(object,
       checkmate::test_flag(x = include_alpha),
       "Argument {.arg include_alpha} must be single {.cls logical} value."
     )
+    stopifnot_(
+      checkmate::test_flag(x = include_cutpoints),
+      "Argument {.arg include_cutpoints} must be a single {.cls logical} value."
+    )
   }
-  if (is.null(parameters) && include_alpha && type %in% c("beta", "delta")) {
-    types <- c("alpha", type)
+  if (is.null(parameters) && type %in% c("beta", "delta")) {
+    types <- c(
+      type,
+      onlyif(include_alpha, "alpha"),
+      onlyif(include_cutpoints, "cutpoints")
+    )
     out <- as.data.frame.dynamitefit(
       object,
       parameters = parameters,

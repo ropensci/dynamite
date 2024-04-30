@@ -16,6 +16,7 @@
   alpha = 0.5,
   scales = c("fixed", "free"),
   include_alpha = TRUE,
+  include_cutpoints = TRUE,
   n_params = NULL,
   ...
 )
@@ -68,7 +69,12 @@ Default is 0.5.}
 (the default) or \code{"free"}? See \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}.}
 
 \item{include_alpha}{[\code{logical(1)}]\cr If \code{TRUE} (default), plots also
-the time-varying alphas if such parameters exists in the model.}
+the alphas if such parameters exists in the model (either time-varying or
+time-invariant)}
+
+\item{include_cutpoints}{[\code{logical(1)}]\cr If \code{TRUE} (default), plots also
+the cutpoints if such parameters exists in the model (either time-varying
+or time-invariant).}
 
 \item{n_params}{[\code{integer()}]\cr Maximum number of parameters to plot.
 The default value is set by \code{plot_type}: 5 for \code{"default"}, 50 for
