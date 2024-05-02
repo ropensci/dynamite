@@ -744,20 +744,21 @@ filter_params <- function(x, n_params, n_params_default) {
   )
   if (is_draws) {
     vars <- setdiff(names(x), c(".chain", ".iteration", ".draw"))
-    vars_len <- length(vars)
-    keep_params <- logical(vars_len)
-    keep_params[seq_len(min(vars_len, n_params))] <- TRUE
+    n_vars <- length(vars)
+    keep_params <- logical(n_vars)
+    keep_params[seq_len(min(n_vars, n_params))] <- TRUE
   } else {
-    param <- glue::glue("{x$parameter}_{x$group}")
-    param <- gsub("_NA", "", param)
-    u_param <- unique(param)
-    n_params <- min(n_params, length(u_param))
-    keep_params <- param %in% u_param[seq_len(n_params)]
+    params <- glue::glue("{x$parameter}_{x$group}")
+    params <- gsub("_NA", "", params)
+    u_params <- unique(params)
+    n_u_params <- length(u_params)
+    n_params <- min(n_params, n_u_params)
+    keep_params <- params %in% u_params[seq_len(n_params)]
   }
   onlyif(
     !n_params_set && !all(keep_params),
     warning_(c(
-      "Number of parameters to be plotted ({length(keep_params)}) exceeds the
+      "Number of parameters to be plotted ({n_u_params}) exceeds the
        maximum number of parameters ({n_params}). The remaining parameters will
        not be plotted.",
       `i` = "Please increase {.arg n_params} to plot more parameters."

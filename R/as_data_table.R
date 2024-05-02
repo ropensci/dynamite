@@ -700,16 +700,19 @@ as_data_table_cutpoints <- function(x, draws, response,
     )
     n_na <- include_fixed * fixed * n_draws
     n_time <- length(time_points)
-    n_time2 <- (n_time - include_fixed * fixed) * (S - 1L)
-    data.table::data.table(
-      parameter = paste0("cutpoints_", response),
-      value = c(
-        rep(NA, n_na),
-        c(draws[, , seq_len(n_time2)])
-      ),
-      category = rep(seq_len(S - 1L), each = n_draws * n_time),
-      time = rep(time_points, each = n_draws)
-    )
+    n_time2 <- n_time - include_fixed * fixed
+    data.table::rbindlist(lapply(seq_len(S - 1L), function(i) {
+      idx <- (i - 1L) * n_time2 + seq_len(n_time2)
+      data.table::data.table(
+        parameter = paste0("cutpoints_", response),
+        value = c(
+          rep(NA, n_na),
+          c(draws[, , idx])
+        ),
+        time = rep(time_points, each = n_draws),
+        category = i
+      )
+    }))
   } else {
     data.table::data.table(
       parameter = paste0("cutpoints_", response),
