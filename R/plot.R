@@ -238,24 +238,19 @@ plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
 #' @family plotting
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param plot_type \[`character(1)`]\cr What type of plot to draw? The default
-#'   is `"default"` which draws posterior densities and traceplots of the
-#'   selected parameters. Other options are `"beta"`, `"delta"`, `"nu"`,
-#'   `"lambda"` and `"psi"`. Option `"beta"` draws the posterior intervals
-#'   and means of the `beta` type parameters. Option `"delta"` draws the
-#'   posterior means and intervals as function of time for the `delta` type
-#'   parameters. Option `"nu"` draws the posterior means and intervals for the
-#'   group-specific random intercepts. Option `"lambda"` draws the posterior
-#'   means and intervals for the factor loading, and option `"psi"` draws
-#'   the means and posterior intervals for the latent factors as a function of
-#'   time.
-#' @param type \[`character(1)`]\cr Type of the parameter for which the plots
+#'   is `"default"` which draws posterior means and intervals of the parameters
+#'   selected by `types` or `parameters`. If both `"types"` and
+#'   `parameters` are `NULL`, all parameters are drawn up to the maximum
+#'   specified by `n_params`. Option `"trace"` instead draws posterior
+#'   densities and traceplots of the parameters.
+#' @param types \[`character(1)`]\cr Types of the parameter for which the plots
 #'   should be drawn. Possible options can be found with the function
 #'   [dynamite::get_parameter_types()]. Ignored if the argument `parameters`
-#'   is supplied or if `plot_type` is not `"default"`.
+#'   is supplied.
 #' @param parameters \[`charecter()`]\cr Parameter name(s) for which the plots
 #'   should be drawn. Possible options can be found with the function
-#'   [dynamite::get_parameter_names()]. The default is all parameters of a
-#'   specific type, limited by `n_params`.
+#'   [dynamite::get_parameter_names()]. The default is all parameters,
+#'   limited by `n_params`.
 #' @param responses \[`character()`]\cr Response(s) for which the plots should
 #'   be drawn. Possible options are `unique(x$priors$response)`. Default is
 #'   all responses. Ignored if the argument `parameters` is supplied.
@@ -264,26 +259,21 @@ plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
 #'   included, up to the maximum number of parameters specified by `n_params`
 #'   starting from the first non-fixed time point.
 #' @param groups \[`character(1)`]\cr Group name(s) for which the plots
-#'   should be drawn when `plot_type` is `"nu"` or `"lambda"`.
-#'   The default is all groups.
+#'   should be drawn for group-specific parameters.
 #' @param level \[`numeric(1)`]\cr Level for posterior intervals.
 #'   Default is 0.05, leading to 90% intervals.
 #' @param alpha \[`numeric(1)`]\cr Opacity level for `geom_ribbon`.
 #'   Default is 0.5.
 #' @param scales \[`character(1)`]\cr Should y-axis of the panels be `"fixed"`
 #'   (the default) or `"free"`? See [ggplot2::facet_wrap()].
-#' @param include_alpha \[`logical(1)`]\cr If `TRUE` (default), plots also
-#'   the alphas if such parameters exists in the model (either time-varying or
-#'   time-invariant)
-#' @param include_cutpoints \[`logical(1)`]\cr If `TRUE` (default), plots also
-#'   the cutpoints if such parameters exists in the model (either time-varying
-#'   or time-invariant).
-#' @param n_params \[`integer()`]\cr Maximum number of parameters to plot.
-#'   The default value is set by `plot_type`: 5 for `"default"`, 50 for
-#'   `"beta"`, `"nu"` and `"lambda"`, and 3 for `"delta"` and `"psi"`. This
-#'   argument is intended to prevent accidental plots that may be very large
-#'   and time consuming to plot. Please use the `parameters`, `times`, and
-#'   `groups` arguments to fine-tune which parameters to plot.
+#' @param n_params \[`integer()`]\cr A single value or a vector of length 2
+#'   specifying the maximum number of parameters to plot. If a single value
+#'   is provided, the same limit is used for all parameters. If a vector is
+#'   supplied, the first element defines the maximum number of time-invariant
+#'   parameters to plot and the second the maximum number of time-varying
+#'   parameters to plot. The defaults values are 50 for time-invariant
+#'   parameters and 3 for time-varying parameters. The default value is 5
+#'   for `plot_type == "trace"`.
 #' @param ... Not used..
 #' @return A `ggplot` object.
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.2, BS6.3, BS6.5} Implements the `plot()`
@@ -293,13 +283,11 @@ plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
 #' data.table::setDTthreads(1) # For CRAN
 #' plot(gaussian_example_fit, type = "beta")
 #'
-plot.dynamitefit <- function(x, plot_type = c(
-                               "default", "beta", "delta", "nu", "lambda", "psi"
-                             ),
-                             type = NULL, parameters = NULL, responses = NULL,
-                             groups = NULL, times = NULL, level = 0.05,
-                             alpha = 0.5, scales = c("fixed", "free"),
-                             include_alpha = TRUE, include_cutpoints = TRUE,
+plot.dynamitefit <- function(x, plot_type = c("default", "trace"),
+                             types = NULL, parameters = NULL,
+                             responses = NULL, groups = NULL, times = NULL,
+                             level = 0.05, alpha = 0.5,
+                             scales = c("fixed", "free"),
                              n_params = NULL, ...) {
   stopifnot_(
     !missing(x),
@@ -309,23 +297,14 @@ plot.dynamitefit <- function(x, plot_type = c(
     is.dynamitefit(x),
     "Argument {.arg x} must be a {.cls dynamitefit} object."
   )
+  plot_type <- onlyif(is.character(plot_type), tolower(plot_type))
   plot_type <- try(
-    match.arg(
-      plot_type,
-      c("default", "beta", "delta", "nu", "lambda", "psi")
-    ),
+    match.arg(plot_type, c("default", "trace")),
     silent = TRUE
   )
   stopifnot_(
     !inherits(plot_type, "try-error"),
-    "Argument {.arg type} must one one of
-    {.val default}, {.val beta}, {.val delta}, {.val nu}, {.val lambda},
-    or {.val psi}."
-  )
-  stopifnot_(
-    !identical(plot_type, "default") || !is.null(parameters) || !is.null(type),
-    "Either {.arg parameters} or {.arg type} must be provided when
-     {.arg plot_type} is {.val default}."
+    "Argument {.arg type} must be either {.val default} or {.val trace}."
   )
   stopifnot_(
     checkmate::test_character(
@@ -337,12 +316,13 @@ plot.dynamitefit <- function(x, plot_type = c(
     "Argument {.arg parameters} must be a {.cls character} vector."
   )
   stopifnot_(
-    checkmate::test_string(
-      x = type,
-      na.ok = FALSE,
+    checkmate::test_character(
+      x = types,
+      any.missing = FALSE,
+      min.len = 1L,
       null.ok = TRUE
     ),
-    "Argument {.arg type} must be a single {.cls character} string."
+    "Argument {.arg types} must be a {.cls character} vector."
   )
   stopifnot_(
     checkmate::test_number(
@@ -370,48 +350,94 @@ plot.dynamitefit <- function(x, plot_type = c(
     !inherits(scales, "try-error"),
     "Argument {.arg scales} must be either {.val fixed} or {.val free}."
   )
-  switch(
-    plot_type,
-    default = plot_default(x, parameters, type, responses, times, n_params),
-    beta = plot_beta(
-      x,
-      parameters,
-      responses,
-      level,
-      include_alpha,
-      include_cutpoints,
-      n_params
+  stopifnot_(
+    checkmate::test_integerish(
+      x = n_params,
+      lower = 1.0,
+      any.missing = FALSE,
+      null.ok = TRUE,
+      min.len = 1L,
+      max.len = 2L
     ),
-    delta = plot_delta(
+    "Argument {.arg n_params} must a
+     positive integer vector of at most length 2."
+  )
+  n_params <- ifelse_(
+    !is.null(n_params) && length(n_params) == 1L,
+    c(n_params, n_params),
+    n_params
+  )
+  if (identical(plot_type, "trace")) {
+    plot_trace(
       x,
+      types,
       parameters,
       responses,
+      times,
+      groups,
+      n_params
+    )
+  } else {
+    p_fixed <- plot_fixed(
+      x,
+      types,
+      parameters,
+      responses,
+      times,
+      groups,
       level,
       alpha,
       scales,
-      include_alpha,
-      include_cutpoints,
+      n_params[1L]
+    )
+    p_varying <- plot_varying(
+      x,
+      types,
+      parameters,
+      responses,
       times,
-      n_params
-    ),
-    nu = plot_nu(x, parameters, responses, level, groups, n_params),
-    lambda = plot_lambda(x, responses, level, groups, n_params),
-    psi = plot_psi(x, responses, level, alpha, scales, n_params)
-  )
+      groups,
+      level,
+      alpha,
+      scales,
+      n_params[2L]
+    )
+    stopifnot_(
+      !is.null(p_fixed) || !is.null(p_varying),
+      "The model does not contain any of the specified parameters."
+    )
+    if (is.null(p_fixed)) {
+      p_varying
+    } else if (is.null(p_varying)) {
+      p_fixed
+    } else {
+      patchwork::wrap_plots(
+        p_fixed,
+        patchwork::free(p_varying),
+        heights = c(0.33, 0.66),
+        ncol = 1L,
+        nrow = 2L,
+        byrow = TRUE,
+        guides = "keep"
+      )
+    }
+  }
 }
 
 #' Traceplots and Density Plots for a `dynamitefit` Object
 #'
 #' @inheritParams plot.dynamitefit
 #' @noRd
-plot_default <- function(x, parameters, type, responses, times, n_params) {
+plot_trace <- function(x, types, parameters, responses,
+                       times, groups, n_params) {
   out <- suppressWarnings(
     as_draws_df.dynamitefit(
       x,
       parameters = parameters,
       responses = responses,
-      types = type,
-      times = times
+      types = types,
+      times = times,
+      groups = groups
     )
   )
   # avoid NSE notes from R CMD check
@@ -448,47 +474,72 @@ plot_default <- function(x, parameters, type, responses, times, n_params) {
   )
 }
 
-#' Plot Time-invariant Regression Coefficients of a Dynamite Model
+#' Plot Time-invariant Parameters of a Dynamite Model
 #'
 #' @inheritParams plot.dynamitefit
 #' @noRd
-plot_beta <- function(x, parameters, responses, level,
-                      include_alpha, include_cutpoints, n_params) {
-
+plot_fixed <- function(x, types, parameters, responses,
+                       times, groups, level, alpha, scales, n_params) {
   if (!is.null(parameters)) {
-    beta_names <- get_parameter_names(x, types = "beta")
-    found_pars <- parameters %in% beta_names
+    fixed_names <- get_parameter_names(x, types = fixed_types)
+    found_pars <- parameters %in% fixed_names
     stopifnot_(
       all(found_pars),
       c(
        "Parameter{?s} {.var {parameters[!found_pars]}} not found or
         {?it is/they are} of wrong type:",
-        `i` = 'Use {.fun get_parameter_names} with {.arg types = "beta"} to
+        `i` = 'Use {.fun get_parameter_names} to
         check suitable parameter names.'
       )
     )
   }
+  types <- ifelse_(
+    is.null(types),
+    default_types[default_types %in% fixed_types],
+    types[types %in% fixed_types]
+  )
+  if (length(types) == 0L) {
+    return(NULL)
+  }
   coefs <- coef.dynamitefit(
     x,
+    types = types,
     parameters = parameters,
     responses = responses,
-    type = "beta",
-    probs = c(level, 1 - level),
-    include_alpha = include_alpha,
-    include_cutpoints = include_cutpoints
+    times = times,
+    groups = groups,
+    probs = c(level, 1 - level)
   )
-  stopifnot_(
-    nrow(coefs) > 0L,
-    "The model does not contain fixed coefficients beta."
-  )
+  coefs <- coefs[is.na(coefs$time), ]
+  if (nrow(coefs) == 0L) {
+    return(NULL)
+  }
   coefs <- filter_params(coefs, n_params, 50)
-  title <- paste0(
-    "Posterior mean and ",
-    100 * (1 - 2 * level),
-    "% intervals of the time-invariant coefficients"
+  n_coefs <- nrow(coefs)
+  coefs$parameter <- glue::glue(
+    "{coefs$parameter}_{coefs$category}_{coefs$group}"
+  )
+  # remove NAs from parameters which are not category specific
+  coefs$parameter <- gsub("_NA", "", coefs$parameter)
+  coefs$parameter <- factor(coefs$parameter, levels = coefs$parameter)
+  title_spec <- "time-invariant parameters"
+  if (n_unique(types) == 1L) {
+    title_spec <- switch(
+      types[1L],
+      alpha = "time-invariant intercepts",
+      beta = "time-invariant regression coefficients",
+      cutpoints = "time-invariant cutpoints",
+      nu = "random intercepts",
+      lambda = "latent factor loadings",
+      "time-invariant parameters"
+    )
+  }
+  title <- glue::glue(
+    "Posterior means and {100 * (1 - 2 * level)} ",
+    "% intervals of the {title_spec}"
   )
   # avoid NSE notes from R CMD check
-  time <- mean <- category <- parameter <- NULL
+  time <- mean <- category <- parameter <- type <- NULL
   if (any(!is.na(coefs$category))) {
     p <- ggplot2::ggplot(
       coefs,
@@ -503,6 +554,7 @@ plot_beta <- function(x, parameters, responses, level,
     p <- ggplot2::ggplot(coefs, ggplot2::aes(mean, parameter))
   }
   p +
+    ggplot2::facet_wrap(~type, scales = "free") +
     ggplot2::geom_pointrange(
       ggplot2::aes(
         xmin = !!rlang::sym(paste0("q", 100 * level)),
@@ -510,49 +562,67 @@ plot_beta <- function(x, parameters, responses, level,
       ),
       position = ggplot2::position_dodge(0.5)
     ) +
-    ggplot2::labs(title = title, x = "Value", y = "Parameter")
+    ggplot2::labs(x = "Value", y = "Parameter") +
+    ggplot2::ggtitle(title)
 }
 
 
-#' Plot Time-varying Regression Coefficients of a Dynamite Model
+#' Plot Time-varying Parameters of a Dynamite Model
 #'
 #' @inheritParams plot.dynamitefit
 #' @noRd
-plot_delta <- function(x, parameters, responses, level, alpha,
-                       scales, include_alpha, include_cutpoints,
-                       times, n_params) {
+plot_varying <- function(x, types, parameters, responses,
+                         times, groups, level, alpha, scales, n_params) {
   if (!is.null(parameters)) {
-    delta_names <- get_parameter_names(x, types = "delta")
-    found_pars <- parameters %in% delta_names
+    varying_names <- get_parameter_names(x, types = varying_types)
+    found_pars <- parameters %in% varying_names
     stopifnot_(
       all(found_pars),
       c(
         "Parameter{?s} {.var {parameters[!found_pars]}} not found or
         {?it is/they are} of wrong type:",
-        `i` = 'Use {.fun get_parameter_names} with {.arg types = "delta"} to
+        `i` = 'Use {.fun get_parameter_names} to
         check suitable parameter names.'
       )
     )
   }
+  types <- ifelse_(
+    is.null(types),
+    default_types[default_types %in% varying_types],
+    types[types %in% varying_types]
+  )
+  if (length(types) == 0L) {
+    return(NULL)
+  }
   coefs <- coef.dynamitefit(
     x,
+    types = types,
     parameters = parameters,
     responses = responses,
-    type = "delta",
     times = times,
-    probs = c(level, 1 - level),
-    include_alpha = include_alpha,
-    include_cutpoints = include_cutpoints
+    groups = groups,
+    probs = c(level, 1 - level)
   )
-  stopifnot_(
-    nrow(coefs) > 0L,
-    "The model does not contain varying coefficients delta."
-  )
-  coefs <- filter_params(coefs, n_params, 3L)
-  title <- paste0(
-    "Posterior mean and ",
-    100 * (1 - 2 * level),
-    "% intervals of the time-varying coefficients"
+  coefs <- coefs[!is.na(coefs$time), ]
+  if (nrow(coefs) == 0L) {
+    return(NULL)
+  }
+  coefs <- filter_params(coefs, n_params, 3)
+  n_coefs <- nrow(coefs)
+  title_spec <- "time-varying parameters"
+  if (n_unique(types) == 1L) {
+    title_spec <- switch(
+      types[1L],
+      alpha = "time-varying intercepts",
+      cutpoints = "time-invariant cutpoints",
+      delta = "time-invariant regression coefficients",
+      psi = "latent factors",
+      "time-varying parameters"
+    )
+  }
+  title <- glue::glue(
+    "Posterior means and {100 * (1 - 2 * level)} %",
+    "intervals of the {title_spec}"
   )
   # avoid NSE notes from R CMD check
   time <- mean <- category <- parameter <- NULL
@@ -581,149 +651,8 @@ plot_delta <- function(x, parameters, responses, level, alpha,
     ggplot2::geom_line(na.rm = TRUE) +
     ggplot2::scale_x_continuous(limits = range(coefs$time)) +
     ggplot2::facet_wrap("parameter", scales = scales) +
-    ggplot2::labs(title = title, x = "Time", y = "Value")
-}
-
-#' Plot Random effects of a Dynamite Model
-#'
-#' @inheritParams plot.dynamitefit
-#' @noRd
-plot_nu <- function(x, parameters, responses, level, groups, n_params) {
-  if (!is.null(parameters)) {
-    nu_names <- get_parameter_names(x, types = "nu")
-    found_pars <- parameters %in% nu_names
-    stopifnot_(
-      all(found_pars),
-      c(
-        "Parameter{?s} {.var {parameters[!found_pars]}} not found or
-        {?it is/they are} of wrong type:",
-        `i` = 'Use {.fun get_parameter_names} with {.arg types = "nu"} to
-        check suitable parameter names.'
-      )
-    )
-  }
-  coefs <- try(
-    coef.dynamitefit(
-      x,
-      parameters = parameters,
-      type = "nu",
-      groups = groups,
-      responses = responses,
-      probs = c(level, 1 - level)
-    ),
-    silent = TRUE
-  )
-  stopifnot_(
-    !inherits(coefs, "try-error"),
-    "The model does not contain random effects nu."
-  )
-  coefs <- filter_params(coefs, n_params, 50L)
-  # avoid NSE notes from R CMD check
-  mean <- parameter <- NULL
-  coefs$parameter <- glue::glue(
-    "{coefs$parameter}_{coefs$category}_{coefs$group}"
-  )
-  # remove NAs from parameters which are not category specific
-  coefs$parameter <- gsub("_NA", "", coefs$parameter)
-  coefs$parameter <- factor(coefs$parameter, levels = coefs$parameter)
-  title <- paste0(
-    "Posterior mean and ",
-    100 * (1 - 2 * level),
-    "% intervals of the random intercepts"
-  )
-  ggplot2::ggplot(coefs, ggplot2::aes(mean, parameter)) +
-    ggplot2::geom_pointrange(
-      ggplot2::aes(
-        xmin = !!rlang::sym(paste0("q", 100 * level)),
-        xmax = !!rlang::sym(paste0("q", 100 * (1 - level)))
-      )
-    ) +
-    ggplot2::labs(title = title, x = "Value", y = "Parameter")
-}
-
-#' Plot Factor Loadings of a Dynamite Model
-#'
-#' @inheritParams plot.dynamitefit
-#' @noRd
-plot_lambda <- function(x, responses, level, groups, n_params) {
-  coefs <- try(
-    coef.dynamitefit(
-      x,
-      type = "lambda",
-      responses = responses,
-      probs = c(level, 1 - level)
-    ),
-    silent = TRUE
-  )
-  stopifnot_(
-    !inherits(coefs, "try-error"),
-    "The model does not contain latent factor psi."
-  )
-  coefs <- filter_params(coefs, n_params, 50L)
-  # avoid NSE notes from R CMD check
-  time <- mean <- parameter <- NULL
-  coefs$parameter <- glue::glue("{coefs$parameter}_{coefs$group}")
-  coefs$parameter <- factor(coefs$parameter, levels = coefs$parameter)
-  title <- paste0(
-    "Posterior mean and ",
-    100 * (1 - 2 * level),
-    "% intervals of the latent factor loadings"
-  )
-  ggplot2::ggplot(coefs, ggplot2::aes(mean, parameter)) +
-    ggplot2::geom_pointrange(ggplot2::aes(
-      xmin = !!rlang::sym(paste0("q", 100 * level)),
-      xmax = !!rlang::sym(paste0("q", 100 * (1 - level)))
-    )) +
-    ggplot2::labs(title = title, x = "Value", y = "Parameter")
-}
-
-#' Plot Latent Factors of a Dynamite Model
-#'
-#' @inheritParams plot.dynamitefit
-#' @noRd
-plot_psi <- function(x, responses, level, alpha, scales, times, n_params) {
-  coefs <- coef.dynamitefit(
-    x,
-    type = "psi",
-    responses = responses,
-    probs = c(level, 1 - level)
-  )
-  stopifnot_(
-    nrow(coefs) > 0L,
-    "The model does not contain latent factor psi."
-  )
-  coefs <- filter_params(coefs, n_params, 3L)
-  title <- paste0(
-    "Posterior mean and ",
-    100 * (1 - 2 * level),
-    "% intervals of the latent factors"
-  )
-  # avoid NSE notes from R CMD check
-  time <- mean <- category <- NULL
-  if (any(!is.na(coefs$category))) {
-    p <- ggplot2::ggplot(
-      coefs,
-      ggplot2::aes(
-        time,
-        mean,
-        colour = category,
-        fill = category
-      )
-    )
-  } else {
-    p <- ggplot2::ggplot(coefs, ggplot2::aes(time, mean))
-  }
-  p +
-    ggplot2::geom_ribbon(
-      ggplot2::aes(
-        ymin = !!rlang::sym(paste0("q", 100 * level)),
-        ymax = !!rlang::sym(paste0("q", 100 * (1 - level)))
-      ),
-      alpha = alpha
-    ) +
-    ggplot2::geom_line() +
-    ggplot2::facet_wrap("parameter", scales = scales) +
-    ggplot2::labs(title = title, x = "Time", y = "Value")
+    ggplot2::labs(x = "Time", y = "Value") +
+    ggplot2::ggtitle(title)
 }
 
 #' Select only specific number of parameters for plotting
@@ -747,23 +676,39 @@ filter_params <- function(x, n_params, n_params_default) {
     n_vars <- length(vars)
     keep_params <- logical(n_vars)
     keep_params[seq_len(min(n_vars, n_params))] <- TRUE
+    onlyif(
+      !n_params_set && !all(keep_params),
+      warning_(c(
+        "Number of parameters to be plotted ({n_u_params}) exceeds the
+       maximum number of parameters ({n_params}). The remaining parameters will
+       not be plotted.",
+       `i` = "Please increase {.arg n_params} to plot more parameters."
+      ))
+    )
   } else {
     params <- glue::glue("{x$parameter}_{x$group}")
     params <- gsub("_NA", "", params)
-    u_params <- unique(params)
-    n_u_params <- length(u_params)
-    n_params <- min(n_params, n_u_params)
-    keep_params <- params %in% u_params[seq_len(n_params)]
+    keep_params <- logical(nrow(x))
+    for (type in unique(x$type)) {
+      type_params <- params[x$type == type]
+      u_params <- unique(type_params)
+      n_u_params <- length(u_params)
+      max_params <- min(n_params, n_u_params)
+      keep_type_params <- type_params %in% u_params[seq_len(n_params)]
+      keep_params <- keep_params |
+        params %in% u_params[seq_len(n_params)]
+      onlyif(
+        !n_params_set && !all(keep_type_params),
+        warning_(c(
+          "Number of parameters to be plotted ({n_u_params}) exceeds the
+         maximum number of parameters ({max_params}) for parameters
+         of type {.var type}. The remaining parameters of this type will
+         not be plotted.",
+         `i` = "Please increase {.arg n_params} to plot more parameters."
+        ))
+      )
+    }
   }
-  onlyif(
-    !n_params_set && !all(keep_params),
-    warning_(c(
-      "Number of parameters to be plotted ({n_u_params}) exceeds the
-       maximum number of parameters ({n_params}). The remaining parameters will
-       not be plotted.",
-      `i` = "Please increase {.arg n_params} to plot more parameters."
-    ))
-  )
   ifelse_(
     is_draws,
     vars[keep_params],

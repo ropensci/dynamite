@@ -30,11 +30,11 @@ package. They will eventually be completely removed.
 \section{Details}{
 
 \itemize{
-\item \code{plot_betas} is now called via \code{plot(., plot_type = "beta")}
-\item \code{plot_deltas} is now called via \code{plot(., plot_type = "delta")}
-\item \code{plot_nus} is now called via \code{plot(., plot_type = "nu")}
-\item \code{plot_lambdas} is now called via \code{plot(., plot_type = "lambda")}
-\item \code{plot_psis} is now called via \code{plot(., plot_type = "psi")}
+\item \code{plot_betas} is now called via \code{plot(., types = "beta")}
+\item \code{plot_deltas} is now called via \code{plot(., types = "delta")}
+\item \code{plot_nus} is now called via \code{plot(., types = "nu")}
+\item \code{plot_lambdas} is now called via \code{plot(., types = "lambda")}
+\item \code{plot_psis} is now called via \code{plot(., types = "psi")}
 }
 }
 

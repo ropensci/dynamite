@@ -6,35 +6,34 @@
 \usage{
 \method{coef}{dynamitefit}(
   object,
+  types = NULL,
   parameters = NULL,
-  type = c("beta", "delta", "nu", "lambda", "psi"),
   responses = NULL,
   times = NULL,
   groups = NULL,
   summary = TRUE,
   probs = c(0.05, 0.95),
-  include_alpha = TRUE,
-  include_cutpoints = TRUE,
   ...
 )
 }
 \arguments{
 \item{object}{[\code{dynamitefit}]\cr The model fit object.}
 
+\item{types}{[\code{character()}]\cr Type(s) of the parameters for which the
+samples should be extracted. See details of possible values. Default is
+all values listed in details except spline coefficients \code{omega}.
+This argument is mutually exclusive with \code{parameters}.}
+
 \item{parameters}{[\code{character()}]\cr Parameter(s) for which the samples
 should be extracted. Possible options can be found with function
-\code{get_parameter_names()}. Default is all parameters of specific type for all
-responses.}
-
-\item{type}{[\code{character(1)}]\cr Either \code{beta} (the default) for
-time-invariant coefficients, \code{delta} for time-varying coefficients,
-\code{nu} for random effects, \code{lambda} for factor loadings, or \code{psi} for
-latent factor. Ignored if the argument \code{parameters} is supplied.}
+\code{get_parameter_names()}. Default is all parameters of specific type for
+all responses. This argument is mutually exclusive with \code{types}.}
 
 \item{responses}{[\code{character()}]\cr Response(s) for which the samples
 should be extracted. Possible options are elements of
 \code{unique(x$priors$response)}, and the default is this entire vector.
-Ignored if the argument \code{parameters} is supplied.}
+Ignored if the argument \code{parameters} is supplied.
+\code{omega_alpha}, and \code{omega_psi}. See also \code{\link[=get_parameter_types]{get_parameter_types()}}.}
 
 \item{times}{[\code{double()}]\cr Time point(s) to keep. If \code{NULL}
 (the default), all time points are kept.}
@@ -49,15 +48,6 @@ posterior samples instead.}
 
 \item{probs}{[\code{numeric()}]\cr Quantiles of interest. Default is
 \code{c(0.05, 0.95)}.}
-
-\item{include_alpha}{[\code{logical(1)}]\cr If \code{TRUE} (default), extracts also
-time-invariant intercept term alpha if time-invariant parameters beta are
-extracted, and time-varying alpha if time-varying delta are extracted.
-Ignored if the argument \code{parameters} is supplied.}
-
-\item{include_cutpoints}{[\code{logical(1)}]\cr If \code{TRUE} (default), plots also
-the cutpoints if such parameters exists in the model (either time-varying
-or time-invariant).}
 
 \item{...}{Ignored.}
 }

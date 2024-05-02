@@ -6,8 +6,8 @@
 \usage{
 \method{plot}{dynamitefit}(
   x,
-  plot_type = c("default", "beta", "delta", "nu", "lambda", "psi"),
-  type = NULL,
+  plot_type = c("default", "trace"),
+  types = NULL,
   parameters = NULL,
   responses = NULL,
   groups = NULL,
@@ -15,8 +15,6 @@
   level = 0.05,
   alpha = 0.5,
   scales = c("fixed", "free"),
-  include_alpha = TRUE,
-  include_cutpoints = TRUE,
   n_params = NULL,
   ...
 )
@@ -25,34 +23,28 @@
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
 \item{plot_type}{[\code{character(1)}]\cr What type of plot to draw? The default
-is \code{"default"} which draws posterior densities and traceplots of the
-selected parameters. Other options are \code{"beta"}, \code{"delta"}, \code{"nu"},
-\code{"lambda"} and \code{"psi"}. Option \code{"beta"} draws the posterior intervals
-and means of the \code{beta} type parameters. Option \code{"delta"} draws the
-posterior means and intervals as function of time for the \code{delta} type
-parameters. Option \code{"nu"} draws the posterior means and intervals for the
-group-specific random intercepts. Option \code{"lambda"} draws the posterior
-means and intervals for the factor loading, and option \code{"psi"} draws
-the means and posterior intervals for the latent factors as a function of
-time.}
+is \code{"default"} which draws posterior means and intervals of the parameters
+selected by \code{types} or \code{parameters}. If both \code{"types"} and
+\code{parameters} are \code{NULL}, all parameters are drawn up to the maximum
+specified by \code{n_params}. Option \code{"trace"} instead draws posterior
+densities and traceplots of the parameters.}
 
-\item{type}{[\code{character(1)}]\cr Type of the parameter for which the plots
+\item{types}{[\code{character(1)}]\cr Types of the parameter for which the plots
 should be drawn. Possible options can be found with the function
 \code{\link[=get_parameter_types]{get_parameter_types()}}. Ignored if the argument \code{parameters}
-is supplied or if \code{plot_type} is not \code{"default"}.}
+is supplied.}
 
 \item{parameters}{[\code{charecter()}]\cr Parameter name(s) for which the plots
 should be drawn. Possible options can be found with the function
-\code{\link[=get_parameter_names]{get_parameter_names()}}. The default is all parameters of a
-specific type, limited by \code{n_params}.}
+\code{\link[=get_parameter_names]{get_parameter_names()}}. The default is all parameters,
+limited by \code{n_params}.}
 
 \item{responses}{[\code{character()}]\cr Response(s) for which the plots should
 be drawn. Possible options are \code{unique(x$priors$response)}. Default is
 all responses. Ignored if the argument \code{parameters} is supplied.}
 
 \item{groups}{[\code{character(1)}]\cr Group name(s) for which the plots
-should be drawn when \code{plot_type} is \code{"nu"} or \code{"lambda"}.
-The default is all groups.}
+should be drawn for group-specific parameters.}
 
 \item{times}{[\code{double()}]\cr Time point(s) for which the plots should be
 drawn for time-varying parameters. By default, all time points are
@@ -68,20 +60,14 @@ Default is 0.5.}
 \item{scales}{[\code{character(1)}]\cr Should y-axis of the panels be \code{"fixed"}
 (the default) or \code{"free"}? See \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}.}
 
-\item{include_alpha}{[\code{logical(1)}]\cr If \code{TRUE} (default), plots also
-the alphas if such parameters exists in the model (either time-varying or
-time-invariant)}
-
-\item{include_cutpoints}{[\code{logical(1)}]\cr If \code{TRUE} (default), plots also
-the cutpoints if such parameters exists in the model (either time-varying
-or time-invariant).}
-
-\item{n_params}{[\code{integer()}]\cr Maximum number of parameters to plot.
-The default value is set by \code{plot_type}: 5 for \code{"default"}, 50 for
-\code{"beta"}, \code{"nu"} and \code{"lambda"}, and 3 for \code{"delta"} and \code{"psi"}. This
-argument is intended to prevent accidental plots that may be very large
-and time consuming to plot. Please use the \code{parameters}, \code{times}, and
-\code{groups} arguments to fine-tune which parameters to plot.}
+\item{n_params}{[\code{integer()}]\cr A single value or a vector of length 2
+specifying the maximum number of parameters to plot. If a single value
+is provided, the same limit is used for all parameters. If a vector is
+supplied, the first element defines the maximum number of time-invariant
+parameters to plot and the second the maximum number of time-varying
+parameters to plot. The defaults values are 50 for time-invariant
+parameters and 3 for time-varying parameters. The default value is 5
+for \code{plot_type == "trace"}.}
 
 \item{...}{Not used..}
 }

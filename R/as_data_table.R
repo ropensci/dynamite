@@ -23,8 +23,8 @@
 #'
 as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
                                       row.names = NULL, optional = FALSE,
-                                      parameters = NULL,
-                                      responses = NULL, types = NULL,
+                                      types = NULL, parameters = NULL,
+                                      responses = NULL,
                                       times = NULL, groups = NULL,
                                       summary = FALSE, probs = c(0.05, 0.95),
                                       include_fixed = TRUE, ...) {
@@ -115,12 +115,6 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       "Model does not contain response variable{?s} {.var {responses[!z]}}."
     )
   }
-  all_types <- c(
-    "alpha", "beta", "delta", "tau", "tau_alpha", "xi",
-    "sigma_nu", "sigma", "phi", "nu", "lambda", "sigma_lambda",
-    "psi", "tau_psi", "corr", "corr_psi", "corr_nu",
-    "omega", "omega_alpha", "omega_psi", "cutpoints"
-  )
   if (is.null(types)) {
     types <- ifelse_(
       is.null(parameters),
@@ -534,7 +528,11 @@ as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
     names(get_channel(x, response)$J_varying)
   )
   k <- length(var_names)
-  data.table::data.table(
+  params_ord <- rep(
+    paste0(rep(var_names, each = D), "_d", rep(seq_len(D), k)),
+    each = n_draws
+  )
+  tmp <- data.table::data.table(
     parameter = rep(
       paste0(var_names, "_d", rep(seq_len(D), each = k)),
       each = n_draws
@@ -542,6 +540,7 @@ as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
     value = c(draws),
     category = category
   )
+  tmp[order(match(parameter, params_ord))]
 }
 
 #' @describeIn as_data_table_default Data Table for a "omega_alpha" Parameter
@@ -722,3 +721,67 @@ as_data_table_cutpoints <- function(x, draws, response,
   }
 }
 
+# Parameter types ---------------------------------------------------------
+
+all_types <- c(
+  "alpha",
+  "beta",
+  "corr",
+  "corr_nu",
+  "corr_psi",
+  "cutpoints",
+  "delta",
+  "lambda",
+  "nu",
+  "omega",
+  "omega_alpha",
+  "omega_psi",
+  "phi",
+  "psi",
+  "sigma_nu",
+  "sigma",
+  "sigma_lambda",
+  "tau",
+  "tau_alpha",
+  "tau_psi",
+  "xi"
+)
+
+fixed_types <- c(
+  "alpha",
+  "beta",
+  "corr",
+  "corr_nu",
+  "corr_psi",
+  "cutpoints",
+  "lambda",
+  "nu",
+  "omega",
+  "omega_alpha",
+  "omega_psi",
+  "phi",
+  "sigma",
+  "sigma_lambda",
+  "sigma_nu",
+  "tau",
+  "tau_alpha",
+  "tau_psi",
+  "xi"
+)
+
+varying_types <- c(
+  "alpha",
+  "cutpoints",
+  "delta",
+  "psi"
+)
+
+default_types <- c(
+  "alpha",
+  "beta",
+  "cutpoints",
+  "delta",
+  "lambda",
+  "nu",
+  "psi"
+)

@@ -34,7 +34,7 @@ The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use i
 
 * Support for regular time-invariant effects, group-level random effects, and time-varying effects modeled via Bayesian P-splines.
 * Joint modeling of multiple measurements per individual (multiple channels) based directly on the assumed data generating process. Individual channels can be univariate or multivariate.
-* Support for various distributions: Currently Gaussian, Multivariate Gaussian, Student t, Categorical, Multinomial, Poisson, Bernoulli, Binomial, Negative Binomial, Gamma, Exponential, and Beta distributions are available, and these can be combined arbitrarily in multichannel models.
+* Support for various distributions: Currently Gaussian, Multivariate Gaussian, Student t, Categorical, Ordered, Multinomial, Poisson, Bernoulli, Binomial, Negative Binomial, Gamma, Exponential, and Beta distributions are available, and these can be combined arbitrarily in multichannel models.
 * Allows evaluating realistic long-term counterfactual predictions which take into account the dynamic structure of the model by posterior predictive distribution simulation.
 * Transparent quantification of parameter and predictive uncertainty due to a fully Bayesian approach.
 * User-friendly and efficient R interface with state-of-the-art estimation via Stan. Both `rstan` and `cmdstanr` backends are supported.
@@ -86,17 +86,17 @@ print(gaussian_example_fit)
 
 Posterior estimates of time-varying effects:
 ```{r, fig.width = 9, fig.height = 4}
-plot(gaussian_example_fit, plot_type = "delta", scales = "free")
+plot(gaussian_example_fit, types = c("alpha", "delta"), scales = "free")
 ```
 
-And group-specific intercepts:
+And group-specific intercepts (for first 10 groups):
 ```{r, fig.width = 9, fig.height = 4}
-plot(gaussian_example_fit, plot_type = "nu", groups = 1:10)
+plot(gaussian_example_fit, types = "nu", groups = 1:10)
 ```
 
 Traceplots and density plots for time-invariant parameters:
 ```{r, fig.width = 9, fig.height = 4}
-plot(gaussian_example_fit, type = "beta")
+plot(gaussian_example_fit, plot_type = "trace", types = "beta")
 ```
 
 Posterior predictive samples for the first 4 groups (samples based on the posterior distribution of model parameters and observed data on first time point):

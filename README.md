@@ -32,8 +32,8 @@ methodology from many other approaches are:
   channels) based directly on the assumed data generating process.
   Individual channels can be univariate or multivariate.
 - Support for various distributions: Currently Gaussian, Multivariate
-  Gaussian, Student t, Categorical, Multinomial, Poisson, Bernoulli,
-  Binomial, Negative Binomial, Gamma, Exponential, and Beta
+  Gaussian, Student t, Categorical, Ordered, Multinomial, Poisson,
+  Bernoulli, Binomial, Negative Binomial, Gamma, Exponential, and Beta
   distributions are available, and these can be combined arbitrarily in
   multichannel models.
 - Allows evaluating realistic long-term counterfactual predictions which
@@ -105,8 +105,8 @@ print(gaussian_example_fit)
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  5.511  3.354
-#> chain:2  5.504  3.462
+#> chain:1  5.801  3.542
+#> chain:2  5.658  3.544
 #> 
 #> Summary statistics of the time- and group-invariant parameters:
 #> # A tibble: 6 × 10
@@ -123,15 +123,15 @@ print(gaussian_example_fit)
 Posterior estimates of time-varying effects:
 
 ``` r
-plot(gaussian_example_fit, plot_type = "delta", scales = "free")
+plot(gaussian_example_fit, types = c("alpha", "delta"), scales = "free")
 ```
 
 <img src="man/figures/README-unnamed-chunk-7-1.png" style="display: block; margin: auto;" />
 
-And group-specific intercepts:
+And group-specific intercepts (for first 10 groups):
 
 ``` r
-plot(gaussian_example_fit, plot_type = "nu", groups = 1:10)
+plot(gaussian_example_fit, types = "nu", groups = 1:10)
 ```
 
 <img src="man/figures/README-unnamed-chunk-8-1.png" style="display: block; margin: auto;" />
@@ -139,7 +139,7 @@ plot(gaussian_example_fit, plot_type = "nu", groups = 1:10)
 Traceplots and density plots for time-invariant parameters:
 
 ``` r
-plot(gaussian_example_fit, type = "beta")
+plot(gaussian_example_fit, plot_type = "trace", types = "beta")
 ```
 
 <img src="man/figures/README-unnamed-chunk-9-1.png" style="display: block; margin: auto;" />

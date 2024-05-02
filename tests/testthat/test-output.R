@@ -171,25 +171,25 @@ test_that("tikz formula plot works", {
 
 test_that("betas can be plotted", {
   expect_error(
-    plot(gaussian_example_fit, plot_type = "beta"),
+    plot(gaussian_example_fit, types = "beta"),
     NA
   )
   expect_error(
-    plot(categorical_example_fit, plot_type = "beta"),
+    plot(categorical_example_fit, types = "beta"),
     NA
   )
 })
 
 test_that("deltas can be plotted", {
   expect_error(
-    plot(gaussian_example_fit, plot_type = "delta"),
+    plot(gaussian_example_fit, types = "delta"),
     NA
   )
 })
 
 test_that("nus can be plotted", {
   expect_error(
-    plot(gaussian_example_fit, plot_type = "nu"),
+    plot(gaussian_example_fit, types = "nu"),
     NA
   )
 })

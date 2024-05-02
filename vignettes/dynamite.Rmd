@@ -497,13 +497,13 @@ For `"dynamitefit"` objects, the `summary()` method is a shortcut for `as.data.f
 The default `plot()` method for `"dynamitefit"` objects produces the marginal posterior densities and traceplots of the MCMC chains for the desired parameters by using the `ggplot2` package to produce the plot. This method has the same `parameters` and `responses` arguments as the `as.data.frame()` method, and the argument `type`, which is analogous to the `types` argument of `as.data.frame()`, but accepts only a single character string for plotting parameters of a specific type. Figure \@ref(fig:parameterposteriorplot) shows the posterior density and traceplot of the `beta_y_z` parameter, which is the time-invariant regression coefficient of `y` in the `gaussian_example_fit` model.
 
 ```{r parameterposteriorplot, echo=TRUE, eval=TRUE, warning=FALSE, fig.width=7, fig.height=3.5, fig.cap="Posterior density and traceplots for the time-invariant regression coefficient of `z` in the model for the response variable `y` (parameter `beta_y_z`) in the `gaussian_example_fit` model."}
-plot(gaussian_example_fit, responses = "y", type = "beta")
+plot(gaussian_example_fit, responses = "y", types = "beta")
 ```
 
 There are also customized plotting functions available for specific parameters types such as time-invariant regression coefficients, time-varying regression coefficients, group-specific random effects, latent factor loadings, and latent factors. For instance, we can obtain the posteriors of the time-varying coefficients for the `gaussian_example_fit` object to see how the parameter values change over time, as shown in Figure \@ref(fig:gaussiandeltas).
 
 ```{r gaussiandeltas, echo=TRUE, eval=TRUE, warning=FALSE, fig.width=7, fig.height=3.5, fig.cap="Posterior mean and 90\\% intervals of the time-varying coefficients for the `gaussian_example_fit` model. The panels from left to right show the time-varying intercept for `y`, the time-varying effect of `x` on `y`, and the time-varying effect of `lag(y)` (the previous time-point) on `y`."}
-plot(gaussian_example_fit, plot_type = "delta") + labs(title = "")
+plot(gaussian_example_fit, types = "delta") + labs(title = "")
 ```
 
 The generated Stan code of the model can be extracted with the method `get_code()` as a `"character"` string. This feature of geared towards advanced users who may for example need to make slight modifications to the generated code in order to adapt the model to a specific scenario that cannot be accomplished with the `dynamite` model syntax. The generated code also contains helpful annotations describing the model blocks, parameters, and complicated code sections. Using the argument `blocks`, we can extract only specific blocks of the full model code. To illustrate, we extract the parameters block of the `gaussian_example_fit` model code as the full model code is too large to display.

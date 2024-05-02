@@ -19,29 +19,29 @@
 #' @param ... Not used.
 #' @section Details:
 #'
-#'   * `plot_betas` is now called via `plot(., plot_type = "beta")`
-#'   * `plot_deltas` is now called via `plot(., plot_type = "delta")`
-#'   * `plot_nus` is now called via `plot(., plot_type = "nu")`
-#'   * `plot_lambdas` is now called via `plot(., plot_type = "lambda")`
-#'   * `plot_psis` is now called via `plot(., plot_type = "psi")`
+#'   * `plot_betas` is now called via `plot(., types = "beta")`
+#'   * `plot_deltas` is now called via `plot(., types = "delta")`
+#'   * `plot_nus` is now called via `plot(., types = "nu")`
+#'   * `plot_lambdas` is now called via `plot(., types = "lambda")`
+#'   * `plot_psis` is now called via `plot(., types = "psi")`
 #'
 plot_betas <- function(x, ...) {
   .Deprecated("plot")
-  plot(x, plot_type = "beta", ...)
+  plot(x, types = "beta", ...)
 }
 plot_deltas <- function(x, ...) {
   .Deprecated("plot")
-  plot(x, plot_type = "delta", ...)
+  plot(x, types = "delta", ...)
 }
 plot_nus <- function(x, ...) {
   .Deprecated("plot")
-  plot(x, plot_type = "nu", ...)
+  plot(x, types = "nu", ...)
 }
 plot_lambdas <- function(x, ...) {
   .Deprecated("plot")
-  plot(x, plot_type = "lambda", ...)
+  plot(x, types = "lambda", ...)
 }
 plot_psis <- function(x, ...) {
   .Deprecated("plot")
-  plot(x, plot_type = "psi", ...)
+  plot(x, types = "psi", ...)
 }

@@ -1,3 +1,11 @@
+# dynamite 1.5.1
+
+  * The `type` argument of `coef()` and `plot()` has been replaced by `types` accepting multiple types simultaneously, similar to `as.data.table()` and `as.data.frame()`.
+  * The functions `plot_betas()`, `plot_deltas()`, `plot_nus()`, `plot_lambdas()` and `plot_psis()` have been deprecated and are now provided via the default plot method by selecting the appropriate `types`.
+  * A new argument `plot_type` has been added to control what type of plot will be drawn by the `plot()` method. The default value `"default"` draws the posterior means and posterior intervals of all parameters. The old functionality of drawing posterior densities and traceplots is provided by the option `"trace"`.
+  * The `plot()` method has gained the argument `n_params` to limit the amount of parameters drawn at once (per parameter type).
+  * Both time-varying and time-invariant parameters can now be plotted simultaneously.
+
 # dynamite 1.5.0
 
   * Estimation of dynamic multivariate panel models with multiple imputation is now available via the function `dynamice()` which uses the `mice` package.
@@ -8,7 +16,6 @@
   * Added a vignette on `get_code()` and `get_data()` functions and how they can be used to modify the generated Stan code and perform variational Bayes inference.
   * Contemporaneous dependencies are now allowed between different components of multivariate distributions, e.g., `obs(c(y, x) ~ x | 1, family = "mvgaussian")`.
   * Ordered probit and logit regressions are now available via `obs(., family = "cumulative", link = "probit")` and `obs(., family = "cumulative", link = "logit")`, respectively.
-  * The functions `plot_betas()`, `plot_deltas()`, `plot_nus()`, `plot_lambdas()` and `plot_psis()` have been deprecated and are now provided via the default plot method via the argument `plot_type` instead.
 
 # dynamite 1.4.11
 

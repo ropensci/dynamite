@@ -1404,31 +1404,14 @@ test_that("constrained prior for unconstrained parameter fails", {
 
 test_that("plot errors when the input is not a dynamitefit object", {
   expect_error(
-    plot.dynamitefit(1, type = "beta"),
+    plot.dynamitefit(1, types = "beta"),
     "Argument `x` must be a <dynamitefit> object."
-  )
-})
-
-test_that("plot errors when no type is defined", {
-  expect_error(
-    plot(categorical_example_fit),
-    paste0(
-      "Either `parameters` or `type` must be provided when `plot_type` ",
-      "is \"default\"\\."
-    )
-  )
-})
-
-test_that("plot errors when type is vector", {
-  expect_error(
-    plot(gaussian_example_fit, type = c("beta", "delta")),
-    "Argument `type` must be a single <character> string."
   )
 })
 
 test_that("plot errors when no variable is found ", {
   expect_error(
-    plot(categorical_example_fit, type = "delta"),
+    plot(categorical_example_fit, types = "delta"),
     paste0(
       "No parameters of type `delta` found for any of the response ",
       "channels `x` and `y`."
@@ -1436,69 +1419,12 @@ test_that("plot errors when no variable is found ", {
   )
 })
 
-test_that("plotting deltas errors when the model does not contain deltas", {
-  expect_error(
-    plot(categorical_example_fit, plot_type = "delta"),
-    "The model does not contain varying coefficients delta."
-  )
-})
-
 test_that("plotting nus errors when the model does not contain nus", {
   expect_error(
-    plot(categorical_example_fit, plot_type = "nu"),
-    "The model does not contain random effects nu."
-  )
-})
-
-test_that("plotting betas errors when incorrect parameters are supplied", {
-  expect_error(
-    plot(
-      gaussian_example_fit,
-      plot_type = "beta",
-      parameters = "delta_y_x"
-    ),
+    plot(categorical_example_fit, types = "nu"),
     paste0(
-      "Parameter `delta_y_x` not found or it is of wrong type:\n",
-      'i Use `get_parameter_names\\(\\)` with `types = "beta"` to check ',
-      'suitable parameter names\\.'
-    )
-  )
-})
-
-test_that("plotting deltas errors when incorrect parameters are supplied", {
-  expect_error(
-    plot(
-      gaussian_example_fit,
-      plot_type = "delta",
-      parameters = c("a", "delta_y_x")
-    ),
-    paste0(
-      "Parameter `a` not found or it is of wrong type:\n",
-      'i Use `get_parameter_names\\(\\)` with `types = "delta"` to check ',
-      'suitable parameter names\\.'
-    )
-  )
-})
-
-test_that("plotting nus errors when incorrect parameters are supplied", {
-  expect_error(
-    plot(
-      gaussian_example_fit,
-      plot_type = "nu",
-      parameters = 5
-    ),
-    "Argument `parameters` must be a <character> vector\\."
-  )
-  expect_error(
-    plot(
-      gaussian_example_fit,
-      plot_type = "nu",
-      parameters = "test"
-    ),
-    paste0(
-      "Parameter `test` not found or it is of wrong type:\n",
-      "i Use `get_parameter_names\\(\\)` with `types = \"nu\"` to check ",
-      "suitable parameter names\\."
+      "No parameters of type `nu` found for any of the response ",
+      "channels `x` and `y`."
     )
   )
 })

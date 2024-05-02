@@ -24,19 +24,19 @@
 
 \item{parameters}{[\code{character()}]\cr Parameter(s) for which the samples
 should be extracted. Possible options can be found with function
-\code{get_parameter_names()}. Default is all parameters of specific type for all
-responses.}
+\code{get_parameter_names()}. Default is all parameters of specific type for
+all responses. This argument is mutually exclusive with \code{types}.}
 
 \item{responses}{[\code{character()}]\cr Response(s) for which the samples
 should be extracted. Possible options are elements of
 \code{unique(x$priors$response)}, and the default is this entire vector.
-Ignored if the argument \code{parameters} is supplied.}
+Ignored if the argument \code{parameters} is supplied.
+\code{omega_alpha}, and \code{omega_psi}. See also \code{\link[=get_parameter_types]{get_parameter_types()}}.}
 
 \item{types}{[\code{character()}]\cr Type(s) of the parameters for which the
 samples should be extracted. See details of possible values. Default is
-all values listed in details except spline coefficients \code{omega},
-\code{omega_alpha}, and \code{omega_psi}. See also \code{\link[=get_parameter_types]{get_parameter_types()}}.
-Ignored if the argument \code{parameters} is supplied.}
+all values listed in details except spline coefficients \code{omega}.
+This argument is mutually exclusive with \code{parameters}.}
 
 \item{times}{[\code{double()}]\cr Time point(s) to keep. If \code{NULL}
 (the default), all time points are kept.}
