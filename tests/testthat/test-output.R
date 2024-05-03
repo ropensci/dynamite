@@ -82,7 +82,7 @@ test_that("default plot works", {
 
 test_that("trace type plot works", {
   expect_error(
-    plot(gaussian_example_fit, plot_type = "trace", type = "beta"),
+    plot(gaussian_example_fit, plot_type = "trace", types = "beta"),
     NA
   )
 })

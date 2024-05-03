@@ -157,7 +157,7 @@ Information on the estimated dynamite model can be obtained via
 effective sample sizes, largest Rhat and summary statistics of the
 time- and group-invariant model parameters.
 
-The \code{summary} method provides statistics of the posterior samples of the
+The \code{summary()} method provides statistics of the posterior samples of the
 model; this is an alias of \code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}} with
 \code{summary = TRUE}.
 }

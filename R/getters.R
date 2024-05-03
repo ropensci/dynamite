@@ -318,7 +318,7 @@ get_parameter_types <- function(x, ...) {
 #' @rdname get_parameter_types
 #' @export
 get_parameter_types.dynamitefit <- function(x, ...) {
-  d <- as.data.table(x)
+  d <- as.data.table(x, types = all_types)
   unique(d$type)
 }
 

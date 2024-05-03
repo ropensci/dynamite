@@ -45,7 +45,10 @@ test_that("nonidentifiable lfactor specification gives warning", {
           correlated = TRUE,
           noncentered_psi = TRUE
         ) + splines(30),
-      data = d, time = "time", group = "id", debug = list(no_compile = TRUE)),
+      data = d,
+      time = "time",
+      group = "id",
+      debug = list(no_compile = TRUE)),
     NA
   )
   expect_warning(
@@ -167,14 +170,14 @@ test_that("latent factor related parameters can be got", {
   skip_if_not(run_extended_tests)
   expect_equal(
     get_parameter_types(latent_factor_example_fit),
-    c("alpha", "sigma", "lambda", "sigma_lambda", "psi", "tau_psi", "omega_psi")
+    c("alpha", "lambda", "omega_psi", "psi", "sigma", "sigma_lambda", "tau_psi")
   )
 })
 
 test_that("lambdas can be plotted", {
   skip_if_not(run_extended_tests)
   expect_error(
-    plot_lambdas(latent_factor_example_fit),
+    plot(latent_factor_example_fit, types = "lambda"),
     NA
   )
 })
@@ -182,7 +185,7 @@ test_that("lambdas can be plotted", {
 test_that("psis can be plotted", {
   skip_if_not(run_extended_tests)
   expect_error(
-    plot_psis(latent_factor_example_fit),
+    plot(latent_factor_example_fit, types = "psi"),
     NA
   )
 })

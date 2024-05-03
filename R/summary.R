@@ -1,6 +1,6 @@
 #' Summary for a Dynamite Model Fit
 #'
-#' The `summary` method provides statistics of the posterior samples of the
+#' The `summary()` method provides statistics of the posterior samples of the
 #' model; this is an alias of [dynamite::as.data.frame.dynamitefit()] with
 #' `summary = TRUE`.
 #'

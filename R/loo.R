@@ -88,7 +88,6 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, thin = 1L, ...) {
     )
     loo::loo(ll, r_eff = reff)
   }
-
   if (separate_channels) {
     ll <- split(
       x = data.table::melt(

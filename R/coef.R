@@ -20,7 +20,8 @@
 #' deltas <- coef(gaussian_example_fit, type = "delta")
 #'
 coef.dynamitefit <- function(object,
-                             types = NULL, parameters = NULL,
+                             types = c("alpha", "beta", "delta"),
+                             parameters = NULL,
                              responses = NULL, times = NULL, groups = NULL,
                              summary = TRUE, probs = c(0.05, 0.95), ...) {
   stopifnot_(

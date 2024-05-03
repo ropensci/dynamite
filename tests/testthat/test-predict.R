@@ -151,7 +151,8 @@ test_that("fitted works", {
   idx <- categorical_example_fit$permutation[1L]
   iter <- idx %% n
   chain <- 1 + idx %/% n
-  xzy <- categorical_example_fit$data |> dplyr::filter(id == 5 & time == 20)
+  xzy <- categorical_example_fit$data |>
+    dplyr::filter(id == 5 & time == 20)
   manual <- as_draws(categorical_example_fit) |>
     dplyr::filter(.iteration == iter & .chain == chain) |>
     dplyr::summarise(

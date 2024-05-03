@@ -230,15 +230,16 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
     )
   }
   categories <- c(
-    NA_character_,
     ulapply(
-      x$stan$responses,
+      unlist(x$stan$responses),
       function(y) {
         channel <- get_channel(x, y)
         if (is_cumulative(channel$family)) {
           seq_len(channel$S - 1L)
-        } else {
+        } else if (is_categorical(channel$family)) {
           channel$categories[-1L]
+        } else {
+          NA_character_
         }
       }
     )

@@ -40,11 +40,11 @@ test_that("multivariate gaussian fit and predict work", {
     iter = 2000,
     refresh = 0
   )
-  expect_error(sumr <- summary(fit, type = "corr"), NA)
+  expect_error(sumr <- summary(fit, types = "corr"), NA)
   expect_equal(sumr$mean, cov2cor(S)[2, 1], tolerance = 0.1)
-  expect_error(sumr <- summary(fit, type = "sigma"), NA)
+  expect_error(sumr <- summary(fit, types = "sigma"), NA)
   expect_equal(sumr$mean, c(0.5, sqrt(diag(S))), tolerance = 0.1)
-  expect_error(sumr <- summary(fit, type = "beta"), NA)
+  expect_error(sumr <- summary(fit, types = "beta"), NA)
   expect_equal(sumr$mean, c(0.5, 0.7, -0.2, 0.4), tolerance = 0.1)
   expect_error(predict(fit, n_draws = 5), NA)
 })

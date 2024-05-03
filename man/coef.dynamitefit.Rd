@@ -6,7 +6,7 @@
 \usage{
 \method{coef}{dynamitefit}(
   object,
-  types = NULL,
+  types = c("alpha", "beta", "delta"),
   parameters = NULL,
   responses = NULL,
   times = NULL,
