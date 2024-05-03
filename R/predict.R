@@ -341,6 +341,7 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
     )
   )
   simulated <- newdata[, .SD, .SDcols = c(resp_draw, group_var, time_var)]
+  obs_names <- setdiff(names(newdata), resp_draw)
   mode <- "full"
   if (length(funs) > 0L) {
     mode <- "summary"
@@ -354,7 +355,7 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
     object = object,
     simulated = simulated,
     storage = simulated,
-    observed = newdata[, .SD, .SDcols = setdiff(names(newdata), resp_draw)],
+    observed = newdata[, .SD, .SDcols = obs_names],
     mode = mode,
     type = type,
     eval_type = eval_type,
@@ -396,6 +397,8 @@ predict_ <- function(object, simulated, storage, observed,
     attr(object$dformulas$lag_det, "rank_order")
   )
   ro_ls <- seq_along(lhs_ls)
+  resp_store <- grep("_store", names(observed), value = TRUE)
+  obs_merge <- setdiff(names(observed), c(names(simulated), resp_store))
   n_group <- n_unique(observed[[group_var]])
   time <- observed[[time_var]]
   draw_time <- rep(time, each = n_draws)
@@ -416,8 +419,8 @@ predict_ <- function(object, simulated, storage, observed,
       env = list(n_new = n_new, n_draws = n_draws)
     ]
     simulated[,
-              (".draw") := rep(seq.int(1L, n_draws), n_new),
-              env = list(n_new = n_new, n_draws = n_draws)
+      (".draw") := rep(seq.int(1L, n_draws), n_new),
+      env = list(n_new = n_new, n_draws = n_draws)
     ]
     idx <- which(draw_time == u_time[1L]) + (fixed - 1L) * n_draws
     n_sim <- n_draws
@@ -488,7 +491,10 @@ predict_ <- function(object, simulated, storage, observed,
     for (j in model_topology) {
       cg_idx <- which(channel_groups == j)
       k <- cg_idx[1L]
-      sub <- cbind_datatable(simulated[idx, ], observed[idx_obs, ])
+      sub <- cbind_datatable(
+        simulated[idx, ],
+        observed[idx_obs, .SD, .SDcols = obs_merge]
+      )
       if (is_deterministic(families[[k]])) {
         assign_deterministic_predict(
           simulated,
@@ -553,8 +559,6 @@ predict_ <- function(object, simulated, storage, observed,
   if (identical(mode, "full")) {
     lhs_lag <- c(lhs_ld, lhs_ls)
     if (length(lhs_lag) > 0L) {
-      # This if might not be needed in next version of data.table
-      #simulated[, c(lhs_ld, lhs_ls) := NULL]
       simulated[, c(lhs_lag) := NULL]
     }
     data.table::setkeyv(simulated, cols = c(".draw", group_var, time_var))
