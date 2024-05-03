@@ -31,17 +31,6 @@ coef.dynamitefit <- function(object,
     is.dynamitefit(object),
     "Argument {.arg object} must be a {.cls dynamitefit} object."
   )
-  if (is.null(parameters)) {
-    types <- onlyif(is.character(types), tolower(types))
-    invalid_types <- types[!types %in% all_types]
-    stopifnot_(
-      length(invalid_types) == 0L,
-      c(
-        "Argument {.arg types} must contain only valid types.",
-        `x` = "Invalid types found: {invalid_types}"
-      )
-    )
-  }
   as.data.frame.dynamitefit(
     x = object,
     types = types,

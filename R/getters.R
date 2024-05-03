@@ -318,13 +318,7 @@ get_parameter_types <- function(x, ...) {
 #' @rdname get_parameter_types
 #' @export
 get_parameter_types.dynamitefit <- function(x, ...) {
-  types <- c(
-    "alpha", "beta", "delta", "tau", "tau_alpha", "xi",
-    "sigma_nu", "sigma", "phi", "nu", "lambda", "sigma_lambda",
-    "psi", "tau_psi", "corr", "corr_psi", "corr_nu",
-    "omega", "omega_alpha", "omega_psi"
-  )
-  d <- as.data.table(x, types =  types)
+  d <- as.data.table(x)
   unique(d$type)
 }
 

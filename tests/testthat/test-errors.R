@@ -1083,30 +1083,53 @@ test_that("output without Stan fit fails", {
   }
 })
 
-test_that("Invalid responses fail", {
+test_that("invalid responses fail", {
   expect_error(
-    as.data.frame.dynamitefit(
-      gaussian_example_fit,
-      responses = "resp"
-    ),
-    "Model does not contain response variable `resp`\\."
+    as.data.table(gaussian_example_fit,responses = "resp"),
+    paste0(
+      "Argument `responses` contains invalid response variable names\\.\n",
+      "x Response variable \"resp\" is not recognized\\.\n",
+      "i The response variable of the model is \"y\"\\."
+    )
   )
 })
 
-test_that("Invalid confint level fails", {
-  expect_error(
-    confint.dynamitefit(gaussian_example_fit, level = -0.1),
-    "Argument `level` must be a single <numeric> value between 0 and 1\\."
-  )
-})
-
-test_that("Invalid parameter name fails", {
+test_that("invalid parameters fail", {
   expect_error(
     as.data.table(gaussian_example_fit, parameter = "test"),
     paste0(
-      "Parameter `test` not found in the model output\\.\n",
+      "Argument `parameters` contains invalid parameter names\\.\n",
+      "x Parameter \"test\" is not recognized\\.\n",
       "i Use `get_parameter_names\\(\\)` to check available parameters\\."
     )
+  )
+})
+
+test_that("invalid types fail", {
+  expect_error(
+    as.data.table(gaussian_example_fit, types = c("aa", "bb")),
+    paste0(
+      "Argument `types` contains invalid types\\.\n",
+      "x Types \"aa\" and \"bb\" are not recognized\\.\n",
+      "i Use `get_parameter_types\\(\\)` to check available types\\."
+    )
+  )
+})
+
+test_that("not found parameters fail", {
+  expect_error(
+    as.data.table(categorical_example_fit, types = "delta"),
+    paste0(
+      "No parameters of type `delta` were found for any of the response ",
+      "channels `x` and `y`\\."
+    )
+  )
+})
+
+test_that("invalid confint level fails", {
+  expect_error(
+    confint.dynamitefit(gaussian_example_fit, level = -0.1),
+    "Argument `level` must be a single <numeric> value between 0 and 1\\."
   )
 })
 
@@ -1406,25 +1429,5 @@ test_that("plot errors when the input is not a dynamitefit object", {
   expect_error(
     plot.dynamitefit(1, types = "beta"),
     "Argument `x` must be a <dynamitefit> object."
-  )
-})
-
-test_that("plot errors when no variable is found ", {
-  expect_error(
-    plot(categorical_example_fit, types = "delta"),
-    paste0(
-      "No parameters of type `delta` found for any of the response ",
-      "channels `x` and `y`."
-    )
-  )
-})
-
-test_that("plotting nus errors when the model does not contain nus", {
-  expect_error(
-    plot(categorical_example_fit, types = "nu"),
-    paste0(
-      "No parameters of type `nu` found for any of the response ",
-      "channels `x` and `y`."
-    )
   )
 })

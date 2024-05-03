@@ -75,7 +75,28 @@ test_that("fit object can be printed", {
 
 test_that("default plot works", {
   expect_error(
-    plot(gaussian_example_fit, type = "beta"),
+    plot(gaussian_example_fit, types = "beta"),
+    NA
+  )
+})
+
+test_that("trace type plot works", {
+  expect_error(
+    plot(gaussian_example_fit, plot_type = "trace", type = "beta"),
+    NA
+  )
+})
+
+test_that("combining plots works", {
+  expect_error(
+    plot(gaussian_example_fit, type = c("alpha", "beta")),
+    NA
+  )
+})
+
+test_that("plotting specific parameters works", {
+  expect_error(
+    plot(gaussian_example_fit, parameters = "beta_y_z"),
     NA
   )
 })

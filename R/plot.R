@@ -307,24 +307,6 @@ plot.dynamitefit <- function(x, plot_type = c("default", "trace"),
     "Argument {.arg type} must be either {.val default} or {.val trace}."
   )
   stopifnot_(
-    checkmate::test_character(
-      x = parameters,
-      any.missing = FALSE,
-      min.len = 1L,
-      null.ok = TRUE
-    ),
-    "Argument {.arg parameters} must be a {.cls character} vector."
-  )
-  stopifnot_(
-    checkmate::test_character(
-      x = types,
-      any.missing = FALSE,
-      min.len = 1L,
-      null.ok = TRUE
-    ),
-    "Argument {.arg types} must be a {.cls character} vector."
-  )
-  stopifnot_(
     checkmate::test_number(
       x = level,
       lower = 0.0,
@@ -367,6 +349,9 @@ plot.dynamitefit <- function(x, plot_type = c("default", "trace"),
     c(n_params, n_params),
     n_params
   )
+  if (!is.null(parameters)) {
+    responses <- types <- NULL
+  }
   if (identical(plot_type, "trace")) {
     plot_trace(
       x,
@@ -378,25 +363,24 @@ plot.dynamitefit <- function(x, plot_type = c("default", "trace"),
       n_params
     )
   } else {
-    p_fixed <- plot_fixed(
+    coefs <- coef.dynamitefit(
       x,
-      types,
-      parameters,
-      responses,
-      times,
-      groups,
+      types = types,
+      parameters = parameters,
+      responses = responses,
+      times = times,
+      groups = groups,
+      probs = c(level, 1 - level)
+    )
+    p_fixed <- plot_fixed(
+      coefs,
       level,
       alpha,
       scales,
       n_params[1L]
     )
     p_varying <- plot_varying(
-      x,
-      types,
-      parameters,
-      responses,
-      times,
-      groups,
+      coefs,
       level,
       alpha,
       scales,
@@ -478,38 +462,8 @@ plot_trace <- function(x, types, parameters, responses,
 #'
 #' @inheritParams plot.dynamitefit
 #' @noRd
-plot_fixed <- function(x, types, parameters, responses,
-                       times, groups, level, alpha, scales, n_params) {
-  if (!is.null(parameters)) {
-    fixed_names <- get_parameter_names(x, types = fixed_types)
-    found_pars <- parameters %in% fixed_names
-    stopifnot_(
-      all(found_pars),
-      c(
-       "Parameter{?s} {.var {parameters[!found_pars]}} not found or
-        {?it is/they are} of wrong type:",
-        `i` = 'Use {.fun get_parameter_names} to
-        check suitable parameter names.'
-      )
-    )
-  }
-  types <- ifelse_(
-    is.null(types),
-    default_types[default_types %in% fixed_types],
-    types[types %in% fixed_types]
-  )
-  if (length(types) == 0L) {
-    return(NULL)
-  }
-  coefs <- coef.dynamitefit(
-    x,
-    types = types,
-    parameters = parameters,
-    responses = responses,
-    times = times,
-    groups = groups,
-    probs = c(level, 1 - level)
-  )
+plot_fixed <- function(coefs, level, alpha, scales, n_params) {
+  coefs <- coefs[coefs$type %in% intersect(fixed_types, default_types), ]
   coefs <- coefs[is.na(coefs$time), ]
   if (nrow(coefs) == 0L) {
     return(NULL)
@@ -523,9 +477,9 @@ plot_fixed <- function(x, types, parameters, responses,
   coefs$parameter <- gsub("_NA", "", coefs$parameter)
   coefs$parameter <- factor(coefs$parameter, levels = coefs$parameter)
   title_spec <- "time-invariant parameters"
-  if (n_unique(types) == 1L) {
+  if (n_unique(coefs$type) == 1L) {
     title_spec <- switch(
-      types[1L],
+      coefs$type[1L],
       alpha = "time-invariant intercepts",
       beta = "time-invariant regression coefficients",
       cutpoints = "time-invariant cutpoints",
@@ -571,38 +525,8 @@ plot_fixed <- function(x, types, parameters, responses,
 #'
 #' @inheritParams plot.dynamitefit
 #' @noRd
-plot_varying <- function(x, types, parameters, responses,
-                         times, groups, level, alpha, scales, n_params) {
-  if (!is.null(parameters)) {
-    varying_names <- get_parameter_names(x, types = varying_types)
-    found_pars <- parameters %in% varying_names
-    stopifnot_(
-      all(found_pars),
-      c(
-        "Parameter{?s} {.var {parameters[!found_pars]}} not found or
-        {?it is/they are} of wrong type:",
-        `i` = 'Use {.fun get_parameter_names} to
-        check suitable parameter names.'
-      )
-    )
-  }
-  types <- ifelse_(
-    is.null(types),
-    default_types[default_types %in% varying_types],
-    types[types %in% varying_types]
-  )
-  if (length(types) == 0L) {
-    return(NULL)
-  }
-  coefs <- coef.dynamitefit(
-    x,
-    types = types,
-    parameters = parameters,
-    responses = responses,
-    times = times,
-    groups = groups,
-    probs = c(level, 1 - level)
-  )
+plot_varying <- function(coefs, level, alpha, scales, n_params) {
+  coefs <- coefs[coefs$type %in% intersect(varying_types, default_types), ]
   coefs <- coefs[!is.na(coefs$time), ]
   if (nrow(coefs) == 0L) {
     return(NULL)
@@ -610,9 +534,9 @@ plot_varying <- function(x, types, parameters, responses,
   coefs <- filter_params(coefs, n_params, 3)
   n_coefs <- nrow(coefs)
   title_spec <- "time-varying parameters"
-  if (n_unique(types) == 1L) {
+  if (n_unique(coefs$type) == 1L) {
     title_spec <- switch(
-      types[1L],
+      coefs$type[1L],
       alpha = "time-varying intercepts",
       cutpoints = "time-invariant cutpoints",
       delta = "time-invariant regression coefficients",

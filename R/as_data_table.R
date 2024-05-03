@@ -58,6 +58,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
     ),
     "Argument {.arg responses} must be a {.cls character} vector."
   )
+  types <- onlyif(is.character(types), tolower(types))
   stopifnot_(
     checkmate::test_character(
       x = types,
@@ -109,10 +110,16 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   if (is.null(responses)) {
     responses <- all_responses
   } else {
-    z <- responses %in% all_responses
+    valid_responses <- responses %in% all_responses
     stopifnot_(
-      all(z),
-      "Model does not contain response variable{?s} {.var {responses[!z]}}."
+      all(valid_responses),
+      c(
+        "Argument {.arg responses} contains invalid response variable names.",
+        `x` = "Response variable{?s} {.val {responses[!valid_responses]}}
+               {?is/are} not recognized.",
+        `i` = "The response variable{?s} of the model
+               {?is/are} {.val {all_responses}}."
+      )
     )
   }
   if (is.null(types)) {
@@ -122,11 +129,15 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       all_types
     )
   } else {
-    types <- onlyif(is.character(types), tolower(types))
-    types <- try(match.arg(types, all_types, TRUE), silent = TRUE)
+    match_types <- match(types, all_types)
+    valid_types <- !is.na(match_types)
     stopifnot_(
-      !inherits(types, "try-error"),
-      "Argument {.arg type} contains unknown types."
+      all(valid_types),
+      c(
+        "Argument {.arg types} contains invalid types.",
+        `x` = "Type{?s} {.val {types[!valid_types]}} {?is/are} not recognized.",
+        `i` = "Use {.fun get_parameter_types} to check available types."
+      )
     )
   }
   values <- function(type, response, category) {
@@ -262,7 +273,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   n_pars <- nrow(out)
   stopifnot_(
     n_pars > 0L,
-    "No parameters of type {.var {types}} found for any of the response
+    "No parameters of type {.var {types}} were found for any of the response
      channels {.var {responses}}."
   )
   all_values <- vector(mode = "list", length = n_pars + 1L)
@@ -291,12 +302,13 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   out <- data.table::rbindlist(all_values, fill = TRUE)
   if (!is.null(parameters)) {
     data.table::setkey(out, "parameter")
-    found_pars <- parameters %in% unique(out$parameter)
+    valid_pars <- parameters %in% unique(out$parameter)
     stopifnot_(
-      all(found_pars),
+      all(valid_pars),
       c(
-        "Parameter{?s} {.var {parameters[!found_pars]}} not found in
-         the model output.",
+        "Argument {.arg parameters} contains invalid parameter names.",
+        `x` = "Parameter{?s} {.val {parameters[!valid_pars]}} {?is/are}
+               not recognized.",
         `i` = "Use {.fun get_parameter_names} to check available parameters."
       )
     )
