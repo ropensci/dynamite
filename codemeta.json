@@ -4,17 +4,17 @@
   "identifier": "dynamite",
   "description": "Easy-to-use and efficient interface for Bayesian inference of complex panel (time series) data using dynamic multivariate panel models by Helske and Tikka (2022) <doi:10.31235/osf.io/mdwu5>. The package supports joint modeling of multiple measurements per individual, time-varying and time-invariant effects, and a wide range of discrete and continuous distributions. Estimation of these dynamic multivariate panel models is carried out via 'Stan'. For an in-depth tutorial of the package, see (Tikka and Helske, 2023) <arxiv:2302.01607>.",
   "name": "dynamite: Bayesian Modeling and Causal Inference for Multivariate\n    Longitudinal Data",
-  "relatedLink": ["https://docs.ropensci.org/dynamite/", "https://CRAN.R-project.org/package=dynamite"],
+  "relatedLink": "https://docs.ropensci.org/dynamite/",
   "codeRepository": "https://github.com/ropensci/dynamite/",
   "issueTracker": "https://github.com/ropensci/dynamite/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.3.0 (2023-04-21 ucrt)",
+  "runtimePlatform": "R version 4.3.1 (2023-06-16 ucrt)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -332,7 +332,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "5726.255KB",
+  "fileSize": "5739.626KB",
   "citation": [
     {
       "@type": "CreativeWork",
@@ -392,15 +392,5 @@
       "url": "https://github.com/ropensci/dynamite",
       "description": "R package version 1.0.0"
     }
-  ],
-  "releaseNotes": "https://github.com/ropensci/dynamite/blob/master/NEWS.md",
-  "readme": "https://github.com/ropensci/dynamite/blob/main/README.md",
-  "contIntegration": ["https://github.com/ropensci/dynamite/actions", "https://app.codecov.io/gh/ropensci/dynamite?branch=main"],
-  "developmentStatus": "https://www.repostatus.org/#active",
-  "review": {
-    "@type": "Review",
-    "url": "https://github.com/ropensci/software-review/issues/554",
-    "provider": "https://ropensci.org"
-  },
-  "keywords": ["bayesian-inference", "panel-data", "r", "r-package", "rstats", "stan", "statistical-models"]
+  ]
 }
