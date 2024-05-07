@@ -2,6 +2,14 @@ run_extended_tests <- identical(Sys.getenv("DYNAMITE_EXTENDED_TESTS"), "true")
 
 data.table::setDTthreads(1) # For CRAN
 
+# Capture both message and output types
+capture_all_output <- function(x) {
+  utils::capture.output(
+    utils::capture.output(x, type = "message"),
+    type = "output"
+  )
+}
+
 test_that("multivariate gaussian fit and predict work", {
   skip_if_not(run_extended_tests)
 
@@ -40,13 +48,68 @@ test_that("multivariate gaussian fit and predict work", {
     iter = 2000,
     refresh = 0
   )
-  expect_error(sumr <- summary(fit, types = "corr"), NA)
-  expect_equal(sumr$mean, cov2cor(S)[2, 1], tolerance = 0.1)
-  expect_error(sumr <- summary(fit, types = "sigma"), NA)
-  expect_equal(sumr$mean, c(0.5, sqrt(diag(S))), tolerance = 0.1)
-  expect_error(sumr <- summary(fit, types = "beta"), NA)
-  expect_equal(sumr$mean, c(0.5, 0.7, -0.2, 0.4), tolerance = 0.1)
-  expect_error(predict(fit, n_draws = 5), NA)
+  expect_error(
+    sumr <- summary(fit, types = "corr"),
+    NA
+  )
+  expect_equal(
+    sumr$mean,
+    cov2cor(S)[2, 1],
+    tolerance = 0.1
+  )
+  expect_error(
+    sumr <- summary(fit, types = "sigma"),
+    NA
+  )
+  expect_equal(
+    sumr$mean,
+    c(0.5, sqrt(diag(S))),
+    tolerance = 0.1
+  )
+  expect_error(
+    sumr <- summary(fit, types = "beta"),
+    NA
+  )
+  expect_equal(
+    sumr$mean,
+    c(0.5, 0.7, -0.2, 0.4),
+    tolerance = 0.1
+  )
+  expect_error(
+    pred <- predict(fit, n_draws = 5),
+    NA
+  )
+  expect_true(
+    all(!is.na(pred[, c("y1_new", "y2_new", "x_new")])),
+    NA
+  )
+  expect_error(
+    pred <- predict(fit, n_draws = 5, type = "mean"),
+    NA
+  )
+  pred <- pred[pred$t > 1, ]
+  expect_true(
+    all(!is.na(pred[, c("y1_mean", "y2_mean", "x_mean")])),
+    NA
+  )
+  expect_error(
+    pred <- predict(fit, n_draws = 5, type = "link"),
+    NA
+  )
+  pred <- pred[pred$t > 1, ]
+  expect_true(
+    all(!is.na(pred[, c("y1_link", "y2_link", "x_link")])),
+    NA
+  )
+  pred <- pred[pred$t > 1, ]
+  expect_error(
+    pred <- fitted(fit, n_draws = 5),
+    NA
+  )
+  expect_true(
+    all(!is.na(pred[, c("y1_fitted", "y2_fitted", "x_fitted")])),
+    NA
+  )
 })
 
 test_that("multinomial fit and predict work", {
@@ -109,10 +172,22 @@ test_that("multinomial fit and predict work", {
     pred$y1_new + pred$y2_new + pred$y3_new,
     pred$n
   )
+  expect_error(
+    predict(fit, type = "mean"),
+    NA
+  )
+  expect_error(
+    predict(fit, type = "link"),
+    NA
+  )
+  expect_error(
+    fitted(fit),
+    NA
+  )
 })
 
 
-test_that("cumulative fit works", {
+test_that("time-invariant cumulative fit and predict work", {
   skip_if_not(run_extended_tests)
 
   set.seed(0)
@@ -141,7 +216,7 @@ test_that("cumulative fit works", {
   )
 
   expect_error(
-    fit_logit <- dynamite(
+    fit <- dynamite(
       dformula =
         obs(y ~ x, family = "cumulative", link = "logit"),
       data = d,
@@ -149,6 +224,124 @@ test_that("cumulative fit works", {
       group = "id"
     ),
     NA
+  )
+  expect_error(
+    plot(fit),
+    NA
+  )
+  expect_error(
+    as.data.table(fit, types = "cutpoints"),
+    NA
+  )
+  expect_error(
+    pred <- predict(fit, type = "response", n_draws = 10),
+    NA
+  )
+  expect_true(
+    all(pred$y_new %in% 1:4)
+  )
+  expect_error(
+    pred <- predict(fit, type = "mean", n_draws = 10),
+    NA
+  )
+  expect_true(
+    all(!is.na(pred[, paste0("y_mean_", 1:4)]))
+  )
+  expect_error(
+    pred <- predict(fit, type = "link", n_draws = 10),
+    NA
+  )
+  expect_true(
+    all(!is.na(pred$y_link))
+  )
+  expect_error(
+    pred <- fitted(fit, n_draws = 10),
+    NA
+  )
+  expect_true(
+    all(!is.na(pred[, paste0("y_fitted_", 1:4)]))
+  )
+})
+
+test_that("time-varying cutpoints for cumulative works", {
+  skip_if_not(run_extended_tests)
+
+  set.seed(34)
+
+  n <- 50
+  t <- 30
+  x <- matrix(0, n, t)
+  y <- matrix(0, n, t)
+  alpha_spline <- t(replicate(3, cumsum(rnorm(t, sd = 0.5))))
+  p <- array(0, c(n, 4, t))
+  cutpoints <- matrix(0, 3, t)
+
+  for (i in seq_len(t)) {
+    tmp <- exp(c(0, alpha_spline[, i]))
+    for (j in 1:3) {
+      cutpoints[j, i] = log(sum(tmp[1:j]) / sum(tmp[(j + 1):4]))
+    }
+    x[, i] <- rnorm(n)
+    eta <- 0.6 * x[, i]
+    p[, 1, i] <- 1 - plogis(eta - cutpoints[1, i])
+    p[, 2, i] <- plogis(eta - cutpoints[1, i]) - plogis(eta - cutpoints[2, i])
+    p[, 3, i] <- plogis(eta - cutpoints[2, i]) - plogis(eta - cutpoints[3, i])
+    p[, 4, i] <- plogis(eta - cutpoints[3, i])
+    y[, i] <- apply(p[, , i], 1, sample, x = 1:4, size = 1, replace = TRUE)
+  }
+  d <- data.frame(
+    y = factor(y, levels = c(1,2,3,4)),
+    x = c(x),
+    time = rep(seq_len(t), each = n),
+    id = rep(seq_len(n), t)
+  )
+
+  expect_error(
+    fit <- dynamite(
+      dformula =
+        obs(y ~ -1 + x + varying(~1), family = "cumulative", link = "logit") +
+        splines(10),
+      data = d,
+      time = "time",
+      group = "id"
+    ),
+    NA
+  )
+  expect_error(
+    plot(fit),
+    NA
+  )
+  expect_error(
+    as.data.table(fit, types = "cutpoints"),
+    NA
+  )
+  expect_error(
+    pred <- predict(fit, type = "response", n_draws = 10),
+    NA
+  )
+  expect_true(
+    all(pred$y_new %in% 1:4)
+  )
+  expect_error(
+    pred <- predict(fit, type = "mean", n_draws = 10),
+    NA
+  )
+  expect_true(
+    all(!is.na(pred[, paste0("y_mean_", 1:4)]))
+  )
+  expect_error(
+    pred <- predict(fit, type = "link", n_draws = 10),
+    NA
+  )
+  expect_true(
+    all(!is.na(pred$y_link))
+  )
+  expect_error(
+    pred <- fitted(fit, n_draws = 10),
+    NA
+  )
+  expect_true(
+    all(!is.na(pred[, paste0("y_fitted_", 1:4)]))
   )
 })
 
@@ -408,5 +601,59 @@ test_that("dynamice works", {
       mice_args = list(m = 5, print = FALSE)
     ),
     NA
+  )
+
+  # single group
+  dmiss_single <- d[d$id == 1, ]
+  dmiss_single$id <- NULL
+  expect_error(
+    fit_long <- dynamice(
+      obs(y ~ lag(y), "gaussian"),
+      time = "time",
+      data = dmiss_single,
+      chains = 1,
+      refresh = 0,
+      backend = "rstan",
+      impute_format = "long",
+      keep_imputed = FALSE,
+      mice_args = list(m = 5, print = FALSE)
+    ),
+    NA
+  )
+})
+
+test_that("information on >2 chains is summarized in print", {
+  skip_if_not(run_extended_tests)
+
+  set.seed(1)
+  fit <- dynamite(
+    dformula =
+      obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1), family = "gaussian") +
+      random_spec() +
+      splines(df = 20),
+    data = gaussian_example,
+    time = "time",
+    group = "id",
+    iter = 2000,
+    warmup = 1000,
+    thin = 10,
+    chains = 4,
+    refresh = 0,
+    save_warmup = FALSE,
+    pars = c(
+      "omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L",
+      "sigma_nu", "a_y"
+    ),
+    include = FALSE
+  )
+  out <- capture_all_output(print(gaussian_example_fit))
+  expect_true(
+    any(
+      grepl(
+        "Elapsed time (seconds) for fastest and slowest chains",
+        out,
+        fixed = TRUE
+      )
+    )
   )
 })

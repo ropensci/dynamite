@@ -133,12 +133,16 @@ intercept_lines <- function(y, obs, family, has_varying, has_fixed, has_random,
                             backend, ydim = y, ...) {
 
   intercept_alpha <- ifelse_(
-    has_fixed_intercept,
-    glue::glue("alpha_{y}"),
+    is_cumulative(family),
+    "0",
     ifelse_(
-      has_varying_intercept,
-      glue::glue("alpha_{y}[t]"),
-      "0"
+      has_fixed_intercept,
+      glue::glue("alpha_{y}"),
+      ifelse_(
+        has_varying_intercept,
+        glue::glue("alpha_{y}[t]"),
+        "0"
+      )
     )
   )
   offset <- ifelse_(
@@ -227,12 +231,15 @@ loglik_lines_default <- function(y, idt, obs, family, has_missing,
   )
   glm <- attr(intercept, "glm")
   scalar_intercept <- !has_offset && !has_random && !has_random_intercept &&
-    !has_lfactor && (glm || !has_X)
+    !has_lfactor && (glm || !has_X) && !is_cumulative(family)
   n_obs <- ifelse_(
     nchar(obs),
     paste0("n_obs_", y, "[t]"),
     "N"
   )
+  if (is_cumulative(family) && intercept == "0") {
+    intercept <- glue::glue("rep_vector(0, {n_obs})")
+  }
   intercept_line <- ifelse_(
     scalar_intercept,
     "real intercept_{y} = {intercept};",
@@ -254,9 +261,12 @@ loglik_lines_default <- function(y, idt, obs, family, has_missing,
         "data int N"
       ),
       paste("data", y_type, "y_{y}"),
-      onlyif(has_fixed_intercept, "real alpha_{y}"),
       onlyif(
-        has_varying_intercept,
+        has_fixed_intercept && !is_cumulative(family),
+        "real alpha_{y}"
+      ),
+      onlyif(
+        has_varying_intercept && !is_cumulative(family),
         stan_array_arg(backend, "real", "alpha_{y}", 0L)
       ),
       onlyif(
@@ -618,7 +628,7 @@ loglik_lines_categorical <- function(y, idt, obs, family, has_missing,
 
 loglik_lines_cumulative <- function(y, obs, idt, default, family,
                                     has_fixed_intercept,
-                                    has_varying_intercept, ...) {
+                                    has_varying_intercept, backend, ...) {
   u <- default$u
   is_logit <- identical("logit", family$link)
   link <- ifelse_(is_logit, "logistic", "probit")
@@ -643,7 +653,11 @@ loglik_lines_cumulative <- function(y, obs, idt, default, family,
       default$fun_args,
       onlyif(
         has_fixed_intercept,
-        glue::glue("ordered[S_{y} - 1] cutpoints_{y}")
+        glue::glue("vector cutpoints_{y}")
+      ),
+      onlyif(
+        has_varying_intercept,
+        glue::glue("array[] vector cutpoints_{y}")
       )
     )
   }
@@ -2023,9 +2037,12 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
 model_lines_default <- function(y, obs, idt, threading, default, family, ...) {
   likelihood <- ifelse_(
     threading,
-    glue::glue(
-      "target += reduce_sum({family$name}_loglik_{y}_lpmf, {default$seq1T}, ",
-      "grainsize, {default$fun_call_args});"
+    paste_rows(
+      paste0(
+        "target += reduce_sum({family$name}_loglik_{y}_lpmf, {default$seq1T}, ",
+        "grainsize, {default$fun_call_args});"
+      ),
+      .indent = idt(1)
     ),
     do.call(
       paste0("loglik_lines_", family$name),
@@ -2144,7 +2161,10 @@ model_lines_categorical <- function(y, idt, obs, family, priors,
 model_lines_cumulative <- function(y, obs, idt, priors,
                                    threading, default, ...) {
   if (threading) {
-    default$fun_call_args <- cs(default$fun_call_args, glue::glue("alpha_{y}"))
+    default$fun_call_args <- cs(
+      default$fun_call_args,
+      glue::glue("cutpoints_{y}")
+    )
   }
   paste_rows(
     priors,

@@ -839,13 +839,15 @@ prepare_eval_env_multivariate <- function(e, resp, resp_levels, cvars,
   e$d <- d
   e$resp <- resp
   e$L <- samples[[paste(c("L", resp), collapse = "_")]]
-  e$link_cols <- ifelse_(
-    is_multivariate(e$family) && !is_multinomial(e$family),
-    paste0(resp, "_link"),
-    paste0(resp, "_link_", resp_levels)
-  )
-  e$mean_cols <- paste0(resp, "_mean_", resp_levels)
-  e$fitted_cols <- paste0(resp, "_fitted_", resp_levels)
+  if (is_multivariate(e$family)) {
+    e$link_cols <- paste0(resp, "_link")
+    e$mean_cols <- paste0(resp, "_mean")
+    e$fitted_cols <- paste0(resp, "_fitted")
+  } else {
+    e$link_cols <- paste0(resp, "_link_", resp_levels)
+    e$mean_cols <- paste0(resp, "_mean_", resp_levels)
+    e$fitted_cols <- paste0(resp, "_fitted_", resp_levels)
+  }
   e$sigma <- matrix(0.0, e$n_draws, d)
   has_fixed <- logical(d)
   has_varying <- logical(d)
@@ -1061,8 +1063,8 @@ predict_expr$fitted$categorical <- "
 "
 
 predict_expr$fitted$cumulative <- "
-  prob <- cbind(1, invlink(xbeta - cuts{idx_cuts})) -
-    cbind(invlink(xbeta - cuts{idx_cuts}), 0)
+  prob <- cbind(1, invlink(xbeta - cutpoints{idx_cuts})) -
+    cbind(invlink(xbeta - cutpoints{idx_cuts}), 0)
   for (s in 1:d) {{
     data.table::set(
       x = out,

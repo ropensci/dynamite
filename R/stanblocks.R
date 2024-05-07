@@ -612,11 +612,12 @@ create_transformed_parameters_lines <- function(idt, backend, cvars, cgvars) {
 create_model <- function(idt, backend, cg, cvars, cgvars, mvars, threading) {
   spline_def <- mvars$spline_def
   spline_text <- ""
-  if (!is.null(spline_def) && spline_def$shrinkage) {
-    xi_prior <- mvars$common_priors
-    xi_prior <- xi_prior[xi_prior$parameter == "xi", "prior"]
-    spline_text <- paste_rows("xi ~ {xi_prior};", .indent = idt(1))
-  }
+  # Shringake feature removed for now
+  # if (!is.null(spline_def) && spline_def$shrinkage) {
+  #   xi_prior <- mvars$common_priors
+  #   xi_prior <- xi_prior[xi_prior$parameter == "xi", "prior"]
+  #   spline_text <- paste_rows("xi ~ {xi_prior};", .indent = idt(1))
+  # }
   random_text <- ""
   if (mvars$random_def$M > 0L) {
     if (mvars$random_def$correlated) {

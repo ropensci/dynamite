@@ -8,6 +8,8 @@ capture_all_output <- function(x) {
   )
 }
 
+# Printing ----------------------------------------------------------------
+
 test_that("dynamiteformula can be printed", {
   f <- obs(y ~ x + random(~1), family = "gaussian") +
     lags(k = c(1, 3)) +
@@ -23,6 +25,25 @@ test_that("dynamiteformula can be printed", {
     )
   )
 })
+
+test_that("fit object can be printed", {
+  expect_error(
+    capture_all_output(print(gaussian_example_fit)),
+    NA
+  )
+  expect_error(
+    capture_all_output(print(gaussian_example_fit, full_diagnostics = TRUE)),
+    NA
+  )
+  gaussian_example_fit_null <- gaussian_example_fit
+  gaussian_example_fit_null$stanfit <- NULL
+  expect_output(
+    print(gaussian_example_fit_null),
+    "No Stan model fit is available"
+  )
+})
+
+# Parameter extraction ----------------------------------------------------
 
 test_that("conversion to data.frame works", {
   expect_error(
@@ -56,22 +77,20 @@ test_that("coefficients can be extracted", {
   )
 })
 
-test_that("fit object can be printed", {
-  expect_error(
-    capture_all_output(print(gaussian_example_fit)),
-    NA
-  )
-  expect_error(
-    capture_all_output(print(gaussian_example_fit, full_diagnostics = TRUE)),
-    NA
-  )
-  gaussian_example_fit_null <- gaussian_example_fit
-  gaussian_example_fit_null$stanfit <- NULL
-  expect_output(
-    print(gaussian_example_fit_null),
-    "No Stan model fit is available"
-  )
+test_that("extracting specific time points works", {
+  d <- as.data.table(gaussian_example_fit, types = "delta", times = 10:20)
+  expect_equal(unique(d$time), 10:20)
 })
+
+test_that("extracting specific groups", {
+  expect_error(
+    d <- as.data.table(gaussian_example_fit, types = "nu", groups = 1:10),
+    NA
+  )
+  expect_equal(unique(d$group), 1:10)
+})
+
+# Plotting ----------------------------------------------------------------
 
 test_that("default plot works", {
   expect_error(
@@ -86,6 +105,7 @@ test_that("trace type plot works", {
     NA
   )
 })
+
 
 test_that("combining plots works", {
   expect_error(
@@ -215,6 +235,15 @@ test_that("nus can be plotted", {
   )
 })
 
+test_that("plotting with categories works", {
+  expect_error(
+    plot(categorical_example_fit),
+    NA
+  )
+})
+
+# Formula -----------------------------------------------------------------
+
 test_that("formula can be extracted", {
   expect_error(
     formula(gaussian_example_fit),
@@ -320,6 +349,9 @@ test_that("formula extraction is correct", {
   )
 })
 
+
+# Other methods -----------------------------------------------------------
+
 test_that("MCMC diagnostics can be computed", {
   expect_error(
     capture_all_output(mcmc_diagnostics(gaussian_example_fit)),
@@ -329,6 +361,19 @@ test_that("MCMC diagnostics can be computed", {
   gaussian_example_fit_null$stanfit <- NULL
   expect_output(
     mcmc_diagnostics(gaussian_example_fit_null),
+    "No Stan model fit is available\\."
+  )
+})
+
+test_that("HMC diagnostics can be computed", {
+  expect_error(
+    capture_all_output(hmc_diagnostics(gaussian_example_fit)),
+    NA
+  )
+  gaussian_example_fit_null <- gaussian_example_fit
+  gaussian_example_fit_null$stanfit <- NULL
+  expect_output(
+    hmc_diagnostics(gaussian_example_fit_null),
     "No Stan model fit is available\\."
   )
 })

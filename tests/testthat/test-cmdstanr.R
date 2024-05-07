@@ -165,6 +165,7 @@ test_that("multivariate gaussian with threading produces a valid model", {
 test_that("threading produces valid model code for other distributions", {
   skip_if_not(run_extended_tests)
   skip_on_os("mac")
+
   set.seed(1)
   n_id <- 50L
   n_time <- 20L
@@ -186,6 +187,111 @@ test_that("threading produces valid model code for other distributions", {
     obs(bb ~ lag(b), family = "beta")
   out <- dynamite(
     dformula = f,
+    data = d,
+    time = "time",
+    group = "id",
+    backend = "cmdstanr",
+    threads_per_chain = 2,
+    grainsize = 10,
+    chains = 2,
+    parallel_chains = 1,
+    debug = list(no_compile = TRUE, model_code = TRUE)
+  )
+  e <- new.env()
+  e$file <- cmdstanr::write_stan_file(out$model_code)
+  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  expect_true(model$check_syntax())
+})
+
+test_that("threading produces a valid model for cumulative", {
+  skip_if_not(run_extended_tests)
+  skip_on_os("mac")
+
+  set.seed(0)
+
+  n <- 100
+  t <- 30
+  x <- matrix(0, n, t)
+  y <- matrix(0, n, t)
+  p <- matrix(0, n, 4)
+  alpha <- c(-1, 0, 1)
+
+  for (i in seq_len(t)) {
+    x[, i] <- rnorm(n)
+    eta <- 0.6 * x[, i]
+    p[, 1] <- 1 - plogis(eta - alpha[1])
+    p[, 2] <- plogis(eta - alpha[1]) - plogis(eta - alpha[2])
+    p[, 3] <- plogis(eta - alpha[2]) - plogis(eta - alpha[3])
+    p[, 4] <- plogis(eta - alpha[3])
+    y[, i] <- apply(p, 1, sample, x = 1:4, size = 1, replace = FALSE)
+  }
+
+  d <- data.frame(
+    y = factor(c(y), levels = 1:4), x = c(x),
+    time = rep(seq_len(t), each = n),
+    id = rep(seq_len(n), t)
+  )
+
+  out <- dynamite(
+    dformula = obs(y ~ x, family = "cumulative", link = "logit"),
+    data = d,
+    time = "time",
+    group = "id",
+    backend = "cmdstanr",
+    threads_per_chain = 2,
+    grainsize = 10,
+    chains = 2,
+    parallel_chains = 1,
+    debug = list(no_compile = TRUE, model_code = TRUE)
+  )
+  e <- new.env()
+  e$file <- cmdstanr::write_stan_file(out$model_code)
+  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  expect_true(model$check_syntax())
+
+  out <- dynamite(
+    dformula =
+      obs(y ~ -1 + x + varying(~1), family = "cumulative", link = "logit") +
+      splines(df = 10),
+    data = d,
+    time = "time",
+    group = "id",
+    backend = "cmdstanr",
+    threads_per_chain = 2,
+    grainsize = 10,
+    chains = 2,
+    parallel_chains = 1,
+    debug = list(no_compile = TRUE, model_code = TRUE)
+  )
+  e <- new.env()
+  e$file <- cmdstanr::write_stan_file(out$model_code)
+  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  expect_true(model$check_syntax())
+
+  # no predictors
+  out <- dynamite(
+    dformula =
+      obs(y ~ -1 + varying(~1), family = "cumulative", link = "logit") +
+      splines(df = 10),
+    data = d,
+    time = "time",
+    group = "id",
+    backend = "cmdstanr",
+    threads_per_chain = 2,
+    grainsize = 10,
+    chains = 2,
+    parallel_chains = 1,
+    debug = list(no_compile = TRUE, model_code = TRUE)
+  )
+  e <- new.env()
+  e$file <- cmdstanr::write_stan_file(out$model_code)
+  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  expect_true(model$check_syntax())
+
+  out <- dynamite(
+    dformula =
+      obs(y ~ 1, family = "cumulative", link = "logit") +
+      splines(df = 10),
     data = d,
     time = "time",
     group = "id",
@@ -293,4 +399,120 @@ test_that("syntax is correct for various models", {
   e$file <- cmdstanr::write_stan_file(out$model_code)
   model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
   expect_true(model$check_syntax())
+})
+
+test_that("latent factor syntax is correct", {
+  skip_if_not(run_extended_tests)
+  skip_on_os("mac")
+
+  set.seed(123)
+  N <- 40L
+  T_ <- 20L
+  D <- 10
+  B <- t(splines::bs(1:T_, df = D, intercept = TRUE))
+  z <- rnorm(D)
+  a <- cumsum(z) + rnorm(D)
+  b <- cumsum(z) + rnorm(D)
+  psi <- matrix(0, 2, T_)
+  lambda_yi <- rnorm(N, 1, 0.2)
+  lambda_xi <- rnorm(N, 1, 0.2)
+  for (t in 1:T_) {
+    psi[1, t] <- B[, t] %*% a
+    psi[2, t] <- B[, t] %*% b
+  }
+  y <- matrix(0, N, T_)
+  x <- matrix(0, N, T_)
+  for (t in 1:T_) {
+    y[, t] <- rnorm(N, lambda_yi * psi[1, t], 0.2)
+    x[, t] <- rnorm(N, lambda_xi * psi[2, t], 0.2)
+  }
+  latent_factor_example <- data.frame(
+    y = c(y),
+    x = c(y),
+    id = seq_len(N),
+    time = rep(seq_len(T_), each = N)
+  )
+  code <- get_code(
+    x = obs(y ~ 1, family = "gaussian") +
+      obs(x ~ 1, family = "gaussian") +
+      lfactor(
+        nonzero_lambda = FALSE,
+        noncentered_psi = TRUE,
+        correlated = FALSE
+      ) +
+      splines(df = 10),
+    data = latent_factor_example,
+    group = "id",
+    time = "time"
+  )
+  e <- new.env()
+  e$file <- cmdstanr::write_stan_file(code)
+  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  expect_true(model$check_syntax())
+
+  code <- get_code(
+    x = obs(y ~ 1, family = "gaussian") +
+      obs(x ~ 1, family = "gaussian") +
+      lfactor(
+        nonzero_lambda = TRUE,
+        noncentered_psi = FALSE,
+        correlated = TRUE
+      ) +
+      splines(df = 10),
+    data = latent_factor_example,
+    group = "id",
+    time = "time"
+  )
+  e <- new.env()
+  e$file <- cmdstanr::write_stan_file(code)
+  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  expect_true(model$check_syntax())
+
+  code <- get_code(
+    x = obs(y ~ 1, family = "gaussian") +
+      obs(x ~ 1, family = "gaussian") +
+      lfactor(
+        nonzero_lambda = FALSE,
+        noncentered_psi = TRUE,
+        correlated = FALSE
+      ) +
+      splines(df = 10),
+    data = latent_factor_example,
+    group = "id",
+    time = "time"
+  )
+  e <- new.env()
+  e$file <- cmdstanr::write_stan_file(code)
+  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  expect_true(model$check_syntax())
+})
+
+test_that("dynamice with cmdstanr backend works", {
+  skip_if_not(run_extended_tests)
+  skip_on_os("mac")
+
+  set.seed(1)
+  n <- 50
+  p <- 1000
+  y <- replicate(p, stats::arima.sim(list(ar = 0.7), n, sd = 0.1))
+  d <- data.frame(y = c(y), time = 1:n, id = rep(seq_len(p), each = n))
+  dmiss <- d
+  dmiss$y[sample(seq_len(nrow(d)), size = 0.2 * nrow(d))] <- NA
+
+  # Long format imputation
+  expect_error(
+    fit_long <- dynamice(
+      obs(y ~ lag(y), "gaussian"),
+      time = "time",
+      group = "id",
+      data = dmiss,
+      chains = 1,
+      refresh = 0,
+      backend = "cmdstanr",
+      impute_format = "long",
+      keep_imputed = FALSE,
+      mice_args = list(m = 5, print = FALSE)
+    ),
+    NA
+  )
 })

@@ -229,19 +229,22 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       )
     )
   }
-  categories <- c(
-    ulapply(
-      unlist(x$stan$responses),
-      function(y) {
-        channel <- get_channel(x, y)
-        if (is_cumulative(channel$family)) {
-          seq_len(channel$S - 1L)
-        } else if (is_categorical(channel$family)) {
-          channel$categories[-1L]
-        } else {
-          NA_character_
+  categories <- unique(
+    c(
+      NA_character_,
+      ulapply(
+        unlist(x$stan$responses),
+        function(y) {
+          channel <- get_channel(x, y)
+          if (is_cumulative(channel$family)) {
+            seq_len(channel$S - 1L)
+          } else if (is_categorical(channel$family)) {
+            channel$categories[-1L]
+          } else {
+            NA_character_
+          }
         }
-      }
+      )
     )
   )
   tmp <- data.table::as.data.table(
@@ -368,18 +371,20 @@ as_data_table_default <- function(type, draws, response, ...) {
   )
 }
 
+#' Shrinkage feature removed at least for now.
+#'
 #' @describeIn as_data_table_default Data Table for a "xi" Parameter
 #' @noRd
-as_data_table_xi <- function(x, draws, n_draws, ...) {
-  D <- x$stan$model_vars$D
-  data.table::data.table(
-    parameter = rep(
-      paste0("xi_d", seq_len(D - 1L)),
-      each = n_draws
-    ),
-    value = c(draws)
-  )
-}
+# as_data_table_xi <- function(x, draws, n_draws, ...) {
+#   D <- x$stan$model_vars$D
+#   data.table::data.table(
+#     parameter = rep(
+#       paste0("xi_d", seq_len(D - 1L)),
+#       each = n_draws
+#     ),
+#     value = c(draws)
+#   )
+# }
 
 #' @describeIn as_data_table_default Data Table for a "corr_nu" Parameter
 #' @noRd

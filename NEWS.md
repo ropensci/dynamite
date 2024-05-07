@@ -5,6 +5,7 @@
   * A new argument `plot_type` has been added to control what type of plot will be drawn by the `plot()` method. The default value `"default"` draws the posterior means and posterior intervals of all parameters. The old functionality of drawing posterior densities and traceplots is provided by the option `"trace"`.
   * The `plot()` method has gained the argument `n_params` to limit the amount of parameters drawn at once (per parameter type).
   * Both time-varying and time-invariant parameters can now be plotted simultaneously.
+  * Fixed an issue with `predict()` and `fitted()` for multinomial responses.
 
 # dynamite 1.5.0
 

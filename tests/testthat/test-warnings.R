@@ -291,3 +291,28 @@ test_that("windows and old rstan warns on attach", {
     )
   )
 })
+
+# Deprecated --------------------------------------------------------------
+
+test_that("deprecated work and warn", {
+  expect_warning(
+    plot_betas(gaussian_example_fit),
+    "'plot_betas' is deprecated"
+  )
+  expect_warning(
+    plot_deltas(gaussian_example_fit),
+    "'plot_deltas' is deprecated"
+  )
+  expect_warning(
+    plot_nus(gaussian_example_fit),
+    "'plot_nus' is deprecated"
+  )
+  expect_warning(
+    try(plot_lambdas(gaussian_example_fit), silent = TRUE),
+    "'plot_lambdas' is deprecated"
+  )
+  expect_warning(
+    try(plot_psis(gaussian_example_fit), silent = TRUE),
+    "'plot_psis' is deprecated"
+  )
+})

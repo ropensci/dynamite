@@ -11,6 +11,7 @@
 #'
 #'  * `alpha`\cr Intercept terms (time-invariant or time-varying).
 #'  * `beta`\cr Time-invariant regression coefficients.
+#'  * `cutpoints`\cr Cutpoints for ordinal regression.
 #'  * `delta`\cr Time-varying regression coefficients.
 #'  * `nu`\cr Group-level random effects.
 #'  * `lambda`\cr Factor loadings.

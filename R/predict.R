@@ -465,6 +465,13 @@ predict_ <- function(object, simulated, storage, observed,
     )
     idx_summ <- which(summaries[[time_var]] == u_time[1L]) + (fixed - 1L)
   }
+  data.table::setcolorder(
+    simulated,
+    neworder = c(
+      group_var, time_var, ".draw",
+      setdiff(names(simulated), c(group_var, time_var, ".draw"))
+    )
+  )
   eval_envs <- prepare_eval_envs(
     object,
     simulated,
