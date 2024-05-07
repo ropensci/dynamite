@@ -19,6 +19,10 @@
 #'   kept in the return object? The default is `FALSE`. If `TRUE`, the
 #'   imputations will be included in the `imputed` field in the return object
 #'   that is otherwise `NULL`.
+#' @param stan_csv_dir \[`character(1)`] A directory path to output the
+#'   Stan .csv files when `backend` is `"cmdstanr"`. The files are saved here
+#'   via `$save_output_files()` to avoid garbage collection between sampling
+#'   runs with different imputed datasets.
 #' @export
 dynamice <- function(dformula, data, time, group = NULL,
                      priors = NULL, backend = "rstan",
@@ -27,7 +31,7 @@ dynamice <- function(dformula, data, time, group = NULL,
                      threads_per_chain = 1L, grainsize = NULL,
                      custom_stan_model = NULL, debug = NULL,
                      mice_args = list(), impute_format = "wide",
-                     keep_imputed = FALSE, ...) {
+                     keep_imputed = FALSE, stan_csv_dir = tempdir(), ...) {
   stopifnot_(
     requireNamespace("mice"),
     "Please install the {.pkg mice} package to use multiple imputation."
@@ -63,12 +67,14 @@ dynamice <- function(dformula, data, time, group = NULL,
     checkmate::test_flag(x = keep_imputed),
     "Argument {.arg keep_imputed} must be a single {.cls logical} value."
   )
-  data <- droplevels(data)
-  data <- data.table::as.data.table(data)
   stopifnot_(
     any(is.na(data)),
     "Argument {.arg data} does not contain missing values."
   )
+  if (data.table::is.data.table(data)) {
+    data <- data.table::copy(data)
+    data.table::setDF(data)
+  }
   if (is.null(group)) {
     group <- ".group"
     data_names <- names(data)
@@ -134,12 +140,12 @@ dynamice <- function(dformula, data, time, group = NULL,
       e$args <- c(
         list(data = tmp$stan_input$sampling_vars),
         dots,
-        #output_dir = outputdir, #TODO outputdir? should this be dynamice arg?
         threads_per_chain = onlyif(threads_per_chain > 1L, threads_per_chain)
       )
       sampling_out <- with(e, {
         do.call(model$sample, args)
       })
+      sampling_out$save_output_files(dir = stan_csv_dir)
       filenames[i] <- sampling_out$output_files()
     }
   }
@@ -322,6 +328,9 @@ impute_long <- function(dformula, data, time, group, backend, mice_args) {
   pred_mat[lead_pred, group] <- 1L
   pred_mat[lead_det, group] <- 1L
   pred_mat <- pred_mat[names(mice_args$data), names(mice_args$data)]
+  if (n_unique(mice_args$data[[group]]) == 1L) {
+    pred_mat[, group] <- 0L
+  }
   mice_args$predictorMatrix <- pred_mat
   method <- rep("", length = ncol(pred_mat))
   names(method) <- colnames(pred_mat)
@@ -332,18 +341,21 @@ impute_long <- function(dformula, data, time, group, backend, mice_args) {
   method[lead_stoch] <- "lead"
   method[lead_pred] <- "lead"
   method[lead_det] <- "lead"
+  mice_args$method <- method
+  blots_fun <- function(y) {
+    list(
+      # for some reason mice drops the grouping variable sometimes
+      # we carry it via the blots just in case to compute the lags/leads
+      group_val = mice_args$data[[group]],
+      group_var = group,
+      resp = y
+    )
+  }
   mice_args$blots <- c(
     mice_args$blots,
-    stats::setNames(
-      lapply(rhs, function(y) list(group_var = group, resp = y)),
-      lags
-    ),
-    stats::setNames(
-      lapply(rhs, function(y) list(group_var = group, resp = y)),
-      leads
-    )
+    stats::setNames(lapply(rhs, blots_fun), lags),
+    stats::setNames(lapply(rhs, blots_fun), leads)
   )
-  mice_args$method <- method
   do.call(mice::mice, args = mice_args)
 }
 
@@ -451,10 +463,15 @@ parse_predictors_wide <- function(dformula, value_vars, idx_time, group_var) {
 #' @param resp \[`character(1)`]\cr Name of the response variable.
 #' @keywords internal
 #' @export
-mice.impute.lag <- function(y, ry, x, wy = NULL,
+mice.impute.lag <- function(y, ry, x, wy = NULL, group_val,
                             group_var, resp, ...) {
   if (is.null(wy)) {
     wy <- !ry
+  }
+  if (!group_var %in% colnames(x)) {
+    x_names <- colnames(x)
+    x <- cbind(x, group_val)
+    colnames(x) <- c(x_names, group_var)
   }
   imputed <- data.table::as.data.table(x)[,
     list(lag = lag_(resp)),
@@ -473,10 +490,15 @@ mice.impute.lag <- function(y, ry, x, wy = NULL,
 #' @param resp \[`character(1)`]\cr Name of the response variable.
 #' @keywords internal
 #' @export
-mice.impute.lead <- function(y, ry, x, wy = NULL,
+mice.impute.lead <- function(y, ry, x, wy = NULL, group_val,
                              group_var, resp, ...) {
   if (is.null(wy)) {
     wy <- !ry
+  }
+  if (!group_var %in% colnames(x)) {
+    x_names <- colnames(x)
+    x <- cbind(x, group_val)
+    colnames(x) <- c(x_names, group_var)
   }
   imputed <- data.table::as.data.table(x)[,
     list(lead = lead_(resp)),

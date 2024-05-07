@@ -48,6 +48,7 @@ test_that("multivariate gaussian fit and predict work", {
     iter = 2000,
     refresh = 0
   )
+
   expect_error(
     sumr <- summary(fit, types = "corr"),
     NA
@@ -75,6 +76,7 @@ test_that("multivariate gaussian fit and predict work", {
     c(0.5, 0.7, -0.2, 0.4),
     tolerance = 0.1
   )
+
   expect_error(
     pred <- predict(fit, n_draws = 5),
     NA
@@ -83,6 +85,7 @@ test_that("multivariate gaussian fit and predict work", {
     all(!is.na(pred[, c("y1_new", "y2_new", "x_new")])),
     NA
   )
+
   expect_error(
     pred <- predict(fit, n_draws = 5, type = "mean"),
     NA
@@ -92,6 +95,7 @@ test_that("multivariate gaussian fit and predict work", {
     all(!is.na(pred[, c("y1_mean", "y2_mean", "x_mean")])),
     NA
   )
+
   expect_error(
     pred <- predict(fit, n_draws = 5, type = "link"),
     NA
@@ -101,11 +105,12 @@ test_that("multivariate gaussian fit and predict work", {
     all(!is.na(pred[, c("y1_link", "y2_link", "x_link")])),
     NA
   )
-  pred <- pred[pred$t > 1, ]
+
   expect_error(
     pred <- fitted(fit, n_draws = 5),
     NA
   )
+  pred <- pred[pred$t > 1, ]
   expect_true(
     all(!is.na(pred[, c("y1_fitted", "y2_fitted", "x_fitted")])),
     NA
@@ -582,7 +587,7 @@ test_that("dynamice works", {
       backend = "rstan",
       impute_format = "long",
       keep_imputed = FALSE,
-      mice_args = list(m = 5, print = FALSE)
+      mice_args = list(m = 3, print = FALSE)
     ),
     NA
   )
@@ -598,16 +603,20 @@ test_that("dynamice works", {
       backend = "rstan",
       impute_format = "wide",
       keep_imputed = FALSE,
-      mice_args = list(m = 5, print = FALSE)
+      mice_args = list(m = 3, print = FALSE)
     ),
     NA
   )
 
   # single group
-  dmiss_single <- d[d$id == 1, ]
-  dmiss_single$id <- NULL
+  set.seed(1)
+  n <- 100
+  y <- stats::arima.sim(list(ar = 0.7), n, sd = 0.1)
+  d <- data.frame(y = c(y), time = 1:n)
+  dmiss_single <- d
+  dmiss_single$y[sample(seq_len(nrow(d)), size = 0.2 * nrow(d))] <- NA
   expect_error(
-    fit_long <- dynamice(
+    fit_single <- dynamice(
       obs(y ~ lag(y), "gaussian"),
       time = "time",
       data = dmiss_single,
@@ -616,7 +625,7 @@ test_that("dynamice works", {
       backend = "rstan",
       impute_format = "long",
       keep_imputed = FALSE,
-      mice_args = list(m = 5, print = FALSE)
+      mice_args = list(m = 3, print = FALSE)
     ),
     NA
   )
@@ -646,7 +655,7 @@ test_that("information on >2 chains is summarized in print", {
     ),
     include = FALSE
   )
-  out <- capture_all_output(print(gaussian_example_fit))
+  out <- capture_all_output(print(fit))
   expect_true(
     any(
       grepl(

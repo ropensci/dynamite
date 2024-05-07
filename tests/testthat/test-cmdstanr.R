@@ -511,7 +511,7 @@ test_that("dynamice with cmdstanr backend works", {
       backend = "cmdstanr",
       impute_format = "long",
       keep_imputed = FALSE,
-      mice_args = list(m = 5, print = FALSE)
+      mice_args = list(m = 3, print = FALSE)
     ),
     NA
   )

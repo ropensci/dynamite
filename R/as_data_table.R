@@ -558,7 +558,12 @@ as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
     value = c(draws),
     category = category
   )
-  tmp[order(match(parameter, params_ord))]
+  # avoid NSE notes from R CMD check
+  parameter <- NULL
+  tmp[
+    order(match(parameter, params_ord)), ,
+    env = list(params_ord = I(params_ord))
+  ]
 }
 
 #' @describeIn as_data_table_default Data Table for a "omega_alpha" Parameter

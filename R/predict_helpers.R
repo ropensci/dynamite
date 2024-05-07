@@ -677,8 +677,8 @@ prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars,
     e$fitted_cols <- paste0(resp, "_fitted_", resp_levels)
     e$invlink <- ifelse_(
       identical(e$family$link, "logit"),
-      plogis,
-      pnorm
+      stats::plogis,
+      stats::pnorm
     )
     if (cvars$has_fixed_intercept) {
       e$cutpoints <- samples[[cutpoints]][idx, , drop = FALSE]
