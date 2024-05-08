@@ -54,7 +54,7 @@ on DMPMs and the `dynamite` package, see the related
 
 ## Installation
 
-You can install the most recent stable version of `dynmite` from
+You can install the most recent stable version of `dynamite` from
 [CRAN](https://cran.r-project.org/package=dynamite) or the development
 version from [R-universe](https://r-universe.dev/search/) by running one
 the following lines:
@@ -105,8 +105,8 @@ print(gaussian_example_fit)
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  5.801  3.542
-#> chain:2  5.658  3.544
+#> chain:1  5.546  3.396
+#> chain:2  5.533  3.524
 #> 
 #> Summary statistics of the time- and group-invariant parameters:
 #> # A tibble: 6 × 10
@@ -144,9 +144,9 @@ plot(gaussian_example_fit, plot_type = "trace", types = "beta")
 
 <img src="man/figures/README-unnamed-chunk-9-1.png" style="display: block; margin: auto;" />
 
-Posterior predictive samples for the first 4 groups (samples based on
-the posterior distribution of model parameters and observed data on
-first time point):
+Posterior predictive samples for the first 4 groups (using the samples
+based on the posterior distribution of the model parameters and observed
+data on the first time point):
 
 ``` r
 library("ggplot2")

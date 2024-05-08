@@ -619,12 +619,14 @@ get_dag <- function(x, project = FALSE, covariates = FALSE,
       lag_dep_pa <- lag_dep[lag_dep$resp == resp[i], ]
       lag_dep_ch <- lag_dep[lag_dep$var == resp[i], ]
       lag_dep_new <- vector(mode = "list", length = nrow(lag_dep_ch))
-      for (j in seq_len(nrow(lag_dep_ch))) {
-        lag_dep_new[[j]] <- data.frame(
-          var = c(contemp_pa, lag_dep_pa$var),
-          order = c(rep(0L, k), lag_dep_pa$order) + lag_dep_ch$order[j],
-          resp = lag_dep_ch$resp[j]
-        )
+      if (nrow(lag_dep_pa) > 0L) {
+        for (j in seq_len(nrow(lag_dep_ch))) {
+          lag_dep_new[[j]] <- data.frame(
+            var = c(contemp_pa, lag_dep_pa$var),
+            order = c(rep(0L, k), lag_dep_pa$order) + lag_dep_ch$order[j],
+            resp = lag_dep_ch$resp[j]
+          )
+        }
       }
       lag_dep <- rbind(
         lag_dep[lag_dep$resp != resp[i] & lag_dep$var != resp[i], ],

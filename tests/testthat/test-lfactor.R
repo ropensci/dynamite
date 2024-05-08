@@ -190,7 +190,7 @@ test_that("psis can be plotted", {
   )
 })
 
-test_that("new group levels can't be included if model has latent factor", {
+test_that("new group levels can't be included if model has a latent factor", {
   skip_if_not(run_extended_tests)
   nd <- latent_factor_example
   nd$id[nd$id == 1] <- 100
@@ -206,5 +206,16 @@ test_that("new group levels can't be included if model has latent factor", {
       "factors do not support new levels because of identifiability",
       "constraints\\."
     )
+  )
+})
+
+test_that("predict works with a latent factor", {
+  skip_if_not(run_extended_tests)
+  expect_error(
+    pred <- predict(latent_factor_example_fit, n_draws = 5),
+    NA
+  )
+  expect_true(
+    all(is.finite(pred$y_new))
   )
 })

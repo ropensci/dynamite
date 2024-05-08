@@ -294,7 +294,7 @@ test_that("windows and old rstan warns on attach", {
 
 # Deprecated --------------------------------------------------------------
 
-test_that("deprecated work and warn", {
+test_that("deprecated warn", {
   expect_warning(
     plot_betas(gaussian_example_fit),
     "'plot_betas' is deprecated"
