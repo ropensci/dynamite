@@ -1431,3 +1431,40 @@ test_that("plot errors when the input is not a dynamitefit object", {
     "Argument `x` must be a <dynamitefit> object."
   )
 })
+
+# Model errors ------------------------------------------------------------
+
+test_that("multinomial model fails if stan version < 2.24", {
+  set.seed(1)
+  n_id <- 10L
+  n_time <- 5L
+  d <- data.frame(
+    y1 = sample(10, size = n_id * n_time, replace = TRUE),
+    y2 = sample(15, size = n_id * n_time, replace = TRUE),
+    y3 = sample(20, size = n_id * n_time, replace = TRUE),
+    z = rnorm(n_id * n_time),
+    time = seq_len(n_time),
+    id = rep(seq_len(n_id), each = n_time)
+  )
+  d$n <- d$y1 + d$y2 + d$y3
+  f <- obs(
+    c(y1, y2, y3) ~ z + lag(y1) + lag(y2) + lag(y3) + trials(n),
+    family = "multinomial"
+  )
+  expect_error(
+    mockthat::with_mock(
+      stan_version = function(...) "2.23",
+      dynamite(
+        dformula = f,
+        data = d,
+        time = "time",
+        group = "id",
+        backend = "rstan"
+      )
+    ),
+    paste0(
+      "Multinomial family is not supported for this version of rstan\\.\n",
+      "i Please install a newer version of rstan\\."
+    )
+  )
+})

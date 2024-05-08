@@ -704,13 +704,6 @@ loglik_lines_gaussian <- function(y, obs, idt, default, ...) {
 
 loglik_lines_multinomial <- function(idt, cvars, cgvars, backend,
                                      threading, ...) {
-  stopifnot_(
-    stan_version(backend) >= "2.24",
-    c(
-      "Multinomial family is not supported for this version of {.pkg {backend}}.",
-      `i` = "Please install a newer version of {.pkg {backend}}."
-    )
-  )
   cgvars$categories <- cgvars$y
   cgvars$y <- cgvars$y_cg
   cgvars$multinomial <- TRUE
@@ -2142,9 +2135,12 @@ model_lines_categorical <- function(y, idt, obs, family, priors,
       onlyif(has_fixed || has_varying, c("J_{y}", "K_{y}")),
       onlyif(has_X, "X")
     )
-    likelihood <- glue::glue(
-      "target += reduce_sum({distr}_loglik_{y}_lpmf, {seq1T}, grainsize, ",
-      "{fun_args});"
+    likelihood <- paste_rows(
+      paste0(
+        "target += reduce_sum({distr}_loglik_{y}_lpmf, {seq1T}, grainsize, ",
+        "{fun_args});"
+      ),
+      .indent = idt(1)
     )
   } else {
     likelihood <- loglik_lines_categorical(
@@ -2211,7 +2207,16 @@ model_lines_gaussian <- function(y, obs, idt, priors,
   paste_rows(priors, model_text, .parse = FALSE)
 }
 
-model_lines_multinomial <- function(cvars, cgvars, idt, threading, ...) {
+model_lines_multinomial <- function(cvars, cgvars, idt, backend,
+                                    threading, ...) {
+  stopifnot_(
+    stan_version(backend) >= "2.24",
+    c(
+      "Multinomial family is not supported for
+       this version of {.pkg {backend}}.",
+      `i` = "Please install a newer version of {.pkg {backend}}."
+    )
+  )
   cgvars$priors <- lapply(
     cgvars$y[-1L],
     function(s) {

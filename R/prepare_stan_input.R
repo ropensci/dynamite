@@ -479,8 +479,6 @@ initialize_multivariate_channel <- function(y, y_cg, y_name, cg_idx,
   list(channel = channel, sampling = sampling)
 }
 
-
-
 #' Default channel preparation
 #'
 #' Computes default channel-specific variables for Stan sampling,
@@ -1253,7 +1251,6 @@ prepare_channel_student <- function(y, Y, channel, sampling,
   }
   out
 }
-
 
 #' Raise an error if factor type is not supported by a family
 #'

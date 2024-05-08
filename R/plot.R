@@ -545,8 +545,8 @@ plot_varying <- function(coefs, level, alpha, scales, n_params) {
     )
   }
   title <- glue::glue(
-    "Posterior means and {100 * (1 - 2 * level)} %",
-    "intervals of the {title_spec}"
+    "Posterior means and {100 * (1 - 2 * level)} ",
+    "% intervals of the {title_spec}"
   )
   # avoid NSE notes from R CMD check
   time <- mean <- category <- parameter <- NULL

@@ -465,3 +465,14 @@ test_that("predict with loglik works", {
     dplyr::pull(y_loglik)
   expect_equal(manual, automatic)
 })
+
+test_that("thin works", {
+  expect_error(
+    pred <- predict(gaussian_example_fit, thin = 10),
+    NA
+  )
+  expect_equal(
+    unique(pred$.draw),
+    1L:20L
+  )
+})

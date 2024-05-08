@@ -130,7 +130,7 @@ test_that("default formula plot works", {
     NA
   )
   expect_error(
-    plot(f, show_auxiliary = TRUE),
+    plot(f, show_auxiliary = FALSE),
     NA
   )
   expect_error(
@@ -138,7 +138,7 @@ test_that("default formula plot works", {
     NA
   )
   expect_error(
-    plot(f, show_auxiliary = TRUE, show_covariates = TRUE),
+    plot(f, show_auxiliary = FALSE, show_covariates = TRUE),
     NA
   )
   multichannel_formula <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
@@ -172,7 +172,7 @@ test_that("tikz formula plot works", {
     NA
   )
   expect_error(
-    plot(f, show_auxiliary = TRUE, tikz = TRUE),
+    plot(f, show_auxiliary = FALSE, tikz = TRUE),
     NA
   )
   expect_error(
@@ -180,7 +180,7 @@ test_that("tikz formula plot works", {
     NA
   )
   expect_error(
-    plot(f, show_auxiliary = TRUE, show_covariates = TRUE, tikz = TRUE),
+    plot(f, show_auxiliary = FALSE, show_covariates = TRUE, tikz = TRUE),
     NA
   )
   multichannel_formula <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +

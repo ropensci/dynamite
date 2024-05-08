@@ -71,19 +71,20 @@ extract_vectorizable_priors <- function(priors, y) {
 prepare_common_priors <- function(priors, M, shrinkage, P,
                                   correlated_nu, correlated_lf) {
   common_priors <- NULL
-  if (shrinkage) {
-    common_priors <- ifelse_(
-      is.null(priors),
-      data.frame(
-        parameter = "xi",
-        response = "",
-        prior = "normal(0, 1)",
-        type = "xi",
-        category = ""
-      ),
-      priors[priors$type == "xi", ]
-    )
-  }
+  # Shrinkage feature removed for now
+  #if (shrinkage) {
+  #  common_priors <- ifelse_(
+  #    is.null(priors),
+  #    data.frame(
+  #      parameter = "xi",
+  #      response = "",
+  #      prior = "normal(0, 1)",
+  #      type = "xi",
+  #      category = ""
+  #    ),
+  #    priors[priors$type == "xi", ]
+  #  )
+  #}
   if (M > 1L && correlated_nu) {
     common_priors <- ifelse_(
       is.null(priors),

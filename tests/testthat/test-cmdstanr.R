@@ -144,8 +144,8 @@ test_that("multivariate gaussian with threading produces a valid model", {
   )
   f <- obs(c(y1, y2) ~ -1 + lag(y1) | -1 + lag(y1) + lag(y2), "mvgaussian") +
     obs(x ~ -1 + lag(y1), "gaussian")
-  out <- dynamite(
-    dformula = f,
+  code <- get_code(
+    x = f,
     data = d,
     time = "t",
     group = "id",
@@ -153,11 +153,10 @@ test_that("multivariate gaussian with threading produces a valid model", {
     threads_per_chain = 2,
     grainsize = 10,
     chains = 2,
-    parallel_chains = 1,
-    debug = list(no_compile = TRUE, model_code = TRUE)
+    parallel_chains = 1
   )
   e <- new.env()
-  e$file <- cmdstanr::write_stan_file(out$model_code)
+  e$file <- cmdstanr::write_stan_file(code)
   model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
   expect_true(model$check_syntax())
 })
@@ -176,6 +175,7 @@ test_that("threading produces valid model code for other distributions", {
     b = rbinom(n, 10, 0.4),
     s = rt(n, 15),
     bb = rbeta(n, 3, 6),
+    e = rexp(n, 2),
     time = rep(seq_len(n_time), each = n_id),
     id = rep(seq_len(n_id)),
     trials = rep(10, n)
@@ -184,9 +184,10 @@ test_that("threading produces valid model code for other distributions", {
     obs(p ~ lag(g) + lag(b), family = "negbin") +
     obs(b ~ lag(b) + lag(b) * lag(g) + trials(trials), family = "binomial") +
     obs(s ~ lag(g), family = "student") +
-    obs(bb ~ lag(b), family = "beta")
-  out <- dynamite(
-    dformula = f,
+    obs(bb ~ lag(b), family = "beta") +
+    obs(e ~ lag(s), family = "exponential")
+  code <- get_code(
+    x = f,
     data = d,
     time = "time",
     group = "id",
@@ -194,11 +195,10 @@ test_that("threading produces valid model code for other distributions", {
     threads_per_chain = 2,
     grainsize = 10,
     chains = 2,
-    parallel_chains = 1,
-    debug = list(no_compile = TRUE, model_code = TRUE)
+    parallel_chains = 1
   )
   e <- new.env()
-  e$file <- cmdstanr::write_stan_file(out$model_code)
+  e$file <- cmdstanr::write_stan_file(code)
   model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
   expect_true(model$check_syntax())
 })
@@ -232,8 +232,8 @@ test_that("threading produces a valid model for cumulative", {
     id = rep(seq_len(n), t)
   )
 
-  out <- dynamite(
-    dformula = obs(y ~ x, family = "cumulative", link = "logit"),
+  code <- get_code(
+    x = obs(y ~ x, family = "cumulative", link = "logit"),
     data = d,
     time = "time",
     group = "id",
@@ -241,17 +241,15 @@ test_that("threading produces a valid model for cumulative", {
     threads_per_chain = 2,
     grainsize = 10,
     chains = 2,
-    parallel_chains = 1,
-    debug = list(no_compile = TRUE, model_code = TRUE)
+    parallel_chains = 1
   )
   e <- new.env()
-  e$file <- cmdstanr::write_stan_file(out$model_code)
+  e$file <- cmdstanr::write_stan_file(code)
   model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
   expect_true(model$check_syntax())
 
-  out <- dynamite(
-    dformula =
-      obs(y ~ -1 + x + varying(~1), family = "cumulative", link = "logit") +
+  code <- get_code(
+    x = obs(y ~ -1 + x + varying(~1), family = "cumulative", link = "logit") +
       splines(df = 10),
     data = d,
     time = "time",
@@ -260,18 +258,16 @@ test_that("threading produces a valid model for cumulative", {
     threads_per_chain = 2,
     grainsize = 10,
     chains = 2,
-    parallel_chains = 1,
-    debug = list(no_compile = TRUE, model_code = TRUE)
+    parallel_chains = 1
   )
   e <- new.env()
-  e$file <- cmdstanr::write_stan_file(out$model_code)
+  e$file <- cmdstanr::write_stan_file(code)
   model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
   expect_true(model$check_syntax())
 
   # no predictors
-  out <- dynamite(
-    dformula =
-      obs(y ~ -1 + varying(~1), family = "cumulative", link = "logit") +
+  code <- get_code(
+    x = obs(y ~ -1 + varying(~1), family = "cumulative", link = "logit") +
       splines(df = 10),
     data = d,
     time = "time",
@@ -280,17 +276,15 @@ test_that("threading produces a valid model for cumulative", {
     threads_per_chain = 2,
     grainsize = 10,
     chains = 2,
-    parallel_chains = 1,
-    debug = list(no_compile = TRUE, model_code = TRUE)
+    parallel_chains = 1
   )
   e <- new.env()
-  e$file <- cmdstanr::write_stan_file(out$model_code)
+  e$file <- cmdstanr::write_stan_file(code)
   model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
   expect_true(model$check_syntax())
 
-  out <- dynamite(
-    dformula =
-      obs(y ~ 1, family = "cumulative", link = "logit") +
+  code <- get_code(
+    x = obs(y ~ 1, family = "cumulative", link = "logit") +
       splines(df = 10),
     data = d,
     time = "time",
@@ -299,11 +293,47 @@ test_that("threading produces a valid model for cumulative", {
     threads_per_chain = 2,
     grainsize = 10,
     chains = 2,
-    parallel_chains = 1,
-    debug = list(no_compile = TRUE, model_code = TRUE)
+    parallel_chains = 1
   )
   e <- new.env()
-  e$file <- cmdstanr::write_stan_file(out$model_code)
+  e$file <- cmdstanr::write_stan_file(code)
+  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  expect_true(model$check_syntax())
+})
+
+test_that("threading produces a valid model for multinomial", {
+  skip_if_not(run_extended_tests)
+  skip_on_os("mac")
+
+  set.seed(1)
+  n_id <- 100L
+  n_time <- 20L
+  d <- data.frame(
+    y1 = sample(10, size = n_id * n_time, replace = TRUE),
+    y2 = sample(15, size = n_id * n_time, replace = TRUE),
+    y3 = sample(20, size = n_id * n_time, replace = TRUE),
+    z = rnorm(n_id * n_time),
+    time = seq_len(n_time),
+    id = rep(seq_len(n_id), each = n_time)
+  )
+  d$n <- d$y1 + d$y2 + d$y3
+  f <- obs(
+    c(y1, y2, y3) ~ z + lag(y1) + lag(y2) + lag(y3) + trials(n),
+    family = "multinomial"
+  )
+  code <- get_code(
+    x = f,
+    data = d,
+    time = "time",
+    group = "id",
+    backend = "cmdstanr",
+    threads_per_chain = 2,
+    grainsize = 10,
+    chains = 2,
+    parallel_chains = 1
+  )
+  e <- new.env()
+  e$file <- cmdstanr::write_stan_file(code)
   model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
   expect_true(model$check_syntax())
 })
@@ -313,51 +343,49 @@ test_that("syntax is correct for various models", {
   skip_on_os("mac")
 
   # categorical_example_fit
-  out <- dynamite(
-    dformula = obs(x ~ z + lag(x) + lag(y), family = "categorical") +
+  code <- get_code(
+    x = obs(x ~ z + lag(x) + lag(y), family = "categorical") +
       obs(y ~ z + lag(x) + lag(y), family = "categorical"),
     data = categorical_example,
     time = "time",
     group = "id",
-    backend = "cmdstanr",
-    debug = list(no_compile = TRUE, model_code = TRUE)
+    backend = "cmdstanr"
   )
   e <- new.env()
-  e$file <- cmdstanr::write_stan_file(out$model_code)
+  e$file <- cmdstanr::write_stan_file(code)
   model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
   expect_true(model$check_syntax())
 
   # gaussian_example_fit
-  out <- dynamite(
-    dformula =
-      obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1), family = "gaussian") +
+  code <- get_code(
+    x = obs(
+        y ~ -1 + z + varying(~ x + lag(y)) + random(~1), family = "gaussian"
+      ) +
       random_spec() +
       splines(df = 20),
     data = gaussian_example,
     time = "time",
     group = "id",
-    backend = "cmdstanr",
-    debug = list(no_compile = TRUE, model_code = TRUE)
+    backend = "cmdstanr"
   )
   e <- new.env()
-  e$file <- cmdstanr::write_stan_file(out$model_code)
+  e$file <- cmdstanr::write_stan_file(code)
   model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
   expect_true(model$check_syntax())
 
   # categorical_example_fit
-  out <- dynamite(
-    dformula = obs(g ~ lag(g) + lag(logp), family = "gaussian") +
+  code <- get_code(
+    x = obs(g ~ lag(g) + lag(logp), family = "gaussian") +
       obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
       obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
       aux(numeric(logp) ~ log(p + 1)),
     data = multichannel_example,
     time = "time",
     group = "id",
-    backend = "cmdstanr",
-    debug = list(no_compile = TRUE, model_code = TRUE)
+    backend = "cmdstanr"
   )
   e <- new.env()
-  e$file <- cmdstanr::write_stan_file(out$model_code)
+  e$file <- cmdstanr::write_stan_file(code)
   model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
   expect_true(model$check_syntax())
 
@@ -387,16 +415,15 @@ test_that("syntax is correct for various models", {
     id = rep(seq_len(n), t)
   )
 
-  out <- dynamite(
-    dformula = obs(y ~ x, family = "cumulative", link = "logit"),
+  code <- get_code(
+    x = obs(y ~ x, family = "cumulative", link = "logit"),
     data = d,
     time = "time",
     group = "id",
-    backend = "cmdstanr",
-    debug = list(no_compile = TRUE, model_code = TRUE)
+    backend = "cmdstanr"
   )
   e <- new.env()
-  e$file <- cmdstanr::write_stan_file(out$model_code)
+  e$file <- cmdstanr::write_stan_file(code)
   model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
   expect_true(model$check_syntax())
 })
