@@ -71,17 +71,15 @@ dynamice <- function(dformula, data, time, group = NULL,
     any(is.na(data)),
     "Argument {.arg data} does not contain missing values."
   )
-  if (data.table::is.data.table(data)) {
-    data <- data.table::copy(data)
-    data.table::setDF(data)
-  }
+  data <- droplevels(data)
+  data <- data.table::as.data.table(data)
   if (is.null(group)) {
     group <- ".group"
     data_names <- names(data)
     while (group %in% data_names) {
       group <- paste0(group, "_")
     }
-    data[[group]] <- 1L
+    data[, (group) := 1L]
   }
   d <- match.call()$data
   data_name <- ifelse_(
@@ -459,6 +457,7 @@ parse_predictors_wide <- function(dformula, value_vars, idx_time, group_var) {
 #' Function for computing the lagged values of an imputed response in `mice`.
 #'
 #' @inheritParams mice::mice.impute.norm
+#' @param group_val \[`vector()`]\cr Values of the grouping variable.
 #' @param group_var \[`character(1)`]\cr Name of the grouping variable.
 #' @param resp \[`character(1)`]\cr Name of the response variable.
 #' @keywords internal
@@ -486,6 +485,7 @@ mice.impute.lag <- function(y, ry, x, wy = NULL, group_val,
 #' Function for computing the leading values of an imputed response in `mice`.
 #'
 #' @inheritParams mice::mice.impute.norm
+#' @param group_val \[`vector()`]\cr Values of the grouping variable.
 #' @param group_var \[`character(1)`]\cr Name of the grouping variable.
 #' @param resp \[`character(1)`]\cr Name of the response variable.
 #' @keywords internal

@@ -432,59 +432,30 @@ test_that("latent factor syntax is correct", {
     id = seq_len(N),
     time = rep(seq_len(T_), each = N)
   )
-  code <- get_code(
-    x = obs(y ~ 1, family = "gaussian") +
-      obs(x ~ 1, family = "gaussian") +
-      lfactor(
-        nonzero_lambda = FALSE,
-        noncentered_psi = TRUE,
-        correlated = FALSE
-      ) +
-      splines(df = 10),
-    data = latent_factor_example,
-    group = "id",
-    time = "time"
+  lfactor_opts <- expand.grid(
+    nonzero_lambda = c(FALSE, TRUE),
+    noncentered_psi = c(FALSE, TRUE),
+    correlated = c(FALSE, TRUE)
   )
-  e <- new.env()
-  e$file <- cmdstanr::write_stan_file(code)
-  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
-  expect_true(model$check_syntax())
-
-  code <- get_code(
-    x = obs(y ~ 1, family = "gaussian") +
-      obs(x ~ 1, family = "gaussian") +
-      lfactor(
-        nonzero_lambda = TRUE,
-        noncentered_psi = FALSE,
-        correlated = TRUE
-      ) +
-      splines(df = 10),
-    data = latent_factor_example,
-    group = "id",
-    time = "time"
-  )
-  e <- new.env()
-  e$file <- cmdstanr::write_stan_file(code)
-  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
-  expect_true(model$check_syntax())
-
-  code <- get_code(
-    x = obs(y ~ 1, family = "gaussian") +
-      obs(x ~ 1, family = "gaussian") +
-      lfactor(
-        nonzero_lambda = FALSE,
-        noncentered_psi = TRUE,
-        correlated = FALSE
-      ) +
-      splines(df = 10),
-    data = latent_factor_example,
-    group = "id",
-    time = "time"
-  )
-  e <- new.env()
-  e$file <- cmdstanr::write_stan_file(code)
-  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
-  expect_true(model$check_syntax())
+  for (i in seq_len(nrow(lfactor_opts))) {
+    code <- get_code(
+      x = obs(y ~ 1, family = "gaussian") +
+        obs(x ~ 1, family = "gaussian") +
+        lfactor(
+          nonzero_lambda = lfactor_opts$nonzero_lambda[i],
+          noncentered_psi = lfactor_opts$noncentered_psi[i],
+          correlated = lfactor_opts$correlated[i]
+        ) +
+        splines(df = 10),
+      data = latent_factor_example,
+      group = "id",
+      time = "time"
+    )
+    e <- new.env()
+    e$file <- cmdstanr::write_stan_file(code)
+    model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+    expect_true(model$check_syntax())
+  }
 })
 
 test_that("dynamice with cmdstanr backend works", {

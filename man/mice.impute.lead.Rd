@@ -4,7 +4,7 @@
 \alias{mice.impute.lead}
 \title{Compute Leading Values of an Imputed Response}
 \usage{
-mice.impute.lead(y, ry, x, wy = NULL, group_var, resp, ...)
+mice.impute.lead(y, ry, x, wy = NULL, group_val, group_var, resp, ...)
 }
 \arguments{
 \item{y}{Vector to be imputed}
@@ -19,6 +19,8 @@ model is fitted. The \code{ry} generally distinguishes the observed
 
 \item{wy}{Logical vector of length \code{length(y)}. A \code{TRUE} value
 indicates locations in \code{y} for which imputations are created.}
+
+\item{group_val}{[\code{vector()}]\cr Values of the grouping variable.}
 
 \item{group_var}{[\code{character(1)}]\cr Name of the grouping variable.}
 

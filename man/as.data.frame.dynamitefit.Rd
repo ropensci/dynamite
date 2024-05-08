@@ -81,6 +81,7 @@ Potential values for the \code{types} argument are:
 \itemize{
 \item \code{alpha}\cr Intercept terms (time-invariant or time-varying).
 \item \code{beta}\cr Time-invariant regression coefficients.
+\item \code{cutpoints}\cr Cutpoints for ordinal regression.
 \item \code{delta}\cr Time-varying regression coefficients.
 \item \code{nu}\cr Group-level random effects.
 \item \code{lambda}\cr Factor loadings.
