@@ -612,7 +612,7 @@ create_transformed_parameters_lines <- function(idt, backend, cvars, cgvars) {
 create_model <- function(idt, backend, cg, cvars, cgvars, mvars, threading) {
   spline_def <- mvars$spline_def
   spline_text <- ""
-  # Shringake feature removed for now
+  # Shrinkage feature removed for now
   # if (!is.null(spline_def) && spline_def$shrinkage) {
   #   xi_prior <- mvars$common_priors
   #   xi_prior <- xi_prior[xi_prior$parameter == "xi", "prior"]
@@ -818,22 +818,28 @@ create_model_lines <- function(idt, backend, cvars, cgvars, mvars, threading) {
       )
     } else if (is_cumulative(family)) {
       # time-varying intercepts only
-      alpha_args <- c(cvars[[1L]], idt = idt)
-      alpha_args$has_fixed_intercept <- FALSE
-      alpha_args$has_lfactor <- FALSE
-      alpha_args$has_random_intercept <- FALSE
-      alpha_args$has_fixed <- FALSE
-      alpha_args$has_varying <- FALSE
-      alpha_args$has_random <- FALSE
-      alpha_args$has_lfactor <- FALSE
-      alpha_priors <- ulapply(
-        seq_len(cvars[[1L]]$S - 1L),
-        function(s) {
-          alpha_args$ydim <- cvars[[1L]]$y
-          alpha_args$y <- paste0(cvars[[1L]]$y, "_", s)
-          do.call(prior_lines, alpha_args)
-        }
-      )
+      if (cvars[[1L]]$has_varying_intercept) {
+        alpha_args <- c(cvars[[1L]], idt = idt)
+        alpha_args$has_fixed_intercept <- FALSE
+        alpha_args$has_lfactor <- FALSE
+        alpha_args$has_random_intercept <- FALSE
+        alpha_args$has_fixed <- FALSE
+        alpha_args$has_varying <- FALSE
+        alpha_args$has_random <- FALSE
+        alpha_args$has_lfactor <- FALSE
+        alpha_priors <- ulapply(
+          seq_len(cvars[[1L]]$S - 1L),
+          function(s) {
+            alpha_args$prior_distr$alpha_prior_distr <- alpha_args$prior_distr$alpha_prior_distr[[s]]
+            alpha_args$prior_distr$tau_alpha_prior_distr <- alpha_args$prior_distr$tau_alpha_prior_distr[[s]]
+            alpha_args$ydim <- cvars[[1L]]$y
+            alpha_args$y <- paste0(cvars[[1L]]$y, "_", s)
+            do.call(prior_lines, alpha_args)
+          }
+        )
+      } else {
+        alpha_priors <- NULL
+      }
       # the linear predictor without intercept
       def_args <- c(cvars[[1L]], idt = idt)
       def_args$has_fixed_intercept <- FALSE

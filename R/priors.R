@@ -207,24 +207,42 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
     )
   }
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {
-    prior_distributions$alpha_prior_distr <-
-      paste0("normal(", mean_y, ", ", sd_y, ")")
+
+    if (is_cumulative(channel$family)) {
+      ycat_ <- paste0("_", channel$categories)
+      category_ <- channel$categories
+      prior_distributions$alpha_prior_distr <-
+        paste0("normal(", rep(mean_y, channel$S - 1), ", ", sd_y, ")")
+      names(prior_distributions$alpha_prior_distr) <- seq_len(channel$S - 1)
+    } else {
+      ycat_ <- ycat
+      category_ <- category
+      prior_distributions$alpha_prior_distr <-
+        paste0("normal(", mean_y, ", ", sd_y, ")")
+    }
     priors$alpha <- data.frame(
-      parameter = paste0("alpha_", y, ycat),
+      parameter = paste0("alpha_", y, ycat_),
       response = y,
       prior = prior_distributions$alpha_prior_distr,
       type = "alpha",
-      category = category
+      category = category_
     )
+
     if (channel$has_varying_intercept) {
-      prior_distributions$tau_alpha_prior_distr <-
-        paste0("normal(0, ", sd_y, ")")
+      if (is_cumulative(channel$family)) {
+        prior_distributions$tau_alpha_prior_distr <-
+          paste0("normal(", rep(0, channel$S - 1), ", ", sd_y, ")")
+        names(prior_distributions$tau_alpha_prior_distr) <- seq_len(channel$S - 1)
+      } else {
+        prior_distributions$tau_alpha_prior_distr <-
+          paste0("normal(0, ", sd_y, ")")
+      }
       priors$tau_alpha <- data.frame(
-        parameter = paste0("tau_alpha_", y, ycat),
+        parameter = paste0("tau_alpha_", y, ycat_),
         response = y,
         prior = prior_distributions$tau_alpha_prior_distr,
         type = "tau_alpha",
-        category = category
+        category = category_
       )
     }
   }

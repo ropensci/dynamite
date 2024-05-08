@@ -513,7 +513,11 @@ prepare_channel_default <- function(y, Y, channel, sampling,
     priors <- out$priors
     channel$prior_distr <- out$prior_distributions
   } else {
-    priors <- priors[priors$response == y & priors$category == category, ]
+    priors <- ifelse_(
+      nzchar(category),
+      priors[priors$response == y & priors$category == category, ],
+      priors[priors$response == y, ]
+      )
     channel$prior_distr <- list()
     types <- priors$type
     loop_types <- intersect(
@@ -722,7 +726,7 @@ prepare_channel_categorical <- function(y, Y, channel, sampling,
   out$priors <- rbindlist_(lapply(outcat, "[[", "priors"))
   out$channel$prior_distr <- lapply(outcat, function(x) x$channel$prior_distr)
   names(out$channel$prior_distr) <- resp_levels[-1L]
-  if (is.null(priors)) {
+  if (!is.null(priors)) {
     defaults <- rbindlist_(
       lapply(
         resp_levels[-1L],
@@ -759,12 +763,22 @@ prepare_channel_cumulative <- function(y, Y, channel, sampling,
   resp_levels <- attr(resp_class, "levels")
   S_y <- length(resp_levels)
   channel$S <- S_y
-  channel$categories <- resp_levels
+  channel$categories <- seq_len(S_y - 1)
   sampling[[paste0("S_", y)]] <- S_y
   sd_y <- 1
   mean_y <- 0.0
   sd_gamma <- 2.0 / sd_x
   mean_gamma <- rep(0.0, length(sd_gamma))
+  fixed_cutpoints <- channel$has_fixed_intercept
+  if (fixed_cutpoints) {
+    cutpoint_priors <- data.frame(
+      parameter = paste0("cutpoints_", y, "_", seq_len(S_y - 1)),
+      response = y,
+      prior = "std_normal()",
+      type = "cutpoint",
+      category = seq_len(S_y - 1)
+    )
+  }
   out <- prepare_channel_default(
     y,
     Y,
@@ -776,11 +790,31 @@ prepare_channel_cumulative <- function(y, Y, channel, sampling,
     sd_y,
     priors
   )
-  if (!is.null(priors)) {
-    check_priors(
-      out$priors,
-      default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
-    )
+
+  if (fixed_cutpoints) {
+    out$priors <- out$priors[out$priors$type != "alpha", ]
+    out$channel$prior_distr$alpha_prior_distr <- NULL
+    if (is.null(priors)) {
+      out$channel$prior_distr$cutpoints_prior_distr <- cutpoint_priors$prior
+      names(out$channel$prior_distr$cutpoints_prior_distr) <- cutpoint_priors$category
+      out$priors <- rbind(cutpoint_priors, out$priors)
+    } else {
+      priors <- priors[priors$response == y, ]
+      pdef <- priors[priors$type == "cutpoint", ]
+      out$channel$prior_distr$cutpoints_prior_distr <- pdef$prior
+      defaults <- rbind(
+        cutpoint_priors,
+        default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
+      )
+      check_priors(priors, defaults)
+    }
+  } else {
+    if (!is.null(priors)) {
+      check_priors(
+        priors[priors$response == y, ],
+        default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
+      )
+    }
   }
   out
 }
@@ -1002,7 +1036,7 @@ prepare_channel_multinomial <- function(y, y_cg, Y, channel, sampling,
   out$priors <- rbindlist_(lapply(outcat, "[[", "priors"))
   out$channel$prior_distr <- lapply(outcat, function(x) x$channel$prior_distr)
   names(out$channel$prior_distr) <- y[-1L]
-  if (is.null(priors)) {
+  if (!is.null(priors)) {
     defaults <- rbindlist_(
       lapply(
         y[-1L],

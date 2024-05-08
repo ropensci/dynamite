@@ -1766,14 +1766,13 @@ transformed_parameters_lines_cumulative <- function(y, categories,
   declare_cutpoints <- ""
   state_cutpoints <- ""
   if (has_varying_intercept) {
-    S <- length(categories)
     declare_cutpoints <- glue::glue(
       stan_array(
         backend, "vector", "cutpoints_{y}", "T", "", "S_{y} - 1"
       )
     )
     assign_cutpoints <- vapply(
-      seq(1L, S - 1L),
+      seq_along(categories),
       function(s) {
         glue::glue(
           "cutpoints_{y}[, {s}] = alpha_{y}_{s};"
@@ -2159,14 +2158,16 @@ model_lines_categorical <- function(y, idt, obs, family, priors,
 }
 
 model_lines_cumulative <- function(y, obs, idt, priors,
-                                   threading, default, ...) {
+                                   threading, prior_distr, default, ...) {
   if (threading) {
     default$fun_call_args <- cs(
       default$fun_call_args,
       glue::glue("cutpoints_{y}")
     )
   }
+  S <- length(prior_distr$cutpoints_prior_distr)
   paste_rows(
+    glue::glue("cutpoints_{y}[{seq_len(S)}] ~ {prior_distr$cutpoints_prior_distr};"),
     priors,
     model_lines_default(y, obs, idt, threading, default, ...),
     .parse = FALSE
