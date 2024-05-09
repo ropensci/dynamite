@@ -37,13 +37,16 @@ methodology from many other approaches are:
   distributions are available, and these can be combined arbitrarily in
   multichannel models.
 - Allows evaluating realistic long-term counterfactual predictions which
-  take into account the dynamic structure of the model by posterior
-  predictive distribution simulation.
+  take into account the dynamic structure of the model by efficient
+  posterior predictive distribution simulation.
 - Transparent quantification of parameter and predictive uncertainty due
   to a fully Bayesian approach.
+- Various visualization methods including method for drawing and
+  producing TikZ code of the directed acyclic graph (DAG) of the model
+  structure.
 - User-friendly and efficient R interface with state-of-the-art
   estimation via Stan. Both `rstan` and `cmdstanr` backends are
-  supported.
+  supported, with both parallel chains and within-chain parallelization.
 
 The `dynamite` package is developed with the support of the Research
 Council of Finland grant 331817
@@ -105,8 +108,8 @@ print(gaussian_example_fit)
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  5.546  3.396
-#> chain:2  5.533  3.524
+#> chain:1  3.727  2.350
+#> chain:2  3.840  2.458
 #> 
 #> Summary statistics of the time- and group-invariant parameters:
 #> # A tibble: 6 × 10

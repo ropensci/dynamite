@@ -72,7 +72,7 @@ The prior for the standard deviation parameter $\tau$ of the random walk prior o
 
 ## Correlation matrices
 
-The correlation matrix of the random effects uses a $\mbox{LKJ}(1)$ prior with the Cholesky parameterization, see Stan documentation of `lkj_cholesky_corr` for details^[https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html].
+The correlation matrix of the random effects uses a $\mbox{LKJ}(1)$ prior with the Cholesky parameterization, see Stan documentation of `lkj_corr_cholesky` for details^[https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html]. The default corresponds to uniform distribution over valid correlation matrices.
 
 ## Family-specific parameters
 
