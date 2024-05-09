@@ -292,6 +292,29 @@ test_that("windows and old rstan warns on attach", {
   )
 })
 
+# Plot warnings -----------------------------------------------------------
+
+test_that("too many parameters warns in plot", {
+  expect_warning(
+    plot(gaussian_example_fit, types = "nu"),
+    paste0(
+      "Number of parameters to be plotted \\(50\\) exceeds the maximum ",
+      "number of parameters \\(20\\) for parameters of type `nu`\\. ",
+      "The remaining parameters of this type will not be plotted\\.\n",
+      "i Please increase `n_params` to plot more parameters\\."
+    )
+  )
+  expect_warning(
+    plot(gaussian_example_fit, types = "nu", plot_type = "trace"),
+    paste0(
+      "Number of parameters to be plotted \\(50\\) exceeds the maximum ",
+      "number of parameters \\(5\\)\\. ",
+      "The remaining parameters will not be plotted\\.\n",
+      "i Please increase `n_params` to plot more parameters\\."
+    )
+  )
+})
+
 # Deprecated --------------------------------------------------------------
 
 test_that("deprecated warn", {
@@ -304,7 +327,7 @@ test_that("deprecated warn", {
     "'plot_deltas' is deprecated"
   )
   expect_warning(
-    plot_nus(gaussian_example_fit),
+    plot_nus(gaussian_example_fit, n_params = 10),
     "'plot_nus' is deprecated"
   )
   expect_warning(

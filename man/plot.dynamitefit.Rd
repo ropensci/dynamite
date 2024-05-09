@@ -65,7 +65,7 @@ specifying the maximum number of parameters to plot. If a single value
 is provided, the same limit is used for all parameters. If a vector is
 supplied, the first element defines the maximum number of time-invariant
 parameters to plot and the second the maximum number of time-varying
-parameters to plot. The defaults values are 50 for time-invariant
+parameters to plot. The defaults values are 20 for time-invariant
 parameters and 3 for time-varying parameters. The default value is 5
 for \code{plot_type == "trace"}.}
 

@@ -271,7 +271,7 @@ plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
 #'   is provided, the same limit is used for all parameters. If a vector is
 #'   supplied, the first element defines the maximum number of time-invariant
 #'   parameters to plot and the second the maximum number of time-varying
-#'   parameters to plot. The defaults values are 50 for time-invariant
+#'   parameters to plot. The defaults values are 20 for time-invariant
 #'   parameters and 3 for time-varying parameters. The default value is 5
 #'   for `plot_type == "trace"`.
 #' @param ... Not used..
@@ -372,6 +372,11 @@ plot.dynamitefit <- function(x, plot_type = c("default", "trace"),
       groups = groups,
       probs = c(level, 1 - level)
     )
+    coefs <- ifelse_(
+      is.null(types) && is.null(parameters),
+      coefs[coefs$type %in% default_types, ],
+      coefs
+    )
     p_fixed <- plot_fixed(
       coefs,
       level,
@@ -463,12 +468,11 @@ plot_trace <- function(x, types, parameters, responses,
 #' @inheritParams plot.dynamitefit
 #' @noRd
 plot_fixed <- function(coefs, level, alpha, scales, n_params) {
-  coefs <- coefs[coefs$type %in% intersect(fixed_types, default_types), ]
   coefs <- coefs[is.na(coefs$time), ]
   if (nrow(coefs) == 0L) {
     return(NULL)
   }
-  coefs <- filter_params(coefs, n_params, 50)
+  coefs <- filter_params(coefs, n_params, 20)
   n_coefs <- nrow(coefs)
   coefs$parameter <- glue::glue(
     "{coefs$parameter}_{coefs$category}_{coefs$group}"
@@ -526,7 +530,6 @@ plot_fixed <- function(coefs, level, alpha, scales, n_params) {
 #' @inheritParams plot.dynamitefit
 #' @noRd
 plot_varying <- function(coefs, level, alpha, scales, n_params) {
-  coefs <- coefs[coefs$type %in% intersect(varying_types, default_types), ]
   coefs <- coefs[!is.na(coefs$time), ]
   if (nrow(coefs) == 0L) {
     return(NULL)
@@ -603,10 +606,10 @@ filter_params <- function(x, n_params, n_params_default) {
     onlyif(
       !n_params_set && !all(keep_params),
       warning_(c(
-        "Number of parameters to be plotted ({n_u_params}) exceeds the
-       maximum number of parameters ({n_params}). The remaining parameters will
-       not be plotted.",
-       `i` = "Please increase {.arg n_params} to plot more parameters."
+        "Number of parameters to be plotted ({n_vars}) exceeds the
+         maximum number of parameters ({n_params}). The remaining parameters
+         will not be plotted.",
+        `i` = "Please increase {.arg n_params} to plot more parameters."
       ))
     )
   } else {
@@ -625,10 +628,10 @@ filter_params <- function(x, n_params, n_params_default) {
         !n_params_set && !all(keep_type_params),
         warning_(c(
           "Number of parameters to be plotted ({n_u_params}) exceeds the
-         maximum number of parameters ({max_params}) for parameters
-         of type {.var type}. The remaining parameters of this type will
-         not be plotted.",
-         `i` = "Please increase {.arg n_params} to plot more parameters."
+           maximum number of parameters ({max_params}) for parameters
+           of type {.var {type}}. The remaining parameters of this type will
+           not be plotted.",
+          `i` = "Please increase {.arg n_params} to plot more parameters."
         ))
       )
     }

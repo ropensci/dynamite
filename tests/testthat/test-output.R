@@ -106,7 +106,6 @@ test_that("trace type plot works", {
   )
 })
 
-
 test_that("combining plots works", {
   expect_error(
     plot(gaussian_example_fit, type = c("alpha", "beta")),
@@ -230,7 +229,7 @@ test_that("deltas can be plotted", {
 
 test_that("nus can be plotted", {
   expect_error(
-    plot(gaussian_example_fit, types = "nu"),
+    plot(gaussian_example_fit, types = "nu", n_params = 10),
     NA
   )
 })
