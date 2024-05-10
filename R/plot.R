@@ -217,12 +217,12 @@ plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
     ) +
     ggplot2::coord_equal(
       xlim = c(
-        min(layout$x) - 0.15 - 0.25 * any_curved_x,
-        max(layout$x) + 0.15 + 0.25 * any_curved_x
+        min(layout$x) - 0.25 - 0.25 * any_curved_x,
+        max(layout$x) + 0.25 + 0.25 * any_curved_x
       ),
       ylim = c(
-        min(layout$y) - 0.15 - 0.25 * any_curved_y,
-        max(layout$y) + 0.15 + 0.25 * any_curved_y
+        min(layout$y) - 0.25 - 0.25 * any_curved_y,
+        max(layout$y) + 0.25 + 0.25 * any_curved_y
       )
     )
 }
@@ -242,7 +242,10 @@ plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
 #'   selected by `types` or `parameters`. If both `"types"` and
 #'   `parameters` are `NULL`, all parameters are drawn up to the maximum
 #'   specified by `n_params`. Option `"trace"` instead draws posterior
-#'   densities and traceplots of the parameters.
+#'   densities and traceplots of the parameters. Option `"dag"` instead plots
+#'   the directed acyclic graph of the model formula, see
+#'   [dynamite::plot.dynamiteformula()] for the arguments available for this
+#'   option.
 #' @param types \[`character(1)`]\cr Types of the parameter for which the plots
 #'   should be drawn. Possible options can be found with the function
 #'   [dynamite::get_parameter_types()]. Ignored if the argument `parameters`
@@ -264,6 +267,8 @@ plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
 #'   Default is 0.05, leading to 90% intervals.
 #' @param alpha \[`numeric(1)`]\cr Opacity level for `geom_ribbon`.
 #'   Default is 0.5.
+#' @param facet \[`logical(1)`]\cr Should the time-invariant parameters be
+#'   plotted separately (`TRUE`) or in a single plot (`FALSE`)?
 #' @param scales \[`character(1)`]\cr Should y-axis of the panels be `"fixed"`
 #'   (the default) or `"free"`? See [ggplot2::facet_wrap()].
 #' @param n_params \[`integer()`]\cr A single value or a vector of length 2
@@ -274,7 +279,8 @@ plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
 #'   parameters to plot. The defaults values are 20 for time-invariant
 #'   parameters and 3 for time-varying parameters. The default value is 5
 #'   for `plot_type == "trace"`.
-#' @param ... Not used..
+#' @param ... Arguments passed to [dynamite::plot.dynamiteformula()] when
+#'   using `plot_type = "dag"`.
 #' @return A `ggplot` object.
 #' @srrstats {BS6.1, RE6.0, RE6.1, BS6.2, BS6.3, BS6.5} Implements the `plot()`
 #' method. Further plots can be easily constructed with the help of
@@ -283,10 +289,10 @@ plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
 #' data.table::setDTthreads(1) # For CRAN
 #' plot(gaussian_example_fit, type = "beta")
 #'
-plot.dynamitefit <- function(x, plot_type = c("default", "trace"),
+plot.dynamitefit <- function(x, plot_type = c("default", "trace", "dag"),
                              types = NULL, parameters = NULL,
                              responses = NULL, groups = NULL, times = NULL,
-                             level = 0.05, alpha = 0.5,
+                             level = 0.05, alpha = 0.5, facet = TRUE,
                              scales = c("fixed", "free"),
                              n_params = NULL, ...) {
   stopifnot_(
@@ -299,13 +305,17 @@ plot.dynamitefit <- function(x, plot_type = c("default", "trace"),
   )
   plot_type <- onlyif(is.character(plot_type), tolower(plot_type))
   plot_type <- try(
-    match.arg(plot_type, c("default", "trace")),
+    match.arg(plot_type, c("default", "trace", "dag")),
     silent = TRUE
   )
   stopifnot_(
     !inherits(plot_type, "try-error"),
-    "Argument {.arg type} must be either {.val default} or {.val trace}."
+    "Argument {.arg type} must be either {.val default}, {.val trace}
+     or {.val dag}."
   )
+  if (identical(plot_type, "dag")) {
+    return(plot.dynamiteformula(x = eval(formula(x)), ...))
+  }
   stopifnot_(
     checkmate::test_number(
       x = level,
@@ -325,6 +335,10 @@ plot.dynamitefit <- function(x, plot_type = c("default", "trace"),
     ),
     "Argument {.arg alpha} must be a single
      {.cls numeric} value between 0 and 1."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = facet),
+    "Argument {.arg facet} must be a single logical value."
   )
   scales <- onlyif(is.character(scales), tolower(scales))
   scales <- try(match.arg(scales, c("fixed", "free")), silent = TRUE)
@@ -381,6 +395,7 @@ plot.dynamitefit <- function(x, plot_type = c("default", "trace"),
       coefs,
       level,
       alpha,
+      facet,
       scales,
       n_params[1L]
     )
@@ -467,7 +482,7 @@ plot_trace <- function(x, types, parameters, responses,
 #'
 #' @inheritParams plot.dynamitefit
 #' @noRd
-plot_fixed <- function(coefs, level, alpha, scales, n_params) {
+plot_fixed <- function(coefs, level, alpha, facet, scales, n_params) {
   coefs <- coefs[is.na(coefs$time), ]
   if (nrow(coefs) == 0L) {
     return(NULL)
@@ -498,8 +513,9 @@ plot_fixed <- function(coefs, level, alpha, scales, n_params) {
   )
   # avoid NSE notes from R CMD check
   time <- mean <- category <- parameter <- type <- NULL
-  if (any(!is.na(coefs$category))) {
-    p <- ggplot2::ggplot(
+  p <- ifelse_(
+    any(!is.na(coefs$category)),
+    ggplot2::ggplot(
       coefs,
       ggplot2::aes(
         mean,
@@ -507,12 +523,14 @@ plot_fixed <- function(coefs, level, alpha, scales, n_params) {
         colour = category,
         group = category
       )
-    )
-  } else {
-    p <- ggplot2::ggplot(coefs, ggplot2::aes(mean, parameter))
-  }
+    ),
+    ggplot2::ggplot(coefs, ggplot2::aes(mean, parameter))
+  )
   p +
-    ggplot2::facet_wrap(~type, scales = "free") +
+    onlyif(
+      facet,
+      ggplot2::facet_wrap(~type, scales = "free")
+    ) +
     ggplot2::geom_pointrange(
       ggplot2::aes(
         xmin = !!rlang::sym(paste0("q", 100 * level)),

@@ -6,7 +6,7 @@
 \usage{
 \method{plot}{dynamitefit}(
   x,
-  plot_type = c("default", "trace"),
+  plot_type = c("default", "trace", "dag"),
   types = NULL,
   parameters = NULL,
   responses = NULL,
@@ -14,6 +14,7 @@
   times = NULL,
   level = 0.05,
   alpha = 0.5,
+  facet = TRUE,
   scales = c("fixed", "free"),
   n_params = NULL,
   ...
@@ -27,7 +28,10 @@ is \code{"default"} which draws posterior means and intervals of the parameters
 selected by \code{types} or \code{parameters}. If both \code{"types"} and
 \code{parameters} are \code{NULL}, all parameters are drawn up to the maximum
 specified by \code{n_params}. Option \code{"trace"} instead draws posterior
-densities and traceplots of the parameters.}
+densities and traceplots of the parameters. Option \code{"dag"} instead plots
+the directed acyclic graph of the model formula, see
+\code{\link[=plot.dynamiteformula]{plot.dynamiteformula()}} for the arguments available for this
+option.}
 
 \item{types}{[\code{character(1)}]\cr Types of the parameter for which the plots
 should be drawn. Possible options can be found with the function
@@ -57,6 +61,9 @@ Default is 0.05, leading to 90\% intervals.}
 \item{alpha}{[\code{numeric(1)}]\cr Opacity level for \code{geom_ribbon}.
 Default is 0.5.}
 
+\item{facet}{[\code{logical(1)}]\cr Should the time-invariant parameters be
+plotted separately (\code{TRUE}) or in a single plot (\code{FALSE})?}
+
 \item{scales}{[\code{character(1)}]\cr Should y-axis of the panels be \code{"fixed"}
 (the default) or \code{"free"}? See \code{\link[ggplot2:facet_wrap]{ggplot2::facet_wrap()}}.}
 
@@ -69,7 +76,8 @@ parameters to plot. The defaults values are 20 for time-invariant
 parameters and 3 for time-varying parameters. The default value is 5
 for \code{plot_type == "trace"}.}
 
-\item{...}{Not used..}
+\item{...}{Arguments passed to \code{\link[=plot.dynamiteformula]{plot.dynamiteformula()}} when
+using \code{plot_type = "dag"}.}
 }
 \value{
 A \code{ggplot} object.
