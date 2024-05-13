@@ -1,21 +1,29 @@
 #' Diagnostic Values of a Dynamite Model
 #'
-#' Prints HMC diagnostics, and lists parameters with smallest effective sample
+#' Prints HMC diagnostics and lists parameters with smallest effective sample
 #' sizes and largest Rhat values. See [hmc_diagnostics()] and
 #' [posterior::default_convergence_measures()] for details.
 #'
 #' @export
 #' @family diagnostics
+#' @rdname mcmc_diagnostics
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param n \[`integer(1)`]\cr How many rows to print in
 #'   parameter-specific convergence measures. The default is 3. Should be a
 #'   positive (unrestricted) integer.
+#' @param ... Ignored.
 #' @return Returns `x` (invisibly).
 #' @examples
 #' data.table::setDTthreads(1) # For CRAN
 #' mcmc_diagnostics(gaussian_example_fit)
 #'
-mcmc_diagnostics <- function(x, n = 3L) {
+mcmc_diagnostics <- function(x, ...) {
+  UseMethod("mcmc_diagnostics", x)
+}
+
+#' @export
+#' @rdname mcmc_diagnostics
+mcmc_diagnostics.dynamitefit <- function(x, n = 3L, ...) {
   stopifnot_(
     !missing(x),
     "Argument {.arg x} is missing."
@@ -71,12 +79,20 @@ mcmc_diagnostics <- function(x, n = 3L) {
 #'
 #' @export
 #' @family diagnostics
+#' @rdname hmc_diagnostics
 #' @param x \[`dynamitefit`]\cr The model fit object.
+#' @param ... Ignored.
 #' @return Returns `x` (invisibly).
 #' data.table::setDTthreads(1) # For CRAN
 #' hmc_diagnostics(gaussian_example_fit)
 #'
-hmc_diagnostics <- function(x) {
+hmc_diagnostics <- function(x, ...) {
+  UseMethod("hmc_diagnostics", x)
+}
+
+#' @export
+#' @rdname hmc_diagnostics
+hmc_diagnostics.dynamitefit <- function(x, ...) {
   stopifnot_(
     !missing(x),
     "Argument {.arg x} is missing."

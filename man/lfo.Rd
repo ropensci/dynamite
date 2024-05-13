@@ -2,12 +2,19 @@
 % Please edit documentation in R/lfo.R
 \name{lfo}
 \alias{lfo}
+\alias{lfo.dynamitefit}
 \title{Approximate Leave-Future-Out (LFO) Cross-validation}
 \usage{
-lfo(x, L, verbose = TRUE, k_threshold = 0.7, ...)
+lfo(x, ...)
+
+\method{lfo}{dynamitefit}(x, L, verbose = TRUE, k_threshold = 0.7, ...)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
+
+\item{...}{Additional arguments passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} or
+\code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}, such as \code{chains} and \code{cores} (\code{parallel_chains} in
+\code{cmdstanr}).}
 
 \item{L}{[\code{integer(1)}]\cr Positive integer defining how many time points
 should be used for the initial fit.}
@@ -17,10 +24,6 @@ the LFO computations to the console.}
 
 \item{k_threshold}{[\code{numeric(1)}]\cr Threshold for the Pareto k estimate
 triggering refit. Default is 0.7.}
-
-\item{...}{Additional arguments passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} or
-\code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}, such as \code{chains} and \code{cores} (\code{parallel_chains} in
-\code{cmdstanr}).}
 }
 \value{
 An \code{lfo} object which is a \code{list} with the following components:

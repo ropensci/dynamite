@@ -989,17 +989,8 @@ test_that("output for missing argument fails", {
     "summary",
     "update"
   )
-  non_s3_methods <- c(
-    "hmc_diagnostics",
-    "lfo",
-    "mcmc_diagnostics"
-  )
   for (m in methods) {
-    call_fun <- ifelse_(
-      m %in% non_s3_methods,
-      m,
-      paste0(m, ".dynamitefit")
-    )
+    call_fun <- paste0(m, ".dynamitefit")
     expect_error(
       do.call(call_fun, args = list()),
       "Argument `.+` is missing"
@@ -1015,7 +1006,10 @@ test_that("output for non dynamitefit objects fails", {
     "coef",
     "fitted",
     "formula",
+    "hmc_diagnostics",
+    "lfo",
     "loo",
+    "mcmc_diagnostics",
     "ndraws",
     "nobs",
     "plot",
@@ -1033,22 +1027,13 @@ test_that("output for non dynamitefit objects fails", {
     "summary",
     "update"
   )
-  non_s3_methods <- c(
-    "hmc_diagnostics",
-    "lfo",
-    "mcmc_diagnostics"
-  )
   for (m in methods) {
     args <- ifelse_(
       m %in% object_arg_methods,
       list(object = 1L),
       list(x = 1L)
     )
-    call_fun <- ifelse_(
-      m %in% non_s3_methods,
-      m,
-      paste0(m, ".dynamitefit")
-    )
+    call_fun <- paste0(m, ".dynamitefit")
     expect_error(
       do.call(call_fun, args = args),
       "Argument `.+` must be a <dynamitefit> object\\."
@@ -1061,6 +1046,8 @@ test_that("output without Stan fit fails", {
     "as.data.frame",
     "as_draws_df",
     "fitted",
+    "lfo",
+    "loo",
     "predict",
     "ndraws"
   )

@@ -770,7 +770,7 @@ prepare_channel_cumulative <- function(y, Y, channel, sampling,
   fixed_cutpoints <- channel$has_fixed_intercept
   if (fixed_cutpoints) {
     cutpoint_priors <- data.frame(
-      parameter = paste0("cutpoints_", y, "_", seq_len(S_y - 1)),
+      parameter = paste0("cutpoint_", y, "_", seq_len(S_y - 1)),
       response = y,
       prior = "std_normal()",
       type = "cutpoint",
@@ -793,13 +793,13 @@ prepare_channel_cumulative <- function(y, Y, channel, sampling,
     out$priors <- out$priors[out$priors$type != "alpha", ]
     out$channel$prior_distr$alpha_prior_distr <- NULL
     if (is.null(priors)) {
-      out$channel$prior_distr$cutpoints_prior_distr <- cutpoint_priors$prior
-      names(out$channel$prior_distr$cutpoints_prior_distr) <- cutpoint_priors$category
+      out$channel$prior_distr$cutpoint_prior_distr <- cutpoint_priors$prior
+      names(out$channel$prior_distr$cutpoint_prior_distr) <- cutpoint_priors$category
       out$priors <- rbind(cutpoint_priors, out$priors)
     } else {
       priors <- priors[priors$response == y, ]
       pdef <- priors[priors$type == "cutpoint", ]
-      out$channel$prior_distr$cutpoints_prior_distr <- pdef$prior
+      out$channel$prior_distr$cutpoint_prior_distr <- pdef$prior
       defaults <- rbind(
         cutpoint_priors,
         default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,

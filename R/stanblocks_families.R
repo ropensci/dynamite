@@ -632,20 +632,20 @@ loglik_lines_cumulative <- function(y, obs, idt, default, family,
   u <- default$u
   is_logit <- identical("logit", family$link)
   link <- ifelse_(is_logit, "logistic", "probit")
-  cutpoints <- ifelse_(
+  cutpoint <- ifelse_(
     has_varying_intercept,
-    glue::glue("cutpoints_{y}[t, ]"),
-    glue::glue("cutpoints_{y}")
+    glue::glue("cutpoint_{y}[t, ]"),
+    glue::glue("cutpoint_{y}")
   )
   likelihood <- ifelse_(
     default$use_glm && is_logit,
     glue::glue(
       "ll += ordered_{link}_glm_l{u}pmf(y_{y}[t, {obs}] | X[t][{obs}, J_{y}], ",
-      "gamma__{y}, {cutpoints});"
+      "gamma__{y}, {cutpoint});"
     ),
     glue::glue(
       "ll += ordered_{link}_l{u}pmf(y_{y}[t, {obs}] | ",
-      "intercept_{y}, {cutpoints});"
+      "intercept_{y}, {cutpoint});"
     )
   )
   if (default$threading) {
@@ -653,11 +653,11 @@ loglik_lines_cumulative <- function(y, obs, idt, default, family,
       default$fun_args,
       onlyif(
         has_fixed_intercept,
-        glue::glue("vector cutpoints_{y}")
+        glue::glue("vector cutpoint_{y}")
       ),
       onlyif(
         has_varying_intercept,
-        glue::glue("array[] vector cutpoints_{y}")
+        glue::glue("array[] vector cutpoint_{y}")
       )
     )
   }
@@ -1459,7 +1459,7 @@ parameters_lines_cumulative <- function(y, idt, default,
     default,
     onlyif(
       has_fixed_intercept,
-      "ordered[S_{y} - 1] cutpoints_{y}; // Cutpoints"
+      "ordered[S_{y} - 1] cutpoint_{y}; // Cutpoints"
     ),
     .indent = idt(c(0, 1))
   )
@@ -1761,14 +1761,14 @@ transformed_parameters_lines_cumulative <- function(y, categories,
   if (has_varying_intercept) {
     declare_cutpoints <- glue::glue(
       stan_array(
-        backend, "vector", "cutpoints_{y}", "T", "", "S_{y} - 1"
+        backend, "vector", "cutpoint_{y}", "T", "", "S_{y} - 1"
       )
     )
     assign_cutpoints <- vapply(
       seq_along(categories),
       function(s) {
         glue::glue(
-          "cutpoints_{y}[, {s}] = alpha_{y}_{s};"
+          "cutpoint_{y}[, {s}] = alpha_{y}_{s};"
         )
       },
       character(1L)
@@ -1776,9 +1776,9 @@ transformed_parameters_lines_cumulative <- function(y, categories,
     state_cutpoints <- paste_rows(
       assign_cutpoints,
       "for (t in 1:T) {{",
-      "vector[S_{y}] tmp = exp(append_row(0, cutpoints_{y}[t, ]));",
+      "vector[S_{y}] tmp = exp(append_row(0, cutpoint_{y}[t, ]));",
       "for (s in 1:(S_{y} - 1)) {{",
-      "cutpoints_{y}[t, s] = log(sum(tmp[1:s]) / sum(tmp[(s + 1):S_{y}]));",
+      "cutpoint_{y}[t, s] = log(sum(tmp[1:s]) / sum(tmp[(s + 1):S_{y}]));",
       "}}",
       "}}",
       .indent = idt(c(1, 1, 2, 2, 3, 2, 1))
@@ -2158,12 +2158,14 @@ model_lines_cumulative <- function(y, obs, idt, priors,
   if (threading) {
     default$fun_call_args <- cs(
       default$fun_call_args,
-      glue::glue("cutpoints_{y}")
+      glue::glue("cutpoint_{y}")
     )
   }
-  S <- length(prior_distr$cutpoints_prior_distr)
+  S <- length(prior_distr$cutpoint_prior_distr)
   paste_rows(
-    glue::glue("cutpoints_{y}[{seq_len(S)}] ~ {prior_distr$cutpoints_prior_distr};"),
+    glue::glue(
+      "cutpoint_{y}[{seq_len(S)}] ~ {prior_distr$cutpoint_prior_distr};"
+    ),
     priors,
     model_lines_default(y, obs, idt, threading, default, ...),
     .parse = FALSE

@@ -7,12 +7,12 @@
 \method{plot}{lfo}(x, ...)
 }
 \arguments{
-\item{x}{[\code{lfo}]\cr Output from the \code{lfo} function.}
+\item{x}{[\code{lfo}]\cr Output of the \code{lfo} method.}
 
 \item{...}{Ignored.}
 }
 \value{
-A ggplot object.
+A \code{ggplot} object.
 }
 \description{
 Plots Pareto k values per each time point (with one point per group),

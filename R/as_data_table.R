@@ -706,9 +706,9 @@ as_data_table_corr <- function(x, draws, n_draws, resps, ...) {
   )
 }
 
-#' @describeIn as_data_table_default Data Table for a "cutpoints" Parameter
+#' @describeIn as_data_table_default Data Table for a "cutpoint" Parameter
 #' @noRd
-as_data_table_cutpoints <- function(x, draws, response,
+as_data_table_cutpoint <- function(x, draws, response,
                                     n_draws, include_fixed, ...) {
   channel <- get_channel(x, response)
   S <- channel$S
@@ -726,7 +726,7 @@ as_data_table_cutpoints <- function(x, draws, response,
     data.table::rbindlist(lapply(seq_len(S - 1L), function(i) {
       idx <- (i - 1L) * n_time2 + seq_len(n_time2)
       data.table::data.table(
-        parameter = paste0("cutpoints_", response),
+        parameter = paste0("cutpoint_", response),
         value = c(
           rep(NA, n_na),
           c(draws[, , idx])
@@ -737,7 +737,7 @@ as_data_table_cutpoints <- function(x, draws, response,
     }))
   } else {
     data.table::data.table(
-      parameter = paste0("cutpoints_", response),
+      parameter = paste0("cutpoint_", response),
       category = rep(seq_len(S - 1L), each = n_draws),
       value = c(draws)
     )
@@ -752,7 +752,7 @@ all_types <- c(
   "corr",
   "corr_nu",
   "corr_psi",
-  "cutpoints",
+  "cutpoint",
   "delta",
   "lambda",
   "nu",
@@ -776,7 +776,7 @@ fixed_types <- c(
   "corr",
   "corr_nu",
   "corr_psi",
-  "cutpoints",
+  "cutpoint",
   "lambda",
   "nu",
   "omega",
@@ -794,7 +794,7 @@ fixed_types <- c(
 
 varying_types <- c(
   "alpha",
-  "cutpoints",
+  "cutpoint",
   "delta",
   "psi"
 )
@@ -802,7 +802,7 @@ varying_types <- c(
 default_types <- c(
   "alpha",
   "beta",
-  "cutpoints",
+  "cutpoint",
   "delta",
   "lambda",
   "nu",

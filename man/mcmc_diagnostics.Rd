@@ -2,12 +2,17 @@
 % Please edit documentation in R/mcmc_diagnostics.R
 \name{mcmc_diagnostics}
 \alias{mcmc_diagnostics}
+\alias{mcmc_diagnostics.dynamitefit}
 \title{Diagnostic Values of a Dynamite Model}
 \usage{
-mcmc_diagnostics(x, n = 3L)
+mcmc_diagnostics(x, ...)
+
+\method{mcmc_diagnostics}{dynamitefit}(x, n = 3L, ...)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
+
+\item{...}{Ignored.}
 
 \item{n}{[\code{integer(1)}]\cr How many rows to print in
 parameter-specific convergence measures. The default is 3. Should be a
@@ -17,7 +22,7 @@ positive (unrestricted) integer.}
 Returns \code{x} (invisibly).
 }
 \description{
-Prints HMC diagnostics, and lists parameters with smallest effective sample
+Prints HMC diagnostics and lists parameters with smallest effective sample
 sizes and largest Rhat values. See \code{\link[=hmc_diagnostics]{hmc_diagnostics()}} and
 \code{\link[posterior:draws_summary]{posterior::default_convergence_measures()}} for details.
 }

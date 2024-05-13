@@ -2,12 +2,17 @@
 % Please edit documentation in R/mcmc_diagnostics.R
 \name{hmc_diagnostics}
 \alias{hmc_diagnostics}
+\alias{hmc_diagnostics.dynamitefit}
 \title{HMC Diagnostics for a Dynamite Model}
 \usage{
-hmc_diagnostics(x)
+hmc_diagnostics(x, ...)
+
+\method{hmc_diagnostics}{dynamitefit}(x, ...)
 }
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
+
+\item{...}{Ignored.}
 }
 \value{
 Returns \code{x} (invisibly).

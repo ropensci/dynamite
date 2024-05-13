@@ -9,9 +9,8 @@
 #' is triggered if pareto k values of any group exceeds the threshold.
 #'
 #' @export
-#' @export lfo
 #' @family diagnostics
-#' @aliases lfo
+#' @rdname lfo
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param L  \[`integer(1)`]\cr Positive integer defining how many time points
 #'   should be used for the initial fit.
@@ -51,7 +50,13 @@
 #' }
 #' }
 #'
-lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
+lfo <- function(x, ...) {
+  UseMethod("lfo", x)
+}
+
+#' @export
+#' @rdname lfo
+lfo.dynamitefit <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
   stopifnot_(
     !missing(x),
     "Argument {.arg x} is missing."
@@ -272,7 +277,8 @@ lfo <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
 #' Print the results from the LFO
 #'
 #' Prints the summary of the leave-future-out cross-validation.
-#' @param x x \[`lfo`]\cr Output of the `lfo` method.
+#'
+#' @param x \[`lfo`]\cr Output of the `lfo` method.
 #' @param ... Ignored.
 #' @return Returns `x` invisibly.
 #' @export
@@ -305,9 +311,9 @@ print.lfo <- function(x, ...) {
 #' Plots Pareto k values per each time point (with one point per group),
 #' together with a horizontal line representing the used threshold.
 #'
-#' @param x \[`lfo`]\cr Output from the `lfo` function.
+#' @param x \[`lfo`]\cr Output of the `lfo` method.
 #' @param ... Ignored.
-#' @return A ggplot object.
+#' @return A `ggplot` object.
 #' @export
 #' @examples
 #' data.table::setDTthreads(1) # For CRAN

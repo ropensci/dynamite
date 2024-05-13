@@ -644,7 +644,7 @@ prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars,
                                         idx, type, eval_type) {
   alpha <- paste0("alpha_", resp)
   beta <- paste0("beta_", resp)
-  cutpoints <- paste0("cutpoints_", resp)
+  cutpoint <- paste0("cutpoint_", resp)
   delta <- paste0("delta_", resp)
   phi <- paste0("phi_", resp)
   sigma <- paste0("sigma_", resp)
@@ -681,14 +681,14 @@ prepare_eval_env_univariate <- function(e, resp, resp_levels, cvars,
       stats::pnorm
     )
     if (cvars$has_fixed_intercept) {
-      e$cutpoints <- samples[[cutpoints]][idx, , drop = FALSE]
-      e$cutpoints <- e$cutpoints[rep_len(e$n_draws, e$k), , drop = FALSE]
+      e$cutpoint <- samples[[cutpoint]][idx, , drop = FALSE]
+      e$cutpoint <- e$cutpoint[rep_len(e$n_draws, e$k), , drop = FALSE]
       e$alpha <- matrix(0.0, e$n_draws, 1L)
     }
     if (cvars$has_varying_intercept) {
-      e$cutpoints <- samples[[cutpoints]][idx, , , drop = FALSE]
-      e$cutpoints <- e$cutpoints[rep_len(e$n_draws, e$k), , , drop = FALSE]
-      e$alpha <- matrix(0.0, e$n_draws, dim(e$cutpoints)[2L])
+      e$cutpoint <- samples[[cutpoint]][idx, , , drop = FALSE]
+      e$cutpoint <- e$cutpoint[rep_len(e$n_draws, e$k), , , drop = FALSE]
+      e$alpha <- matrix(0.0, e$n_draws, dim(e$cutpoint)[2L])
     }
   } else {
     if (cvars$has_fixed_intercept) {
@@ -1063,8 +1063,8 @@ predict_expr$fitted$categorical <- "
 "
 
 predict_expr$fitted$cumulative <- "
-  prob <- cbind(1, invlink(xbeta - cutpoints{idx_cuts})) -
-    cbind(invlink(xbeta - cutpoints{idx_cuts}), 0)
+  prob <- cbind(1, invlink(xbeta - cutpoint{idx_cuts})) -
+    cbind(invlink(xbeta - cutpoint{idx_cuts}), 0)
   for (s in 1:d) {{
     data.table::set(
       x = out,
@@ -1173,8 +1173,8 @@ predict_expr$predicted$categorical <- "
 "
 
 predict_expr$predicted$cumulative <- "
-  prob <- cbind(1, invlink(xbeta - cutpoints{idx_cuts})) -
-    cbind(invlink(xbeta - cutpoints{idx_cuts}), 0)
+  prob <- cbind(1, invlink(xbeta - cutpoint{idx_cuts})) -
+    cbind(invlink(xbeta - cutpoint{idx_cuts}), 0)
   data.table::set(
     x = out,
     i = idx_data,
@@ -1322,8 +1322,8 @@ predict_expr$mean$categorical <- "
 "
 
 predict_expr$mean$cumulative <- "
-  prob <- cbind(1, invlink(xbeta - cutpoints{idx_cuts})) -
-    cbind(invlink(xbeta - cutpoints{idx_cuts}), 0)
+  prob <- cbind(1, invlink(xbeta - cutpoint{idx_cuts})) -
+    cbind(invlink(xbeta - cutpoint{idx_cuts}), 0)
   for (s in 1:d) {{
     data.table::set(
       x = out,
@@ -1462,8 +1462,8 @@ predict_expr$loglik$categorical <- "
 "
 
 predict_expr$loglik$cumulative <- "
-  prob <- cbind(1, invlink(xbeta - cutpoints{idx_cuts})) -
-    cbind(invlink(xbeta - cutpoints{idx_cuts}), 0)
+  prob <- cbind(1, invlink(xbeta - cutpoint{idx_cuts})) -
+    cbind(invlink(xbeta - cutpoint{idx_cuts}), 0)
   data.table::set(
     x = out,
     i = idx,

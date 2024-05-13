@@ -501,7 +501,7 @@ plot_fixed <- function(coefs, level, alpha, facet, scales, n_params) {
       coefs$type[1L],
       alpha = "time-invariant intercepts",
       beta = "time-invariant regression coefficients",
-      cutpoints = "time-invariant cutpoints",
+      cutpoint = "time-invariant cutpoints",
       nu = "random intercepts",
       lambda = "latent factor loadings",
       "time-invariant parameters"
@@ -559,7 +559,7 @@ plot_varying <- function(coefs, level, alpha, scales, n_params) {
     title_spec <- switch(
       coefs$type[1L],
       alpha = "time-varying intercepts",
-      cutpoints = "time-invariant cutpoints",
+      cutpoint = "time-invariant cutpoints",
       delta = "time-invariant regression coefficients",
       psi = "latent factors",
       "time-varying parameters"

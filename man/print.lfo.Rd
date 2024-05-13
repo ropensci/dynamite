@@ -7,7 +7,7 @@
 \method{print}{lfo}(x, ...)
 }
 \arguments{
-\item{x}{x [\code{lfo}]\cr Output of the \code{lfo} method.}
+\item{x}{[\code{lfo}]\cr Output of the \code{lfo} method.}
 
 \item{...}{Ignored.}
 }

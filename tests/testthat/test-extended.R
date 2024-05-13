@@ -235,7 +235,7 @@ test_that("time-invariant cumulative fit and predict work", {
     NA
   )
   expect_error(
-    as.data.table(fit, types = "cutpoints"),
+    as.data.table(fit, types = "cutpoint"),
     NA
   )
   expect_error(
@@ -317,7 +317,7 @@ test_that("time-varying cutpoints for cumulative works", {
     NA
   )
   expect_error(
-    as.data.table(fit, types = "cutpoints"),
+    as.data.table(fit, types = "cutpoint"),
     NA
   )
   expect_error(
