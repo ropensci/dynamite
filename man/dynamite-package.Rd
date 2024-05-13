@@ -48,7 +48,7 @@ Authors:
 Other contributors:
 \itemize{
   \item Nicholas Clark [reviewer]
-  \item Lucy D’Agostino McGowan [reviewer]
+  \item Lucy D'Agostino McGowan [reviewer]
 }
 
 }

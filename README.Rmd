@@ -37,7 +37,7 @@ The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use i
 * Support for various distributions: Currently Gaussian, Multivariate Gaussian, Student t, Categorical, Ordered, Multinomial, Poisson, Bernoulli, Binomial, Negative Binomial, Gamma, Exponential, and Beta distributions are available, and these can be combined arbitrarily in multichannel models.
 * Allows evaluating realistic long-term counterfactual predictions which take into account the dynamic structure of the model by efficient posterior predictive distribution simulation.
 * Transparent quantification of parameter and predictive uncertainty due to a fully Bayesian approach.
-* Various visualization methods including method for drawing and producing TikZ code of the directed acyclic graph (DAG) of the model structure.
+* Various visualization methods including a method for drawing and producing a TikZ code of the directed acyclic graph (DAG) of the model structure.
 * User-friendly and efficient R interface with state-of-the-art estimation via Stan. Both `rstan` and `cmdstanr` backends are supported, with both parallel chains and within-chain parallelization.
 
 The `dynamite` package is developed with the support of the Research Council of Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)). For further information on DMPMs and the `dynamite` package, see the related [arXiv](https://arxiv.org/abs/2302.01607) and [SocArXiv](https://osf.io/preprints/socarxiv/mdwu5/) preprints.
@@ -102,7 +102,6 @@ plot(gaussian_example_fit, plot_type = "trace", types = "beta")
 ```
 
 Posterior predictive samples for the first 4 groups (using the samples based on the posterior distribution of the model parameters and observed data on the first time point):
-
 ```{r, warning=FALSE, fig.width = 9, fig.height = 4}
 library("ggplot2")
 pred <- predict(gaussian_example_fit, n_draws = 100)
@@ -114,6 +113,11 @@ pred |>
   geom_line(aes(y = y), colour = "tomato") +
   facet_wrap(~id) +
   theme_bw()
+```
+
+Visualizing the model structure as a DAG (a snapshot at time `t`):
+```{r, fig.width = 4, fig.height = 4}
+plot(gaussian_example_fit, plot_type = "dag", show_covariates = TRUE)
 ```
 
 For more examples, see the package vignette and the [blog post about dynamite](https://ropensci.org/blog/2023/01/31/dynamite-r-package/).

@@ -25,7 +25,7 @@
 #'     `rstan::extract(fit$stanfit, pars = "corr_matrix_nu")` if necessary.
 #'  * `sigma_lambda`\cr Standard deviations of the latent factor loadings
 #'    `lambda`.
-#'  * `tau_psi`\cr Standard deviations of the the spline coefficients of `psi`.
+#'  * `tau_psi`\cr Standard deviations of the spline coefficients of `psi`.
 #'  * `corr_psi`\cr Pairwise correlations of the latent factors.
 #'     Samples of the full correlation matrix can be extracted manually as
 #'     `rstan::extract(fit$stanfit, pars = "corr_matrix_psi")` if necessary.

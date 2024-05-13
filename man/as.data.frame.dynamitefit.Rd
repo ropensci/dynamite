@@ -95,7 +95,7 @@ Samples of the full correlation matrix can be extracted manually as
 \code{rstan::extract(fit$stanfit, pars = "corr_matrix_nu")} if necessary.
 \item \code{sigma_lambda}\cr Standard deviations of the latent factor loadings
 \code{lambda}.
-\item \code{tau_psi}\cr Standard deviations of the the spline coefficients of \code{psi}.
+\item \code{tau_psi}\cr Standard deviations of the spline coefficients of \code{psi}.
 \item \code{corr_psi}\cr Pairwise correlations of the latent factors.
 Samples of the full correlation matrix can be extracted manually as
 \code{rstan::extract(fit$stanfit, pars = "corr_matrix_psi")} if necessary.

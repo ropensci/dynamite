@@ -41,8 +41,8 @@ methodology from many other approaches are:
   posterior predictive distribution simulation.
 - Transparent quantification of parameter and predictive uncertainty due
   to a fully Bayesian approach.
-- Various visualization methods including method for drawing and
-  producing TikZ code of the directed acyclic graph (DAG) of the model
+- Various visualization methods including a method for drawing and
+  producing a TikZ code of the directed acyclic graph (DAG) of the model
   structure.
 - User-friendly and efficient R interface with state-of-the-art
   estimation via Stan. Both `rstan` and `cmdstanr` backends are
@@ -108,8 +108,8 @@ print(gaussian_example_fit)
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  3.727  2.350
-#> chain:2  3.840  2.458
+#> chain:1  5.430  3.327
+#> chain:2  5.375  3.404
 #> 
 #> Summary statistics of the time- and group-invariant parameters:
 #> # A tibble: 6 × 10
@@ -165,6 +165,14 @@ pred |>
 ```
 
 <img src="man/figures/README-unnamed-chunk-10-1.png" style="display: block; margin: auto;" />
+
+Visualizing the model structure as a DAG (a snapshot at time `t`):
+
+``` r
+plot(gaussian_example_fit, plot_type = "dag", show_covariates = TRUE)
+```
+
+<img src="man/figures/README-unnamed-chunk-11-1.png" style="display: block; margin: auto;" />
 
 For more examples, see the package vignette and the [blog post about
 dynamite](https://ropensci.org/blog/2023/01/31/dynamite-r-package/).

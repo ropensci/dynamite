@@ -475,4 +475,12 @@ test_that("thin works", {
     unique(pred$.draw),
     1L:20L
   )
+  expect_error(
+    pred <- fitted(gaussian_example_fit, thin = 10),
+    NA
+  )
+  expect_equal(
+    unique(pred$.draw),
+    1L:20L
+  )
 })

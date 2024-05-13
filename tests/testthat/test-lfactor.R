@@ -67,9 +67,11 @@ test_that("nonidentifiable lfactor specification gives warning", {
       group = "id",
       debug = list(no_compile = TRUE)
     ),
-    paste0("The common time-invariant intercept term of channel `y2` was ",
+    paste0(
+      "The common time-invariant intercept term of channel `y2` was ",
       "removed as channel predictors contain random intercept and latent ",
-      "factor specified with `nonzero_lambda` as TRUE\\.")
+      "factor specified with `nonzero_lambda` as TRUE\\."
+    )
   )
 })
 
