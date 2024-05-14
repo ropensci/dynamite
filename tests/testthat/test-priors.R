@@ -131,3 +131,85 @@ test_that("manual priors for multinomial channel works", {
   )
   expect_identical(get_priors(fit), p)
 })
+
+test_that("manual priors for cumulative channel works", {
+  n <- 100
+  t <- 30
+  x <- matrix(0, n, t)
+  y <- matrix(0, n, t)
+  p <- matrix(0, n, 4)
+  alpha <- c(-1, 0, 1)
+
+  for (i in seq_len(t)) {
+    x[, i] <- rnorm(n)
+    eta <- 0.6 * x[, i]
+    p[, 1] <- 1 - plogis(eta - alpha[1])
+    p[, 2] <- plogis(eta - alpha[1]) - plogis(eta - alpha[2])
+    p[, 3] <- plogis(eta - alpha[2]) - plogis(eta - alpha[3])
+    p[, 4] <- plogis(eta - alpha[3])
+    y[, i] <- apply(p, 1, sample, x = letters[1:4], size = 1, replace = FALSE)
+  }
+
+  d <- data.frame(
+    y = factor(c(y)), x = c(x),
+    time = rep(seq_len(t), each = n),
+    id = rep(seq_len(n), t)
+  )
+  f <- obs(y ~ x, family = "cumulative", link = "logit")
+
+  expect_error(
+    p <- get_priors(
+      f,
+      data = d,
+      time = "time",
+      group = "id"
+    ),
+    NA
+  )
+  expect_identical(
+    p$parameter,
+    c("cutpoint_y_1", "cutpoint_y_2", "cutpoint_y_3", "beta_y_x")
+  )
+  expect_error(
+    fit <- dynamite(
+      f,
+      data = d,
+      time = "time",
+      group = "id",
+      priors = p,
+      debug = list(no_compile = TRUE)
+    ),
+    NA
+  )
+  expect_identical(get_priors(fit), p)
+
+  f <- obs(y ~ -1 + x + varying(~ 1), family = "cumulative", link = "probit") +
+    splines()
+
+  expect_error(
+    p <- get_priors(
+      f,
+      data = d,
+      time = "time",
+      group = "id"
+    ),
+    NA
+  )
+  expect_identical(
+    p$parameter,
+    c("alpha_y_1", "alpha_y_2", "alpha_y_3", "tau_alpha_y_1", "tau_alpha_y_2",
+      "tau_alpha_y_3", "beta_y_x")
+  )
+  expect_error(
+    fit <- dynamite(
+      f,
+      data = d,
+      time = "time",
+      group = "id",
+      priors = p,
+      debug = list(no_compile = TRUE)
+    ),
+    NA
+  )
+  expect_identical(get_priors(fit), p)
+})
