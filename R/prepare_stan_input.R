@@ -794,15 +794,19 @@ prepare_channel_cumulative <- function(y, Y, channel, sampling,
     out$channel$prior_distr$alpha_prior_distr <- NULL
     if (is.null(priors)) {
       out$channel$prior_distr$cutpoint_prior_distr <- cutpoint_priors$prior
-      names(out$channel$prior_distr$cutpoint_prior_distr) <- cutpoint_priors$category
+      names(out$channel$prior_distr$cutpoint_prior_distr) <-
+        cutpoint_priors$category
       out$priors <- rbind(cutpoint_priors, out$priors)
     } else {
       priors <- priors[priors$response == y, ]
       pdef <- priors[priors$type == "cutpoint", ]
       out$channel$prior_distr$cutpoint_prior_distr <- pdef$prior
+      default_priors <-
+        default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors
+      default_priors <- default_priors[default_priors$type != "alpha", ]
       defaults <- rbind(
         cutpoint_priors,
-        default_priors(y, channel, mean_gamma, sd_gamma, mean_y, sd_y)$priors,
+        default_priors
       )
       check_priors(priors, defaults)
     }
