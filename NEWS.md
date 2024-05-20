@@ -6,7 +6,8 @@
   * The `plot()` method has gained the argument `n_params` to limit the amount of parameters drawn at once (per parameter type).
   * Both time-varying and time-invariant parameters can now be plotted simultaneously.
   * Fixed an issue with `predict()` and `fitted()` for multinomial responses.
-  * Priors for the cutpoint parameters of `cumulative` family are now customizable.
+  * Priors of the cutpoint parameters of the `cumulative` family are now customizable.
+  * Both `factor` and `ordered factor` responses are now supported for `categorical` and `cumulative` families. In addition, `ordered factor` columns of `data` are no longer converted to `factor` columns.
 
 # dynamite 1.5.0
 

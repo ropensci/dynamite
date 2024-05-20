@@ -21,25 +21,6 @@ test_that("factor time conversion warns", {
   )
 })
 
-test_that("ordered factor conversion to factor warns", {
-  test_data <- data.frame(
-    y = factor(c(1, 2, 2), ordered = TRUE),
-    x = c(1, 1, 2), z = c(1, 2, 3)
-  )
-  expect_warning(
-    dynamite(
-      dformula = obs(y ~ x, family = "categorical"),
-      data = test_data, group = "x", time = "z",
-      debug = list(no_compile = TRUE)
-    ),
-    paste0(
-      "Response variable `y` is of class <ordered factor> ",
-      "whose channel is categorical:\n",
-      "i `y` will be converted to an unordered factor\\."
-    )
-  )
-})
-
 test_that("perfect collinearity warns", {
   f1 <- obs(y ~ -1 + x + z, family = "gaussian")
   f2 <- obs(y ~ z, family = "gaussian")

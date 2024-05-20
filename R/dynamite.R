@@ -817,10 +817,12 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
   )
   if (is.factor(data[[time_var]])) {
     if (verbose) {
-      warning_(c(
-        "Time index variable {.arg {time_var}} is a {.cls factor}:",
-        `i` = "Converting the variable to {.cls integer} based on its levels."
-      ))
+      warning_(
+        c(
+          "Time index variable {.arg {time_var}} is a {.cls factor}:",
+          `i` = "Converting the variable to {.cls integer} based on its levels."
+        )
+      )
     }
     data.table::set(data, j = time_var, value = as.integer(data[[time_var]]))
   }
@@ -848,26 +850,6 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
     data.table::set(data, j = j, value = val)
   }
   resp <- get_responses(dformula)
-  ordered_factor_resp <- vapply(
-    seq_along(resp),
-    function(i) {
-      is_categorical(dformula[[i]]$family) && is.ordered(data[[resp[i]]])
-    },
-    logical(1L)
-  )
-  if (any(ordered_factor_resp)) {
-    rof <- resp[ordered_factor_resp]
-    if (verbose) {
-      warning_(c(
-        "Response variable{?s} {.var {rof}} {?is/are} of class
-        {.cls ordered factor} whose channel{?s} {?is/are} categorical:",
-        `i` = "{.var {rof}} will be converted to {?an/} unordered factor{?s}."
-      ))
-    }
-    for (i in seq_along(rof)) {
-      class(data[[rof[i]]]) <- "factor"
-    }
-  }
   finite_cols <- vapply(
     data,
     function(x) all(is.finite(x) | is.na(x)),

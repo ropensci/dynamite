@@ -73,7 +73,7 @@ as.array(fit$stanfit, pars = "df") |>
 
 It is important to note that in order to use the post-processing functions of `dynamite`, the modifications to the Stan code should not alter the names or sizes of the higher level parameters such as the random effect parameters `nu` in this example. Modifying priors, rewriting likelihood calculations or transformed parameters for efficiency gains, adding constraints to parameters, or computing additional variables in generated quantities block are some of the potential modifications that allows you to still use many of the useful functions of `dynamite`. For example, we can visualize the random effects of our custom model:
 ```{r}
-plot_nus(fit)
+plot(fit, type = "nu", n_params = 20)
 ```
 
 perform leave-one-out cross-validation:
@@ -106,7 +106,7 @@ While `dynamite` is written for MCMC estimation of DMPMs, we can still use other
 d <- get_data(fit)
 ```
 
-Like `get_code()`, this method is available for both `dynamiteformula` and `dynamitefit` objects. With the custom code and the corresponding input data, we can call the variational algorithm of `rstan`':
+Like `get_code()`, this method is available for both `dynamiteformula` and `dynamitefit` objects. With the custom code and the corresponding input data, we can call the variational algorithm of `rstan`:
 
 ```{r}
 model <- rstan::stan_model("custom_code.stan")
