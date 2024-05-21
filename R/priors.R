@@ -78,7 +78,7 @@ prepare_common_priors <- function(priors, M, shrinkage, P,
   #    data.frame(
   #      parameter = "xi",
   #      response = "",
-  #      prior = "normal(0, 1)",
+  #      prior = "std_normal()",
   #      type = "xi",
   #      category = ""
   #    ),
@@ -179,7 +179,7 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
     prior_distributions$vectorized_sigma_nu <- FALSE
   }
   if (channel$has_lfactor) {
-    prior_distributions$sigma_lambda_prior_distr <- "normal(0, 1)"
+    prior_distributions$sigma_lambda_prior_distr <- "std_normal()"
     priors$sigma_lambda <- data.frame(
       parameter = paste0("sigma_lambda_", y, ycat),
       response = y,
@@ -187,18 +187,7 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
       type = "sigma_lambda",
       category = category
     )
-    if (channel$nonzero_lambda) {
-      prior_distributions$tau_psi_prior_distr <-
-        paste0("normal(0, ", sd_y, ")")
-      priors$tau_psi <- data.frame(
-        parameter = paste0("tau_psi_", y, ycat),
-        response = y,
-        prior = prior_distributions$tau_psi_prior_distr,
-        type = "tau_psi",
-        category = category
-      )
-    }
-    prior_distributions$psi_prior_distr <- "normal(0, 1)"
+    prior_distributions$psi_prior_distr <- "std_normal()"
     priors$psi <- data.frame(
       parameter = paste0("psi_", y, ycat),
       response = y,
@@ -206,6 +195,16 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
       type = "psi",
       category = category
     )
+    if (channel$nonzero_kappa) {
+      prior_distributions$kappa_prior_distr <- "std_normal()"
+      priors$kappa <- data.frame(
+        parameter = paste0("kappa_", y, ycat),
+        response = y,
+        prior = prior_distributions$kappa_prior_distr,
+        type = "kappa",
+        category = category
+      )
+    }
   }
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {
 

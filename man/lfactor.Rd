@@ -6,7 +6,7 @@
 \usage{
 lfactor(
   responses = NULL,
-  nonzero_lambda = TRUE,
+  nonzero_kappa = TRUE,
   correlated = TRUE,
   noncentered_psi = FALSE
 )
@@ -17,7 +17,7 @@ factor should affect. Default is all responses defined with
 \code{obs} except categorical responses, which do not (yet) support the factor
 component.}
 
-\item{nonzero_lambda}{[\code{logical()}]\cr If \code{TRUE} (the default), assumes
+\item{nonzero_kappa}{[\code{logical()}]\cr If \code{TRUE} (the default), assumes
 that the mean of factor loadings is nonzero or not. Should be a logical
 vector matching the length of \code{responses} or a single logical value in
 case \code{responses} is \code{NULL}. See details.}
@@ -50,7 +50,7 @@ obs(y ~ 1, family = "gaussian") +
   obs(x ~ 1, family = "poisson") +
   obs(z ~ 1, family = "gaussian") +
   lfactor(
-    responses = c("y", "x"), nonzero_lambda = c(TRUE, FALSE),
+    responses = c("y", "x"), nonzero_kappa = c(TRUE, FALSE),
     correlated = TRUE, noncentered_psi = FALSE
   )
 

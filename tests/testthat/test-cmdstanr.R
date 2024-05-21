@@ -460,7 +460,7 @@ test_that("latent factor syntax is correct", {
     time = rep(seq_len(T_), each = N)
   )
   lfactor_opts <- expand.grid(
-    nonzero_lambda = c(FALSE, TRUE),
+    nonzero_kappa = c(FALSE, TRUE),
     noncentered_psi = c(FALSE, TRUE),
     correlated = c(FALSE, TRUE)
   )
@@ -469,7 +469,7 @@ test_that("latent factor syntax is correct", {
       x = obs(y ~ 1, family = "gaussian") +
         obs(x ~ 1, family = "gaussian") +
         lfactor(
-          nonzero_lambda = lfactor_opts$nonzero_lambda[i],
+          nonzero_kappa = lfactor_opts$nonzero_kappa[i],
           noncentered_psi = lfactor_opts$noncentered_psi[i],
           correlated = lfactor_opts$correlated[i]
         ) +

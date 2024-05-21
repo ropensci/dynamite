@@ -41,7 +41,7 @@ test_that("nonidentifiable lfactor specification gives warning", {
       obs(y1 ~ -1 + x, family = "poisson") +
         obs(y2 ~ x, family = "gaussian") +
         lfactor(responses = c("y1", "y2"),
-          nonzero_lambda = TRUE,
+          nonzero_kappa = TRUE,
           correlated = TRUE,
           noncentered_psi = TRUE
         ) + splines(30),
@@ -54,10 +54,10 @@ test_that("nonidentifiable lfactor specification gives warning", {
   expect_warning(
     dynamite(
       obs(y1 ~ x, family = "poisson") +
-        obs(y2 ~ x + random(~1), family = "gaussian") +
+        obs(y2 ~ -1+x + varying(~1) + random(~1), family = "gaussian") +
         lfactor(
           responses = c("y1", "y2"),
-          nonzero_lambda = TRUE,
+          nonzero_kappa = TRUE,
           correlated = TRUE,
           noncentered_psi = TRUE
         ) +
@@ -68,9 +68,9 @@ test_that("nonidentifiable lfactor specification gives warning", {
       debug = list(no_compile = TRUE)
     ),
     paste0(
-      "The common time-invariant intercept term of channel `y2` was ",
-      "removed as channel predictors contain random intercept and latent ",
-      "factor specified with `nonzero_lambda` as TRUE\\."
+      "The common time-varying intercept term of channel `y2` was ",
+      "removed as channel predictors contain latent factor specified with ",
+      "`nonzero_kappa` as TRUE\\."
     )
   )
 })
@@ -81,7 +81,7 @@ test_that("nonidentifiable lfactor specification gives warning", {
 #
 #   fit1 <- dynamite(
 #     obs(y1 ~ x, family = "poisson") + obs(y2 ~ x, family = "gaussian") +
-#       lfactor(nonzero_lambda = c(TRUE, FALSE),
+#       lfactor(nonzero_kappa = c(TRUE, FALSE),
 #         noncentered_psi = TRUE) +
 #       splines(10),
 #     data = d, time = "time", group = "id",
@@ -91,7 +91,7 @@ test_that("nonidentifiable lfactor specification gives warning", {
 #   fit2 <- dynamite(
 #     obs(y1 ~ x, family = "poisson") + obs(y2 ~ x, family = "gaussian") +
 #       lfactor(
-#         nonzero_lambda = c(TRUE, FALSE),
+#         nonzero_kappa = c(TRUE, FALSE),
 #         noncentered_psi = FALSE) +
 #       splines(10),
 #     data = d, time = "time", group = "id",
@@ -101,14 +101,14 @@ test_that("nonidentifiable lfactor specification gives warning", {
 #   fit3 <- dynamite(
 #     obs(y1 ~ x, family = "poisson") + obs(y2 ~ x, family = "gaussian") +
 #       lfactor(
-#         nonzero_lambda = c(TRUE, FALSE),
+#         nonzero_kappa = c(TRUE, FALSE),
 #         correlated = FALSE,
 #         noncentered_psi = FALSE) +
 #       splines(10),
 #     data = d, time = "time", group = "id",
 #     chains = 1, refresh = 0, seed = 1
 #   )
-#   as_draws(fit3,types=c("alpha","beta","sigma_lambda","tau_psi")) |> posterior:::summarise_draws()
+#   as_draws(fit3,types=c("alpha","beta","sigma_lambda")) |> posterior:::summarise_draws()
 #   expect_equal(
 #     summary(fit1, types = c("alpha", "beta", "sigma"))$mean,
 #     c(1, 1.05, 1, 0.53),
@@ -172,7 +172,7 @@ test_that("latent factor related parameters can be got", {
   skip_if_not(run_extended_tests)
   expect_equal(
     get_parameter_types(latent_factor_example_fit),
-    c("alpha", "lambda", "omega_psi", "psi", "sigma", "sigma_lambda", "tau_psi")
+    c("alpha", "lambda", "omega_psi", "psi", "sigma", "sigma_lambda", "kappa")
   )
 })
 

@@ -199,14 +199,15 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   category <- group <- parameter <- response <- NULL
   catstr <- time <- type <- value <- NULL
   out_all <- NULL
-  if ("xi" %in% types) {
-    out_all <- data.table::data.table(
-      type = "xi",
-      response = "",
-      category = NA_character_,
-      parameter = "xi"
-    )
-  }
+  # shrinkage not supported for now
+  # if ("xi" %in% types) {
+  #   out_all <- data.table::data.table(
+  #     type = "xi",
+  #     response = "",
+  #     category = NA_character_,
+  #     parameter = "xi"
+  #   )
+  # }
   if ("corr_nu" %in% types) {
     out_all <- rbind(
       out_all,
@@ -639,6 +640,12 @@ as_data_table_sigma_lambda <- function(draws, response, ...) {
   as_data_table_default("sigma_lambda", draws, response)
 }
 
+#' @describeIn as_data_table_default Data Table for a "kappa" Parameter
+#' @noRd
+as_data_table_kappa <- function(draws, response, ...) {
+  as_data_table_default("kappa", draws, response)
+}
+
 #' @describeIn as_data_table_default Data Table for a "psi" Parameter
 #' @noRd
 as_data_table_psi <- function(x, draws, n_draws, response,
@@ -662,12 +669,6 @@ as_data_table_psi <- function(x, draws, n_draws, response,
     time = rep(time_points, each = n_draws),
     category = category
   )
-}
-
-#' @describeIn as_data_table_default Data Table for a "tau_psi" Parameter
-#' @noRd
-as_data_table_tau_psi <- function(draws, response, ...) {
-  as_data_table_default("tau_psi", draws, response)
 }
 
 #' @describeIn as_data_table_default Data Table for a "omega_psi" Parameter
@@ -766,8 +767,8 @@ all_types <- c(
   "sigma_nu",
   "tau",
   "tau_alpha",
-  "tau_psi",
-  "xi"
+  "kappa"
+  #"xi" # shrinkage not supported for now
 )
 
 fixed_types <- c(
@@ -788,8 +789,8 @@ fixed_types <- c(
   "sigma_nu",
   "tau",
   "tau_alpha",
-  "tau_psi",
-  "xi"
+  "kappa"
+  #"xi" # shrinkage not supported for now
 )
 
 varying_types <- c(

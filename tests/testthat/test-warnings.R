@@ -153,26 +153,7 @@ test_that("time-varying intercept is removed", {
     paste0(
       "The common time-varying intercept term of channel `y` was removed ",
       "as channel predictors contain latent factor specified with ",
-      "`nonzero_lambda` as TRUE\\."
-    )
-  )
-})
-
-test_that("time-varying intercept is removed", {
-  expect_warning(
-    dynamite(
-      obs(y ~ x + random(~1), family = "gaussian") +
-        lfactor() +
-        splines(4),
-      test_data,
-      "time",
-      "id",
-      debug = debug
-    ),
-    paste0(
-      "The common time-invariant intercept term of channel `y` was ",
-      "removed as channel predictors contain random intercept and latent ",
-      "factor specified with `nonzero_lambda` as TRUE\\."
+      "`nonzero_kappa` as TRUE\\."
     )
   )
 })
