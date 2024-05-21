@@ -747,7 +747,7 @@ prepare_channel_categorical <- function(y, Y, channel, sampling,
   list(channel = out$channel, sampling = out$sampling, priors = out$priors)
 }
 
-#' @describeIn prepare_channel_default Prepare a Student-t Channel
+#' @describeIn prepare_channel_default Prepare a Cumulative Channel
 #' @noRd
 prepare_channel_cumulative <- function(y, Y, channel, sampling,
                                        sd_x, resp_class, priors) {

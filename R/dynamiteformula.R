@@ -619,7 +619,7 @@ get_dag <- function(x, project = FALSE, covariates = FALSE,
       lag_dep_pa <- lag_dep[lag_dep$resp == resp[i], ]
       lag_dep_ch <- lag_dep[lag_dep$var == resp[i], ]
       lag_dep_new <- vector(mode = "list", length = nrow(lag_dep_ch))
-      if (nrow(lag_dep_pa) > 0L) {
+      if (nrow(lag_dep_pa) > 0L || k > 0L) {
         for (j in seq_len(nrow(lag_dep_ch))) {
           lag_dep_new[[j]] <- data.frame(
             var = c(contemp_pa, lag_dep_pa$var),
@@ -648,9 +648,6 @@ get_dag <- function(x, project = FALSE, covariates = FALSE,
     f_(resp_lag$var, -1L * resp_lag$order),
     f_(resp_lag$var, resp_lag$order),
     f_(all_vars, 0L)
-    #paste0(resp_lag$var, "_{t - ", resp_lag$order, "}"),
-    #paste0(resp_lag$var, "_{t + ", resp_lag$order, "}"),
-    #paste0(all_vars, "_{t}")
   )
   n <- length(v)
   m <- nrow(lag_dep)
@@ -670,9 +667,6 @@ get_dag <- function(x, project = FALSE, covariates = FALSE,
   } else {
     layout_y <- rev(seq_along(resp[order(cg)]))
   }
-  # resp_past <- paste0(resp, "_{t - 1}")
-  # resp_future <- paste0(resp, "_{t + 1}")
-  # resp_t <- paste0(resp, "_{t}")
   resp_past <- f_(resp, -1L)
   resp_future <- f_(resp, 1L)
   resp_t <- f_(resp, 0L)
@@ -683,10 +677,6 @@ get_dag <- function(x, project = FALSE, covariates = FALSE,
   layout[layout$var %in% resp_past, "y"] <- layout_y
   layout[layout$var %in% resp_future, "x"] <- 1.0
   layout[layout$var %in% resp_future, "y"] <- layout_y
-  # var_past <- paste0(lag_dep$var, "_{t - ", lag_dep$order, "}")
-  # resp_future <- paste0(lag_dep$resp, "_{t + ", lag_dep$order, "}")
-  # resp_t <- paste0(lag_dep$resp, "_{t}")
-  # var_t <- paste0(lag_dep$var, "_{t}")
   var_past <- f_(lag_dep$var, -1 * lag_dep$order)
   resp_future <- f_(lag_dep$resp, lag_dep$order)
   resp_t <- f_(lag_dep$resp, 0L)
@@ -699,24 +689,18 @@ get_dag <- function(x, project = FALSE, covariates = FALSE,
   e_idx <- 3L
   for (i in seq_len(max_lag - 1L)) {
     include <- (lag_dep$order + i) <= max_lag
-    #var_past <- paste0(lag_dep$var, "_{t - ", lag_dep$order + i, "}")
     var_past <- f_(lag_dep$var, -1 * (lag_dep$order + i))
     var_past <- var_past[include]
-    #resp_past <- paste0(lag_dep$resp, "_{t - ", i, "}")
     resp_past <- f_(lag_dep$resp, -1 * i)
     resp_past <- resp_past[include]
-    #var_future <- paste0(lag_dep$var, "_{t + ", i, "}")
     var_future <- f_(lag_dep$var, i)
     var_future <- var_future[include]
-    #resp_future <- paste0(lag_dep$resp, "_{t + ", i + lag_dep$order, "}")
     resp_future <- f_(lag_dep$resp, (lag_dep$order + i))
     resp_future <- resp_future[include]
     A[cbind(var_past, resp_past)] <- 1L
     A[cbind(var_future, resp_future)] <- 1L
     edgelist[[e_idx]] <- data.frame(from = var_past, to = resp_past)
     edgelist[[e_idx + 1L]] <- data.frame(from = var_future, to = resp_future)
-    #resp_past <- paste0(resp, "_{t - ", i + 1L, "}")
-    #resp_future <- paste0(resp, "_{t + ", i + 1L, "}")
     resp_past <- f_(resp, -1L * (i + 1L))
     resp_future <- f_(resp, i + 1L)
     layout[layout$var %in% resp_past, "x"] <- (-1.0) * (i + 1L)
@@ -728,18 +712,12 @@ get_dag <- function(x, project = FALSE, covariates = FALSE,
   for (i in seq_along(contemp_dep)) {
     k <- length(contemp_dep[[i]])
     if (k > 0L) {
-      #resp_ti <- paste0(resp[i], "_{t}")
-      #contemp_t <- paste0(contemp_dep[[i]], "_{t}")
       resp_ti <- f_(resp[i], 0L)
       contemp_t <- f_(contemp_dep[[i]], 0L)
       A[contemp_t, resp_ti] <- 1L
       edgelist[[e_idx]] <- data.frame(from = contemp_t, to = resp_ti)
       e_idx <- e_idx + 1L
       for (j in seq_len(max_lag)) {
-        #contemp_past <- paste0(contemp_dep[[i]], "_{t - ", j, "}")
-        #contemp_future <- paste0(contemp_dep[[i]], "_{t + ", j, "}")
-        #resp_past <- paste0(resp[i], "_{t - ", j, "}")
-        #resp_future <- paste0(resp[i], "_{t + ", j, "}")
         contemp_past <- f_(contemp_dep[[i]], -1L * j)
         contemp_future <- f_(contemp_dep[[i]], j)
         resp_past <- f_(resp[i], -1L * j)

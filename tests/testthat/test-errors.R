@@ -1402,7 +1402,7 @@ test_that("constrained prior for unconstrained parameter fails", {
       debug = list(no_compile = TRUE)
     ),
     paste0(
-      "Priors for parameters alpha, beta, and delta ",
+      "Priors for parameters \"alpha\", \"beta\", and \"delta\" ",
       "should have unconstrained support:\n",
       "x Found an unconstrained distribution ",
       "`gamma` for parameter `delta_y_x`\\."
@@ -1452,6 +1452,33 @@ test_that("multinomial model fails if stan version < 2.24", {
     paste0(
       "Multinomial family is not supported for this version of rstan\\.\n",
       "i Please install a newer version of rstan\\."
+    )
+  )
+})
+
+# Stan errors -------------------------------------------------------------
+
+test_that("Stan backend argument conversion duplicates fail", {
+  dots <- list(iter = 1000, iter_sampling = 1000)
+  expect_error(
+    check_stan_args(dots, verbose = FALSE, backend = "rstan"),
+    paste0(
+      "Conflict in argument syntax conversion from cmdstanr to rstan\\.\n",
+      "x Argument `iter` has been multiply specified\\."
+    )
+  )
+  dots <- list(
+    iter = 1000,
+    iter_sampling = 1000,
+    cores = 3,
+    parallel_chains = 4
+  )
+  expect_error(
+    check_stan_args(dots, verbose = FALSE, backend = "cmdstanr"),
+    paste0(
+      "Conflict in argument syntax conversion from rstan to cmdstanr\\.\n",
+      "x Arguments `iter_sampling` and `parallel_chains` have been multiply ",
+      "specified\\."
     )
   )
 })

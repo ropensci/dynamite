@@ -80,7 +80,7 @@ For standard deviation parameter of gaussian and student's $t$ responses, we use
 
 # Defining priors of dynamite models
 
-While `dynamite()` can be used with the default prior choices, we recommend to check whether the defaults make sense for your particular problem and to odify them accordingly based on the domain knowledge. 
+While `dynamite()` can be used with the default prior choices, we recommend to check whether the defaults make sense for your particular problem and to codify them accordingly based on the domain knowledge. 
 
 Any univariate unbounded continuous distributions supported by Stan can be used as a prior for univariate model parameters (in case the parameter is constrained to be positive, the distribution is automatically truncated). Naturally, any univariate distribution bounded to the positive real line can be used as a prior for parameters constrained to be positive (e.g., a standard deviation parameter).
 See the Stan function reference at \url{https://mc-stan.org/users/documentation/} for possible distributions. For custom priors, you should first get the default priors with the `get_priors()` function, and then modify the `priors` column of the obtained data frame before supplying it to the `dynamite()` function:

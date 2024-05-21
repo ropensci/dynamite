@@ -207,7 +207,6 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
     }
   }
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {
-
     if (is_cumulative(channel$family)) {
       ycat_ <- paste0("_", channel$categories)
       category_ <- channel$categories
@@ -227,7 +226,6 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
       type = "alpha",
       category = category_
     )
-
     if (channel$has_varying_intercept) {
       if (is_cumulative(channel$family)) {
         prior_distributions$tau_alpha_prior_distr <-
@@ -314,8 +312,8 @@ check_priors <- function(priors, defaults) {
   stopifnot_(
     all(!dupl),
     c(
-      "Argument {.var priors} contains multiple priors for same parameter.",
-      `x` = "{cli::qty(sum(dupl))} Found multiple prior{?s} for parameter{?s}
+      "Argument {.arg priors} contains multiple priors for the same parameter.",
+      `x` = "{cli::qty(sum(dupl))} Found multiple priors for parameter{?s}
              {.var {priors$parameter[dupl]}}."
     )
   )
@@ -324,7 +322,7 @@ check_priors <- function(priors, defaults) {
   stopifnot_(
     identical(not_found_len, 0L),
     c(
-      "Argument {.var priors} must contain all relevant parameters:",
+      "Argument {.arg priors} must contain all relevant parameters:",
       `x` = "{cli::qty(not_found_len)} Prior{?s} for parameter{?s}
              {.var {not_found}} {?is/are} not defined."
     )
@@ -334,7 +332,7 @@ check_priors <- function(priors, defaults) {
   stopifnot_(
     identical(extras_len, 0L),
     c(
-      "Argument {.var priors} must contain only relevant parameters:",
+      "Argument {.arg priors} must contain only relevant parameters:",
       `x` = "{cli::qty(extras)} Found {?a/} prior{?s} for parameter{?s}
              {.var {extras}} but the model does not contain such
              {?a/} parameter{?s}."
@@ -357,7 +355,7 @@ check_priors <- function(priors, defaults) {
     identical(unsupported_len, 0L),
     c(
       "{cli::qty(unsupported_len)} Found {?an/} unsupported prior
-       distribution{?s} in {.var priors}:",
+       distribution{?s} in {.arg priors}:",
       `x` = "Distribution{?s} {.var {unsupported}} {?is/are} not available."
     )
   )
@@ -371,8 +369,8 @@ check_priors <- function(priors, defaults) {
   stopifnot_(
     identical(unsupported_len, 0L),
     c(
-      "Priors for parameters alpha, beta, and delta should have unconstrained
-      support:",
+      "Priors for parameters {.val alpha}, {.val beta}, and {.val delta}
+      should have unconstrained support:",
       `x` = "{cli::qty(unsupported_len)} Found {?an/} unconstrained
              distribution{?s} {.var {dists}} for parameter{?s} {.var {pars}}."
     )

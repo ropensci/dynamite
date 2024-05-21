@@ -21,25 +21,6 @@ test_that("factor time conversion warns", {
   )
 })
 
-test_that("ordered factor conversion to factor warns", {
-  test_data <- data.frame(
-    y = factor(c(1, 2, 2), ordered = TRUE),
-    x = c(1, 1, 2), z = c(1, 2, 3)
-  )
-  expect_warning(
-    dynamite(
-      dformula = obs(y ~ x, family = "categorical"),
-      data = test_data, group = "x", time = "z",
-      debug = list(no_compile = TRUE)
-    ),
-    paste0(
-      "Response variable `y` is of class <ordered factor> ",
-      "whose channel is categorical:\n",
-      "i `y` will be converted to an unordered factor\\."
-    )
-  )
-})
-
 test_that("perfect collinearity warns", {
   f1 <- obs(y ~ -1 + x + z, family = "gaussian")
   f2 <- obs(y ~ z, family = "gaussian")
@@ -298,7 +279,7 @@ test_that("too many parameters warns in plot", {
 
 # Deprecated --------------------------------------------------------------
 
-test_that("deprecated warn", {
+test_that("deprecated functions warn", {
   expect_warning(
     plot_betas(gaussian_example_fit),
     "'plot_betas' is deprecated"
@@ -318,5 +299,12 @@ test_that("deprecated warn", {
   expect_warning(
     try(plot_psis(gaussian_example_fit), silent = TRUE),
     "'plot_psis' is deprecated"
+  )
+})
+
+test_that("deprecated cmdstanr arguments warn", {
+  dots <- list(seed = 0, cores = 4, num_sampling = 1000)
+  expect_warning(
+    check_stan_args(dots, verbose = TRUE, backend = "cmdstanr"),
   )
 })

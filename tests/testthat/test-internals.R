@@ -189,3 +189,46 @@ test_that("message_ outputs", {
 test_that("R_version works", {
   expect_identical(R_version(), base::getRversion())
 })
+
+test_that("argument name conversion between rstan and cmdstanr works", {
+  dots <- list(
+    iter_warmup = 2000,
+    iter_sampling = 1000,
+    parallel_chains = 4,
+    seed = 0
+  )
+  expect_identical(
+    check_stan_args(dots, verbose = FALSE, backend = "rstan"),
+    list(warmup = 2000, iter = 1000, cores = 4, seed = 0)
+  )
+  dots <- list(
+    seed = 0,
+    iter_sampling = 1000,
+    parallel_chains = 4,
+    iter_warmup = 2000
+  )
+  expect_identical(
+    check_stan_args(dots, verbose = FALSE, backend = "rstan"),
+    list(seed = 0, iter = 1000, cores = 4, warmup = 2000)
+  )
+  dots <- list(warmup = 2000, iter = 1000, cores = 4, seed = 0)
+  expect_identical(
+    check_stan_args(dots, verbose = FALSE, backend = "cmdstanr"),
+    list(
+      iter_warmup = 2000,
+      iter_sampling = 1000,
+      parallel_chains = 4,
+      seed = 0
+    )
+  )
+  dots <- list(seed = 0, iter = 1000, cores = 4, warmup = 2000)
+  expect_identical(
+    check_stan_args(dots, verbose = FALSE, backend = "cmdstanr"),
+    list(
+      seed = 0,
+      iter_sampling = 1000,
+      parallel_chains = 4,
+      iter_warmup = 2000
+    )
+  )
+})

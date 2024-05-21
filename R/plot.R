@@ -138,8 +138,6 @@ plot_dynamiteformula_tikz <- function(g) {
   )
 }
 
-
-
 #' Create a `ggplot` of the Directed Acyclic Graph of a `dynamiteformula`
 #'
 #' @param g \[`list`]\cr Output of `get_dag`.

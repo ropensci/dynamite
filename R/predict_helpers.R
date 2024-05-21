@@ -131,10 +131,7 @@ parse_newdata <- function(dformulas, newdata, data, type, eval_type,
     time_scale = original_times[2L] - original_times[1L]
   )
   clear_names <- intersect(names(newdata), clear_names)
-  if (length(clear_names) > 0L) {
-    # TODO no need check length when data.table package is updated
-    newdata[, (clear_names) := NULL]
-  }
+  newdata[, (clear_names) := NULL]
   drop_unused(dformulas$all, newdata, group_var, time_var)
   type <- ifelse_(eval_type %in% c("fitted", "loglik"), eval_type, type)
   if (identical(type, "loglik")) {
@@ -507,7 +504,6 @@ expand_predict_output <- function(simulated, observed, df) {
 prepare_eval_envs <- function(object, simulated, observed,
                               type, eval_type, idx_draws,
                               new_levels, group_var) {
-  #samples <- rstan::extract(object$stanfit)
   samples <- lapply(
     posterior::as_draws_rvars(object$stanfit),
     posterior::draws_of
