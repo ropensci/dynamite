@@ -12,24 +12,23 @@ bibentry(
 )
 bibentry(
   key = "dmpmpaper",
-  bibtype  = "Misc",
-  title    = "Estimating Causal Effects from Panel Data with Dynamic
+  bibtype = "Article",
+  title = "Estimating Causal Effects from Panel Data with Dynamic
     Multivariate Panel Models",
   author = c(person("Santtu", "Tikka"), person("Jouni", "Helske")),
-  publisher = "SocArxiv",
-  year     = "2022",
-  url      = "https://osf.io/preprints/socarxiv/mdwu5/"
+  journal = "Advances in Life Course Research",
+  volume = "60",
+  pages = "100617",
+  year = "2024",
+  doi = "10.1016/j.alcr.2024.100617"
 )
-
 bibentry(
   key = "dynamite",
-  bibtype  = "Manual",
-  title    = "Bayesian Modeling and Causal Inference for Multivariate
+  bibtype = "Manual",
+  title = "Bayesian Modeling and Causal Inference for Multivariate
     Longitudinal Data",
   author = c(person("Santtu", "Tikka"), person("Jouni", "Helske")),
-  note  = "R package version 1.0.0",
-  year     = "2022",
-  url      = "https://github.com/ropensci/dynamite"
+  note = "R package version 1.5.1",
+  year = "2024",
+  url = "https://github.com/ropensci/dynamite"
 )
-
-

@@ -1,5 +1,5 @@
 ---
-title: "Customizing Stan code for dynamite"
+title: "Model customization and non-MCMC estimation with dynamite"
 link-citations: yes
 output:
   bookdown::html_document2:
@@ -8,7 +8,7 @@ pkgdown:
   as_is: true
 bibliography: dynamite.bib
 vignette: >
-  %\VignetteIndexEntry{Customizing Stan code for dynamite} 
+  %\VignetteIndexEntry{Model customization and non-MCMC estimation with dynamite} 
   %\VignetteEngine{knitr::rmarkdown} 
   %\VignetteEncoding{UTF-8}
 ---
@@ -126,7 +126,7 @@ Now the methods for `dynamitefit` objects such as `summary()` and `predict()` wo
 summary(fit_vb_dynamite, types = "beta")
 
 pp2 <- predict(
-  fit_vb_dynamite, newdata = newdata, new_levels = "gaussian", n_draws = 50
+  fit_vb_dynamite, newdata = newdata, new_levels = "original", n_draws = 50
 )
 
 ggplot2::ggplot(pp2, ggplot2::aes(time, y_new, group = .draw)) +
