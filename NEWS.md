@@ -9,6 +9,7 @@
   * Priors of the cutpoint parameters of the `cumulative` family are now customizable.
   * Both `factor` and `ordered factor` responses are now supported for `categorical` and `cumulative` families. In addition, `ordered factor` columns of `data` are no longer converted to `factor` columns.
   * Arguments that have the different names but the same functionality between `rstan` and `cmdstanr` can now be used interchangeably for either backend, such as `iter` and `iter_samples`.
+  * The latent factor component was reparameterized for additional robustness. User-visible changes include the change of argument `nonzero_lambda` to `nonzero_kappa`, and replacement of parameter `tau_psi` (deviation parameter of latent factor, now fixed to 1) with `kappa`, which corresponds to the inverse of coefficient of variation of lambdas.
 
 # dynamite 1.5.0
 
