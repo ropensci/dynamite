@@ -1,5 +1,5 @@
 ---
-title: "Customizing DMPMs"
+title: "Customizing Stan code for dynamite"
 link-citations: yes
 output:
   bookdown::html_document2:
@@ -8,7 +8,7 @@ pkgdown:
   as_is: true
 bibliography: dynamite.bib
 vignette: >
-  %\VignetteIndexEntry{Customizing DMPMs} 
+  %\VignetteIndexEntry{Customizing Stan code for dynamite} 
   %\VignetteEngine{knitr::rmarkdown} 
   %\VignetteEncoding{UTF-8}
 ---
@@ -91,7 +91,7 @@ newdata <- data.frame(
   z = 1
 )
 
-pp <- predict(fit, newdata = newdata, new_levels = "gaussian", n_draws = 50)
+pp <- predict(fit, newdata = newdata, new_levels = "original", n_draws = 50)
 
 ggplot2::ggplot(pp, ggplot2::aes(time, y_new, group = .draw)) +
   ggplot2::geom_line(alpha = 0.1) +

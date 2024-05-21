@@ -298,7 +298,7 @@ test_that("too many parameters warns in plot", {
 
 # Deprecated --------------------------------------------------------------
 
-test_that("deprecated warn", {
+test_that("deprecated functions warn", {
   expect_warning(
     plot_betas(gaussian_example_fit),
     "'plot_betas' is deprecated"
@@ -318,5 +318,12 @@ test_that("deprecated warn", {
   expect_warning(
     try(plot_psis(gaussian_example_fit), silent = TRUE),
     "'plot_psis' is deprecated"
+  )
+})
+
+test_that("deprecated cmdstanr arguments warn", {
+  dots <- list(seed = 0, cores = 4, num_sampling = 1000)
+  expect_warning(
+    check_stan_args(dots, verbose = TRUE, backend = "cmdstanr"),
   )
 })

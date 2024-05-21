@@ -12,13 +12,13 @@ Authors@R: c(
   )
 Description: Easy-to-use and efficient interface for 
   Bayesian inference of complex panel (time series) data using dynamic 
-  multivariate panel models by Helske and Tikka (2022) 
-  <doi:10.31235/osf.io/mdwu5>. The package supports joint modeling of multiple 
-  measurements per individual, time-varying and time-invariant effects, and a 
-  wide range of discrete and continuous distributions. Estimation of these 
-  dynamic multivariate panel models is carried out via 'Stan'. For an 
-  in-depth tutorial of the package, see (Tikka and Helske, 2023) 
-  <arxiv:2302.01607>.
+  multivariate panel models by Helske and Tikka (2024) 
+  <doi:10.1016/j.alcr.2024.100617>. The package supports joint modeling of 
+  multiple measurements per individual, time-varying and time-invariant 
+  effects, and a wide range of discrete and continuous distributions. 
+  Estimation of these dynamic multivariate panel models is carried out via 
+  'Stan'. For an  in-depth tutorial of the package, see 
+  (Tikka and Helske, 2023) <arxiv:2302.01607>.
 License: GPL (>= 3)
 URL: https://docs.ropensci.org/dynamite/, https://github.com/ropensci/dynamite/
 BugReports: https://github.com/ropensci/dynamite/issues/

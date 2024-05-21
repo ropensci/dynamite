@@ -51,9 +51,16 @@ methodology from many other approaches are:
 The `dynamite` package is developed with the support of the Research
 Council of Finland grant 331817
 ([PREDLIFE](https://sites.utu.fi/predlife/en/)). For further information
-on DMPMs and the `dynamite` package, see the related
-[arXiv](https://arxiv.org/abs/2302.01607) and
-[SocArXiv](https://osf.io/preprints/socarxiv/mdwu5/) preprints.
+on DMPMs and the `dynamite` package, see the related papers:
+
+- Helske J. and Tikka S. (2024). Estimating Causal Effects from Panel
+  Data with Dynamic Multivariate Panel Models. *Advances in Life Course
+  Research*, 60, 100617. ([Journal
+  version](https://doi.org/10.1016/j.alcr.2024.100617),
+  [SocArXiv](https://osf.io/preprints/socarxiv/mdwu5/) preprint)
+- Tikka S. and Helske J. (2023). `dynamite`: An R Package for Dynamic
+  Multivariate Panel Models. ([arXiv](https://arxiv.org/abs/2302.01607)
+  preprint)
 
 ## Installation
 
@@ -108,8 +115,8 @@ print(gaussian_example_fit)
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  5.430  3.327
-#> chain:2  5.375  3.404
+#> chain:1  5.448  3.404
+#> chain:2  5.419  3.390
 #> 
 #> Summary statistics of the time- and group-invariant parameters:
 #> # A tibble: 6 × 10
@@ -174,7 +181,7 @@ plot(gaussian_example_fit, plot_type = "dag", show_covariates = TRUE)
 
 <img src="man/figures/README-unnamed-chunk-11-1.png" style="display: block; margin: auto;" />
 
-For more examples, see the package vignette and the [blog post about
+For more examples, see the package vignettes and the [blog post about
 dynamite](https://ropensci.org/blog/2023/01/31/dynamite-r-package/).
 
 ## Related packages

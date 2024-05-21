@@ -8,6 +8,7 @@
   * Fixed an issue with `predict()` and `fitted()` for multinomial responses.
   * Priors of the cutpoint parameters of the `cumulative` family are now customizable.
   * Both `factor` and `ordered factor` responses are now supported for `categorical` and `cumulative` families. In addition, `ordered factor` columns of `data` are no longer converted to `factor` columns.
+  * Arguments that have the different names but the same functionality between `rstan` and `cmdstanr` can now be used interchangeably for either backend, such as `iter` and `iter_samples`.
 
 # dynamite 1.5.0
 
