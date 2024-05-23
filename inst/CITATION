@@ -3,11 +3,10 @@ citHeader("To cite dynamite in publications use:")
 bibentry(
   key = "dynamitepaper",
   bibtype  = "Misc",
-  doi = "10.48550/ARXIV.2302.01607",
+  doi = "10.48550/arXiv.2302.01607",
   url = "https://arxiv.org/abs/2302.01607",
   author = c(person("Santtu", "Tikka"), person("Jouni", "Helske")),
   title = "dynamite: An R Package for Dynamic Multivariate Panel Models",
-  publisher = "arXiv",
   year = "2023"
 )
 bibentry(
@@ -25,7 +24,7 @@ bibentry(
 bibentry(
   key = "dynamite",
   bibtype = "Manual",
-  title = "Bayesian Modeling and Causal Inference for Multivariate
+  title = "dynamite: Bayesian Modeling and Causal Inference for Multivariate
     Longitudinal Data",
   author = c(person("Santtu", "Tikka"), person("Jouni", "Helske")),
   note = "R package version 1.5.1",
