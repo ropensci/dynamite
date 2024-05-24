@@ -120,14 +120,15 @@ test_that("latent factor related parameters can be got", {
   skip_if_not(run_extended_tests)
   expect_equal(
     get_parameter_types(latent_factor_example_fit),
-    c("alpha", "lambda", "omega_psi", "psi", "sigma", "sigma_lambda", "kappa")
+    c("alpha", "lambda", "omega_psi", "psi", "sigma", "sigma_lambda",
+      "tau_psi", "kappa", "zeta")
   )
 })
 
 test_that("lambdas can be plotted", {
   skip_if_not(run_extended_tests)
   expect_error(
-    plot(latent_factor_example_fit, types = "lambda"),
+    plot(latent_factor_example_fit, types = "lambda", n_params = 10),
     NA
   )
 })
