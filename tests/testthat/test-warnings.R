@@ -134,7 +134,7 @@ test_that("time-varying intercept is removed", {
     paste0(
       "The common time-varying intercept term of channel `y` was removed ",
       "as channel predictors contain latent factor specified with ",
-      "`nonzero_kappa` as TRUE\\."
+      "`nonzero_lambda` as TRUE\\."
     )
   )
 })

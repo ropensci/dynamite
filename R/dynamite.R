@@ -798,9 +798,9 @@ formula.dynamitefit <- function(x, ...) {
     paste0("c(", paste0("'", lfactor_def$responses, "'", collapse = ", "), ")")
   )
   lfactor_nonzero <- ifelse_(
-    length(lfactor_def$nonzero_kappa) > 1L,
-    paste0("c(", cs(lfactor_def$nonzero_kappa), ")"),
-    lfactor_def$nonzero_kappa
+    length(lfactor_def$nonzero_lambda) > 1L,
+    paste0("c(", cs(lfactor_def$nonzero_lambda), ")"),
+    lfactor_def$nonzero_lambda
   )
   lfactor_str <- onlyif(
     lfactor_def$has_lfactor,
@@ -808,7 +808,7 @@ formula.dynamitefit <- function(x, ...) {
       "lfactor(",
       "responses = ", lfactor_resp, ", ",
       "noncentered_psi = ", lfactor_def$noncentered_psi, ", ",
-      "nonzero_kappa = ", lfactor_nonzero, ", ",
+      "nonzero_lambda = ", lfactor_nonzero, ", ",
       "correlated = ", lfactor_def$correlated,
       ")"
     )
@@ -1017,7 +1017,7 @@ parse_components <- function(dformulas, data, group_var, time_var) {
   )
 
    if (attr(dformulas$stoch, "lfactor")$has_lfactor) {
-    nz <- which(attr(dformulas$stoch, "lfactor")$nonzero_kappa)
+    nz <- which(attr(dformulas$stoch, "lfactor")$nonzero_lambda)
     if (length(nz) > 0L) {
       lresp <- attr(dformulas$stoch, "lfactor")$responses
       for (i in nz) {
@@ -1028,7 +1028,7 @@ parse_components <- function(dformulas, data, group_var, time_var) {
           warning_(
             "The common time-varying intercept term of channel
             {.var {lresp[i]}} was removed as channel predictors
-            contain latent factor specified with {.arg nonzero_kappa} as TRUE."
+            contain latent factor specified with {.arg nonzero_lambda} as TRUE."
           )
         }
         # ficpt <- dformulas$stoch[[j]]$has_fixed_intercept
@@ -1040,7 +1040,7 @@ parse_components <- function(dformulas, data, group_var, time_var) {
         #     "The common time-invariant intercept term of channel
         #     {.var {lresp[i]}} was removed as channel predictors
         #     contain random intercept and latent factor specified
-        #     with {.arg nonzero_kappa} as TRUE."
+        #     with {.arg nonzero_lambda} as TRUE."
         #   )
         # }
       }
@@ -1151,13 +1151,13 @@ parse_lfactor <- function(lfactor_def, resp, families) {
     out$responses <- lfactor_def$responses
     out$noncentered_psi <- lfactor_def$noncentered_psi
     n_channels <- length(lfactor_def$responses)
-    out$nonzero_kappa <- lfactor_def$nonzero_kappa
+    out$nonzero_lambda <- lfactor_def$nonzero_lambda
     stopifnot_(
-      length(out$nonzero_kappa) %in% c(1L, n_channels),
-      "Length of the {.arg nonzero_kappa} argument of {.fun lfactor} function
+      length(out$nonzero_lambda) %in% c(1L, n_channels),
+      "Length of the {.arg nonzero_lambda} argument of {.fun lfactor} function
       is not equal to 1 or {n_channels}, the number of the channels."
     )
-    out$nonzero_kappa <- rep(out$nonzero_kappa, length = n_channels)
+    out$nonzero_lambda <- rep(out$nonzero_lambda, length = n_channels)
     out$correlated <- lfactor_def$correlated
     out$P <- length(lfactor_def$responses)
   } else {
@@ -1166,7 +1166,7 @@ parse_lfactor <- function(lfactor_def, resp, families) {
       has_lfactor = FALSE,
       responses = character(0L),
       noncentered_psi = FALSE,
-      nonzero_kappa = logical(n_channels),
+      nonzero_lambda = logical(n_channels),
       correlated = FALSE,
       P = 0
     )

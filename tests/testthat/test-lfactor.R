@@ -41,7 +41,7 @@ test_that("nonidentifiable lfactor specification gives warning", {
       obs(y1 ~ -1 + x, family = "poisson") +
         obs(y2 ~ x, family = "gaussian") +
         lfactor(responses = c("y1", "y2"),
-          nonzero_kappa = TRUE,
+          nonzero_lambda = TRUE,
           correlated = TRUE,
           noncentered_psi = TRUE
         ) + splines(30),
@@ -57,7 +57,7 @@ test_that("nonidentifiable lfactor specification gives warning", {
         obs(y2 ~ -1+x + varying(~1) + random(~1), family = "gaussian") +
         lfactor(
           responses = c("y1", "y2"),
-          nonzero_kappa = TRUE,
+          nonzero_lambda = TRUE,
           correlated = TRUE,
           noncentered_psi = TRUE
         ) +
@@ -70,62 +70,10 @@ test_that("nonidentifiable lfactor specification gives warning", {
     paste0(
       "The common time-varying intercept term of channel `y2` was ",
       "removed as channel predictors contain latent factor specified with ",
-      "`nonzero_kappa` as TRUE\\."
+      "`nonzero_lambda` as TRUE\\."
     )
   )
 })
-
-# WIP
-# test_that("latent factors work", {
-#   skip_if_not(run_extended_tests)
-#
-#   fit1 <- dynamite(
-#     obs(y1 ~ x, family = "poisson") + obs(y2 ~ x, family = "gaussian") +
-#       lfactor(nonzero_kappa = c(TRUE, FALSE),
-#         noncentered_psi = TRUE) +
-#       splines(10),
-#     data = d, time = "time", group = "id",
-#     chains = 1, refresh = 0, seed = 1
-#   )
-#
-#   fit2 <- dynamite(
-#     obs(y1 ~ x, family = "poisson") + obs(y2 ~ x, family = "gaussian") +
-#       lfactor(
-#         nonzero_kappa = c(TRUE, FALSE),
-#         noncentered_psi = FALSE) +
-#       splines(10),
-#     data = d, time = "time", group = "id",
-#     chains = 1, refresh = 0, seed = 1
-#   )
-#
-#   fit3 <- dynamite(
-#     obs(y1 ~ x, family = "poisson") + obs(y2 ~ x, family = "gaussian") +
-#       lfactor(
-#         nonzero_kappa = c(TRUE, FALSE),
-#         correlated = FALSE,
-#         noncentered_psi = FALSE) +
-#       splines(10),
-#     data = d, time = "time", group = "id",
-#     chains = 1, refresh = 0, seed = 1
-#   )
-#   as_draws(fit3,types=c("alpha","beta","sigma_lambda")) |> posterior:::summarise_draws()
-#   expect_equal(
-#     summary(fit1, types = c("alpha", "beta", "sigma"))$mean,
-#     c(1, 1.05, 1, 0.53),
-#     tolerance = 0.1
-#   )
-#
-#   expect_equal(
-#     summary(fit1)$mean,
-#     summary(fit2)$mean,
-#     tolerance = 0.1
-#   )
-#   expect_equal(
-#     summary(fit1, types = c("alpha", "beta", "sigma"))$mean,
-#     summary(fit3, types = c("alpha", "beta", "sigma"))$mean,
-#     tolerance = 0.1
-#   )
-# })
 
 # Tests involving `latent_factor_example` and `latent_factor_example_fit` -----
 
@@ -160,7 +108,7 @@ latent_factor_example_fit <- onlyif(
     data = latent_factor_example,
     group = "id",
     time = "time",
-    iter = 2000,
+    iter = 4000,
     warmup = 1000,
     thin = 1,
     chains = 2,

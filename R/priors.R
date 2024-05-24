@@ -179,14 +179,33 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
     prior_distributions$vectorized_sigma_nu <- FALSE
   }
   if (channel$has_lfactor) {
-    prior_distributions$sigma_lambda_prior_distr <- "std_normal()"
-    priors$sigma_lambda <- data.frame(
-      parameter = paste0("sigma_lambda_", y, ycat),
-      response = y,
-      prior = prior_distributions$sigma_lambda_prior_distr,
-      type = "sigma_lambda",
-      category = category
-    )
+    if (channel$nonzero_lambda) {
+      prior_distributions$zeta_prior_distr <- "std_normal()"
+      priors$zeta <- data.frame(
+        parameter = paste0("zeta_", y, ycat),
+        response = y,
+        prior = prior_distributions$zeta_prior_distr,
+        type = "zeta",
+        category = category
+      )
+      prior_distributions$kappa_prior_distr <- "beta(2, 2)"
+      priors$kappa <- data.frame(
+        parameter = paste0("kappa_", y, ycat),
+        response = y,
+        prior = prior_distributions$kappa_prior_distr,
+        type = "kappa",
+        category = category
+      )
+    } else {
+      prior_distributions$sigma_lambda_prior_distr <- "std_normal()"
+      priors$sigma_lambda <- data.frame(
+        parameter = paste0("sigma_lambda_", y, ycat),
+        response = y,
+        prior = prior_distributions$sigma_lambda_prior_distr,
+        type = "sigma_lambda",
+        category = category
+      )
+    }
     prior_distributions$psi_prior_distr <- "std_normal()"
     priors$psi <- data.frame(
       parameter = paste0("psi_", y, ycat),
@@ -195,16 +214,6 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
       type = "psi",
       category = category
     )
-    if (channel$nonzero_kappa) {
-      prior_distributions$kappa_prior_distr <- "std_normal()"
-      priors$kappa <- data.frame(
-        parameter = paste0("kappa_", y, ycat),
-        response = y,
-        prior = prior_distributions$kappa_prior_distr,
-        type = "kappa",
-        category = category
-      )
-    }
   }
   if (channel$has_fixed_intercept || channel$has_varying_intercept) {
     if (is_cumulative(channel$family)) {
@@ -347,7 +356,8 @@ check_priors <- function(priors, defaults) {
     "gamma", "exponential", "lognormal", "chi_square", "inv_chi_square",
     "scaled_inv_chi_square", "inv_gamma", "weibull", "frechet", "rayleigh"
   )
-  all_dists <- c(unconstrained_dists, positive_dists)
+  bounded_dists <- "beta"
+  all_dists <- c(unconstrained_dists, positive_dists, bounded_dists)
   dists <- sub("\\(.*", "", priors$prior)
   unsupported <- unique(dists[!dists %in% all_dists])
   unsupported_len <- length(unsupported)

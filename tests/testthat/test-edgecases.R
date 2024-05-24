@@ -323,13 +323,12 @@ test_that("latent factors are handled correctly", {
       obs(y3 ~ -1 + x3 + varying(~x1) + trials(trials), family = "binomial") +
       obs(y4 ~ x1 + varying(~ -1 + x2), family = "bernoulli") +
       splines(df = 5) +
-      lfactor(c("y2", "y3"), nonzero_kappa = c(TRUE, FALSE)),
+      lfactor(c("y2", "y3"), nonzero_lambda = c(TRUE, FALSE)),
     NA
   )
   expect_equal(
     c(
-      "sigma_lambda_y2", "psi_y2", "kappa_y2",
-      "sigma_lambda_y3", "psi_y3", "L_lf"
+      "zeta_y2", "kappa_y2", "psi_y2", "sigma_lambda_y3", "psi_y3", "L_lf"
     ),
     get_priors(obs_all_lfactor, test_data, "time", "group")$parameter[
       c(1:3, 6:7, 25)

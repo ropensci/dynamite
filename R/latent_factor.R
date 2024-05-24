@@ -16,7 +16,7 @@
 #'   factor should affect. Default is all responses defined with
 #'   `obs` except categorical responses, which do not (yet) support the factor
 #'   component.
-#' @param nonzero_kappa \[`logical()`]\cr If `TRUE` (the default), assumes
+#' @param nonzero_lambda \[`logical()`]\cr If `TRUE` (the default), assumes
 #'   that the mean of factor loadings is nonzero or not. Should be a logical
 #'   vector matching the length of `responses` or a single logical value in
 #'   case `responses` is `NULL`. See details.
@@ -33,11 +33,11 @@
 #'   obs(x ~ 1, family = "poisson") +
 #'   obs(z ~ 1, family = "gaussian") +
 #'   lfactor(
-#'     responses = c("y", "x"), nonzero_kappa = c(TRUE, FALSE),
+#'     responses = c("y", "x"), nonzero_lambda = c(TRUE, FALSE),
 #'     correlated = TRUE, noncentered_psi = FALSE
 #'   )
 #'
-lfactor <- function(responses = NULL, nonzero_kappa = TRUE, correlated = TRUE,
+lfactor <- function(responses = NULL, nonzero_lambda = TRUE, correlated = TRUE,
   noncentered_psi = FALSE) {
   stopifnot_(
     checkmate::test_character(x = responses, min.len = 1L, null.ok = TRUE),
@@ -53,11 +53,11 @@ lfactor <- function(responses = NULL, nonzero_kappa = TRUE, correlated = TRUE,
   )
   stopifnot_(
     checkmate::test_logical(
-      x = nonzero_kappa,
+      x = nonzero_lambda,
       any.missing = FALSE,
       min.len = 1L
     ),
-    "Argument {.arg nonzero_kappa} must be a {.cls logical} vector."
+    "Argument {.arg nonzero_lambda} must be a {.cls logical} vector."
   )
   stopifnot_(
     checkmate::test_logical(
@@ -70,7 +70,7 @@ lfactor <- function(responses = NULL, nonzero_kappa = TRUE, correlated = TRUE,
   structure(
     list(
       responses = responses,
-      nonzero_kappa = nonzero_kappa,
+      nonzero_lambda = nonzero_lambda,
       correlated = correlated,
       noncentered_psi = noncentered_psi
     ),

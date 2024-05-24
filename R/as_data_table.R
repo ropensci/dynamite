@@ -639,13 +639,21 @@ as_data_table_lambda <- function(x, draws, n_draws, response, ...) {
 as_data_table_sigma_lambda <- function(draws, response, ...) {
   as_data_table_default("sigma_lambda", draws, response)
 }
-
+#' @describeIn as_data_table_default Data Table for a "tau_psi" Parameter
+#' @noRd
+as_data_table_tau_psi <- function(draws, response, ...) {
+  as_data_table_default("tau_psi", draws, response)
+}
 #' @describeIn as_data_table_default Data Table for a "kappa" Parameter
 #' @noRd
 as_data_table_kappa <- function(draws, response, ...) {
   as_data_table_default("kappa", draws, response)
 }
-
+#' @describeIn as_data_table_default Data Table for a "zeta" Parameter
+#' @noRd
+as_data_table_zeta <- function(draws, response, ...) {
+  as_data_table_default("zeta", draws, response)
+}
 #' @describeIn as_data_table_default Data Table for a "psi" Parameter
 #' @noRd
 as_data_table_psi <- function(x, draws, n_draws, response,
@@ -764,10 +772,12 @@ all_types <- c(
   "psi",
   "sigma",
   "sigma_lambda",
+  "tau_psi",
   "sigma_nu",
   "tau",
   "tau_alpha",
-  "kappa"
+  "kappa",
+  "zeta"
   #"xi" # shrinkage not supported for now
 )
 
@@ -786,10 +796,12 @@ fixed_types <- c(
   "phi",
   "sigma",
   "sigma_lambda",
+  "tau_psi",
   "sigma_nu",
   "tau",
   "tau_alpha",
-  "kappa"
+  "kappa",
+  "zeta"
   #"xi" # shrinkage not supported for now
 )
 

@@ -129,7 +129,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       has_splines = has_splines,
       has_lfactor = y %in% lfactor_def$responses,
       noncentered_psi = lfactor_def$noncentered_psi,
-      nonzero_kappa = lfactor_def$nonzero_kappa[i]
+      nonzero_lambda = lfactor_def$nonzero_lambda[i]
     )
     if (has_univariate(dformula[[i]]$family)) {
       prep <- do.call(
@@ -288,7 +288,7 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
                                           T_full, N, X_na, lb,
                                           shrinkage, noncentered,
                                           has_lfactor, has_splines,
-                                          noncentered_psi, nonzero_kappa) {
+                                          noncentered_psi, nonzero_lambda) {
   channel <- list()
   Y_na <- is.na(Y)
   # Separate copy of Y for Stan, so that added zeros do not influence channel
@@ -370,7 +370,7 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
   channel$noncentered <- noncentered
   channel$has_lfactor <- has_lfactor
   channel$noncentered_psi <- noncentered_psi
-  channel$nonzero_kappa <- nonzero_kappa
+  channel$nonzero_lambda <- nonzero_lambda
   stopifnot_(
     has_splines || !(channel$has_varying || channel$has_varying_intercept),
     "Model for response variable {.var {y}} contains time-varying
@@ -520,7 +520,7 @@ prepare_channel_default <- function(y, Y, channel, sampling,
     types <- priors$type
     loop_types <- intersect(
       types,
-      c("alpha", "tau_alpha", "sigma_lambda", "psi")
+      c("alpha", "tau_alpha", "sigma_lambda", "psi", "kappa", "zeta")
     )
     for (ptype in loop_types) {
       pdef <- priors[priors$type == ptype, ]

@@ -474,6 +474,12 @@ create_transformed_parameters <- function(idt, backend,
   P <- length(psis)
   if (P > 0L) {
     if (mvars$lfactor_def$noncentered_psi) {
+      nz_lambda <- rep(mvars$lfactor_def$nonzero_lambda, times = n_y)
+      tau_psi <- ifelse(
+        nz_lambda,
+        paste0("tau_psi_", psis, " * "),
+        ""
+      )
       # create noise terms for latent factors
       lfactor_text <- ifelse_(
         mvars$lfactor_def$correlated,
@@ -481,14 +487,14 @@ create_transformed_parameters <- function(idt, backend,
           "matrix[P, D - 1] omega_psi = L_lf * omega_raw_psi;",
           paste0(
             "row_vector[D] omega_psi_{psis} = ",
-            "append_col(0, omega_psi[{1:P}, ]);"
+            "append_col(0, {tau_psi}omega_psi[{1:P}, ]);"
           ),
           .indent = idt(1)
         ),
         paste_rows(
           paste0(
             "row_vector[D] omega_psi_{psis} = ",
-            "append_col(0, omega_raw_psi[{1:P}, ]);"
+            "append_col(0, {tau_psi}omega_raw_psi[{1:P}, ]);"
           ),
           .indent = idt(1)
         )
@@ -673,7 +679,9 @@ create_model <- function(idt, backend, cg, cvars, cgvars, mvars, threading) {
   psis <- unlist(psis)
   P <- length(psis)
   if (P > 0L) {
+    nz_lambda <- rep(mvars$lfactor_def$nonzero_lambda, times = n_y)
     omega1 <- paste0("omega_raw_psi_1_", psis, collapse = ", ")
+    tau_psi <- paste0("tau_psi_", psis)
     if (mvars$lfactor_def$correlated) {
       L_prior <- mvars$common_priors
       L_prior <- L_prior[L_prior$parameter == "L_lf", "prior"]
@@ -684,17 +692,45 @@ create_model <- function(idt, backend, cg, cvars, cgvars, mvars, threading) {
           .indent = idt(c(1, 1))
         )
       } else {
-        lfactor_text <- paste_rows(
-          "L_lf ~ {L_prior};",
-          "omega_raw_psi[, 1] ~ multi_normal_cholesky({omega1}, L_lf);",
-          "for (i in 2:(D - 1)) {{",
-          paste0(
-            "omega_raw_psi[, i] ~ ",
-            "multi_normal_cholesky(omega_raw_psi[, i - 1], L_lf);"
-          ),
-          "}}",
-          .indent = idt(c(1, 1, 1, 2, 1))
-        )
+        if (any(nz_lambda)) {
+          tau <- paste0(
+            ifelse(
+              nz_lambda,
+              paste0("tau_psi_", psis),
+              "1"
+            ),
+            collapse = ", "
+          )
+          lfactor_text <- paste_rows(
+            "L_lf ~ {L_prior};",
+            "{{",
+            "vector[P] tau_psi = [{tau}]';",
+            "matrix[P, P] Ltau = diag_pre_multiply(tau_psi, L_lf);",
+            "vector[P] omega1 = [{omega1}]';",
+            "omega_raw_psi[, 1] ~ multi_normal_cholesky(omega1, Ltau);",
+            "for (i in 2:(D - 1)) {{",
+            paste0(
+              "omega_raw_psi[, i] ~ ",
+              "multi_normal_cholesky(omega_raw_psi[, i - 1], Ltau);"
+            ),
+            "}}",
+            "}}",
+            .indent = idt(c(1, 1, 2, 2, 2, 2, 2, 3, 2, 1))
+          )
+        } else {
+          lfactor_text <- paste_rows(
+            "L_lf ~ {L_prior};",
+            "vector[P] omega1 = [{omega1}]';",
+            "omega_raw_psi[, 1] ~ multi_normal_cholesky(omega1, L_lf);",
+            "for (i in 2:(D - 1)) {{",
+            paste0(
+              "omega_raw_psi[, i] ~ ",
+              "multi_normal_cholesky(omega_raw_psi[, i - 1], L_lf);"
+            ),
+            "}}",
+            .indent = idt(c(1, 1, 1, 1, 2, 1))
+          )
+        }
       }
     } else {
       if (mvars$lfactor_def$noncentered_psi) {
@@ -703,13 +739,36 @@ create_model <- function(idt, backend, cg, cvars, cgvars, mvars, threading) {
           .indent = idt(1)
         )
       } else {
-        lfactor_text <- paste_rows(
-          "omega_raw_psi[, 1] ~ normal({omega1}, 1);",
-          "for (i in 2:(D - 1)) {{",
-          "omega_raw_psi[, i] ~ normal(omega_raw_psi[, i - 1], 1);",
-          "}}",
-          .indent = idt(c(1, 1, 2, 1))
-        )
+        if (any(nz_lambda)) {
+          tau <- paste0(
+            ifelse(
+              nz_lambda,
+              paste0("tau_psi_", psis),
+              "1"
+            ),
+            collapse = ", "
+          )
+          lfactor_text <- paste_rows(
+            "{{",
+            "vector[P] tau_psi = [{tau}]';",
+            "vector[P] omega1 = [{omega1}]';",
+            "omega_raw_psi[, 1] ~ normal(omega1, tau_psi);",
+            "for (i in 2:(D - 1)) {{",
+            "omega_raw_psi[, i] ~ normal(omega_raw_psi[, i - 1], tau_psi);",
+            "}}",
+            "}}",
+            .indent = idt(c(1, 2, 2, 2, 2, 3, 2, 1))
+          )
+        } else {
+          lfactor_text <- paste_rows(
+            "vector[P] omega1 = [{omega1}]';",
+            "omega_raw_psi[, 1] ~ normal(omega1, 1);",
+            "for (i in 2:(D - 1)) {{",
+            "omega_raw_psi[, i] ~ normal(omega_raw_psi[, i - 1], 1);",
+            "}}",
+            .indent = idt(c(1, 1, 1, 2, 1))
+          )
+        }
       }
     }
   }

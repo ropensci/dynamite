@@ -666,3 +666,179 @@ test_that("information on >2 chains is summarized in print", {
     )
   )
 })
+
+
+test_that("latent factor models are identifiable", {
+  skip_if_not(run_extended_tests)
+
+  generate_data <- function(N, T_, D, alpha, mean_lambda, sd_lambda, sd_alpha) {
+    y <- matrix(0, N, T_)
+    x <- matrix(rnorm(N * T_), N, T_)
+    psi <-
+      c(splines::bs(seq_len(T_), df = D, intercept = TRUE) %*% cumsum(rnorm(D)))
+    lambda <- rnorm(N, 0, sd_lambda)
+    lambda <- mean_lambda + lambda - mean(lambda)
+    a <- rnorm(N, alpha, sd_alpha)
+    for(t in 1:T_) {
+      y[, t] <- rnorm(N, a + lambda * psi[t] + x[, t])
+    }
+    list(data = data.frame(
+      y = c(y), x = c(x),
+      time = rep(seq_len(T_), each = N),
+      id = rep(seq_len(N), times = T_)
+    ),
+    psi = psi, lambda = lambda,
+    mean_lambda_psi = mean(lambda) * psi,
+    alpha = alpha, beta = 1, kappa = sd_lambda / (1+sd_lambda),
+    sigma_lambda = sd_lambda, sigma_alpha = sd_alpha, sigma_y = 1, tau_psi = 1,
+    zeta = 1 + sd_lambda)
+  }
+
+  set.seed(1)
+  sim <- generate_data(
+    100, 50, 20,
+    alpha = 1, mean_lambda = 1, sd_lambda = 1, sd_alpha = 1)
+  dformula <- obs(y ~ x + random(~ 1), family = "gaussian") +
+    lfactor() + splines(20)
+  priors <- get_priors(dformula, data = sim$data, time = "time", group = "id")
+  priors$prior[priors$parameter != "kappa_y"] <- "normal(0, 5)"
+  fit1 <- dynamite(
+    dformula, priors = priors,
+    data = sim$data, time = "time", group = "id",
+    backend = "cmdstanr", stanc_options = list("O1"),
+    iter_sampling = 5000, iter_warmup = 5000,
+    parallel_chains = 4, refresh = 0, seed = 1
+  )
+  sumr1 <- as_draws(fit1) |>
+    posterior::summarise_draws()
+  expect_true(all(sumr1$rhat < 1.1))
+  expect_true(all(sumr1$ess_bulk > 500))
+  expect_true(all(sumr1$ess_tail > 500))
+  true_values <- c("alpha", "beta", "kappa", "sigma_lambda", "sigma_alpha",
+                   "sigma_y", "tau_psi", "zeta")
+  true_values <- unname(unlist(sim[true_values]))
+  expect_equal(sumr1$mean, true_values, tolerance = 0.1)
+  expect_equal(summary(fit1, type="psi")$mean, sim$mean_lambda_psi,
+               tolerance = 0.5)
+
+  set.seed(2)
+  sim <- generate_data(
+    100, 50, 20,
+    alpha = 0, mean_lambda = 1, sd_lambda = 0.1, sd_alpha = 2)
+  dformula <- obs(y ~ -1 + x + random(~ 1), family = "gaussian") +
+    lfactor() + splines(20)
+  priors <- get_priors(dformula, data = sim$data, time = "time", group = "id")
+  priors$prior[priors$parameter != "kappa_y"] <- "normal(0, 5)"
+  fit2 <- dynamite(
+    dformula, priors = priors,
+    data = sim$data, time = "time", group = "id",
+    backend = "cmdstanr", stanc_options = list("O1"),
+    iter_sampling = 5000, iter_warmup = 5000,
+    parallel_chains = 4, refresh = 0, seed = 1
+  )
+  sumr2 <- as_draws(fit2) |>
+    posterior::summarise_draws()
+  expect_true(all(sumr2$rhat < 1.1))
+  expect_true(all(sumr2$ess_bulk > 500))
+  expect_true(all(sumr2$ess_tail > 500))
+  expect_equal(summary(fit2, type="psi")$mean, sim$mean_lambda_psi,
+               tolerance = 0.5)
+
+  set.seed(3)
+  sim <- generate_data(
+    100, 50, 20,
+    alpha = -1, mean_lambda = 0.5, sd_lambda = 2, sd_alpha = 0)
+  dformula <- obs(y ~ x, family = "gaussian") +
+    lfactor() + splines(20)
+  priors <- get_priors(dformula, data = sim$data, time = "time", group = "id")
+  priors$prior[priors$parameter != "kappa_y"] <- "normal(0, 5)"
+  # need some informativeness on prior of kappa (or zeta?)
+  priors$prior[priors$parameter == "kappa_y"] <- "beta(10, 10)"
+  fit3 <- dynamite(
+    dformula, priors = priors,
+    data = sim$data, time = "time", group = "id",
+    backend = "cmdstanr", stanc_options = list("O1"),
+    iter_sampling = 5000, iter_warmup = 5000,
+    parallel_chains = 4, refresh = 0, seed = 1
+  )
+  sumr3 <- as_draws(fit3) |>
+    posterior::summarise_draws()
+
+  expect_true(all(sumr3$rhat < 1.1))
+  expect_true(all(sumr3$ess_bulk > 500))
+  expect_true(all(sumr3$ess_tail > 500))
+  expect_equal(summary(fit3, type="psi")$mean, sim$mean_lambda_psi,
+               tolerance = 0.5)
+
+  set.seed(4)
+  sim <- generate_data(
+    100, 50, 20,
+    alpha = 0, mean_lambda = -1, sd_lambda = 0.5, sd_alpha = 0.5)
+  dformula <- obs(y ~ x + random(~ 1), family = "gaussian") +
+    lfactor() + splines(20)
+  priors <- get_priors(dformula, data = sim$data, time = "time", group = "id")
+  priors$prior[priors$parameter != "kappa_y"] <- "normal(0, 5)"
+  fit4 <- dynamite(
+    dformula, priors = priors,
+    data = sim$data, time = "time", group = "id",
+    backend = "cmdstanr", stanc_options = list("O1"),
+    iter_sampling = 5000, iter_warmup = 5000,
+    parallel_chains = 4, refresh = 0, seed = 1
+  )
+  sumr4 <- as_draws(fit4) |>
+    posterior::summarise_draws()
+
+  expect_true(all(sumr4$rhat < 1.1))
+  expect_true(all(sumr4$ess_bulk > 500))
+  expect_true(all(sumr4$ess_tail > 500))
+  expect_equal(summary(fit4, type="psi")$mean, sim$mean_lambda_psi,
+               tolerance = 0.5)
+
+  set.seed(5)
+  sim <- generate_data(
+    100, 50, 20,
+    alpha = 1, mean_lambda = 0, sd_lambda = 0.5, sd_alpha = 1)
+  dformula <- obs(y ~ x + random(~ 1), family = "gaussian") +
+    lfactor(nonzero_lambda = FALSE) + splines(20)
+  priors <- get_priors(dformula, data = sim$data, time = "time", group = "id")
+  priors$prior[] <- "normal(0, 5)"
+  fit5 <- dynamite(
+    dformula, priors = priors,
+    data = sim$data, time = "time", group = "id",
+    backend = "cmdstanr", stanc_options = list("O1"),
+    iter_sampling = 5000, iter_warmup = 5000,
+    parallel_chains = 4, refresh = 0, seed = 1
+  )
+  sumr5 <- as_draws(fit5) |>
+    posterior::summarise_draws()
+
+  expect_true(all(sumr5$rhat < 1.1))
+  expect_true(all(sumr5$ess_bulk > 500))
+  expect_true(all(sumr5$ess_tail > 500))
+  expect_equal(summary(fit5, type="psi")$mean, -sim$psi,
+               tolerance = 0.5)
+
+  set.seed(6)
+  sim <- generate_data(
+    100, 50, 20,
+    alpha = 1, mean_lambda = 0, sd_lambda = 0.5, sd_alpha = 0)
+  dformula <- obs(y ~ x, family = "gaussian") +
+    lfactor(nonzero_lambda = FALSE) + splines(20)
+  priors <- get_priors(dformula, data = sim$data, time = "time", group = "id")
+  priors$prior[] <- "normal(0, 5)"
+  fit6 <- dynamite(
+    dformula, priors = priors,
+    data = sim$data, time = "time", group = "id",
+    backend = "cmdstanr", stanc_options = list("O1"),
+    iter_sampling = 5000, iter_warmup = 5000,
+    parallel_chains = 4, refresh = 0, seed = 1
+  )
+  sumr6 <- as_draws(fit6) |>
+    posterior::summarise_draws()
+
+  expect_true(all(sumr6$rhat < 1.1))
+  expect_true(all(sumr6$ess_bulk > 500))
+  expect_true(all(sumr6$ess_tail > 500))
+  expect_equal(summary(fit6, type="psi")$mean, -sim$psi,
+               tolerance = 0.5)
+})
