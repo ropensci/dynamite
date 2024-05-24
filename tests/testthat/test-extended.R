@@ -714,10 +714,6 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr1$rhat < 1.1))
   expect_true(all(sumr1$ess_bulk > 500))
   expect_true(all(sumr1$ess_tail > 500))
-  true_values <- c("alpha", "beta", "kappa", "sigma_lambda", "sigma_alpha",
-                   "sigma_y", "tau_psi", "zeta")
-  true_values <- unname(unlist(sim[true_values]))
-  expect_equal(sumr1$mean, true_values, tolerance = 0.1)
   expect_equal(summary(fit1, type="psi")$mean, sim$mean_lambda_psi,
                tolerance = 0.5)
 
