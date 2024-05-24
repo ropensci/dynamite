@@ -1611,7 +1611,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
   if (has_fixed || has_varying) {
     declare_omega_alpha_1 <- paste_rows(
       "// Time-varying intercept",
-      "vector[T] alpha_{y};",
+      stan_array(backend, "real", "alpha_{y}", "T"),
       "// Spline coefficients",
       "real omega_alpha_1_{y};",
       .indent = idt(1),
@@ -1642,7 +1642,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
   } else {
     declare_omega_alpha_1 <- paste_rows(
       "// Time-varying intercept",
-      "vector[T] alpha_{y};",
+      stan_array(backend, "real", "alpha_{y}", "T"),
       "real omega_alpha_1_{y} = a_{y};",
       .indent = idt(1),
       .parse = FALSE
@@ -1663,8 +1663,10 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
   state_varying_intercept <- paste_rows(
     state_omega_alpha_1,
     state_omega_alpha,
-    "alpha_{y} = (omega_alpha_{y} * Bs)';",
-    .indent = idt(c(0, 0, 1)),
+    "for (t in 1:T) {{",
+    "alpha_{y}[t] = omega_alpha_{y} * Bs[, t];",
+    "}}",
+    .indent = idt(c(0, 0, 1, 2, 1)),
     .parse = FALSE
   )
   m <- ifelse(has_lfactor && nonzero_lambda, "1 + ", "")
