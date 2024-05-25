@@ -1710,12 +1710,11 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
   )
   if (has_lfactor && !nonzero_lambda) {
     state_psi <- paste_rows(
-      "{{",
-      "int s = mean(omega_psi_{y}) < 0 ? -1 : 1;",
-      "psi_{y} = s * (omega_psi_{y} * Bs)';",
-      "lambda_{y} = -s * lambda_{y};",
-      "}}",
-      .indent = idt(c(1, 2, 2, 2, 1)),
+      "// try to avoid sign-switching by adjusting psi and lambda",
+      "real sign_omega_{y} = mean(omega_psi_{y}) < 0 ? -1 : 1;",
+      "psi_{y} = sign_omega_{y} * (omega_psi_{y} * Bs)';",
+      "lambda_{y} = -sign_omega_{y} * lambda_{y};",
+      .indent = idt(1),
       .parse = FALSE
     )
   } else {

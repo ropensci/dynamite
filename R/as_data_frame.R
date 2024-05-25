@@ -25,9 +25,10 @@
 #'     `rstan::extract(fit$stanfit, pars = "corr_matrix_nu")` if necessary.
 #'  * `sigma_lambda`\cr Standard deviations of the latent factor loadings
 #'    `lambda`.
-#'  * `corr_psi`\cr Pairwise correlations of the latent factors.
-#'     Samples of the full correlation matrix can be extracted manually as
-#'     `rstan::extract(fit$stanfit, pars = "corr_matrix_psi")` if necessary.
+#'  * `corr_psi`\cr Pairwise correlations of the noise terms of the latent
+#'     factors. Samples of the full correlation matrix can be extracted
+#'     manually as `rstan::extract(fit$stanfit, pars = "corr_matrix_psi")` if
+#'     necessary.
 #'  * `sigma`\cr Standard deviations of gaussian responses.
 #'  * `corr`\cr Pairwise correlations of multivariate gaussian responses.
 #'  * `phi`\cr Describes various distributional parameters, such as:
@@ -37,7 +38,10 @@
 #'    - Degrees of freedom of the Student t-distribution.
 #'  * `omega`\cr Spline coefficients of the regression coefficients `delta`.
 #'  * `omega_alpha`\cr Spline coefficients of time-varying `alpha`.
-#'  * `omega_psi`\cr Spline coefficients of the latent factors `psi`.
+#'  * `omega_psi`\cr Spline coefficients of the latent factors `psi`. Note that
+#'     in case of `nonzero_lambda = FALSE`, mean of these are used to flip the
+#'     sign of `psi` to avoid multimodality due to sign-switching, but
+#'     `omega_psi` variables are not modified.
 #'
 #' @export
 #' @family output

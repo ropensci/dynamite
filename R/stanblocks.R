@@ -524,8 +524,8 @@ create_transformed_parameters <- function(idt, backend,
   paste_rows(
     "transformed parameters {",
     random_text,
-    lfactor_text,
     declarations,
+    lfactor_text,
     statements,
     "}",
     .parse = FALSE
@@ -889,19 +889,44 @@ create_generated_quantities <- function(idt, backend,
   P <- mvars$lfactor_def$P
   if (P > 0L && mvars$lfactor_def$correlated) {
     # evaluate number of corrs to avoid Stan warning about integer division
-    gen_psi <- paste_rows(
-      paste0(
-        "matrix[P, P] corr_matrix_psi = ",
-        "multiply_lower_tri_self_transpose(L_lf);"
-      ),
-      "vector[{(P * (P - 1L)) %/% 2L}] corr_psi;",
-      "for (k in 1:P) {{",
-      "for (j in 1:(k - 1)) {{",
-      "corr_psi[choose(k - 1, 2) + j] = corr_matrix_psi[j, k];",
-      "}}",
-      "}}",
-      .indent = idt(c(1, 1, 1, 2, 3, 2, 1))
-    )
+    if (any(!mvars$lfactor_def$nonzero_lambda)) {
+      signs <- paste0(
+        ifelse(
+          !mvars$lfactor_def$nonzero_lambda,
+          paste0("sign_omega_", psis),
+          "1"
+        ),
+        collapse = ", "
+      )
+      gen_psi <- paste_rows(
+        paste0(
+          "matrix[P, P] corr_matrix_psi = ",
+          "multiply_lower_tri_self_transpose(L_lf);"
+        ),
+        "row_vector[P] signs = [{signs}];",
+        "vector[{(P * (P - 1L)) %/% 2L}] corr_psi;",
+        "for (k in 1:P) {{",
+        "for (j in 1:(k - 1)) {{",
+        "corr_psi[choose(k - 1, 2) + j] = signs[j] * signs[k] * corr_matrix_psi[j, k];",
+        "}}",
+        "}}",
+        .indent = idt(c(1, 1, 1, 1, 2, 3, 2, 1))
+      )
+    } else {
+      gen_psi <- paste_rows(
+        paste0(
+          "matrix[P, P] corr_matrix_psi = ",
+          "multiply_lower_tri_self_transpose(L_lf);"
+        ),
+        "vector[{(P * (P - 1L)) %/% 2L}] corr_psi;",
+        "for (k in 1:P) {{",
+        "for (j in 1:(k - 1)) {{",
+        "corr_psi[choose(k - 1, 2) + j] = corr_matrix_psi[j, k];",
+        "}}",
+        "}}",
+        .indent = idt(c(1, 1, 1, 2, 3, 2, 1))
+      )
+    }
   }
   n_cg <- n_unique(cg)
   generated_quantities_text <- character(n_cg)

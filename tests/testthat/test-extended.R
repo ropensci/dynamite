@@ -837,4 +837,50 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr6$ess_tail > 500))
   expect_equal(summary(fit6, type="psi")$mean, -sim$psi,
                tolerance = 0.5)
+
+  # Test bivariate case with nonzero_lambda
+  set.seed(123)
+  N <- 20
+  T_ <- 100
+  D <- 50
+  x <- y <- matrix(0, N, T_)
+  psi <- matrix(NA, 2, T_)
+  lambda_y <- rnorm(N)
+  lambda_y <- lambda_y - mean(lambda_y)
+  lambda_x <- rnorm(N)
+  lambda_x <- 0.1 + lambda_x - mean(lambda_x)
+  L <- t(chol(matrix(c(1, 0.6, 0.6, 1), 2, 2)))
+  B <- t(splines::bs(seq_len(T_), df = D, intercept = TRUE))
+  omega <- matrix(NA, 2, D)
+  omega[, 1] <- L %*% rnorm(2)
+  for(i in 2:D) {
+    omega[, i] <- omega[, i - 1] + L %*% rnorm(2)
+  }
+  psi[1, ] <- omega[1, ] %*% B
+  psi[2, ] <- omega[2, ] %*% B
+  for(t in 1:T_) {
+    y[, t] <- rnorm(N, lambda_y * psi[1, t])
+    x[, t] <- rnorm(N, lambda_x * psi[2, t])
+  }
+  d <- data.frame(
+    y = c(y), x = c(x),
+    time = rep(seq_len(T_), each = N),
+    id = rep(seq_len(N), times = T_)
+  )
+  dformula <- obs(y ~ 1, family = "gaussian") +
+    obs(x ~ 1, family = "gaussian") +
+    lfactor(nonzero_lambda = c(FALSE, TRUE)) + splines(50)
+  fit <- dynamite(
+    dformula,
+    data = d, time = "time", group = "id",
+    backend = "cmdstanr", stanc_options = list("O1"),
+    iter_sampling = 5000, iter_warmup = 5000,
+    parallel_chains = 4, refresh = 0, seed = 1
+  )
+  sumr <- as_draws(fit) |>
+    posterior::summarise_draws()
+
+  expect_true(all(sumr$rhat < 1.1))
+  expect_true(all(sumr$ess_bulk > 500))
+  expect_true(all(sumr$ess_tail > 500))
 })
