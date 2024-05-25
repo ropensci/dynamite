@@ -809,7 +809,8 @@ formula.dynamitefit <- function(x, ...) {
       "responses = ", lfactor_resp, ", ",
       "noncentered_psi = ", lfactor_def$noncentered_psi, ", ",
       "nonzero_lambda = ", lfactor_nonzero, ", ",
-      "correlated = ", lfactor_def$correlated,
+      "correlated = ", lfactor_def$correlated, ", ",
+      "flip_sign = ", lfactor_def$flip_sign,
       ")"
     )
   )
@@ -1150,6 +1151,7 @@ parse_lfactor <- function(lfactor_def, resp, families) {
     out$has_lfactor <- TRUE
     out$responses <- lfactor_def$responses
     out$noncentered_psi <- lfactor_def$noncentered_psi
+    out$flip_sign <- lfactor_def$flip_sign
     n_channels <- length(lfactor_def$responses)
     out$nonzero_lambda <- lfactor_def$nonzero_lambda
     stopifnot_(
@@ -1166,6 +1168,7 @@ parse_lfactor <- function(lfactor_def, resp, families) {
       has_lfactor = FALSE,
       responses = character(0L),
       noncentered_psi = FALSE,
+      flip_sign = TRUE,
       nonzero_lambda = logical(n_channels),
       correlated = FALSE,
       P = 0

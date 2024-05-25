@@ -889,7 +889,7 @@ create_generated_quantities <- function(idt, backend,
   P <- mvars$lfactor_def$P
   if (P > 0L && mvars$lfactor_def$correlated) {
     # evaluate number of corrs to avoid Stan warning about integer division
-    if (any(!mvars$lfactor_def$nonzero_lambda)) {
+    if (any(!mvars$lfactor_def$nonzero_lambda) && mvars$lfactor_def$flip_sign) {
       signs <- paste0(
         ifelse(
           !mvars$lfactor_def$nonzero_lambda,

@@ -5,11 +5,7 @@
 #' similarly as a time-varying intercept, but instead of having equal effect on
 #' each group, there is an additional loading variable for each group so that
 #' in the linear predictor we have a term \eqn{\lambda_i \psi_t} for each
-#' group \eqn{i}. In order to keep the full factor loadings \eqn{\lambda},
-#' the latent factor \eqn{\psi} and the full model identifiable, some
-#' restrictions are added to the model. Details will be available in an
-#' upcoming paper. This component should be treated as experimental feature.
-#'
+#' group \eqn{i}.
 #' @export
 #' @family formulas
 #' @param responses \[`character()`]\cr Names of the responses that the
@@ -24,7 +20,15 @@
 #'   factors are assumed to be correlated between channels.
 #' @param noncentered_psi \[`logical(1)`]\cr If `TRUE`, uses a
 #'   noncentered parametrization for spline coefficients of all the factors.
-#'   The number of knots is based `splines()` call.
+#'   The number of knots is based `splines()` call. Default is `FALSE`.
+#' @param flip_sign \[`logical(1)`]\cr If `TRUE` (default), try to avoid
+#'   multimodality due to sign-switching by defining the sign of \eqn{\lambda}
+#'   and \eqn{\psi} based on the mean of \eqn{\omega_1,\ldots, \omega_D}
+#'   coefficients. This only affects channels with `nonzero_lambda = FALSE`.
+#'   If the true mean of \eqn{\omega}s is close to zero, this might not help,
+#'   in which case it is better to set `flip_sign = FALSE` and post-process the
+#'   samples in other ways (or use only one chain and/or suitable initial
+#'   values). This argument is common to all factors.
 #' @return An object of class `latent_factor`.
 #' @examples
 #' data.table::setDTthreads(1) # For CRAN
@@ -38,7 +42,7 @@
 #'   )
 #'
 lfactor <- function(responses = NULL, nonzero_lambda = TRUE, correlated = TRUE,
-  noncentered_psi = FALSE) {
+  noncentered_psi = FALSE, flip_sign = TRUE) {
   stopifnot_(
     checkmate::test_character(x = responses, min.len = 1L, null.ok = TRUE),
     "Argument {.arg responses} must be a {.cls character} vector."
@@ -50,6 +54,14 @@ lfactor <- function(responses = NULL, nonzero_lambda = TRUE, correlated = TRUE,
       len = 1
     ),
     "Argument {.arg noncentered_psi} must be a single {.cls logical} value."
+  )
+  stopifnot_(
+    checkmate::test_logical(
+      x = flip_sign,
+      any.missing = FALSE,
+      len = 1
+    ),
+    "Argument {.arg flip_sign} must be a single {.cls logical} value."
   )
   stopifnot_(
     checkmate::test_logical(
@@ -72,7 +84,8 @@ lfactor <- function(responses = NULL, nonzero_lambda = TRUE, correlated = TRUE,
       responses = responses,
       nonzero_lambda = nonzero_lambda,
       correlated = correlated,
-      noncentered_psi = noncentered_psi
+      noncentered_psi = noncentered_psi,
+      flip_sign = flip_sign
     ),
     class = "latent_factor"
   )

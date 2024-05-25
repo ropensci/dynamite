@@ -840,19 +840,19 @@ test_that("latent factor models are identifiable", {
 
   # Test bivariate case with nonzero_lambda
   set.seed(123)
-  N <- 20
-  T_ <- 100
-  D <- 50
+  N <- 50
+  T_ <- 50
+  D <- 10
   x <- y <- matrix(0, N, T_)
   psi <- matrix(NA, 2, T_)
   lambda_y <- rnorm(N)
   lambda_y <- lambda_y - mean(lambda_y)
   lambda_x <- rnorm(N)
-  lambda_x <- 0.1 + lambda_x - mean(lambda_x)
-  L <- t(chol(matrix(c(1, 0.6, 0.6, 1), 2, 2)))
+  lambda_x <- lambda_x - mean(lambda_x)
+  L <- t(chol(matrix(c(1, 0.7, 0.7, 1), 2, 2)))
   B <- t(splines::bs(seq_len(T_), df = D, intercept = TRUE))
   omega <- matrix(NA, 2, D)
-  omega[, 1] <- L %*% rnorm(2)
+  omega[, 1] <- c(5, 2) + L %*% rnorm(2)
   for(i in 2:D) {
     omega[, i] <- omega[, i - 1] + L %*% rnorm(2)
   }
@@ -869,7 +869,7 @@ test_that("latent factor models are identifiable", {
   )
   dformula <- obs(y ~ 1, family = "gaussian") +
     obs(x ~ 1, family = "gaussian") +
-    lfactor(nonzero_lambda = c(FALSE, TRUE)) + splines(50)
+    lfactor(nonzero_lambda = FALSE, flip_sign = TRUE) + splines(10)
   fit <- dynamite(
     dformula,
     data = d, time = "time", group = "id",

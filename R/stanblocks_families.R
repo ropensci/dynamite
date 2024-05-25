@@ -1371,8 +1371,8 @@ transformed_data_lines_student <- function(default, ...) {
 parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
                                      has_varying, has_fixed_intercept,
                                      has_varying_intercept, has_lfactor,
-                                     noncentered_psi, nonzero_lambda,
-                                     ydim = y, ...) {
+                                     noncentered_psi, flip_sign,
+                                     nonzero_lambda, ydim = y, ...) {
 
   oname <- ifelse_(noncentered, "omega_raw_", "omega_")
   paste_rows(
@@ -1534,7 +1534,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
                                                  J, K, K_fixed, K_varying,
                                                  L_fixed, L_varying,
                                                  has_lfactor,
-                                                 noncentered_psi,
+                                                 noncentered_psi, flip_sign,
                                                  nonzero_lambda,
                                                  backend, ydim = y, ...) {
   if (noncentered) {
@@ -1708,7 +1708,7 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     .indent = idt(1),
     .parse = FALSE
   )
-  if (has_lfactor && !nonzero_lambda) {
+  if (has_lfactor && !nonzero_lambda && flip_sign) {
     state_psi <- paste_rows(
       "// try to avoid sign-switching by adjusting psi and lambda",
       "real sign_omega_{y} = mean(omega_psi_{y}) < 0 ? -1 : 1;",
@@ -1886,7 +1886,7 @@ prior_lines <- function(y, idt, noncentered, shrinkage,
                         has_varying, has_fixed, has_random,
                         has_fixed_intercept,
                         has_varying_intercept, has_random_intercept,
-                        has_lfactor, noncentered_psi,
+                        has_lfactor, noncentered_psi, flip_sign,
                         nonzero_lambda,
                         K_fixed, K_varying, K_random, prior_distr, ...) {
   if (prior_distr$vectorized_sigma_nu) {

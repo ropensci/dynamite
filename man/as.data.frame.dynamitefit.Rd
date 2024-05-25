@@ -95,9 +95,10 @@ Samples of the full correlation matrix can be extracted manually as
 \code{rstan::extract(fit$stanfit, pars = "corr_matrix_nu")} if necessary.
 \item \code{sigma_lambda}\cr Standard deviations of the latent factor loadings
 \code{lambda}.
-\item \code{corr_psi}\cr Pairwise correlations of the latent factors.
-Samples of the full correlation matrix can be extracted manually as
-\code{rstan::extract(fit$stanfit, pars = "corr_matrix_psi")} if necessary.
+\item \code{corr_psi}\cr Pairwise correlations of the noise terms of the latent
+factors. Samples of the full correlation matrix can be extracted
+manually as \code{rstan::extract(fit$stanfit, pars = "corr_matrix_psi")} if
+necessary.
 \item \code{sigma}\cr Standard deviations of gaussian responses.
 \item \code{corr}\cr Pairwise correlations of multivariate gaussian responses.
 \item \code{phi}\cr Describes various distributional parameters, such as:
@@ -109,7 +110,10 @@ Samples of the full correlation matrix can be extracted manually as
 }
 \item \code{omega}\cr Spline coefficients of the regression coefficients \code{delta}.
 \item \code{omega_alpha}\cr Spline coefficients of time-varying \code{alpha}.
-\item \code{omega_psi}\cr Spline coefficients of the latent factors \code{psi}.
+\item \code{omega_psi}\cr Spline coefficients of the latent factors \code{psi}. Note that
+in case of \code{nonzero_lambda = FALSE}, mean of these are used to flip the
+sign of \code{psi} to avoid multimodality due to sign-switching, but
+\code{omega_psi} variables are not modified.
 }
 }
 \examples{

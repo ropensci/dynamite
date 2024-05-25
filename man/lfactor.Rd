@@ -8,7 +8,8 @@ lfactor(
   responses = NULL,
   nonzero_lambda = TRUE,
   correlated = TRUE,
-  noncentered_psi = FALSE
+  noncentered_psi = FALSE,
+  flip_sign = TRUE
 )
 }
 \arguments{
@@ -27,7 +28,16 @@ factors are assumed to be correlated between channels.}
 
 \item{noncentered_psi}{[\code{logical(1)}]\cr If \code{TRUE}, uses a
 noncentered parametrization for spline coefficients of all the factors.
-The number of knots is based \code{splines()} call.}
+The number of knots is based \code{splines()} call. Default is \code{FALSE}.}
+
+\item{flip_sign}{[\code{logical(1)}]\cr If \code{TRUE} (default), try to avoid
+multimodality due to sign-switching by defining the sign of \eqn{\lambda}
+and \eqn{\psi} based on the mean of \eqn{\omega_1,\ldots, \omega_D}
+coefficients. This only affects channels with \code{nonzero_lambda = FALSE}.
+If the true mean of \eqn{\omega}s is close to zero, this might not help,
+in which case it is better to set \code{flip_sign = FALSE} and post-process the
+samples in other ways (or use only one chain and/or suitable initial
+values). This argument is common to all factors.}
 }
 \value{
 An object of class \code{latent_factor}.
@@ -38,10 +48,7 @@ a common latent factor component. The latent factor is modeled as a spline
 similarly as a time-varying intercept, but instead of having equal effect on
 each group, there is an additional loading variable for each group so that
 in the linear predictor we have a term \eqn{\lambda_i \psi_t} for each
-group \eqn{i}. In order to keep the full factor loadings \eqn{\lambda},
-the latent factor \eqn{\psi} and the full model identifiable, some
-restrictions are added to the model. Details will be available in an
-upcoming paper. This component should be treated as experimental feature.
+group \eqn{i}.
 }
 \examples{
 data.table::setDTthreads(1) # For CRAN

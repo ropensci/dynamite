@@ -129,6 +129,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
       has_splines = has_splines,
       has_lfactor = y %in% lfactor_def$responses,
       noncentered_psi = lfactor_def$noncentered_psi,
+      flip_sign = lfactor_def$flip_sign,
       nonzero_lambda = lfactor_def$nonzero_lambda[i]
     )
     if (has_univariate(dformula[[i]]$family)) {
@@ -288,7 +289,8 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
                                           T_full, N, X_na, lb,
                                           shrinkage, noncentered,
                                           has_lfactor, has_splines,
-                                          noncentered_psi, nonzero_lambda) {
+                                          noncentered_psi, flip_sign,
+                                          nonzero_lambda) {
   channel <- list()
   Y_na <- is.na(Y)
   # Separate copy of Y for Stan, so that added zeros do not influence channel
@@ -370,6 +372,7 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
   channel$noncentered <- noncentered
   channel$has_lfactor <- has_lfactor
   channel$noncentered_psi <- noncentered_psi
+  channel$flip_sign <- flip_sign
   channel$nonzero_lambda <- nonzero_lambda
   stopifnot_(
     has_splines || !(channel$has_varying || channel$has_varying_intercept),
