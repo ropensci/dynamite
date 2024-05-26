@@ -72,7 +72,13 @@ The prior for the standard deviation parameter $\tau$ of the random walk prior o
 
 ## Correlation matrices
 
-The correlation matrix of the random effects uses a $\mbox{LKJ}(1)$ prior with the Cholesky parameterization, see Stan documentation of `lkj_corr_cholesky` for details^[https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html]. The default corresponds to uniform distribution over valid correlation matrices.
+The correlation matrix of the random effects and latent factors uses a $\mbox{LKJ}(1)$ prior with the Cholesky parameterization, see Stan documentation of `lkj_corr_cholesky` for details^[https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html]. The default corresponds to uniform distribution over valid correlation matrices.
+
+## Parameters related to latent factors
+
+When defining latent factor term with `nonzero_lambda = TRUE`, priors are set for $\zeta$ and $\kappa$, with defaults $\kappa \sim N(0, 1)$ and $\kappa \sim Beta(2, 2)$. These are used to define standard deviation $\sigma_\lambda$ of the loadings as $\sigma_\lambda = \kappa \zeta$, and $\tau_\psi = (1 - \kappa)\zeta$, the standard deviation of the random walk prior of $\psi_t$.
+
+In case where `nonzero_lambda = FALSE`, $\tau_\psi$ is fixed to one, and prior is set directly on $\sigma_\lambda $ as $N(0, 1)$. In both cases, prior on first $\psi_1 \sim N(0, 1)$.
 
 ## Family-specific parameters
 
