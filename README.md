@@ -29,14 +29,14 @@ methodology from many other approaches are:
 - Support for regular time-invariant effects, group-level random
   effects, and time-varying effects modeled via Bayesian P-splines.
 - Joint modeling of multiple measurements per individual (multiple
-  channels) based directly on the assumed data generating process.
+  channels) based directly on the assumed data-generating process.
   Individual channels can be univariate or multivariate.
 - Support for various distributions: Currently Gaussian, Multivariate
   Gaussian, Student t, Categorical, Ordered, Multinomial, Poisson,
   Bernoulli, Binomial, Negative Binomial, Gamma, Exponential, and Beta
   distributions are available, and these can be combined arbitrarily in
   multichannel models.
-- Allows evaluating realistic long-term counterfactual predictions which
+- Allows evaluating realistic long-term counterfactual predictions that
   take into account the dynamic structure of the model by efficient
   posterior predictive distribution simulation.
 - Transparent quantification of parameter and predictive uncertainty due
@@ -58,7 +58,7 @@ on DMPMs and the `dynamite` package, see the related papers:
   Research*, 60, 100617. ([Journal
   version](https://doi.org/10.1016/j.alcr.2024.100617),
   [SocArXiv](https://osf.io/preprints/socarxiv/mdwu5/) preprint)
-- Tikka S. and Helske J. (2023). `dynamite`: An R Package for Dynamic
+- Tikka S. and Helske J. (2024). `dynamite`: An R Package for Dynamic
   Multivariate Panel Models. ([arXiv](https://arxiv.org/abs/2302.01607)
   preprint)
 
@@ -115,8 +115,8 @@ print(gaussian_example_fit)
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  5.448  3.404
-#> chain:2  5.419  3.390
+#> chain:1  5.824  3.531
+#> chain:2  5.669  3.612
 #> 
 #> Summary statistics of the time- and group-invariant parameters:
 #> # A tibble: 6 × 10

@@ -33,9 +33,9 @@ knitr::opts_chunk$set(
 The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use interface for Bayesian inference of complex panel (time series) data comprising of multiple measurements per multiple individuals measured in time via dynamic multivariate panel models (DMPM). The main features distinguishing the package and the underlying methodology from many other approaches are:
 
 * Support for regular time-invariant effects, group-level random effects, and time-varying effects modeled via Bayesian P-splines.
-* Joint modeling of multiple measurements per individual (multiple channels) based directly on the assumed data generating process. Individual channels can be univariate or multivariate.
+* Joint modeling of multiple measurements per individual (multiple channels) based directly on the assumed data-generating process. Individual channels can be univariate or multivariate.
 * Support for various distributions: Currently Gaussian, Multivariate Gaussian, Student t, Categorical, Ordered, Multinomial, Poisson, Bernoulli, Binomial, Negative Binomial, Gamma, Exponential, and Beta distributions are available, and these can be combined arbitrarily in multichannel models.
-* Allows evaluating realistic long-term counterfactual predictions which take into account the dynamic structure of the model by efficient posterior predictive distribution simulation.
+* Allows evaluating realistic long-term counterfactual predictions that take into account the dynamic structure of the model by efficient posterior predictive distribution simulation.
 * Transparent quantification of parameter and predictive uncertainty due to a fully Bayesian approach.
 * Various visualization methods including a method for drawing and producing a TikZ code of the directed acyclic graph (DAG) of the model structure.
 * User-friendly and efficient R interface with state-of-the-art estimation via Stan. Both `rstan` and `cmdstanr` backends are supported, with both parallel chains and within-chain parallelization.
@@ -43,7 +43,7 @@ The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use i
 The `dynamite` package is developed with the support of the Research Council of Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)). For further information on DMPMs and the `dynamite` package, see the related papers:
 
 * Helske J. and Tikka S. (2024). Estimating Causal Effects from Panel Data with Dynamic Multivariate Panel Models. *Advances in Life Course Research*, 60, 100617. ([Journal version](https://doi.org/10.1016/j.alcr.2024.100617), [SocArXiv](https://osf.io/preprints/socarxiv/mdwu5/) preprint)
-* Tikka S. and Helske J. (2023). `dynamite`: An R Package for Dynamic Multivariate Panel Models. ([arXiv](https://arxiv.org/abs/2302.01607) preprint)
+* Tikka S. and Helske J. (2024). `dynamite`: An R Package for Dynamic Multivariate Panel Models. ([arXiv](https://arxiv.org/abs/2302.01607) preprint)
 
 ## Installation
 
