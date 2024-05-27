@@ -8,7 +8,7 @@
 #'
 #' # See Also
 #'
-#' * The package vignette.
+#' * The package vignettes
 #' * [dynamite::dynamiteformula()] for information on defining models.
 #' * [dynamite::dynamite()] for information on fitting models.
 #' * \url{https://github.com/ropensci/dynamite/issues/} to submit a bug report

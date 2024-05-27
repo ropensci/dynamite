@@ -6,7 +6,6 @@ output:
     base_format: rmarkdown::html_vignette
 pkgdown:
   as_is: true
-bibliography: dynamite.bib
 vignette: >
   %\VignetteIndexEntry{Priors for dynamic multivariate panel models} 
   %\VignetteEngine{knitr::rmarkdown} 
@@ -99,7 +98,7 @@ p
 ```
 ```{r}
 p$prior[p$type == "sigma_nu"] <- "normal(0, 1)" # change prior for sigma_nu
-p$prior[p$parameter == "sigma_y"] <- "student_t(3, 0, 2)" #prior for sigma_y
+p$prior[p$parameter == "sigma_y"] <- "student_t(3, 0, 2)" # prior for sigma_y
 p
 ```
 ```{r, eval = FALSE}

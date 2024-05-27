@@ -6,7 +6,6 @@ output:
     base_format: rmarkdown::html_vignette
 pkgdown:
   as_is: true
-bibliography: dynamite.bib
 vignette: >
   %\VignetteIndexEntry{Simulating data from a dynamic multivariate panel model} 
   %\VignetteEngine{knitr::rmarkdown} 
@@ -35,7 +34,7 @@ After the user has specified the parameter values, they should be supplied to `d
 
 As an illustration, the approach described in this vignette was used to generate the package data `categorical_example` as follows. First, we define the data for the first time index:
 ```{r categinit, eval=FALSE, echo=TRUE}
-library(dynamite)
+library("dynamite")
 set.seed(1)
 n_id <- 100L
 n_time <- 20L

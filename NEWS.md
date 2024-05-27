@@ -1,3 +1,7 @@
+# dynamite 1.5.2
+
+  * The main package vignette has been temporarily removed as it contained out-of-date information. Please see the arXiv preprint for up-to-date information instead: https://arxiv.org/abs/2302.01607
+
 # dynamite 1.5.1
 
   * The `type` argument of `coef()` and `plot()` has been replaced by `types` accepting multiple types simultaneously, similar to `as.data.table()` and `as.data.frame()`.
@@ -9,7 +13,7 @@
   * Priors of the cutpoint parameters of the `cumulative` family are now customizable.
   * Both `factor` and `ordered factor` responses are now supported for `categorical` and `cumulative` families. In addition, `ordered factor` columns of `data` are no longer converted to `factor` columns.
   * Arguments that have the different names but the same functionality between `rstan` and `cmdstanr` can now be used interchangeably for either backend, such as `iter` and `iter_samples`.
-  * The latent factor component was reparameterized for additional robustness. User-visible changes are related to priors: Instead of prior on the standard deviations `sigma_lambda` and `tau_psi`, prior is now defined on `zeta`, the sum of these, as well as on `kappa`, which is the proportion of `zeta` attributable to `sigma_lambda`.
+  * The latent factor component was reparametrized for additional robustness. User-visible changes are related to priors: Instead of prior on the standard deviations `sigma_lambda` and `tau_psi`, prior is now defined on `zeta`, the sum of these, as well as on `kappa`, which is the proportion of `zeta` attributable to `sigma_lambda`.
 
 # dynamite 1.5.0
 

@@ -7,7 +7,7 @@ bibentry(
   url = "https://arxiv.org/abs/2302.01607",
   author = c(person("Santtu", "Tikka"), person("Jouni", "Helske")),
   title = "dynamite: An R Package for Dynamic Multivariate Panel Models",
-  year = "2023"
+  year = "2024"
 )
 bibentry(
   key = "dmpmpaper",
@@ -27,7 +27,7 @@ bibentry(
   title = "dynamite: Bayesian Modeling and Causal Inference for Multivariate
     Longitudinal Data",
   author = c(person("Santtu", "Tikka"), person("Jouni", "Helske")),
-  note = "R package version 1.5.1",
+  note = "R package version 1.5.2",
   year = "2024",
   url = "https://github.com/ropensci/dynamite"
 )

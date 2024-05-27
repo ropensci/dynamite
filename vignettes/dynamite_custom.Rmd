@@ -6,7 +6,6 @@ output:
     base_format: rmarkdown::html_vignette
 pkgdown:
   as_is: true
-bibliography: dynamite.bib
 vignette: >
   %\VignetteIndexEntry{Model customization and non-MCMC estimation with dynamite} 
   %\VignetteEngine{knitr::rmarkdown} 

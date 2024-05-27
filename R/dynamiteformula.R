@@ -2,7 +2,7 @@
 #'
 #' Defines a new observational or a new auxiliary channel for the model using
 #' standard \R formula syntax. Formulas of individual response variables can be
-#' joined together via `+`. See 'Details' and the package vignette for more
+#' joined together via `+`. See 'Details' and the package vignettes for more
 #' information. The function `obs` is a shorthand alias for `dynamiteformula`,
 #' and `aux` is a shorthand alias for
 #' `dynamiteformula(formula, family = "deterministic")`.

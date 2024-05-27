@@ -42,7 +42,7 @@ A \code{dynamiteformula} object.
 \description{
 Defines a new observational or a new auxiliary channel for the model using
 standard \R formula syntax. Formulas of individual response variables can be
-joined together via \code{+}. See 'Details' and the package vignette for more
+joined together via \code{+}. See 'Details' and the package vignettes for more
 information. The function \code{obs} is a shorthand alias for \code{dynamiteformula},
 and \code{aux} is a shorthand alias for
 \code{dynamiteformula(formula, family = "deterministic")}.
