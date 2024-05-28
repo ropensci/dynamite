@@ -33,6 +33,7 @@ After the user has specified the parameter values, they should be supplied to `d
 # Model with categorical responses
 
 As an illustration, the approach described in this vignette was used to generate the package data `categorical_example` as follows. First, we define the data for the first time index:
+
 ```{r categinit, eval=FALSE, echo=TRUE}
 library("dynamite")
 set.seed(1)
@@ -45,7 +46,9 @@ d <- data.frame(
   id = seq_len(n_id)
 )
 ```
+
 Based on this initial data, our goal is to generate categorical responses for two channels, `y` and `x`, for 100 individuals over 20 time points. We expand the initial data with missing values for the remaining time points. We also add a random noise variable `z` that is observed for each individual at each time index.
+
 ```{r categexpand, eval=FALSE, echo=TRUE}
 d <- dplyr::right_join(
   d,
@@ -57,13 +60,17 @@ d <- dplyr::right_join(
 )
 d$z <- rnorm(nrow(d))
 ```
-Next, we define the model formula for the DMPM of the response variables
+
+Next, we define the model formula for the DMPM of the response variables.
+
 ```{r categform, eval=FALSE, echo=TRUE}
 f <- obs(x ~ z + lag(x) + lag(y), family = "categorical") +
   obs(y ~ z + lag(x) + lag(y), family = "categorical")
 ```
+
 Based on this formula, we now need to define the values of the parameters of the model that it implies. First, we must determine what the parameters are called and what their dimensions are via `get_parameter_dims()`.
 For `dynamiteformula` objects, this method should be provided the same arguments as `dynamite`: the model formula, the data, the time index variable and the optional grouping variable. This function fits a temporary Stan model to define the required parameters, meaning that it may take a few seconds to obtain the result.
+
 ```{r categdimsecho, eval=FALSE, echo=TRUE}
 get_parameter_dims(x = f, data = d, time = "time", group = "id")
 ```
@@ -71,7 +78,9 @@ get_parameter_dims(x = f, data = d, time = "time", group = "id")
 # This is actually computed
 get_parameter_dims(categorical_example_fit)
 ```
+
 In other words, all `beta` parameters are vectors of length 5, and the `a` parameters are scalars. The `a` type parameters are centered versions of the intercepts `alpha` at the first time index (see the package vignette on default priors for more information: `vignette("dynamite_priors", package = "dynamite")`). Now we have the required information to specify the values for the parameters of the model. The actual values to be chosen  naturally depends on the scenario and is up to the user. We set the following values for the simulation as the list `init`. 
+
 ```{r categparamvals, eval=FALSE, echo=TRUE}
 init <- list(
   beta_x_B = c(2, 0.8, 0.2, 0, 0),
@@ -84,7 +93,9 @@ init <- list(
   a_y_c = -0.5
 )
 ```
+
 We fit the model with these fixed values. Note that we wrap our `init` object in another list, because the `init` argument is chain specific, and thus the first element provides initial values to the first (and in this case only) chain.
+
 ```{r categfit, eval=FALSE, echo=TRUE}
 fit <- dynamite(
   dformula = f,
@@ -97,7 +108,9 @@ fit <- dynamite(
   init = list(init),
 )
 ```
+
 The `categorical_example` data of the package can now be obtained with a simple call to `predict()`. Finally, we simply rename the simulated values of the responses, and select the variables of interest.
+
 ```{r categpred, eval=FALSE, echo=TRUE}
 categorical_example <- predict(fit, type = "response") |>
   dplyr::mutate(x = x_new, y = y_new) |>
@@ -119,7 +132,9 @@ d <- data.frame(
   id = seq_len(n_id)
 )
 ```
+
 We again expand the data with missing values to the full time period and add a fixed covariate `x`.
+
 ```{r gaussianexpand}
 d <- dplyr::right_join(
   d,
@@ -131,23 +146,20 @@ d <- dplyr::right_join(
 )
 d$x <- rnorm(nrow(d))
 ```
+
 Next, we define the model formula for the response variable `y` of the DMPM and define the splines of the time-varying effects.
+
 ```{r gaussianform}
 f <- obs(y ~ 1 + varying(~ -1 + x + lag(y)), family = "gaussian") +
   splines(df = 10)
 ```
+
 Again, we apply the `get_parameter_dims()` function to get the model parameters and their dimensions.
+
 ```{r gaussiandimsecho, eval=FALSE, echo=TRUE}
 get_parameter_dims(x = f, data = d, time = "time", group = "id")
 ```
-```{r gaussiandimseval, eval=TRUE, echo=FALSE}
-list(
-  omega_y = c(2L, 10L),
-  tau_y = 2L,
-  a_y = 1L,
-  sigma_y = 1L
-)
-```
+
 Here, `omega_y` defines the spline coefficients for the time-varying effects. This parameter is a 2 by 10 matrix because we have 2 time-varying effects, `x` and `lag(y)`, and the degrees of freedom of the splines is 10. The parameter `tau_y` defines the standard deviations of the random walk priors for the two time-varying effects. We choose the following values for the model parameters:
 ```{r gaussianparamvals}
 init <- list(
@@ -160,8 +172,10 @@ init <- list(
   sigma_y = 0.5
 )
 ```
+
 We fit the model with these fixed values.
-```{r gaussianfit, eval=FALSE, echo=TRUE}
+
+```{r gaussianfit}
 gaussian_simulation_fit <- dynamite(
   dformula = f,
   data = d,
@@ -170,17 +184,22 @@ gaussian_simulation_fit <- dynamite(
   chains = 1,
   iter = 1,
   algorithm = "Fixed_param",
+  refresh = 0,
   init = list(init),
 )
 ```
+
 Finally, we generate the data using `predict()`.
+
 ```{r gaussianpred}
 sim <- predict(gaussian_simulation_fit, type = "response") |>
   dplyr::mutate(y = y_new) |>
   dplyr::select(id, time, x, y)
 ```
+
 We can plot individual trajectories of `y` over time to visualize the data.
-```{r gaussianplot, fig.width = 7, fig.height=3.5}
+
+```{r gaussianplot, fig.width=7, fig.height=3.5, out.width="100%"}
 library("ggplot2")
 sim |>
   dplyr::filter(id < 9) |>

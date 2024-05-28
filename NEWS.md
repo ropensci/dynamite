@@ -1,6 +1,7 @@
 # dynamite 1.5.3
 
-  Restored and updated the main package vignette. The vignette now also contains a real data example and information on multiple imputation.
+  * Restored and updated the main package vignette. The vignette now also contains a real data example and information on multiple imputation.
+  * The package data `gaussian_simulation_fit` has been removed to accommodate CRAN package size requirements. The code to generate the data is still available in the `data_raw` directory.
 
 # dynamite 1.5.2
 
