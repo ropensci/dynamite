@@ -196,7 +196,7 @@ Next, we fit the model
 fit <- dynamite(
   dformula = seatbelt_formula,
   data = seatbelt, time = "year", group = "state",
-  chains = 4, cores = 4, refresh = 0
+  chains = 4, refresh = 0
 )
 ```
 
@@ -286,7 +286,7 @@ Here, the `aux()` function creates a deterministic transformation of \(p_t\) def
 multichannel_fit <- dynamite(
   dformula = multi_formula,
   data = multichannel_example, time = "time", group = "id",
-  chains = 4, cores = 4, refresh = 0
+  chains = 4, refresh = 0
 )
 ```
 

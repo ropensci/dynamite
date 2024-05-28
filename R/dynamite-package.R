@@ -100,29 +100,29 @@
 #' @format A `dynamitefit` object.
 "gaussian_example_fit"
 
-#' Model Fit for the time-varying example in the `dynamite_simulation` Vignette
-#'
-#' A `dynamitefit` object obtained by running `dynamite` with the
-#' `"Fixed_param"` algorithm on the specified `inits` in the example.
-#' \preformatted{
-#' set.seed(1)
-#' library(dynamite)
-#' gaussian_simulation_fit <- dynamite(
-#'   dformula = f,
-#'   data = d,
-#'   time = "time",
-#'   group = "id",
-#'   chains = 1,
-#'   iter = 1,
-#'   algorithm = "Fixed_param",
-#'   init = list(init),
-#' )
-#' }
-#' @family examples
-#' @source The data was generated according to a script in
-#' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/gaussian_simulation_fit.R}
-#' @format A `dynamitefit` object.
-"gaussian_simulation_fit"
+# #' Model Fit for the time-varying example in the `dynamite_simulation` Vignette
+# #'
+# #' A `dynamitefit` object obtained by running `dynamite` with the
+# #' `"Fixed_param"` algorithm on the specified `inits` in the example.
+# #' \preformatted{
+# #' set.seed(1)
+# #' library(dynamite)
+# #' gaussian_simulation_fit <- dynamite(
+# #'   dformula = f,
+# #'   data = d,
+# #'   time = "time",
+# #'   group = "id",
+# #'   chains = 1,
+# #'   iter = 1,
+# #'   algorithm = "Fixed_param",
+# #'   init = list(init),
+# #' )
+# #' }
+# #' @family examples
+# #' @source The data was generated according to a script in
+# #' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/gaussian_simulation_fit.R}
+# #' @format A `dynamitefit` object.
+# "gaussian_simulation_fit"
 
 #' Simulated Multivariate Panel Data
 #'
