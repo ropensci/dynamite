@@ -2,13 +2,13 @@
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
   "identifier": "dynamite",
-  "description": "Easy-to-use and efficient interface for Bayesian inference of complex panel (time series) data using dynamic multivariate panel models by Helske and Tikka (2024) <doi:10.1016/j.alcr.2024.100617>. The package supports joint modeling of multiple measurements per individual, time-varying and time-invariant effects, and a wide range of discrete and continuous distributions. Estimation of these dynamic multivariate panel models is carried out via 'Stan'. For an in-depth tutorial of the package, see (Tikka and Helske, 2024) <arxiv:2302.01607>.",
+  "description": "Easy-to-use and efficient interface for Bayesian inference of complex panel (time series) data using dynamic multivariate panel models by Helske and Tikka (2024) <doi:10.1016/j.alcr.2024.100617>. The package supports joint modeling of multiple measurements per individual, time-varying and time-invariant effects, and a wide range of discrete and continuous distributions. Estimation of these dynamic multivariate panel models is carried out via 'Stan'. For an in-depth tutorial of the package, see (Tikka and Helske, 2024) <doi:10.48550/arXiv.2302.01607>.",
   "name": "dynamite: Bayesian Modeling and Causal Inference for Multivariate\n    Longitudinal Data",
   "relatedLink": ["https://docs.ropensci.org/dynamite/", "https://CRAN.R-project.org/package=dynamite"],
   "codeRepository": "https://github.com/ropensci/dynamite/",
   "issueTracker": "https://github.com/ropensci/dynamite/issues/",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -332,7 +332,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "5946.449KB",
+  "fileSize": "5815.036KB",
   "citation": [
     {
       "@type": "CreativeWork",
@@ -402,7 +402,7 @@
       ],
       "name": "dynamite: Bayesian Modeling and Causal Inference for Multivariate\n    Longitudinal Data",
       "url": "https://github.com/ropensci/dynamite",
-      "description": "R package version 1.5.2"
+      "description": "R package version 1.5.3"
     }
   ],
   "releaseNotes": "https://github.com/ropensci/dynamite/blob/master/NEWS.md",

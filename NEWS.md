@@ -1,3 +1,7 @@
+# dynamite 1.5.3
+
+  Restored and updated the main package vignette. The vignette now also contains a real data example and information on multiple imputation.
+
 # dynamite 1.5.2
 
   * The main package vignette has been temporarily removed as it contained out-of-date information. Please see the arXiv preprint for up-to-date information instead: https://arxiv.org/abs/2302.01607
