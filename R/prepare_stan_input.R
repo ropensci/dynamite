@@ -32,7 +32,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     "Can't find variable{?s} {.var {resp[resp_missing]}} in {.arg data}."
   )
   specials <- lapply(dformula, evaluate_specials, data = data)
-  model_matrix <- full_model.matrix(dformula, data, verbose)
+  model_matrix <- full_model.matrix(dformula, data, group_var, fixed, verbose)
   cg <- attr(dformula, "channel_groups")
   n_cg <- n_unique(cg)
   n_channels <- length(resp_names)
@@ -85,8 +85,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   N <- n_unique(group)
   K <- ncol(model_matrix)
   X <- model_matrix[, ]
-  dim(X) <- c(T_full, N, K)
-  X <- X[T_idx, , , drop = FALSE]
+  dim(X) <- c(T_full - fixed, N, K)
   x_tmp <- X[1L, , , drop = FALSE]
   sd_x <- pmax(
     stats::setNames(apply(X, 3L, sd, na.rm = TRUE), colnames(model_matrix)),

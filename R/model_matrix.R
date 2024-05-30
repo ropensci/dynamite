@@ -1,20 +1,26 @@
 #' Combine `model.matrix` Objects of All Formulas of a `dynamiteformula`
 #'
-#' @inheritParams dynamite
+#' @inheritParams prepare_stan_input
 #' @srrstats {RE1.3, RE1.3a} `full_model.matrix` preserves relevant attributes.
 #' @noRd
-full_model.matrix <- function(dformula, data, verbose) {
+full_model.matrix <- function(dformula, data, group_var, fixed, verbose) {
   model_matrices <- vector(mode = "list", length = length(dformula))
   model_matrices_type <- vector(mode = "list", length = length(dformula))
   types <- c("fixed", "varying", "random")
+  idx <- data[,
+    .I[base::seq.int(fixed + 1L, .N)],
+    by = group,
+    env = list(fixed = fixed, group = group_var)
+  ]$V1
+  data_nonfixed <- droplevels(data[idx, , env = list(idx = idx)])
   for (i in seq_along(dformula)) {
     mm <- stats::model.matrix.lm(
       dformula[[i]]$formula,
-      data = data,
+      data = data_nonfixed,
       na.action = na.pass
     )
     if (verbose) {
-      test_collinearity(dformula[[i]]$resp, mm, data)
+      test_collinearity(dformula[[i]]$resp, mm, data_nonfixed)
     }
     model_matrices_type[[i]] <- list()
     for (type in c("fixed", "varying", "random")) {
@@ -22,14 +28,14 @@ full_model.matrix <- function(dformula, data, verbose) {
       if (!is.null(type_formula)) {
         model_matrices_type[[i]][[type]] <- stats::model.matrix.lm(
           type_formula,
-          data = data,
+          data = data_nonfixed,
           na.action = na.pass
         )
       }
     }
     tmp <- do.call(cbind, model_matrices_type[[i]])
     ifelse_(identical(length(tmp), 0L),
-      model_matrices[[i]] <- matrix(nrow = nrow(mm), ncol = 0),
+      model_matrices[[i]] <- matrix(nrow = nrow(mm), ncol = 0L),
       model_matrices[[i]] <- tmp
     )
   }

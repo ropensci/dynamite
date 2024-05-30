@@ -24,14 +24,24 @@ test_that("factor time conversion warns", {
 test_that("perfect collinearity warns", {
   f1 <- obs(y ~ -1 + x + z, family = "gaussian")
   f2 <- obs(y ~ z, family = "gaussian")
-  test_data1 <- data.frame(y = rnorm(10), x = rep(1, 10), z = rep(2, 10))
-  test_data2 <- data.frame(y = rep(1, 10), x = rep(1, 10), z = rnorm(10))
+  test_data1 <- data.table::data.table(
+    y = rnorm(10),
+    x = rep(1, 10),
+    z = rep(2, 10),
+    id = 1L
+  )
+  test_data2 <- data.table::data.table(
+    y = rep(1, 10),
+    x = rep(1, 10),
+    z = rnorm(10),
+    id = 1L
+  )
   expect_warning(
-    full_model.matrix(f1, test_data1, TRUE),
+    full_model.matrix(f1, test_data1, "id", 0L, TRUE),
     "Perfect collinearity found between predictor variables of channel `y`\\."
   )
   expect_warning(
-    full_model.matrix(f2, test_data2, TRUE),
+    full_model.matrix(f2, test_data2, "id", 0L, TRUE),
     paste0(
       "Perfect collinearity found between response and predictor variable:\n",
       "i Response variable `y` is perfectly collinear ",
@@ -39,7 +49,7 @@ test_that("perfect collinearity warns", {
     )
   )
   expect_warning(
-    full_model.matrix(f1, test_data2, TRUE),
+    full_model.matrix(f1, test_data2, "id", 0L, TRUE),
     paste0(
       "Perfect collinearity found between response and predictor variable:\n",
       "i Response variable `y` is perfectly collinear ",
@@ -50,14 +60,15 @@ test_that("perfect collinearity warns", {
 
 test_that("too few observations warns", {
   f <- obs(y ~ x + z + w, family = "gaussian")
-  test_data <- data.frame(
+  test_data <- data.table::data.table(
     y = rnorm(3),
     x = rnorm(3),
     z = rnorm(3),
-    w = rnorm(3)
+    w = rnorm(3),
+    id = 1L
   )
   expect_warning(
-    full_model.matrix(f, test_data, TRUE),
+    full_model.matrix(f, test_data, "id", 0L, TRUE),
     paste0(
       "Number of non-missing observations 3 in channel `y` ",
       "is less than 4, the number of predictors \\(including possible ",
@@ -68,13 +79,14 @@ test_that("too few observations warns", {
 
 test_that("zero predictor warns", {
   f <- obs(y ~ -1 + x + z, family = "gaussian")
-  test_data <- data.frame(
+  test_data <- data.table::data.table(
     y = rnorm(6),
     x = c(NA, rnorm(2), NA, rnorm(2)),
-    z = factor(1:3)
+    z = factor(1:3),
+    id = 1L
   )
   expect_warning(
-    full_model.matrix(f, test_data, TRUE),
+    full_model.matrix(f, test_data, "id", 0L, TRUE),
     paste0(
       "Predictor `z1` contains only zeros in the complete case rows of the ",
       "design matrix for the channel `y`\\."
