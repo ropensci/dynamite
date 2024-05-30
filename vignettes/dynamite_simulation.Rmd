@@ -175,7 +175,22 @@ init <- list(
 
 We fit the model with these fixed values.
 
-```{r gaussianfit, message=FALSE, error=FALSE, warning=FALSE}
+```{r gaussianfitactual, echo=FALSE, eval=TRUE, message=FALSE, error=FALSE, warning=FALSE}
+invisible(capture.output({
+  gaussian_simulation_fit <- dynamite(
+    dformula = f,
+    data = d,
+    time = "time",
+    group = "id",
+    chains = 1,
+    iter = 1,
+    algorithm = "Fixed_param",
+    refresh = 0,
+    init = list(init),
+  )
+}))
+```
+```{r gaussianfit, echo=TRUE, eval=FALSE}
 gaussian_simulation_fit <- dynamite(
   dformula = f,
   data = d,

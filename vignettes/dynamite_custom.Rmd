@@ -56,7 +56,15 @@ to_vector(nu_raw) ~ student_t(df, 0, 1);
 ```
 and add `real<lower=2> df;` to the parameters block. Now we can call the `dynamite` with our new model code, using the `custom_stan_model` argument, which accepts either a `character` string containing the model code or a path to a `.stan` file.
 
-```{r customfit, message=FALSE, error=FALSE, warning=FALSE}
+```{r customfitactual, echo=FALSE, eval=TRUE, message=FALSE, error=FALSE, warning=FALSE}
+invisible(capture.output({
+  fit <- dynamite(
+    dformula = f, data = gaussian_example, time = "time",  group = "id", 
+    custom_stan_model = "custom_code.stan", chains = 1, refresh = 0
+  )
+}))
+```
+```{r customfit, echo=TRUE, eval=FALSE}
 fit <- dynamite(
   dformula = f, data = gaussian_example, time = "time",  group = "id", 
   custom_stan_model = "custom_code.stan", chains = 1, refresh = 0
@@ -107,8 +115,15 @@ d <- get_data(fit)
 
 Like `get_code()`, this method is available for both `dynamiteformula` and `dynamitefit` objects. With the custom code and the corresponding input data, we can call the variational algorithm of `rstan`:
 
-```{r vbfit, message=FALSE, error=FALSE, warning=FALSE}
+```{r vbmodelactual, echo=FALSE, eval=TRUE, message=FALSE, error=FALSE, warning=FALSE}
+invisible(capture.output({
+  model <- rstan::stan_model("custom_code.stan")
+}))
+```
+```{r vbmodel, echo=TRUE, eval=FALSE}
 model <- rstan::stan_model("custom_code.stan")
+```
+```{r vbfit}
 fit_vb <- rstan::vb(model, data = d, iter = 1e5, refresh = 0)
 ```
 
