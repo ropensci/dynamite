@@ -15,6 +15,8 @@
 #'  * `delta`\cr Time-varying regression coefficients.
 #'  * `nu`\cr Group-level random effects.
 #'  * `lambda`\cr Factor loadings.
+#'  * `kappa`\cr Contribution of the latent factor loadings in the total
+#'    variation.
 #'  * `psi`\cr Latent factors.
 #'  * `tau`\cr Standard deviations of the spline coefficients of `delta`.
 #'  * `tau_alpha`\cr Standard deviations of the spline coefficients of
@@ -42,6 +44,8 @@
 #'     in case of `nonzero_lambda = FALSE`, mean of these are used to flip the
 #'     sign of `psi` to avoid multimodality due to sign-switching, but
 #'     `omega_psi` variables are not modified.
+#'  * `zeta`\cr Total variation of latent factors, i.e., the sum
+#'     of `sigma_lambda` and `tau_psi`.
 #'
 #' @export
 #' @family output

@@ -85,6 +85,8 @@ Potential values for the \code{types} argument are:
 \item \code{delta}\cr Time-varying regression coefficients.
 \item \code{nu}\cr Group-level random effects.
 \item \code{lambda}\cr Factor loadings.
+\item \code{kappa}\cr Contribution of the latent factor loadings in the total
+variation.
 \item \code{psi}\cr Latent factors.
 \item \code{tau}\cr Standard deviations of the spline coefficients of \code{delta}.
 \item \code{tau_alpha}\cr Standard deviations of the spline coefficients of
@@ -114,6 +116,8 @@ necessary.
 in case of \code{nonzero_lambda = FALSE}, mean of these are used to flip the
 sign of \code{psi} to avoid multimodality due to sign-switching, but
 \code{omega_psi} variables are not modified.
+\item \code{zeta}\cr Total variation of latent factors, i.e., the sum
+of \code{sigma_lambda} and \code{tau_psi}.
 }
 }
 \examples{

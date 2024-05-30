@@ -192,7 +192,7 @@ seatbelt_formula <-
 
 Next, we fit the model
 
-```{r seatbeltmodelfit, echo=TRUE, eval=TRUE, message=FALSE}
+```{r seatbeltmodelfit, echo=TRUE, eval=TRUE, message=FALSE, error=FALSE, warning=FALSE}
 fit <- dynamite(
   dformula = seatbelt_formula,
   data = seatbelt, time = "year", group = "state",
@@ -282,7 +282,7 @@ Here, the `aux()` function creates a deterministic transformation of \(p_t\) def
 
 ![(#fig:multichanneldag) A directed acyclic graph for the multichannel model with arrows corresponding to the assumed direct causal effects. A cross-section at times \(t\), \(t+1\), and \(t+2\) is shown. The vertices and edges corresponding to the deterministic tranformation \(\log(p_t)\) are omitted for clarity.](dag.png){width=80%}
 
-```{r multichannelfit, echo=TRUE, eval=TRUE, message=FALSE}
+```{r multichannelfit, echo=TRUE, eval=TRUE, message=FALSE, error=FALSE, warning=FALSE}
 multichannel_fit <- dynamite(
   dformula = multi_formula,
   data = multichannel_example, time = "time", group = "id",

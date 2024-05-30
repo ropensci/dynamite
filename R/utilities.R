@@ -301,7 +301,7 @@ topological_order <- function(A) {
 #'
 #' @param message See [cli::cli_abort()].
 #' @param ... See [cli::cli_abort()].
-#' @param call See See [cli::cli_abort()].
+#' @param call See [cli::cli_abort()].
 #' @noRd
 stop_ <- function(message, ..., call = rlang::caller_env()) {
   cli::cli_abort(message, ..., .envir = parent.frame(), call = call)

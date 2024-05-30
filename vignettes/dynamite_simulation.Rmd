@@ -175,7 +175,7 @@ init <- list(
 
 We fit the model with these fixed values.
 
-```{r gaussianfit}
+```{r gaussianfit, message=FALSE, error=FALSE, warning=FALSE}
 gaussian_simulation_fit <- dynamite(
   dformula = f,
   data = d,
