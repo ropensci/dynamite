@@ -557,8 +557,8 @@ plot_varying <- function(coefs, level, alpha, scales, n_params) {
     title_spec <- switch(
       coefs$type[1L],
       alpha = "time-varying intercepts",
-      cutpoint = "time-invariant cutpoints",
-      delta = "time-invariant regression coefficients",
+      cutpoint = "time-varying cutpoints",
+      delta = "time-varying regression coefficients",
       psi = "latent factors",
       "time-varying parameters"
     )
