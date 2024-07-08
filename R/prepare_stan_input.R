@@ -350,7 +350,7 @@ initialize_univariate_channel <- function(dformula, specials, fixed_pars,
   channel$has_fully_missing <- any(obs_len == 0L)
   sampling[[paste0("obs_", y_name)]] <- obs_idx
   sampling[[paste0("n_obs_", y_name)]] <- obs_len
-  sampling[[paste0("t_obs_", y_name)]] <- which(obs_len > 0L)
+  sampling[[paste0("t_obs_", y_name)]] <- as.array(which(obs_len > 0L))
   sampling[[paste0("T_obs_", y_name)]] <- length(which(obs_len > 0L))
   # obs selects complete cases if there are missing observations
   channel$obs <- ifelse_(
