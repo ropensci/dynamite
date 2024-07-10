@@ -14,7 +14,7 @@
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.3.1 (2023-06-16 ucrt)",
+  "runtimePlatform": "R version 4.3.0 (2023-04-21 ucrt)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -123,6 +123,30 @@
         "url": "https://cran.r-project.org"
       },
       "sameAs": "https://CRAN.R-project.org/package=mockthat"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "pder",
+      "name": "pder",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=pder"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "pryr",
+      "name": "pryr",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=pryr"
     },
     {
       "@type": "SoftwareApplication",
@@ -332,7 +356,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "5815.036KB",
+  "fileSize": "5071.746KB",
   "citation": [
     {
       "@type": "CreativeWork",
