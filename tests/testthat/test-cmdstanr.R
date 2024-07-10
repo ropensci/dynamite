@@ -54,29 +54,29 @@ test_that("LOO and LFO works for AR(1) model estimated with cmdstanr", {
   skip_if_not(run_extended_tests)
   set.seed(1)
   fit <- dynamite(obs(LakeHuron ~ 1, "gaussian") + lags(),
-    data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
-    time = "time",
-    group = "id",
-    chains = 1,
-    iter_sampling = 1000,
-    iter_warmup = 1000,
-    refresh = 0,
-    backend = "cmdstanr",
-    stanc_options = list("O0"),
-    show_messages = FALSE,
-    init = 0
+                  data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
+                  time = "time",
+                  group = "id",
+                  chains = 1,
+                  iter_sampling = 1000,
+                  iter_warmup = 1000,
+                  refresh = 0,
+                  backend = "cmdstanr",
+                  stanc_options = list("O0"),
+                  show_messages = FALSE,
+                  init = 0
   )
   l <- loo(fit)
   expect_equal(l$estimates,
-    structure(
-      c(
-        -107.877842970846, 2.86041434691809, 215.755685941693,
-        7.36848739076899, 0.561813071004331, 14.736974781538
-      ),
-      dim = 3:2,
-      dimnames = list(c("elpd_loo", "p_loo", "looic"), c("Estimate", "SE"))
-    ),
-    tolerance = 1
+               structure(
+                 c(
+                   -107.877842970846, 2.86041434691809, 215.755685941693,
+                   7.36848739076899, 0.561813071004331, 14.736974781538
+                 ),
+                 dim = 3:2,
+                 dimnames = list(c("elpd_loo", "p_loo", "looic"), c("Estimate", "SE"))
+               ),
+               tolerance = 1
   )
   expect_error(plot(l), NA)
 
@@ -128,11 +128,11 @@ test_that("multivariate gaussian with threading produces a valid model", {
   x <- matrix(0, N, T_)
   for (t in 2:T_) {
     for (i in 1:N){
-      mu <- c(0.7 * y1[i, t-1], 0.4 * y2[i, t-1] - 0.2 * y1[i, t-1])
+      mu <- c(0.7 * y1[i, t - 1], 0.4 * y2[i, t - 1] - 0.2 * y1[i, t - 1])
       y <- mu + L %*% rnorm(2)
       y1[i, t] <- y[1L]
       y2[i, t] <- y[2L]
-      x[i, t] <- rnorm(1, c(0.5 * y1[i, t-1]), 0.5)
+      x[i, t] <- rnorm(1, c(0.5 * y1[i, t - 1]), 0.5)
     }
   }
   d <- data.frame(
@@ -157,7 +157,9 @@ test_that("multivariate gaussian with threading produces a valid model", {
   )
   e <- new.env()
   e$file <- cmdstanr::write_stan_file(code)
-  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  model <- with(e, {
+    cmdstanr::cmdstan_model(file, compile = FALSE)
+  })
   expect_true(model$check_syntax())
 })
 
@@ -199,7 +201,9 @@ test_that("threading produces valid model code for other distributions", {
   )
   e <- new.env()
   e$file <- cmdstanr::write_stan_file(code)
-  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  model <- with(e, {
+    cmdstanr::cmdstan_model(file, compile = FALSE)
+  })
   expect_true(model$check_syntax())
 })
 
@@ -245,7 +249,9 @@ test_that("threading produces a valid model for cumulative", {
   )
   e <- new.env()
   e$file <- cmdstanr::write_stan_file(code)
-  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  model <- with(e, {
+    cmdstanr::cmdstan_model(file, compile = FALSE)
+  })
   expect_true(model$check_syntax())
 
   code <- get_code(
@@ -262,7 +268,9 @@ test_that("threading produces a valid model for cumulative", {
   )
   e <- new.env()
   e$file <- cmdstanr::write_stan_file(code)
-  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  model <- with(e, {
+    cmdstanr::cmdstan_model(file, compile = FALSE)
+  })
   expect_true(model$check_syntax())
 
   # no predictors
@@ -280,7 +288,9 @@ test_that("threading produces a valid model for cumulative", {
   )
   e <- new.env()
   e$file <- cmdstanr::write_stan_file(code)
-  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  model <- with(e, {
+    cmdstanr::cmdstan_model(file, compile = FALSE)
+  })
   expect_true(model$check_syntax())
 
   code <- get_code(
@@ -297,7 +307,9 @@ test_that("threading produces a valid model for cumulative", {
   )
   e <- new.env()
   e$file <- cmdstanr::write_stan_file(code)
-  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  model <- with(e, {
+    cmdstanr::cmdstan_model(file, compile = FALSE)
+  })
   expect_true(model$check_syntax())
 })
 
@@ -334,7 +346,9 @@ test_that("threading produces a valid model for multinomial", {
   )
   e <- new.env()
   e$file <- cmdstanr::write_stan_file(code)
-  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  model <- with(e, {
+    cmdstanr::cmdstan_model(file, compile = FALSE)
+  })
   expect_true(model$check_syntax())
 })
 
@@ -353,14 +367,16 @@ test_that("syntax is correct for various models", {
   )
   e <- new.env()
   e$file <- cmdstanr::write_stan_file(code)
-  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  model <- with(e, {
+    cmdstanr::cmdstan_model(file, compile = FALSE)
+  })
   expect_true(model$check_syntax())
 
   # gaussian_example_fit
   code <- get_code(
     x = obs(
-        y ~ -1 + z + varying(~ x + lag(y)) + random(~1), family = "gaussian"
-      ) +
+      y ~ -1 + z + varying(~ x + lag(y)) + random(~1), family = "gaussian"
+    ) +
       random_spec() +
       splines(df = 20),
     data = gaussian_example,
@@ -370,7 +386,9 @@ test_that("syntax is correct for various models", {
   )
   e <- new.env()
   e$file <- cmdstanr::write_stan_file(code)
-  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  model <- with(e, {
+    cmdstanr::cmdstan_model(file, compile = FALSE)
+  })
   expect_true(model$check_syntax())
 
   # categorical_example_fit
@@ -386,7 +404,9 @@ test_that("syntax is correct for various models", {
   )
   e <- new.env()
   e$file <- cmdstanr::write_stan_file(code)
-  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  model <- with(e, {
+    cmdstanr::cmdstan_model(file, compile = FALSE)
+  })
   expect_true(model$check_syntax())
 
   # ordered probit model
@@ -424,7 +444,9 @@ test_that("syntax is correct for various models", {
   )
   e <- new.env()
   e$file <- cmdstanr::write_stan_file(code)
-  model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+  model <- with(e, {
+    cmdstanr::cmdstan_model(file, compile = FALSE)
+  })
   expect_true(model$check_syntax())
 })
 
@@ -480,7 +502,9 @@ test_that("latent factor syntax is correct", {
     )
     e <- new.env()
     e$file <- cmdstanr::write_stan_file(code)
-    model <- with(e, {cmdstanr::cmdstan_model(file, compile = FALSE)})
+    model <- with(e, {
+      cmdstanr::cmdstan_model(file, compile = FALSE)
+    })
     expect_true(model$check_syntax())
   }
 })

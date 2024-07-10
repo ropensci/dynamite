@@ -136,8 +136,8 @@ test_that("fitted works", {
   manual <- as_draws(gaussian_example_fit) |>
     dplyr::filter(.iteration == iter & .chain == chain) |>
     dplyr::summarise(fit = `alpha_y[20]` + nu_y_alpha_id5 +
-      `delta_y_x[20]` * xzy$x + beta_y_z * xzy$z +
-      `delta_y_y_lag1[20]` * xzy$y_lag1) |>
+                       `delta_y_x[20]` * xzy$x + beta_y_z * xzy$z +
+                       `delta_y_y_lag1[20]` * xzy$y_lag1) |>
     dplyr::pull(fit)
   automatic <- fitg |>
     dplyr::filter(id == 5 & time == 20) |>

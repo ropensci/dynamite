@@ -23,11 +23,11 @@ test_that("multivariate gaussian fit and predict work", {
   x <- matrix(0, N, T_)
   for (t in 2:T_) {
     for (i in 1:N){
-      mu <- c(0.7 * y1[i, t-1], 0.4 * y2[i, t-1] - 0.2 * y1[i, t-1])
+      mu <- c(0.7 * y1[i, t - 1], 0.4 * y2[i, t - 1] - 0.2 * y1[i, t - 1])
       y <- mu + L %*% rnorm(2)
       y1[i, t] <- y[1L]
       y2[i, t] <- y[2L]
-      x[i, t] <- rnorm(1, c(0.5 * y1[i, t-1]), 0.5)
+      x[i, t] <- rnorm(1, c(0.5 * y1[i, t - 1]), 0.5)
     }
   }
   d <- data.frame(
@@ -284,7 +284,7 @@ test_that("time-varying cutpoints for cumulative works", {
   for (i in seq_len(t)) {
     tmp <- exp(c(0, alpha_spline[, i]))
     for (j in 1:3) {
-      cutpoints[j, i] = log(sum(tmp[1:j]) / sum(tmp[(j + 1):4]))
+      cutpoints[j, i] <- log(sum(tmp[1:j]) / sum(tmp[(j + 1):4]))
     }
     x[, i] <- rnorm(n)
     eta <- 0.6 * x[, i]
@@ -295,7 +295,7 @@ test_that("time-varying cutpoints for cumulative works", {
     y[, i] <- apply(p[, , i], 1, sample, x = 1:4, size = 1, replace = TRUE)
   }
   d <- data.frame(
-    y = factor(y, levels = c(1,2,3,4)),
+    y = factor(y, levels = 1:4),
     x = c(x),
     time = rep(seq_len(t), each = n),
     id = rep(seq_len(n), t)
@@ -400,10 +400,10 @@ test_that("predict with random variable trials works", {
   T_ <- 50
   y <- matrix(0, N, T_)
   n <- matrix(0, N, T_)
-  for(t in 2:T_) {
-    for(i in 1:N) {
+  for (t in 2:T_) {
+    for (i in 1:N) {
       n[i, t] <- rpois(1, 5)
-      lp <- -3.0 + 1.25 * y[i, t-1]
+      lp <- -3.0 + 1.25 * y[i, t - 1]
       y[i, t] <- rbinom(1, 1 + n[i, t], plogis(lp))
     }
   }
@@ -512,7 +512,7 @@ test_that("custom stan model works", {
   set.seed(1)
   initial_fit <- dynamite(
     dformula = obs(y ~ -1 + z + varying(~ x + lag(y)) +
-      random(~1), family = "gaussian") +
+                     random(~1), family = "gaussian") +
       random_spec() +
       splines(df = 20),
     data = gaussian_example,
@@ -536,7 +536,7 @@ test_that("custom stan model works", {
   expect_error(
     custom_fit <- dynamite(
       dformula = obs(y ~ -1 + z + varying(~ x + lag(y)) +
-        random(~1), family = "gaussian") +
+                       random(~1), family = "gaussian") +
         random_spec() +
         splines(df = 20),
       data = gaussian_example,
@@ -637,7 +637,8 @@ test_that("information on >2 chains is summarized in print", {
   set.seed(1)
   fit <- dynamite(
     dformula =
-      obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1), family = "gaussian") +
+      obs(y ~ -1 + z +
+            varying(~ x + lag(y)) + random(~1), family = "gaussian") +
       random_spec() +
       splines(df = 20),
     data = gaussian_example,
@@ -679,7 +680,7 @@ test_that("latent factor models are identifiable", {
     lambda <- rnorm(N, 0, sd_lambda)
     lambda <- mean_lambda + lambda - mean(lambda)
     a <- rnorm(N, alpha, sd_alpha)
-    for(t in 1:T_) {
+    for (t in 1:T_) {
       y[, t] <- rnorm(N, a + lambda * psi[t] + x[, t])
     }
     list(data = data.frame(
@@ -689,7 +690,7 @@ test_that("latent factor models are identifiable", {
     ),
     psi = psi, lambda = lambda,
     mean_lambda_psi = mean(lambda) * psi,
-    alpha = alpha, beta = 1, kappa = sd_lambda / (1+sd_lambda),
+    alpha = alpha, beta = 1, kappa = sd_lambda / (1 + sd_lambda),
     sigma_lambda = sd_lambda, sigma_alpha = sd_alpha, sigma_y = 1, tau_psi = 1,
     zeta = 1 + sd_lambda)
   }
@@ -714,7 +715,7 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr1$rhat < 1.1))
   expect_true(all(sumr1$ess_bulk > 500))
   expect_true(all(sumr1$ess_tail > 500))
-  expect_equal(summary(fit1, type="psi")$mean, sim$mean_lambda_psi,
+  expect_equal(summary(fit1, type = "psi")$mean, sim$mean_lambda_psi,
                tolerance = 0.5)
 
   set.seed(2)
@@ -737,7 +738,7 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr2$rhat < 1.1))
   expect_true(all(sumr2$ess_bulk > 500))
   expect_true(all(sumr2$ess_tail > 500))
-  expect_equal(summary(fit2, type="psi")$mean, sim$mean_lambda_psi,
+  expect_equal(summary(fit2, type = "psi")$mean, sim$mean_lambda_psi,
                tolerance = 0.5)
 
   set.seed(3)
@@ -763,7 +764,7 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr3$rhat < 1.1))
   expect_true(all(sumr3$ess_bulk > 500))
   expect_true(all(sumr3$ess_tail > 500))
-  expect_equal(summary(fit3, type="psi")$mean, sim$mean_lambda_psi,
+  expect_equal(summary(fit3, type = "psi")$mean, sim$mean_lambda_psi,
                tolerance = 0.5)
 
   set.seed(4)
@@ -787,7 +788,7 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr4$rhat < 1.1))
   expect_true(all(sumr4$ess_bulk > 500))
   expect_true(all(sumr4$ess_tail > 500))
-  expect_equal(summary(fit4, type="psi")$mean, sim$mean_lambda_psi,
+  expect_equal(summary(fit4, type = "psi")$mean, sim$mean_lambda_psi,
                tolerance = 0.5)
 
   set.seed(5)
@@ -811,7 +812,7 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr5$rhat < 1.1))
   expect_true(all(sumr5$ess_bulk > 500))
   expect_true(all(sumr5$ess_tail > 500))
-  expect_equal(summary(fit5, type="psi")$mean, -sim$psi,
+  expect_equal(summary(fit5, type = "psi")$mean, -sim$psi,
                tolerance = 0.5)
 
   set.seed(6)
@@ -835,7 +836,7 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr6$rhat < 1.1))
   expect_true(all(sumr6$ess_bulk > 500))
   expect_true(all(sumr6$ess_tail > 500))
-  expect_equal(summary(fit6, type="psi")$mean, -sim$psi,
+  expect_equal(summary(fit6, type = "psi")$mean, -sim$psi,
                tolerance = 0.5)
 
   # Test bivariate case with nonzero_lambda
@@ -853,12 +854,12 @@ test_that("latent factor models are identifiable", {
   B <- t(splines::bs(seq_len(T_), df = D, intercept = TRUE))
   omega <- matrix(NA, 2, D)
   omega[, 1] <- c(5, 2) + L %*% rnorm(2)
-  for(i in 2:D) {
+  for (i in 2:D) {
     omega[, i] <- omega[, i - 1] + L %*% rnorm(2)
   }
   psi[1, ] <- omega[1, ] %*% B
   psi[2, ] <- omega[2, ] %*% B
-  for(t in 1:T_) {
+  for (t in 1:T_) {
     y[, t] <- rnorm(N, lambda_y * psi[1, t])
     x[, t] <- rnorm(N, lambda_x * psi[2, t])
   }

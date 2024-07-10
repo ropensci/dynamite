@@ -100,7 +100,8 @@
 #' @format A `dynamitefit` object.
 "gaussian_example_fit"
 
-# #' Model Fit for the time-varying example in the `dynamite_simulation` Vignette
+# #' Model Fit for the time-varying example in the `dynamite_simulation`
+# #' Vignette
 # #'
 # #' A `dynamitefit` object obtained by running `dynamite` with the
 # #' `"Fixed_param"` algorithm on the specified `inits` in the example.
@@ -232,7 +233,8 @@
 # #' \describe{
 # #'  \item{y}{A continuos variable.}
 # #'  \item{id}{Variable defining individuals (1 to 100).}
-# #'  \item{time}{Variable defining the time point of the measurement (1 to 20).}
+# #'  \item{time}{Variable defining the time point of the measurement
+# #'  (1 to 20).}
 # #' }
 # "latent_factor_example"
 

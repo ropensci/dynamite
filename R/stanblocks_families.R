@@ -2257,7 +2257,8 @@ model_lines_multinomial <- function(cvars, cgvars, idt, backend,
   )
 }
 
-model_lines_mvgaussian <- function(cvars, cgvars, idt, backend, threading, ...) {
+model_lines_mvgaussian <- function(cvars, cgvars, idt, backend, threading,
+                                   ...) {
 
   y <- cgvars$y
   y_cg <- cgvars$y_cg
@@ -2319,7 +2320,8 @@ model_lines_mvgaussian <- function(cvars, cgvars, idt, backend, threading, ...) 
       " {fun_args});"
     )
   } else {
-    likelihood <- loglik_lines_mvgaussian(idt, cvars, cgvars, backend, threading)
+    likelihood <- loglik_lines_mvgaussian(idt, cvars, cgvars, backend,
+                                          threading)
   }
   model_text <- paste_rows(
     glue::glue("L_{y_cg} ~ {cgvars$prior_distr$L_prior_distr};"),

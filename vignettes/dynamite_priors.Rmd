@@ -102,5 +102,6 @@ p$prior[p$parameter == "sigma_y"] <- "student_t(3, 0, 2)" # prior for sigma_y
 p
 ```
 ```{r, eval = FALSE}
-fit <- dynamite(f, data = gaussian_example, time = "time",  group = "id", priors = p)
+fit <- dynamite(f, data = gaussian_example, time = "time",  group = "id",
+                priors = p)
 ```

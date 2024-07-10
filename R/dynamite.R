@@ -598,7 +598,7 @@ check_stan_args <- function(dots, verbose, backend) {
   )
   dots_names[original_args] <- converted_args
   names(dots)[original_args] <- converted_args
-  if (identical(backend, "cmdstanr") ) {
+  if (identical(backend, "cmdstanr")) {
     valid_args <- !dots_names %in% cmdstanr_deprecated_args
     deprecated_args <- dots_names[!valid_args]
     if (verbose && any(deprecated_args)) {
@@ -904,7 +904,6 @@ parse_data <- function(dformula, data, group_var, time_var, verbose) {
     val <- do.call(paste0("as.", type), args = list(col))
     data.table::set(data, j = j, value = val)
   }
-  resp <- get_responses(dformula)
   finite_cols <- vapply(
     data,
     function(x) all(is.finite(x) | is.na(x)),
@@ -1017,7 +1016,7 @@ parse_components <- function(dformulas, data, group_var, time_var) {
     "Cannot estimate latent factors using only one group."
   )
 
-   if (attr(dformulas$stoch, "lfactor")$has_lfactor) {
+  if (attr(dformulas$stoch, "lfactor")$has_lfactor) {
     nz <- which(attr(dformulas$stoch, "lfactor")$nonzero_lambda)
     if (length(nz) > 0L) {
       lresp <- attr(dformulas$stoch, "lfactor")$responses

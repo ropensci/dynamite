@@ -42,9 +42,10 @@ Sometimes the current modelling choices of `dynamite` might not fully suit your 
 The `get_code()` method can be used to extract the generated Stan code for inspection:
 
 ```{r}
-f <- obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1), "gaussian") + 
+f <- obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1), "gaussian") +
   splines(df = 20)
-dynamite_code <- get_code(f, data = gaussian_example, time = "time",  group = "id")
+dynamite_code <- get_code(f, data = gaussian_example, time = "time",
+                          group = "id")
 ```
 
 Calling `cat(dynamite_code)` code then prints the code, or you can write it directly to a file for example with `sink()`. The `get_code()` method also works for `dynamitefit` objects, e.g., `get_code(gaussian_example_fit)`.
@@ -59,22 +60,22 @@ and add `real<lower=2> df;` to the parameters block. Now we can call the `dynami
 ```{r customfitactual, echo=FALSE, eval=TRUE, message=FALSE, error=FALSE, warning=FALSE}
 invisible(capture.output({
   fit <- dynamite(
-    dformula = f, data = gaussian_example, time = "time",  group = "id", 
+    dformula = f, data = gaussian_example, time = "time",  group = "id",
     custom_stan_model = "custom_code.stan", chains = 1, refresh = 0
   )
 }))
 ```
 ```{r customfit, echo=TRUE, eval=FALSE}
 fit <- dynamite(
-  dformula = f, data = gaussian_example, time = "time",  group = "id", 
+  dformula = f, data = gaussian_example, time = "time",  group = "id",
   custom_stan_model = "custom_code.stan", chains = 1, refresh = 0
 )
 ```
 
 The `print()` method does not recognize the new parameter `df`, but we can extract those samples manually from the `stanfit` object:
 ```{r}
-as.array(fit$stanfit, pars = "df") |> 
-  posterior::as_draws_df() |> 
+as.array(fit$stanfit, pars = "df") |>
+  posterior::as_draws_df() |>
   posterior::summarise_draws()
 ```
 
@@ -91,10 +92,10 @@ loo(fit)
 and compute predictions:
 ```{r}
 newdata <- data.frame(
-  time = 1:30, 
-  id = 51, 
-  y = rep(c(3, NA), times = c(10, 20)), 
-  x = 0, 
+  time = 1:30,
+  id = 51,
+  y = rep(c(3, NA), times = c(10, 20)),
+  x = 0,
   z = 1
 )
 

@@ -68,7 +68,6 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   time <- sort(unique(data[[time_var]]))
   T_full <- length(time)
   T_idx <- seq.int(fixed + 1L, T_full)
-  has_groups <- !is.null(group_var)
   group <- data[[group_var]]
   spline_def <- attr(dformula, "splines")
   random_def <- attr(dformula, "random_spec")
@@ -97,7 +96,6 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   X_na <- is.na(X)
   # Placeholder for NAs in Stan
   X[X_na] <- 0.0
-  assigned <- attr(model_matrix, "assign")
   fixed_pars <- attr(model_matrix, "fixed")
   varying_pars <- attr(model_matrix, "varying")
   random_pars <- attr(model_matrix, "random")
@@ -266,10 +264,10 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
   model_vars$P <- sampling_vars$P
   model_vars$D <- sampling_vars$D
   model_vars$K <- K
-  model_vars$common_priors = prior_list$common_priors
-  model_vars$spline_def = spline_def
-  model_vars$random_def = random_def
-  model_vars$lfactor_def = lfactor_def
+  model_vars$common_priors <- prior_list$common_priors
+  model_vars$spline_def <- spline_def
+  model_vars$random_def <- random_def
+  model_vars$lfactor_def <- lfactor_def
   list(
     channel_vars = channel_vars,
     channel_group_vars = channel_group_vars,
@@ -436,7 +434,9 @@ initialize_multivariate_channel <- function(y, y_cg, y_name, cg_idx,
   sampling[[paste0("n_obs_", y_cg)]] <- apply(
     sampling[[paste0("obs_", y_cg)]],
     2L,
-    function(x) { sum(x > 0L) }
+    function(x) {
+      sum(x > 0L)
+    }
   )
   sampling[[paste0("t_obs_", y_cg)]] <- which(
     sampling[[paste0("n_obs_", y_cg)]] > 0L
@@ -992,7 +992,7 @@ prepare_channel_multinomial <- function(y, y_cg, Y, channel, sampling,
     abort_factor(y_cg, "Multinomial", call = rlang::caller_env())
   }
   obs <- sampling[[paste0("n_obs_", y_cg)]] > 0L
-  Y_obs <- Y[obs, , ,drop = FALSE]
+  Y_obs <- Y[obs, , , drop = FALSE]
   if (any(Y_obs < 0.0) || any(Y_obs != as.integer(Y_obs))) {
     abort_negative(
       y_cg,

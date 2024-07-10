@@ -51,7 +51,7 @@ stan_array_arg <- function(backend, type, name, n_dims = 0, data = FALSE) {
   ifelse_(
     stan_supports_array_keyword(backend),
     paste0(data, "array[", commas, "] ", type, " ", name),
-    paste0(data, type, "[",commas, "] ", name)
+    paste0(data, type, "[", commas, "] ", name)
   )
 }
 

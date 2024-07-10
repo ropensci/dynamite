@@ -250,8 +250,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
 #'   `"loglik"`.
 #' @noRd
 initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
-                               new_levels, global_fixed, idx_draws, expand, df) {
-  n_draws <- length(idx_draws)
+                               new_levels, global_fixed, idx_draws, expand,
+                               df) {
   newdata_null <- is.null(newdata)
   newdata <- check_newdata(object, newdata)
   fixed <- as.integer(attr(object$dformulas$all, "max_lag"))

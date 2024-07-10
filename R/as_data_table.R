@@ -159,7 +159,6 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
         permuted = FALSE
       )
     }
-    channel <- get_channel(x, response)
     idx <- which(names(x$stan$responses) %in% response)
     resps <- ifelse_(
       identical(length(idx), 0L),
@@ -431,7 +430,6 @@ as_data_table_nu <- function(x, draws, n_draws, response, category, ...) {
     "nu_", response, "_",
     c(icpt, names(get_channel(x, response)$J_random))
   )
-  n_vars <- length(var_names)
   groups <- sort(unique(x$data[[x$group_var]]))
   n_group <- length(groups)
   data.table::data.table(
@@ -482,7 +480,6 @@ as_data_table_beta <- function(x, draws, n_draws, response, category, ...) {
     "beta_", response, "_",
     names(get_channel(x, response)$J_fixed)
   )
-  n_vars <- length(var_names)
   data.table::data.table(
     parameter = rep(var_names, each = n_draws),
     value = c(draws),
@@ -540,7 +537,6 @@ as_data_table_tau <- function(x, draws, n_draws, response, category, ...) {
 #' @describeIn as_data_table_default Data Table for a "omega" Parameter
 #' @noRd
 as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
-  n_cat <- length(category)
   D <- x$stan$model_vars$D
   var_names <- paste0(
     "omega_", response, "_",
@@ -569,8 +565,8 @@ as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
 
 #' @describeIn as_data_table_default Data Table for a "omega_alpha" Parameter
 #' @noRd
-as_data_table_omega_alpha <-function(x, draws, n_draws, response,
-  category, ...) {
+as_data_table_omega_alpha <- function(x, draws, n_draws, response,
+                                     category, ...) {
   D <- x$stan$model_vars$D
   data.table::data.table(
     parameter = rep(
@@ -626,7 +622,6 @@ as_data_table_phi <- function(draws, response, ...) {
 #' @describeIn as_data_table_default Data Table for a "lambda" Parameter
 #' @noRd
 as_data_table_lambda <- function(x, draws, n_draws, response, ...) {
-  n_group <- dim(draws)[3L]
   data.table::data.table(
     parameter = paste0("lambda_", response),
     value = c(draws),
@@ -722,7 +717,7 @@ as_data_table_corr <- function(x, draws, n_draws, resps, ...) {
 #' @describeIn as_data_table_default Data Table for a "cutpoint" Parameter
 #' @noRd
 as_data_table_cutpoint <- function(x, draws, response,
-                                    n_draws, include_fixed, ...) {
+                                   n_draws, include_fixed, ...) {
   channel <- get_channel(x, response)
   S <- channel$S
   fixed <- x$stan$fixed

@@ -255,7 +255,7 @@ test_that("windows and old rstan warns on attach", {
     stan_version = function(...) "2.23",
     is_windows = function(...) TRUE,
     R_version = function(...) "4.2.0",
-     capture.output(startup(), type = "message")
+    capture.output(startup(), type = "message")
   )
   expect_match(
     out[1L],

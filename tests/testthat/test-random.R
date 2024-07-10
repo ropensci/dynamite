@@ -248,11 +248,11 @@ test_that("random effects for multivariate gaussian distribution work", {
   x <- matrix(0, N, T_)
   for (t in 2:T_) {
     for (i in 1:N){
-      mu <- c(0.7 * y1[i, t-1], 0.4 * y2[i, t-1] - 0.2 * y1[i, t-1])
+      mu <- c(0.7 * y1[i, t - 1], 0.4 * y2[i, t - 1] - 0.2 * y1[i, t - 1])
       y <- mu + L %*% rnorm(2L)
       y1[i, t] <- y[1L]
       y2[i, t] <- y[2L]
-      x[i, t] <- rnorm(1, c(0.5 * y1[i, t-1]), 0.5)
+      x[i, t] <- rnorm(1, c(0.5 * y1[i, t - 1]), 0.5)
     }
   }
   d <- data.frame(

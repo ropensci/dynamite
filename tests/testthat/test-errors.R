@@ -1072,7 +1072,7 @@ test_that("output without Stan fit fails", {
 
 test_that("invalid responses fail", {
   expect_error(
-    as.data.table(gaussian_example_fit,responses = "resp"),
+    as.data.table(gaussian_example_fit, responses = "resp"),
     paste0(
       "Argument `responses` contains invalid response variable names\\.\n",
       "x Response variable \"resp\" is not recognized\\.\n",

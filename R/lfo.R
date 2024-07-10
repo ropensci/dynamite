@@ -125,7 +125,7 @@ lfo.dynamitefit <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     df = FALSE
   )$simulated
   # avoid NSE notes from R CMD check
-  loglik <- patterns <- .draw <- group <- groups <- time <- NULL
+  loglik <- patterns <- group <- groups <- time <- NULL
   # sum the log-likelihood over the channels and non-missing time points
   # for each group, time, and draw
   # drop those id&time pairs which contain NA

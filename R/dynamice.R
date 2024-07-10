@@ -97,7 +97,6 @@ dynamice <- function(dformula, data, time, group = NULL,
   e <- new.env()
   sf <- vector(mode = "list", length = m)
   filenames <- character(m)
-  model <- NULL
   tmp <- NULL
   for (i in seq_len(m)) {
     data_imputed <- ifelse_(
@@ -372,7 +371,6 @@ impute_wide <- function(dformula, data, time, group, mice_args) {
   if (length(value_vars) == 1L) {
     names(data_wide)[-1L] <- paste0(value_vars, "_", names(data_wide)[-1L])
   }
-  wide_vars <- names(data_wide)[-1L]
   mice_args$data <- data_wide
   n_time <- n_unique(data[[time]])
   pred_mat <- parse_predictors_wide(
@@ -393,7 +391,6 @@ impute_wide <- function(dformula, data, time, group, mice_args) {
 #' @param all_vars \[`character()`]\cr Names of all data variables.
 #' @noRd
 parse_predictors_long <- function(dformula, time_var, group_var, all_vars) {
-  resp <- get_responses(dformula)
   value_vars <- setdiff(all_vars, c(time_var, group_var))
   pred_vars <- c(value_vars, time_var, group_var)
   n_vars <- length(value_vars)

@@ -145,7 +145,6 @@ plot_dynamiteformula_tikz <- function(g) {
 plot_dynamiteformula_ggplot <- function(g, vertex_size, label_size) {
   # avoid NSE notes from R CMD check
   var_expr <- NULL
-  v <- colnames(g$A)
   layout <- g$layout
   edgelist <- g$edgelist
   layout$var_expr <- gsub("(.+)_\\{(.+)\\}", "\\1\\[\\2\\]", layout$var)
@@ -551,7 +550,6 @@ plot_varying <- function(coefs, level, alpha, scales, n_params) {
     return(NULL)
   }
   coefs <- filter_params(coefs, n_params, 3)
-  n_coefs <- nrow(coefs)
   title_spec <- "time-varying parameters"
   if (n_unique(coefs$type) == 1L) {
     title_spec <- switch(

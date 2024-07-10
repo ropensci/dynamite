@@ -276,7 +276,7 @@ test_that("parameters of a time-varying gaussian model are recovered", {
   d <- create_data(T_ = 500, N = 500, D = 100)
   data <- get_data(
     obs(y ~ -1 + z + varying(~x), family = "gaussian") +
-    splines(df = 100),
+      splines(df = 100),
     time = "time",
     group = "id",
     data = d$data
@@ -304,17 +304,18 @@ test_that("prior parameters are recovered with zero observations", {
   d <- data.frame(y = rep(NA, 10), x = rnorm(10), id = 1, time = 1:10)
   p <- get_priors(obs(y ~ x, "gaussian"), d, time = "time", group = "id")
   p$prior[] <- c("normal(2, 0.1)", "normal(5, 0.5)", "exponential(10)")
-  fit_prior <- dynamite(obs(y ~ x, "gaussian"),
-                        data = d,
-                        time = "time",
-                        group = "id",
-                        priors = p,
-                        iter = 55000,
-                        warmup = 5000,
-                        chains = 1,
-                        cores = 1,
-                        refresh = 0,
-                        save_warmup = FALSE
+  fit_prior <- dynamite(
+    obs(y ~ x, "gaussian"),
+    data = d,
+    time = "time",
+    group = "id",
+    priors = p,
+    iter = 55000,
+    warmup = 5000,
+    chains = 1,
+    cores = 1,
+    refresh = 0,
+    save_warmup = FALSE
   )
   sumr <- summary(fit_prior) |>
     dplyr::select(parameter, mean, sd, q5, q95) |>
@@ -351,7 +352,7 @@ test_that("predict recovers correct estimates", {
   y <- matrix(0, N, T_)
   nu <- rnorm(N)
   y[, 1] <- rbinom(N, size = 1, prob = 0.5)
-  for (t in 2:T_) y[, t] <- rbinom(N, 1, plogis(nu + y[, t-1]))
+  for (t in 2:T_) y[, t] <- rbinom(N, 1, plogis(nu + y[, t - 1]))
 
   ## check these if tests fail ##
   # model <- rstan::stan_model("testmodel.stan")
@@ -438,7 +439,8 @@ test_that("predict recovers correct estimates", {
       mean_m = mean(m), mean_s = mean(s),
       se_m = sd(m) / sqrt(dplyr::n()), se_s = sd(s) / sqrt(dplyr::n()),
       sd_m = sd(m), sd_s = sd(s)
-    ) |> unlist()
+    ) |>
+    unlist()
 
   expect_equal(
     res,
@@ -466,7 +468,8 @@ test_that("predict recovers correct estimates", {
       mean_m = mean(m), mean_s = mean(s),
       se_m = sd(m) / sqrt(dplyr::n()), se_s = sd(s) / sqrt(dplyr::n()),
       sd_m = sd(m), sd_s = sd(s)
-    ) |> unlist()
+    ) |>
+    unlist()
 
   expect_equal(
     res,
@@ -594,6 +597,3 @@ test_that("LFO works for AR(1) model", {
   expect_error(plot(l), NA)
   expect_error(print(l), NA)
 })
-
-
-

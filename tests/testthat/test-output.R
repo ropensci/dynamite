@@ -381,7 +381,7 @@ test_that("gets can be got", {
   expect_error(
     get_code(
       obs(y ~ -1 + z + varying(~ x + lag(y)) +
-        random(~1), family = "gaussian") + random_spec() + splines(df = 20),
+            random(~1), family = "gaussian") + random_spec() + splines(df = 20),
       gaussian_example, time =  "time", group = "id"
     ),
     NA

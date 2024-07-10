@@ -239,7 +239,8 @@ default_priors <- function(y, channel, mean_gamma, sd_gamma, mean_y, sd_y,
       if (is_cumulative(channel$family)) {
         prior_distributions$tau_alpha_prior_distr <-
           paste0("normal(", rep(0, channel$S - 1), ", ", sd_y, ")")
-        names(prior_distributions$tau_alpha_prior_distr) <- seq_len(channel$S - 1)
+        names(prior_distributions$tau_alpha_prior_distr) <-
+          seq_len(channel$S - 1)
       } else {
         prior_distributions$tau_alpha_prior_distr <-
           paste0("normal(0, ", sd_y, ")")

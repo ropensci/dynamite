@@ -406,8 +406,7 @@ create_parameters_lines <- function(idt, backend, cvars, cgvars) {
         par_alpha,
         .parse = FALSE
       )
-    }
-    else {
+    } else {
       cvars[[1L]]$default <- lines_wrap(
         "parameters", "default", idt, backend, cvars[[1L]]
       )

@@ -33,8 +33,8 @@ as_draws_df.dynamitefit <- function(x, parameters = NULL, responses = NULL,
                                     types = NULL, times = NULL,
                                     groups = NULL, ...) {
   # avoid NSE notes from R CMD check
-  .chain <- .draw <- .iteration <- NULL
-  category <- group <- parameter <- response <- time <- type <- value <- NULL
+  .chain <- .iteration <- NULL
+  category <- group <- parameter <- time <- NULL
   d <- as.data.table.dynamitefit(
     x,
     parameters = parameters,
