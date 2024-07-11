@@ -237,12 +237,7 @@ dynamite <- function(dformula, data, time, group = NULL,
   # copy so that get_data can still return the full stan_input via debug
   stan_input_out <- stan_input
   stan_input_out$sampling_vars <- NULL
-  n_draws <- ifelse_(
-    is.null(stanfit),
-    0L,
-    (stanfit@sim$n_save[1L] - stanfit@sim$warmup2[1L]) *
-      stanfit@sim$chains
-  )
+  n_draws <- ifelse_(is.null(stanfit), 0L, get_ndraws(stanfit))
   out <- structure(
     list(
       stanfit = stanfit,

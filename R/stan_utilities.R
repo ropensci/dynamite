@@ -225,7 +225,7 @@ get_diagnostics.stanfit <- function(x) {
 }
 
 get_diagnostics.CmdStanMCMC <- function(x) {
-  x$diagnostic_summary(x)
+  x$diagnostic_summary()
 }
 
 get_max_treedepth.stanfit <- function(x) {
@@ -256,7 +256,7 @@ get_draws.stanfit <- function(x, pars) {
 }
 
 get_draws.CmdStanMCMC <- function(x, pars) {
-  x$draws(varibles = pars)
+  x$draws(variables = pars)
 }
 
 get_elapsed_time.stanfit <- function(x) {
