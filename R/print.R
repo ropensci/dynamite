@@ -48,7 +48,7 @@ print.dynamitefit <- function(x, full_diagnostics = FALSE, ...) {
   )
   if (!is.null(x$stanfit)) {
     cat("\n")
-    mcmc_algorithm <- x$stanfit@stan_args[[1L]]$algorithm %in% c("NUTS", "hmc")
+    mcmc_algorithm <- get_algorithm(x$stanfit) %in% c("NUTS", "hmc")
     if (mcmc_algorithm) {
       hmc_diagnostics(x)
     }
@@ -83,7 +83,7 @@ print.dynamitefit <- function(x, full_diagnostics = FALSE, ...) {
           sumr$variable[max_rhat], ")",
           sep = ""
       )
-      runtimes <- rstan::get_elapsed_time(x$stanfit)
+      runtimes <- get_elapsed_time(x$stanfit)
       if (nrow(runtimes) > 2L) {
         rs <- rowSums(runtimes)
         cat("\n\nElapsed time (seconds) for fastest and slowest chains:\n")

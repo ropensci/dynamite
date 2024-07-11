@@ -1,3 +1,7 @@
+# dynamite 1.5.4
+
+  * Model fitting using `cmdstanr` backend no longer relies on `rstan::read_stan_csv()` to construct the fit object. Instead, the resulting `CmdStanMCMC` object is used directly. This should provide a substantial performance improvement in some instances.
+
 # dynamite 1.5.3
 
   * Restored and updated the main package vignette. The vignette now also contains a real data example and information on multiple imputation.

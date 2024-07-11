@@ -105,7 +105,7 @@ get_code.dynamitefit <- function(x, blocks = NULL, ...) {
       ...
     )$model_code
   } else {
-    out <- x$stanfit@stanmodel@model_code[1L]
+    out <- get_model_code(x$stanfit)
   }
   get_code_(out, blocks)
 }
@@ -269,6 +269,7 @@ get_parameter_dims.dynamitefit <- function(x, ...) {
   )
   pars_text <- get_code(x, blocks = "parameters")
   pars <- get_parameters(pars_text)
+  # TODO no inits
   out <- rstan::get_inits(x$stanfit)[[1L]]
   out <- out[names(out) %in% pars]
   lapply(

@@ -107,3 +107,162 @@ stan_supports_glm_likelihood <- function(family, backend, common_intercept) {
       (identical(family$name, "cumulative") && identical(family$link, "logit"))
   )
 }
+
+
+# Wrapper methods for backends --------------------------------------------
+
+#' Get `pars_oi` of a Stan model fit
+#'
+#' @param x A `stanfit` (from `rstan`) or a `CmdStanMCMC`
+#'   (from `cmdstanr`) object.
+#' @noRd
+get_pars_oi <- function(x) {
+  UseMethod("get_pars_oi")
+}
+
+#' Get the model code of a Stan model fit
+#'
+#' @inheritParams get_pars_oi
+#' @noRd
+get_model_code <- function(x) {
+  UseMethod("get_model_code")
+}
+
+#' Get the number of chains of a Stan model fit
+#'
+#' @inheritParams get_pars_oi
+#' @noRd
+get_num_chains <- function(x) {
+  UseMethod("get_num_chains")
+}
+
+#' Get the algorithm used in a Stan model fit
+#'
+#' @inheritParams get_pars_oi
+#' @noRd
+get_algorithm <- function(x) {
+  UseMethod("get_algorithm")
+}
+
+#' Get the diagnostics of a Stan model fit
+#'
+#' @inheritParams get_pars_oi
+#' @noRd
+get_diagnostics <- function(x) {
+  UseMethod("get_diagnostics")
+}
+
+#' Get the maximum treedepth of chains of a Stan model fit
+#'
+#' @inheritParams get_pars_oi
+#' @noRd
+get_max_treedepth <- function(x) {
+  UseMethod("get_max_treedepth")
+}
+
+#' Get the number of draws of a Stan model fit
+#'
+#' @inheritParams get_pars_oi
+#' @noRd
+get_ndraws <- function(x) {
+  UseMethod("get_ndraws")
+}
+
+#' Get the draws of a Stan model fit
+#'
+#' @inheritParams get_pars_oi
+#' @noRd
+get_draws <- function(x, ...) {
+  UseMethod("get_draws")
+}
+
+#' Get the elapsed time of a Stan model fit
+#'
+#' @inheritParams get_pars_oi
+#' @noRd
+get_elapsed_time <- function(x) {
+  UseMethod("get_elapsed_time")
+}
+
+get_pars_oi.stanfit <- function(x) {
+  x@sim$pars_oi
+}
+
+get_pars_oi.CmdStanMCMC <- function(x) {
+  x$metadata()$stan_variables
+}
+
+get_model_code.stanfit <- function(x) {
+  x@stanmodel@model_code[1L]
+}
+
+get_model_code.CmdStanMCMC <- function(x) {
+  x$code()
+}
+
+get_num_chains.stanfit <- function(x) {
+  x@sim$chains
+}
+
+get_num_chains.CmdStanMCMC <- function(x) {
+  x$num_chains()
+}
+
+get_algorithm.stanfit <- function(x) {
+  x@stan_args[[1L]]$algorithm
+}
+
+get_algorithm.CmdStanMCMC <- function(x) {
+  x$metadata()$algorithm
+}
+
+get_diagnostics.stanfit <- function(x) {
+  list(
+    num_divergent = rstan::get_num_divergent(x),
+    num_max_treedepth = rstan::get_num_max_treedepth(x),
+    ebfmi = rstan::get_bfmi(x)
+  )
+}
+
+get_diagnostics.CmdStanMCMC <- function(x) {
+  x$diagnostic_summary(x)
+}
+
+get_max_treedepth.stanfit <- function(x) {
+  x@stan_args[[1L]]$control$max_treedepth
+}
+
+get_max_treedepth.CmdStanMCMC <- function(x) {
+  x$metadata()$max_treedepth
+}
+
+get_ndraws.stanfit <- function(x) {
+  (x@sim$n_save[1L] - x@sim$warmup2[1L]) * x@sim$chains
+}
+
+get_ndraws.CmdStanMCMC <- function(x) {
+  m <- x$metadata()
+  m$iter_sampling * m$num_chains
+}
+
+get_draws.stanfit <- function(x, pars) {
+  posterior::as_draws(
+    rstan::extract(
+      x,
+      pars = pars,
+      permuted = FALSE
+    )
+  )
+}
+
+get_draws.CmdStanMCMC <- function(x, pars) {
+  x$draws(varibles = pars)
+}
+
+get_elapsed_time.stanfit <- function(x) {
+  rstan::get_elapsed_time(x)
+}
+
+get_elapsed_time.CmdStanMCMC <- function(x) {
+  x$time()$chains
+}

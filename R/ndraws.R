@@ -23,8 +23,5 @@ ndraws.dynamitefit <- function(x) {
     !is.null(x$stanfit),
     "No Stan model fit is available."
   )
-  as.integer(
-    (x$stanfit@sim$n_save[1L] - x$stanfit@sim$warmup2[1L]) *
-      x$stanfit@sim$chains
-  )
+  as.integer(get_ndraws(x$stanfit))
 }

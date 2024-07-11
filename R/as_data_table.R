@@ -147,16 +147,11 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       ""
     )
     if (type %in% c("xi", "corr_nu", "corr_psi")) {
-      draws <- rstan::extract(
-        x$stanfit,
-        pars = type,
-        permuted = FALSE
-      )
+      draws <- get_draws(x$stanfit, pars = type)
     } else {
-      draws <- rstan::extract(
+      draws <- get_draws(
         x$stanfit,
-        pars = paste0(type, "_", response, ycat),
-        permuted = FALSE
+        pars = paste0(type, "_", response, ycat)
       )
     }
     idx <- which(names(x$stan$responses) %in% response)
@@ -269,7 +264,7 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
     any(
       grepl(
         paste0("^", y["parameter"], "$"),
-        x$stanfit@sim$pars_oi
+        get_pars_oi(x$stanfit)
       )
     )
   })

@@ -59,7 +59,7 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, thin = 1L, ...) {
     checkmate::test_int(x = thin, lower = 1L, upper = ndraws(x)),
     "Argument {.arg thin} must be a single positive {.cls integer}."
   )
-  n_chains <- x$stanfit@sim$chains
+  n_chains <- get_nchains(x$stanfit)
   n_draws <- ndraws(x)
   idx_draws <- seq.int(1L, n_draws, by = thin)
   # need equal number of samples per chain
