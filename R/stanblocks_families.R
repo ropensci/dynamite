@@ -1271,7 +1271,7 @@ data_lines_poisson <- function(y, idt, default, has_missing,
                                has_fully_missing, has_offset, prior_distr,
                                K_fixed, K_varying, K_random, backend, ...) {
   paste_rows(
-    missing_data_lines(y, idt, has_missing,has_fully_missing, backend),
+    missing_data_lines(y, idt, has_missing, has_fully_missing, backend),
     default,
     prior_data_lines(y, idt, prior_distr, K_fixed, K_varying, K_random),
     stan_array(backend, "int", "y_{y}", "T, N", "lower=0"),

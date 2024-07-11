@@ -4,6 +4,8 @@
 #' @srrstats {RE1.3, RE1.3a} `full_model.matrix` preserves relevant attributes.
 #' @noRd
 full_model.matrix <- function(dformula, data, group_var, fixed, verbose) {
+  # avoid NSE notes from R CMD check
+  group <- NULL
   model_matrices <- vector(mode = "list", length = length(dformula))
   model_matrices_type <- vector(mode = "list", length = length(dformula))
   types <- c("fixed", "varying", "random")
