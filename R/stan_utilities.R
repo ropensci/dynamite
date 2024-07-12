@@ -132,8 +132,8 @@ get_model_code <- function(x) {
 #'
 #' @inheritParams get_pars_oi
 #' @noRd
-get_num_chains <- function(x) {
-  UseMethod("get_num_chains")
+get_nchains <- function(x) {
+  UseMethod("get_nchains")
 }
 
 #' Get the algorithm used in a Stan model fit
@@ -200,11 +200,11 @@ get_model_code.CmdStanMCMC <- function(x) {
   x$code()
 }
 
-get_num_chains.stanfit <- function(x) {
+get_nchains.stanfit <- function(x) {
   x@sim$chains
 }
 
-get_num_chains.CmdStanMCMC <- function(x) {
+get_nchains.CmdStanMCMC <- function(x) {
   x$num_chains()
 }
 
