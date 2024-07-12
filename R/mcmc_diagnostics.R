@@ -115,7 +115,7 @@ hmc_diagnostics.dynamitefit <- function(x, ...) {
     n_divs <- diags$num_divergent
     n_trees <- diags$num_max_treedepth
     bfmis <- diags$ebfmi
-    all_ok <- n_divs == 0L && n_trees == 0L && all(bfmis > 0.2)
+    all_ok <- all(n_divs == 0L) && all(n_trees == 0L) && all(bfmis > 0.2)
     cat("NUTS sampler diagnostics:\n")
     all_ok_str <- ifelse_(
       all_ok,
@@ -124,9 +124,9 @@ hmc_diagnostics.dynamitefit <- function(x, ...) {
     )
     cat(all_ok_str)
     div_str <- ifelse_(
-      n_divs > 0L,
+      any(n_divs > 0L),
       paste0(
-        "\n", n_divs, " out of ", n_draws, " iterations ended with a ",
+        "\n", sum(n_divs), " out of ", n_draws, " iterations ended with a ",
         "divergence. See Stan documentation for details.\n"
       ),
       ""
@@ -135,9 +135,9 @@ hmc_diagnostics.dynamitefit <- function(x, ...) {
     mt <- get_max_treedepth(x$stanfit)
     mt <- ifelse_(is.null(mt), 10, mt)
     trees_str <- ifelse_(
-      n_trees > 0L,
+      any(n_trees > 0L),
       paste0(
-        "\n", n_trees, " out of ", n_draws, " saturated the maximum ",
+        "\n", sum(n_trees), " out of ", n_draws, " saturated the maximum ",
         "tree depth of ", mt, ". See Stan documentation for details.\n"
       ),
       ""

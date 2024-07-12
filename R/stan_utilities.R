@@ -192,12 +192,20 @@ get_pars_oi.CmdStanMCMC <- function(x) {
   x$metadata()$stan_variables
 }
 
+get_pars_oi.CmdStanMCMC_CSV <- function(x) {
+  NextMethod("get_pars_oi")
+}
+
 get_model_code.stanfit <- function(x) {
   x@stanmodel@model_code[1L]
 }
 
 get_model_code.CmdStanMCMC <- function(x) {
   x$code()
+}
+
+get_model_code.CmdStanMCMC_CSV <- function(x) {
+  NextMethod("get_model_code")
 }
 
 get_nchains.stanfit <- function(x) {
@@ -208,12 +216,20 @@ get_nchains.CmdStanMCMC <- function(x) {
   x$num_chains()
 }
 
+get_nchains.CmdStanMCMC_CSV <- function(x) {
+  NextMethod("get_nchains")
+}
+
 get_algorithm.stanfit <- function(x) {
   x@stan_args[[1L]]$algorithm
 }
 
 get_algorithm.CmdStanMCMC <- function(x) {
   x$metadata()$algorithm
+}
+
+get_algorithm.CmdStanMCMC_CSV <- function(x) {
+  NextMethod("get_algorithm")
 }
 
 get_diagnostics.stanfit <- function(x) {
@@ -228,6 +244,10 @@ get_diagnostics.CmdStanMCMC <- function(x) {
   x$diagnostic_summary()
 }
 
+get_diagnostics.CmdStanMCMC_CSV <- function(x) {
+  NextMethod("get_diagnostics")
+}
+
 get_max_treedepth.stanfit <- function(x) {
   x@stan_args[[1L]]$control$max_treedepth
 }
@@ -236,13 +256,21 @@ get_max_treedepth.CmdStanMCMC <- function(x) {
   x$metadata()$max_treedepth
 }
 
+get_max_treedepth.CmdStanMCMC_CSV <- function(x) {
+  NextMethod("get_max_treedepth")
+}
+
 get_ndraws.stanfit <- function(x) {
   (x@sim$n_save[1L] - x@sim$warmup2[1L]) * x@sim$chains
 }
 
 get_ndraws.CmdStanMCMC <- function(x) {
   m <- x$metadata()
-  m$iter_sampling * m$num_chains
+  x$metadata()$iter_sampling * get_nchains(x)
+}
+
+get_ndraws.CmdStanMCMC_CSV <- function(x) {
+  NextMethod("get_ndraws")
 }
 
 get_draws.stanfit <- function(x, pars) {
@@ -259,10 +287,18 @@ get_draws.CmdStanMCMC <- function(x, pars) {
   x$draws(variables = pars)
 }
 
+get_draws.CMdStanMCMC_CSV <- function(x) {
+  NextMethod("get_draws")
+}
+
 get_elapsed_time.stanfit <- function(x) {
   rstan::get_elapsed_time(x)
 }
 
 get_elapsed_time.CmdStanMCMC <- function(x) {
   x$time()$chains
+}
+
+get_elapsed_time.CmdStanMCMC_CSV <- function(x) {
+  NextMethod("get_elapsed_time")
 }

@@ -53,30 +53,32 @@ test_that("cmdstanr backend works for categorical model", {
 test_that("LOO and LFO works for AR(1) model estimated with cmdstanr", {
   skip_if_not(run_extended_tests)
   set.seed(1)
-  fit <- dynamite(obs(LakeHuron ~ 1, "gaussian") + lags(),
-                  data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
-                  time = "time",
-                  group = "id",
-                  chains = 1,
-                  iter_sampling = 1000,
-                  iter_warmup = 1000,
-                  refresh = 0,
-                  backend = "cmdstanr",
-                  stanc_options = list("O0"),
-                  show_messages = FALSE,
-                  init = 0
+  fit <- dynamite(
+    dformula = obs(LakeHuron ~ 1, "gaussian") + lags(),
+    data = data.frame(LakeHuron, time = seq_len(length(LakeHuron)), id = 1),
+    time = "time",
+    group = "id",
+    chains = 1,
+    iter_sampling = 1000,
+    iter_warmup = 1000,
+    refresh = 0,
+    backend = "cmdstanr",
+    stanc_options = list("O0"),
+    show_messages = FALSE,
+    init = 0
   )
   l <- loo(fit)
-  expect_equal(l$estimates,
-               structure(
-                 c(
-                   -107.877842970846, 2.86041434691809, 215.755685941693,
-                   7.36848739076899, 0.561813071004331, 14.736974781538
-                 ),
-                 dim = 3:2,
-                 dimnames = list(c("elpd_loo", "p_loo", "looic"), c("Estimate", "SE"))
-               ),
-               tolerance = 1
+  expect_equal(
+    l$estimates,
+    structure(
+      c(
+        -107.877842970846, 2.86041434691809, 215.755685941693,
+        7.36848739076899, 0.561813071004331, 14.736974781538
+      ),
+      dim = 3:2,
+      dimnames = list(c("elpd_loo", "p_loo", "looic"), c("Estimate", "SE"))
+    ),
+    tolerance = 1
   )
   expect_error(plot(l), NA)
 
@@ -93,9 +95,9 @@ test_that("within-chain parallelization with cmdstanr works", {
   f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
     obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
     obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
-    aux(numeric(logp) ~ log(p + 1))
+    aux(numeric(logp) ~ log(p + 1) | init(0))
   fit_dynamite <- dynamite(
-    f,
+    dformula = f,
     data = multichannel_example,
     time = "time",
     group = "id",
@@ -396,7 +398,7 @@ test_that("syntax is correct for various models", {
     x = obs(g ~ lag(g) + lag(logp), family = "gaussian") +
       obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
       obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
-      aux(numeric(logp) ~ log(p + 1)),
+      aux(numeric(logp) ~ log(p + 1)| init(0)),
     data = multichannel_example,
     time = "time",
     group = "id",
@@ -524,7 +526,7 @@ test_that("dynamice with cmdstanr backend works", {
   # Long format imputation
   expect_error(
     fit_long <- dynamice(
-      obs(y ~ lag(y), "gaussian"),
+      dformula = obs(y ~ lag(y), "gaussian"),
       time = "time",
       group = "id",
       data = dmiss,

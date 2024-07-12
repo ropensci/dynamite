@@ -149,16 +149,11 @@ dynamice <- function(dformula, data, time, group = NULL,
   if (identical(backend, "rstan")) {
     stanfit <- rstan::sflist2stanfit(sf)
   } else {
-    stanfit <- rstan::read_stan_csv(filenames)
-    stanfit@stanmodel <- methods::new("stanmodel", model_code = tmp$model_code)
+    stanfit <- cmdstanr::as_cmdstan_fit(filenames, check_diagnostics = FALSE)
+    #stanfit@stanmodel <- methods::new("stanmodel", model_code = tmp$model_code)
   }
   # TODO does this work in this case?
-  n_draws <- ifelse_(
-    is.null(stanfit),
-    0L,
-    (stanfit@sim$n_save[1L] - stanfit@sim$warmup2[1L]) *
-      stanfit@sim$chains
-  )
+  n_draws <- ifelse_(is.null(stanfit), 0L, get_ndraws(stanfit))
   # TODO return object? How is this going to work with update?
   structure(
     list(

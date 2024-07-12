@@ -1,6 +1,6 @@
 # dynamite 1.5.4
 
-  * Model fitting using `cmdstanr` backend no longer relies on `rstan::read_stan_csv()` to construct the fit object. Instead, the resulting `CmdStanMCMC` object is used directly. This should provide a substantial performance improvement in some instances.
+  * Model fitting using `cmdstanr` backend no longer relies on `rstan::read_stan_csv()` to construct the fit object. Instead, the resulting `CmdStanMCMC` object is used directly. This should provide a substantial performance improvement in some instances. For `dynamice()`, samples from different imputed datasets are combined using `cmdstanr::as_cmdstan_fit()` instead.
 
 # dynamite 1.5.3
 
