@@ -16,7 +16,7 @@ Review](https://badges.ropensci.org/554_status.svg)](https://github.com/ropensci
 [![dynamite status
 badge](https://ropensci.r-universe.dev/badges/dynamite)](https://ropensci.r-universe.dev)
 [![dynamite CRAN
-badge](http://www.r-pkg.org/badges/version/dynamite)](https://cran.r-project.org/package=dynamite)
+badge](https://www.r-pkg.org/badges/version/dynamite)](https://cran.r-project.org/package=dynamite)
 <!-- badges: end -->
 
 The `dynamite` [R](https://www.r-project.org/) package provides an
@@ -109,25 +109,25 @@ print(gaussian_example_fit)
 #> 
 #> No divergences, saturated max treedepths or low E-BFMIs.
 #> 
-#> Smallest bulk-ESS: 661 (sigma_nu_y_alpha)
-#> Smallest tail-ESS: 1058 (sigma_nu_y_alpha)
-#> Largest Rhat: 1.003 (sigma_y)
+#> Smallest bulk-ESS: 651 (sigma_nu_y_alpha)
+#> Smallest tail-ESS: 853 (sigma_nu_y_alpha)
+#> Largest Rhat: 1.002 (beta_y_z)
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  5.824  3.531
-#> chain:2  5.669  3.612
+#> chain:1 10.157  6.377
+#> chain:2 10.431  5.864
 #> 
 #> Summary statistics of the time- and group-invariant parameters:
 #> # A tibble: 6 × 10
 #>   variable      mean median      sd     mad     q5   q95  rhat ess_bulk ess_tail
 #>   <chr>        <dbl>  <dbl>   <dbl>   <dbl>  <dbl> <dbl> <dbl>    <dbl>    <dbl>
-#> 1 beta_y_z    1.97   1.97   0.0116  0.0112  1.95   1.99   1.00    2815.    1434.
-#> 2 sigma_nu_y… 0.0944 0.0933 0.0114  0.0107  0.0780 0.114  1.00     661.    1058.
-#> 3 sigma_y     0.198  0.198  0.00373 0.00362 0.192  0.204  1.00    2580.    1254.
-#> 4 tau_alpha_y 0.212  0.205  0.0483  0.0432  0.146  0.301  1.00    1731.    1606.
-#> 5 tau_y_x     0.364  0.355  0.0740  0.0648  0.266  0.494  1.00    2812.    1504.
-#> 6 tau_y_y_la… 0.107  0.105  0.0219  0.0213  0.0781 0.148  1.00    2387.    1682.
+#> 1 beta_y_z    1.97   1.97   0.0118  0.0119  1.95   1.99  1.00     3946.    1727.
+#> 2 sigma_nu_y… 0.0946 0.0938 0.0116  0.0108  0.0772 0.115 1.00      651.     853.
+#> 3 sigma_y     0.198  0.198  0.00371 0.00378 0.192  0.204 1.00     2734.    1459.
+#> 4 tau_alpha_y 0.213  0.207  0.0481  0.0456  0.146  0.302 1.00     1797.    1634.
+#> 5 tau_y_x     0.362  0.352  0.0683  0.0607  0.269  0.488 1.00     2600.    1492.
+#> 6 tau_y_y_la… 0.107  0.104  0.0204  0.0193  0.0777 0.144 0.999    2118.    1899.
 ```
 
 Posterior estimates of time-varying effects:

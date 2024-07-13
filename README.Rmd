@@ -27,7 +27,7 @@ knitr::opts_chunk$set(
 [![Codecov test coverage](https://codecov.io/gh/ropensci/dynamite/branch/main/graph/badge.svg)](https://app.codecov.io/gh/ropensci/dynamite?branch=main)
 [![Status at rOpenSci Software Peer Review](https://badges.ropensci.org/554_status.svg)](https://github.com/ropensci/software-review/issues/554)
 [![dynamite status badge](https://ropensci.r-universe.dev/badges/dynamite)](https://ropensci.r-universe.dev)
-[![dynamite CRAN badge](http://www.r-pkg.org/badges/version/dynamite)](https://cran.r-project.org/package=dynamite)
+[![dynamite CRAN badge](https://www.r-pkg.org/badges/version/dynamite)](https://cran.r-project.org/package=dynamite)
 <!-- badges: end -->
 
 The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use interface for Bayesian inference of complex panel (time series) data comprising of multiple measurements per multiple individuals measured in time via dynamic multivariate panel models (DMPM). The main features distinguishing the package and the underlying methodology from many other approaches are:
