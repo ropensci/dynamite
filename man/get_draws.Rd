@@ -7,7 +7,7 @@
 \alias{get_draws.CMdStanMCMC_CSV}
 \title{Get the draws of a Stan model fit}
 \usage{
-get_draws(x, ...)
+get_draws(x, pars)
 
 \method{get_draws}{stanfit}(x, pars)
 
@@ -19,7 +19,7 @@ get_draws(x, ...)
 \item{x}{A \code{stanfit} (from \code{rstan}) or a \code{CmdStanMCMC}
 (from \code{cmdstanr}) object.}
 
-\item{pars}{A \code{character} vector of parameter names}
+\item{pars}{A \code{character} vector of parameter names.}
 }
 \description{
 Get the draws of a Stan model fit

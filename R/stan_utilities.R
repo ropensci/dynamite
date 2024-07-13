@@ -178,9 +178,10 @@ get_ndraws <- function(x) {
 #' Get the draws of a Stan model fit
 #'
 #' @inheritParams get_pars_oi
+#' @param pars A `character` vector of parameter names.
 #' @keywords internal
 #' @export
-get_draws <- function(x, ...) {
+get_draws <- function(x, pars) {
   UseMethod("get_draws")
 }
 
@@ -346,7 +347,6 @@ get_ndraws.CmdStanMCMC_CSV <- function(x) {
 }
 
 #' @rdname get_draws
-#' @param pars A `character` vector of parameter names
 #' @keywords internal
 #' @export
 get_draws.stanfit <- function(x, pars) {
@@ -360,7 +360,6 @@ get_draws.stanfit <- function(x, pars) {
 }
 
 #' @rdname get_draws
-#' @param pars A `character` vector of parameter names
 #' @keywords internal
 #' @export
 get_draws.CmdStanMCMC <- function(x, pars) {
@@ -368,7 +367,6 @@ get_draws.CmdStanMCMC <- function(x, pars) {
 }
 
 #' @rdname get_draws
-#' @param pars A `character` vector of parameter names
 #' @keywords internal
 #' @export
 get_draws.CMdStanMCMC_CSV <- function(x, pars) {
