@@ -184,9 +184,12 @@ We are interested in the effect of the seat belt law on traffic fatalities in te
 ```{r seatbeltmodelformula, echo=TRUE, eval=TRUE, message=FALSE}
 seatbelt_formula <-
   obs(usage ~ -1 + law + random(~1) + varying(~1), family = "beta") +
-  obs(fatalities ~ usage + densurb + densrur +
-    bac08 + mlda21 + lim65 + lim70p + income10000 + unemp + fueltax +
-    random(~1) + offset(log_miles), family = "negbin") +
+  obs(
+    fatalities ~ usage + densurb + densrur +
+      bac08 + mlda21 + lim65 + lim70p + income10000 + unemp + fueltax +
+      random(~1) + offset(log_miles), 
+    family = "negbin"
+  ) +
   splines(df = 10)
 ```
 

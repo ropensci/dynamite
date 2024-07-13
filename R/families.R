@@ -18,7 +18,8 @@ dynamitefamily <- function(name, link) {
   )
   stopifnot_(
     is_supported_link(name, link),
-    "{.val {link}} is not a supported link function for a {.val {name}} channel."
+    "{.val {link}} is not a supported link function
+    for a {.val {name}} channel."
   )
   structure(
     list(name = name, link = link),

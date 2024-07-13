@@ -18,9 +18,9 @@
 #'   the LFO computations to the console.
 #' @param k_threshold \[`numeric(1)`]\cr Threshold for the Pareto k estimate
 #'   triggering refit. Default is 0.7.
-#' @param ... Additional arguments passed to [rstan::sampling()] or
-#'   [cmdstanr::sample()], such as `chains` and `cores` (`parallel_chains` in
-#'   `cmdstanr`).
+#' @param ... Additional arguments passed to [rstan::sampling()] or the
+#'   `$sample()` method of the `CmdStanModel` object, such as `chains` and
+#'   `cores` (`parallel_chains` in `cmdstanr`).
 #' @return An `lfo` object which is a `list` with the following components:
 #'
 #'   * `ELPD`\cr Expected log predictive density estimate.

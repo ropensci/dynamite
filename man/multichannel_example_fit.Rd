@@ -8,8 +8,8 @@
 A \code{dynamitefit} object.
 }
 \source{
-Script in
-\url{https://github.com/ropensci/dynamite/blob/main/data-raw/multichannel_example_fit.R}
+THe data was generated via \code{multichannel_example_fit.R} in
+\url{https://github.com/ropensci/dynamite/tree/main/data-raw/}
 }
 \usage{
 multichannel_example_fit

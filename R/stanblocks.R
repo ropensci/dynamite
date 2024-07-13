@@ -830,8 +830,10 @@ create_model_lines <- function(idt, backend, cvars, cgvars, mvars, threading) {
         alpha_priors <- ulapply(
           seq_len(cvars[[1L]]$S - 1L),
           function(s) {
-            alpha_args$prior_distr$alpha_prior_distr <- alpha_args$prior_distr$alpha_prior_distr[[s]]
-            alpha_args$prior_distr$tau_alpha_prior_distr <- alpha_args$prior_distr$tau_alpha_prior_distr[[s]]
+            alpha_args$prior_distr$alpha_prior_distr <-
+              alpha_args$prior_distr$alpha_prior_distr[[s]]
+            alpha_args$prior_distr$tau_alpha_prior_distr <-
+              alpha_args$prior_distr$tau_alpha_prior_distr[[s]]
             alpha_args$ydim <- cvars[[1L]]$y
             alpha_args$y <- paste0(cvars[[1L]]$y, "_", s)
             do.call(prior_lines, alpha_args)
@@ -906,7 +908,10 @@ create_generated_quantities <- function(idt, backend,
         "vector[{(P * (P - 1L)) %/% 2L}] corr_psi;",
         "for (k in 1:P) {{",
         "for (j in 1:(k - 1)) {{",
-        "corr_psi[choose(k - 1, 2) + j] = signs[j] * signs[k] * corr_matrix_psi[j, k];",
+        paste0(
+          "corr_psi[choose(k - 1, 2) + j] = ",
+          "signs[j] * signs[k] * corr_matrix_psi[j, k];"
+        ),
         "}}",
         "}}",
         .indent = idt(c(1, 1, 1, 1, 2, 3, 2, 1))

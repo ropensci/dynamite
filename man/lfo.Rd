@@ -12,9 +12,9 @@ lfo(x, ...)
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
-\item{...}{Additional arguments passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} or
-\code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}, such as \code{chains} and \code{cores} (\code{parallel_chains} in
-\code{cmdstanr}).}
+\item{...}{Additional arguments passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} or the
+\verb{$sample()} method of the \code{CmdStanModel} object, such as \code{chains} and
+\code{cores} (\code{parallel_chains} in \code{cmdstanr}).}
 
 \item{L}{[\code{integer(1)}]\cr Positive integer defining how many time points
 should be used for the initial fit.}

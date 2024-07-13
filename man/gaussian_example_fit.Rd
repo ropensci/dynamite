@@ -8,8 +8,8 @@
 A \code{dynamitefit} object.
 }
 \source{
-The data was generated according to a script in
-\url{https://github.com/ropensci/dynamite/blob/main/data-raw/gaussian_example_fit.R}
+The data was generated via \code{gaussian_example_fit.R} in
+\url{https://github.com/ropensci/dynamite/tree/main/data-raw/}
 }
 \usage{
 gaussian_example_fit

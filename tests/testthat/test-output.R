@@ -289,7 +289,8 @@ test_that("formula extraction is correct", {
     paste0(
       "obs(g ~ lag(g) + lag(logp), family = \"gaussian\") + ",
       "obs(p ~ lag(g) + lag(logp) + lag(b), family = \"poisson\") + ",
-      "obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = \"bernoulli\") + ",
+      "obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), ",
+      "family = \"bernoulli\") + ",
       "aux(numeric(logp) ~ log(p + 1))"
     )
   )
@@ -320,7 +321,8 @@ test_that("formula extraction is correct", {
     deparse1(formula(fit)),
     paste0(
       "obs(z ~ w1, family = \"gaussian\") + ",
-      "obs(c(w1, w2, w3) ~ 1 | y | varying(~-1 + x), family = \"mvgaussian\") + ",
+      "obs(c(w1, w2, w3) ~ 1 | y | varying(~-1 + x), ",
+      "family = \"mvgaussian\") + ",
       "lags(k = 1, type = \"varying\") + ",
       "splines(df = NULL, degree = 3, lb_tau = c(0, 0, 0, 0), ",
       "noncentered = c(FALSE, FALSE, FALSE, FALSE), override = FALSE)"

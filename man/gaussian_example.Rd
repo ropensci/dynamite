@@ -15,8 +15,8 @@ A data frame with 3000 rows and 5 variables:
 }
 }
 \source{
-The data was generated according to a script in
-\url{https://github.com/ropensci/dynamite/blob/main/data-raw/gaussian_example.R}
+The data was generated via \code{gaussian_example.R} in
+\url{https://github.com/ropensci/dynamite/tree/main/data-raw/}
 }
 \usage{
 gaussian_example

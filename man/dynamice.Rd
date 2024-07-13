@@ -56,8 +56,8 @@ definitions. See \code{\link[=get_priors]{get_priors()}} and 'Details'.}
 \item{backend}{[\code{character(1)}]\cr Defines the backend interface to Stan,
 should be  either \code{"rstan"} (the default) or \code{"cmdstanr"}. Note that
 \code{cmdstanr} needs to be installed separately as it is not on CRAN. It also
-needs the actual \code{CmdStan} software. See https://mc-stan.org/cmdstanr/ for
-details.}
+needs the actual \code{CmdStan} software. See \url{https://mc-stan.org/cmdstanr/}
+for details.}
 
 \item{verbose}{[\code{logical(1)}]\cr All warnings and messages are suppressed
 if set to \code{FALSE}. Defaults to \code{TRUE}. Setting this to \code{FALSE} will also
@@ -68,9 +68,10 @@ disable checks for perfect collinearity in the model matrix.}
 
 \item{stanc_options}{[\code{list()}]\cr This is the \code{stanc_options} argument
 passed to the compile method of a \code{CmdStanModel} object via
-\code{\link[cmdstanr:cmdstan_model]{cmdstanr::cmdstan_model()}} when \code{backend = "cmdstanr"}.
-Defaults to \code{list("O0")}. To enable level one compiler optimizations,
-use \code{list("O1")}.}
+\code{cmdstan_model()} when \code{backend = "cmdstanr"}. Defaults to \code{list("O0")}.
+To enable level one compiler optimizations, use \code{list("O1")}.
+See \url{https://mc-stan.org/cmdstanr/reference/cmdstan_model.html}
+for details.}
 
 \item{threads_per_chain}{[\code{integer(1)}]\cr A Positive integer defining the
 number of parallel threads to use within each chain. Default is \code{1}. See
@@ -115,11 +116,13 @@ via \verb{$save_output_files()} to avoid garbage collection between sampling
 runs with different imputed datasets.}
 
 \item{...}{For \code{dynamite()}, additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} or
-\code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}, such as \code{chains} and \code{cores} (\code{chains} and
-\code{parallel_chains} in \code{cmdstanr}). For \code{summary()}, additional arguments to
-\code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}}. For \code{print()}, further arguments
-to the print method for tibbles (see \link[tibble:formatting]{tibble::formatting}). Not used for
-\code{formula()}.}
+the \verb{$sample()} method of the \code{CmdStanModel} object
+(see \url{https://mc-stan.org/cmdstanr/reference/model-method-sample.html}),
+such as \code{chains} and \code{cores}
+(\code{chains} and \code{parallel_chains} in \code{cmdstanr}). For \code{summary()},
+additional arguments to \code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}}. For \code{print()},
+further arguments to the print method for tibbles
+(see \link[tibble:formatting]{tibble::formatting}). Not used for \code{formula()}.}
 }
 \description{
 Applies multiple imputation using \code{\link[mice:mice]{mice::mice()}} to the supplied \code{data}

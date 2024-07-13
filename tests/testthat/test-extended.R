@@ -697,8 +697,14 @@ test_that("latent factor models are identifiable", {
 
   set.seed(1)
   sim <- generate_data(
-    100, 50, 20,
-    alpha = 1, mean_lambda = 1, sd_lambda = 1, sd_alpha = 1)
+    N = 100,
+    T_ = 50,
+    D = 20,
+    alpha = 1,
+    mean_lambda = 1,
+    sd_lambda = 1,
+    sd_alpha = 1
+  )
   dformula <- obs(y ~ x + random(~ 1), family = "gaussian") +
     lfactor() + splines(20)
   priors <- get_priors(dformula, data = sim$data, time = "time", group = "id")

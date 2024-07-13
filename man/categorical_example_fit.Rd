@@ -8,8 +8,8 @@
 A \code{dynamitefit} object.
 }
 \source{
-Script in
-\url{https://github.com/ropensci/dynamite/blob/main/data-raw/categorical_example_fit.R}
+The data was generated via \code{categorical_example_fit.R} in
+\url{https://github.com/ropensci/dynamite/tree/main/data-raw/}
 }
 \usage{
 categorical_example_fit

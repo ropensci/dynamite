@@ -198,8 +198,12 @@ intercept_lines <- function(y, obs, family, has_varying, has_fixed, has_random,
     (has_fixed || has_varying)
   intercept <- ifelse_(
     glm,
-    glue::glue("{intercept_alpha}{offset}{intercept_nu}{random}{lfactor}"),
-    glue::glue("{intercept_alpha}{offset}{intercept_nu}{random}{lfactor}{fixed}{varying}")
+    glue::glue(
+      "{intercept_alpha}{offset}{intercept_nu}{random}{lfactor}"
+    ),
+    glue::glue(
+      "{intercept_alpha}{offset}{intercept_nu}{random}{lfactor}{fixed}{varying}"
+    )
   )
   intercept <- sub("^0 \\+", "", intercept)
   attr(intercept, "glm") <- glm
@@ -387,7 +391,8 @@ loglik_lines_bernoulli <- function(y, obs, idt, default, ...) {
   likelihood <- ifelse_(
     default$use_glm,
     glue::glue(
-      "ll += bernoulli_logit_glm_l{u}pmf(y_{y}[t, {obs}] | X[t][{obs}, J_{y}], ",
+      "ll += bernoulli_logit_glm_l{u}pmf(",
+      "y_{y}[t, {obs}] | X[t][{obs}, J_{y}], ",
       "intercept_{y}, gamma__{y});"
     ),
     glue::glue(
@@ -1407,9 +1412,9 @@ parameters_lines_default <- function(y, idt, noncentered, lb, has_fixed,
     onlyif(
       has_lfactor && nonzero_lambda,
       paste_rows(
-      "real<lower=0> zeta_{y}; // tau_psi * sigma_lambda",
-      "real<lower=0,upper=1> kappa_{y}; // sigma_lambda = kappa * zeta",
-      .parse = FALSE
+        "real<lower=0> zeta_{y}; // tau_psi * sigma_lambda",
+        "real<lower=0,upper=1> kappa_{y}; // sigma_lambda = kappa * zeta",
+        .parse = FALSE
       )
     ),
     onlyif(
@@ -1677,17 +1682,20 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
     glue::glue("lambda_{y}")
   )
   declare_lambda <- paste_rows(
-    onlyif(has_lfactor && nonzero_lambda,
-           "real sigma_lambda_{y} = kappa_{y} * zeta_{y};"),
-    onlyif(has_lfactor && nonzero_lambda,
-           "real tau_psi_{y} = (1 - kappa_{y}) * zeta_{y};"),
+    onlyif(
+      has_lfactor && nonzero_lambda,
+      "real sigma_lambda_{y} = kappa_{y} * zeta_{y};"
+    ),
+    onlyif(
+      has_lfactor && nonzero_lambda,
+      "real tau_psi_{y} = (1 - kappa_{y}) * zeta_{y};"
+    ),
     "// hard sum constraint",
     "vector[N] lambda_{y} = sum_to_zero(lambda_raw_{y}, QR_Q);",
     "lambda_{y} = {m}sigma_lambda_{y} * {o};",
     .indent = idt(1),
     .parse = FALSE
   )
-
   if (noncentered_psi) {
     state_omega_psi <- paste_rows(
       "omega_psi_{y}[1] = omega_raw_psi_1_{y};",
@@ -1724,8 +1732,6 @@ transformed_parameters_lines_default <- function(y, idt, noncentered,
       .parse = FALSE
     )
   }
-
-
   list(
     declarations = paste_rows(
       onlyif(has_lfactor, declare_psi),

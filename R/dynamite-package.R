@@ -11,7 +11,7 @@
 #' * The package vignettes
 #' * [dynamite::dynamiteformula()] for information on defining models.
 #' * [dynamite::dynamite()] for information on fitting models.
-#' * \url{https://github.com/ropensci/dynamite/issues/} to submit a bug report
+#' * <https://github.com/ropensci/dynamite/issues/> to submit a bug report
 #'   or a feature request.
 #'
 #' # Authors
@@ -56,8 +56,8 @@
 #' coefficients vary according to a spline with 20 degrees of freedom.
 #'
 #' @family examples
-#' @source The data was generated according to a script in
-#' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/gaussian_example.R}
+#' @source The data was generated via `gaussian_example.R` in
+#' <https://github.com/ropensci/dynamite/tree/main/data-raw/>
 #' @format A data frame with 3000 rows and 5 variables:
 #' \describe{
 #'  \item{y}{The response variable.}
@@ -95,8 +95,8 @@
 #' }
 #' Note the very small number of samples due to size restrictions on CRAN.
 #' @family examples
-#' @source The data was generated according to a script in
-#' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/gaussian_example_fit.R}
+#' @source The data was generated via `gaussian_example_fit.R` in
+#' <https://github.com/ropensci/dynamite/tree/main/data-raw/>
 #' @format A `dynamitefit` object.
 "gaussian_example_fit"
 
@@ -120,8 +120,8 @@
 # #' )
 # #' }
 # #' @family examples
-# #' @source The data was generated according to a script in
-# #' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/gaussian_simulation_fit.R}
+# #' @source The data was generated via to `gaussian_simulation_fit.R` in
+# #' <https://github.com/ropensci/dynamite/tree/main/data-raw/>
 # #' @format A `dynamitefit` object.
 # "gaussian_simulation_fit"
 
@@ -131,8 +131,8 @@
 #' response variables of different distributions.
 #'
 #' @family examples
-#' @source The data was generated according to a script in
-#' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/multichannel_example.R}
+#' @source The data was generated via `multichannel_example.R` in
+#' <https://github.com/ropensci/dynamite/tree/main/data-raw/>
 #' @format A data frame with 3000 rows and 5 variables:
 #' \describe{
 #'  \item{id}{Variable defining individuals (1 to 50).}
@@ -171,8 +171,8 @@
 #' }
 #' Note the small number of samples due to size restrictions on CRAN.
 #' @family examples
-#' @source Script in
-#' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/multichannel_example_fit.R}
+#' @source THe data was generated via `multichannel_example_fit.R` in
+#' <https://github.com/ropensci/dynamite/tree/main/data-raw/>
 #' @format A `dynamitefit` object.
 "multichannel_example_fit"
 
@@ -182,8 +182,8 @@
 #' response variables.
 #'
 #' @family examples
-#' @source The data was generated according to a script in
-#' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/categorical_example.R}
+#' @source The data was generated via `categorical_example.R` in
+#' <https://github.com/ropensci/dynamite/tree/main/data-raw/>
 #' @format A data frame with 2000 rows and 5 variables:
 #' \describe{
 #'  \item{id}{Variable defining individuals (1 to 100).}
@@ -216,8 +216,8 @@
 #' }
 #' Note the small number of samples due to size restrictions on CRAN.
 #' @family examples
-#' @source Script in
-#' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/categorical_example_fit.R}
+#' @source The data was generated via `categorical_example_fit.R` in
+#' <https://github.com/ropensci/dynamite/tree/main/data-raw/>
 #' @format A `dynamitefit` object.
 "categorical_example_fit"
 
@@ -227,8 +227,8 @@
 # #' trajectories are defined by a latent factor and random intercept terms.
 # #'
 # #' @family examples
-# #' @source The data was generated according to a script in
-# #' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/latent_factor_example.R}
+# #' @source The data was generated via `latent_factor_example.R` in
+# #' <https://github.com/ropensci/dynamite/blob/main/data-raw/>
 # #' @format A data frame with 2000 rows and 3 variables:
 # #' \describe{
 # #'  \item{y}{A continuos variable.}
@@ -264,7 +264,7 @@
 # #' }
 # #' Note the very small number of samples due to size restrictions on CRAN.
 # #' @family examples
-# #' @source Script in
-# #' \url{https://github.com/ropensci/dynamite/blob/main/data-raw/latent_factor_example_fit.R}
+# #' @source The data was generated via `latent_factor_example_fit.R` in
+# #' <https://github.com/ropensci/dynamite/tree/main/data-raw/>
 # #' @format A `dynamitefit` object.
 # "latent_factor_example_fit"

@@ -398,7 +398,7 @@ test_that("syntax is correct for various models", {
     x = obs(g ~ lag(g) + lag(logp), family = "gaussian") +
       obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
       obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
-      aux(numeric(logp) ~ log(p + 1)| init(0)),
+      aux(numeric(logp) ~ log(p + 1) | init(0)),
     data = multichannel_example,
     time = "time",
     group = "id",

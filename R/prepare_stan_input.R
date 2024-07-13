@@ -517,7 +517,7 @@ prepare_channel_default <- function(y, Y, channel, sampling,
       nzchar(category),
       priors[priors$response == y & priors$category == category, ],
       priors[priors$response == y, ]
-      )
+    )
     channel$prior_distr <- list()
     types <- priors$type
     loop_types <- intersect(

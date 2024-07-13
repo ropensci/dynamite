@@ -561,7 +561,7 @@ as_data_table_omega <- function(x, draws, n_draws, response, category, ...) {
 #' @describeIn as_data_table_default Data Table for a "omega_alpha" Parameter
 #' @noRd
 as_data_table_omega_alpha <- function(x, draws, n_draws, response,
-                                     category, ...) {
+                                      category, ...) {
   D <- x$stan$model_vars$D
   data.table::data.table(
     parameter = rep(

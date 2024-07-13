@@ -363,7 +363,8 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
 #'   are stochastic.
 #' @param increment \[`logical()`]\cr  A vector indicating whether to add
 #'   the new lag term or not (e.g.,, whether it was already present or not).
-#' @param type \[`character(1)`]\cr Either `"fixed"`, `"varying"`, or `"random"`.
+#' @param type \[`character(1)`]\cr
+#'   Either `"fixed"`, `"varying"`, or `"random"`.
 #' @param lhs \[`character()`]\cr A vector of the new lagged variable names.
 #' @noRd
 parse_new_lags <- function(dformula, channels_stoch, increment, type, lhs) {
@@ -594,5 +595,3 @@ prepare_lagged_response <- function(dformula, lag_map,
   }
   y
 }
-
-

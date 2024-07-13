@@ -4,7 +4,7 @@
 #' Bayesian inference. The \pkg{dynamite} package supports a wide range of
 #' distributions and allows the user to flexibly customize the priors for the
 #' model parameters. The dynamite model is specified using standard \R formula
-#' syntax via [dynamite::dynamiteformula()]. For more information and examples,
+#' syntax via [dynamiteformula()]. For more information and examples,
 #' see 'Details' and the package vignettes.
 #'
 #' The best-case scalability of `dynamite` in terms of data size should be
@@ -17,7 +17,7 @@
 #' @family fitting
 #' @rdname dynamite
 #' @param dformula \[`dynamiteformula`]\cr The model formula.
-#'   See [dynamite::dynamiteformula()] and 'Details'.
+#'   See [dynamiteformula()] and 'Details'.
 #' @param data
 #'   \[`data.frame`, `tibble::tibble`, or `data.table::data.table`]\cr
 #'   The data that contains the variables in the model in long format.
@@ -38,12 +38,12 @@
 #'   group. In case of name conflicts with `data`, see the `group_var` element
 #'   of the return object to get the column name of the new variable.
 #' @param priors \[`data.frame`]\cr An optional data frame with prior
-#'   definitions. See [dynamite::get_priors()] and 'Details'.
+#'   definitions. See [get_priors()] and 'Details'.
 #' @param backend \[`character(1)`]\cr Defines the backend interface to Stan,
 #'   should be  either `"rstan"` (the default) or `"cmdstanr"`. Note that
 #'   `cmdstanr` needs to be installed separately as it is not on CRAN. It also
-#'   needs the actual `CmdStan` software. See https://mc-stan.org/cmdstanr/ for
-#'   details.
+#'   needs the actual `CmdStan` software. See <https://mc-stan.org/cmdstanr/>
+#'   for details.
 #' @param verbose \[`logical(1)`]\cr All warnings and messages are suppressed
 #'   if set to `FALSE`. Defaults to `TRUE`. Setting this to `FALSE` will also
 #'   disable checks for perfect collinearity in the model matrix.
@@ -51,9 +51,10 @@
 #'   [rstan::sampling()]. Defaults to `FALSE`.
 #' @param stanc_options \[`list()`]\cr This is the `stanc_options` argument
 #'   passed to the compile method of a `CmdStanModel` object via
-#'   [cmdstanr::cmdstan_model()] when `backend = "cmdstanr"`.
-#'   Defaults to `list("O0")`. To enable level one compiler optimizations,
-#'   use `list("O1")`.
+#'   `cmdstan_model()` when `backend = "cmdstanr"`. Defaults to `list("O0")`.
+#'   To enable level one compiler optimizations, use `list("O1")`.
+#'   See <https://mc-stan.org/cmdstanr/reference/cmdstan_model.html>
+#'   for details.
 #' @param threads_per_chain \[`integer(1)`]\cr A Positive integer defining the
 #'   number of parallel threads to use within each chain. Default is `1`. See
 #'   [rstan::rstan_options()] and [cmdstanr::sample()] for details.
@@ -76,11 +77,13 @@
 #'   combined with `model_code = TRUE`, which adds the Stan model code to the
 #'   return object.
 #' @param ... For `dynamite()`, additional arguments to [rstan::sampling()] or
-#'   [cmdstanr::sample()], such as `chains` and `cores` (`chains` and
-#'   `parallel_chains` in `cmdstanr`). For `summary()`, additional arguments to
-#'   [dynamite::as.data.frame.dynamitefit()]. For `print()`, further arguments
-#'   to the print method for tibbles (see [tibble::formatting]). Not used for
-#'   `formula()`.
+#'   the `$sample()` method of the `CmdStanModel` object
+#'   (see <https://mc-stan.org/cmdstanr/reference/model-method-sample.html>),
+#'   such as `chains` and `cores`
+#'   (`chains` and `parallel_chains` in `cmdstanr`). For `summary()`,
+#'   additional arguments to [as.data.frame.dynamitefit()]. For `print()`,
+#'   further arguments to the print method for tibbles
+#'   (see [tibble::formatting]). Not used for `formula()`.
 #' @return `dynamite` returns a `dynamitefit` object which is a list containing
 #'   the following components:
 #'
@@ -321,7 +324,8 @@ dynamite_check <- function(dformula, data, time, group, priors, verbose,
   )
   stopifnot_(
     checkmate::test_string(x = custom_stan_model, null.ok = TRUE),
-    "Argument {.arg custom_stan_model} must be a single {.cls character} string."
+    "Argument {.arg custom_stan_model}
+    must be a single {.cls character} string."
   )
   stopifnot_(
     !isTRUE(grepl("\\.stan$", custom_stan_model, perl = TRUE)) ||
