@@ -6,7 +6,7 @@
 \alias{aux}
 \alias{+.dynamiteformula}
 \alias{print.dynamiteformula}
-\title{Model formula for \pkg{dynamite}}
+\title{Model Formula for \pkg{dynamite}}
 \usage{
 dynamiteformula(formula, family, link = NULL)
 
@@ -53,7 +53,7 @@ distributions for the observations:
 \itemize{
 \item Categorical: \code{categorical} (with a softmax link using the first category
 as reference). See the documentation of the \code{categorical_logit_glm} in the
-Stan function reference manual (https://mc-stan.org/users/documentation/).
+Stan function reference manual \url{https://mc-stan.org/users/documentation/}.
 \item Multinomial: \code{multinomial} (softmax link, first category is reference).
 \item Gaussian: \code{gaussian} (identity link, parameterized using mean and standard
 deviation).
@@ -79,7 +79,7 @@ Each channel is defined via the \code{obs} function, and the channels are
 combined with \code{+}. For example a formula
 \code{obs(y ~ lag(x), family = "gaussian") + obs(x ~ z, family = "poisson")}
 defines a model with two channels;
-first we declare that \code{y} is a gaussian variable depending on a previous
+first we declare that \code{y} is a Gaussian variable depending on a previous
 value of \code{x} (\code{lag(x)}), and then we add a second channel declaring \code{x} as
 Poisson distributed depending on some exogenous variable \code{z}
 (for which we do not define any distribution).

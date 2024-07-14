@@ -2,7 +2,7 @@
 % Please edit documentation in R/predict.R
 \name{predict.dynamitefit}
 \alias{predict.dynamitefit}
-\title{Predict Method for a Dynamite Model}
+\title{Predict Method for a \pkg{dynamite} Model}
 \usage{
 \method{predict}{dynamitefit}(
   object,
@@ -67,7 +67,7 @@ group level was not present in the original data. The options are:
 are encountered.
 \item \code{"bootstrap"} which will randomly draw from the posterior samples of
 the random effects across all original levels.
-\item \code{"gaussian"} which will randomly draw from a gaussian
+\item \code{"gaussian"} which will randomly draw from a Gaussian
 distribution using the posterior samples of the random effects
 standard deviation (and correlation matrix if applicable).
 \item \code{"original"} which will randomly match each new level to one of

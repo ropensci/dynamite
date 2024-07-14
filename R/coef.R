@@ -1,4 +1,4 @@
-#' Extract Regression Coefficients of a Dynamite Model
+#' Extract Regression Coefficients of a \pkg{dynamite} Model
 #'
 #' Extracts either time-varying or time-invariant parameters of the model.
 #'

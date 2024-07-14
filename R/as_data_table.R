@@ -1,7 +1,7 @@
 #' Extract Samples From a `dynamitefit` Object as a Data Table
 #'
 #' Provides a `data.table` representation of the posterior samples of the model
-#' parameters. See [dynamite::as.data.frame.dynamitefit()] for details.
+#' parameters. See [as.data.frame.dynamitefit()] for details.
 #'
 #' @export
 #' @export as.data.table

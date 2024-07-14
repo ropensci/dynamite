@@ -2,7 +2,7 @@
 #'
 #' Applies multiple imputation using [mice::mice()] to the supplied `data`
 #' and fits a dynamic multivariate panel model to each imputed data set using
-#' [dynamite::dynamite()]. Posterior samples from each imputation run are
+#' [dynamite()]. Posterior samples from each imputation run are
 #' combined. When using wide format imputation, the long format `data` is
 #' automatically converted to a wide format before imputation to preserve the
 #' longitudinal structure, and then converted back to long format for
@@ -19,11 +19,12 @@
 #'   kept in the return object? The default is `FALSE`. If `TRUE`, the
 #'   imputations will be included in the `imputed` field in the return object
 #'   that is otherwise `NULL`.
-#' @param stan_csv_dir \[`character(1)`] A directory path to output the
+#' @param stan_csv_dir \[`character(1)`]\cr A directory path to output the
 #'   Stan .csv files when `backend` is `"cmdstanr"`. The files are saved here
 #'   via `$save_output_files()` to avoid garbage collection between sampling
 #'   runs with different imputed datasets.
 #' @export
+#'
 dynamice <- function(dformula, data, time, group = NULL,
                      priors = NULL, backend = "rstan",
                      verbose = TRUE, verbose_stan = FALSE,
@@ -150,9 +151,7 @@ dynamice <- function(dformula, data, time, group = NULL,
     stanfit <- rstan::sflist2stanfit(sf)
   } else {
     stanfit <- cmdstanr::as_cmdstan_fit(filenames, check_diagnostics = FALSE)
-    #stanfit@stanmodel <- methods::new("stanmodel", model_code = tmp$model_code)
   }
-  # TODO does this work in this case?
   n_draws <- ifelse_(is.null(stanfit), 0L, get_ndraws(stanfit))
   # TODO return object? How is this going to work with update?
   structure(

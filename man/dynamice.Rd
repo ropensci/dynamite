@@ -110,7 +110,7 @@ kept in the return object? The default is \code{FALSE}. If \code{TRUE}, the
 imputations will be included in the \code{imputed} field in the return object
 that is otherwise \code{NULL}.}
 
-\item{stan_csv_dir}{[\code{character(1)}] A directory path to output the
+\item{stan_csv_dir}{[\code{character(1)}]\cr A directory path to output the
 Stan .csv files when \code{backend} is \code{"cmdstanr"}. The files are saved here
 via \verb{$save_output_files()} to avoid garbage collection between sampling
 runs with different imputed datasets.}

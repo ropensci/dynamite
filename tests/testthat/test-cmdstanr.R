@@ -16,7 +16,7 @@ test_that("stanc_options argument works", {
     gaussian_example,
     "time",
     "id",
-    #parallel_chains = 2,
+    parallel_chains = 2,
     chains = 1,
     refresh = 0,
     backend = "cmdstanr",
@@ -538,5 +538,41 @@ test_that("dynamice with cmdstanr backend works", {
       mice_args = list(m = 3, print = FALSE)
     ),
     NA
+  )
+})
+
+test_that("get_parameter_dims() works for cmdnstar models", {
+  skip_if_not(run_extended_tests)
+  skip_on_os("mac") # Seems to segfault on MacOS
+  set.seed(1)
+  f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
+    obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
+    obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
+    aux(numeric(logp) ~ log(p + 1) | init(0))
+  fit_dynamite <- suppressWarnings(
+    dynamite(
+      dformula = f,
+      data = multichannel_example,
+      time = "time",
+      group = "id",
+      backend = "cmdstanr",
+      show_messages = FALSE,
+      chains = 1,
+      parallel_chains = 1,
+      iter_sampling = 10,
+      iter_warmup = 10
+    )
+  )
+  expect_equal(
+    get_parameter_dims(fit_dynamite),
+    list(
+      beta_g = 2L,
+      a_g = 1L,
+      sigma_g = 1L,
+      beta_p = 3L,
+      a_p = 1L,
+      beta_b = 5L,
+      a_b = 1L
+    )
   )
 })

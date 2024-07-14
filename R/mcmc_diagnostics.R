@@ -1,4 +1,4 @@
-#' Diagnostic Values of a Dynamite Model
+#' Diagnostic Values of a \pkg{dynamite} Model
 #'
 #' Prints HMC diagnostics and lists parameters with smallest effective sample
 #' sizes and largest Rhat values. See [hmc_diagnostics()] and
@@ -73,7 +73,7 @@ mcmc_diagnostics.dynamitefit <- function(x, n = 3L, ...) {
   invisible(x)
 }
 
-#' HMC Diagnostics for a Dynamite Model
+#' HMC Diagnostics for a \pkg{dynamite} Model
 #'
 #' Prints the divergences, saturated treedepths, and low E-BFMI warnings.
 #'

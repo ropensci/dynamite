@@ -4,7 +4,7 @@
 \alias{get_code}
 \alias{get_code.dynamiteformula}
 \alias{get_code.dynamitefit}
-\title{Extract the Stan Code of the Dynamite Model}
+\title{Extract the Stan Code of the \pkg{dynamite} Model}
 \usage{
 get_code(x, ...)
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/latent_factor.R
 \name{lfactor}
 \alias{lfactor}
-\title{Define a Common Latent Factor for the Dynamite Model.}
+\title{Define a Common Latent Factor for the \pkg{dynamite} Model.}
 \usage{
 lfactor(
   responses = NULL,
@@ -43,7 +43,7 @@ values). This argument is common to all factors.}
 An object of class \code{latent_factor}.
 }
 \description{
-This function can be used as part of \code{\link[=dynamiteformula]{dynamiteformula()}} to define
+This function can be used as part of a \code{\link[=dynamiteformula]{dynamiteformula()}} to define
 a common latent factor component. The latent factor is modeled as a spline
 similarly as a time-varying intercept, but instead of having equal effect on
 each group, there is an additional loading variable for each group so that

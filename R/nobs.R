@@ -1,4 +1,4 @@
-#' Extract the Number of Observations Used to Fit a Dynamite Model
+#' Extract the Number of Observations Used to Fit a \pkg{dynamite} Model
 #'
 #' @export
 #' @family output

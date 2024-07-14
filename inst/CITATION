@@ -27,7 +27,7 @@ bibentry(
   title = "dynamite: Bayesian Modeling and Causal Inference for Multivariate
     Longitudinal Data",
   author = c(person("Santtu", "Tikka"), person("Jouni", "Helske")),
-  note = "R package version 1.5.3",
+  note = "R package version 1.5.4",
   year = "2024",
   url = "https://github.com/ropensci/dynamite"
 )

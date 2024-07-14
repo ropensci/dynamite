@@ -1,4 +1,4 @@
-#' Credible Intervals for Dynamite Model Parameters
+#' Credible Intervals for \pkg{dynamite} Model Parameters
 #'
 #' Extracts credible intervals from `dynamitefit` object.
 #'

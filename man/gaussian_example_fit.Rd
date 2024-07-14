@@ -3,7 +3,7 @@
 \docType{data}
 \name{gaussian_example_fit}
 \alias{gaussian_example_fit}
-\title{Model Fit for the Simulated Data of Gaussian Responses}
+\title{Model Fit for the Simulated Data of a Gaussian Response}
 \format{
 A \code{dynamitefit} object.
 }

@@ -45,7 +45,7 @@ Ignored if the argument \code{parameters} is supplied.
 \item{times}{[\code{double()}]\cr Time point(s) to keep. If \code{NULL}
 (the default), all time points are kept.}
 
-\item{groups}{[\code{character()}] Group name(s) to keep. If \code{NULL}
+\item{groups}{[\code{character()}]\cr Group name(s) to keep. If \code{NULL}
 (the default), all groups are kept.}
 
 \item{summary}{[\code{logical(1)}]\cr If \code{TRUE}, returns posterior
@@ -66,7 +66,7 @@ from the output.}
 \value{
 A \code{tibble} containing either samples or summary statistics of the
 model parameters in a long format. For a wide format, see
-\code{\link[=as_draws]{as_draws()}}.
+\code{\link[=as_draws.dynamitefit]{as_draws.dynamitefit()}}.
 }
 \description{
 Provides a \code{data.frame} representation of the posterior samples of the model
@@ -101,8 +101,8 @@ Samples of the full correlation matrix can be extracted manually as
 factors. Samples of the full correlation matrix can be extracted
 manually as \code{rstan::extract(fit$stanfit, pars = "corr_matrix_psi")} if
 necessary.
-\item \code{sigma}\cr Standard deviations of gaussian responses.
-\item \code{corr}\cr Pairwise correlations of multivariate gaussian responses.
+\item \code{sigma}\cr Standard deviations of Gaussian responses.
+\item \code{corr}\cr Pairwise correlations of multivariate Gaussian responses.
 \item \code{phi}\cr Describes various distributional parameters, such as:
 \itemize{
 \item Dispersion parameter of the Negative Binomial distribution.

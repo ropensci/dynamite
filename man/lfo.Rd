@@ -45,7 +45,7 @@ models using Pareto smoothed importance sampling.
 For multichannel models, the log-likelihoods of all channels are combined.
 For models with groups, expected log predictive densities (ELPDs) are
 computed independently for each group, but the re-estimation of the model
-is triggered if pareto k values of any group exceeds the threshold.
+is triggered if Pareto k values of any group exceeds the threshold.
 }
 \examples{
 data.table::setDTthreads(1) # For CRAN

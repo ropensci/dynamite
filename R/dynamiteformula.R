@@ -1,4 +1,4 @@
-#' Model formula for \pkg{dynamite}
+#' Model Formula for \pkg{dynamite}
 #'
 #' Defines a new observational or a new auxiliary channel for the model using
 #' standard \R formula syntax. Formulas of individual response variables can be
@@ -12,7 +12,7 @@
 #'
 #' * Categorical: `categorical` (with a softmax link using the first category
 #'   as reference). See the documentation of the `categorical_logit_glm` in the
-#'   Stan function reference manual (https://mc-stan.org/users/documentation/).
+#'   Stan function reference manual <https://mc-stan.org/users/documentation/>.
 #' * Multinomial: `multinomial` (softmax link, first category is reference).
 #' * Gaussian: `gaussian` (identity link, parameterized using mean and standard
 #'   deviation).
@@ -37,7 +37,7 @@
 #' combined with `+`. For example a formula
 #' `obs(y ~ lag(x), family = "gaussian") + obs(x ~ z, family = "poisson")`
 #' defines a model with two channels;
-#' first we declare that `y` is a gaussian variable depending on a previous
+#' first we declare that `y` is a Gaussian variable depending on a previous
 #' value of `x` (`lag(x)`), and then we add a second channel declaring `x` as
 #' Poisson distributed depending on some exogenous variable `z`
 #' (for which we do not define any distribution).
@@ -106,7 +106,7 @@
 #' `random(~1)` leads to a model where in addition to the common intercept,
 #' each individual/group has their own intercept with zero-mean normal prior and
 #' unknown standard deviation analogously with the typical mixed models. An
-#' additional model component [dynamite::random_spec()] can be used to define
+#' additional model component [random_spec()] can be used to define
 #' whether the random effects are allowed to correlate within and across
 #' channels and whether to use centered or noncentered parameterization for
 #' the random effects.

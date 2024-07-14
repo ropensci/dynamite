@@ -1,9 +1,9 @@
-#' Print a Summary of a Dynamite Model Fit Object
+#' Print a Summary of a \pkg{dynamite} Model Fit Object
 #'
-#' Information on the estimated dynamite model can be obtained via
-#'  `print` including the following: The model formula, the data, the smallest
-#' effective sample sizes, largest Rhat and summary statistics of the
-#' time- and group-invariant model parameters.
+#' Information on the estimated `dynamite` model can be obtained via
+#' `print()` including the following: The model formula, the data,
+#' the smallest effective sample sizes, largest Rhat and summary statistics of
+#' the time-invariant and group-invariant model parameters.
 #'
 #' @export
 #' @rdname dynamite

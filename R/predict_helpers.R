@@ -409,7 +409,7 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
 #' @param n_group \[`integer(1)`]\cr Number of groups.
 #' @param orig_ids \[`character()`]\cr Group levels of the original data.
 #' @param new_ids \[`character()`]\cr Group levels of `newdata` in
-#'   [dynamite::predict.dynamitefit()].
+#'   [predict.dynamitefit()].
 #' @param new_levels \[`character(1)`]\cr
 #'   Defines if and how to sample the random effects for groups not present in
 #'   the original data. The options are
@@ -417,7 +417,7 @@ clear_nonfixed <- function(newdata, newdata_null, resp_stoch, eval_type,
 #'       are encountered.
 #'     * `"bootstrap"` which will randomly draw from the posterior samples of
 #'       the random effects across all original levels.
-#'     * `"gaussian"` which will randomly draw from a gaussian
+#'     * `"gaussian"` which will randomly draw from a Gaussian
 #'       distribution using the posterior samples of the random effect
 #'       standard deviations (and correlation matrix if applicable).
 #'     * `"original"` which will randomly match each new level to one of

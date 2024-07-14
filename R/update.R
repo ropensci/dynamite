@@ -1,4 +1,4 @@
-#' Update a Dynamite Model
+#' Update a \pkg{dynamite} Model
 #'
 #' Note that using a different backend for the original model fit and when
 #' updating can lead to an error due to different naming in `cmdstanr` and

@@ -4,7 +4,7 @@
 \alias{get_data}
 \alias{get_data.dynamiteformula}
 \alias{get_data.dynamitefit}
-\title{Extract the Model Data of the Dynamite Model}
+\title{Extract the Model Data of the \pkg{dynamite} Model}
 \usage{
 get_data(x, ...)
 

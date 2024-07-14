@@ -136,6 +136,7 @@ construction and sampling.
 \item \code{priors}\cr Data frame containing the used priors.
 \item \code{backend}\cr Either \code{"rstan"} or \code{"cmdstanr"} indicating which
 package was used in sampling.
+\item \code{permutation}\cr Randomized permutation of the posterior draws.
 \item \code{call}\cr Original function call as an object of class \code{call}.
 }
 
@@ -155,10 +156,10 @@ see 'Details' and the package vignettes.
 
 The \code{formula} method returns the model definition as a quoted expression.
 
-Information on the estimated dynamite model can be obtained via
-\code{print} including the following: The model formula, the data, the smallest
-effective sample sizes, largest Rhat and summary statistics of the
-time- and group-invariant model parameters.
+Information on the estimated \code{dynamite} model can be obtained via
+\code{print()} including the following: The model formula, the data,
+the smallest effective sample sizes, largest Rhat and summary statistics of
+the time-invariant and group-invariant model parameters.
 
 The \code{summary()} method provides statistics of the posterior samples of the
 model; this is an alias of \code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}} with
@@ -204,8 +205,8 @@ summary(gaussian_example_fit,
 
 }
 \references{
-Santtu Tikka and Jouni Helske (2023). \code{dynamite}: An \R Package for Dynamic
-Multivariate Panel Models. arXiv preprint,
+Santtu Tikka and Jouni Helske (2023). \pkg{dynamite}: An \R Package for
+Dynamic Multivariate Panel Models. arXiv preprint,
 \url{https://arxiv.org/abs/2302.01607}.
 
 Jouni Helske and Santtu Tikka (2022). Estimating Causal Effects

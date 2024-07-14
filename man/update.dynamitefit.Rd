@@ -2,7 +2,7 @@
 % Please edit documentation in R/update.R
 \name{update.dynamitefit}
 \alias{update.dynamitefit}
-\title{Update a Dynamite Model}
+\title{Update a \pkg{dynamite} Model}
 \usage{
 \method{update}{dynamitefit}(
   object,

@@ -3,13 +3,14 @@
 \docType{package}
 \name{dynamite-package}
 \alias{dynamite-package}
-\title{The \code{dynamite} package.}
+\title{The \pkg{dynamite} Package}
 \description{
 Easy-to-use and efficient interface for Bayesian inference of
 complex panel data consisting of multiple individuals with multiple
-measurements over time. Supports several observational distributions,
-time-varying effects and realistic counterfactual predictions which take into
-account the dynamic structure of the model.
+measurements over time using dynamic multivariate panel models.
+Supports several observational distributions, time-varying effects and
+realistic counterfactual predictions which take into account the dynamic
+structure of the model.
 }
 \section{See Also}{
 \itemize{

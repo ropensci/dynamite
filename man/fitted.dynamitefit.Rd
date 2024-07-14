@@ -2,7 +2,7 @@
 % Please edit documentation in R/fitted.R
 \name{fitted.dynamitefit}
 \alias{fitted.dynamitefit}
-\title{Extract Fitted Values of a Dynamite Model}
+\title{Extract Fitted Values of a \pkg{dynamite} Model}
 \usage{
 \method{fitted}{dynamitefit}(
   object,
@@ -52,8 +52,8 @@ A \code{data.frame} containing the fitted values.
 \description{
 Fitted values for a \code{dynamitefit} object, i.e.,
 \eqn{E(y_t | newdata, \theta)} where \eqn{\theta} contains all the
-model parameters. See also
-\code{\link[=predict.dynamitefit]{predict.dynamitefit()}} for multi-step predictions.
+model parameters. See also \code{\link[=predict.dynamitefit]{predict.dynamitefit()}} for multi-step
+predictions.
 }
 \examples{
 data.table::setDTthreads(1) # For CRAN
@@ -95,7 +95,7 @@ if (!identical(.Platform$OS.type, "windows")) {
       ggplot2::geom_line(ggplot2::aes(y = LakeHuron), colour = "tomato") +
       ggplot2::theme_bw()
   }
- }
+}
 }
 
 }

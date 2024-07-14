@@ -3,7 +3,7 @@
 \name{get_parameter_names}
 \alias{get_parameter_names}
 \alias{get_parameter_names.dynamitefit}
-\title{Get Parameter Names of the Dynamite Model}
+\title{Get Parameter Names of the \pkg{dynamite} Model}
 \usage{
 get_parameter_names(x, types = NULL, ...)
 

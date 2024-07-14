@@ -4,7 +4,7 @@
 \alias{get_priors}
 \alias{get_priors.dynamiteformula}
 \alias{get_priors.dynamitefit}
-\title{Get Prior Definitions of a Dynamite Model}
+\title{Get Prior Definitions of a \pkg{dynamite} Model}
 \usage{
 get_priors(x, ...)
 
@@ -43,14 +43,14 @@ of the return object to get the column name of the new variable.}
 A \code{data.frame} containing the prior definitions.
 }
 \description{
-Extracts the priors used in the dynamite model as a data frame. You
+Extracts the priors used in the \code{dynamite} model as a data frame. You
 can then alter the priors by changing the contents of the \code{prior} column and
 supplying this data frame to \code{dynamite} function using the argument
 \code{priors}. See vignettes for details.
 }
 \note{
 Only the \code{prior} column of the output should be altered when defining
-the user-defined priors for the \code{dynamite}.
+the user-defined priors for \code{dynamite}.
 }
 \examples{
 data.table::setDTthreads(1) # For CRAN

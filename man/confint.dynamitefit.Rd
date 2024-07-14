@@ -2,7 +2,7 @@
 % Please edit documentation in R/ci.R
 \name{confint.dynamitefit}
 \alias{confint.dynamitefit}
-\title{Credible Intervals for Dynamite Model Parameters}
+\title{Credible Intervals for \pkg{dynamite} Model Parameters}
 \usage{
 \method{confint}{dynamitefit}(object, parm, level = 0.95, ...)
 }

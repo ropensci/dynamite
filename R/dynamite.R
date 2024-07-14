@@ -98,6 +98,7 @@
 #'   * `priors`\cr Data frame containing the used priors.
 #'   * `backend`\cr Either `"rstan"` or `"cmdstanr"` indicating which
 #'     package was used in sampling.
+#'   * `permutation`\cr Randomized permutation of the posterior draws.
 #'   * `call`\cr Original function call as an object of class `call`.
 #'
 #' @srrstats {G2.9} Potential loss of information is reported by `dynamite`.
@@ -132,8 +133,8 @@
 #'   based on Stan, the  scalability of the package depends directly on the
 #'   scalability of Stan.
 #' @references
-#' Santtu Tikka and Jouni Helske (2023). `dynamite`: An \R Package for Dynamic
-#' Multivariate Panel Models. arXiv preprint,
+#' Santtu Tikka and Jouni Helske (2023). \pkg{dynamite}: An \R Package for
+#' Dynamic Multivariate Panel Models. arXiv preprint,
 #' <https://arxiv.org/abs/2302.01607>.
 #'
 #' Jouni Helske and Santtu Tikka (2022). Estimating Causal Effects
@@ -496,8 +497,6 @@ dynamite_sampling <- function(sampling, backend, model_code, model,
       out <- with(e, {
         do.call(model$sample, args)
       })
-      #out <- rstan::read_stan_csv(sampling_out$output_files())
-      #out@stanmodel <- methods::new("stanmodel", model_code = model_code)
     }
   }
   out
@@ -700,7 +699,7 @@ remove_redundant_parameters <- function(stan_input, backend,
   dots
 }
 
-#' Access the Model Formula of a Dynamite Model
+#' Access the Model Formula of a \pkg{dynamite} Model
 #'
 #' The `formula` method returns the model definition as a quoted expression.
 #'

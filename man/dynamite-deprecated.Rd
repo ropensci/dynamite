@@ -7,7 +7,7 @@
 \alias{plot_nus}
 \alias{plot_lambdas}
 \alias{plot_psis}
-\title{Deprecated Functions in the dynamite Package}
+\title{Deprecated Functions in the \pkg{dynamite} Package}
 \usage{
 plot_betas(x, ...)
 plot_deltas(x,  ...)

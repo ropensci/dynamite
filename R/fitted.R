@@ -1,9 +1,9 @@
-#' Extract Fitted Values of a Dynamite Model
+#' Extract Fitted Values of a \pkg{dynamite} Model
 #'
 #' Fitted values for a `dynamitefit` object, i.e.,
 #' \eqn{E(y_t | newdata, \theta)} where \eqn{\theta} contains all the
-#' model parameters. See also
-#' [dynamite::predict.dynamitefit()] for multi-step predictions.
+#' model parameters. See also [predict.dynamitefit()] for multi-step
+#' predictions.
 #'
 #' @export
 #' @family prediction
@@ -55,7 +55,7 @@
 #'       ggplot2::geom_line(ggplot2::aes(y = LakeHuron), colour = "tomato") +
 #'       ggplot2::theme_bw()
 #'   }
-#'  }
+#' }
 #' }
 #'
 fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, thin = 1,

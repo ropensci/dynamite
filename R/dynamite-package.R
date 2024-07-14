@@ -1,16 +1,17 @@
-#' The `dynamite` package.
+#' The \pkg{dynamite} Package
 #'
 #' @description Easy-to-use and efficient interface for Bayesian inference of
 #' complex panel data consisting of multiple individuals with multiple
-#' measurements over time. Supports several observational distributions,
-#' time-varying effects and realistic counterfactual predictions which take into
-#' account the dynamic structure of the model.
+#' measurements over time using dynamic multivariate panel models.
+#' Supports several observational distributions, time-varying effects and
+#' realistic counterfactual predictions which take into account the dynamic
+#' structure of the model.
 #'
 #' # See Also
 #'
 #' * The package vignettes
-#' * [dynamite::dynamiteformula()] for information on defining models.
-#' * [dynamite::dynamite()] for information on fitting models.
+#' * [dynamiteformula()] for information on defining models.
+#' * [dynamite()] for information on fitting models.
 #' * <https://github.com/ropensci/dynamite/issues/> to submit a bug report
 #'   or a feature request.
 #'
@@ -47,12 +48,12 @@
 #'   recovered.
 "_PACKAGE"
 
-#' Simulated Data of Gaussian Responses
+#' Simulated Data of a Gaussian Response
 #'
-#' Simulated data containing gaussian response variables with two covariates.
-#' The dataset was generated from a model with time-varying effects of
-#' covariate x and the lagged value of the response variable, time-varying
-#' intercept, and time-invariant effect of covariate z. The time-varying
+#' Simulated data containing a Gaussian response variable `y` with two
+#' covariates. The dataset was generated from a model with time-varying effects
+#' of covariate `x` and the lagged value of the response variable, time-varying
+#' intercept, and time-invariant effect of covariate `z`. The time-varying
 #' coefficients vary according to a spline with 20 degrees of freedom.
 #'
 #' @family examples
@@ -68,7 +69,7 @@
 #' }
 "gaussian_example"
 
-#' Model Fit for the Simulated Data of Gaussian Responses
+#' Model Fit for the Simulated Data of a Gaussian Response
 #'
 #' A `dynamitefit` object obtained by running `dynamite` on the
 #' `gaussian_example` dataset as

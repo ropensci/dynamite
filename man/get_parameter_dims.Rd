@@ -4,7 +4,7 @@
 \alias{get_parameter_dims}
 \alias{get_parameter_dims.dynamiteformula}
 \alias{get_parameter_dims.dynamitefit}
-\title{Get Parameter Dimensions of the Dynamite Model}
+\title{Get Parameter Dimensions of the \pkg{dynamite} Model}
 \usage{
 get_parameter_dims(x, ...)
 

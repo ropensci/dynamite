@@ -1,7 +1,7 @@
 #' Approximate Leave-One-Out (LOO) Cross-validation
 #'
 #' Estimates the leave-one-out (LOO) information criterion for `dynamite`
-#' models using Pareto smoothed importance sampling with the `loo` package.
+#' models using Pareto smoothed importance sampling with the \pkg{loo} package.
 #'
 #' @export
 #' @export loo

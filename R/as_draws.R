@@ -1,19 +1,18 @@
 #' Convert `dynamite` Output to `draws_df` Format
 #'
-#' Converts the output from a [dynamite::dynamite()] call to a
+#' Converts the output from a [dynamite()] call to a
 #' `draws_df` format of the \pkg{posterior} package, enabling the use
 #' of diagnostics and plotting methods of \pkg{posterior} and \pkg{bayesplot}
 #' packages. Note that this function returns variables in a wide format,
-#' whereas [dynamite::as.data.frame()] uses the long format.
+#' whereas [as.data.frame.dynamitefit()] uses the long format.
 #'
 #' You can use the arguments `parameters`, `responses` and `types` to extract
 #' only a subset of the model parameters (i.e., only certain types of
 #' parameters related to a certain response variable).
 #'
-#' See potential values for the types argument in
-#' [dynamite::as.data.frame.dynamitefit()] and
-#' [dynamite::get_parameter_names()] for potential values for `parameters`
-#' argument.
+#' See potential values for the types argument in [as.data.frame.dynamitefit()]
+#' and [get_parameter_names()] for potential values for `parameters` argument.
+#'
 #' @export
 #' @family output
 #' @aliases as_draws_df

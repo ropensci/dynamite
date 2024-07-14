@@ -2,7 +2,7 @@
 % Please edit documentation in R/lags.R
 \name{lags}
 \alias{lags}
-\title{Add Lagged Responses as Predictors to Each Channel of a Dynamite Model}
+\title{Add Lagged Responses as Predictors to Each Channel of a \pkg{dynamite} Model}
 \usage{
 lags(k = 1L, type = c("fixed", "varying", "random"))
 }

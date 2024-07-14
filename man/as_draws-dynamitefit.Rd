@@ -41,7 +41,7 @@ This argument is mutually exclusive with \code{parameters}.}
 \item{times}{[\code{double()}]\cr Time point(s) to keep. If \code{NULL}
 (the default), all time points are kept.}
 
-\item{groups}{[\code{character()}] Group name(s) to keep. If \code{NULL}
+\item{groups}{[\code{character()}]\cr Group name(s) to keep. If \code{NULL}
 (the default), all groups are kept.}
 
 \item{...}{Ignored.}
@@ -56,17 +56,15 @@ Converts the output from a \code{\link[=dynamite]{dynamite()}} call to a
 \code{draws_df} format of the \pkg{posterior} package, enabling the use
 of diagnostics and plotting methods of \pkg{posterior} and \pkg{bayesplot}
 packages. Note that this function returns variables in a wide format,
-whereas \code{\link[=as.data.frame]{as.data.frame()}} uses the long format.
+whereas \code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}} uses the long format.
 }
 \details{
 You can use the arguments \code{parameters}, \code{responses} and \code{types} to extract
 only a subset of the model parameters (i.e., only certain types of
 parameters related to a certain response variable).
 
-See potential values for the types argument in
-\code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}} and
-\code{\link[=get_parameter_names]{get_parameter_names()}} for potential values for \code{parameters}
-argument.
+See potential values for the types argument in \code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}}
+and \code{\link[=get_parameter_names]{get_parameter_names()}} for potential values for \code{parameters} argument.
 }
 \examples{
 data.table::setDTthreads(1) # For CRAN

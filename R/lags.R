@@ -1,4 +1,4 @@
-#' Add Lagged Responses as Predictors to Each Channel of a Dynamite Model
+#' Add Lagged Responses as Predictors to Each Channel of a \pkg{dynamite} Model
 #'
 #' Adds the lagged value of the response of each channel specified via
 #' [dynamiteformula()] as a predictor to each channel. The added predictors

@@ -27,7 +27,7 @@ An output from \code{\link[loo:loo]{loo::loo()}} or a list of such outputs (if
 }
 \description{
 Estimates the leave-one-out (LOO) information criterion for \code{dynamite}
-models using Pareto smoothed importance sampling with the \code{loo} package.
+models using Pareto smoothed importance sampling with the \pkg{loo} package.
 }
 \examples{
 data.table::setDTthreads(1) # For CRAN

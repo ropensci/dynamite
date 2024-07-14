@@ -1,6 +1,6 @@
-#' Define a Common Latent Factor for the Dynamite Model.
+#' Define a Common Latent Factor for the \pkg{dynamite} Model.
 #'
-#' This function can be used as part of [dynamite::dynamiteformula()] to define
+#' This function can be used as part of a [dynamiteformula()] to define
 #' a common latent factor component. The latent factor is modeled as a spline
 #' similarly as a time-varying intercept, but instead of having equal effect on
 #' each group, there is an additional loading variable for each group so that

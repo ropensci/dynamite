@@ -1,4 +1,4 @@
-#' Deprecated Functions in the dynamite Package
+#' Deprecated Functions in the \pkg{dynamite} Package
 #'
 #' These functions are provided for compatibility with older versions of the
 #' package. They will eventually be completely removed.
@@ -11,7 +11,7 @@
 #' plot_lambdas(x,  ...)
 #' plot_psis(x, ...)
 #' @return A `ggplot` object.
-#' @seealso See [dynamite::plot.dynamitefit()] for documentation of the
+#' @seealso See [plot.dynamitefit()] for documentation of the
 #'   parameters of these functions
 #' @export  plot_betas plot_deltas plot_nus plot_lambdas plot_psis
 #' @aliases plot_betas plot_deltas plot_nus plot_lambdas plot_psis

@@ -30,8 +30,7 @@ selected by \code{types} or \code{parameters}. If both \code{"types"} and
 specified by \code{n_params}. Option \code{"trace"} instead draws posterior
 densities and traceplots of the parameters. Option \code{"dag"} instead plots
 the directed acyclic graph of the model formula, see
-\code{\link[=plot.dynamiteformula]{plot.dynamiteformula()}} for the arguments available for this
-option.}
+\code{\link[=plot.dynamiteformula]{plot.dynamiteformula()}} for the arguments available for this option.}
 
 \item{types}{[\code{character(1)}]\cr Types of the parameter for which the plots
 should be drawn. Possible options can be found with the function
@@ -76,8 +75,8 @@ parameters to plot. The defaults values are 20 for time-invariant
 parameters and 3 for time-varying parameters. The default value is 5
 for \code{plot_type == "trace"}.}
 
-\item{...}{Arguments passed to \code{\link[=plot.dynamiteformula]{plot.dynamiteformula()}} when
-using \code{plot_type = "dag"}.}
+\item{...}{Arguments passed to \code{\link[=plot.dynamiteformula]{plot.dynamiteformula()}} when using
+\code{plot_type = "dag"}.}
 }
 \value{
 A \code{ggplot} object.

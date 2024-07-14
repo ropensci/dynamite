@@ -3,7 +3,7 @@
 \name{mcmc_diagnostics}
 \alias{mcmc_diagnostics}
 \alias{mcmc_diagnostics.dynamitefit}
-\title{Diagnostic Values of a Dynamite Model}
+\title{Diagnostic Values of a \pkg{dynamite} Model}
 \usage{
 mcmc_diagnostics(x, ...)
 

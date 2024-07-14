@@ -2,7 +2,7 @@
 % Please edit documentation in R/nobs.R
 \name{nobs.dynamitefit}
 \alias{nobs.dynamitefit}
-\title{Extract the Number of Observations Used to Fit a Dynamite Model}
+\title{Extract the Number of Observations Used to Fit a \pkg{dynamite} Model}
 \usage{
 \method{nobs}{dynamitefit}(object, ...)
 }
@@ -15,7 +15,7 @@
 Total number of non-missing observations as an \code{integer}.
 }
 \description{
-Extract the Number of Observations Used to Fit a Dynamite Model
+Extract the Number of Observations Used to Fit a \pkg{dynamite} Model
 }
 \examples{
 data.table::setDTthreads(1) # For CRAN

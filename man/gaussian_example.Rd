@@ -3,7 +3,7 @@
 \docType{data}
 \name{gaussian_example}
 \alias{gaussian_example}
-\title{Simulated Data of Gaussian Responses}
+\title{Simulated Data of a Gaussian Response}
 \format{
 A data frame with 3000 rows and 5 variables:
 \describe{
@@ -22,10 +22,10 @@ The data was generated via \code{gaussian_example.R} in
 gaussian_example
 }
 \description{
-Simulated data containing gaussian response variables with two covariates.
-The dataset was generated from a model with time-varying effects of
-covariate x and the lagged value of the response variable, time-varying
-intercept, and time-invariant effect of covariate z. The time-varying
+Simulated data containing a Gaussian response variable \code{y} with two
+covariates. The dataset was generated from a model with time-varying effects
+of covariate \code{x} and the lagged value of the response variable, time-varying
+intercept, and time-invariant effect of covariate \code{z}. The time-varying
 coefficients vary according to a spline with 20 degrees of freedom.
 }
 \seealso{

@@ -1,12 +1,12 @@
-#' Get Prior Definitions of a Dynamite Model
+#' Get Prior Definitions of a \pkg{dynamite} Model
 #'
-#' Extracts the priors used in the dynamite model as a data frame. You
+#' Extracts the priors used in the `dynamite` model as a data frame. You
 #' can then alter the priors by changing the contents of the `prior` column and
 #' supplying this data frame to `dynamite` function using the argument
 #' `priors`. See vignettes for details.
 #'
 #' @note Only the `prior` column of the output should be altered when defining
-#' the user-defined priors for the `dynamite`.
+#' the user-defined priors for `dynamite`.
 #'
 #' @export
 #' @family fitting
@@ -48,7 +48,7 @@ get_priors.dynamitefit <- function(x, ...) {
   x$priors
 }
 
-#' Extract the Stan Code of the Dynamite Model
+#' Extract the Stan Code of the \pkg{dynamite} Model
 #'
 #' Returns the Stan code of the model. Mostly useful for debugging or for
 #' building a customized version of the model.
@@ -156,7 +156,7 @@ get_code_ <- function(x, blocks = NULL) {
   paste_rows(out, .parse = FALSE)
 }
 
-#' Extract the Model Data of the Dynamite Model
+#' Extract the Model Data of the \pkg{dynamite} Model
 #'
 #' Returns the input data to the Stan model. Mostly useful for debugging.
 #'
@@ -206,11 +206,11 @@ get_data.dynamitefit <- function(x, ...) {
   out$stan_input$sampling_vars
 }
 
-#' Get Parameter Dimensions of the Dynamite Model
+#' Get Parameter Dimensions of the \pkg{dynamite} Model
 #'
 #' Extracts the names and dimensions of all parameters used in the
-#' `dynamite` model. See also [dynamite::get_parameter_types()] and
-#' [dynamite::get_parameter_names()]. The returned dimensions match those of
+#' `dynamite` model. See also [get_parameter_types()] and
+#' [get_parameter_names()]. The returned dimensions match those of
 #' the `stanfit` element of the `dynamitefit` object. When applied to
 #' `dynamiteformula` objects, the model is compiled and sampled for 1 iteration
 #' to get the parameter dimensions.
@@ -267,6 +267,17 @@ get_parameter_dims.dynamitefit <- function(x, ...) {
     !is.null(x$stanfit),
     "No Stan model fit is available."
   )
+  if (x$backend == "cmdstanr") {
+    return(
+      get_parameter_dims.dynamiteformula(
+        x = eval(formula(x)),
+        data = x$data,
+        time = x$time_var,
+        group = x$group_var,
+        ...
+      )
+    )
+  }
   pars_text <- get_code(x, blocks = "parameters")
   pars <- get_parameters(pars_text)
   # TODO no inits
@@ -298,10 +309,10 @@ get_parameters <- function(x) {
   vapply(par_matches, "[[", character(1L), 2L)
 }
 
-#' Get Parameter Types of the Dynamite Model
+#' Get Parameter Types of the \pkg{dynamite} Model
 #'
 #' Extracts all parameter types of used in the `dynamitefit` object. See
-#' [dynamite::as.data.frame.dynamitefit()] for explanations of different types.
+#' [as.data.frame.dynamitefit()] for explanations of different types.
 #'
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param ... Ignored.
@@ -323,7 +334,7 @@ get_parameter_types.dynamitefit <- function(x, ...) {
   unique(d$type)
 }
 
-#' Get Parameter Names of the Dynamite Model
+#' Get Parameter Names of the \pkg{dynamite} Model
 #'
 #' Extracts all parameter names of used in the `dynamitefit` object.
 #'
@@ -336,7 +347,7 @@ get_parameter_types.dynamitefit <- function(x, ...) {
 #'
 #' @param x \[`dynamitefit`]\cr The model fit object.
 #' @param types \[`character()`]\cr Extract only names of parameter of a
-#'   certain type. See [dynamite::get_parameter_types()].
+#'   certain type. See [get_parameter_types()].
 #' @param ... Ignored.
 #' @return A `character` vector with parameter names of the input model.
 #' @export

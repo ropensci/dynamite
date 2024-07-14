@@ -2,7 +2,7 @@
 % Please edit documentation in R/coef.R
 \name{coef.dynamitefit}
 \alias{coef.dynamitefit}
-\title{Extract Regression Coefficients of a Dynamite Model}
+\title{Extract Regression Coefficients of a \pkg{dynamite} Model}
 \usage{
 \method{coef}{dynamitefit}(
   object,
@@ -38,7 +38,7 @@ Ignored if the argument \code{parameters} is supplied.
 \item{times}{[\code{double()}]\cr Time point(s) to keep. If \code{NULL}
 (the default), all time points are kept.}
 
-\item{groups}{[\code{character()}] Group name(s) to keep. If \code{NULL}
+\item{groups}{[\code{character()}]\cr Group name(s) to keep. If \code{NULL}
 (the default), all groups are kept.}
 
 \item{summary}{[\code{logical(1)}]\cr If \code{TRUE} (default), returns posterior
