@@ -3,5 +3,4 @@ destination: docs
 
 template:
   package: rotemplate
-  params:
-    mathjax: true
+  math-rendering: mathjax
