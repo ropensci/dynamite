@@ -226,7 +226,7 @@ get_model_code.stanfit <- function(x) {
 #' @keywords internal
 #' @export
 get_model_code.CmdStanMCMC <- function(x) {
-  x$code()
+  paste0(x$code(), collapse = "\n")
 }
 
 #' @rdname get_model_code
