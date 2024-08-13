@@ -193,6 +193,9 @@ get_data.dynamiteformula <- function(x, data, time, group = NULL, ...) {
 #' @rdname get_data
 #' @export
 get_data.dynamitefit <- function(x, ...) {
+  if (!is.null(x$stan_input)) {
+    return(x$stan_input$sampling_vars)
+  }
   out <- dynamite(
     dformula = eval(formula(x)),
     data = x$data,
@@ -232,63 +235,55 @@ get_parameter_dims <- function(x, ...) {
 #' @export
 get_parameter_dims.dynamiteformula <- function(x, data, time,
                                                group = NULL, ...) {
-  out <- try(
-    suppressWarnings(
-      dynamite(
-        dformula = x,
-        data = data,
-        time = time,
-        group = group,
-        algorithm = "Fixed_param",
-        chains = 1,
-        iter = 1,
-        refresh = 0,
-        backend = "rstan",
-        verbose_stan = FALSE,
-        ...
-      )
-    ),
-    silent = TRUE
+  out <- dynamite(
+    dformula = x,
+    data = data,
+    time = time,
+    group = group,
+    debug = list(no_compile = TRUE, stan_input = TRUE, model_code = FALSE),
+    ...
   )
-  stopifnot_(
-    !inherits(out, "try-error"),
-    c(
-      "Unable to determine parameter dimensions:",
-      `x` = attr(out, "condition")$message
-    )
-  )
-  get_parameter_dims(out)
+  get_parameter_dims(out, ...)
 }
 
 #' @rdname get_parameter_dims
 #' @export
 get_parameter_dims.dynamitefit <- function(x, ...) {
-  stopifnot_(
-    !is.null(x$stanfit),
-    "No Stan model fit is available."
-  )
-  if (x$backend == "cmdstanr") {
-    return(
-      get_parameter_dims.dynamiteformula(
-        x = eval(formula(x)),
-        data = x$data,
-        time = x$time_var,
-        group = x$group_var,
-        ...
-      )
-    )
-  }
   pars_text <- get_code(x, blocks = "parameters")
-  pars <- get_parameters(pars_text)
-  # TODO no inits
-  out <- rstan::get_inits(x$stanfit)[[1L]]
-  out <- out[names(out) %in% pars]
-  lapply(
-    out,
+  pars_text <- strsplit(pars_text, split = "\n")[[1L]]
+  pars_text <- pars_text[grepl(";", pars_text)]
+  par_regex <- regexec(
+    pattern = "^.+\\s([^\\s]+);.*$",
+    text = pars_text,
+    perl = TRUE
+  )
+  par_matches <- regmatches(pars_text, par_regex)
+  par_names <- vapply(par_matches, "[[", character(1L), 2L)
+  dim_regex <- regexec(
+    pattern = "^[^\\[]+\\[([^\\]]+)\\].+",
+    text = pars_text,
+    perl = TRUE
+  )
+  dim_matches <- regmatches(pars_text, dim_regex)
+  dim_names <- lapply(
+    dim_matches,
     function(y) {
-      d <- dim(y)
-      ifelse_(is.null(d), 1L, d)
+      if (length(y) > 0L) {
+        paste0("c(", y[2L], ")")
+      } else {
+        "1"
+      }
     }
+  )
+  e <- list2env(get_data(x, ...))
+  stats::setNames(
+    lapply(
+      dim_names,
+      function(y) {
+        eval(str2lang(y), envir = e)
+      }
+    ),
+    par_names
   )
 }
 

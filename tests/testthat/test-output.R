@@ -445,6 +445,20 @@ test_that("gets can be got", {
       a_y_c = 1L
     )
   )
+  stanfit_dims <- gaussian_example_fit$stanfit@par_dims
+  stanfit_dims[lengths(stanfit_dims) == 0] <- 1L
+  gaussian_dims <- get_parameter_dims(gaussian_example_fit)
+  stanfit_dims <- stanfit_dims[names(gaussian_dims)]
+  expect_equal(gaussian_dims, stanfit_dims)
+  expect_equal(
+    get_parameter_dims(
+      obs(y ~ -1 + z + varying(~ x + lag(y)) + random(~1),
+          family = "gaussian"
+      ) + random_spec() + splines(df = 20),
+      gaussian_example, time = "time", group = "id"
+    ),
+    gaussian_dims
+  )
 })
 
 test_that("credible intervals can be computed", {
