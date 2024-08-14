@@ -8,7 +8,6 @@ data.table::setDTthreads(1) # For CRAN
 test_that("stanc_options argument works", {
   skip_if_not(run_extended_tests)
   set.seed(1)
-
   fit <- dynamite(
     dformula = obs(y ~ -1 + varying(~x), family = "gaussian") +
       lags(type = "varying") +
@@ -35,7 +34,6 @@ test_that("stanc_options argument works", {
 test_that("cmdstanr backend works for categorical model", {
   skip_if_not(run_extended_tests)
   set.seed(1)
-
   fit_dynamite <- update(
     categorical_example_fit,
     stanc_options = list("O0"),
@@ -168,7 +166,6 @@ test_that("multivariate gaussian with threading produces a valid model", {
 test_that("threading produces valid model code for other distributions", {
   skip_if_not(run_extended_tests)
   skip_on_os("mac")
-
   set.seed(1)
   n_id <- 50L
   n_time <- 20L
@@ -212,7 +209,6 @@ test_that("threading produces valid model code for other distributions", {
 test_that("threading produces a valid model for cumulative", {
   skip_if_not(run_extended_tests)
   skip_on_os("mac")
-
   set.seed(0)
 
   n <- 100
@@ -318,7 +314,6 @@ test_that("threading produces a valid model for cumulative", {
 test_that("threading produces a valid model for multinomial", {
   skip_if_not(run_extended_tests)
   skip_on_os("mac")
-
   set.seed(1)
   n_id <- 100L
   n_time <- 20L
@@ -454,9 +449,8 @@ test_that("syntax is correct for various models", {
 
 test_that("latent factor syntax is correct", {
   skip_if_not(run_extended_tests)
-  skip_on_os("mac")
-
   set.seed(123)
+
   N <- 40L
   T_ <- 20L
   D <- 10
@@ -513,8 +507,6 @@ test_that("latent factor syntax is correct", {
 
 test_that("dynamice with cmdstanr backend works", {
   skip_if_not(run_extended_tests)
-  skip_on_os("mac")
-
   set.seed(1)
   n <- 50
   p <- 1000
@@ -539,12 +531,16 @@ test_that("dynamice with cmdstanr backend works", {
     ),
     NA
   )
+  expect_error(
+    print(fit_long),
+    NA
+  )
 })
 
 test_that("get_parameter_dims() works for cmdnstar models", {
   skip_if_not(run_extended_tests)
-  skip_on_os("mac") # Seems to segfault on MacOS
   set.seed(1)
+
   f <- obs(g ~ lag(g) + lag(logp), family = "gaussian") +
     obs(p ~ lag(g) + lag(logp) + lag(b), family = "poisson") +
     obs(b ~ lag(b) * lag(logp) + lag(b) * lag(g), family = "bernoulli") +
@@ -575,4 +571,27 @@ test_that("get_parameter_dims() works for cmdnstar models", {
       a_b = 1L
     )
   )
+})
+
+test_that("diagnostics can be obtained for cmdstanr models", {
+  skip_if_not(run_extended_tests)
+  set.seed(1)
+
+  gaussian_fit <- dynamite(
+    dformula =
+      obs(
+        y ~ -1 + z + varying(~ x + lag(y)) + random(~1),
+        family = "gaussian"
+      ) +
+      random_spec() +
+      splines(df = 20),
+    data = gaussian_example,
+    time = "time",
+    group = "id",
+    refresh = 0,
+    backend = "cmdstanr"
+  )
+  expect_error(print(gaussian_fit), NA)
+  expect_error(hmc_diagnostics(gaussian_fit), NA)
+  expect_error(mcmc_diagnostics(gaussian_fit), NA)
 })
