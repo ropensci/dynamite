@@ -75,7 +75,9 @@ for details.}
 
 \item{threads_per_chain}{[\code{integer(1)}]\cr A Positive integer defining the
 number of parallel threads to use within each chain. Default is \code{1}. See
-\code{\link[rstan:rstan_options]{rstan::rstan_options()}} and \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}} for details.}
+\code{\link[rstan:rstan_options]{rstan::rstan_options()}} and
+\url{https://mc-stan.org/cmdstanr/reference/model-method-sample.html}
+for details.}
 
 \item{grainsize}{[\code{integer(1)}]\cr A positive integer defining the
 suggested size of the partial sums when using within-chain parallelization.

@@ -57,7 +57,9 @@
 #'   for details.
 #' @param threads_per_chain \[`integer(1)`]\cr A Positive integer defining the
 #'   number of parallel threads to use within each chain. Default is `1`. See
-#'   [rstan::rstan_options()] and [cmdstanr::sample()] for details.
+#'   [rstan::rstan_options()] and
+#'   <https://mc-stan.org/cmdstanr/reference/model-method-sample.html>
+#'   for details.
 #' @param grainsize \[`integer(1)`]\cr A positive integer defining the
 #'   suggested size of the partial sums when using within-chain parallelization.
 #'   Default is number of time points divided by `threads_per_chain`.
