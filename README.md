@@ -66,7 +66,7 @@ on DMPMs and the `dynamite` package, see the related papers:
 
 You can install the most recent stable version of `dynamite` from
 [CRAN](https://cran.r-project.org/package=dynamite) or the development
-version from [R-universe](https://r-universe.dev/search/) by running one
+version from [R-universe](https://r-universe.dev/search) by running one
 the following lines:
 
 ``` r
@@ -115,8 +115,8 @@ print(gaussian_example_fit)
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1 10.157  6.377
-#> chain:2 10.431  5.864
+#> chain:1  7.851  5.239
+#> chain:2  8.104  4.531
 #> 
 #> Summary statistics of the time- and group-invariant parameters:
 #> # A tibble: 6 × 10

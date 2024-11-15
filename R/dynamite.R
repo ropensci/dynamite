@@ -137,12 +137,12 @@
 #' @references
 #' Santtu Tikka and Jouni Helske (2024). \pkg{dynamite}: An \R Package for
 #' Dynamic Multivariate Panel Models. arXiv preprint,
-#' <https://arxiv.org/abs/2302.01607>.
+#' <doi:10.48550/arXiv.2302.01607>.
 #'
 #' Jouni Helske and Santtu Tikka (2022). Estimating Causal Effects
 #' from Panel Data with Dynamic Multivariate Panel Models.
 #' *Advances in Life Course Research*, 60, 100617.
-#' <https://doi.org/10.1016/j.alcr.2024.100617>.
+#' <doi:10.1016/j.alcr.2024.100617>.
 #' @examples
 #' data.table::setDTthreads(1) # For CRAN
 #' \donttest{
