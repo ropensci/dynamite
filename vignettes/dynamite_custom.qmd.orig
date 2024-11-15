@@ -5,8 +5,6 @@ format:
     theme: none
     minimal: true
     embed-resources: true
-pkgdown:
-  as_is: true
 vignette: >
   %\VignetteIndexEntry{Model customization and non-MCMC estimation with dynamite}
   %\VignetteEngine{quarto::html}
@@ -98,7 +96,7 @@ It is important to note that in order to use the post-processing functions of `d
 ```{r}
 #| label: nuplot
 #| fig.cap: ""
-#| fig.dpi: 300
+#| out.width: "100%"
 plot(fit, type = "nu", n_params = 20)
 ```
 
@@ -111,7 +109,7 @@ and compute predictions:
 ```{r}
 #| label: custommodelplot
 #| fig.cap: ""
-#| fig.dpi: 300
+#| out.width: "100%"
 newdata <- data.frame(
   time = 1:30,
   id = 51,
@@ -172,7 +170,7 @@ summary(fit_vb_dynamite, types = "beta")
 ```{r}
 #| label: vbplot
 #| fig.cap: ""
-#| fig.dpi: 300
+#| out.width: "100%"
 pp2 <- predict(
   fit_vb_dynamite, newdata = newdata, new_levels = "original", n_draws = 50
 )

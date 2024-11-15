@@ -17,7 +17,7 @@ Description: Easy-to-use and efficient interface for
   multiple measurements per individual, time-varying and time-invariant 
   effects, and a wide range of discrete and continuous distributions. 
   Estimation of these dynamic multivariate panel models is carried out via 
-  'Stan'. For an  in-depth tutorial of the package, see 
+  'Stan'. For an in-depth tutorial of the package, see 
   (Tikka and Helske, 2024) <doi:10.48550/arXiv.2302.01607>.
 License: GPL (>= 3)
 URL: https://docs.ropensci.org/dynamite/, https://github.com/ropensci/dynamite/
@@ -49,8 +49,7 @@ Suggests:
     quarto,
     testthat (>= 3.0.0),
     tidyr
-VignetteBuilder: 
-    quarto
+VignetteBuilder: quarto
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, roclets = c ("namespace", "rd",

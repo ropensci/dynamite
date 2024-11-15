@@ -5,8 +5,6 @@ format:
     theme: none
     minimal: true
     embed-resources: true
-pkgdown:
-  as_is: true
 vignette: >
   %\VignetteIndexEntry{Model customization and non-MCMC estimation with dynamite}
   %\VignetteEngine{quarto::html}
@@ -70,7 +68,7 @@ It is important to note that in order to use the post-processing functions of `d
 plot(fit, type = "nu", n_params = 20)
 ```
 
-![](nuplot-1.png)
+<img src="nuplot-1.png" width="100%" />
 
 perform leave-one-out cross-validation:
 
@@ -107,7 +105,7 @@ ggplot2::ggplot(pp, ggplot2::aes(time, y_new, group = .draw)) +
   ggplot2::theme_bw()
 ```
 
-![](custommodelplot-1.png)
+<img src="custommodelplot-1.png" width="100%" />
 
 # Using non-MCMC algorithms in `dynamite`
 
@@ -160,4 +158,4 @@ ggplot2::ggplot(pp2, ggplot2::aes(time, y_new, group = .draw)) +
   ggplot2::theme_bw()
 ```
 
-![](vbplot-1.png)
+<img src="vbplot-1.png" width="100%" />

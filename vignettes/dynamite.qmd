@@ -9,8 +9,6 @@ format:
     toc: true
     number-sections: true
     html-math-method: mathjax
-pkgdown:
-  as_is: true
 bibliography: dynamite.bib
 vignette: >
   %\VignetteIndexEntry{dynamite: An R Package for Dynamic Multivariate Panel Models}
@@ -325,7 +323,6 @@ We can obtain posterior samples or summary statistics of the model using the `as
 #| out.width: "100%"
 #| fig.width: 8
 #| fig.height: 4
-#| fig.dpi: 300
 #| fig.align: "center"
 #| fig.cap: "Posterior means and 90\\% posterior intervals of the time-invariant coefficients for the multivariate model."
 library("ggplot2")
@@ -409,7 +406,6 @@ The resulting data frame `sumrb` is equal to the previous `sumr` (apart from sto
 #| out.width: "100%"
 #| fig.width: 8
 #| fig.height: 3.5
-#| fig.dpi: 300
 #| fig.align: "center"
 #| fig.cap: "Expected causal effects of interventions $do(b_5 = 0)$ and $do(b_5 = 1)$ on $g_t$. The black lines show the posterior means and the gray areas show 90\\% posterior intervals."
 ggplot(sumr, aes(time, mean)) +
@@ -452,7 +448,6 @@ We can also plot the difference between the expected causal effects as shown in 
 #| out.width: "100%"
 #| fig.width: 8
 #| fig.height: 3.5
-#| fig.dpi: 300
 #| fig.align: "center"
 #| fig.cap: "Difference between the expected causal effects $E(g_t | do(b_5 = 1)) - E(g_t | do(b_5 = 0))$. The black line shows the posterior mean and the gray area shows a 90\\% posterior interval."
 ggplot(sumr_diff, aes(time, mean)) +
@@ -694,13 +689,11 @@ A `plot()` method is available for `"dynamiteformula"` objects that can be used 
 ```{r}
 #| label: fig-multichanneldagplot
 #| fig.show: "hold"
-#| out.width: "50%"
-#| fig.cap: "DAGs for the multivariate model created using the `plot()` method for `\"dynamitefit\"` objects. The left panel shows the model structure including the auxiliary response variable `logp` while the right panel shows the model structure where the auxiliary variable is not included. The latter DAG is obtained via a functional projection where the parents of `logp` become the parents of the children of `logp` and `logp` is removed from the graph at each timepoint."
+#| out.width: "100%"
+#| fig.cap: "DAGs for the multivariate model created using the `plot()` method for `\"dynamitefit\"` objects. Panel (a) shows the model structure including the auxiliary response variable `logp` while panel (b) shows the model structure where the auxiliary variable is not included. The latter DAG is obtained via a functional projection where the parents of `logp` become the parents of the children of `logp` and `logp` is removed from the graph at each timepoint."
 #| fig.subcap:
 #|   - ""
 #|   - ""
-#| layout-ncol: 2
-#| fig.dpi: 300
 plot(multi_formula)
 plot(multi_formula, show_auxiliary = FALSE)
 ```
@@ -877,7 +870,6 @@ For instance, @fig-parameterposteriorplot shows the posterior means and posterio
 #| out.width: "100%"
 #| fig.width: 10
 #| fig.height: 4
-#| fig.dpi: 300
 #| fig.align: "center"
 #| fig.cap: "Posterior means (black lines) and 90\\% posterior intervals (gray areas) for the time-varying coefficients for the response variable `y` in the `gaussian_example_fit` model. The panels from left to right show the time-varying intercept for `y`, the time-varying effect of `x` on `y`, and the time-varying effect of `lag(y)` (the previous time-point) on `y`."
 plot(
@@ -894,7 +886,6 @@ While `plot_type = "default"` produces plots such as @fig-parameterposteriorplot
 #| out.width: "100%"
 #| fig.width: 9
 #| fig.height: 4
-#| fig.dpi: 300
 #| fig.align: "center"
 #| fig.cap: "Marginal posterior density and traceplot of the MCMC chains of the time-invariant regression coefficient `beta_y_z` of `z` for the response variable `y` in the `gaussian_example_fit` model."
 plot(gaussian_example_fit, plot_type = "trace", types = "beta")
@@ -936,7 +927,6 @@ For example, we can obtain posterior predictive samples for the first 4 groups i
 #| out.width: "100%"
 #| fig.width: 8
 #| fig.height: 5
-#| fig.dpi: 300
 #| fig.align: "center"
 #| fig.cap: "Posterior predictive samples for the first 4 groups of the `gaussian_example` data. Lines in red represent the observed values."
 pred <- predict(gaussian_example_fit, n_draws = 50)
@@ -1001,7 +991,7 @@ In the future, we plan to extend the capabilities of **dynamite** by adding supp
 ::: {#refs}
 :::
 
-# Details on latent factors {#sec-latentfactor .appendix}
+# Details on latent factors {#sec-latentfactor .unnumbered}
 
 Latent factor models with product terms $\lambda_i\psi_t$ are known to suffer from identifiability issues. For example, it is possible to multiply each $\lambda_i$ by some constant $c$ while simultaneously multiplying $\psi_i, t=1,\ldots, T$ with the reciprocal of the same constant, leading to the same likelihood value as the original model. In case of multiple latent factors and (vector) autoregressive process on $\psi_t$, @bai2015 discuss two alternative identifiability constraints, which in our single factor model translate to fixing $\lambda_i = 1$ for some $i$, or constraining $\lambda_i > 0$ for some $i$, with an additional constraint that the standard deviation of the noise term of $\psi_t$ is 1. In both cases, we need to decide which individual is used as a reference for the constrained $\lambda_i$. This choice can lead to computational issues if the true value of $\lambda_i$ is not compatible with these constrains (e.g., the true value is zero). Instead, we define the constraints via the mean of $\lambda$.
 

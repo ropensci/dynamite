@@ -5,8 +5,6 @@ format:
     theme: none
     minimal: true
     embed-resources: true
-pkgdown:
-  as_is: true
 vignette: >
   %\VignetteIndexEntry{Simulating data from a dynamic multivariate panel model}
   %\VignetteEngine{quarto::html}
@@ -249,7 +247,6 @@ We can plot individual trajectories of `y` over time to visualize the data.
 #| fig.width: 7
 #| fig.height: 3.5
 #| fig.cap: ""
-#| fig.dpi: 300
 #| out.width: "100%"
 library("ggplot2")
 sim |>

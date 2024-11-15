@@ -5,8 +5,6 @@ format:
     theme: none
     minimal: true
     embed-resources: true
-pkgdown:
-  as_is: true
 vignette: >
   %\VignetteIndexEntry{Simulating data from a dynamic multivariate panel model}
   %\VignetteEngine{quarto::html}
@@ -181,6 +179,7 @@ Again, we apply the `get_parameter_dims()` function to get the model parameters 
 
 ``` r
 get_parameter_dims(x = f, data = d, time = "time", group = "id")
+#> recompiling to avoid crashing R session
 #> $omega_y
 #> [1]  2 10
 #> 
