@@ -207,13 +207,14 @@ summary(gaussian_example_fit,
 
 }
 \references{
-Santtu Tikka and Jouni Helske (2023). \pkg{dynamite}: An \R Package for
+Santtu Tikka and Jouni Helske (2024). \pkg{dynamite}: An \R Package for
 Dynamic Multivariate Panel Models. arXiv preprint,
 \url{https://arxiv.org/abs/2302.01607}.
 
 Jouni Helske and Santtu Tikka (2022). Estimating Causal Effects
-from Panel Data with Dynamic Multivariate Panel Models. SocArxiv preprint,
-\url{https://osf.io/preprints/socarxiv/mdwu5/}.
+from Panel Data with Dynamic Multivariate Panel Models.
+\emph{Advances in Life Course Research}, 60, 100617.
+\url{https://doi.org/10.1016/j.alcr.2024.100617}.
 }
 \seealso{
 Model fitting

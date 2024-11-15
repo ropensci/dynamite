@@ -1,3 +1,9 @@
+# dynamite 1.5.5
+
+  * The package vignettes are now prerendered as some of them took a long time to build.
+  * The vignette builder has been switched to `quarto`.
+  * The package no longer depends on `prder`, `pryr`, and `rmarkdown`.
+
 # dynamite 1.5.4
 
   * Obtaining the model parameter dimensions via `get_parameter_dims()` no longer requires a compiled Stan model. This leads to a significant performance improvement when applied to `dynamiteformula` objects.

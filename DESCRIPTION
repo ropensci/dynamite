@@ -1,7 +1,7 @@
 Package: dynamite
 Title: Bayesian Modeling and Causal Inference for Multivariate
     Longitudinal Data
-Version: 1.5.4
+Version: 1.5.5
 Authors@R: c(
     person("Santtu", "Tikka", email = "santtuth@gmail.com", 
            role = c("aut", "cre"), comment = c(ORCID = "0000-0003-4039-4342")),
@@ -40,20 +40,17 @@ Imports:
     tibble (>= 2.0.0),
     utils
 Suggests:
-    bookdown,
     cmdstanr,
     covr,
     dplyr,
     knitr,
     mice,
     mockthat,
-    pder,
-    pryr,
-    rmarkdown,
+    quarto,
     testthat (>= 3.0.0),
     tidyr
 VignetteBuilder: 
-    knitr
+    quarto
 Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, roclets = c ("namespace", "rd",

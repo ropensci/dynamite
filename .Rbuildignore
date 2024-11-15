@@ -9,3 +9,6 @@
 ^_pkgdown.yml$
 ^doc$
 ^Meta$
+^vignettes/.*\.qmd\.orig$
+^vignettes/rebuild_vignettes\.R$
+^vignettes/*_files$
