@@ -5,7 +5,7 @@ format:
     theme: none
     minimal: true
     embed-resources: true
-    html-math-method: mathjax
+    html-math-method: katex
 vignette: >
   %\VignetteIndexEntry{Priors for dynamic multivariate panel models}
   %\VignetteEngine{quarto::html}

@@ -3,12 +3,12 @@ title: "dynamite: An R Package for Dynamic Multivariate Panel Models"
 link-citations: true
 format:
   html:
+    toc: true
     theme: none
     minimal: true
     embed-resources: true
-    toc: true
     number-sections: true
-    html-math-method: mathjax
+    html-math-method: katex
 bibliography: dynamite.bib
 vignette: >
   %\VignetteIndexEntry{dynamite: An R Package for Dynamic Multivariate Panel Models}
