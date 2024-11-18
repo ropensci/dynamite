@@ -34,14 +34,14 @@ knitr::opts_chunk$set(
 
 The default priors in `dynamite` are chosen to be relatively uninformative (i.e., weakly informative) such that they provide computational stability by slightly regularizing the posterior. The motivation behind the default priors is thus similar to other popular Stan-based R packages such as `brms`^[https://CRAN.R-project.org/package=brms] and `rstanarm`^[https://CRAN.R-project.org/package=rstanarm].
 
-Define $\sigma_x=\max(1, \text{SD}(x))$, where $\mbox{SD}(x)$ is the standard deviation of the predictor variable $x$ over groups and non-fixed time points (see section "Lagged responses and predictors" in the main vignette for more information: `vignette("dynamite", package = "dynamite")`). Define also
+Define $\sigma_x=\max(1, \text{SD}(x))$, where $\text{SD}(x)$ is the standard deviation of the predictor variable $x$ over groups and non-fixed time points (see section "Lagged responses and predictors" in the main vignette for more information: `vignette("dynamite", package = "dynamite")`). Define also
 $$
   \sigma_y = \begin{cases}
     \max(1, \text{SD}(y)), &\text{if family is gaussian or student} \\
     1, &\text{otherwise}
   \end{cases},
 $$
-where $\mbox{SD}(y)$ is the standard deviation of the response variable as over groups and non-fixed time points.
+where $\text{SD}(y)$ is the standard deviation of the response variable as over groups and non-fixed time points.
 
 ## Regression coefficients
 
@@ -56,7 +56,7 @@ $$
 $$
 where $\bar X^\beta$ and $\bar X^\delta$ are the means of the corresponding predictors at first (non-fixed) time point. The prior is then defined for $a$ as
 $$
-a \sim \mbox{N}(\bar y, 2\sigma_y),
+a \sim \text{N}(\bar y, 2\sigma_y),
 $$
 where $\bar y$ is mean of the response variable values at first time point after applying the link function (except in case of categorical and multinomial response where $\bar y$ is set to zero).
 
@@ -66,7 +66,7 @@ The prior for the standard deviation parameter $\tau$ of the random walk prior o
 
 ## Correlation matrices
 
-The correlation matrix of the random effects and latent factors uses a $\mbox{LKJ}(1)$ prior with the Cholesky parameterization, see Stan documentation of `lkj_corr_cholesky` for details^[https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html]. The default corresponds to uniform distribution over valid correlation matrices.
+The correlation matrix of the random effects and latent factors uses a $\text{LKJ}(1)$ prior with the Cholesky parameterization, see Stan documentation of `lkj_corr_cholesky` for details^[https://mc-stan.org/docs/functions-reference/cholesky-lkj-correlation-distribution.html]. The default corresponds to uniform distribution over valid correlation matrices.
 
 ## Parameters related to latent factors
 
@@ -76,7 +76,7 @@ In case where `nonzero_lambda = FALSE`, $\tau_\psi$ is fixed to one, and prior i
 
 ## Family-specific parameters
 
-For standard deviation parameter of gaussian and student's $t$ responses, we use exponential prior with a rate parameter $\frac{1}{2\max(1,\sigma_y)}$. The degrees-of-freedom parameter of the student's $t$-distribution has a $\mbox{Gamma}(2, 0.1)$ prior, whereas for other family specific parameters we set $\phi \sim \mbox{Exponential}(1)$.
+For standard deviation parameter of gaussian and student's $t$ responses, we use exponential prior with a rate parameter $\frac{1}{2\max(1,\sigma_y)}$. The degrees-of-freedom parameter of the student's $t$-distribution has a $\text{Gamma}(2, 0.1)$ prior, whereas for other family specific parameters we set $\phi \sim \text{Exponential}(1)$.
 
 # Defining priors of dynamite models
 
