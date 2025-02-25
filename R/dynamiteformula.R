@@ -187,7 +187,7 @@ dynamiteformula <- function(formula, family, link = NULL) {
     dims[[1L]]$specials$resp_type <- resp_parsed$type
     dims[[1L]]$response <- resp_parsed$resp
     dims[[1L]]$original <- formula
-    dims[[1L]]$name <- parse_name(resp_parsed$resp)
+    dims[[1L]]$name <- stan_name(resp_parsed$resp)
   } else {
     dims <- parse_formula(formula, family)
     if (is_binomial(family) || is_multinomial(family)) {
@@ -320,6 +320,7 @@ parse_formula <- function(x, family) {
     rep(formula_parts, n_responses),
     formula_parts
   )
+  responses <- str_quote(responses)
   formulas <- lapply(paste0(responses, "~", formula_parts), as.formula)
   predictors <- lapply(
     formulas,
@@ -334,13 +335,6 @@ parse_formula <- function(x, family) {
     },
     logical(1L)
   )
-  # predictors <- ulapply(
-  #   formulas,
-  #   function(y) {
-  #     find_nonlags(formula_rhs(y))
-  #   }
-  # )
-  # resp_pred <- responses %in% predictors
   p <- sum(resp_pred)
   stopifnot_(
     !any(resp_pred),
@@ -356,21 +350,6 @@ parse_formula <- function(x, family) {
     original = x,
     family = family
   )
-}
-
-#' Parse a Channel Name for a `dynamiteformula` To Be Used in Stan
-#'
-#' This function prepares a channel name such that it is valid for Stan. From
-#' Stan Reference Manual: "A variable by itself is a well-formed expression of
-#' the same type as the variable. Variables in Stan consist of ASCII strings
-#' containing only the basic lower-case and upper-case Roman letters, digits,
-#' and the underscore (_) character. Variables must start with a letter
-#' (a--z and A--Z) and may not end with two underscores (__)"
-#'
-#' @param x A `character` vector.
-#' @noRd
-parse_name <- function(x) {
-  gsub("[^[:alnum:]_]+", "", x, perl = TRUE)
 }
 
 #' @rdname dynamiteformula
@@ -531,7 +510,7 @@ get_type_formula <- function(x, type = c("fixed", "varying", "random")) {
   tr <- attr(ft, "term.labels")
   rhs <- paste0(tr[idx], collapse = " + ")
   rhs_out <- ifelse_(nzchar(rhs), paste0(" + ", rhs), "")
-  out_str <- paste0(resp, " ~ ", icpt, rhs_out)
+  out_str <- paste0(str_quote(deparse1(resp)), " ~ ", icpt, rhs_out)
   ifelse_(
     has_icpt || nzchar(rhs_out),
     as.formula(out_str),

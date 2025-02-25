@@ -49,7 +49,6 @@ full_model.matrix <- function(dformula, data, group_var, fixed, verbose) {
     vector(mode = "list", length = length(model_matrices)),
     y_names
   )
-  #attr(model_matrix, "assign") <- empty_list
   attr(model_matrix, "fixed") <- empty_list
   attr(model_matrix, "varying") <- empty_list
   attr(model_matrix, "random") <- empty_list
@@ -62,15 +61,6 @@ full_model.matrix <- function(dformula, data, group_var, fixed, verbose) {
         attr(model_matrix, type)[[i]] <- integer(0L)
       }
     }
-    # attr(model_matrix, "assign")[[i]] <- sort(
-    #   unique(
-    #     c(
-    #       attr(model_matrix, "fixed")[[i]],
-    #       attr(model_matrix, "varying")[[i]],
-    #       attr(model_matrix, "random")[[i]]
-    #     )
-    #   )
-    # )
   }
   model_matrix
 }

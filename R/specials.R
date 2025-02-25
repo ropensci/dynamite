@@ -81,7 +81,7 @@ formula_specials <- function(x, original, family) {
   resp <- deparse1(formula_lhs(x))
   list(
     response = resp,
-    name = parse_name(resp),
+    name = stan_name(resp),
     formula = x,
     family = family,
     original = original,

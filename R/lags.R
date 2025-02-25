@@ -89,12 +89,12 @@ complete_lags <- function(x) {
     xlen <- length(x)
     if (identical(xlen, 2L)) {
       x <- str2lang(
-        paste0("lag(", deparse1(x[[2L]]), ", ", "1)")
+        paste0("lag(", str_quote(deparse1(x[[2L]])), ", ", "1)")
       )
     } else if (identical(xlen, 3L)) {
       k <- verify_lag(x[[3L]], deparse1(x))
       x <- str2lang(
-        paste0("lag(", deparse1(x[[2L]]), ", ", k, ")")
+        paste0("lag(", str_quote(deparse1(x[[2L]])), ", ", k, ")")
       )
     } else {
       stop_(c(
@@ -190,6 +190,7 @@ extract_lags <- function(x) {
   if (length(lag_matches) > 0L) {
     lag_map <- do.call("rbind", args = lag_matches)
     lag_map <- as.data.frame(lag_map[, -1L, drop = FALSE])
+    lag_map$var <- str_unquote(lag_map$var)
     lag_map$k <- as.integer(lag_map$k)
     lag_map$k[is.na(lag_map$k)] <- 1L
     lag_map$present <- TRUE
@@ -283,7 +284,7 @@ parse_lags <- function(dformula, data, group_var, time_var, verbose) {
   for (i in seq_len(n_channels)) {
     fix_rhs <- complete_lags(formula_rhs(dformula[[i]]$formula))
     dformula[[i]]$formula <- as.formula(
-      paste0(resp_all[i], "~", deparse1(fix_rhs))
+      paste0(str_quote(resp_all[i]), "~", deparse1(fix_rhs))
     )
   }
   data_names <- names(data)
@@ -406,7 +407,7 @@ parse_present_lags <- function(dformula, lag_map, y, i, lhs) {
       dformula[[j]]$formula <- as.formula(
         gsub(
           pattern = lag_map$src[k],
-          replacement = lhs,
+          replacement = str_quote(lhs),
           x = deparse1(dformula[[j]]$formula),
           fixed = TRUE
         )
@@ -535,7 +536,7 @@ parse_singleton_lags <- function(dformula, data, group_var,
         }
       }
       channels[[idx]] <- dynamitechannel(
-        formula = as.formula(paste0(lhs, " ~ ", rhs)),
+        formula = as.formula(paste0(str_quote(lhs), " ~ ", str_quote(rhs))),
         family = deterministic_(),
         response = lhs,
         specials = spec

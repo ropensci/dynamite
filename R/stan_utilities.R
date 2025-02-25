@@ -108,6 +108,41 @@ stan_supports_glm_likelihood <- function(family, backend, common_intercept) {
   )
 }
 
+stan_reserved_keywords <- c(
+  "int", "real", "vector", "row_vector", "matrix", "ordered",
+  "positive_ordered", "simplex", "unit_vector", "cholesky_factor_corr",
+  "cholesky_factor_cov", "corr_matrix", "cov_matrix", "functions", "model",
+  "parameters", "transformed", "generated", "quantities", "data", "var",
+  "return", "if", "else", "while", "for", "in", "break", "continue", "void",
+  "reject", "print", "target", "T"
+)
+
+#' Ensure that a character string is a valid Stan variable name
+#'
+#' This function prepares a name such that it is valid for Stan. From
+#' Stan Reference Manual: "A variable by itself is a well-formed expression of
+#' the same type as the variable. Variables in Stan consist of ASCII strings
+#' containing only the basic lower-case and upper-case Roman letters, digits,
+#' and the underscore (_) character. Variables must start with a letter
+#' (a--z and A--Z) and may not end with two underscores (__)". Adds a prefix
+#' when the first character is not a letter and a suffix for reserved keywords.
+#'
+#' @param x A `character` vector.
+#' @noRd
+stan_name <- function(x) {
+  x <- gsub("\\s+", "_", x)
+  x <- gsub("[^a-zA-Z0-9_]", "", x)
+  x <- gsub("_{2,}$", "", x)
+  for (i in seq_along(x)) {
+    if (!grepl("^[a-zA-Z]", x[i])) {
+      x[i] <- paste0("v_", x[i])
+    }
+    if (tolower(x[i]) %in% stan_reserved_keywords) {
+      x[i] <- paste0(x[i], "_var")
+    }
+  }
+  x
+}
 
 # Wrapper methods for backends --------------------------------------------
 

@@ -1,3 +1,7 @@
+# dynamite 1.5.6
+
+  * Variable names and factor levels are now checked and modified if needed for compatibility with Stan. Previously only response variable names were checked. It is also now possible to have spaces in variable names by quoting them.
+
 # dynamite 1.5.5
 
   * The package vignettes are now prerendered as some of them took a long time to build.

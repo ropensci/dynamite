@@ -172,6 +172,32 @@ cs <- function(...) {
   paste0(c(...), collapse = ", ")
 }
 
+#' Quote strings with spaces
+#'
+#' @param x A `character` vector.
+#' @noRd
+str_quote <- function(x) {
+  vapply(
+    x,
+    function(y) {
+      ifelse_(
+        grepl("\\s+", y),
+        paste0("`", y, "`"),
+        y
+      )
+    },
+    character(1L)
+  )
+}
+
+#' Unquote strings
+#'
+#' @param x A `character` vector.
+#' @noRd
+str_unquote <- function(x) {
+  gsub("^`(.+)`$", "\\1", x)
+}
+
 #' Create a Comma-separated Character String and Evaluate with glue
 #'
 #' @param ... `character` strings.

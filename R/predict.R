@@ -260,7 +260,8 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
   resp_stoch <- get_responses(object$dformulas$stoch)
   categories <- lapply(
     attr(object$stan$responses, "resp_class"),
-    "attr", "levels"
+    "attr",
+    "levels"
   )
   new_levels <- ifelse_(
     length(which_random(object$dformulas$all)) == 0L,
