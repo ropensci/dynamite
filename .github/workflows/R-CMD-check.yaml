@@ -57,10 +57,12 @@ jobs:
           use-public-rspm: true
 
       - uses: r-lib/actions/setup-r-dependencies@v2
+        needs: check
         with:
           cache-version: 2
           extra-packages: |
-            rcmdcheck
+            any::rcmdcheck
+            local::.
             BH
             RcppParallel
             RcppEigen

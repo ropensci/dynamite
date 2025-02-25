@@ -222,8 +222,7 @@ test_that("time-invariant cumulative fit and predict work", {
 
   expect_error(
     fit <- dynamite(
-      dformula =
-        obs(y ~ x, family = "cumulative", link = "logit"),
+      dformula = obs(y ~ x, family = "cumulative", link = "logit"),
       data = d,
       time = "time",
       group = "id"

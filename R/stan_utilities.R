@@ -129,12 +129,12 @@ stan_reserved_keywords <- c(
 #'
 #' @param x A `character` vector.
 #' @noRd
-stan_name <- function(x) {
+stan_name <- function(x, check_first = TRUE) {
   x <- gsub("\\s+", "_", x)
   x <- gsub("[^a-zA-Z0-9_]", "", x)
   x <- gsub("_{2,}$", "", x)
   for (i in seq_along(x)) {
-    if (!grepl("^[a-zA-Z]", x[i])) {
+    if (check_first && !grepl("^[a-zA-Z]", x[i])) {
       x[i] <- paste0("v_", x[i])
     }
     if (tolower(x[i]) %in% stan_reserved_keywords) {
