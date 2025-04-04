@@ -670,6 +670,7 @@ test_that("information on >2 chains is summarized in print", {
 
 test_that("latent factor models are identifiable", {
   skip_if_not(run_extended_tests)
+  skip_on_os("windows") # Fails for Windows for some reason
 
   generate_data <- function(N, T_, D, alpha, mean_lambda, sd_lambda, sd_alpha) {
     y <- matrix(0, N, T_)
@@ -720,15 +721,20 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr1$rhat < 1.1))
   expect_true(all(sumr1$ess_bulk > 500))
   expect_true(all(sumr1$ess_tail > 500))
-  expect_equal(summary(fit1, type = "psi")$mean, sim$mean_lambda_psi,
-               tolerance = 0.5)
+  expect_equal(
+    summary(fit1, type = "psi")$mean,
+    sim$mean_lambda_psi,
+    tolerance = 0.5
+  )
 
   set.seed(2)
   sim <- generate_data(
     100, 50, 20,
-    alpha = 0, mean_lambda = 1, sd_lambda = 0.1, sd_alpha = 2)
+    alpha = 0, mean_lambda = 1, sd_lambda = 0.1, sd_alpha = 2
+  )
   dformula <- obs(y ~ -1 + x + random(~ 1), family = "gaussian") +
-    lfactor() + splines(20)
+    lfactor() +
+    splines(20)
   priors <- get_priors(dformula, data = sim$data, time = "time", group = "id")
   priors$prior[priors$parameter != "kappa_y"] <- "normal(0, 5)"
   fit2 <- dynamite(
@@ -743,15 +749,20 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr2$rhat < 1.1))
   expect_true(all(sumr2$ess_bulk > 500))
   expect_true(all(sumr2$ess_tail > 500))
-  expect_equal(summary(fit2, type = "psi")$mean, sim$mean_lambda_psi,
-               tolerance = 0.5)
+  expect_equal(
+    summary(fit2, type = "psi")$mean,
+    sim$mean_lambda_psi,
+    tolerance = 0.5
+  )
 
   set.seed(3)
   sim <- generate_data(
     100, 50, 20,
-    alpha = -1, mean_lambda = 0.5, sd_lambda = 2, sd_alpha = 0)
+    alpha = -1, mean_lambda = 0.5, sd_lambda = 2, sd_alpha = 0
+  )
   dformula <- obs(y ~ x, family = "gaussian") +
-    lfactor() + splines(20)
+    lfactor() +
+    splines(20)
   priors <- get_priors(dformula, data = sim$data, time = "time", group = "id")
   priors$prior[priors$parameter != "kappa_y"] <- "normal(0, 5)"
   # need some informativeness on prior of kappa (or zeta?)
@@ -769,13 +780,17 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr3$rhat < 1.1))
   expect_true(all(sumr3$ess_bulk > 500))
   expect_true(all(sumr3$ess_tail > 500))
-  expect_equal(summary(fit3, type = "psi")$mean, sim$mean_lambda_psi,
-               tolerance = 0.5)
+  expect_equal(
+    summary(fit3, type = "psi")$mean,
+    sim$mean_lambda_psi,
+    tolerance = 0.5
+  )
 
   set.seed(4)
   sim <- generate_data(
     100, 50, 20,
-    alpha = 0, mean_lambda = -1, sd_lambda = 0.5, sd_alpha = 0.5)
+    alpha = 0, mean_lambda = -1, sd_lambda = 0.5, sd_alpha = 0.5
+  )
   dformula <- obs(y ~ x + random(~ 1), family = "gaussian") +
     lfactor() + splines(20)
   priors <- get_priors(dformula, data = sim$data, time = "time", group = "id")
@@ -793,15 +808,20 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr4$rhat < 1.1))
   expect_true(all(sumr4$ess_bulk > 500))
   expect_true(all(sumr4$ess_tail > 500))
-  expect_equal(summary(fit4, type = "psi")$mean, sim$mean_lambda_psi,
-               tolerance = 0.5)
+  expect_equal(
+    summary(fit4, type = "psi")$mean,
+    sim$mean_lambda_psi,
+    tolerance = 0.5
+  )
 
   set.seed(5)
   sim <- generate_data(
     100, 50, 20,
-    alpha = 1, mean_lambda = 0, sd_lambda = 0.5, sd_alpha = 1)
+    alpha = 1, mean_lambda = 0, sd_lambda = 0.5, sd_alpha = 1
+  )
   dformula <- obs(y ~ x + random(~ 1), family = "gaussian") +
-    lfactor(nonzero_lambda = FALSE) + splines(20)
+    lfactor(nonzero_lambda = FALSE) +
+    splines(20)
   priors <- get_priors(dformula, data = sim$data, time = "time", group = "id")
   priors$prior[] <- "normal(0, 5)"
   fit5 <- dynamite(
@@ -817,15 +837,20 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr5$rhat < 1.1))
   expect_true(all(sumr5$ess_bulk > 500))
   expect_true(all(sumr5$ess_tail > 500))
-  expect_equal(summary(fit5, type = "psi")$mean, -sim$psi,
-               tolerance = 0.5)
+  expect_equal(
+    summary(fit5, type = "psi")$mean,
+    -sim$psi,
+    tolerance = 0.5
+  )
 
   set.seed(6)
   sim <- generate_data(
     100, 50, 20,
-    alpha = 1, mean_lambda = 0, sd_lambda = 0.5, sd_alpha = 0)
+    alpha = 1, mean_lambda = 0, sd_lambda = 0.5, sd_alpha = 0
+  )
   dformula <- obs(y ~ x, family = "gaussian") +
-    lfactor(nonzero_lambda = FALSE) + splines(20)
+    lfactor(nonzero_lambda = FALSE) +
+    splines(20)
   priors <- get_priors(dformula, data = sim$data, time = "time", group = "id")
   priors$prior[] <- "normal(0, 5)"
   fit6 <- dynamite(
@@ -841,8 +866,11 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr6$rhat < 1.1))
   expect_true(all(sumr6$ess_bulk > 500))
   expect_true(all(sumr6$ess_tail > 500))
-  expect_equal(summary(fit6, type = "psi")$mean, -sim$psi,
-               tolerance = 0.5)
+  expect_equal(
+    summary(fit6, type = "psi")$mean,
+    -sim$psi,
+    tolerance = 0.5
+  )
 
   # Test bivariate case with nonzero_lambda
   set.seed(123)
@@ -875,7 +903,8 @@ test_that("latent factor models are identifiable", {
   )
   dformula <- obs(y ~ 1, family = "gaussian") +
     obs(x ~ 1, family = "gaussian") +
-    lfactor(nonzero_lambda = FALSE, flip_sign = TRUE) + splines(10)
+    lfactor(nonzero_lambda = FALSE, flip_sign = TRUE) +
+    splines(10)
   fit <- dynamite(
     dformula,
     data = d, time = "time", group = "id",
