@@ -42,7 +42,7 @@ The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use i
 
 The `dynamite` package is developed with the support of the Research Council of Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)). For further information on DMPMs and the `dynamite` package, see the related papers:
 
-* Helske J. and Tikka S. (2024). Estimating Causal Effects from Panel Data with Dynamic Multivariate Panel Models. *Advances in Life Course Research*, 60, 100617. ([Journal version](https://doi.org/10.1016/j.alcr.2024.100617), [SocArXiv](https://osf.io/preprints/socarxiv/mdwu5/) preprint)
+* Helske J. and Tikka S. (2024). Estimating Causal Effects from Panel Data with Dynamic Multivariate Panel Models. *Advances in Life Course Research*, 60, 100617. ([Journal version](https://doi.org/10.1016/j.alcr.2024.100617), [SocArXiv](https://doi.org/10.31235/osf.io/mdwu5) preprint)
 * Tikka S. and Helske J. (2024). `dynamite`: An R Package for Dynamic Multivariate Panel Models. ([arXiv](https://arxiv.org/abs/2302.01607) preprint)
 
 ## Installation
