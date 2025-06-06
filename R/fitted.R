@@ -55,7 +55,7 @@
 #' }
 #'
 fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, thin = 1,
-                               expand = TRUE, df = TRUE, ...) {
+                               expand = TRUE, df = TRUE, drop = TRUE, ...) {
   stopifnot_(
     !missing(object),
     "Argument {.arg object} is missing."
@@ -75,6 +75,10 @@ fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, thin = 1,
   stopifnot_(
     checkmate::test_flag(x = df),
     "Argument {.arg df} must be a single {.cls logical} value."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = drop),
+    "Argument {.arg drop} must be a single {.cls logical} value."
   )
   if (thin > 1L) {
     idx_draws <- seq.int(1L, ndraws(object), by = thin)
@@ -97,6 +101,7 @@ fitted.dynamitefit <- function(object, newdata = NULL, n_draws = NULL, thin = 1,
     global_fixed = FALSE,
     idx_draws,
     expand,
-    df
+    df,
+    drop
   )
 }

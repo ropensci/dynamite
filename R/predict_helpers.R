@@ -58,10 +58,11 @@ check_newdata <- function(object, newdata) {
 #' @param group_var \[`character(1)`,`NULL`]\cr Group variable name or `NULL`
 #'   if there is only one group.
 #' @param time_var \[`character(1)`]\cr Time index variable name.
+#' @param drop \[`logical(1)`]\cr Drop unused variables.
 #' @noRd
 parse_newdata <- function(dformulas, newdata, data, type, eval_type,
                           resp_stoch, categories, clear_names, new_levels,
-                          group_var, time_var) {
+                          group_var, time_var, drop) {
   if (!group_var %in% names(newdata)) {
     orig <- sort(data[[group_var]])[1L]
     data.table::set(x = newdata, j = group_var, value = orig)
@@ -139,7 +140,9 @@ parse_newdata <- function(dformulas, newdata, data, type, eval_type,
   )
   clear_names <- intersect(names(newdata), clear_names)
   newdata[, (clear_names) := NULL]
-  drop_unused(dformulas$all, newdata, group_var, time_var)
+  if (drop) {
+    drop_unused(dformulas$all, newdata, group_var, time_var)
+  }
   type <- ifelse_(eval_type %in% c("fitted", "loglik"), eval_type, type)
   if (identical(type, "loglik")) {
     cg <- attr(dformulas$stoch, "channel_groups")

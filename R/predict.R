@@ -81,6 +81,9 @@
 #'   This argument is ignored if `funs` are provided.
 #' @param df \[`logical(1)`]\cr If `TRUE` (default) the output
 #'   consists of `data.frame` objects, and `data.table` objects otherwise.
+#' @param drop \[`logical(1)`]\cr If `TRUE` (default), the columns of `newdata`
+#'   that are not used by any model formula are dropped from the output.
+#'   If `FALSE`, all columns are kept.
 #' @param ... Ignored.
 #' @return A `data.frame` containing the predicted values or a `list` of two
 #'   `data.frames`. See the `expand` argument for details. Note that the
@@ -162,7 +165,7 @@ predict.dynamitefit <- function(object, newdata = NULL,
                                   "none", "bootstrap", "gaussian", "original"
                                 ),
                                 global_fixed = FALSE, n_draws = NULL, thin = 1,
-                                expand = TRUE, df = TRUE, ...) {
+                                expand = TRUE, df = TRUE, drop = TRUE, ...) {
   stopifnot_(
     !missing(object),
     "Argument {.arg object} is missing."
@@ -215,6 +218,10 @@ predict.dynamitefit <- function(object, newdata = NULL,
     "Argument {.arg df} must be a single {.cls logical} value."
   )
   stopifnot_(
+    checkmate::test_flag(x = drop),
+    "Argument {.arg drop} must be a single {.cls logical} value."
+  )
+  stopifnot_(
     checkmate::test_int(x = thin, lower = 1L, upper = ndraws(object)),
     "Argument {.arg thin} must be a single positive {.cls integer}."
   )
@@ -239,7 +246,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
     global_fixed,
     idx_draws,
     expand,
-    df
+    df,
+    drop
   )
 }
 
@@ -251,12 +259,18 @@ predict.dynamitefit <- function(object, newdata = NULL,
 #' @noRd
 initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
                                new_levels, global_fixed, idx_draws, expand,
-                               df) {
+                               df, drop) {
   newdata_null <- is.null(newdata)
   newdata <- check_newdata(object, newdata)
   fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
   group_var <- object$group_var
   time_var <- object$time_var
+  interval <- object$interval
+  stopifnot_(
+    interval == 1L || length(funs) == 0L,
+    "Summarized predictions cannot be computed for models with
+    {.arg interval} > 1."
+  )
   resp_stoch <- get_responses(object$dformulas$stoch)
   categories <- lapply(
     attr(object$stan$responses, "resp_class"),
@@ -283,7 +297,8 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
     ),
     new_levels = new_levels,
     group_var = group_var,
-    time_var = time_var
+    time_var = time_var,
+    drop = drop
   )
   impute_newdata(
     newdata = newdata,
@@ -323,7 +338,8 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
     dld = object$dformulas$lag_det,
     dls = object$dformulas$lag_stoch,
     fixed = fixed,
-    group_var = group_var
+    group_var = group_var,
+    ival = interval
   )
   newdata_names <- names(newdata)
   resp_draw <- c(
@@ -367,7 +383,8 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
     group_var = group_var,
     time_var = time_var,
     expand = expand,
-    df = df
+    df = df,
+    ival = interval
   )
 }
 
@@ -381,7 +398,7 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
 #' @noRd
 predict_ <- function(object, simulated, storage, observed,
                      mode, type, eval_type, new_levels, idx_draws, fixed, funs,
-                     group_var, time_var, expand, df) {
+                     group_var, time_var, expand, df, ival) {
   n_draws <- length(idx_draws)
   formulas_stoch <- object$dformulas$stoch
   resp <- get_responses(object$dformulas$all)
@@ -410,7 +427,7 @@ predict_ <- function(object, simulated, storage, observed,
   idx_prev <- integer(0L)
   idx_summ <- integer(0L)
   idx_obs <- rep(
-    which(time == u_time[1L]) + (fixed - 1L),
+    which(time == u_time[1L]) + (fixed * ival - 1L),
     each = n_draws
   )
   if (identical(mode, "full")) {
@@ -423,7 +440,7 @@ predict_ <- function(object, simulated, storage, observed,
       (".draw") := rep(seq.int(1L, n_draws), n_new),
       env = list(n_new = n_new, n_draws = n_draws)
     ]
-    idx <- which(draw_time == u_time[1L]) + (fixed - 1L) * n_draws
+    idx <- which(draw_time == u_time[1L]) + (fixed * ival - 1L) * n_draws
     n_sim <- n_draws
   } else {
     n_sim <- n_group * n_draws
@@ -464,7 +481,7 @@ predict_ <- function(object, simulated, storage, observed,
       j = ".draw",
       value = rep(seq_len(n_draws), each = n_time)
     )
-    idx_summ <- which(summaries[[time_var]] == u_time[1L]) + (fixed - 1L)
+    idx_summ <- which(summaries[[time_var]] == u_time[1L]) + (fixed * ival - 1L)
   }
   data.table::setcolorder(
     simulated,
@@ -485,8 +502,9 @@ predict_ <- function(object, simulated, storage, observed,
   )
   time_offset <- which(unique(object$data[[time_var]]) == u_time[1L]) - 1L
   skip <- TRUE
-  for (i in seq.int(fixed + 1L, n_time)) {
-    time_i <- time_offset + i - fixed
+  ival_pred <- n_sim + ival - 1L
+  for (i in seq.int(fixed * ival + 1L, n_time)) {
+    time_i <- time_offset + i - fixed * ival
     idx <- ifelse_(identical(mode, "full"), idx + n_draws, idx)
     idx_obs <- idx_obs + 1L
     if (identical(mode, "summary")) {
@@ -494,8 +512,8 @@ predict_ <- function(object, simulated, storage, observed,
       shift_simulated_values(simulated, idx, idx_prev)
       assign_from_storage(storage, simulated, idx, idx_obs)
     }
-    assign_lags(simulated, idx, ro_ld, lhs_ld, rhs_ld, skip, n_sim)
-    assign_lags(simulated, idx, ro_ls, lhs_ls, rhs_ls, skip, n_sim)
+    assign_lags(simulated, idx, ro_ld, lhs_ld, rhs_ld, ival_pred, skip)
+    assign_lags(simulated, idx, ro_ls, lhs_ls, rhs_ls, ival_pred, skip)
     for (j in model_topology) {
       cg_idx <- which(channel_groups == j)
       k <- cg_idx[1L]
@@ -541,7 +559,8 @@ predict_ <- function(object, simulated, storage, observed,
         )
         e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
         if (identical(eval_type, "predicted")) {
-          idx_na <- is.na(simulated[idx, .SD, .SDcols = resp[cg_idx]])
+          idx_na <- is.na(simulated[idx, .SD, .SDcols = resp[cg_idx]]) &
+            complete.cases(model_matrix)
           e$idx_out <- which(idx_na, arr.ind = TRUE)[, "row"]
           e$k_obs <- length(e$idx_out)
           e$idx_data <- idx[e$idx_out]

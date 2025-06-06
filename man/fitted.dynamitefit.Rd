@@ -11,6 +11,7 @@
   thin = 1,
   expand = TRUE,
   df = TRUE,
+  drop = TRUE,
   ...
 )
 }
@@ -43,6 +44,10 @@ This argument is ignored if \code{funs} are provided.}
 
 \item{df}{[\code{logical(1)}]\cr If \code{TRUE} (default) the output
 consists of \code{data.frame} objects, and \code{data.table} objects otherwise.}
+
+\item{drop}{[\code{logical(1)}]\cr If \code{TRUE} (default), the columns of \code{newdata}
+that are not used by any model formula are dropped from the output.
+If \code{FALSE}, all columns are kept.}
 
 \item{...}{Ignored.}
 }

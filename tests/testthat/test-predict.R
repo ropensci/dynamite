@@ -436,16 +436,11 @@ test_that("predict with loglik works", {
       global_fixed = FALSE,
       idx_draws = 1:ndraws(gaussian_example_fit),
       expand = FALSE,
-      df = TRUE
+      df = TRUE,
+      drop = TRUE
     )$simulated,
     NA
   )
-
-  # n <- ndraws(gaussian_example_fit) %/%
-  #   gaussian_example_fit$stanfit@sim$chains
-  # idx <- gaussian_example_fit$permutation[1L]
-  # iter <- idx %% n
-  # chain <- 1 + idx %/% n
   xzy <- gaussian_example_fit$data |>
     dplyr::filter(id == 5 & time == 20)
   manual <- as_draws(gaussian_example_fit) |>

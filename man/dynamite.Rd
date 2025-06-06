@@ -21,6 +21,7 @@ dynamite(
   grainsize = NULL,
   custom_stan_model = NULL,
   debug = NULL,
+  interval = 1L,
   ...
 )
 
@@ -104,6 +105,14 @@ added to the return object. Additionally, values \code{no_compile = TRUE} and
 and sampling steps respectively. This can be useful for debugging when
 combined with \code{model_code = TRUE}, which adds the Stan model code to the
 return object.}
+
+\item{interval}{[\code{integer(1)}]\cr This arguments acts as an offset for
+the evaluation of lagged observations when measurements are not available
+at every time point. For example, if measurements are only available at
+every second time point, setting \code{interval = 2} means that a lag of order
+\code{k} will instead use the observation at \code{2 * k} time units in the past.
+The default value is \code{1} meaning that there is a one-to-one correspondence
+between the lag order and the time scale. For expert users only.}
 
 \item{...}{For \code{dynamite()}, additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} or
 the \verb{$sample()} method of the \code{CmdStanModel} object

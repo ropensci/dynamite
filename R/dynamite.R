@@ -71,6 +71,13 @@
 #'   that either contains a customized Stan model code or a path to a `.stan`
 #'   file that contains the code. Using this will override the generated model
 #'   code. For expert users only.
+#' @param interval \[`integer(1)`]\cr This arguments acts as an offset for
+#'   the evaluation of lagged observations when measurements are not available
+#'   at every time point. For example, if measurements are only available at
+#'   every second time point, setting `interval = 2` means that a lag of order
+#'   `k` will instead use the observation at `2 * k` time units in the past.
+#'   The default value is `1` meaning that there is a one-to-one correspondence
+#'   between the lag order and the time scale. For expert users only.
 #' @param debug \[`list()`]\cr A named list of form `name = TRUE` indicating
 #'   additional objects in the environment of the `dynamite` function which are
 #'   added to the return object. Additionally, values `no_compile = TRUE` and
@@ -167,7 +174,8 @@ dynamite <- function(dformula, data, time, group = NULL,
                      verbose = TRUE, verbose_stan = FALSE,
                      stanc_options = list("O0"),
                      threads_per_chain = 1L, grainsize = NULL,
-                     custom_stan_model = NULL, debug = NULL, ...) {
+                     custom_stan_model = NULL, debug = NULL, interval = 1L,
+                     ...) {
   dynamite_check(
     dformula,
     data,
@@ -180,6 +188,7 @@ dynamite <- function(dformula, data, time, group = NULL,
     threads_per_chain,
     grainsize,
     custom_stan_model,
+    interval,
     debug
   )
   custom_stan_model <- ifelse_(
@@ -209,8 +218,8 @@ dynamite <- function(dformula, data, time, group = NULL,
   data <- parse_data(dformula, data, group, time, verbose)
   dformula <- parse_past(dformula, data, group, time)
   dformulas <- parse_lags(dformula, data, group, time, verbose)
-  evaluate_deterministic(dformulas, data, group, time)
-  dformulas <- parse_components(dformulas, data, group, time)
+  evaluate_deterministic(dformulas, data, group, time, interval)
+  dformulas <- parse_components(dformulas, data, group, time, interval)
   stan_out <- dynamite_stan(
     dformulas,
     data,
@@ -225,6 +234,7 @@ dynamite <- function(dformula, data, time, group = NULL,
     threads_per_chain,
     grainsize,
     custom_stan_model,
+    interval,
     debug,
     ...
   )
@@ -257,6 +267,7 @@ dynamite <- function(dformula, data, time, group = NULL,
       priors = rbindlist_(stan_input$priors),
       backend = backend,
       permutation = sample(n_draws),
+      interval = interval,
       call = dynamite_call
     ),
     class = "dynamitefit"
@@ -277,7 +288,7 @@ dynamite <- function(dformula, data, time, group = NULL,
 dynamite_check <- function(dformula, data, time, group, priors, verbose,
                            verbose_stan, stanc_options,
                            threads_per_chain, grainsize,
-                           custom_stan_model, debug) {
+                           custom_stan_model, interval, debug) {
   stopifnot_(
     !missing(dformula),
     "Argument {.arg dformula} is missing."
@@ -349,6 +360,10 @@ dynamite_check <- function(dformula, data, time, group, priors, verbose,
     "Argument {.arg grainsize} must be a single positive integer or
     {.code NULL}."
   )
+  stopifnot_(
+    checkmate::test_int(x = interval, lower = 1L),
+    "Argument {.arg interval} must be a single positive integer."
+  )
 }
 
 #' Prepare Data for Stan and Construct a Stan Model for `dynamite`
@@ -360,14 +375,14 @@ dynamite_check <- function(dformula, data, time, group, priors, verbose,
 dynamite_stan <- function(dformulas, data, data_name, group, time,
                           priors, backend, verbose, verbose_stan,
                           stanc_options, threads_per_chain, grainsize,
-                          custom_stan_model, debug, ...) {
+                          custom_stan_model, interval, debug, ...) {
   stan_input <- prepare_stan_input(
     dformulas$stoch,
     data,
     group,
     time,
     priors,
-    fixed = attr(dformulas$all, "max_lag"),
+    fixed = attr(dformulas$all, "max_lag") * interval,
     verbose
   )
   grainsize <- ifelse_(
@@ -970,14 +985,14 @@ parse_past <- function(dformula, data, group_var, time_var) {
 #' @inheritParams parse_data
 #' @param dformulas \[`list()`]\cr Output of `parse_lags`.
 #' @noRd
-parse_components <- function(dformulas, data, group_var, time_var) {
+parse_components <- function(dformulas, data, group_var, time_var, interval) {
   fixed <- attr(dformulas$all, "max_lag")
   resp <- get_responses(dformulas$stoch)
   families <- unlist(get_families(dformulas$stoch))
   attr(dformulas$stoch, "splines") <- parse_splines(
     spline_def = attr(dformulas$stoch, "splines"),
     resp = resp,
-    times = seq.int(fixed + 1L, n_unique(data[[time_var]]))
+    times = seq.int(fixed * interval + 1L, n_unique(data[[time_var]]))
   )
   M <- count_random_effects(dformulas$stoch, data)
   stopifnot_(
