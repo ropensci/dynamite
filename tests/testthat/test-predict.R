@@ -484,3 +484,22 @@ test_that("thin works", {
     1L:20L
   )
 })
+
+test_that("time variable attributes are ignored", {
+  newdata <- gaussian_example |>
+    dplyr::mutate(y = ifelse(time > 8, NA, y))
+  newdata_attrs <- gaussian_example |>
+    dplyr::mutate(y = ifelse(time > 8, NA, y))
+  attr(newdata_attrs$time, "custom_attribute") <- "time"
+  set.seed(123)
+  pred <- predict(gaussian_example_fit, newdata, n_draws = 2)
+  set.seed(123)
+  expect_error(
+    pred_attrs <- predict(gaussian_example_fit, newdata_attrs, n_draws = 2),
+    NA
+  )
+  expect_equal(
+    pred$y_new,
+    pred_attrs$y_new
+  )
+})

@@ -179,7 +179,6 @@ Again, we apply the `get_parameter_dims()` function to get the model parameters 
 
 ``` r
 get_parameter_dims(x = f, data = d, time = "time", group = "id")
-#> recompiling to avoid crashing R session
 #> $omega_y
 #> [1]  2 10
 #> 
@@ -209,8 +208,6 @@ init <- list(
 
 We fit the model with these fixed values.
 
-
-
 ``` r
 gaussian_simulation_fit <- dynamite(
   dformula = f,
@@ -227,7 +224,6 @@ gaussian_simulation_fit <- dynamite(
 
 Finally, we generate the data using `predict()`.
 
-
 ``` r
 sim <- predict(gaussian_simulation_fit, type = "response") |>
   dplyr::mutate(y = y_new) |>
@@ -235,7 +231,6 @@ sim <- predict(gaussian_simulation_fit, type = "response") |>
 ```
 
 We can plot individual trajectories of `y` over time to visualize the data.
-
 
 ``` r
 library("ggplot2")
