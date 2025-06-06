@@ -720,8 +720,11 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr1$rhat < 1.1))
   expect_true(all(sumr1$ess_bulk > 500))
   expect_true(all(sumr1$ess_tail > 500))
-  expect_equal(summary(fit1, type = "psi")$mean, sim$mean_lambda_psi,
-               tolerance = 0.5)
+  expect_equal(
+    summary(fit1, type = "psi")$mean,
+    sim$mean_lambda_psi,
+    tolerance = 0.5
+  )
 
   set.seed(2)
   sim <- generate_data(
@@ -743,8 +746,11 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr2$rhat < 1.1))
   expect_true(all(sumr2$ess_bulk > 500))
   expect_true(all(sumr2$ess_tail > 500))
-  expect_equal(summary(fit2, type = "psi")$mean, sim$mean_lambda_psi,
-               tolerance = 0.5)
+  expect_equal(
+    summary(fit2, type = "psi")$mean,
+    sim$mean_lambda_psi,
+    tolerance = 0.5
+  )
 
   set.seed(3)
   sim <- generate_data(
@@ -769,8 +775,11 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr3$rhat < 1.1))
   expect_true(all(sumr3$ess_bulk > 500))
   expect_true(all(sumr3$ess_tail > 500))
-  expect_equal(summary(fit3, type = "psi")$mean, sim$mean_lambda_psi,
-               tolerance = 0.5)
+  expect_equal(
+    summary(fit3, type = "psi")$mean,
+    sim$mean_lambda_psi,
+    tolerance = 0.5
+  )
 
   set.seed(4)
   sim <- generate_data(
@@ -793,8 +802,11 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr4$rhat < 1.1))
   expect_true(all(sumr4$ess_bulk > 500))
   expect_true(all(sumr4$ess_tail > 500))
-  expect_equal(summary(fit4, type = "psi")$mean, sim$mean_lambda_psi,
-               tolerance = 0.5)
+  expect_equal(
+    summary(fit4, type = "psi")$mean,
+    sim$mean_lambda_psi,
+    tolerance = 0.5
+  )
 
   set.seed(5)
   sim <- generate_data(
@@ -817,8 +829,11 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr5$rhat < 1.1))
   expect_true(all(sumr5$ess_bulk > 500))
   expect_true(all(sumr5$ess_tail > 500))
-  expect_equal(summary(fit5, type = "psi")$mean, -sim$psi,
-               tolerance = 0.5)
+  expect_equal(
+    summary(fit5, type = "psi")$mean,
+    -sim$psi,
+    tolerance = 0.5
+  )
 
   set.seed(6)
   sim <- generate_data(
@@ -841,8 +856,11 @@ test_that("latent factor models are identifiable", {
   expect_true(all(sumr6$rhat < 1.1))
   expect_true(all(sumr6$ess_bulk > 500))
   expect_true(all(sumr6$ess_tail > 500))
-  expect_equal(summary(fit6, type = "psi")$mean, -sim$psi,
-               tolerance = 0.5)
+  expect_equal(
+    summary(fit6, type = "psi")$mean,
+    -sim$psi,
+    tolerance = 0.5
+  )
 
   # Test bivariate case with nonzero_lambda
   set.seed(123)
