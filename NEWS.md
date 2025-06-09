@@ -1,3 +1,8 @@
+# dynamite 1.6.0
+
+  * Added a new argument `drop` for `predict()` and `fitted()` which can be set to `FALSE` to keep redundant columns of `newdata` in the output. The default value `TRUE` matches the previous behavior of removing all redundant columns.
+  * Added a new argument `interval` for controlling the time interval of observations in `dynamite()`. See the documentation for more details.
+
 # dynamite 1.5.7
 
   * Fixed an issue with `predict()` when the time index variable had attributes.

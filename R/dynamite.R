@@ -215,6 +215,8 @@ dynamite <- function(dformula, data, time, group = NULL,
     deparse1(d),
     "NULL"
   )
+  dt_progress_opt <- getOption("datatable.showProgress")
+  options(datatable.showProgress = FALSE)
   data <- parse_data(dformula, data, group, time, verbose)
   dformula <- parse_past(dformula, data, group, time)
   dformulas <- parse_lags(dformula, data, group, time, verbose)
@@ -278,6 +280,7 @@ dynamite <- function(dformula, data, time, group = NULL,
     got <- try(get(x = opt), silent = TRUE)
     out[[opt]] <- onlyif(!inherits(got, "try-error"), got)
   }
+  options(datatable.showProgress = dt_progress_opt)
   out
 }
 

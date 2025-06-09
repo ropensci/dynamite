@@ -260,6 +260,8 @@ predict.dynamitefit <- function(object, newdata = NULL,
 initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
                                new_levels, global_fixed, idx_draws, expand,
                                df, drop) {
+  dt_progress_opt <- getOption("datatable.showProgress")
+  options(datatable.showProgress = FALSE)
   newdata_null <- is.null(newdata)
   newdata <- check_newdata(object, newdata)
   fixed <- as.integer(attr(object$dformulas$all, "max_lag"))
@@ -368,7 +370,7 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
       neworder = c(group_var, time_var, resp_draw)
     )
   }
-  predict_(
+  out <- predict_(
     object = object,
     simulated = simulated,
     storage = simulated,
@@ -386,6 +388,8 @@ initialize_predict <- function(object, newdata, type, eval_type, funs, impute,
     df = df,
     ival = interval
   )
+  options(datatable.showProgress = dt_progress_opt)
+  out
 }
 
 #' Obtain Predictions Or Fitted Values
@@ -559,12 +563,12 @@ predict_ <- function(object, simulated, storage, observed,
         )
         e$a_time <- ifelse_(identical(NCOL(e$alpha), 1L), 1L, time_i)
         if (identical(eval_type, "predicted")) {
-          idx_na <- is.na(simulated[idx, .SD, .SDcols = resp[cg_idx]]) &
-            complete.cases(model_matrix)
-          e$idx_out <- which(idx_na, arr.ind = TRUE)[, "row"]
+          resp_na <- is.na(simulated[idx, .SD, .SDcols = resp[cg_idx]])
+          idx_resp <- which(resp_na, arr.ind = TRUE)[, "row"]
+          e$idx_out <- idx_resp[which(complete.cases(model_matrix[idx_resp, ]))]
           e$k_obs <- length(e$idx_out)
           e$idx_data <- idx[e$idx_out]
-          if (any(idx_na)) {
+          if (any(resp_na)) {
             eval(e$call, envir = e)
           }
         } else {
