@@ -122,7 +122,8 @@ lfo.dynamitefit <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     global_fixed = FALSE,
     idx_draws,
     expand = FALSE,
-    df = FALSE
+    df = FALSE,
+    drop = TRUE
   )$simulated
   # avoid NSE notes from R CMD check
   loglik <- patterns <- group <- groups <- time <- NULL
@@ -219,7 +220,8 @@ lfo.dynamitefit <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
           global_fixed = FALSE,
           idx_draws,
           expand = FALSE,
-          df = FALSE
+          df = FALSE,
+          drop = TRUE
         )$simulated
         lls <- out[
           time > tp[L],

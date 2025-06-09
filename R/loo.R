@@ -76,7 +76,8 @@ loo.dynamitefit <- function(x, separate_channels = FALSE, thin = 1L, ...) {
     global_fixed = FALSE,
     idx_draws,
     expand = FALSE,
-    df = FALSE
+    df = FALSE,
+    drop = TRUE
   )$simulated
   # avoid NSE notes from R CMD check
   patterns <- NULL
