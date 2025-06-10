@@ -565,7 +565,8 @@ predict_ <- function(object, simulated, storage, observed,
         if (identical(eval_type, "predicted")) {
           resp_na <- is.na(simulated[idx, .SD, .SDcols = resp[cg_idx]])
           idx_resp <- which(resp_na, arr.ind = TRUE)[, "row"]
-          e$idx_out <- idx_resp[which(complete.cases(model_matrix[idx_resp, ]))]
+          complete <- which(stats::complete.cases(model_matrix[idx_resp, ]))
+          e$idx_out <- idx_resp[complete]
           e$k_obs <- length(e$idx_out)
           e$idx_data <- idx[e$idx_out]
           if (any(resp_na)) {
