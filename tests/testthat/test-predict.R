@@ -436,16 +436,11 @@ test_that("predict with loglik works", {
       global_fixed = FALSE,
       idx_draws = 1:ndraws(gaussian_example_fit),
       expand = FALSE,
-      df = TRUE
+      df = TRUE,
+      drop = TRUE
     )$simulated,
     NA
   )
-
-  # n <- ndraws(gaussian_example_fit) %/%
-  #   gaussian_example_fit$stanfit@sim$chains
-  # idx <- gaussian_example_fit$permutation[1L]
-  # iter <- idx %% n
-  # chain <- 1 + idx %/% n
   xzy <- gaussian_example_fit$data |>
     dplyr::filter(id == 5 & time == 20)
   manual <- as_draws(gaussian_example_fit) |>
@@ -492,14 +487,27 @@ test_that("time variable attributes are ignored", {
     dplyr::mutate(y = ifelse(time > 8, NA, y))
   attr(newdata_attrs$time, "custom_attribute") <- "time"
   set.seed(123)
-  pred <- predict(gaussian_example_fit, newdata, n_draws = 2)
+  pred <- predict(gaussian_example_fit, newdata, n_draws = 2L)
   set.seed(123)
   expect_error(
-    pred_attrs <- predict(gaussian_example_fit, newdata_attrs, n_draws = 2),
+    pred_attrs <- predict(gaussian_example_fit, newdata_attrs, n_draws = 2L),
     NA
   )
   expect_equal(
     pred$y_new,
     pred_attrs$y_new
   )
+})
+
+test_that("additional columns can be kept", {
+  newdata <- gaussian_example |>
+    dplyr::arrange(id, time)
+  newdata$new_col <- seq_len(nrow(newdata))
+  pred <- predict(
+    gaussian_example_fit,
+    newdata,
+    n_draws = 2L,
+    drop = FALSE
+  )
+  expect_equal(pred$new_col, rep(newdata$new_col, 2L))
 })

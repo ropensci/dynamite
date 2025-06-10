@@ -201,9 +201,10 @@ get_data.dynamitefit <- function(x, ...) {
     data = x$data,
     time = x$time_var,
     group = x$group_var,
+    priors = x$priors,
+    interval = x$interval,
     debug = list(no_compile = TRUE, stan_input = TRUE, model_code = FALSE),
     verbose = FALSE,
-    priors = x$priors,
     ...
   )
   out$stan_input$sampling_vars

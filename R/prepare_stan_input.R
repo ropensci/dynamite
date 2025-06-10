@@ -46,7 +46,7 @@ prepare_stan_input <- function(dformula, data, group_var, time_var,
     data[, .SD, .SDcols = resp],
     function(x) {
       cl <- class(x)
-      attr(cl, "levels") <- stan_name(levels(x), check_first = FALSE)
+      attr(cl, "levels") <- levels(x)
       cl
     }
   )

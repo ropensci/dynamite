@@ -542,6 +542,26 @@ test_that("no groups group variable name generation works", {
   expect_true(all(fit$data[[fit$group_var]] == 1L))
 })
 
+test_that("interval works", {
+  d <- data.frame(
+    id = gl(2, 100),
+    time = rep(1:100, 2),
+    y = rnorm(200)
+  )
+  d$y[seq(1, 100, by = 2)] <- NA
+  d$y[seq(102, 200, by = 2)] <- NA
+  fit <- dynamite(
+    dformula = obs(y ~ lag(y), family = "gaussian"),
+    data = d,
+    group = "id",
+    time = "time",
+    interval = 2L,
+    debug = list(no_compile = TRUE)
+  )
+  expect_equal(fit$data$y_lag1[1:100], dplyr::lag(d$y[1:100], n = 2L))
+  expect_equal(fit$data$y_lag1[101:200], dplyr::lag(d$y[101:200], n = 2L))
+})
+
 # Deterministic edgecases -------------------------------------------------
 
 test_that("deterministic channels are parsed", {

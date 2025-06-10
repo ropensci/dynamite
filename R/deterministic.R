@@ -74,7 +74,7 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
 #' @param group_var \[`character(1)`] Grouping variable name.
 #' @noRd
 assign_initial_values <- function(data, idx, dd, dlp, dld, dls,
-                                  fixed, group_var) {
+                                  fixed, group_var, ival) {
   # avoid NSE notes from R CMD check
   group <- NULL
   ro_lp <- ifelse_(
@@ -110,12 +110,12 @@ assign_initial_values <- function(data, idx, dd, dlp, dld, dls,
     past <- do.call(as_fun, args = list(dld[[i]]$specials$past))
     data.table::set(x = data, j = lhs_ld[i], value = past)
   }
-  idx <- idx + 1L
+  idx <- idx + ival
   assign_deterministic(data, idx, cl)
-  for (i in seq_len(fixed)) {
+  for (i in seq_len(1L + (fixed - 1L) * ival)) {
     idx <- idx + 1L
-    assign_lags_init(data, idx, ro_ld, lhs_ld, rhs_ld)
-    assign_lags_init(data, idx, ro_ls, lhs_ls, rhs_ls)
+    assign_lags_init(data, idx, ro_ld, lhs_ld, rhs_ld, ival)
+    assign_lags_init(data, idx, ro_ls, lhs_ls, rhs_ls, ival)
     assign_deterministic(data, idx, cl)
   }
   assign_deterministic(data, idx, cl)
@@ -165,7 +165,7 @@ assign_deterministic_predict <- function(simulated, sub, idx, resp, cl) {
 #' @param offset \[`integer(1)`]\cr The distance between consequent
 #'   observations in `data`.
 #' @noRd
-assign_lags <- function(data, idx, ro, lhs, rhs, skip = FALSE, offset = 1L) {
+assign_lags <- function(data, idx, ro, lhs, rhs, offset = 1L, skip = FALSE) {
   if (!skip) {
     for (k in ro) {
       data.table::set(
@@ -188,7 +188,6 @@ assign_lags_init <- function(data, idx, ro, lhs, rhs, offset = 1L) {
     na_val <- is.na(val)
     val[na_val] <- data[[lhs[k]]][idx][na_val]
     data.table::set(x = data, i = idx, j = lhs[k], value = val)
-    # data[idx, (lhs[k]) := val]
   }
 }
 
@@ -197,7 +196,7 @@ assign_lags_init <- function(data, idx, ro, lhs, rhs, offset = 1L) {
 #' @inheritParams parse_data
 #' @param dformulas \[list()]\cr The return object of [parse_lags()].
 #' @noRd
-evaluate_deterministic <- function(dformulas, data, group_var, time_var) {
+evaluate_deterministic <- function(dformulas, data, group_var, time_var, ival) {
   fixed <- as.integer(attr(dformulas$all, "max_lag"))
   n_time <- n_unique(data[[time_var]])
   dd <- dformulas$det
@@ -210,8 +209,8 @@ evaluate_deterministic <- function(dformulas, data, group_var, time_var) {
   cl <- get_quoted(dd)
   initialize_deterministic(data, dd, dlp, dld, dls)
   idx <- seq.int(1L, nrow(data), by = n_time) - 1L
-  assign_initial_values(data, idx, dd, dlp, dld, dls, fixed, group_var)
-  if (n_time > fixed + 1L) {
+  assign_initial_values(data, idx, dd, dlp, dld, dls, fixed, group_var, ival)
+  if (n_time > (fixed - 1L) * ival + 1L) {
     ro_ld <- ifelse_(
       is.null(attr(dld, "rank_order")),
       integer(0L),
@@ -222,11 +221,11 @@ evaluate_deterministic <- function(dformulas, data, group_var, time_var) {
     rhs_ld <- get_rhs(dld)
     lhs_ls <- get_responses(dls)
     rhs_ls <- get_rhs(dls)
-    idx <- idx + fixed + 1L
-    for (i in seq.int(fixed + 2L, n_time)) {
+    idx <- idx + fixed * ival + 1L
+    for (i in seq.int(fixed * ival + 2L, n_time)) {
       idx <- idx + 1L
-      assign_lags(data, idx, ro_ld, lhs_ld, rhs_ld)
-      assign_lags(data, idx, ro_ls, lhs_ls, rhs_ls)
+      assign_lags(data, idx, ro_ld, lhs_ld, rhs_ld, ival)
+      assign_lags(data, idx, ro_ls, lhs_ls, rhs_ls, ival)
       assign_deterministic(data, idx, cl)
     }
   }
