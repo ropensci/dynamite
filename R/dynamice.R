@@ -171,7 +171,7 @@ dynamice <- function(dformula, data, time, group = NULL,
       priors = priors,
       backend = backend,
       permutation = sample(n_draws),
-      interval,
+      interval = interval,
       imputed = onlyif(keep_imputed, imputed),
       call = tmp$call # TODO?
     ),
