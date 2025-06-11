@@ -1,3 +1,7 @@
+# dynamite 1.6.1
+
+  * The `interval` argument of `dynamite()` is now coerced to `integer` for efficiency.
+
 # dynamite 1.6.0
 
   * Added a new argument `drop` for `predict()` and `fitted()` which can be set to `FALSE` to keep redundant columns of `newdata` in the output. The default value `TRUE` matches the previous behavior of removing all redundant columns.
