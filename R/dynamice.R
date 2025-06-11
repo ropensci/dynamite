@@ -75,6 +75,7 @@ dynamice <- function(dformula, data, time, group = NULL,
   )
   dt_progress_opt <- getOption("datatable.showProgress")
   options(datatable.showProgress = FALSE)
+  interval <- as.integer(interval)
   data <- droplevels(data)
   data <- data.table::as.data.table(data)
   if (is.null(group)) {

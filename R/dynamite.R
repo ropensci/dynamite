@@ -217,6 +217,7 @@ dynamite <- function(dformula, data, time, group = NULL,
   )
   dt_progress_opt <- getOption("datatable.showProgress")
   options(datatable.showProgress = FALSE)
+  interval <- as.integer(interval)
   data <- parse_data(dformula, data, group, time, verbose)
   dformula <- parse_past(dformula, data, group, time)
   dformulas <- parse_lags(dformula, data, group, time, verbose)
