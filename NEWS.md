@@ -1,6 +1,7 @@
 # dynamite 1.6.1
 
   * The `interval` argument of `dynamite()` is now coerced to `integer` for efficiency.
+  * Fixed an issue with the `interval` argument with lagged predictors that were not response variables.
 
 # dynamite 1.6.0
 

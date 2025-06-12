@@ -101,7 +101,7 @@ assign_initial_values <- function(data, idx, dd, dlp, dld, dls,
       (dlp[[i]]$response) := lapply(.SD, lag_, k),
       .SDcols = resp_lp[i],
       by = group,
-      env = list(k = k, lag_ = lag_, group = group_var)
+      env = list(k = k * ival, lag_ = lag_, group = group_var)
     ]
   }
   init <- which(has_past(dld))
