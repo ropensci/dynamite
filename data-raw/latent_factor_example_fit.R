@@ -23,7 +23,8 @@ latent_factor_example_fit <- dynamite(
     "omega_alpha_1_y", "omega_raw_alpha_y", "omega_raw_psi",
     "omega_raw_psi_1_y", "L_lf", "lambda_raw_y"
   ),
-  include = FALSE
+  include = FALSE,
+  backend = "rstan"
 )
 
 usethis::use_data(

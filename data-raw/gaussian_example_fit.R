@@ -24,7 +24,8 @@ gaussian_example_fit <- dynamite(
     "omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L",
     "sigma_nu", "a_y"
   ),
-  include = FALSE
+  include = FALSE,
+  backend = "rstan"
 )
 
 usethis::use_data(
@@ -50,7 +51,8 @@ gaussian_example_single_fit <- dynamite(
   warmup = 1000,
   chains = 1,
   refresh = 0,
-  save_warmup = FALSE
+  save_warmup = FALSE,
+  backend = "rstan"
 )
 
 usethis::use_data(

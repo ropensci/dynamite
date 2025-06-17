@@ -164,7 +164,7 @@ test_that("multinomial fit and predict work", {
       group = "id",
       chains = 1,
       iter = 1,
-      backend = "rstan"
+      backend = "rstan",
       algorithm = "Fixed_param",
       init = list(init),
     ),

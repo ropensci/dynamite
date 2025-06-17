@@ -21,7 +21,8 @@ multichannel_example_fit <- dynamite(
   init = 0,
   refresh = 0,
   thin = 5,
-  save_warmup = FALSE
+  save_warmup = FALSE,
+  backend = "rstan"
 )
 
 usethis::use_data(
