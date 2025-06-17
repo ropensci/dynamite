@@ -52,15 +52,8 @@ dynamice <- function(dformula, data, time, group = NULL,
     interval,
     debug
   )
-  backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
-  stopifnot_(
-    !inherits(backend, "try-error"),
-    "Argument {.arg backend} must be either {.val rstan} or {.val cmdstanr}."
-  )
-  impute_format <- try(
-    match.arg(impute_format, c("long", "wide")),
-    silent = TRUE
-  )
+  backend <- dynamite_backend(backend)
+  impute_format <- try_(match.arg(impute_format, c("long", "wide")))
   stopifnot_(
     !inherits(impute_format, "try-error"),
     "Argument {.arg impute_format} must be either {.val long} or {.val wide}."

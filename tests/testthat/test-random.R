@@ -180,7 +180,7 @@ test_that("random effects for categorical distribution work", {
   set.seed(1)
   f <- obs(x ~  lag(x) + lag(y) + random(~1 + z), family = "categorical") +
     obs(y ~ -1 + lag(x) + lag(y) + random(~z), family = "categorical")
-  fit <- try(
+  fit <- try_(
     # Suppress, as this produces divergences
     suppressWarnings(
       dynamite(
@@ -192,8 +192,7 @@ test_that("random effects for categorical distribution work", {
         iter = 2000,
         refresh = 0
       )
-    ),
-    silent = TRUE
+    )
   )
   expect_false(inherits(fit, "try-error"))
   expect_error(
@@ -213,7 +212,7 @@ test_that("random effects for multinomial distribution work", {
   d$x <- rnorm(100)
   d$n <- d$y1 + d$y2 + d$y3
 
-  fit <- try(
+  fit <- try_(
     # Suppress, as this produces divergences
     suppressWarnings(
       dynamite(
@@ -225,8 +224,7 @@ test_that("random effects for multinomial distribution work", {
         iter = 2000,
         refresh = 0
       )
-    ),
-    silent = TRUE
+    )
   )
   expect_false(inherits(fit, "try-error"))
   expect_error(
@@ -262,7 +260,7 @@ test_that("random effects for multivariate gaussian distribution work", {
     t = rep(1:T_, each = N),
     id = 1:N
   )
-  fit <- try(
+  fit <- try_(
     # Suppress, as this produces divergences
     suppressWarnings(
       dynamite(
@@ -276,8 +274,7 @@ test_that("random effects for multivariate gaussian distribution work", {
         iter = 2000,
         refresh = 0
       )
-    ),
-    silent = TRUE
+    )
   )
   expect_false(inherits(fit, "try-error"))
   expect_error(

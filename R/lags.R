@@ -33,7 +33,7 @@
 #'
 lags <- function(k = 1L, type = c("fixed", "varying", "random")) {
   type <- onlyif(is.character(type), tolower(type))
-  type <- try(match.arg(type, c("fixed", "varying", "random")), silent = TRUE)
+  type <- try_(match.arg(type, c("fixed", "varying", "random")))
   stopifnot_(
     !inherits(type, "try-error"),
     "Argument {.arg type} must be either
@@ -227,7 +227,7 @@ extract_lags <- function(x) {
 #' @noRd
 verify_lag <- function(k, lag_str) {
   k_str <- deparse1(k)
-  k_coerce <- try(eval(k), silent = TRUE)
+  k_coerce <- try_(eval(k))
   stopifnot_(
     !inherits(k_coerce, "try-error"),
     "Invalid shift value expression {.code {k_str}}."

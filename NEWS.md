@@ -1,3 +1,7 @@
+# dynamite 1.6.2
+
+  * The default Stan backend is now CmdStan via `cmdstanr`. If CmdStan or `cmdstanr` are not available, the package will default to `rstan`.
+
 # dynamite 1.6.1
 
   * The `interval` argument of `dynamite()` is now coerced to `integer` for efficiency.

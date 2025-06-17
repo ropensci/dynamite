@@ -219,6 +219,7 @@ test_that("unrecognized arguments warns", {
       "time",
       "id",
       debug = debug,
+      backend = "rstan",
       strange_arg1 = 1L,
       strange_arg2 = 1L,
     ),
@@ -238,7 +239,8 @@ test_that("categorical non-glm availability warns", {
       dynamite(
         dformula = obs(y ~ 1, family = "categorical"),
         data = data.frame(y = c("A", "B"), time = c(1, 2)),
-        time = "time"
+        time = "time",
+        backend = "rstan"
       )
     ),
     paste0(
@@ -305,11 +307,11 @@ test_that("deprecated functions warn", {
     "'plot_nus' is deprecated"
   )
   expect_warning(
-    try(plot_lambdas(gaussian_example_fit), silent = TRUE),
+    try_(plot_lambdas(gaussian_example_fit)),
     "'plot_lambdas' is deprecated"
   )
   expect_warning(
-    try(plot_psis(gaussian_example_fit), silent = TRUE),
+    try_(plot_psis(gaussian_example_fit)),
     "'plot_psis' is deprecated"
   )
 })

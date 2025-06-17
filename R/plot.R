@@ -300,10 +300,7 @@ plot.dynamitefit <- function(x, plot_type = c("default", "trace", "dag"),
     "Argument {.arg x} must be a {.cls dynamitefit} object."
   )
   plot_type <- onlyif(is.character(plot_type), tolower(plot_type))
-  plot_type <- try(
-    match.arg(plot_type, c("default", "trace", "dag")),
-    silent = TRUE
-  )
+  plot_type <- try_(match.arg(plot_type, c("default", "trace", "dag")))
   stopifnot_(
     !inherits(plot_type, "try-error"),
     "Argument {.arg type} must be either {.val default}, {.val trace}
@@ -337,7 +334,7 @@ plot.dynamitefit <- function(x, plot_type = c("default", "trace", "dag"),
     "Argument {.arg facet} must be a single logical value."
   )
   scales <- onlyif(is.character(scales), tolower(scales))
-  scales <- try(match.arg(scales, c("fixed", "free")), silent = TRUE)
+  scales <- try_(match.arg(scales, c("fixed", "free")))
   stopifnot_(
     !inherits(scales, "try-error"),
     "Argument {.arg scales} must be either {.val fixed} or {.val free}."

@@ -55,7 +55,7 @@ initialize_deterministic <- function(data, dd, dlp, dld, dls) {
   }
   if (length(dd) > 0L) {
     cl <- get_quoted(dd)
-    res <- try(assign_deterministic(data, 1L, cl), silent = TRUE)
+    res <- try_(assign_deterministic(data, 1L, cl))
     stopifnot_(
       !inherits(res, "try-error"),
       c(

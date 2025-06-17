@@ -179,14 +179,14 @@ predict.dynamitefit <- function(object, newdata = NULL,
     "No Stan model fit is available."
   )
   type <- onlyif(is.character(type), tolower(type))
-  type <- try(match.arg(type, c("response", "mean", "link")), silent = TRUE)
+  type <- try_(match.arg(type, c("response", "mean", "link")))
   stopifnot_(
     !inherits(type, "try-error"),
     "Argument {.arg type} must be either
     {.val response}, {.val mean}, or {.val link}."
   )
   impute <- onlyif(is.character(impute), tolower(impute))
-  impute <- try(match.arg(impute, c("none", "locf", "nocb")), silent = TRUE)
+  impute <- try_(match.arg(impute, c("none", "locf", "nocb")))
   stopifnot_(
     !inherits(impute, "try-error"),
     "Argument {.arg type} must be either

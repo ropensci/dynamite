@@ -40,10 +40,10 @@
 #' @param priors \[`data.frame`]\cr An optional data frame with prior
 #'   definitions. See [get_priors()] and 'Details'.
 #' @param backend \[`character(1)`]\cr Defines the backend interface to Stan,
-#'   should be  either `"rstan"` (the default) or `"cmdstanr"`. Note that
+#'   should be  either `"cmdstanr"` (the default) or `"rstan"`. Note that
 #'   `cmdstanr` needs to be installed separately as it is not on CRAN. It also
 #'   needs the actual `CmdStan` software. See <https://mc-stan.org/cmdstanr/>
-#'   for details.
+#'   for details. Defaults to `"rstan"` if `"cmdstanr"` cannot be used.
 #' @param verbose \[`logical(1)`]\cr All warnings and messages are suppressed
 #'   if set to `FALSE`. Defaults to `TRUE`. Setting this to `FALSE` will also
 #'   disable checks for perfect collinearity in the model matrix.
@@ -170,7 +170,7 @@
 #' }
 #'
 dynamite <- function(dformula, data, time, group = NULL,
-                     priors = NULL, backend = "rstan",
+                     priors = NULL, backend = "cmdstanr",
                      verbose = TRUE, verbose_stan = FALSE,
                      stanc_options = list("O0"),
                      threads_per_chain = 1L, grainsize = NULL,
@@ -196,11 +196,7 @@ dynamite <- function(dformula, data, time, group = NULL,
     paste(readLines(custom_stan_model), collapse = "\n"),
     custom_stan_model
   )
-  backend <- try(match.arg(backend, c("rstan", "cmdstanr")), silent = TRUE)
-  stopifnot_(
-    !inherits(backend, "try-error"),
-    "Argument {.arg backend} must be either {.val rstan} or {.val cmdstanr}."
-  )
+  backend <- dynamite_backend(backend)
   if (is.null(group)) {
     group <- ".group"
     data_names <- names(data)
@@ -278,11 +274,33 @@ dynamite <- function(dformula, data, time, group = NULL,
   # Adds any object in the environment of this function to the return object
   # if its name is included in the debug argument.
   for (opt in setdiff(names(debug), names(out))) {
-    got <- try(get(x = opt), silent = TRUE)
+    got <- try_(get(x = opt))
     out[[opt]] <- onlyif(!inherits(got, "try-error"), got)
   }
   options(datatable.showProgress = dt_progress_opt)
   out
+}
+
+#' Check backend capabilities for `dynamite`
+#'
+#' @param backedn Either `"cmdstanr"` or `"rstan"`
+dynamite_backend <- function(backend) {
+  backend <- try_(match.arg(backend, c("cmdstanr", "rstan")))
+  stopifnot_(
+    !inherits(backend, "try-error"),
+    "Argument {.arg backend} must be either {.val cmdstanr} or {.val rstan}."
+  )
+  if (identical(backend, "rstan") || (identical(backend, "cmdstanr") &&
+      requireNamespace("cmdstanr", quietly = TRUE))) {
+    return(backend)
+  }
+  message_(
+    c(
+      "Please install the {.pkg cmdstanr} package to use the CmdStan backend",
+      `i` = "Switching to {.pkg rstan} backend."
+    )
+  )
+  "rstan"
 }
 
 #' Check `dynamite` Arguments
@@ -951,9 +969,9 @@ parse_past <- function(dformula, data, group_var, time_var) {
       y <- dformula[[i]]$response
       cl <- dformula[[i]]$specials$past
       if (identical(typeof(cl), "language")) {
-        past_eval <- try(eval(cl), silent = TRUE)
+        past_eval <- try_(eval(cl))
         if (inherits(past_eval, "try-error")) {
-          past_eval <- try(data[, cl, env = list(cl = cl)], silent = TRUE)
+          past_eval <- try_(data[, cl, env = list(cl = cl)])
           stopifnot_(
             !inherits(past_eval, "try-error"),
             c(

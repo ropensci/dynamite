@@ -389,6 +389,14 @@ onlyif <- function(test, yes) {
   }
 }
 
+#' Silent try
+#'
+#' @param x Expression to evaluate silently.
+#' @noRd
+try_ <- function(expr) {
+  try(expr, silent = TRUE)
+}
+
 #' Unlist lapply
 #'
 #' @inheritParams base::lapply
