@@ -113,6 +113,7 @@ update_ <- function(object, data, refresh, ...) {
   call$group <- object$group_var
   call$priors <- get_priors(object)
   call$refresh <- refresh
+  call$backend <- object$backend
   call$debug <- NULL
   recompile <- NULL
   extras <- match.call(expand.dots = FALSE)$...

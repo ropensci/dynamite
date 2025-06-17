@@ -55,10 +55,10 @@ of the return object to get the column name of the new variable.}
 definitions. See \code{\link[=get_priors]{get_priors()}} and 'Details'.}
 
 \item{backend}{[\code{character(1)}]\cr Defines the backend interface to Stan,
-should be  either \code{"rstan"} (the default) or \code{"cmdstanr"}. Note that
+should be  either \code{"cmdstanr"} (the default) or \code{"rstan"}. Note that
 \code{cmdstanr} needs to be installed separately as it is not on CRAN. It also
 needs the actual \code{CmdStan} software. See \url{https://mc-stan.org/cmdstanr/}
-for details.}
+for details. Defaults to \code{"rstan"} if \code{"cmdstanr"} cannot be used.}
 
 \item{verbose}{[\code{logical(1)}]\cr All warnings and messages are suppressed
 if set to \code{FALSE}. Defaults to \code{TRUE}. Setting this to \code{FALSE} will also

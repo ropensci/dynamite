@@ -529,6 +529,9 @@ dynamite_sampling <- function(sampling, backend, model_code, model,
       })
     } else {
       e$model <- model
+      if (is.null(dots$show_exceptions)) {
+        dots$show_exceptions <- FALSE
+      }
       e$args <- c(
         list(data = sampling_vars),
         dots,

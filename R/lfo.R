@@ -105,7 +105,6 @@ lfo.dynamitefit <- function(x, L, verbose = TRUE, k_threshold = 0.7, ...) {
     message_("Estimating model with {L} time points.")
   }
   fit <- update_(x, data = d, refresh = 0, ...)
-
   idx_draws <- seq.int(1, ndraws(fit))
   n_draws <- length(idx_draws)
   # would be faster to use only data

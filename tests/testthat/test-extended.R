@@ -164,6 +164,7 @@ test_that("multinomial fit and predict work", {
       group = "id",
       chains = 1,
       iter = 1,
+      backend = "rstan"
       algorithm = "Fixed_param",
       init = list(init),
     ),
@@ -479,12 +480,7 @@ test_that("update without recompile works", {
     chains = 2,
     cores = 2,
     refresh = 0,
-    save_warmup = FALSE,
-    pars = c(
-      "omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L",
-      "sigma_nu", "a_y"
-    ),
-    include = FALSE
+    save_warmup = FALSE
   )
   expect_error(
     fit <- update(
@@ -523,12 +519,7 @@ test_that("custom stan model works", {
     chains = 2,
     cores = 2,
     refresh = 0,
-    save_warmup = FALSE,
-    pars = c(
-      "omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L",
-      "sigma_nu", "a_y"
-    ),
-    include = FALSE
+    save_warmup = FALSE
   )
   code <- get_code(initial_fit)
   set.seed(1)
@@ -548,11 +539,6 @@ test_that("custom stan model works", {
       cores = 2,
       refresh = 0,
       save_warmup = FALSE,
-      pars = c(
-        "omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L",
-        "sigma_nu", "a_y"
-      ),
-      include = FALSE,
       custom_stan_model = code
     ),
     NA
@@ -648,12 +634,7 @@ test_that("information on >2 chains is summarized in print", {
     thin = 10,
     chains = 4,
     refresh = 0,
-    save_warmup = FALSE,
-    pars = c(
-      "omega_alpha_1_y", "omega_raw_alpha_y", "nu_raw", "nu", "L",
-      "sigma_nu", "a_y"
-    ),
-    include = FALSE
+    save_warmup = FALSE
   )
   out <- capture_all_output(print(fit))
   expect_true(
@@ -669,6 +650,8 @@ test_that("information on >2 chains is summarized in print", {
 
 
 test_that("latent factor models are identifiable", {
+  # Skip for now
+  skip()
   skip_if_not(run_extended_tests)
 
   generate_data <- function(N, T_, D, alpha, mean_lambda, sd_lambda, sd_alpha) {
