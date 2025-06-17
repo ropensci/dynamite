@@ -519,6 +519,7 @@ test_that("custom stan model works", {
     chains = 2,
     cores = 2,
     refresh = 0,
+    backend = "rstan",
     save_warmup = FALSE
   )
   code <- get_code(initial_fit)
@@ -539,6 +540,7 @@ test_that("custom stan model works", {
       cores = 2,
       refresh = 0,
       save_warmup = FALSE,
+      backend = "rstan",
       custom_stan_model = code
     ),
     NA
