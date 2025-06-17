@@ -283,7 +283,8 @@ dynamite <- function(dformula, data, time, group = NULL,
 
 #' Check backend capabilities for `dynamite`
 #'
-#' @param backedn Either `"cmdstanr"` or `"rstan"`
+#' @param backend Either `"cmdstanr"` or `"rstan"`.
+#' @noRd
 dynamite_backend <- function(backend) {
   backend <- try_(match.arg(backend, c("cmdstanr", "rstan")))
   stopifnot_(
