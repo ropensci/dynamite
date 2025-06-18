@@ -291,17 +291,31 @@ dynamite_backend <- function(backend) {
     !inherits(backend, "try-error"),
     "Argument {.arg backend} must be either {.val cmdstanr} or {.val rstan}."
   )
-  if (identical(backend, "rstan") || (identical(backend, "cmdstanr") &&
-      requireNamespace("cmdstanr", quietly = TRUE))) {
+  if (backend == "rstan") {
     return(backend)
   }
-  message_(
-    c(
-      "Please install the {.pkg cmdstanr} package to use the CmdStan backend",
-      `i` = "Switching to {.pkg rstan} backend."
+  if (requireNamespace("cmdstanr", quietly = TRUE)) {
+    cmdstan_path <- try_(cmdstanr::cmdstan_path())
+    if (inherits(cmdstan_path, "try-error")) {
+      message_(
+        c(
+          "CmdStan path has not been set yet. See ?set_cmdstan_path.",
+          `i` = "Switching to {.pkg rstan} backend."
+        )
+      )
+      backend <- "rstan"
+    }
+  } else {
+    message_(
+      c(
+        "Please install the {.pkg cmdstanr}
+         package to use the CmdStan backend.",
+        `i` = "Switching to {.pkg rstan} backend."
+      )
     )
-  )
-  "rstan"
+    backend <- "rstan"
+  }
+  backend
 }
 
 #' Check `dynamite` Arguments
