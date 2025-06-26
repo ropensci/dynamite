@@ -52,20 +52,23 @@ print.dynamitefit <- function(x, full_diagnostics = FALSE, ...) {
     if (mcmc_algorithm) {
       hmc_diagnostics(x)
     }
-    draws <- suppressWarnings(as_draws(x))
-    match_names <- grepl(
-      pattern = "^(?!.*^nu|^omega|^lambda|.*\\[.*]).*",
-      x = names(draws),
-      perl = TRUE
-    )
+    # draws <- suppressWarnings(as_draws(x))
+    # match_names <- grepl(
+    #   pattern = "^(?!.*^nu|^omega|^lambda|.*\\[.*]).*",
+    #   x = names(draws),
+    #   perl = TRUE
+    # )
+    param_types <-  setdiff(all_types, c("nu", "omega", "lambda"))
     if (full_diagnostics && mcmc_algorithm) {
       # compute only the convergence measures for all variables
+      draws <- suppressWarnings(as_draws(x))
       sumr <- posterior::summarise_draws(
         draws,
         posterior::default_convergence_measures()
       )
     } else {
-      sumr <- posterior::summarise_draws(draws[, match_names])
+      draws <- suppressWarnings(as_draws(x, types = param_types))
+      sumr <- posterior::summarise_draws(draws)
     }
     if (mcmc_algorithm) {
       min_ess <- which.min(sumr$ess_bulk)
@@ -97,7 +100,8 @@ print.dynamitefit <- function(x, full_diagnostics = FALSE, ...) {
       "\nSummary statistics of the time- and group-invariant parameters:\n"
     )
     if (full_diagnostics) {
-      sumr <- posterior::summarise_draws(draws[, match_names])
+      draws <- suppressWarnings(as_draws(x, types = param_types))
+      sumr <- posterior::summarise_draws(draws)
     }
     print(sumr, ...)
   } else {

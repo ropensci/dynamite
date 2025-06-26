@@ -100,6 +100,7 @@ get_code.dynamitefit <- function(x, blocks = NULL, ...) {
       data = x$data,
       time = x$time_var,
       group = x$group_var,
+      backend = x$backend,
       debug = list(no_compile = TRUE, model_code = TRUE),
       verbose = FALSE,
       ...
@@ -202,6 +203,7 @@ get_data.dynamitefit <- function(x, ...) {
     time = x$time_var,
     group = x$group_var,
     priors = x$priors,
+    backend = x$backend,
     interval = x$interval,
     debug = list(no_compile = TRUE, stan_input = TRUE, model_code = FALSE),
     verbose = FALSE,
