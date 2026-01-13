@@ -5,8 +5,7 @@
 #'   supported family name, or `"default"`.
 #' @param args Channel specific component of `channel_vars`.
 #' @param idt An indenter function.
-#' @param backend The Stan backend.
-#'   (see [create_blocks()])
+#' @param backend The Stan backend (see `create_blocks`).
 #' @noRd
 lines_wrap <- function(prefix, family, idt, backend, args) {
   args$idt <- idt
@@ -44,7 +43,7 @@ lines_wrap <- function(prefix, family, idt, backend, args) {
 #' @param priors \[`character(1)`]\cr Model block prior definitions
 #' @param y_cg \[`character(1)`]\cr Name of the channel group for multivariate
 #'   channels.
-#' @param idt \[`function`]\cr An indentation function, see [indenter_()].
+#' @param idt \[`function`]\cr An indentation function, see `indenter_`.
 #' @param has_missing \[`logical(1)`]\cr Does the channel contain missing
 #'   observations?
 #' @param has_fully_missing \[`logical(1)`]\cr Does the channel have time

@@ -18,7 +18,7 @@ Description: Easy-to-use and efficient interface for
   effects, and a wide range of discrete and continuous distributions. 
   Estimation of these dynamic multivariate panel models is carried out via 
   'Stan'. For an in-depth tutorial of the package, see 
-  (Tikka and Helske, 2024) <doi:10.48550/arXiv.2302.01607>.
+  (Tikka and Helske, 2025) <doi:10.18637/jss.v115.i05>.
 License: GPL (>= 3)
 URL: https://docs.ropensci.org/dynamite/, https://github.com/ropensci/dynamite/
 BugReports: https://github.com/ropensci/dynamite/issues/
@@ -54,7 +54,7 @@ Config/testthat/edition: 3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE, roclets = c ("namespace", "rd",
     "srr::srr_stats_roclet"))
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 LazyData: true
 LazyDataCompression: xz
-Additional_repositories: https://mc-stan.org/r-packages/
+Additional_repositories: https://stan-dev.r-universe.dev/

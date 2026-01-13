@@ -1,6 +1,8 @@
 # dynamite 1.6.2
 
   * The default Stan backend is now CmdStan via `cmdstanr`. If CmdStan or `cmdstanr` are not available, the package will default to `rstan`.
+  * The terms `fixed()`, `varying()`, and `random()` now check that their argument is a formula.
+  * Added Journal of Statistical Software reference.
 
 # dynamite 1.6.1
 
@@ -11,7 +13,7 @@
 
   * Added a new argument `drop` for `predict()` and `fitted()` which can be set to `FALSE` to keep redundant columns of `newdata` in the output. The default value `TRUE` matches the previous behavior of removing all redundant columns.
   * Added a new argument `interval` for controlling the time interval of observations in `dynamite()`. See the documentation for more details.
-  * Predictions are now only generated for observations with no missing predictors in `predict()` and `fitted()`. This change does not affect the simulation results, but warnings related to missing or non-finite values should no longer be unnecesarily generated during the simulation. 
+  * Predictions are now only generated for observations with no missing predictors in `predict()` and `fitted()`. This change does not affect the simulation results, but warnings related to missing or non-finite values should no longer be unnecessarily generated during the simulation. 
   * Disabled messages from `data.table` related to longer computations when using `dynamite()`, `dynamice()`, `predict()`, and `fitted()`.
 
 # dynamite 1.5.7

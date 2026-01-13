@@ -2,13 +2,22 @@ citHeader("To cite dynamite in publications use:")
 
 bibentry(
   key = "dynamitepaper",
-  bibtype  = "Misc",
-  doi = "10.48550/arXiv.2302.01607",
-  url = "https://arxiv.org/abs/2302.01607",
-  author = c(person("Santtu", "Tikka"), person("Jouni", "Helske")),
-  title = "dynamite: An R Package for Dynamic Multivariate Panel Models",
-  year = "2024"
+  bibtype = "Article",
+  title  = "{dynamite}: An {R} Package for Dynamic Multivariate Panel Models",
+  author = c(person(given = "Santtu",
+                    family = "Tikka",
+                    email = "santtu.tikka@jyu.fi"),
+             person(given = "Jouni",
+                    family = "Helske",
+                    email = "jouni.helske@utu.fi")),
+  journal = "Journal of Statistical Software",
+  year  = "2025",
+  volume  = "115",
+  number  = "5",
+  pages = "1--42",
+  doi = "10.18637/jss.v115.i05"
 )
+
 bibentry(
   key = "dmpmpaper",
   bibtype = "Article",

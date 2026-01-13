@@ -194,7 +194,7 @@ assign_lags_init <- function(data, idx, ro, lhs, rhs, offset = 1L) {
 #' Evaluate Definitions of Deterministic Channels
 #'
 #' @inheritParams parse_data
-#' @param dformulas \[list()]\cr The return object of [parse_lags()].
+#' @param dformulas \[list()]\cr The return object of `parse_lags`.
 #' @noRd
 evaluate_deterministic <- function(dformulas, data, group_var, time_var, ival) {
   fixed <- as.integer(attr(dformulas$all, "max_lag"))

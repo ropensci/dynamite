@@ -288,7 +288,11 @@ get_special_terms <- function(type, xt_variables, xt_specials) {
       "A {.code {type}()} term must have a single formula argument."
     )
     # eval to ensure that form is a formula
-    form <- eval(xt_variables[[xt_specials[[type]] + 1L]][[2L]])
+    form <- try_(eval(xt_variables[[xt_specials[[type]] + 1L]][[2L]]))
+    stopifnot_(
+      !inherits(form, "try-error") && class(form) == "formula",
+      "Argument of {.code {type}()} must be a formula."
+    )
     terms <- formula_terms(form)
     icpt <- attr(terms(form), "intercept")
     nested_specials <- c("fixed", "varying", "random")

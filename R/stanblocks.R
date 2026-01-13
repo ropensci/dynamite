@@ -6,11 +6,11 @@
 #' @param cg \[`integer()`]\cr The `"channel_groups"` attribute of the
 #'   `dformula` for stochastic channels.
 #' @param cvars \[`list()`]\cr The `channel_vars` component of
-#'   [prepare_stan_input()] output.
+#'   `prepare_stan_input` output.
 #' @param cgvars \[`list()`]\cr The `channel_group_vars` component of
-#'   [prepare_stan_input()] output.
+#'   `prepare_stan_input` output.
 #' @param mvars \[`list()`]\cr The `model_vars` component of
-#'   [prepare_stan_input()] output.
+#'   `prepare_stan_input` output.
 #' @noRd
 create_blocks <- function(indent = 2L, backend, cg, cvars, cgvars, mvars,
                           threading) {
@@ -31,7 +31,7 @@ create_blocks <- function(indent = 2L, backend, cg, cvars, cgvars, mvars,
 #'
 #' @inheritParams create_blocks
 #' @param idt \[`function`]\cr
-#'   An indentation function created by [indenter_()].
+#'   An indentation function created by `indenter_`.
 #' @noRd
 create_functions <- function(idt, backend, cg, cvars, cgvars, mvars, threading) {
   functions_psi <- ""
