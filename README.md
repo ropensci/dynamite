@@ -56,11 +56,12 @@ on DMPMs and the `dynamite` package, see the related papers:
 - Helske J. and Tikka S. (2024). Estimating Causal Effects from Panel
   Data with Dynamic Multivariate Panel Models. *Advances in Life Course
   Research*, 60, 100617. ([Journal
-  version](https://doi.org/10.1016/j.alcr.2024.100617),
-  [SocArXiv](https://doi.org/10.31235/osf.io/mdwu5) preprint)
-- Tikka S. and Helske J. (2024). `dynamite`: An R Package for Dynamic
-  Multivariate Panel Models. ([arXiv](https://arxiv.org/abs/2302.01607)
-  preprint)
+  version](https://doi.org/10.1016/j.alcr.2024.100617), [SocArXiv
+  preprint](https://doi.org/10.31235/osf.io/mdwu5))
+- Tikka S. and Helske J. (2025). `dynamite`: An R Package for Dynamic
+  Multivariate Panel Models. *Journal of Statistical Software*, 115(5),
+  1-42. ([Journal version](https://doi.org/10.18637/jss.v115.i05),
+  [arXiv preprint](https://arxiv.org/abs/2302.01607))
 
 ## Installation
 
@@ -109,25 +110,30 @@ print(gaussian_example_fit)
 #> 
 #> No divergences, saturated max treedepths or low E-BFMIs.
 #> 
-#> Smallest bulk-ESS: 661 (sigma_nu_y_alpha)
-#> Smallest tail-ESS: 1058 (sigma_nu_y_alpha)
-#> Largest Rhat: 1.003 (sigma_y)
+#> Smallest bulk-ESS: 651 (sigma_nu_y_alpha)
+#> Smallest tail-ESS: 853 (sigma_nu_y_alpha)
+#> Largest Rhat: 1.01 (delta_y_y_lag1[2])
 #> 
 #> Elapsed time (seconds):
 #>         warmup sample
-#> chain:1  4.215  2.563
-#> chain:2  4.118  2.592
+#> chain:1  7.646  5.113
+#> chain:2  8.010  4.943
 #> 
 #> Summary statistics of the time- and group-invariant parameters:
-#> # A tibble: 6 × 10
-#>   variable      mean median      sd     mad     q5   q95  rhat ess_bulk ess_tail
-#>   <chr>        <dbl>  <dbl>   <dbl>   <dbl>  <dbl> <dbl> <dbl>    <dbl>    <dbl>
-#> 1 beta_y_z    1.97   1.97   0.0116  0.0112  1.95   1.99   1.00    2815.    1434.
-#> 2 sigma_nu_y… 0.0944 0.0933 0.0114  0.0107  0.0780 0.114  1.00     661.    1058.
-#> 3 sigma_y     0.198  0.198  0.00373 0.00362 0.192  0.204  1.00    2580.    1254.
-#> 4 tau_alpha_y 0.212  0.205  0.0483  0.0432  0.146  0.301  1.00    1731.    1606.
-#> 5 tau_y_x     0.364  0.355  0.0740  0.0648  0.266  0.494  1.00    2812.    1504.
-#> 6 tau_y_y_la… 0.107  0.105  0.0219  0.0213  0.0781 0.148  1.00    2387.    1682.
+#> # A tibble: 113 × 10
+#>    variable      mean median     sd    mad      q5   q95  rhat ess_bulk ess_tail
+#>    <chr>        <dbl>  <dbl>  <dbl>  <dbl>   <dbl> <dbl> <dbl>    <dbl>    <dbl>
+#>  1 alpha_y[2]  0.0577 0.0579 0.0321 0.0327 0.00492 0.110 1.000    2093.    1577.
+#>  2 alpha_y[3]  0.0900 0.0908 0.0437 0.0437 0.0180  0.161 0.999    2148.    1681.
+#>  3 alpha_y[4]  0.165  0.164  0.0390 0.0392 0.102   0.229 1.000    2301.    1644.
+#>  4 alpha_y[5]  0.263  0.263  0.0377 0.0385 0.200   0.325 1.00     2342.    1505.
+#>  5 alpha_y[6]  0.303  0.302  0.0365 0.0366 0.244   0.364 0.999    2439.    1573.
+#>  6 alpha_y[7]  0.332  0.333  0.0399 0.0406 0.268   0.398 1.000    2123.    1573.
+#>  7 alpha_y[8]  0.421  0.421  0.0364 0.0382 0.361   0.480 1.00     2160.    1475.
+#>  8 alpha_y[9]  0.457  0.456  0.0400 0.0395 0.391   0.522 1.00     2090.    1797.
+#>  9 alpha_y[10] 0.412  0.412  0.0421 0.0410 0.340   0.482 1.000    2159.    1760.
+#> 10 alpha_y[11] 0.404  0.404  0.0404 0.0412 0.337   0.468 0.999    2036.    1756.
+#> # ℹ 103 more rows
 ```
 
 Posterior estimates of time-varying effects:
@@ -136,7 +142,7 @@ Posterior estimates of time-varying effects:
 plot(gaussian_example_fit, types = c("alpha", "delta"), scales = "free")
 ```
 
-<img src="man/figures/README-unnamed-chunk-7-1.png" style="display: block; margin: auto;" />
+<img src="man/figures/README-posterior-1.png" alt="" style="display: block; margin: auto;" />
 
 And group-specific intercepts (for first 10 groups):
 
@@ -144,7 +150,7 @@ And group-specific intercepts (for first 10 groups):
 plot(gaussian_example_fit, types = "nu", groups = 1:10)
 ```
 
-<img src="man/figures/README-unnamed-chunk-8-1.png" style="display: block; margin: auto;" />
+<img src="man/figures/README-random-1.png" alt="" style="display: block; margin: auto;" />
 
 Traceplots and density plots for time-invariant parameters:
 
@@ -152,7 +158,7 @@ Traceplots and density plots for time-invariant parameters:
 plot(gaussian_example_fit, plot_type = "trace", types = "beta")
 ```
 
-<img src="man/figures/README-unnamed-chunk-9-1.png" style="display: block; margin: auto;" />
+<img src="man/figures/README-trace-1.png" alt="" style="display: block; margin: auto;" />
 
 Posterior predictive samples for the first 4 groups (using the samples
 based on the posterior distribution of the model parameters and observed
@@ -171,7 +177,7 @@ pred |>
   theme_bw()
 ```
 
-<img src="man/figures/README-unnamed-chunk-10-1.png" style="display: block; margin: auto;" />
+<img src="man/figures/README-prediction-1.png" alt="" style="display: block; margin: auto;" />
 
 Visualizing the model structure as a DAG (a snapshot at time `t`):
 
@@ -179,7 +185,7 @@ Visualizing the model structure as a DAG (a snapshot at time `t`):
 plot(gaussian_example_fit, plot_type = "dag", show_covariates = TRUE)
 ```
 
-<img src="man/figures/README-unnamed-chunk-11-1.png" style="display: block; margin: auto;" />
+<img src="man/figures/README-dag-1.png" alt="" style="display: block; margin: auto;" />
 
 For more examples, see the package vignettes and the [blog post about
 dynamite](https://ropensci.org/blog/2023/01/31/dynamite-r-package/).

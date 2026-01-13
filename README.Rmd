@@ -42,14 +42,14 @@ The `dynamite` [R](https://www.r-project.org/) package provides an easy-to-use i
 
 The `dynamite` package is developed with the support of the Research Council of Finland grant 331817 ([PREDLIFE](https://sites.utu.fi/predlife/en/)). For further information on DMPMs and the `dynamite` package, see the related papers:
 
-* Helske J. and Tikka S. (2024). Estimating Causal Effects from Panel Data with Dynamic Multivariate Panel Models. *Advances in Life Course Research*, 60, 100617. ([Journal version](https://doi.org/10.1016/j.alcr.2024.100617), [SocArXiv](https://doi.org/10.31235/osf.io/mdwu5) preprint)
-* Tikka S. and Helske J. (2024). `dynamite`: An R Package for Dynamic Multivariate Panel Models. ([arXiv](https://arxiv.org/abs/2302.01607) preprint)
+* Helske J. and Tikka S. (2024). Estimating Causal Effects from Panel Data with Dynamic Multivariate Panel Models. *Advances in Life Course Research*, 60, 100617. ([Journal version](https://doi.org/10.1016/j.alcr.2024.100617), [SocArXiv preprint](https://doi.org/10.31235/osf.io/mdwu5))
+* Tikka S. and Helske J. (2025). `dynamite`: An R Package for Dynamic Multivariate Panel Models. *Journal of Statistical Software*, 115(5), 1-42. ([Journal version](https://doi.org/10.18637/jss.v115.i05), [arXiv preprint](https://arxiv.org/abs/2302.01607))
 
 ## Installation
 
 You can install the most recent stable version of `dynamite` from [CRAN](https://cran.r-project.org/package=dynamite) or the development version from [R-universe](https://r-universe.dev/search) by running one the following lines:
 
-```{r, eval = FALSE}
+```{r packages, eval = FALSE}
 install.packages("dynamite")
 install.packages("dynamite", repos = "https://ropensci.r-universe.dev")
 ```
@@ -58,12 +58,12 @@ install.packages("dynamite", repos = "https://ropensci.r-universe.dev")
 
 A single-channel model with time-invariant effect of `z`, time-varying effect of `x`, lagged value of the response variable `y` and a group-specific random intercepts:
 
-```{r, echo = FALSE}
+```{r load, echo = FALSE}
 library("dynamite")
 ggplot2::theme_set(ggplot2::theme_bw())
 ```
 
-```{r, eval = FALSE}
+```{r fit, eval = FALSE}
 set.seed(1)
 library("dynamite")
 gaussian_example_fit <- dynamite(
@@ -74,7 +74,7 @@ gaussian_example_fit <- dynamite(
 )
 ```
 
-```{r, echo = FALSE}
+```{r update, echo = FALSE}
 set.seed(1)
 library("dynamite")
 gaussian_example_fit <- update(
@@ -85,27 +85,27 @@ gaussian_example_fit <- update(
 ```
 
 Summary of the model:
-```{r}
+```{r summary}
 print(gaussian_example_fit)
 ```
 
 Posterior estimates of time-varying effects:
-```{r, fig.width = 9, fig.height = 4}
+```{r posterior, fig.width = 9, fig.height = 4}
 plot(gaussian_example_fit, types = c("alpha", "delta"), scales = "free")
 ```
 
 And group-specific intercepts (for first 10 groups):
-```{r, fig.width = 9, fig.height = 4}
+```{r random, fig.width = 9, fig.height = 4}
 plot(gaussian_example_fit, types = "nu", groups = 1:10)
 ```
 
 Traceplots and density plots for time-invariant parameters:
-```{r, fig.width = 9, fig.height = 4}
+```{r trace, fig.width = 9, fig.height = 4}
 plot(gaussian_example_fit, plot_type = "trace", types = "beta")
 ```
 
 Posterior predictive samples for the first 4 groups (using the samples based on the posterior distribution of the model parameters and observed data on the first time point):
-```{r, warning=FALSE, fig.width = 9, fig.height = 4}
+```{r prediction, warning=FALSE, fig.width = 9, fig.height = 4}
 library("ggplot2")
 pred <- predict(gaussian_example_fit, n_draws = 100)
 pred |>
@@ -119,7 +119,7 @@ pred |>
 ```
 
 Visualizing the model structure as a DAG (a snapshot at time `t`):
-```{r, fig.width = 4, fig.height = 4}
+```{r dag, fig.width = 4, fig.height = 4}
 plot(gaussian_example_fit, plot_type = "dag", show_covariates = TRUE)
 ```
 

@@ -48,6 +48,7 @@ update.dynamitefit <- function(object, dformula = NULL, data = NULL,
      multiple imputation."
   )
   call <- object$call
+  call$backend <- object$backend # for backward compatibility
   if (!is.null(dformula)) {
     call$dformula <- dformula
     recompile <- TRUE

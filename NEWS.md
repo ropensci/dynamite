@@ -2,6 +2,7 @@
 
   * The default Stan backend is now CmdStan via `cmdstanr`. If CmdStan or `cmdstanr` are not available, the package will default to `rstan`.
   * The terms `fixed()`, `varying()`, and `random()` now check that their argument is a formula.
+  * Fixed an issue with `update()` using the wrong Stan backend in some instances.
   * Added Journal of Statistical Software reference.
 
 # dynamite 1.6.1
