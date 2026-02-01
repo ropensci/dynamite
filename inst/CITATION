@@ -23,7 +23,7 @@ bibentry(
   bibtype = "Article",
   title = "Estimating Causal Effects from Panel Data with Dynamic
     Multivariate Panel Models",
-  author = c(person("Santtu", "Tikka"), person("Jouni", "Helske")),
+  author = c(person("Jouni", "Helske"), person("Santtu", "Tikka")),
   journal = "Advances in Life Course Research",
   volume = "60",
   pages = "100617",
