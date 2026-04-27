@@ -1,6 +1,6 @@
 # dynamite 1.6.3
 
-  * Added `Matrix` to Suggests.
+  * Fixed an issue related to `Matrix` package dependency.
 
 # dynamite 1.6.2
 
