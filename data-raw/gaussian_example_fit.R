@@ -55,6 +55,9 @@ gaussian_example_single_fit <- dynamite(
   backend = "rstan"
 )
 
+# This seems to prevent Matrix from being referenced
+# unloadNamespace("Matrix)
+
 usethis::use_data(
   gaussian_example_single_fit,
   overwrite = TRUE,
