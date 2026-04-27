@@ -32,7 +32,6 @@ Imports:
     glue,
     ggplot2,
     loo,
-    Matrix,
     patchwork,
     posterior,
     rlang,
