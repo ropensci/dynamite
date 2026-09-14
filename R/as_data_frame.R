@@ -79,6 +79,9 @@
 #'   parameters for `1:fixed` time points are included in the output as `NA`
 #'   values. If `FALSE`, fixed time points are omitted completely
 #'   from the output.
+#' @param include_varying \[`logical(1)`]\cr If `TRUE` (default), time-varying
+#'   parameters are included in the output (if present). If `FALSE`, only
+#'   time-invariant parameters are included.
 #' @param ... Ignored.
 #' @return A `tibble` containing either samples or summary statistics of the
 #'   model parameters in a long format. For a wide format, see
@@ -119,7 +122,8 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
                                       responses = NULL,
                                       times = NULL, groups = NULL,
                                       summary = FALSE, probs = c(0.05, 0.95),
-                                      include_fixed = TRUE, ...) {
+                                      include_fixed = TRUE,
+                                      include_varying = TRUE, ...) {
   out <- as.data.table.dynamitefit(
     x = x,
     keep.rownames = FALSE,
@@ -133,6 +137,7 @@ as.data.frame.dynamitefit <- function(x, row.names = NULL, optional = FALSE,
     summary = summary,
     probs = probs,
     include_fixed = include_fixed,
+    include_varying = include_varying,
     ...
   )
   tibble::tibble(data.table::setDF(out))

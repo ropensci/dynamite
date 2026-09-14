@@ -37,7 +37,7 @@ Supported column types are \code{integer}, \code{logical}, \code{double}, and
 Unused factor levels will be dropped. The \code{data} can contain missing
 values which will simply be ignored in the estimation in a case-wise
 fashion (per time-point and per channel). Input \code{data} is converted to
-channel specific matrix representations via \code{\link[stats:model.matrix]{stats::model.matrix.lm()}}.}
+channel specific matrix representations via \code{\link[stats:model.matrix.lm]{stats::model.matrix.lm()}}.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time index of observations. If this variable is a factor, the integer
@@ -65,7 +65,7 @@ if set to \code{FALSE}. Defaults to \code{TRUE}. Setting this to \code{FALSE} wi
 disable checks for perfect collinearity in the model matrix.}
 
 \item{verbose_stan}{[\code{logical(1)}]\cr This is the \code{verbose} argument for
-\code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}. Defaults to \code{FALSE}.}
+\code{\link[rstan:sampling]{rstan::sampling()}}. Defaults to \code{FALSE}.}
 
 \item{stanc_options}{[\code{list()}]\cr This is the \code{stanc_options} argument
 passed to the compile method of a \code{CmdStanModel} object via
@@ -126,7 +126,7 @@ Stan .csv files when \code{backend} is \code{"cmdstanr"}. The files are saved he
 via \verb{$save_output_files()} to avoid garbage collection between sampling
 runs with different imputed datasets.}
 
-\item{...}{For \code{dynamite()}, additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} or
+\item{...}{For \code{dynamite()}, additional arguments to \code{\link[rstan:sampling]{rstan::sampling()}} or
 the \verb{$sample()} method of the \code{CmdStanModel} object
 (see \url{https://mc-stan.org/cmdstanr/reference/model-method-sample.html}),
 such as \code{chains} and \code{cores}
@@ -145,9 +145,9 @@ longitudinal structure, and then converted back to long format for
 estimation.
 }
 \seealso{
-Model fitting
-\code{\link{dynamite}()},
-\code{\link{get_priors}()},
-\code{\link{update.dynamitefit}()}
+Model fitting:
+\code{\link[=dynamite]{dynamite()}},
+\code{\link[=get_priors]{get_priors()}},
+\code{\link[=update.dynamitefit]{update.dynamitefit()}}
 }
 \concept{fitting}

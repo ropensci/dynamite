@@ -27,18 +27,18 @@ get_parameter_types(multichannel_example_fit)
 
 }
 \seealso{
-Model outputs
-\code{\link{as.data.frame.dynamitefit}()},
-\code{\link{as.data.table.dynamitefit}()},
-\code{\link{as_draws_df.dynamitefit}()},
-\code{\link{coef.dynamitefit}()},
-\code{\link{confint.dynamitefit}()},
-\code{\link{dynamite}()},
-\code{\link{get_code}()},
-\code{\link{get_data}()},
-\code{\link{get_parameter_dims}()},
-\code{\link{get_parameter_names}()},
-\code{\link{ndraws.dynamitefit}()},
-\code{\link{nobs.dynamitefit}()}
+Model outputs:
+\code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}},
+\code{\link[=as.data.table.dynamitefit]{as.data.table.dynamitefit()}},
+\code{\link[=as_draws_df.dynamitefit]{as_draws_df.dynamitefit()}},
+\code{\link[=coef.dynamitefit]{coef.dynamitefit()}},
+\code{\link[=confint.dynamitefit]{confint.dynamitefit()}},
+\code{\link[=dynamite]{dynamite()}},
+\code{\link[=get_code]{get_code()}},
+\code{\link[=get_data]{get_data()}},
+\code{\link[=get_parameter_dims]{get_parameter_dims()}},
+\code{\link[=get_parameter_names]{get_parameter_names()}},
+\code{\link[=ndraws.dynamitefit]{ndraws.dynamitefit()}},
+\code{\link[=nobs.dynamitefit]{nobs.dynamitefit()}}
 }
 \concept{output}

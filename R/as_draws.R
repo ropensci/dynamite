@@ -30,7 +30,8 @@
 #'
 as_draws_df.dynamitefit <- function(x, parameters = NULL, responses = NULL,
                                     types = NULL, times = NULL,
-                                    groups = NULL, ...) {
+                                    groups = NULL, include_varying = TRUE,
+                                    ...) {
   # avoid NSE notes from R CMD check
   .chain <- .iteration <- NULL
   category <- group <- parameter <- time <- NULL
@@ -42,7 +43,8 @@ as_draws_df.dynamitefit <- function(x, parameters = NULL, responses = NULL,
     times = times,
     groups = groups,
     summary = FALSE,
-    include_fixed = FALSE
+    include_fixed = FALSE,
+    include_varying = include_varying
   )[,
     .SD,
     .SDcols = c(

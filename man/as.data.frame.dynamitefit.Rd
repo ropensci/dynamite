@@ -16,6 +16,7 @@
   summary = FALSE,
   probs = c(0.05, 0.95),
   include_fixed = TRUE,
+  include_varying = TRUE,
   ...
 )
 }
@@ -60,6 +61,10 @@ posterior samples instead.}
 parameters for \code{1:fixed} time points are included in the output as \code{NA}
 values. If \code{FALSE}, fixed time points are omitted completely
 from the output.}
+
+\item{include_varying}{[\code{logical(1)}]\cr If \code{TRUE} (default), time-varying
+parameters are included in the output (if present). If \code{FALSE}, only
+time-invariant parameters are included.}
 
 \item{...}{Ignored.}
 }
@@ -153,18 +158,18 @@ as.data.frame(
 
 }
 \seealso{
-Model outputs
-\code{\link{as.data.table.dynamitefit}()},
-\code{\link{as_draws_df.dynamitefit}()},
-\code{\link{coef.dynamitefit}()},
-\code{\link{confint.dynamitefit}()},
-\code{\link{dynamite}()},
-\code{\link{get_code}()},
-\code{\link{get_data}()},
-\code{\link{get_parameter_dims}()},
-\code{\link{get_parameter_names}()},
-\code{\link{get_parameter_types}()},
-\code{\link{ndraws.dynamitefit}()},
-\code{\link{nobs.dynamitefit}()}
+Model outputs:
+\code{\link[=as.data.table.dynamitefit]{as.data.table.dynamitefit()}},
+\code{\link[=as_draws_df.dynamitefit]{as_draws_df.dynamitefit()}},
+\code{\link[=coef.dynamitefit]{coef.dynamitefit()}},
+\code{\link[=confint.dynamitefit]{confint.dynamitefit()}},
+\code{\link[=dynamite]{dynamite()}},
+\code{\link[=get_code]{get_code()}},
+\code{\link[=get_data]{get_data()}},
+\code{\link[=get_parameter_dims]{get_parameter_dims()}},
+\code{\link[=get_parameter_names]{get_parameter_names()}},
+\code{\link[=get_parameter_types]{get_parameter_types()}},
+\code{\link[=ndraws.dynamitefit]{ndraws.dynamitefit()}},
+\code{\link[=nobs.dynamitefit]{nobs.dynamitefit()}}
 }
 \concept{output}

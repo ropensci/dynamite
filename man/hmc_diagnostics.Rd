@@ -23,9 +23,9 @@ hmc_diagnostics(gaussian_example_fit)
 Prints the divergences, saturated treedepths, and low E-BFMI warnings.
 }
 \seealso{
-Model diagnostics
-\code{\link{lfo}()},
-\code{\link{loo.dynamitefit}()},
-\code{\link{mcmc_diagnostics}()}
+Model diagnostics:
+\code{\link[=lfo]{lfo()}},
+\code{\link[=loo.dynamitefit]{loo.dynamitefit()}},
+\code{\link[=mcmc_diagnostics]{mcmc_diagnostics()}}
 }
 \concept{diagnostics}

@@ -52,13 +52,16 @@ print.dynamitefit <- function(x, full_diagnostics = FALSE, ...) {
     if (mcmc_algorithm) {
       hmc_diagnostics(x)
     }
-    # draws <- suppressWarnings(as_draws(x))
-    # match_names <- grepl(
-    #   pattern = "^(?!.*^nu|^omega|^lambda|.*\\[.*]).*",
-    #   x = names(draws),
-    #   perl = TRUE
-    # )
-    param_types <-  setdiff(all_types, c("nu", "omega", "lambda"))
+    param_types <-  setdiff(
+      all_types,
+      c(
+        "nu",
+        "delta",
+        "omega",
+        "omega_alpha",
+        "lambda"
+      )
+    )
     if (full_diagnostics && mcmc_algorithm) {
       # compute only the convergence measures for all variables
       draws <- suppressWarnings(as_draws(x))
@@ -67,7 +70,9 @@ print.dynamitefit <- function(x, full_diagnostics = FALSE, ...) {
         posterior::default_convergence_measures()
       )
     } else {
-      draws <- suppressWarnings(as_draws(x, types = param_types))
+      draws <- suppressWarnings(
+        as_draws(x, types = param_types, include_varying = FALSE)
+      )
       sumr <- posterior::summarise_draws(draws)
     }
     if (mcmc_algorithm) {

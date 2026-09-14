@@ -100,33 +100,39 @@ export(plot_nus)
 export(plot_psis)
 export(random_spec)
 export(splines)
-importFrom(data.table,":=")
-importFrom(data.table,as.data.table)
+importFrom(data.table,
+  ":=",
+  as.data.table
+)
 importFrom(loo,loo)
 importFrom(patchwork,wrap_plots)
-importFrom(posterior,as_draws)
-importFrom(posterior,as_draws_df)
-importFrom(posterior,ndraws)
+importFrom(posterior,
+  as_draws,
+  as_draws_df,
+  ndraws
+)
 importFrom(rlang,.data)
-importFrom(stats,as.formula)
-importFrom(stats,coef)
-importFrom(stats,fitted)
-importFrom(stats,formula)
-importFrom(stats,model.matrix)
-importFrom(stats,model.matrix.lm)
-importFrom(stats,na.exclude)
-importFrom(stats,na.pass)
-importFrom(stats,nobs)
-importFrom(stats,plogis)
-importFrom(stats,qlogis)
-importFrom(stats,quantile)
-importFrom(stats,rbinom)
-importFrom(stats,reformulate)
-importFrom(stats,rnbinom)
-importFrom(stats,rnorm)
-importFrom(stats,rpois)
-importFrom(stats,runif)
-importFrom(stats,sd)
-importFrom(stats,setNames)
-importFrom(stats,terms)
-importFrom(stats,update)
+importFrom(stats,
+  as.formula,
+  coef,
+  fitted,
+  formula,
+  model.matrix,
+  model.matrix.lm,
+  na.exclude,
+  na.pass,
+  nobs,
+  plogis,
+  qlogis,
+  quantile,
+  rbinom,
+  reformulate,
+  rnbinom,
+  rnorm,
+  rpois,
+  runif,
+  sd,
+  setNames,
+  terms,
+  update
+)

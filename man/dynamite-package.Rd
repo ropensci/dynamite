@@ -43,6 +43,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Santtu Tikka \email{santtuth@gmail.com} (\href{https://orcid.org/0000-0003-4039-4342}{ORCID})
   \item Jouni Helske \email{jouni.helske@iki.fi} (\href{https://orcid.org/0000-0001-7130-793X}{ORCID})
 }
 

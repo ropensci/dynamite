@@ -42,11 +42,11 @@ obs(x ~ z, family = "categorical") +
 
 }
 \seealso{
-Model formula construction
-\code{\link{dynamite}()},
-\code{\link{dynamiteformula}()},
-\code{\link{lfactor}()},
-\code{\link{random_spec}()},
-\code{\link{splines}()}
+Model formula construction:
+\code{\link[=dynamite]{dynamite()}},
+\code{\link[=dynamiteformula]{dynamiteformula()}},
+\code{\link[=lfactor]{lfactor()}},
+\code{\link[=random_spec]{random_spec()}},
+\code{\link[=splines]{splines()}}
 }
 \concept{formulas}

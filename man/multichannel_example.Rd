@@ -26,7 +26,7 @@ A simulated multichannel data containing multiple individuals with multiple
 response variables of different distributions.
 }
 \seealso{
-Example models
+Example models:
 \code{\link{categorical_example}},
 \code{\link{categorical_example_fit}},
 \code{\link{gaussian_example}},

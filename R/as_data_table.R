@@ -27,7 +27,8 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
                                       responses = NULL,
                                       times = NULL, groups = NULL,
                                       summary = FALSE, probs = c(0.05, 0.95),
-                                      include_fixed = TRUE, ...) {
+                                      include_fixed = TRUE,
+                                      include_varying = TRUE, ...) {
   stopifnot_(
     !missing(x),
     "Argument {.arg x} is missing."
@@ -102,6 +103,10 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
   stopifnot_(
     checkmate::test_flag(x = include_fixed),
     "Argument {.arg include_fixed} must be a single {.cls logical} value."
+  )
+  stopifnot_(
+    checkmate::test_flag(x = include_varying),
+    "Argument {.arg include_varying} must be a single {.cls logical} value."
   )
   if (!is.null(parameters)) {
     responses <- types <- NULL
@@ -312,6 +317,9 @@ as.data.table.dynamitefit <- function(x, keep.rownames = FALSE,
       )
     )
     out <- out[parameters]
+  }
+  if (!include_varying) {
+    out <- out[is.na(time), ]
   }
   if (summary) {
     pars <- unique(out$parameter)

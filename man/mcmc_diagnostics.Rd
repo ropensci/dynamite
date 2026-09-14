@@ -24,7 +24,7 @@ Returns \code{x} (invisibly).
 \description{
 Prints HMC diagnostics and lists parameters with smallest effective sample
 sizes and largest Rhat values. See \code{\link[=hmc_diagnostics]{hmc_diagnostics()}} and
-\code{\link[posterior:draws_summary]{posterior::default_convergence_measures()}} for details.
+\code{\link[posterior:default_convergence_measures]{posterior::default_convergence_measures()}} for details.
 }
 \examples{
 data.table::setDTthreads(1) # For CRAN
@@ -32,9 +32,9 @@ mcmc_diagnostics(gaussian_example_fit)
 
 }
 \seealso{
-Model diagnostics
-\code{\link{hmc_diagnostics}()},
-\code{\link{lfo}()},
-\code{\link{loo.dynamitefit}()}
+Model diagnostics:
+\code{\link[=hmc_diagnostics]{hmc_diagnostics()}},
+\code{\link[=lfo]{lfo()}},
+\code{\link[=loo.dynamitefit]{loo.dynamitefit()}}
 }
 \concept{diagnostics}

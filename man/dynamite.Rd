@@ -42,7 +42,7 @@ Supported column types are \code{integer}, \code{logical}, \code{double}, and
 Unused factor levels will be dropped. The \code{data} can contain missing
 values which will simply be ignored in the estimation in a case-wise
 fashion (per time-point and per channel). Input \code{data} is converted to
-channel specific matrix representations via \code{\link[stats:model.matrix]{stats::model.matrix.lm()}}.}
+channel specific matrix representations via \code{\link[stats:model.matrix.lm]{stats::model.matrix.lm()}}.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time index of observations. If this variable is a factor, the integer
@@ -70,7 +70,7 @@ if set to \code{FALSE}. Defaults to \code{TRUE}. Setting this to \code{FALSE} wi
 disable checks for perfect collinearity in the model matrix.}
 
 \item{verbose_stan}{[\code{logical(1)}]\cr This is the \code{verbose} argument for
-\code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}}. Defaults to \code{FALSE}.}
+\code{\link[rstan:sampling]{rstan::sampling()}}. Defaults to \code{FALSE}.}
 
 \item{stanc_options}{[\code{list()}]\cr This is the \code{stanc_options} argument
 passed to the compile method of a \code{CmdStanModel} object via
@@ -114,7 +114,7 @@ every second time point, setting \code{interval = 2} means that a lag of order
 The default value is \code{1} meaning that there is a one-to-one correspondence
 between the lag order and the time scale. For expert users only.}
 
-\item{...}{For \code{dynamite()}, additional arguments to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} or
+\item{...}{For \code{dynamite()}, additional arguments to \code{\link[rstan:sampling]{rstan::sampling()}} or
 the \verb{$sample()} method of the \code{CmdStanModel} object
 (see \url{https://mc-stan.org/cmdstanr/reference/model-method-sample.html}),
 such as \code{chains} and \code{cores}
@@ -136,7 +136,7 @@ values for all model parameters, which can take some time for complex models.}
 \code{dynamite} returns a \code{dynamitefit} object which is a list containing
 the following components:
 \itemize{
-\item \code{stanfit}\cr A \code{stanfit} object, see \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} for details.
+\item \code{stanfit}\cr A \code{stanfit} object, see \code{\link[rstan:sampling]{rstan::sampling()}} for details.
 \item \code{dformulas}\cr A list of \code{dynamiteformula} objects for internal use.
 \item \code{data}\cr A processed version of the input \code{data}.
 \item \code{data_name}\cr Name of the input data object.
@@ -226,31 +226,31 @@ from Panel Data with Dynamic Multivariate Panel Models.
 \url{doi:10.1016/j.alcr.2024.100617}.
 }
 \seealso{
-Model fitting
-\code{\link{dynamice}()},
-\code{\link{get_priors}()},
-\code{\link{update.dynamitefit}()}
+Model fitting:
+\code{\link[=dynamice]{dynamice()}},
+\code{\link[=get_priors]{get_priors()}},
+\code{\link[=update.dynamitefit]{update.dynamitefit()}}
 
-Model formula construction
-\code{\link{dynamiteformula}()},
-\code{\link{lags}()},
-\code{\link{lfactor}()},
-\code{\link{random_spec}()},
-\code{\link{splines}()}
+Model formula construction:
+\code{\link[=dynamiteformula]{dynamiteformula()}},
+\code{\link[=lags]{lags()}},
+\code{\link[=lfactor]{lfactor()}},
+\code{\link[=random_spec]{random_spec()}},
+\code{\link[=splines]{splines()}}
 
-Model outputs
-\code{\link{as.data.frame.dynamitefit}()},
-\code{\link{as.data.table.dynamitefit}()},
-\code{\link{as_draws_df.dynamitefit}()},
-\code{\link{coef.dynamitefit}()},
-\code{\link{confint.dynamitefit}()},
-\code{\link{get_code}()},
-\code{\link{get_data}()},
-\code{\link{get_parameter_dims}()},
-\code{\link{get_parameter_names}()},
-\code{\link{get_parameter_types}()},
-\code{\link{ndraws.dynamitefit}()},
-\code{\link{nobs.dynamitefit}()}
+Model outputs:
+\code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}},
+\code{\link[=as.data.table.dynamitefit]{as.data.table.dynamitefit()}},
+\code{\link[=as_draws_df.dynamitefit]{as_draws_df.dynamitefit()}},
+\code{\link[=coef.dynamitefit]{coef.dynamitefit()}},
+\code{\link[=confint.dynamitefit]{confint.dynamitefit()}},
+\code{\link[=get_code]{get_code()}},
+\code{\link[=get_data]{get_data()}},
+\code{\link[=get_parameter_dims]{get_parameter_dims()}},
+\code{\link[=get_parameter_names]{get_parameter_names()}},
+\code{\link[=get_parameter_types]{get_parameter_types()}},
+\code{\link[=ndraws.dynamitefit]{ndraws.dynamitefit()}},
+\code{\link[=nobs.dynamitefit]{nobs.dynamitefit()}}
 }
 \concept{fitting}
 \concept{formulas}

@@ -101,7 +101,7 @@ if (!identical(.Platform$OS.type, "windows")) {
 
 }
 \seealso{
-Obtaining predictions
-\code{\link{predict.dynamitefit}()}
+Obtaining predictions:
+\code{\link[=predict.dynamitefit]{predict.dynamitefit()}}
 }
 \concept{prediction}

@@ -25,7 +25,7 @@ Supported column types are \code{integer}, \code{logical}, \code{double}, and
 Unused factor levels will be dropped. The \code{data} can contain missing
 values which will simply be ignored in the estimation in a case-wise
 fashion (per time-point and per channel). Input \code{data} is converted to
-channel specific matrix representations via \code{\link[stats:model.matrix]{stats::model.matrix.lm()}}.}
+channel specific matrix representations via \code{\link[stats:model.matrix.lm]{stats::model.matrix.lm()}}.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time index of observations. If this variable is a factor, the integer
@@ -61,9 +61,9 @@ get_priors(obs(y ~ x, family = "gaussian"),
 
 }
 \seealso{
-Model fitting
-\code{\link{dynamice}()},
-\code{\link{dynamite}()},
-\code{\link{update.dynamitefit}()}
+Model fitting:
+\code{\link[=dynamice]{dynamice()}},
+\code{\link[=dynamite]{dynamite()}},
+\code{\link[=update.dynamitefit]{update.dynamitefit()}}
 }
 \concept{fitting}

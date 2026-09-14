@@ -48,9 +48,9 @@ Practical Bayesian model evaluation using leave-one-out cross-validation and
 WAIC. Statistics and Computing. 27(5), 1413--1432.
 }
 \seealso{
-Model diagnostics
-\code{\link{hmc_diagnostics}()},
-\code{\link{lfo}()},
-\code{\link{mcmc_diagnostics}()}
+Model diagnostics:
+\code{\link[=hmc_diagnostics]{hmc_diagnostics()}},
+\code{\link[=lfo]{lfo()}},
+\code{\link[=mcmc_diagnostics]{mcmc_diagnostics()}}
 }
 \concept{diagnostics}

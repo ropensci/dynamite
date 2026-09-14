@@ -12,7 +12,7 @@ lfo(x, ...)
 \arguments{
 \item{x}{[\code{dynamitefit}]\cr The model fit object.}
 
-\item{...}{Additional arguments passed to \code{\link[rstan:stanmodel-method-sampling]{rstan::sampling()}} or the
+\item{...}{Additional arguments passed to \code{\link[rstan:sampling]{rstan::sampling()}} or the
 \verb{$sample()} method of the \code{CmdStanModel} object, such as \code{chains} and
 \code{cores} (\code{parallel_chains} in \code{cmdstanr}).}
 
@@ -70,9 +70,9 @@ Approximate leave-future-out cross-validation for Bayesian time series
 models, Journal of Statistical Computation and Simulation, 90:14, 2499-2523.
 }
 \seealso{
-Model diagnostics
-\code{\link{hmc_diagnostics}()},
-\code{\link{loo.dynamitefit}()},
-\code{\link{mcmc_diagnostics}()}
+Model diagnostics:
+\code{\link[=hmc_diagnostics]{hmc_diagnostics()}},
+\code{\link[=loo.dynamitefit]{loo.dynamitefit()}},
+\code{\link[=mcmc_diagnostics]{mcmc_diagnostics()}}
 }
 \concept{diagnostics}

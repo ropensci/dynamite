@@ -41,7 +41,7 @@ gaussian_example_fit <- dynamite(
 Note the very small number of samples due to size restrictions on CRAN.
 }
 \seealso{
-Example models
+Example models:
 \code{\link{categorical_example}},
 \code{\link{categorical_example_fit}},
 \code{\link{gaussian_example}},

@@ -25,7 +25,7 @@ Supported column types are \code{integer}, \code{logical}, \code{double}, and
 Unused factor levels will be dropped. The \code{data} can contain missing
 values which will simply be ignored in the estimation in a case-wise
 fashion (per time-point and per channel). Input \code{data} is converted to
-channel specific matrix representations via \code{\link[stats:model.matrix]{stats::model.matrix.lm()}}.}
+channel specific matrix representations via \code{\link[stats:model.matrix.lm]{stats::model.matrix.lm()}}.}
 
 \item{time}{[\code{character(1)}]\cr A column name of \code{data} that denotes the
 time index of observations. If this variable is a factor, the integer
@@ -63,18 +63,18 @@ cat(dynamite(obs(y ~ x, family = "gaussian"),
 
 }
 \seealso{
-Model outputs
-\code{\link{as.data.frame.dynamitefit}()},
-\code{\link{as.data.table.dynamitefit}()},
-\code{\link{as_draws_df.dynamitefit}()},
-\code{\link{coef.dynamitefit}()},
-\code{\link{confint.dynamitefit}()},
-\code{\link{dynamite}()},
-\code{\link{get_data}()},
-\code{\link{get_parameter_dims}()},
-\code{\link{get_parameter_names}()},
-\code{\link{get_parameter_types}()},
-\code{\link{ndraws.dynamitefit}()},
-\code{\link{nobs.dynamitefit}()}
+Model outputs:
+\code{\link[=as.data.frame.dynamitefit]{as.data.frame.dynamitefit()}},
+\code{\link[=as.data.table.dynamitefit]{as.data.table.dynamitefit()}},
+\code{\link[=as_draws_df.dynamitefit]{as_draws_df.dynamitefit()}},
+\code{\link[=coef.dynamitefit]{coef.dynamitefit()}},
+\code{\link[=confint.dynamitefit]{confint.dynamitefit()}},
+\code{\link[=dynamite]{dynamite()}},
+\code{\link[=get_data]{get_data()}},
+\code{\link[=get_parameter_dims]{get_parameter_dims()}},
+\code{\link[=get_parameter_names]{get_parameter_names()}},
+\code{\link[=get_parameter_types]{get_parameter_types()}},
+\code{\link[=ndraws.dynamitefit]{ndraws.dynamitefit()}},
+\code{\link[=nobs.dynamitefit]{nobs.dynamitefit()}}
 }
 \concept{output}

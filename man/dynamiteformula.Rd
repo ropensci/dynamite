@@ -194,11 +194,11 @@ print(x)
 
 }
 \seealso{
-Model formula construction
-\code{\link{dynamite}()},
-\code{\link{lags}()},
-\code{\link{lfactor}()},
-\code{\link{random_spec}()},
-\code{\link{splines}()}
+Model formula construction:
+\code{\link[=dynamite]{dynamite()}},
+\code{\link[=lags]{lags()}},
+\code{\link[=lfactor]{lfactor()}},
+\code{\link[=random_spec]{random_spec()}},
+\code{\link[=splines]{splines()}}
 }
 \concept{formulas}

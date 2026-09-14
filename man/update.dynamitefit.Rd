@@ -54,9 +54,9 @@ if (identical(.Platform$OS.type, "windows")) {
 
 }
 \seealso{
-Model fitting
-\code{\link{dynamice}()},
-\code{\link{dynamite}()},
-\code{\link{get_priors}()}
+Model fitting:
+\code{\link[=dynamice]{dynamice()}},
+\code{\link[=dynamite]{dynamite()}},
+\code{\link[=get_priors]{get_priors()}}
 }
 \concept{fitting}

@@ -63,11 +63,11 @@ obs(y ~ 1, family = "gaussian") +
 
 }
 \seealso{
-Model formula construction
-\code{\link{dynamite}()},
-\code{\link{dynamiteformula}()},
-\code{\link{lags}()},
-\code{\link{random_spec}()},
-\code{\link{splines}()}
+Model formula construction:
+\code{\link[=dynamite]{dynamite()}},
+\code{\link[=dynamiteformula]{dynamiteformula()}},
+\code{\link[=lags]{lags()}},
+\code{\link[=random_spec]{random_spec()}},
+\code{\link[=splines]{splines()}}
 }
 \concept{formulas}

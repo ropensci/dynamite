@@ -93,7 +93,7 @@ plot(gaussian_example_fit, type = "beta")
 
 }
 \seealso{
-Drawing plots
-\code{\link{plot.dynamiteformula}()}
+Drawing plots:
+\code{\link[=plot.dynamiteformula]{plot.dynamiteformula()}}
 }
 \concept{plotting}

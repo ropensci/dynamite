@@ -29,7 +29,7 @@ intercept, and time-invariant effect of covariate \code{z}. The time-varying
 coefficients vary according to a spline with 20 degrees of freedom.
 }
 \seealso{
-Example models
+Example models:
 \code{\link{categorical_example}},
 \code{\link{categorical_example_fit}},
 \code{\link{gaussian_example_fit}},

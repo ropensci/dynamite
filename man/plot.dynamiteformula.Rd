@@ -59,7 +59,7 @@ plot(multichannel_formula, tikz = TRUE)
 
 }
 \seealso{
-Drawing plots
-\code{\link{plot.dynamitefit}()}
+Drawing plots:
+\code{\link[=plot.dynamitefit]{plot.dynamitefit()}}
 }
 \concept{plotting}
